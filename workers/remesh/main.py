@@ -1,32 +1,38 @@
 """
-Mesh processing service — remesh, simplify, repair, retopologize, and convert 3D files.
+Mesh processing service, remesh, simplify, repair, retopologize, and convert 3D files.
 
-Wraps trimesh + open3d + QuadriFlow + xatlas, with Blender (bpy) for FBX export.
-No GPU required; runs on CPU. Handles:
+Wraps trimesh + open3d + AutoRemesher + QuadriFlow + xatlas, with Blender (bpy)
+for FBX export. No GPU required; runs on CPU. Handles:
   - Format conversion (GLB ↔ OBJ ↔ FBX ↔ STL ↔ PLY ↔ USDZ ↔ 3MF)
-  - FBX export with skeletons — a `convert` of a rigged GLB keeps its bone
+  - FBX export with skeletons, a `convert` of a rigged GLB keeps its bone
     hierarchy, skin weights, and blendshapes (via headless Blender; see
     blender_fbx.py). trimesh has no FBX writer, so this is the only path that
     round-trips a rig.
   - Triangle decimation (quadric error metric via open3d)
-  - Quad remeshing (field-aligned quad-dominant topology via QuadriFlow, MIT)
+  - Quad remeshing (AutoRemesher first, QuadriFlow as the fallback; both MIT)
   - Smart low-poly (silhouette-preserving decimation + UV re-unwrap + texture re-bake)
   - Mesh repair (fill holes, remove degenerate faces, fix normals)
   - Vertex deduplication and cleaning
 
 Tooling / licensing:
-  - QuadriFlow (https://github.com/hjwdzh/QuadriFlow) — MIT, commercial-OK. A scalable,
+  - AutoRemesher (https://github.com/huxingyi/autoremesher), MIT. Upstream ships
+    it inside a Qt desktop app; autoremesher_cli/ builds its Qt-free core into a
+    headless OBJ-in/OBJ-out CLI (pinned commit, see the Dockerfile). The default
+    quad engine since 2026-11-21: one to two orders of magnitude faster than
+    QuadriFlow at equal or better surface fit on most benchmark meshes.
+  - QuadriFlow (https://github.com/hjwdzh/QuadriFlow), MIT, commercial-OK. A scalable,
     robust field-aligned quadrangulation method. Invoked as a separate CLI process
     (built from source in the Dockerfile) so its permissively-licensed transitive deps
     never link into our code. Chosen over Instant Meshes (GPLv3) and Exoside Quad
     Remesher (paid, closed) precisely because MIT is unambiguously commercial-safe.
-  - xatlas (https://github.com/jpcy/xatlas, via xatlas-python) — MIT. UV atlas
+  - xatlas (https://github.com/jpcy/xatlas, via xatlas-python), MIT. UV atlas
     generation used to re-unwrap remeshed geometry so a baked texture maps cleanly.
 
 API contract:
   POST /process  {
     mesh: url,                       # https GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE URL (required)
     remesh_mode: "triangle"|"quad"|"lowpoly",   # default: "triangle"
+    quad_engine?: "auto"|"autoremesher"|"quadriflow",  # default: "auto" (quad mode only)
     operation: "convert"|"simplify"|"repair"|"full",   # default: "full" (triangle mode only)
     target_faces?: int,              # default: 50000, range: 1000–500000
     texture_size?: int,              # 512|1024|2048, default 1024 (bake atlas size)
@@ -35,16 +41,18 @@ API contract:
 
   GET /tasks/:id → {
     task_id, status, result_url?, texture_url?, mtl_url?,
-    face_count?, quad_ratio?, mode?, textured?, error?
+    face_count?, quad_ratio?, quad_engine?, mode?, textured?, error?
   }
 
   GET /health    → { ok }
 
 Environment variables:
-  API_KEY        — bearer secret (required)
-  GCS_BUCKET     — output bucket (required)
-  MAX_CONCURRENT — default 2
-  QUADRIFLOW_BIN — path to the quadriflow executable (default: "quadriflow")
+  API_KEY       , bearer secret (required)
+  GCS_BUCKET    , output bucket (required)
+  MAX_CONCURRENT, default 2
+  QUADRIFLOW_BIN, path to the quadriflow executable (default: "quadriflow")
+  AUTOREMESHER_BIN, path to the autoremesher-cli executable (default: "autoremesher-cli")
+  AUTOREMESHER_BUDGET_S, seconds AutoRemesher may spend before QuadriFlow takes over (default: 120)
   BLENDER_TIMEOUT: seconds before a Blender FBX conversion is killed (default: 300)
 """
 
@@ -90,6 +98,18 @@ QUADRIFLOW_BIN = os.environ.get("QUADRIFLOW_BIN", "quadriflow")
 MANIFOLD_BIN = os.environ.get("MANIFOLD_BIN", "manifold")
 MANIFOLD_RESOLUTION = int(os.environ.get("MANIFOLD_RESOLUTION", "50000"))
 MANIFOLD_TIMEOUT = int(os.environ.get("MANIFOLD_TIMEOUT", "120"))
+AUTOREMESHER_BIN = os.environ.get("AUTOREMESHER_BIN", "autoremesher-cli")
+# A run takes about a second on the benchmark meshes; this caps a pathological
+# input so the QuadriFlow fallback still has most of the shared budget.
+AUTOREMESHER_BUDGET_S = float(os.environ.get("AUTOREMESHER_BUDGET_S", "120"))
+AUTOREMESHER_CALIBRATION_RUNS = 4
+# Calibration stops once the face count is this close to the request ...
+AUTOREMESHER_COUNT_TOLERANCE = 0.15
+# ... and `auto` hands the job to QuadriFlow when the best run is further off
+# than this, or less quad-dominant than AUTOREMESHER_MIN_QUAD_RATIO.
+AUTOREMESHER_ACCEPT_TOLERANCE = 0.5
+AUTOREMESHER_MIN_QUAD_RATIO = 0.85
+QUAD_ENGINES = {"auto", "autoremesher", "quadriflow"}
 
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
@@ -103,15 +123,15 @@ MAX_MESH_BYTES = 128 * 1024 * 1024
 
 # Headless-Blender FBX export. Blender is the only tool here that writes an FBX
 # with a real skeleton; we run it as a one-shot subprocess (bpy holds global,
-# non-thread-safe state — a fresh process per job is the safe pattern).
+# non-thread-safe state, a fresh process per job is the safe pattern).
 BLENDER_FBX_SCRIPT = Path(__file__).parent / "blender_fbx.py"
 BLENDER_TIMEOUT = int(os.environ.get("BLENDER_TIMEOUT", "300"))
 # Formats the `bpy` wheel imports reliably as a single self-contained file, so
 # Blender can read (and keep) their rig directly. Excluded and bridged through a
 # trimesh-written GLB instead:
-#   .gltf — JSON with external .bin/texture refs a single fetched file can't carry
-#   .dae  — Collada importer isn't bundled in the standalone bpy wheel
-#   .off  — Blender has no OFF importer at all
+#   .gltf, JSON with external .bin/texture refs a single fetched file can't carry
+#   .dae , Collada importer isn't bundled in the standalone bpy wheel
+#   .off , Blender has no OFF importer at all
 BLENDER_IMPORT_FORMATS = {".glb", ".fbx", ".obj", ".stl", ".ply"}
 
 # blender_fbx.py exits with this status when the input imported no mesh
@@ -139,10 +159,10 @@ async def lifespan(app: FastAPI):
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
     import trimesh
     import open3d
-    quad = shutil.which(QUADRIFLOW_BIN) or QUADRIFLOW_BIN
     log.info(
-        "remesh service ready — trimesh %s, open3d %s, quadriflow=%s",
-        trimesh.__version__, open3d.__version__, quad,
+        "remesh service ready, trimesh %s, open3d %s, autoremesher=%s, quadriflow=%s",
+        trimesh.__version__, open3d.__version__,
+        _binary_path(AUTOREMESHER_BIN), _binary_path(QUADRIFLOW_BIN),
     )
     yield
 
@@ -221,7 +241,7 @@ def _load_textured(data: bytes, suffix: str):
         textured = [m for m in meshes if _source_texture(m)[1] is not None]
         if textured:
             return max(textured, key=lambda m: len(m.faces))
-        # No textures anywhere — concatenating is lossless for geometry.
+        # No textures anywhere, concatenating is lossless for geometry.
         return trimesh.util.concatenate(meshes)
 
     raise ValueError("unsupported mesh container")
@@ -293,7 +313,7 @@ def _decimate(mesh, target_faces: int):
 # ── Quad remeshing (QuadriFlow) ──────────────────────────────────────────────
 
 def _write_obj_geometry(mesh, path: Path) -> None:
-    """Write a minimal v/f OBJ — QuadriFlow only consumes geometry."""
+    """Write a minimal v/f OBJ, QuadriFlow only consumes geometry."""
     import numpy as np
     v = np.asarray(mesh.vertices)
     f = np.asarray(mesh.faces)
@@ -367,89 +387,205 @@ def _watertight_obj(src: Path, dst: Path) -> bool:
     return True
 
 
-def _quad_remesh(mesh, target_faces: int):
-    """Run QuadriFlow to produce quad-dominant topology.
+def _binary_path(name: str) -> Optional[str]:
+    """Resolve an engine binary from PATH or an absolute path, None if absent."""
+    found = shutil.which(name)
+    if found:
+        return found
+    return name if os.path.isfile(name) else None
 
-    Returns (verts, polys, quad_ratio) where polys is a list of 0-based index
-    lists (length 3 or 4). Walks QUADRIFLOW_ATTEMPTS until one succeeds, sharing
-    a single wall-clock budget across them (each non-final solver gets at most
-    half of what remains, so a hung solver cannot starve its fallbacks). Raises with an actionable message if
-    the binary is missing or every solver fails."""
-    binary = shutil.which(QUADRIFLOW_BIN) or QUADRIFLOW_BIN
-    if shutil.which(QUADRIFLOW_BIN) is None and not os.path.isfile(binary):
+
+def _quad_ratio(polys) -> float:
+    return sum(1 for p in polys if len(p) == 4) / len(polys)
+
+
+def _autoremesher_remesh(src: Path, tmp: Path, target_faces: int, budget_s: float):
+    """Quad remesh with AutoRemesher, calibrating its density to `target_faces`.
+
+    AutoRemesher sizes its quads from surface area / target triangle count, so a
+    mesh built from many separate parts lands well under the requested face
+    count. Each run takes about a second, so the target is rescaled from the
+    face count actually produced and retried (up to AUTOREMESHER_CALIBRATION_RUNS)
+    until the result is within AUTOREMESHER_COUNT_TOLERANCE of the request.
+
+    Returns (verts, polys), or raises RuntimeError with the reason."""
+    binary = _binary_path(AUTOREMESHER_BIN)
+    if binary is None:
+        raise RuntimeError(f"autoremesher binary not found ({AUTOREMESHER_BIN})")
+
+    target_faces = max(1000, int(target_faces))
+    deadline = time.monotonic() + budget_s
+    target_tris = target_faces * 2
+    best = None
+    last_error = "autoremesher produced no attempts"
+    for run in range(AUTOREMESHER_CALIBRATION_RUNS):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            last_error = f"autoremesher ran out of its {int(budget_s)}s budget"
+            break
+        candidate = tmp / f"autoremesher{run}.obj"
+        try:
+            proc = subprocess.run(
+                [binary, "-i", str(src), "-o", str(candidate), "-t", str(target_tris)],
+                capture_output=True, text=True, timeout=remaining, check=False,
+            )
+        except subprocess.TimeoutExpired:
+            last_error = f"autoremesher timed out after {int(remaining)}s"
+            break
+        if proc.returncode != 0 or not candidate.exists():
+            tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-3:]
+            last_error = f"autoremesher exited {proc.returncode}: " + " | ".join(tail)
+            break
+        verts, polys = _parse_obj(candidate)
+        if not polys:
+            last_error = "autoremesher wrote no faces"
+            break
+        miss = abs(len(polys) - target_faces) / target_faces
+        if best is None or miss < best[0]:
+            best = (miss, verts, polys)
+        if miss <= AUTOREMESHER_COUNT_TOLERANCE:
+            break
+        target_tris = max(2, int(target_tris * target_faces / len(polys)))
+
+    if best is None:
+        raise RuntimeError(last_error)
+    return best[1], best[2]
+
+
+def _quadriflow_remesh(src: Path, tmp: Path, target_faces: int, budget_s: float):
+    """Quad remesh with QuadriFlow, walking QUADRIFLOW_ATTEMPTS until one succeeds.
+
+    The attempts share one wall-clock budget: each non-final solver gets at most
+    half of what remains, so a hung solver cannot starve its fallbacks. Returns
+    (verts, polys), or raises RuntimeError with an actionable message."""
+    binary = _binary_path(QUADRIFLOW_BIN)
+    if binary is None:
         raise RuntimeError(
             "quad remesher unavailable: the quadriflow binary was not found. "
             "Build it from https://github.com/hjwdzh/QuadriFlow and set QUADRIFLOW_BIN."
         )
 
-    with tempfile.TemporaryDirectory() as tmp:
-        src = Path(tmp) / "in.obj"
+    deadline = time.monotonic() + budget_s
+    last_error = "quad remesh produced no attempts"
+    dst = None
+
+    for attempt, flags in enumerate(QUADRIFLOW_ATTEMPTS):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            last_error = (
+                f"quad remesh ran out of its {int(budget_s)}s budget; "
+                f"last solver said: {last_error}"
+            )
+            break
+
+        # A solver that hangs must not starve the ones after it: every
+        # attempt but the last may use at most half of what is left, and the
+        # last gets all of it.
+        is_last = attempt == len(QUADRIFLOW_ATTEMPTS) - 1
+        attempt_timeout = remaining if is_last else remaining / 2
+
+        candidate = tmp / f"out{attempt}.obj"
+        cmd = [
+            binary,
+            "-i", str(src),
+            "-o", str(candidate),
+            "-f", str(max(1000, int(target_faces))),
+            *flags,
+        ]
+        try:
+            proc = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=attempt_timeout, check=False,
+            )
+        except subprocess.TimeoutExpired:
+            last_error = f"solver {flags or ('default',)} timed out"
+            log.warning("quad remesh: %s, trying the next solver", last_error)
+            continue
+
+        if proc.returncode == 0 and candidate.exists():
+            dst = candidate
+            if attempt:
+                log.info("quad remesh: solver %s succeeded after a fallback", flags or ("default",))
+            break
+
+        tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-5:]
+        last_error = f"solver {flags or ('default',)} failed: " + " | ".join(tail)
+        log.warning("quad remesh: %s", last_error)
+
+    if dst is None:
+        raise RuntimeError("quad remesh failed: " + last_error)
+    verts, polys = _parse_obj(dst)
+    if not polys:
+        raise RuntimeError("quad remesh produced empty output")
+    return verts, polys
+
+
+def _autoremesher_acceptable(polys, target_faces: int) -> bool:
+    """Whether an AutoRemesher result is good enough to ship under `auto`.
+
+    It is quad-dominant rather than all-quad (0.93 to 0.999 on the benchmark
+    meshes) and can undershoot the face count on kitbashed inputs; past these
+    bounds QuadriFlow gets the job instead."""
+    target = max(1000, int(target_faces))
+    return (
+        _quad_ratio(polys) >= AUTOREMESHER_MIN_QUAD_RATIO
+        and abs(len(polys) - target) / target <= AUTOREMESHER_ACCEPT_TOLERANCE
+    )
+
+
+def _quad_remesh(mesh, target_faces: int, engine: str = "auto"):
+    """Produce quad-dominant topology with the requested engine.
+
+    engine:
+      "auto"          AutoRemesher first; QuadriFlow when it is missing, fails,
+                      or its result misses the quad-ratio / face-count bounds.
+      "autoremesher"  AutoRemesher only.
+      "quadriflow"    QuadriFlow only (the pre-2026-11-21 behaviour).
+
+    Both engines share the input preparation: an open mesh is rebuilt watertight
+    with Manifold first, which both need on kitbashed character exports (see the
+    README benchmark). One QUADRIFLOW_BUDGET_S wall-clock budget covers the whole
+    call; AutoRemesher may spend at most AUTOREMESHER_BUDGET_S of it.
+
+    Returns (verts, polys, quad_ratio, engine_used) where polys is a list of
+    0-based index lists (length 3 or 4)."""
+    if engine not in QUAD_ENGINES:
+        raise ValueError(f"quad engine must be one of {sorted(QUAD_ENGINES)}")
+
+    deadline = time.monotonic() + QUADRIFLOW_BUDGET_S
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp = Path(tmp_dir)
+        src = tmp / "in.obj"
         _write_obj_geometry(mesh, src)
 
         # An open mesh is rebuilt watertight first; a mesh that is already closed
         # is handed over untouched, since the rebuild is an approximation.
         if not mesh.is_watertight:
-            healed = Path(tmp) / "watertight.obj"
+            healed = tmp / "watertight.obj"
             if _watertight_obj(src, healed):
-                log.info("quad remesh: rebuilt an open mesh as watertight for QuadriFlow")
+                log.info("quad remesh: rebuilt an open mesh as watertight")
                 src = healed
 
-        deadline = time.monotonic() + QUADRIFLOW_BUDGET_S
-        last_error = "quad remesh produced no attempts"
-        dst = None
-
-        for attempt, flags in enumerate(QUADRIFLOW_ATTEMPTS):
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                last_error = (
-                    f"quad remesh ran out of its {int(QUADRIFLOW_BUDGET_S)}s budget; "
-                    f"last solver said: {last_error}"
-                )
-                break
-
-            # A solver that hangs must not starve the ones after it: every
-            # attempt but the last may use at most half of what is left, and the
-            # last gets all of it.
-            is_last = attempt == len(QUADRIFLOW_ATTEMPTS) - 1
-            attempt_timeout = remaining if is_last else remaining / 2
-
-            candidate = Path(tmp) / f"out{attempt}.obj"
-            cmd = [
-                binary,
-                "-i", str(src),
-                "-o", str(candidate),
-                "-f", str(max(1000, int(target_faces))),
-                *flags,
-            ]
+        if engine in ("auto", "autoremesher"):
+            budget = min(AUTOREMESHER_BUDGET_S, max(0.0, deadline - time.monotonic()))
             try:
-                proc = subprocess.run(
-                    cmd, capture_output=True, text=True, timeout=attempt_timeout, check=False,
+                verts, polys = _autoremesher_remesh(src, tmp, target_faces, budget)
+            except RuntimeError as exc:
+                if engine == "autoremesher":
+                    raise RuntimeError(f"quad remesh failed: {exc}") from exc
+                log.warning("quad remesh: %s; falling back to QuadriFlow", exc)
+            else:
+                if engine == "autoremesher" or _autoremesher_acceptable(polys, target_faces):
+                    return verts, polys, _quad_ratio(polys), "autoremesher"
+                log.warning(
+                    "quad remesh: AutoRemesher gave %d faces at quad_ratio %.3f for a %d target; "
+                    "falling back to QuadriFlow",
+                    len(polys), _quad_ratio(polys), target_faces,
                 )
-            except subprocess.TimeoutExpired:
-                last_error = f"solver {flags or ('default',)} timed out"
-                log.warning("quad remesh: %s, trying the next solver", last_error)
-                continue
 
-            if proc.returncode == 0 and candidate.exists():
-                dst = candidate
-                if attempt:
-                    log.info("quad remesh: solver %s succeeded after a fallback", flags or ("default",))
-                break
-
-            tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-5:]
-            last_error = f"solver {flags or ('default',)} failed: " + " | ".join(tail)
-            log.warning("quad remesh: %s", last_error)
-
-        if dst is None:
-            raise RuntimeError("quad remesh failed: " + last_error)
-
-        verts, polys = _parse_obj(dst)
-
-    if not polys:
-        raise RuntimeError("quad remesh produced empty output")
-    quads = sum(1 for p in polys if len(p) == 4)
-    quad_ratio = quads / len(polys)
-    return verts, polys, quad_ratio
+        verts, polys = _quadriflow_remesh(
+            src, tmp, target_faces, max(0.0, deadline - time.monotonic()),
+        )
+    return verts, polys, _quad_ratio(polys), "quadriflow"
 
 
 def _make_manifold(mesh):
@@ -489,7 +625,7 @@ def _make_manifold(mesh):
 
 def _triangulate_polys(verts, polys):
     """Triangulate a mixed tri/quad polygon list into a Trimesh (for GLB export
-    and texture baking — glTF has no native quads)."""
+    and texture baking, glTF has no native quads)."""
     import numpy as np
     import trimesh
     tris: list[list[int]] = []
@@ -790,7 +926,7 @@ def _convert_to_fbx_preserving_rig(data: bytes, suffix: str, task_id: str) -> tu
     """`convert` → FBX without touching geometry, so a rigged GLB keeps its bone
     hierarchy, skin weights, and blendshapes. Blender imports the source
     directly when it can read it as one self-contained file; the rest
-    (`.gltf`/`.dae`/`.off` — see BLENDER_IMPORT_FORMATS) are bridged through a
+    (`.gltf`/`.dae`/`.off`, see BLENDER_IMPORT_FORMATS) are bridged through a
     trimesh-written GLB, which yields a static FBX."""
     with tempfile.TemporaryDirectory() as tmp:
         out_path = Path(tmp) / f"{task_id}.fbx"
@@ -923,14 +1059,17 @@ def _process_triangle(mesh, operation: str, target_faces: int):
     return mesh, {"quad_ratio": 0.0, "textured": False}
 
 
-def _process_quad(source, target_faces: int, output_format: str, tex_size: int, task_id: str):
+def _process_quad(
+    source, target_faces: int, output_format: str, tex_size: int, task_id: str,
+    quad_engine: str = "auto",
+):
     import trimesh
     src_uv, src_img = _source_texture(source)
-    # QuadriFlow wants a clean watertight-ish triangle mesh as input.
+    # Both quad engines want a clean watertight-ish triangle mesh as input.
     geom = source.copy()
     _repair_mesh(geom)
     geom = _make_manifold(geom)
-    verts, polys, quad_ratio = _quad_remesh(geom, target_faces)
+    verts, polys, quad_ratio, engine_used = _quad_remesh(geom, target_faces, quad_engine)
 
     tri_mesh = _triangulate_polys(verts, polys)
     unwrap = _unwrap(tri_mesh)
@@ -942,12 +1081,13 @@ def _process_quad(source, target_faces: int, output_format: str, tex_size: int, 
         )
         tri_mesh = trimesh.Trimesh(vertices=u_verts, faces=u_faces, process=False)
 
-    # OBJ output preserves the true quad faces (geometry only — the re-unwrapped
+    # OBJ output preserves the true quad faces (geometry only, the re-unwrapped
     # UVs live on the triangulated atlas, not the quads, so a textured atlas is
     # delivered via GLB). Every other format triangulates and carries the bake.
     if output_format == "obj":
         meta = {
             "quad_ratio": round(quad_ratio, 4),
+            "quad_engine": engine_used,
             "textured": False,
             "face_count": len(polys),
         }
@@ -955,6 +1095,7 @@ def _process_quad(source, target_faces: int, output_format: str, tex_size: int, 
 
     meta = {
         "quad_ratio": round(quad_ratio, 4),
+        "quad_engine": engine_used,
         "textured": baked_img is not None,
         "face_count": len(polys),
     }
@@ -1003,11 +1144,12 @@ def _run_processing(
     output_format: str,
     texture_size: int,
     task_id: str,
+    quad_engine: str = "auto",
 ) -> tuple[list, dict]:
     data, suffix = _fetch_mesh(mesh_url)
 
     # A plain `convert` to FBX must keep the skeleton, so it never enters the
-    # trimesh pipelines (which flatten the scene and drop the rig) — Blender
+    # trimesh pipelines (which flatten the scene and drop the rig), Blender
     # reads the source directly. Geometry-changing FBX requests fall through to
     # the pipelines below and emit a static FBX via _export_simple.
     if output_format == "fbx" and remesh_mode == "triangle" and operation == "convert":
@@ -1019,13 +1161,15 @@ def _run_processing(
 
     if remesh_mode == "quad":
         source = _load_textured(data, suffix)
-        return _process_quad(source, target_faces, output_format, texture_size, task_id)
+        return _process_quad(
+            source, target_faces, output_format, texture_size, task_id, quad_engine,
+        )
 
     if remesh_mode == "lowpoly":
         source = _load_textured(data, suffix)
         return _process_lowpoly(source, target_faces, output_format, texture_size, task_id)
 
-    # triangle (default) — legacy behaviour, geometry only.
+    # triangle (default), legacy behaviour, geometry only.
     mesh = _load_concatenated(data, suffix)
     mesh, meta = _process_triangle(mesh, operation, target_faces)
     meta["face_count"] = len(mesh.faces)
@@ -1042,6 +1186,7 @@ async def _process(
     target_faces: int,
     output_format: str,
     texture_size: int,
+    quad_engine: str = "auto",
 ) -> None:
     async with _sem:
         _tasks[task_id]["status"] = "running"
@@ -1058,6 +1203,7 @@ async def _process(
                 output_format,
                 texture_size,
                 task_id,
+                quad_engine,
             )
 
             urls: dict[str, str] = {}
@@ -1079,6 +1225,7 @@ async def _process(
                 "mtl_url": urls.get("material"),
                 "face_count": meta.get("face_count"),
                 "quad_ratio": meta.get("quad_ratio"),
+                "quad_engine": meta.get("quad_engine"),
                 "textured": meta.get("textured"),
                 "mode": remesh_mode,
                 "output_format": output_format,
@@ -1086,7 +1233,7 @@ async def _process(
                 "elapsed_ms": int(elapsed * 1000),
             })
             log.info(
-                "[%s] done in %.2fs — mode=%s, %s faces, quad_ratio=%s, textured=%s → %s",
+                "[%s] done in %.2fs, mode=%s, %s faces, quad_ratio=%s, textured=%s → %s",
                 task_id, elapsed, remesh_mode, meta.get("face_count"),
                 meta.get("quad_ratio"), meta.get("textured"), urls.get("model"),
             )
@@ -1113,6 +1260,7 @@ async def _process(
 class ProcessRequest(BaseModel):
     mesh: str = Field(..., description="https URL to input mesh (GLB/GLTF/OBJ/FBX/STL/PLY/OFF/DAE)")
     remesh_mode: str = Field(default="triangle", description="triangle|quad|lowpoly")
+    quad_engine: str = Field(default="auto", description="auto|autoremesher|quadriflow (quad mode)")
     operation: str = Field(default="full", description="convert|simplify|repair|full")
     target_faces: int = Field(default=50_000, ge=1_000, le=500_000)
     texture_size: int = Field(default=1024)
@@ -1140,6 +1288,14 @@ class ProcessRequest(BaseModel):
         v = (v or "triangle").lower()
         if v not in VALID_MODES:
             raise ValueError(f"remesh_mode must be one of {sorted(VALID_MODES)}")
+        return v
+
+    @field_validator("quad_engine")
+    @classmethod
+    def validate_quad_engine(cls, v: str) -> str:
+        v = (v or "auto").lower()
+        if v not in QUAD_ENGINES:
+            raise ValueError(f"quad_engine must be one of {sorted(QUAD_ENGINES)}")
         return v
 
     @field_validator("texture_size")
@@ -1174,6 +1330,7 @@ async def process_mesh(
         body.target_faces,
         body.output_format,
         body.texture_size,
+        body.quad_engine,
     )
     return {"task_id": task_id, "status": "queued", "mode": body.remesh_mode}
 

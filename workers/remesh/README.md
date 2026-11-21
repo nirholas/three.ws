@@ -7,8 +7,9 @@ transcode between GLB / OBJ / FBX / STL / PLY / USDZ / 3MF. It backs three.ws's
 post-generation tools — Game-Ready export and the remesh stage of the paid 3D
 asset pipeline — not the primary generation lanes.
 
-Wraps `trimesh` + `open3d` for geometry, [QuadriFlow](https://github.com/hjwdzh/QuadriFlow)
-(MIT) for quad remeshing, [xatlas](https://github.com/jpcy/xatlas) (MIT) for UV
+Wraps `trimesh` + `open3d` for geometry,
+[AutoRemesher](https://github.com/huxingyi/autoremesher) (MIT) and
+[QuadriFlow](https://github.com/hjwdzh/QuadriFlow) (MIT) for quad remeshing, [xatlas](https://github.com/jpcy/xatlas) (MIT) for UV
 re-unwrap, and headless [Blender](https://www.blender.org/) (`bpy`) for FBX
 import and export. **No GPU required**: everything runs on CPU.
 
@@ -57,19 +58,20 @@ yields a static FBX.
 | `remesh_mode` | What it does |
 |---|---|
 | `triangle` (default) | Repair + quadric-error triangle decimation (open3d, trimesh fallback). Geometry only — drops materials. Honors `operation`. |
-| `quad` | Field-aligned quad-dominant topology via QuadriFlow, then xatlas UV re-unwrap + source-texture re-bake. Reports a real `quad_ratio`. An open or non-manifold input is cleaned and rebuilt watertight first (see below); QuadriFlow refuses anything else. |
+| `quad` | Quad-dominant topology via AutoRemesher (QuadriFlow as the fallback, see `quad_engine`), then xatlas UV re-unwrap + source-texture re-bake. Reports a real `quad_ratio` and the engine that produced it. An open or non-manifold input is cleaned and rebuilt watertight first (see below). |
 | `lowpoly` | Silhouette-preserving QEM decimation + UV re-unwrap + texture re-bake. |
 
 `operation` (`convert` · `simplify` · `repair` · `full`) applies to `triangle`
 mode; `full` (default) runs repair then decimate.
 
-### What quad mode does to your mesh before QuadriFlow
+### What quad mode does to your mesh before remeshing
 
-QuadriFlow needs a watertight manifold, and no real character export is one:
+Both quad engines want a watertight manifold, and no real character export is one:
 they are assembled from overlapping parts, so seams share edges between more
 than two faces, and they are open at the wrists, neck, and hems. Fed such a mesh
 QuadriFlow aborts in its index-map solve with `wrong init`, whichever flow solver
-it is given. Quad mode therefore runs three preparation steps, each of which
+it is given; AutoRemesher does finish, but traces the holes and seams into the
+result (chamfer error roughly 4x higher on an open mannequin). Quad mode therefore runs three preparation steps, each of which
 falls through rather than failing the job:
 
 1. `_repair_mesh` fills holes, drops degenerate faces, and merges vertices.
@@ -79,10 +81,48 @@ falls through rather than failing the job:
    QuadriFlow, which is what its README prescribes). A mesh that is already
    watertight skips this, since the rebuild is an approximation.
 
-QuadriFlow then walks a solver ladder (`-mcf -sharp`, `-sharp`, bare) under one
-shared wall-clock budget. Falling back to triangle soup is never one of the
-rungs: a quad request that cannot be met is reported as failed, with the solver
-output in the message.
+### Quad engines
+
+`quad_engine` picks the remesher. The default, `auto`, runs AutoRemesher first and
+falls back to QuadriFlow, all under one shared wall-clock budget
+(`QUADRIFLOW_BUDGET_S`, 600 s, of which AutoRemesher may spend at most
+`AUTOREMESHER_BUDGET_S`).
+
+- **AutoRemesher** ([huxingyi/autoremesher](https://github.com/huxingyi/autoremesher),
+  MIT). Upstream ships its library only inside a Qt desktop app, so
+  [`autoremesher_cli/`](./autoremesher_cli) compiles the Qt-free core into a
+  headless `autoremesher-cli` (OBJ in, OBJ out), built from a pinned commit in
+  the [`Dockerfile`](./Dockerfile). Its density comes from surface area rather
+  than a face budget, which undershoots on kitbashed meshes, so the worker
+  calibrates: it reruns with a rescaled target (up to 4 runs) until the face
+  count is within 15% of `target_faces`. `auto` accepts the result when at least
+  85% of faces are quads and the count is within 50% of the target; anything else
+  (a crash, a missing binary, an out-of-bounds result, the budget running out)
+  falls through to QuadriFlow.
+- **QuadriFlow** walks a solver ladder (`-mcf -sharp`, `-sharp`, bare) with the
+  remaining budget.
+
+`quad_engine: "autoremesher"` or `"quadriflow"` pins one engine and never swaps:
+an engine failure fails the task. Falling back to triangle soup is never an
+option either: a quad request that cannot be met is reported as failed, with the
+solver output in the message. The task result's `quad_engine` says which engine
+produced the mesh.
+
+Why AutoRemesher leads (target 4000 faces, error as % of the bounding-box
+diagonal, both engines given the same healed input and landing within a few
+percent of the same face count):
+
+| Mesh | AutoRemesher chamfer / Hausdorff | QuadriFlow chamfer / Hausdorff | AutoRemesher time | QuadriFlow time |
+|---|---|---|---|---|
+| fox | 0.25 / 1.05 | 0.26 / 1.82 | 4 s | 204 s |
+| cesium-man | 0.24 / 0.84 | 0.26 / 2.57 | 3.5 s | 11 s |
+| character-zombie | 0.75 / 6.99 | 0.96 / 7.91 | 3 s | 9 s |
+| mannequin | 0.44 / 5.0 | 0.45 / 5.05 | 2 s | 28 s |
+| brainstem | 0.66 / 5.66 | 0.59 / 4.43 | 2 s | 312 s |
+
+AutoRemesher fits as well or better on four of five, and is 3x to 150x faster.
+Its output is quad-dominant (`quad_ratio` 0.93 to 0.999) where QuadriFlow's is
+pure quads; callers that need exactly 1.0 pin `quadriflow`.
 
 ## API
 
@@ -112,6 +152,7 @@ curl -X POST https://$SERVICE_URL/process \
 | `target_faces` | no | `50000` | `1000`–`500000` |
 | `texture_size` | no | `1024` | `512` \| `1024` \| `2048` — atlas size for the re-bake |
 | `output_format` | no | `glb` | `glb` \| `obj` \| `stl` \| `ply` \| `usdz` \| `3mf` \| `fbx` |
+| `quad_engine` | no | `auto` | `auto` \| `autoremesher` \| `quadriflow` (quad mode; see [Quad engines](#quad-engines)) |
 
 Remote URLs are fetched through the SSRF guard in
 [`worker_security.py`](./worker_security.py) — https-only, with private,
@@ -136,6 +177,7 @@ against your own copy locally.
   "mtl_url": null,
   "face_count": 19842,
   "quad_ratio": 0.94,
+  "quad_engine": "autoremesher",
   "textured": true,
   "mode": "quad",
   "output_format": "glb",
@@ -169,6 +211,9 @@ Unauthenticated, so Cloud Run's startup probe can reach it.
 | `GCS_BUCKET` | yes | — | Output bucket; artifacts land under the `remesh/` prefix (`three-ws-avatar-reconstructions`) |
 | `MAX_CONCURRENT` | no | `2` | In-flight jobs |
 | `QUADRIFLOW_BIN` | no | `quadriflow` | Path to the QuadriFlow executable. The image builds it and sets this to `/usr/local/bin/quadriflow` |
+| `QUADRIFLOW_BUDGET_S` | no | `600` | Wall-clock budget for one quad remesh, shared by both engines |
+| `AUTOREMESHER_BIN` | no | `autoremesher-cli` | Path to the headless AutoRemesher built from [`autoremesher_cli/`](./autoremesher_cli) (installed on `PATH` in the image) |
+| `AUTOREMESHER_BUDGET_S` | no | `120` | Most of the shared budget AutoRemesher may use, calibration runs included, before `auto` moves on to QuadriFlow |
 | `BLENDER_TIMEOUT` | no | `300` | Seconds before a Blender FBX conversion (export, or the FBX input bridge) is killed |
 | `MANIFOLD_BIN` | no | `manifold` | Path to the [Manifold](https://github.com/hjwdzh/Manifold) executable (built into the image). Quad mode rebuilds an open mesh watertight with it before QuadriFlow, which requires watertight manifold input |
 | `MANIFOLD_RESOLUTION` | no | `50000` | Octree resolution for that rebuild |
@@ -177,7 +222,7 @@ Unauthenticated, so Cloud Run's startup probe can reach it.
 ## Build and test locally
 
 The image builds from [`Dockerfile`](./Dockerfile) with no arguments or build
-args. It compiles QuadriFlow from source and installs the ~1 GB Blender `bpy`
+args. It compiles QuadriFlow, Manifold, and AutoRemesher from source and installs the ~1 GB Blender `bpy`
 wheel, so a cold build takes several minutes:
 
 ```bash
@@ -190,7 +235,11 @@ texture bake and seam dilation, every export format, request validation, a real
 QuadriFlow quad remesh, a rigged GLB to FBX round trip re-checked with
 [`verify_fbx.py`](./verify_fbx.py), FBX *input* through every path (FBX to GLB,
 FBX repair to OBJ, FBX behind an extensionless URL, FBX to FBX keeping the rig),
-DAE input through pycollada, and the input errors for ASCII and corrupt FBX. The Docker build runs it as a gate, so a
+DAE input through pycollada, and the input errors for ASCII and corrupt FBX.
+[`test_quad_engines.py`](./test_quad_engines.py) covers engine selection
+(calibration, every `auto` fallback path, pinned engines never swapping) and runs
+the real `autoremesher-cli` on a closed and an open mesh;
+[`test_quad_budget.py`](./test_quad_budget.py) covers the QuadriFlow budget. The Docker build runs all of them as a gate, so a
 regression fails the image instead of reaching Cloud Run. Run it on its own
 against the built image:
 

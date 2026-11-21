@@ -45,6 +45,26 @@ RUN git clone --depth 1 --recursive https://github.com/hjwdzh/Manifold /tmp/mani
     && install -m 0755 /tmp/manifold/build/manifold /usr/local/bin/manifold \
     && rm -rf /tmp/manifold
 
+# ── Build AutoRemesher (MIT) from source ─────────────────────────────────────
+# The default quad engine (QuadriFlow stays as the fallback). Upstream ships the
+# library only inside a Qt desktop app; autoremesher_cli/ compiles its Qt-free
+# core into a headless OBJ-in/OBJ-out CLI. Pinned by commit so the image never
+# picks up code we did not benchmark. Eigen, the isotropic remesher and
+# meshoptimizer come from upstream's thirdparty/ (MPL-2.0 / MIT / MIT); TBB
+# (Apache-2.0) is the distro package, and libtbb12 stays for the runtime.
+ARG AUTOREMESHER_COMMIT=4a49f82f720f647691c09a7d8a16fa63be208aad
+COPY autoremesher_cli /tmp/autoremesher_cli
+RUN apt-get update && apt-get install -y --no-install-recommends libtbb-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && git init -q /tmp/autoremesher \
+    && git -C /tmp/autoremesher fetch -q --depth 1 https://github.com/huxingyi/autoremesher ${AUTOREMESHER_COMMIT} \
+    && git -C /tmp/autoremesher checkout -q FETCH_HEAD \
+    && cmake -S /tmp/autoremesher_cli -B /tmp/autoremesher_cli/build -DAUTOREMESHER_SRC=/tmp/autoremesher \
+    && cmake --build /tmp/autoremesher_cli/build -j "$(nproc)" \
+    && install -m 0755 /tmp/autoremesher_cli/build/autoremesher-cli /usr/local/bin/autoremesher-cli \
+    && rm -rf /tmp/autoremesher /tmp/autoremesher_cli \
+    && (autoremesher-cli; test $? -eq 2)
+
 # ── Runtime deps for trimesh / open3d / usd / Blender ────────────────────────
 # The X11/GL libs are for the `bpy` (Blender) module, which links against them
 # even when running headless for FBX import and export. No libassimp: nothing in
@@ -72,9 +92,11 @@ COPY main.py /app/main.py
 # regression fails the image instead of reaching Cloud Run. No network, no GCS.
 COPY test_remesh.py /app/test_remesh.py
 COPY test_quad_budget.py /app/test_quad_budget.py
+COPY test_quad_engines.py /app/test_quad_engines.py
 COPY test_gltf_meshopt.py /app/test_gltf_meshopt.py
 RUN API_KEY=build-gate GCS_BUCKET=build-gate python test_remesh.py \
     && python test_quad_budget.py \
+    && python test_quad_engines.py \
     && python test_gltf_meshopt.py
 
 EXPOSE 8080

@@ -458,7 +458,7 @@ check("an input error reaches the caller verbatim, not as an opaque ref",
 # -- quad remesh (needs the quadriflow binary) -------------------------------
 
 if shutil.which(remesh.QUADRIFLOW_BIN) or os.path.isfile(remesh.QUADRIFLOW_BIN):
-    qverts, qpolys, quad_ratio = remesh._quad_remesh(sphere(3), 1000)
+    qverts, qpolys, quad_ratio, _ = remesh._quad_remesh(sphere(3), 1000, "quadriflow")
     check("quad remesh produced geometry", len(qverts) > 0 and len(qpolys) > 0)
     check(
         "quad remesh is quad-dominant",
@@ -483,7 +483,7 @@ if shutil.which(remesh.QUADRIFLOW_BIN) or os.path.isfile(remesh.QUADRIFLOW_BIN):
         "open-boundary fixture really has a boundary",
         len(trimesh.grouping.group_rows(open_sphere.edges_sorted, require_count=1)) > 0,
     )
-    overts, opolys, oratio = remesh._quad_remesh(open_sphere, 1000)
+    overts, opolys, oratio, _ = remesh._quad_remesh(open_sphere, 1000, "quadriflow")
     check(
         "quad remesh survives an open boundary",
         len(opolys) > 0 and oratio > 0.5,

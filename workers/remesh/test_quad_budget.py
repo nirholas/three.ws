@@ -53,7 +53,9 @@ def main() -> int:
 
         started = time.monotonic()
         try:
-            verts, polys, quad_ratio = remesh._quad_remesh(trimesh.creation.icosphere(subdivisions=2), 1000)
+            verts, polys, quad_ratio, _ = remesh._quad_remesh(
+                trimesh.creation.icosphere(subdivisions=2), 1000, "quadriflow",
+            )
         except RuntimeError as exc:
             print(f"FAIL  a hung first solver must not starve the fallbacks: {exc}")
             return 1
@@ -70,7 +72,7 @@ def main() -> int:
         binary.write_text(SOLVER.replace('if [ "$hang" = 1 ]', 'if true'))
         started = time.monotonic()
         try:
-            remesh._quad_remesh(trimesh.creation.icosphere(subdivisions=2), 1000)
+            remesh._quad_remesh(trimesh.creation.icosphere(subdivisions=2), 1000, "quadriflow")
         except RuntimeError as exc:
             took = time.monotonic() - started
             if "quad remesh failed" not in str(exc) or took > 3.5:
