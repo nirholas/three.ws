@@ -26,6 +26,26 @@ const RECORD_VERSION = 1;
 const DB_NAME = 'three-ws-capture-uploads';
 const STORE_NAME = 'uploads';
 
+// The capture-upload API checks content_type against the file extension. Browsers
+// leave File.type empty for .exr, .insv and .insp and use vendor types such as
+// video/x-m4v or image/pjpeg, so the type sent is the one the extension calls for.
+const EXTENSION_TYPES = Object.freeze({
+	'.mp4': 'video/mp4',
+	'.m4v': 'video/mp4',
+	'.mov': 'video/quicktime',
+	'.jpg': 'image/jpeg',
+	'.jpeg': 'image/jpeg',
+	'.png': 'image/png',
+	'.exr': 'image/x-exr',
+});
+
+/** The content type the capture-upload API expects for this file name. */
+export function captureContentType(name, browserType = '') {
+	const dot = String(name).lastIndexOf('.');
+	const ext = dot > 0 ? String(name).slice(dot).toLowerCase() : '';
+	return EXTENSION_TYPES[ext] || browserType || 'application/octet-stream';
+}
+
 /** An upload failure with a stable machine code the UI maps to copy. */
 export class UploadError extends Error {
 	constructor(code, message, { status = 0, cause } = {}) {
@@ -339,7 +359,7 @@ export async function uploadFile(file, opts = {}) {
 	if (!record) {
 		const created = await api('create', {
 			filename: file.name,
-			content_type: file.type || 'application/octet-stream',
+			content_type: captureContentType(file.name, file.type),
 			size_bytes: file.size,
 			kind,
 		});
@@ -361,7 +381,7 @@ export async function uploadFile(file, opts = {}) {
 			await store.delete(fp);
 			const created = await api('create', {
 				filename: file.name,
-				content_type: file.type || 'application/octet-stream',
+				content_type: captureContentType(file.name, file.type),
 				size_bytes: file.size,
 				kind,
 			});

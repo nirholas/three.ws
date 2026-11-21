@@ -15,6 +15,7 @@ import {
 	SIGN_BATCH,
 	MAX_UPLOAD_BYTES,
 } from '../src/multipart-upload.js';
+import { validateCreate } from '../api/_lib/capture-upload.js';
 
 // A local HTTP server that speaks the capture-upload contract (create, sign,
 // complete, abort) and the presigned part PUTs, with switches to inject failures.
@@ -81,6 +82,11 @@ beforeAll(async () => {
 		}
 		const body = JSON.parse((await readBody(req)).toString() || '{}');
 		if (url.pathname === '/api/capture-upload/create') {
+			try {
+				validateCreate(body);
+			} catch (err) {
+				return send(err.status, { error: err.code, message: err.message });
+			}
 			state.creates++;
 			const id = `up${state.creates}`;
 			const part_count = Math.ceil(body.size_bytes / PART_SIZE);
@@ -274,6 +280,25 @@ describe('upload against a C4-speaking server', () => {
 			fetchImpl: async () => new Response(JSON.stringify({ error: 'unauthorized', message: 'Sign in to upload.' }), { status: 401, headers: { 'content-type': 'application/json' } }),
 		});
 		await expect(uploadFile(file, failing)).rejects.toMatchObject({ code: 'unauthorized', status: 401, message: 'Sign in to upload.' });
+	});
+});
+
+describe('content type', () => {
+	// Browsers leave File.type empty for .exr, .insv and .insp, and Chrome labels
+	// .m4v as video/x-m4v. The server checks the type against the extension, so the
+	// uploader sends the type the extension calls for.
+	it.each([
+		['pano.exr', ''],
+		['walk.insv', ''],
+		['shot.insp', ''],
+		['clip.m4v', 'video/x-m4v'],
+		['clip.MOV', ''],
+		['frame.JPG', 'image/pjpeg'],
+	])('creates %s (browser type "%s") with a type the server accepts', async (name, type) => {
+		const file = new File([randomBytes(PART_SIZE + 5)], name, { type, lastModified: 1700000000000 });
+		const out = await uploadFile(file, opts());
+		expect(out.source_url).toBeTruthy();
+		expect(state.creates).toBe(1);
 	});
 });
 
