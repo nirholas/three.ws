@@ -55,6 +55,14 @@
 			<description>Agents can now turn 360 footage or a 360 photo into a 3D scene over MCP: pano_capture_start, pano_capture_status, pano_capture_list, pano_scene_create and pano_scene_status on /api/mcp-studio (full and Grok surfaces, signed-in accounts). They call the same lanes as the capture pages, so a job started from an agent shows up in the browser. Start tools take a public https URL; local files go through the three-ws CLI.</description>
 		</item>
 		<item>
+			<title>360 captures train into a real Gaussian splat with a flythrough preview</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-21:360 captures train into a real Gaussian splat with a flythrough preview</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The pano2splat worker has a splat_train stage: it trains a splat from the reconstructed camera poses, checks quality on held-out frames, and writes a PLY, a compact SPZ and a 20 second 1080p preview video.</description>
+		</item>
+		<item>
 			<title>A page and tutorial for turning 360 footage into 3D</title>
 			<link>https://three.ws/insta360</link>
 			<guid isPermaLink="false">2026-11-21:A page and tutorial for turning 360 footage into 3D</guid>
@@ -95,6 +103,14 @@
 			<description>Every Grok call three.ws makes now tells xAI which conversation it belongs to, so follow-up turns with the same agent reach the server that already holds that agent's persona and tools in its cache. Cached input costs a quarter of the normal rate and starts the reply sooner. Only a one-way fingerprint of the prompt is sent, never the text. The Grok usage report now shows how much of each lane's input came from the cache.</description>
 		</item>
 		<item>
+			<title>Motion capture from 360 video follows the person for you</title>
+			<link>https://three.ws/video-to-motion</link>
+			<guid isPermaLink="false">2026-11-21:Motion capture from 360 video follows the person for you</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Send a stitched 360 clip to Video to Motion or Motion Swap and the worker finds the person on the sphere, keeps a perspective camera pointed at them (even across the wrap-around seam), and captures their motion from that view. You get the usual animation plus the reframed video and the camera track it followed, so you can see exactly what was tracked. Optionally pass the direction to the person to skip the search. Regular videos behave exactly as before.</description>
+		</item>
+		<item>
 			<title>Premiere Pro panel for 360 capture</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-21:Premiere Pro panel for 360 capture</guid>
@@ -109,6 +125,14 @@
 			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The new /api/capture-upload endpoints (create, sign, parts, complete, abort) upload 360 videos, photos and raw .insv, .insp and .lrv files up to 8 GiB straight to storage in parallel parts. A dropped connection costs one part, and a resumed upload re-sends only what is missing. Limits are 3 uploads in progress and 32 GiB per account per day. A 2.19 GB file killed mid-upload and resumed came back byte-identical.</description>
+		</item>
+		<item>
+			<title>Send 360 footage from Blender and get the splat back in your scene</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-21:Send 360 footage from Blender and get the splat back in your scene</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws Blender extension (version 1.1.0) has a new 360 Capture panel. Pick a 360 video, either a 2:1 equirectangular mp4 or the raw .insv file from an Insta360 X3, X4, X5 or X6 camera, and it uploads in resumable parallel parts, becomes a 3D Gaussian splat on three.ws, and lands in your scene selected. A single 360 photo, including a raw .insp, comes back as a depth shell mesh instead. With the KIRI Engine 3DGS Render add-on enabled the splat renders as Gaussians; without it you get a coloured point cloud. Choose a quality preset, trim the clip, pick the up axis, cancel at any point, and reopen past captures from the Your captures list, with the preview video one click away in the sequencer. Blender stays smooth while a job runs, and the panel respects Allow Online Access.</description>
 		</item>
 		<item>
 			<title>Start a 360 scene from a link when uploads are down</title>
@@ -141,6 +165,14 @@
 			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
 			<category>sdk</category>
 			<description>The three-ws CLI gains a capture command: three-ws capture 360 &lt;file&gt; uploads a 360 clip, stills set or .insv from any 360 camera in resumable 8 MiB parts and starts the reconstruction, capture scene &lt;photo&gt; turns one 360 photo into a scene, and capture status, list and cancel follow the job. An interrupted upload picks up where it stopped. It signs in with a stored login or THREE_WS_API_KEY. /openapi.json now documents every capture upload, pano-capture and pano-scene route with request and response schemas, the error shape and examples taken from real responses.</description>
+		</item>
+		<item>
+			<title>Use your own 360 photo as your avatar's world</title>
+			<link>https://three.ws/splat</link>
+			<guid isPermaLink="false">2026-11-21:Use your own 360 photo as your avatar's world</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Drop an equirectangular photo from any 360 camera on the viewer, or paste a link, and it becomes both the light on your avatar and the backdrop behind it. Lighting and background are separate switches with rotation, blur and brightness sliders, and a brighten-highlights option makes a clipped sun light the avatar like a real one. Huge photos are resized safely on phones, a non-360 image or a blocked link explains itself, and the same backdrop control is on the Splat Viewer. Embeds accept it through the environment attribute.</description>
 		</item>
 		<item>
 			<title>Your 360 scenes keep building after you close the tab</title>

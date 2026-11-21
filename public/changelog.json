@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T22:54:53.158Z",
+	"generated_at": "2026-11-21T23:11:13.008Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -70,6 +70,16 @@
 		{
 			"date": "2026-11-21",
 			"type": "update",
+			"title": "360 captures train into a real Gaussian splat with a flythrough preview",
+			"summary": "The pano2splat worker has a splat_train stage: it trains a splat from the reconstructed camera poses, checks quality on held-out frames, and writes a PLY, a compact SPZ and a 20 second 1080p preview video.",
+			"link": null,
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
 			"title": "A page and tutorial for turning 360 footage into 3D",
 			"summary": "The new /insta360 page explains how to turn a 360 walkaround into a Gaussian splat you can download as PLY or SPZ, step inside one 360 photo, or capture motion from a 360 clip, with a shooting guide and links to each tool. It works with Insta360 X3, X4, X5 and X6 files, and any 360 camera. A step-by-step tutorial covers each route and every error code.",
 			"link": "/insta360",
@@ -124,6 +134,16 @@
 		{
 			"date": "2026-11-21",
 			"type": "update",
+			"title": "Motion capture from 360 video follows the person for you",
+			"summary": "Send a stitched 360 clip to Video to Motion or Motion Swap and the worker finds the person on the sphere, keeps a perspective camera pointed at them (even across the wrap-around seam), and captures their motion from that view. You get the usual animation plus the reframed video and the camera track it followed, so you can see exactly what was tracked. Optionally pass the direction to the person to skip the search. Regular videos behave exactly as before.",
+			"link": "/video-to-motion",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
 			"title": "Premiere Pro panel for 360 capture",
 			"summary": "A UXP panel for Adobe Premiere Pro 25.6 or later sends a 360 clip (or the selected sequence clip's in and out range) to three.ws, uploads it in resumable parts, shows live progress with cancel, and imports the preview, poster and scene files into a three.ws captures bin, with one button to insert the preview at the playhead. Source and a built .ccx live in integrations/premiere-uxp; the Adobe Exchange listing is an owner step.",
 			"link": null,
@@ -141,6 +161,16 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Send 360 footage from Blender and get the splat back in your scene",
+			"summary": "The three.ws Blender extension (version 1.1.0) has a new 360 Capture panel. Pick a 360 video, either a 2:1 equirectangular mp4 or the raw .insv file from an Insta360 X3, X4, X5 or X6 camera, and it uploads in resumable parallel parts, becomes a 3D Gaussian splat on three.ws, and lands in your scene selected. A single 360 photo, including a raw .insp, comes back as a depth shell mesh instead. With the KIRI Engine 3DGS Render add-on enabled the splat renders as Gaussians; without it you get a coloured point cloud. Choose a quality preset, trim the clip, pick the up axis, cancel at any point, and reopen past captures from the Your captures list, with the preview video one click away in the sequencer. Blender stays smooth while a job runs, and the panel respects Allow Online Access.",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{

@@ -55,3 +55,5 @@ Record the extension's auth model (API key in preferences or OAuth), how it hono
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
 3. The listing submission is the owner's: leave this file in `finish/` with a dated status line ("extension <version> built, SHA <sha>; submission waits on 347"). Append to [_context/insta360-PROGRESS.md](_context/insta360-PROGRESS.md).
 4. Report: what step 0 measured; files and SHAs; evidence per Definition of done line; the one batched owner message; one-line judgment calls. No trailing questions.
+
+Status 2026-11-21: extension 1.1.0 built, SHA 0aafc744f5c62e26fbca2500505c1c625ece4eb9fac424abe81cdf7daceafd2a; submission waits on 347.
