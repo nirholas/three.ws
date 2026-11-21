@@ -42,6 +42,7 @@
  *   node scripts/audit-docs.mjs prompts/finish/_context/roadmap-00-README.md
  */
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { unregisteredDocs } from './lib/docs-registry.mjs';
 import { resolve, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dropGitIgnored } from './lib/git-ignored.mjs';
@@ -437,19 +438,16 @@ const UNPUBLISHED_DOCS = new Map([
 	['ui-lint', 'internal: operator guide for the lintapple design-system QA script, not a reader-facing product doc'],
 	['standalone-repo-playbook', 'internal: the checklist for making a mirrored package discoverable by humans and LLM crawlers, written for whoever runs the mirror-promotion work'],
 	['listings-registry', 'internal: generated operator tracker of every listing surface and its status; the reader-facing record is docs/listings.md'],
+	['z-axis-awards-submission', 'internal: owner-gated awards entry plan with a third-party contact address, nothing in it is submitted or posted'],
 	['awesome-solana-ai-submission', 'internal: one-time PR packet for the solana-foundation/awesome-solana-ai README, owner-gated to post; register in data/pages.json only if it becomes an ongoing reader-facing page'],
 ]);
 const GENERATED_DOCS = new Set(['ALL', 'EVERYTHING', 'README']);
 
 if (!explicitFiles.length) {
-	const docsDir = resolve(root, 'docs');
-	for (const entry of readdirSync(docsDir, { withFileTypes: true })) {
-		if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
-		const slug = entry.name.replace(/\.md$/, '');
-		if (GENERATED_DOCS.has(slug) || UNPUBLISHED_DOCS.has(slug)) continue;
-		if (declaredPages.has(`/docs/${slug}`)) continue;
+	const skip = new Set([...GENERATED_DOCS, ...UNPUBLISHED_DOCS.keys()]);
+	for (const slug of unregisteredDocs(root, { declaredPages, skip })) {
 		findings.push({
-			file: `docs/${entry.name}`,
+			file: `docs/${slug}.md`,
 			line: 0,
 			kind: 'unregistered-doc',
 			detail: `served at /docs/${slug} but absent from data/pages.json, so no crawler can find it. Add an entry there, or add the slug to UNPUBLISHED_DOCS in this script with the reason it stays unpublished.`,
