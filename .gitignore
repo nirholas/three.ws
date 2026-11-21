@@ -735,6 +735,8 @@ integrations/nvidia/omniverse-kit-extension/.test-output/
 
 # Generated aggregate of docs/ (scripts/combine-docs.mjs); regenerate on demand
 /docs/ALL.md
+s.txt
 
 # xAI docs reference copy (copyright xAI, ai-train=no): local only, refresh with npm run sync:xai-docs
 /docs/vendor/xai-docs/
+docs/pumpfun-team-grok-note.md
