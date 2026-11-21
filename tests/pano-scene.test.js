@@ -96,6 +96,7 @@ function contractServer(name) {
 			req.on('end', () => {
 				const body = JSON.parse(raw);
 				state.submits.push(body);
+				if (state.rejectSubmit && typeof state.rejectSubmit === 'object') return send(state.rejectSubmit.status, state.rejectSubmit.body);
 				if (state.rejectSubmit) return send(400, { error: { code: 'unsupported_input', message: 'Not an equirectangular image.' } });
 				const id = `${name}-task-${state.nextId++}`;
 				state.tasks.set(id, { status: 'queued', progress: 0 });
@@ -341,6 +342,45 @@ describe('equirect photo: depth, mesh, save', () => {
 		const got = await submit({ image_url: PUBLIC_PHOTO });
 		expect(got.status).toBe(422);
 		expect(got.body).toEqual({ error: 'unsupported_input', message: 'Not an equirectangular image.' });
+	});
+
+	// workers/model-panodepth refuses through FastAPI's HTTPException, whose
+	// wire shape nests the error under `detail`. The visitor must still get the
+	// worker's own code and reason, not a generic "answered 400".
+	it('reads a FastAPI detail-wrapped worker refusal at submit', async () => {
+		c2.state.rejectSubmit = {
+			status: 400,
+			body: { detail: { error: 'unsafe_url', message: 'The image address is not allowed. Use a public https link.' } },
+		};
+		const got = await submit({ image_url: PUBLIC_PHOTO });
+		expect(got.status).toBe(422);
+		expect(got.body).toEqual({ error: 'unsafe_url', message: 'The image address is not allowed. Use a public https link.' });
+	});
+
+	// Pydantic refuses a malformed body with 422 and a list of field errors
+	// under `detail`; the message must still say what was wrong.
+	it('reads a pydantic validation refusal at submit as a readable message', async () => {
+		c2.state.rejectSubmit = {
+			status: 422,
+			body: { detail: [{ type: 'missing', loc: ['body', 'image_url'], msg: 'Field required', input: {} }] },
+		};
+		const got = await submit({ image_url: PUBLIC_PHOTO });
+		expect(got.status).toBe(422);
+		expect(got.body).toEqual({ error: 'invalid_request', message: 'The 3D server refused the request: image_url: Field required.' });
+	});
+
+	// model-panodepth names its own steps: decode, depth, export (point cloud
+	// and shell mesh), upload. The page shows Depth, then Mesh.
+	it('maps the worker stages onto the depth and mesh steps', async () => {
+		const start = await submit({ image_url: PUBLIC_PHOTO });
+		const at = async (stage, progress) => {
+			c2.state.tasks.set('depth-task-1', { status: 'running', stage, progress });
+			return (await poll(start.body.job_id)).body.stage;
+		};
+		expect(await at('decode', 0.05)).toBe('depth');
+		expect(await at('depth', 0.4)).toBe('depth');
+		expect(await at('export', 0.6)).toBe('mesh');
+		expect(await at('upload', 0.95)).toBe('mesh');
 	});
 
 	it('fails with result_unavailable when the worker files expired before the copy', async () => {

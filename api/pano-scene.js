@@ -116,7 +116,26 @@ function storageUnconfigured(res) {
 
 // ── worker client (contracts C1 and C2) ───────────────────────────────────────
 
-function workerError(status, data) {
+// The workers answer { error, message } or { error: { code, message } };
+// model-panodepth refuses through FastAPI's HTTPException, which nests that
+// body under `detail`, and its pydantic validation answers 422 with a list of
+// field errors under `detail` instead.
+function validationMessage(issues) {
+	const parts = issues
+		.filter((i) => i && typeof i.msg === 'string')
+		.map((i) => {
+			const field = Array.isArray(i.loc) ? i.loc.filter((p) => p !== 'body').join('.') : '';
+			return field ? `${field}: ${i.msg}` : i.msg;
+		});
+	return parts.length ? `The 3D server refused the request: ${parts.join('; ')}.` : null;
+}
+
+function workerError(status, raw) {
+	if (Array.isArray(raw?.detail)) {
+		const message = validationMessage(raw.detail) || `The 3D server answered ${status}.`;
+		return Object.assign(new Error(message), { status, code: 'invalid_request' });
+	}
+	const data = raw?.detail && typeof raw.detail === 'object' ? raw.detail : raw;
 	const err = data?.error;
 	const code = (typeof err === 'object' ? err?.code : err) || 'worker_error';
 	const message =
@@ -374,6 +393,15 @@ async function finalize(res, token, prefix, result) {
 	}
 }
 
+// model-panodepth names its steps download, decode, depth, export (point
+// cloud and shell mesh) and upload; the page shows Depth then Mesh. A worker
+// that reports no stage gets the mesh step for the tail of its run.
+const MESH_STEPS = new Set(['export', 'upload', 'mesh']);
+function depthWorkerStep(t) {
+	if (typeof t.stage === 'string' && t.stage) return MESH_STEPS.has(t.stage) ? 'mesh' : 'depth';
+	return t.progress >= 0.7 ? 'mesh' : 'depth';
+}
+
 async function advanceDepth(res, token, job, cfg, prefix, depthTaskId, since) {
 	const base = job.kind === 'insp' ? STITCH_SHARE : 0;
 	const span = SAVE_START - base;
@@ -389,8 +417,7 @@ async function advanceDepth(res, token, job, cfg, prefix, depthTaskId, since) {
 		});
 	}
 	if (t.status === 'succeeded') return finalize(res, token, prefix, t.result);
-	// C2 reports no stage of its own today; meshing is the tail of its run.
-	const stage = t.stage === 'mesh' || (t.stage == null && t.progress >= 0.7) ? 'mesh' : 'depth';
+	const stage = depthWorkerStep(t);
 	return report(res, token, { status: t.status, stage, progress: base + span * t.progress });
 }
 
