@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Step Inside Your 360 Photo · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Drop a 360 photo and stand inside it in 3D. Depth estimation turns one equirectangular photo, or a raw .insp file, into a metric shell you can look around, step through and download as GLB or PLY. Works with Insta360 X3, X4, X5 and X6 photos, or any 360 camera." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/pano-scene" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Step inside your 360 photo · three.ws" />
+		<meta property="og:description" content="One 360 photo becomes a 3D shell you can stand inside, with GLB and PLY downloads." />
+		<meta property="og:url" content="https://three.ws/pano-scene" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Step+inside+your+360+photo&amp;d=One+360+photo+becomes+a+3D+shell+you+can+stand+inside%2C+with+GLB+and+PLY+downloads.&amp;p=%2Fpano-scene" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Step inside your 360 photo · three.ws" />
+		<meta name="twitter:description" content="One 360 photo becomes a 3D shell you can stand inside." />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+
+		<style>
+			/* Monochrome by design, matching /capture: greyscale tokens, white as the single accent. */
+			.ps-page {
+				min-height: 100vh;
+				background: var(--bg, #060606);
+				color: var(--text, #f6f6f6);
+				font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+				-webkit-font-smoothing: antialiased;
+			}
+			.ps-wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 72px; }
+			.ps-chip {
+				display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px;
+				background: var(--surface-1, #141414); border: 1px solid var(--hairline, #1f1f1f);
+				border-radius: 20px; font-size: 11px; color: var(--text-2, #b4b4b4);
+				letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 16px;
+			}
+			.ps-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text, #f6f6f6); }
+			.ps-head h1 {
+				font-family: var(--font-display, 'Space Grotesk', sans-serif);
+				font-size: clamp(26px, 4.4vw, 42px); font-weight: 700; letter-spacing: -0.025em;
+				margin: 0 0 12px; line-height: 1.06;
+			}
+			.ps-head p { color: var(--text-2, #a8a8a8); font-size: 15px; line-height: 1.6; margin: 0; max-width: 660px; }
+			.ps-head a, .ps-note a { color: var(--text, #f6f6f6); }
+
+			.ps-layout { display: grid; grid-template-columns: 1fr 320px; gap: 18px; margin-top: 28px; align-items: start; }
+			.ps-layout > * { min-width: 0; }
+
+			/* Stage */
+			.ps-stage {
+				position: relative; aspect-ratio: 16 / 10; min-height: 360px;
+				background: radial-gradient(circle at 50% 30%, #141414 0%, #070707 72%);
+				border: 1px solid var(--hairline, #1f1f1f); border-radius: 16px; overflow: hidden;
+			}
+			.ps-host { position: absolute; inset: 0; }
+			.ps-host canvas { display: block; width: 100%; height: 100%; outline: none; }
+			.ps-host canvas:focus-visible { outline: 2px solid var(--text, #fff); outline-offset: -4px; }
+			.ps-stage.is-dragover { border-color: var(--text, #f6f6f6); }
+
+			.ps-overlay {
+				position: absolute; inset: 0; display: flex; flex-direction: column;
+				align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 24px;
+			}
+			.ps-overlay[hidden] { display: none; }
+			.ps-overlay--drop {
+				cursor: pointer; width: 100%; border: 0; background: transparent; font: inherit; color: inherit;
+				transition: background var(--duration-fast, 120ms);
+			}
+			.ps-overlay--drop:hover, .ps-stage.is-dragover .ps-overlay--drop { background: rgba(255,255,255,0.04); }
+			.ps-overlay--drop:active { background: rgba(255,255,255,0.07); }
+			.ps-overlay--drop:focus-visible { outline: 2px solid var(--text, #fff); outline-offset: -4px; }
+			.ps-glyph {
+				width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center;
+				color: var(--text, #f6f6f6); background: var(--surface-1, #141414); border: 1px solid var(--hairline-strong, #2a2a2a);
+			}
+			.ps-title { font-family: var(--font-display, 'Space Grotesk', sans-serif); font-size: 17px; font-weight: 700; margin: 0; color: var(--text, #f6f6f6); }
+			.ps-sub { font-size: 13px; color: var(--text-3, #8a8a8a); margin: 0; max-width: 420px; line-height: 1.55; }
+			.ps-sub b { color: var(--text-2, #cfcfcf); font-weight: 600; }
+			.ps-lane-note { font-size: 12px; color: var(--text-2, #cfcfcf); background: var(--surface-1, #141414); border: 1px solid var(--hairline-strong, #2a2a2a); border-radius: 8px; padding: 7px 11px; }
+			.ps-lane-note[hidden] { display: none; }
+
+			/* Progress overlay */
+			.ps-progress { width: min(440px, 100%); display: flex; flex-direction: column; gap: 14px; }
+			.ps-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+			.ps-step {
+				font-size: 11.5px; padding: 5px 11px; border-radius: 20px; color: var(--text-4, #6e6e6e);
+				border: 1px solid var(--hairline, #1f1f1f); background: var(--surface-0, #0b0b0b);
+			}
+			.ps-step[data-state="active"] { color: #000; background: var(--text, #f6f6f6); border-color: var(--text, #f6f6f6); font-weight: 600; }
+			.ps-step[data-state="done"] { color: var(--text-2, #cfcfcf); border-color: var(--hairline-strong, #2a2a2a); }
+			.ps-step[data-state="done"]::before { content: '\2713\00a0'; }
+			.ps-bar { height: 4px; border-radius: 4px; background: var(--hairline, #1f1f1f); overflow: hidden; }
+			.ps-bar > span { display: block; height: 100%; width: 0; background: var(--text, #f6f6f6); transition: width 600ms ease; }
+			.ps-skeleton { display: grid; gap: 8px; width: min(440px, 100%); }
+			.ps-skeleton i {
+				display: block; height: 10px; border-radius: 6px;
+				background: linear-gradient(90deg, var(--surface-1, #141414) 25%, var(--surface-2, #1f1f1f) 50%, var(--surface-1, #141414) 75%);
+				background-size: 200% 100%; animation: ps-shimmer 1.4s linear infinite;
+			}
+			.ps-skeleton i:nth-child(2) { width: 82%; }
+			.ps-skeleton i:nth-child(3) { width: 64%; }
+			@keyframes ps-shimmer { to { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .ps-skeleton i { animation: none; } .ps-bar > span { transition: none; } }
+
+			.ps-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+			.ps-actions .ps-btn { width: auto; }
+
+			/* HUD */
+			.ps-hud {
+				position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; align-items: center;
+				justify-content: space-between; gap: 10px; pointer-events: none; flex-wrap: wrap;
+			}
+			.ps-hud[hidden] { display: none; }
+			.ps-hud-label {
+				font-size: 11.5px; color: var(--text-2, #cfcfcf); background: rgba(0,0,0,0.6);
+				border: 1px solid var(--hairline, #1f1f1f); padding: 6px 11px; border-radius: 8px;
+				backdrop-filter: blur(6px); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+			}
+			.ps-hud-right { display: flex; align-items: center; gap: 8px; pointer-events: auto; flex-wrap: wrap; }
+			.ps-chipbtn {
+				display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px;
+				background: rgba(0,0,0,0.6); border: 1px solid var(--hairline, #1f1f1f); border-radius: 8px;
+				color: var(--text-2, #cfcfcf); cursor: pointer; font: inherit; font-size: 12px; text-decoration: none;
+				backdrop-filter: blur(6px); transition: color var(--duration-fast, 120ms), border-color var(--duration-fast, 120ms), background var(--duration-fast, 120ms);
+			}
+			.ps-chipbtn:hover { color: #fff; border-color: var(--hairline-strong, #2a2a2a); }
+			.ps-chipbtn:active { background: rgba(255,255,255,0.12); }
+			.ps-chipbtn:focus-visible { outline: 2px solid var(--text, #fff); outline-offset: 2px; }
+			.ps-chipbtn[aria-pressed="true"] { color: #fff; border-color: var(--text, #f6f6f6); }
+			.ps-chipbtn[hidden] { display: none; }
+
+			/* Side panel */
+			.ps-panel { display: flex; flex-direction: column; gap: 14px; }
+			.ps-card { background: var(--surface-1, #111); border: 1px solid var(--hairline, #1f1f1f); border-radius: 13px; padding: 16px; }
+			.ps-card h2 { font-family: var(--font-display, 'Space Grotesk', sans-serif); font-size: 13px; font-weight: 700; margin: 0 0 12px; letter-spacing: 0.01em; }
+			.ps-btn {
+				display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%;
+				padding: 10px 14px; border-radius: 9px; font-size: 13px; font-weight: 600;
+				border: 1px solid var(--hairline-strong, #2a2a2a); background: transparent;
+				color: var(--text, #f6f6f6); cursor: pointer; font-family: inherit; text-decoration: none; box-sizing: border-box;
+				transition: background var(--duration-fast, 120ms), border-color var(--duration-fast, 120ms), opacity var(--duration-fast, 120ms);
+			}
+			.ps-btn:hover { background: var(--surface-2, #1a1a1a); }
+			.ps-btn:active { background: var(--surface-3, #232323); }
+			.ps-btn:focus-visible { outline: 2px solid var(--text, #fff); outline-offset: 2px; }
+			.ps-btn:disabled { opacity: 0.5; cursor: default; }
+			.ps-btn[hidden] { display: none; }
+			.ps-btn--primary { background: var(--text, #f6f6f6); color: #000; border-color: var(--text, #f6f6f6); }
+			.ps-btn--primary:hover { background: #fff; }
+			.ps-stack { display: flex; flex-direction: column; gap: 8px; }
+			.ps-note { font-size: 12px; color: var(--text-3, #8a8a8a); line-height: 1.6; margin: 0; }
+			.ps-note + .ps-note { margin-top: 8px; }
+			.ps-note code { font-size: 11.5px; }
+			.ps-howto { margin: 0; padding-left: 18px; font-size: 12px; color: var(--text-3, #8a8a8a); line-height: 1.65; }
+			.ps-done { display: grid; gap: 8px; }
+			.ps-done[hidden] { display: none; }
+
+			@media (max-width: 880px) { .ps-layout { grid-template-columns: 1fr; } }
+			@media (max-width: 640px) {
+				.ps-wrap { padding: 28px 16px 56px; }
+				.ps-stage { aspect-ratio: auto; height: 66vh; min-height: 340px; }
+				.ps-overlay { padding: 16px; }
+			}
+		</style>
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Step Inside Your 360 Photo","description":"Drop a 360 photo and stand inside it in 3D. Depth estimation turns one equirectangular photo, or a raw .insp file, into a metric shell you can look around, step through and download as GLB or PLY.","url":"https://three.ws/pano-scene","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+	</head>
+	<body>
+		<div class="ps-page">
+			<div id="nav-container"></div>
+			<script type="module" src="/nav.js"></script>
+
+			<div class="ps-wrap">
+				<div class="ps-head">
+					<span class="ps-chip"><span class="ps-chip-dot"></span> 360 photo to 3D</span>
+					<h1>Step inside your 360 photo</h1>
+					<p>
+						Drop one 360 photo and stand inside it in 3D. Depth estimation turns it into a shell in real
+						metres that you can look around, walk through a little, and download as <code>.glb</code> or
+						<code>.ply</code>. Works with photos from Insta360 X3, X4, X5 and X6, or any 360 camera.
+						For a whole walkaround video, try <a href="/capture">Scene Capture</a>.
+					</p>
+				</div>
+
+				<div class="ps-layout">
+					<div class="ps-stage" id="ps-stage">
+						<div class="ps-host" id="ps-host"></div>
+
+						<!-- Empty state: what to upload and how to export it -->
+						<button class="ps-overlay ps-overlay--drop" id="ps-idle" type="button" aria-label="Choose a 360 photo to step inside">
+							<span class="ps-glyph">
+								<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg>
+							</span>
+							<span class="ps-title">Drop a 360 photo here</span>
+							<span class="ps-sub">
+								Use an <b>equirectangular JPEG or PNG</b>, twice as wide as it is tall, or a raw
+								<b>.insp</b> file straight off an Insta360 card. In your camera app, export the photo as
+								a 360 JPEG (not a reframed or flattened one).
+							</span>
+							<span class="ps-lane-note" id="ps-lane-note" hidden></span>
+						</button>
+
+						<!-- Working: staged, driven by the real job -->
+						<div class="ps-overlay" id="ps-loading" role="status" aria-live="polite" hidden>
+							<div class="ps-progress" id="ps-progress">
+								<ol class="ps-steps" id="ps-steps" aria-label="Progress"></ol>
+								<div class="ps-bar" aria-hidden="true"><span id="ps-bar"></span></div>
+								<p class="ps-title" id="ps-loading-title">Working</p>
+								<p class="ps-sub" id="ps-loading-sub"></p>
+							</div>
+							<div class="ps-skeleton" aria-hidden="true"><i></i><i></i><i></i></div>
+						</div>
+
+						<!-- Error -->
+						<div class="ps-overlay" id="ps-error" role="alert" hidden>
+							<div class="ps-glyph">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 9v4 M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+							</div>
+							<h3 class="ps-title" id="ps-error-title">Something went wrong</h3>
+							<p class="ps-sub" id="ps-error-sub"></p>
+							<div class="ps-actions">
+								<a class="ps-btn ps-btn--primary" id="ps-error-signin" href="/login" hidden>Sign in</a>
+								<button class="ps-btn ps-btn--primary" id="ps-error-retry" type="button" hidden>Try again</button>
+								<button class="ps-btn" id="ps-error-pick" type="button">Choose another photo</button>
+							</div>
+						</div>
+
+						<!-- HUD over the live scene -->
+						<div class="ps-hud" id="ps-hud" hidden>
+							<div class="ps-hud-label" id="ps-hud-label" role="status"></div>
+							<div class="ps-hud-right">
+								<button class="ps-chipbtn" id="ps-step" type="button" aria-pressed="false" title="Step off-centre to see the depth (or use W A S D)">Step</button>
+								<button class="ps-chipbtn" id="ps-gyro" type="button" aria-pressed="false" title="Look around by moving your phone" hidden>Gyroscope</button>
+								<button class="ps-chipbtn" id="ps-recenter" type="button" title="Face forward and return to the centre">Recenter</button>
+								<button class="ps-chipbtn" id="ps-shot" type="button" title="Save a PNG of this view">Save view</button>
+							</div>
+						</div>
+					</div>
+
+					<aside class="ps-panel">
+						<div class="ps-card">
+							<h2>Your 360 photo</h2>
+							<div class="ps-stack">
+								<button class="ps-btn ps-btn--primary" id="ps-pick" type="button">Choose a photo</button>
+								<input id="ps-file" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png,.insp" hidden aria-label="360 photo file" />
+							</div>
+							<p class="ps-note" style="margin-top:10px">JPEG, PNG or raw .insp, up to 120 MB. A raw .insp is stitched for you first, so the result takes a little longer.</p>
+						</div>
+
+						<div class="ps-card ps-done" id="ps-done" hidden>
+							<h2>Your scene</h2>
+							<a class="ps-btn ps-btn--primary" id="ps-dl-glb" href="#" rel="noopener" download>Download GLB</a>
+							<a class="ps-btn" id="ps-dl-ply" href="#" rel="noopener" download>Download PLY</a>
+							<a class="ps-btn" id="ps-open" href="#">Open in viewer</a>
+						</div>
+
+						<div class="ps-card">
+							<h2>Moving around</h2>
+							<ol class="ps-howto">
+								<li>Drag to look around, or use the arrow keys.</li>
+								<li>Press <b>W A S D</b> or <b>Step</b> to move off-centre and see the depth.</li>
+								<li>On a phone, turn on <b>Gyroscope</b> and move the phone to look.</li>
+							</ol>
+						</div>
+
+						<div class="ps-card">
+							<h2>How it works</h2>
+							<p class="ps-note">
+								A depth model estimates how far every pixel of the sphere is from where the photo was
+								taken, then builds one textured mesh around the camera. Parts hidden behind objects are
+								not in a single photo, so the shell is best seen from near the centre.
+								Want to walk all the way around? <a href="/capture">Scene Capture</a> turns a video into a full scene.
+							</p>
+						</div>
+					</aside>
+				</div>
+			</div>
+
+			<div id="footer-container"></div>
+			<script src="/footer.js" defer></script>
+		</div>
+
+		<script type="module" src="/src/pano-scene.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
