@@ -7,13 +7,62 @@
 			"category": "architecture",
 			"prompt": "a small Japanese pagoda with three tiers",
 			"seed": 149039386,
-			"ranAt": "2026-11-20T21:42:55.214Z",
+			"ranAt": "2026-11-20T22:42:30.904Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 7044,
+				"imageUrl": "https://three.ws/cdn/forge/refs/794aa6a9-7ce7-41e6-9fc1-7feab124b493.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/architecture-01.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					187,
+					191,
+					187
+				],
+				"bgUniformity": 0.114,
+				"components": 2,
+				"mainShare": 0.749,
+				"centroidOffset": 0.056,
+				"bboxOffset": 0.006,
+				"fillArea": 0.668,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": false,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/daf23171-1c8b-420d-997a-b869f99194de.glb",
+				"latencyMs": 181602,
+				"bytes": 3563676,
+				"metrics": {
+					"triangles": 25740,
+					"vertices": 12872,
+					"edges": 38610,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 1936,
+				"path": ".cache/grok-eval-ref-image/baseline/architecture-01.render.png"
+			},
+			"score": 50,
+			"failed": false
 		},
 		"baseline:architecture-02": {
 			"provider": "baseline",
@@ -21,13 +70,62 @@
 			"category": "architecture",
 			"prompt": "a medieval stone watchtower",
 			"seed": 1340860849,
-			"ranAt": "2026-11-20T21:42:55.548Z",
+			"ranAt": "2026-11-20T22:44:09.339Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 29486,
+				"imageUrl": "https://three.ws/cdn/forge/refs/c253e472-6f7d-4fd8-acc6-c020b2051d93.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/architecture-02.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					208,
+					209,
+					204
+				],
+				"bgUniformity": 0.479,
+				"components": 1,
+				"mainShare": 1,
+				"centroidOffset": 0.313,
+				"bboxOffset": 0.086,
+				"fillArea": 0.494,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/29582351-e5b5-4c01-9b90-02a610ac33bd.glb",
+				"latencyMs": 209393,
+				"bytes": 6117412,
+				"metrics": {
+					"triangles": 58726,
+					"vertices": 29365,
+					"edges": 88089,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 3288,
+				"path": ".cache/grok-eval-ref-image/baseline/architecture-02.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:architecture-03": {
 			"provider": "baseline",
@@ -35,10 +133,10 @@
 			"category": "architecture",
 			"prompt": "a cozy wooden cabin with a chimney",
 			"seed": 948467444,
-			"ranAt": "2026-11-20T21:42:55.558Z",
+			"ranAt": "2026-11-20T22:44:31.527Z",
 			"reference": {
 				"ok": false,
-				"error": "pollinations returned 402"
+				"error": "pollinations returned 503: SERVICE_UNAVAILABLE The Classic API is at its limit right now. Retry after 10s, or get full access to every model with a pollen key at https://enter.pollinations.ai/?ref=classic"
 			},
 			"score": 0,
 			"failed": true
@@ -49,10 +147,10 @@
 			"category": "architecture",
 			"prompt": "a white lighthouse on a rocky base",
 			"seed": 1310453645,
-			"ranAt": "2026-11-20T21:42:55.907Z",
+			"ranAt": "2026-11-20T22:45:27.418Z",
 			"reference": {
 				"ok": false,
-				"error": "pollinations returned 402"
+				"error": "pollinations returned 503: SERVICE_UNAVAILABLE The Classic API is at its limit right now. Retry after 10s, or get full access to every model with a pollen key at https://enter.pollinations.ai/?ref=classic"
 			},
 			"score": 0,
 			"failed": true
@@ -63,13 +161,62 @@
 			"category": "architecture",
 			"prompt": "a modern glass-and-concrete villa, isometric",
 			"seed": 9814227,
-			"ranAt": "2026-11-20T21:42:55.946Z",
+			"ranAt": "2026-11-20T22:46:07.731Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 5899,
+				"imageUrl": "https://three.ws/cdn/forge/refs/08f15f8a-1c31-463d-a814-e27d84923bfe.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/architecture-05.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					106,
+					119,
+					113
+				],
+				"bgUniformity": 0.252,
+				"components": 7,
+				"mainShare": 0.352,
+				"centroidOffset": 0.09,
+				"bboxOffset": 0.006,
+				"fillArea": 0.538,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": false,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/14ea2d2d-4738-43c0-bd66-92639d158c98.glb",
+				"latencyMs": 98507,
+				"bytes": 4115128,
+				"metrics": {
+					"triangles": 47844,
+					"vertices": 23924,
+					"edges": 71766,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 6600,
+				"path": ".cache/grok-eval-ref-image/baseline/architecture-05.render.png"
+			},
+			"score": 50,
+			"failed": false
 		},
 		"baseline:architecture-06": {
 			"provider": "baseline",
@@ -77,13 +224,62 @@
 			"category": "architecture",
 			"prompt": "a classical Greek temple with columns",
 			"seed": 1636376505,
-			"ranAt": "2026-11-20T21:42:56.251Z",
+			"ranAt": "2026-11-20T22:46:39.854Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 30784,
+				"imageUrl": "https://three.ws/cdn/forge/refs/e42a167c-0095-4fc4-af1c-f29960d7d09a.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/architecture-06.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					106,
+					107,
+					103
+				],
+				"bgUniformity": 0.171,
+				"components": 3,
+				"mainShare": 0.99,
+				"centroidOffset": 0.035,
+				"bboxOffset": 0.006,
+				"fillArea": 0.702,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/e02cd126-be4d-4ab6-9548-60f0a9a31cbf.glb",
+				"latencyMs": 114539,
+				"bytes": 5756724,
+				"metrics": {
+					"triangles": 64696,
+					"vertices": 32328,
+					"edges": 97044,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2387,
+				"path": ".cache/grok-eval-ref-image/baseline/architecture-06.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:characters-01": {
 			"provider": "baseline",
@@ -91,13 +287,62 @@
 			"category": "characters",
 			"prompt": "a cartoon fox adventurer wearing a backpack, standing",
 			"seed": 1098417459,
-			"ranAt": "2026-11-20T21:42:51.688Z",
+			"ranAt": "2026-11-20T22:19:06.196Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 30480,
+				"imageUrl": "https://three.ws/cdn/forge/refs/c7fe795b-31ad-41e4-991e-b85e2d2ccdaf.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-01.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					235,
+					235,
+					235
+				],
+				"bgUniformity": 0.983,
+				"components": 2,
+				"mainShare": 0.988,
+				"centroidOffset": 0.252,
+				"bboxOffset": 0.059,
+				"fillArea": 0.339,
+				"extent": 0.949,
+				"cropped": false,
+				"checks": {
+					"bgClean": true,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": true,
+					"notCropped": true
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/d72a6edc-e7e3-45c1-8686-cb74bc269701.glb",
+				"latencyMs": 241996,
+				"bytes": 5520780,
+				"metrics": {
+					"triangles": 48492,
+					"vertices": 24236,
+					"edges": 72738,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2072,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-01.render.png"
+			},
+			"score": 100,
+			"failed": false
 		},
 		"baseline:characters-02": {
 			"provider": "baseline",
@@ -105,13 +350,62 @@
 			"category": "characters",
 			"prompt": "a friendly round robot with stubby arms and a screen face",
 			"seed": 224755238,
-			"ranAt": "2026-11-20T21:42:52.010Z",
+			"ranAt": "2026-11-20T22:20:48.427Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 28851,
+				"imageUrl": "https://three.ws/cdn/forge/refs/9e8f2d98-03e5-427e-8aa7-075690134d91.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-02.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					146,
+					154,
+					147
+				],
+				"bgUniformity": 0.464,
+				"components": 2,
+				"mainShare": 0.993,
+				"centroidOffset": 0.174,
+				"bboxOffset": 0.006,
+				"fillArea": 0.538,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/02850b66-9a39-4b06-a938-085d6502db5e.glb",
+				"latencyMs": 145371,
+				"bytes": 5375224,
+				"metrics": {
+					"triangles": 53782,
+					"vertices": 26891,
+					"edges": 80673,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2099,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-02.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:characters-03": {
 			"provider": "baseline",
@@ -119,13 +413,62 @@
 			"category": "characters",
 			"prompt": "an elderly wizard in a long blue robe holding a staff",
 			"seed": 1180568150,
-			"ranAt": "2026-11-20T21:42:52.030Z",
+			"ranAt": "2026-11-20T22:21:19.219Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 4994,
+				"imageUrl": "https://three.ws/cdn/forge/refs/45b57956-77f6-42ed-92ac-852e39189f9d.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-03.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					157,
+					160,
+					163
+				],
+				"bgUniformity": 0.384,
+				"components": 2,
+				"mainShare": 0.992,
+				"centroidOffset": 0.144,
+				"bboxOffset": 0.004,
+				"fillArea": 0.751,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/42d29993-c157-4ccf-8b3f-4c55304e2fe4.glb",
+				"latencyMs": 221049,
+				"bytes": 5289812,
+				"metrics": {
+					"triangles": 61712,
+					"vertices": 30856,
+					"edges": 92568,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2215,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-03.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:characters-04": {
 			"provider": "baseline",
@@ -133,13 +476,62 @@
 			"category": "characters",
 			"prompt": "a stylized astronaut in a white suit, full body, T-pose",
 			"seed": 962106170,
-			"ranAt": "2026-11-20T21:42:52.356Z",
+			"ranAt": "2026-11-20T22:23:45.007Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 31302,
+				"imageUrl": "https://three.ws/cdn/forge/refs/72335059-8afb-421f-84d1-72cc9e860e2a.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-04.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					58,
+					59,
+					55
+				],
+				"bgUniformity": 0.35,
+				"components": 2,
+				"mainShare": 0.995,
+				"centroidOffset": 0.072,
+				"bboxOffset": 0.006,
+				"fillArea": 0.901,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/b99a7c31-a8b2-4c80-b916-91d97e214ffb.glb",
+				"latencyMs": 113750,
+				"bytes": 5159904,
+				"metrics": {
+					"triangles": 52112,
+					"vertices": 26040,
+					"edges": 78168,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2050,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-04.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:characters-05": {
 			"provider": "baseline",
@@ -147,10 +539,10 @@
 			"category": "characters",
 			"prompt": "a chibi samurai girl with a katana on her back",
 			"seed": 1082316325,
-			"ranAt": "2026-11-20T21:42:52.373Z",
+			"ranAt": "2026-11-20T22:23:49.714Z",
 			"reference": {
 				"ok": false,
-				"error": "pollinations returned 402"
+				"error": "pollinations returned 402: FREE_LIMIT Free limit reached: 1 image every 45 seconds per IP. Retry after 40s, or get unlimited images with a pollen key at https://enter.pollinations.ai/?ref=classic"
 			},
 			"score": 0,
 			"failed": true
@@ -161,13 +553,62 @@
 			"category": "characters",
 			"prompt": "a green goblin merchant carrying a sack of goods",
 			"seed": 1155746689,
-			"ranAt": "2026-11-20T21:42:52.706Z",
+			"ranAt": "2026-11-20T22:25:03.300Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 30709,
+				"imageUrl": "https://three.ws/cdn/forge/refs/1fdc3e63-7791-4d4a-80fc-d76536da7bf3.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-06.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					164,
+					164,
+					154
+				],
+				"bgUniformity": 0.407,
+				"components": 1,
+				"mainShare": 1,
+				"centroidOffset": 0.098,
+				"bboxOffset": 0.016,
+				"fillArea": 0.753,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/c6b97b44-da66-4725-bd50-a97a779c0b91.glb",
+				"latencyMs": 154552,
+				"bytes": 7629768,
+				"metrics": {
+					"triangles": 143403,
+					"vertices": 71629,
+					"edges": 215090,
+					"boundaryEdges": 2,
+					"nonManifoldEdges": 1,
+					"boundaryRatio": 0.00001,
+					"watertight": false,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 3255,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-06.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:characters-07": {
 			"provider": "baseline",
@@ -175,13 +616,62 @@
 			"category": "characters",
 			"prompt": "a plush teddy bear sitting upright",
 			"seed": 828373564,
-			"ranAt": "2026-11-20T21:42:52.718Z",
+			"ranAt": "2026-11-20T22:25:53.868Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 6645,
+				"imageUrl": "https://three.ws/cdn/forge/refs/60ceaacb-2734-45e1-b20b-918a6ab6e15c.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-07.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					138,
+					138,
+					138
+				],
+				"bgUniformity": 0.32,
+				"components": 2,
+				"mainShare": 0.978,
+				"centroidOffset": 0.207,
+				"bboxOffset": 0.006,
+				"fillArea": 0.739,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/a8f8386f-ac10-4c84-b3d2-2785e2e7fbb1.glb",
+				"latencyMs": 244667,
+				"bytes": 5963980,
+				"metrics": {
+					"triangles": 64136,
+					"vertices": 32068,
+					"edges": 96204,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 3494,
+				"path": ".cache/grok-eval-ref-image/baseline/characters-07.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:food-01": {
 			"provider": "baseline",
@@ -189,13 +679,62 @@
 			"category": "food",
 			"prompt": "a cheeseburger with lettuce, tomato and sesame bun",
 			"seed": 1928366043,
-			"ranAt": "2026-11-20T21:42:54.141Z",
+			"ranAt": "2026-11-20T22:35:07.776Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 6637,
+				"imageUrl": "https://three.ws/cdn/forge/refs/aaa3bd57-da67-472f-ae2f-50d4d614773c.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/food-01.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					181,
+					179,
+					171
+				],
+				"bgUniformity": 0.348,
+				"components": 3,
+				"mainShare": 0.99,
+				"centroidOffset": 0.196,
+				"bboxOffset": 0.016,
+				"fillArea": 0.699,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/67a847f3-b369-4d66-b3d0-f0fa6659f0a8.glb",
+				"latencyMs": 133831,
+				"bytes": 6186368,
+				"metrics": {
+					"triangles": 70154,
+					"vertices": 35073,
+					"edges": 105231,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 3726,
+				"path": ".cache/grok-eval-ref-image/baseline/food-01.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:food-02": {
 			"provider": "baseline",
@@ -203,13 +742,62 @@
 			"category": "food",
 			"prompt": "a slice of strawberry layer cake on a plate",
 			"seed": 689298375,
-			"ranAt": "2026-11-20T21:42:54.480Z",
+			"ranAt": "2026-11-20T22:37:25.631Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 29968,
+				"imageUrl": "https://three.ws/cdn/forge/refs/4b54add5-8672-415f-8c4a-f806a15e8e8b.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/food-02.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					132,
+					134,
+					134
+				],
+				"bgUniformity": 0.071,
+				"components": 2,
+				"mainShare": 0.901,
+				"centroidOffset": 0.121,
+				"bboxOffset": 0.006,
+				"fillArea": 0.79,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": false,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/37cdbdfd-0c74-47d6-bae8-2e32ed2efe14.glb",
+				"latencyMs": 195685,
+				"bytes": 5551464,
+				"metrics": {
+					"triangles": 45750,
+					"vertices": 22877,
+					"edges": 68625,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 1982,
+				"path": ".cache/grok-eval-ref-image/baseline/food-02.render.png"
+			},
+			"score": 50,
+			"failed": false
 		},
 		"baseline:food-03": {
 			"provider": "baseline",
@@ -217,10 +805,10 @@
 			"category": "food",
 			"prompt": "a bowl of ramen with egg, nori and chopsticks",
 			"seed": 576258177,
-			"ranAt": "2026-11-20T21:42:54.498Z",
+			"ranAt": "2026-11-20T22:38:02.423Z",
 			"reference": {
 				"ok": false,
-				"error": "pollinations returned 402"
+				"error": "pollinations returned 503: SERVICE_UNAVAILABLE The Classic API is at its limit right now. Retry after 10s, or get full access to every model with a pollen key at https://enter.pollinations.ai/?ref=classic"
 			},
 			"score": 0,
 			"failed": true
@@ -231,13 +819,62 @@
 			"category": "food",
 			"prompt": "a whole pineapple",
 			"seed": 388597635,
-			"ranAt": "2026-11-20T21:42:54.828Z",
+			"ranAt": "2026-11-20T22:38:45.317Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 29161,
+				"imageUrl": "https://three.ws/cdn/forge/refs/62f0f5b0-4bc5-47c3-b959-d5b47e981e8b.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/food-04.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					140,
+					140,
+					137
+				],
+				"bgUniformity": 0.206,
+				"components": 1,
+				"mainShare": 1,
+				"centroidOffset": 0.103,
+				"bboxOffset": 0.006,
+				"fillArea": 0.681,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/1b6c3142-82c1-4a95-b6a9-673872e674ff.glb",
+				"latencyMs": 142889,
+				"bytes": 8173388,
+				"metrics": {
+					"triangles": 121345,
+					"vertices": 60605,
+					"edges": 182016,
+					"boundaryEdges": 2,
+					"nonManifoldEdges": 3,
+					"boundaryRatio": 0.00001,
+					"watertight": false,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2333,
+				"path": ".cache/grok-eval-ref-image/baseline/food-04.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:food-05": {
 			"provider": "baseline",
@@ -245,13 +882,62 @@
 			"category": "food",
 			"prompt": "a stack of three pancakes with butter and syrup",
 			"seed": 1857880879,
-			"ranAt": "2026-11-20T21:42:54.859Z",
+			"ranAt": "2026-11-20T22:39:02.733Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 6662,
+				"imageUrl": "https://three.ws/cdn/forge/refs/41e02242-19c6-45d5-9398-e33ed649b7ba.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/food-05.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					192,
+					193,
+					191
+				],
+				"bgUniformity": 0.448,
+				"components": 2,
+				"mainShare": 0.994,
+				"centroidOffset": 0.109,
+				"bboxOffset": 0.016,
+				"fillArea": 0.692,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/b998f8a7-3113-4dbe-b7b9-4ed47da9f5f8.glb",
+				"latencyMs": 187321,
+				"bytes": 7665312,
+				"metrics": {
+					"triangles": 150032,
+					"vertices": 74932,
+					"edges": 225047,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 1,
+					"boundaryRatio": 0,
+					"watertight": false,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 3117,
+				"path": ".cache/grok-eval-ref-image/baseline/food-05.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:food-06": {
 			"provider": "baseline",
@@ -259,13 +945,62 @@
 			"category": "food",
 			"prompt": "a glazed donut with rainbow sprinkles",
 			"seed": 333960318,
-			"ranAt": "2026-11-20T21:42:55.198Z",
+			"ranAt": "2026-11-20T22:41:17.226Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 30333,
+				"imageUrl": "https://three.ws/cdn/forge/refs/ed282d23-b702-44d0-b033-93d2a6cdcff6.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/food-06.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					205,
+					207,
+					206
+				],
+				"bgUniformity": 0.487,
+				"components": 3,
+				"mainShare": 0.867,
+				"centroidOffset": 0.173,
+				"bboxOffset": 0.08,
+				"fillArea": 0.58,
+				"extent": 0.988,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": false,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/3d84de3b-2479-4255-a3b9-49f889c1354d.glb",
+				"latencyMs": 137129,
+				"bytes": 4944576,
+				"metrics": {
+					"triangles": 29900,
+					"vertices": 14950,
+					"edges": 44850,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2277,
+				"path": ".cache/grok-eval-ref-image/baseline/food-06.render.png"
+			},
+			"score": 50,
+			"failed": false
 		},
 		"baseline:hard-01": {
 			"provider": "baseline",
@@ -273,7 +1008,7 @@
 			"category": "hard",
 			"prompt": "a bicycle with thin spokes",
 			"seed": 216931794,
-			"ranAt": "2026-11-20T21:42:56.272Z",
+			"ranAt": "2026-11-20T22:03:58.444Z",
 			"reference": {
 				"ok": false,
 				"error": "pollinations returned 402"
@@ -287,7 +1022,7 @@
 			"category": "hard",
 			"prompt": "a wire birdcage with an open door",
 			"seed": 498055926,
-			"ranAt": "2026-11-20T21:42:56.611Z",
+			"ranAt": "2026-11-20T22:03:58.831Z",
 			"reference": {
 				"ok": false,
 				"error": "pollinations returned 402"
@@ -301,7 +1036,7 @@
 			"category": "hard",
 			"prompt": "a dragonfly with transparent veined wings",
 			"seed": 1953490741,
-			"ranAt": "2026-11-20T21:42:56.625Z",
+			"ranAt": "2026-11-20T22:03:59.187Z",
 			"reference": {
 				"ok": false,
 				"error": "pollinations returned 402"
@@ -315,7 +1050,7 @@
 			"category": "hard",
 			"prompt": "a wrought iron floor lamp with a thin curved stem",
 			"seed": 683648954,
-			"ranAt": "2026-11-20T21:42:56.958Z",
+			"ranAt": "2026-11-20T22:03:59.559Z",
 			"reference": {
 				"ok": false,
 				"error": "pollinations returned 402"
@@ -329,7 +1064,7 @@
 			"category": "hard",
 			"prompt": "a clear glass wine bottle",
 			"seed": 1258575395,
-			"ranAt": "2026-11-20T21:42:56.976Z",
+			"ranAt": "2026-11-20T22:03:59.893Z",
 			"reference": {
 				"ok": false,
 				"error": "pollinations returned 402"
@@ -343,7 +1078,7 @@
 			"category": "hard",
 			"prompt": "a crystal chandelier",
 			"seed": 2116853233,
-			"ranAt": "2026-11-20T21:42:57.291Z",
+			"ranAt": "2026-11-20T22:04:00.271Z",
 			"reference": {
 				"ok": false,
 				"error": "pollinations returned 402"
@@ -357,7 +1092,7 @@
 			"category": "hard",
 			"prompt": "a glass jar half full of honey",
 			"seed": 9831318,
-			"ranAt": "2026-11-20T21:42:57.315Z",
+			"ranAt": "2026-11-20T22:04:00.619Z",
 			"reference": {
 				"ok": false,
 				"error": "pollinations returned 402"
@@ -428,19 +1163,131 @@
 			"score": 70,
 			"failed": false
 		},
+		"baseline:props-02": {
+			"provider": "baseline",
+			"id": "props-02",
+			"category": "props",
+			"prompt": "a wooden treasure chest with iron bands, lid closed",
+			"seed": 1048122372,
+			"ranAt": "2026-11-20T21:42:15.626Z",
+			"reference": {
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 17359,
+				"imageUrl": "https://three.ws/cdn/forge/refs/5f30ad12-4857-454d-b032-ff57e12aa197.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/props-02.ref.png"
+			},
+			"image": {
+				"bgColor": [
+					138,
+					135,
+					131
+				],
+				"bgUniformity": 0.048,
+				"components": 1,
+				"mainShare": 1,
+				"centroidOffset": 0.013,
+				"bboxOffset": 0.006,
+				"fillArea": 0.93,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/dacb03d1-2bec-47f4-b5b5-f80580cb426f.glb",
+				"latencyMs": 315387,
+				"bytes": 6877708,
+				"metrics": {
+					"triangles": 144679,
+					"vertices": 72333,
+					"edges": 217067,
+					"boundaryEdges": 97,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0.00045,
+					"watertight": false,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 3232,
+				"path": ".cache/grok-eval-ref-image/baseline/props-02.render.png"
+			},
+			"score": 70,
+			"failed": false
+		},
 		"baseline:props-03": {
 			"provider": "baseline",
 			"id": "props-03",
 			"category": "props",
 			"prompt": "a vintage rotary telephone in red bakelite",
 			"seed": 1755564410,
-			"ranAt": "2026-11-20T21:42:15.643Z",
+			"ranAt": "2026-11-20T22:03:16.003Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 31006,
+				"imageUrl": "https://three.ws/cdn/forge/refs/b7bf6681-457b-47f0-b230-3d287652663b.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/props-03.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					204,
+					205,
+					199
+				],
+				"bgUniformity": 0.143,
+				"components": 3,
+				"mainShare": 0.994,
+				"centroidOffset": 0.075,
+				"bboxOffset": 0.006,
+				"fillArea": 0.804,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/017715f0-9ef9-40ea-b155-90c2adb8c1a0.glb",
+				"latencyMs": 251146,
+				"bytes": 4191756,
+				"metrics": {
+					"triangles": 37542,
+					"vertices": 18771,
+					"edges": 56313,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2501,
+				"path": ".cache/grok-eval-ref-image/baseline/props-03.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:props-04": {
 			"provider": "baseline",
@@ -448,13 +1295,62 @@
 			"category": "props",
 			"prompt": "a ceramic teapot with a blue floral pattern",
 			"seed": 28454214,
-			"ranAt": "2026-11-20T21:42:15.645Z",
+			"ranAt": "2026-11-20T22:13:16.620Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 25637,
+				"imageUrl": "https://three.ws/cdn/forge/refs/37f024ad-6440-4ef2-9846-fb0513b4b345.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/props-04.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					114,
+					101,
+					91
+				],
+				"bgUniformity": 0.403,
+				"components": 4,
+				"mainShare": 0.819,
+				"centroidOffset": 0.329,
+				"bboxOffset": 0.215,
+				"fillArea": 0.43,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": false,
+					"centered": false,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/05368622-5d5f-4fab-9ea4-9eb275fac3e0.glb",
+				"latencyMs": 318570,
+				"bytes": 5873636,
+				"metrics": {
+					"triangles": 53892,
+					"vertices": 26946,
+					"edges": 80838,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2262,
+				"path": ".cache/grok-eval-ref-image/baseline/props-04.render.png"
+			},
+			"score": 40,
+			"failed": false
 		},
 		"baseline:props-05": {
 			"provider": "baseline",
@@ -462,13 +1358,62 @@
 			"category": "props",
 			"prompt": "a battered leather armchair",
 			"seed": 322730513,
-			"ranAt": "2026-11-20T21:42:27.174Z",
+			"ranAt": "2026-11-20T22:13:16.649Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 5544,
+				"imageUrl": "https://three.ws/cdn/forge/refs/77569d9c-a067-45e2-b960-e88551aad60f.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/props-05.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					192,
+					193,
+					187
+				],
+				"bgUniformity": 0.32,
+				"components": 1,
+				"mainShare": 1,
+				"centroidOffset": 0.133,
+				"bboxOffset": 0.006,
+				"fillArea": 0.71,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/fcd73af0-550d-471d-a2c4-0ae1237f8fd6.glb",
+				"latencyMs": 133434,
+				"bytes": 5041444,
+				"metrics": {
+					"triangles": 48978,
+					"vertices": 24489,
+					"edges": 73461,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2408,
+				"path": ".cache/grok-eval-ref-image/baseline/props-05.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:props-06": {
 			"provider": "baseline",
@@ -476,13 +1421,62 @@
 			"category": "props",
 			"prompt": "a sci-fi energy cell canister with glowing cyan core",
 			"seed": 282078230,
-			"ranAt": "2026-11-20T21:42:27.227Z",
+			"ranAt": "2026-11-20T22:13:16.650Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 29570,
+				"imageUrl": "https://three.ws/cdn/forge/refs/4e86b56a-f0e1-4dfe-801b-12d2b85e3f38.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/props-06.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					85,
+					94,
+					113
+				],
+				"bgUniformity": 0.197,
+				"components": 2,
+				"mainShare": 0.982,
+				"centroidOffset": 0.073,
+				"bboxOffset": 0.006,
+				"fillArea": 0.84,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/8826bbb4-973e-47fb-a372-a95525475a6f.glb",
+				"latencyMs": 325593,
+				"bytes": 4127836,
+				"metrics": {
+					"triangles": 31284,
+					"vertices": 15644,
+					"edges": 46926,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2334,
+				"path": ".cache/grok-eval-ref-image/baseline/props-06.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:props-07": {
 			"provider": "baseline",
@@ -490,13 +1484,62 @@
 			"category": "props",
 			"prompt": "a knight's steel helmet with a visor",
 			"seed": 459198047,
-			"ranAt": "2026-11-20T21:42:51.668Z",
+			"ranAt": "2026-11-20T22:16:55.053Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 28932,
+				"imageUrl": "https://three.ws/cdn/forge/refs/a498a77f-0020-4a9b-a9f6-d0a3a50e7676.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/props-07.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					182,
+					182,
+					180
+				],
+				"bgUniformity": 0.636,
+				"components": 2,
+				"mainShare": 0.996,
+				"centroidOffset": 0.173,
+				"bboxOffset": 0.012,
+				"fillArea": 0.665,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/8df0f331-0481-41d3-8374-63192ea58a27.glb",
+				"latencyMs": 192298,
+				"bytes": 7170884,
+				"metrics": {
+					"triangles": 149141,
+					"vertices": 74425,
+					"edges": 223681,
+					"boundaryEdges": 6,
+					"nonManifoldEdges": 8,
+					"boundaryRatio": 0.00003,
+					"watertight": false,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 3917,
+				"path": ".cache/grok-eval-ref-image/baseline/props-07.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:vehicles-01": {
 			"provider": "baseline",
@@ -504,10 +1547,10 @@
 			"category": "vehicles",
 			"prompt": "a red vintage pickup truck",
 			"seed": 1963857808,
-			"ranAt": "2026-11-20T21:42:53.061Z",
+			"ranAt": "2026-11-20T22:26:14.841Z",
 			"reference": {
 				"ok": false,
-				"error": "pollinations returned 402"
+				"error": "pollinations returned 402: FREE_LIMIT Free limit reached: 1 image every 45 seconds per IP. Retry after 14s, or get unlimited images with a pollen key at https://enter.pollinations.ai/?ref=classic"
 			},
 			"score": 0,
 			"failed": true
@@ -518,13 +1561,62 @@
 			"category": "vehicles",
 			"prompt": "a low-poly style yellow school bus",
 			"seed": 1021752576,
-			"ranAt": "2026-11-20T21:42:53.085Z",
+			"ranAt": "2026-11-20T22:28:23.390Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 5455,
+				"imageUrl": "https://three.ws/cdn/forge/refs/65104d27-b5f4-495d-b156-4c754101363d.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-02.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					103,
+					103,
+					104
+				],
+				"bgUniformity": 0.316,
+				"components": 2,
+				"mainShare": 0.821,
+				"centroidOffset": 0.105,
+				"bboxOffset": 0.125,
+				"fillArea": 0.762,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": false,
+					"centered": false,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/76d8aebd-48e3-4270-a9a6-c8774f31c3f9.glb",
+				"latencyMs": 107327,
+				"bytes": 4455472,
+				"metrics": {
+					"triangles": 33938,
+					"vertices": 17024,
+					"edges": 50961,
+					"boundaryEdges": 108,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0.00212,
+					"watertight": false,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2697,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-02.render.png"
+			},
+			"score": 40,
+			"failed": false
 		},
 		"baseline:vehicles-03": {
 			"provider": "baseline",
@@ -532,13 +1624,62 @@
 			"category": "vehicles",
 			"prompt": "a matte black sport motorcycle",
 			"seed": 2069057653,
-			"ranAt": "2026-11-20T21:42:53.397Z",
+			"ranAt": "2026-11-20T22:29:05.005Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 30696,
+				"imageUrl": "https://three.ws/cdn/forge/refs/20874bc5-6b5b-47ae-9a22-9c18342d0dd1.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-03.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					52,
+					57,
+					56
+				],
+				"bgUniformity": 0.243,
+				"components": 3,
+				"mainShare": 0.982,
+				"centroidOffset": 0.094,
+				"bboxOffset": 0.006,
+				"fillArea": 0.712,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/85066458-a15a-41f7-986f-6904eedc0154.glb",
+				"latencyMs": 143496,
+				"bytes": 5324684,
+				"metrics": {
+					"triangles": 42056,
+					"vertices": 20999,
+					"edges": 63084,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2010,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-03.render.png"
+			},
+			"score": 70,
+			"failed": false
 		},
 		"baseline:vehicles-04": {
 			"provider": "baseline",
@@ -546,13 +1687,62 @@
 			"category": "vehicles",
 			"prompt": "a small propeller seaplane with floats",
 			"seed": 929800351,
-			"ranAt": "2026-11-20T21:42:53.414Z",
+			"ranAt": "2026-11-20T22:31:10.640Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 5199,
+				"imageUrl": "https://three.ws/cdn/forge/refs/361734c8-1a4a-44d1-a338-7600a754d9ee.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-04.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					17,
+					68,
+					93
+				],
+				"bgUniformity": 0.305,
+				"components": 4,
+				"mainShare": 0.489,
+				"centroidOffset": 0.361,
+				"bboxOffset": 0.006,
+				"fillArea": 0.248,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": false,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/9c40fafa-84fa-4f7a-9fd0-14ebaf093b60.glb",
+				"latencyMs": 99388,
+				"bytes": 4132732,
+				"metrics": {
+					"triangles": 20016,
+					"vertices": 10012,
+					"edges": 30024,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 1859,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-04.render.png"
+			},
+			"score": 50,
+			"failed": false
 		},
 		"baseline:vehicles-05": {
 			"provider": "baseline",
@@ -560,13 +1750,62 @@
 			"category": "vehicles",
 			"prompt": "a steampunk submarine with brass rivets",
 			"seed": 1570313402,
-			"ranAt": "2026-11-20T21:42:53.765Z",
+			"ranAt": "2026-11-20T22:31:24.147Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 29484,
+				"imageUrl": "https://three.ws/cdn/forge/refs/9cd7d125-cfca-424c-b838-e7aecaf41e32.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-05.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					49,
+					52,
+					47
+				],
+				"bgUniformity": 0.197,
+				"components": 3,
+				"mainShare": 0.487,
+				"centroidOffset": 0.099,
+				"bboxOffset": 0.006,
+				"fillArea": 0.637,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": false,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/25553b7b-e07f-46cc-b5a9-a7f632826b0c.glb",
+				"latencyMs": 140913,
+				"bytes": 5758416,
+				"metrics": {
+					"triangles": 53336,
+					"vertices": 26720,
+					"edges": 80059,
+					"boundaryEdges": 110,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0.00137,
+					"watertight": false,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2292,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-05.render.png"
+			},
+			"score": 50,
+			"failed": false
 		},
 		"baseline:vehicles-06": {
 			"provider": "baseline",
@@ -574,13 +1813,62 @@
 			"category": "vehicles",
 			"prompt": "a six-wheeled planetary rover",
 			"seed": 142051365,
-			"ranAt": "2026-11-20T21:42:53.782Z",
+			"ranAt": "2026-11-20T22:33:05.369Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 6423,
+				"imageUrl": "https://three.ws/cdn/forge/refs/9734205c-7aa4-49d4-9dc8-1df322a5b638.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-06.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					195,
+					195,
+					195
+				],
+				"bgUniformity": 0.346,
+				"components": 4,
+				"mainShare": 0.805,
+				"centroidOffset": 0.049,
+				"bboxOffset": 0.006,
+				"fillArea": 0.564,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": false,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/beb2b5d2-66a2-42fd-96f2-5f5ac2bf0d77.glb",
+				"latencyMs": 226221,
+				"bytes": 6877448,
+				"metrics": {
+					"triangles": 118988,
+					"vertices": 59402,
+					"edges": 178479,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 3,
+					"boundaryRatio": 0,
+					"watertight": false,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 2269,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-06.render.png"
+			},
+			"score": 50,
+			"failed": false
 		},
 		"baseline:vehicles-07": {
 			"provider": "baseline",
@@ -588,13 +1876,62 @@
 			"category": "vehicles",
 			"prompt": "a wooden rowing boat with two oars resting inside",
 			"seed": 997747800,
-			"ranAt": "2026-11-20T21:42:54.129Z",
+			"ranAt": "2026-11-20T22:33:06.967Z",
 			"reference": {
-				"ok": false,
-				"error": "pollinations returned 402"
+				"ok": true,
+				"lane": "fallthrough",
+				"model": "pollinations/flux",
+				"latencyMs": 31255,
+				"imageUrl": "https://three.ws/cdn/forge/refs/f4672150-887f-4d61-99e4-13e8ef69a4e6.jpg",
+				"xaiCalls": 0,
+				"costUsd": null,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-07.ref.png"
 			},
-			"score": 0,
-			"failed": true
+			"image": {
+				"bgColor": [
+					142,
+					141,
+					140
+				],
+				"bgUniformity": 0.075,
+				"components": 3,
+				"mainShare": 0.959,
+				"centroidOffset": 0.074,
+				"bboxOffset": 0.006,
+				"fillArea": 0.841,
+				"extent": 1,
+				"cropped": true,
+				"checks": {
+					"bgClean": false,
+					"singleSubject": true,
+					"centered": true,
+					"saneFill": false,
+					"notCropped": false
+				}
+			},
+			"mesh": {
+				"ok": true,
+				"glbUrl": "https://storage.googleapis.com/three-ws-avatar-reconstructions/raw-meshes/trellis/91a17f8c-1251-4c9c-a208-8cde95d42c66.glb",
+				"latencyMs": 249157,
+				"bytes": 5236492,
+				"metrics": {
+					"triangles": 43058,
+					"vertices": 21509,
+					"edges": 64587,
+					"boundaryEdges": 0,
+					"nonManifoldEdges": 0,
+					"boundaryRatio": 0,
+					"watertight": true,
+					"closed": true
+				}
+			},
+			"render": {
+				"ok": true,
+				"latencyMs": 1806,
+				"path": ".cache/grok-eval-ref-image/baseline/vehicles-07.render.png"
+			},
+			"score": 70,
+			"failed": false
 		}
 	},
 	"judgments": {},
@@ -608,6 +1945,26 @@
 			"prompts": 1,
 			"renderBase": "https://three.ws",
 			"finishedAt": "2026-11-20T21:41:33.422Z"
+		},
+		{
+			"startedAt": "2026-11-20T21:42:15.605Z",
+			"commit": "7ca96e42e",
+			"providers": [
+				"baseline"
+			],
+			"prompts": 40,
+			"renderBase": "https://three.ws",
+			"finishedAt": "2026-11-20T21:47:54.718Z"
+		},
+		{
+			"startedAt": "2026-11-20T22:03:15.933Z",
+			"commit": "10f55e76e",
+			"providers": [
+				"baseline"
+			],
+			"prompts": 40,
+			"renderBase": "https://three.ws",
+			"finishedAt": "2026-11-20T22:08:03.925Z"
 		}
 	]
 }

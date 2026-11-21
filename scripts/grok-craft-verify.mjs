@@ -264,6 +264,28 @@ async function canvasVerdict(png) {
 
 // ---------- browser ----------
 
+// Runs in the page. Reads the largest canvas inside an animation frame, right after the app's
+// own rAF callback has drawn it, while the WebGL drawing buffer is still valid. No compositor
+// round trip, so a GPU-bound render loop (GTAO in SwiftShader) cannot starve the capture the way
+// it starves page.screenshot().
+function captureLargestCanvas() {
+	return new Promise((resolve) => {
+		requestAnimationFrame(() => {
+			const canvas = [...document.querySelectorAll('canvas')].sort((a, b) => b.width * b.height - a.width * a.height)[0];
+			if (!canvas) return resolve({ why: 'no canvas in the page' });
+			if (!canvas.width || !canvas.height) return resolve({ why: 'canvas has zero size' });
+			const copy = document.createElement('canvas');
+			copy.width = canvas.width;
+			copy.height = canvas.height;
+			const ctx = copy.getContext('2d');
+			ctx.fillStyle = '#ffffff'; // transparent canvases are judged against white
+			ctx.fillRect(0, 0, copy.width, copy.height);
+			ctx.drawImage(canvas, 0, 0);
+			resolve({ png: copy.toDataURL('image/png').split(',')[1] });
+		});
+	});
+}
+
 async function runJsBlock(context, block, origin) {
 	const page = await context.newPage();
 	const problems = [];
@@ -292,23 +314,6 @@ async function runJsBlock(context, block, origin) {
 		return route.abort();
 	});
 
-	// Heavy passes (GTAO at full size) keep SwiftShader busy every frame, so a screenshot never
-	// gets a compositor slot. During capture the page's rAF callbacks are queued, the canvas keeps
-	// its last presented frame, and the queue is replayed afterwards.
-	await page.addInitScript(() => {
-		const native = window.requestAnimationFrame.bind(window);
-		let held = null;
-		window.requestAnimationFrame = (cb) => (held ? held.push(cb) : native(cb));
-		window.__craftHold = () => {
-			held = held || [];
-		};
-		window.__craftRelease = () => {
-			const queued = held || [];
-			held = null;
-			for (const cb of queued) native(cb);
-		};
-	});
-
 	let verdict = { blank: true, why: 'no canvas' };
 	let shot = null;
 	try {
@@ -317,18 +322,18 @@ async function runJsBlock(context, block, origin) {
 		const deadline = Date.now() + 60_000;
 		while (Date.now() < deadline) {
 			await page.waitForTimeout(1500);
-			const handle = await page.evaluateHandle(() =>
-				[...document.querySelectorAll('canvas')].sort((a, b) => b.clientWidth * b.clientHeight - a.clientWidth * a.clientHeight)[0] || null,
-			);
-			const el = handle.asElement();
-			if (!el) {
-				verdict = { blank: true, why: 'no canvas in the page' };
+			let timer;
+			const capture = await Promise.race([
+				page.evaluate(captureLargestCanvas),
+				new Promise((ok) => {
+					timer = setTimeout(() => ok({ why: 'no frame rendered within 60 s' }), 60_000);
+				}),
+			]).finally(() => clearTimeout(timer));
+			if (!capture.png) {
+				verdict = { blank: true, why: capture.why };
 				continue;
 			}
-			await page.evaluate(() => window.__craftHold());
-			await page.waitForTimeout(500); // let the frame already in flight present
-			shot = await el.screenshot({ timeout: 60_000 });
-			await page.evaluate(() => window.__craftRelease());
+			shot = Buffer.from(capture.png, 'base64');
 			verdict = await canvasVerdict(shot);
 			if (!verdict.blank) break;
 		}

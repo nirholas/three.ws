@@ -464,7 +464,7 @@ Make today's 3D brief about: lighthouses.
 
 In Grok Bot, a schedule such as "every morning, run the `daily-3d-brief` prompt
 from three-ws-grok and send me the links" is the whole setup.
-[three.ws/grok](/grok#gk-recipes-h) has four copy-ready recipes, and
+[three.ws/grok](/grok#gk-schedule-h) has four copy-ready recipes, and
 [MCP use cases](./mcp.md#use-cases) writes each prompt out as its calls. The
 prompts live in [`api/_mcp/prompts.js`](../api/_mcp/prompts.js).
 

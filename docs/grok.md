@@ -24,6 +24,100 @@ and [Grok Build](#grok-build) picks the same server up from a project
 | **Protocol** | MCP `2025-06-18` |
 | **Tools** | The full free studio: the same sixteen tools as [`/api/mcp-studio`](./mcp-studio.md). Signed in, also your [account's agent tools](#your-account-on-the-same-url) |
 
+## Install
+
+These are the same six tabs as the Install section on [three.ws/grok](/grok#install),
+with the same values. Every route connects one URL,
+`https://three.ws/api/mcp-grok?auth=oauth`, and signs in to a free three.ws
+account the first time. Only Cursor documents an install link format, so only
+the Cursor tab has a one-click button; for the rest the page ships the exact
+value to paste, with a copy button, rather than guess at a link scheme.
+
+| Tab | Deep link on the page | What you paste |
+|---|---|---|
+| Grok Bot | [/grok#install-bot](/grok#install-bot) | The sentence below, or the URL in **Connect apps**, **Add a custom connector** (Type: Remote HTTPS) |
+| grok.com | [/grok#install-grokcom](/grok#install-grokcom) | The URL in [grok.com/connectors](https://grok.com/connectors), **New Connector**, **Custom**, OAuth |
+| Grok Build | [/grok#install-build](/grok#install-build) | `grok mcp add`, the plugin, or `.mcp.json` |
+| Cursor | [/grok#install-cursor](/grok#install-cursor) | The **Add to Cursor** link, or `mcp.json` |
+| Any MCP client | [/grok#install-any](/grok#install-any) | `claude mcp add`, `code --add-mcp`, or `.mcp.json` |
+| xAI API | [/grok#install-api](/grok#install-api) | The `tools` entry in a Responses API request |
+
+**Grok Bot.** Send this from chat (details in [Grok Bot](#grok-bot)):
+
+```
+Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok?auth=oauth with OAuth authentication
+```
+
+**grok.com.** The connector URL, with OAuth (details in [Grok connectors](#grok-connectors)):
+
+```
+https://three.ws/api/mcp-grok?auth=oauth
+```
+
+**Grok Build.** One command adds the server (`--scope project` shares it with a
+repository); `grok mcp doctor` or `/mcps` confirms it:
+
+```bash
+grok mcp add --transport http three-ws-grok "https://three.ws/api/mcp-grok?auth=oauth"
+```
+
+The [plugin](../integrations/grok/three-ws/README.md) adds six 3D skills, five
+commands and a 3D art director agent. Plugins under `~/.grok/plugins/` are
+trusted automatically:
+
+```bash
+git clone --depth 1 --filter=blob:none --sparse https://github.com/nirholas/three.ws three.ws-src
+git -C three.ws-src sparse-checkout set integrations/grok/three-ws
+mkdir -p ~/.grok/plugins && cp -r three.ws-src/integrations/grok/three-ws ~/.grok/plugins/three-ws
+```
+
+Or commit a project `.mcp.json` (details in [Grok Build](#grok-build)):
+
+```json
+{
+  "mcpServers": {
+    "three-ws-grok": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp-grok?auth=oauth"
+    }
+  }
+}
+```
+
+**Cursor.** The install link follows Cursor's documented
+[MCP install link](https://cursor.com/docs/context/mcp/install-links) format, the
+server config as base64 JSON (`{"url":"https://three.ws/api/mcp-grok?auth=oauth"}`):
+
+```
+cursor://anysphere.cursor-deeplink/mcp/install?name=three-ws-grok&config=eyJ1cmwiOiJodHRwczovL3RocmVlLndzL2FwaS9tY3AtZ3Jvaz9hdXRoPW9hdXRoIn0%3D
+```
+
+Or add it by hand to `~/.cursor/mcp.json` (or a project's `.cursor/mcp.json`);
+Cursor shows **Needs login** once, which opens three.ws sign-in:
+
+```json
+{
+  "mcpServers": {
+    "three-ws-grok": {
+      "url": "https://three.ws/api/mcp-grok?auth=oauth"
+    }
+  }
+}
+```
+
+**Any MCP client.** Claude Code, VS Code, or any client that reads `.mcp.json`
+(VS Code documents the command and the file but no install link):
+
+```bash
+claude mcp add --transport http three-ws-grok "https://three.ws/api/mcp-grok?auth=oauth"
+code --add-mcp '{"name":"three-ws-grok","type":"http","url":"https://three.ws/api/mcp-grok?auth=oauth"}'
+```
+
+Every other client, step by step: [Connect AI clients](/connect).
+
+**xAI API.** The Responses API calls the server from xAI's side with a three.ws
+API key; full request and SDK examples are in [xAI API](#xai-api).
+
 ## Grok Bot
 
 Grok Bot adds a custom MCP server from chat. Send:
@@ -316,6 +410,17 @@ session, search the catalog, fetch embed code, generate a model and render it
 from several angles. Every example is run against production before the file
 changes.
 
+It works without a connector too. Grok Bot has a terminal, so the file shows the
+free server as `curl` JSON-RPC calls that run as written, for example a catalog
+search:
+
+```bash
+curl -s -X POST https://three.ws/api/mcp-studio \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search_catalog","arguments":{"q":"chair","limit":2}}}'
+```
+
 It renders from [`data/grok-skill-md.template.md`](../data/grok-skill-md.template.md)
 with the same facts as the general [`skill.md`](./agent-skills.md#the-entry-point-skill-httpsthreewsskillmd)
 (server URLs, tool and prompt names, free limits), read from the code that owns
@@ -364,41 +469,13 @@ stops to ask, and ends with the plain links Grok hands back.
 | `market-brief` | `focus` (optional), `count` (1 to 5, default 3) | Signed in only: fresh pump.fun graduations, Oracle's top plays and the Sentiment Scout, due diligence on the strongest coins with insider-heavy ones flagged, and the verified trader leaderboard. Reads only; never trades or suggests an amount. |
 
 A schedule such as "every morning, run the `daily-3d-brief` prompt from
-three-ws-grok and send me the links" is all it takes. [three.ws/grok](/grok#gk-recipes-h)
+three-ws-grok and send me the links" is all it takes. [three.ws/grok](/grok#gk-schedule-h)
 has four of these as copy-ready recipes, each with the calls it makes in order. Anonymous, the connector lists
 the first four; signed in, it adds `agent-report` and `market-brief`. Each prompt is written out as
 its calls in [MCP use cases](./mcp.md#use-cases), and
 [`api/_mcp/prompts.js`](../api/_mcp/prompts.js) renders them against the
 caller's own `tools/list`, so a prompt never names a tool the connector cannot
 call.
-
-## A skill file for Grok
-
-[`https://three.ws/grok-skill.md`](https://three.ws/grok-skill.md) teaches
-Grok all of the above in one Markdown file: the connector URL and its settings,
-the plain HTTPS fallback, the links contract, the free limits, what needs an
-account, and the rule that a connector never spends. Upload it to Grok's Skills,
-or have Grok Bot keep it in its files:
-
-```
-Download https://three.ws/grok-skill.md to your files and follow it whenever I ask for anything 3D.
-```
-
-It works without a connector too. Grok Bot has a terminal, so the file shows the
-free server as `curl` JSON-RPC calls that run as written: list the tools, search
-the ready-made library, get paste-ready code for a match, generate a model, and
-collect a render that outlived the call:
-
-```bash
-curl -s -X POST https://three.ws/api/mcp-studio \
-  -H 'content-type: application/json' \
-  -H 'accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search_catalog","arguments":{"q":"chair","limit":2}}}'
-```
-
-The file is the Grok edition of the general [`/skill.md`](./agent-skills.md#the-entry-point-skill-httpsthreewsskillmd).
-Both render from one set of facts, so their URLs, mint and free limits cannot
-disagree; see [Agent Skills](./agent-skills.md#the-grok-edition-httpsthreewsgrok-skillmd).
 
 ## How it behaves under Grok
 
