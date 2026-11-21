@@ -111,6 +111,52 @@ export function walkRadius(medianDepthM) {
 	return Math.min(1.5, Math.max(0.25, base * 0.3));
 }
 
+/**
+ * A latitude/longitude sphere of `radius` metres that samples the equirect photo
+ * in the depth worker's frame (workers/model-panodepth/shell_mesh.py
+ * directions(): u = 0.5, v = 0.5 looks along -Z, u grows toward +X, v is
+ * measured from the top). The worker drops shell faces that bridge a depth
+ * jump; drawn behind the shell, this sphere shows the photo through those gaps
+ * instead of the empty background, exactly from the centre and as distant
+ * scenery once the camera steps off it.
+ */
+export function backdropGrid(cols, rows, radius) {
+	const positions = new Float32Array((cols + 1) * (rows + 1) * 3);
+	const uvs = new Float32Array((cols + 1) * (rows + 1) * 2);
+	let p = 0;
+	let t = 0;
+	for (let r = 0; r <= rows; r++) {
+		const v = r / rows;
+		const pitch = (0.5 - v) * Math.PI;
+		const cp = Math.cos(pitch);
+		const sp = Math.sin(pitch);
+		for (let c = 0; c <= cols; c++) {
+			const u = c / cols;
+			const yaw = (u - 0.5) * 2 * Math.PI;
+			positions[p++] = radius * Math.sin(yaw) * cp;
+			positions[p++] = radius * sp;
+			positions[p++] = -radius * Math.cos(yaw) * cp;
+			uvs[t++] = u;
+			uvs[t++] = v;
+		}
+	}
+	const indices = new Uint32Array(cols * rows * 6);
+	let k = 0;
+	for (let r = 0; r < rows; r++) {
+		for (let c = 0; c < cols; c++) {
+			const a = r * (cols + 1) + c;
+			const b = a + cols + 1;
+			indices[k++] = a;
+			indices[k++] = b;
+			indices[k++] = a + 1;
+			indices[k++] = a + 1;
+			indices[k++] = b;
+			indices[k++] = b + 1;
+		}
+	}
+	return { positions, uvs, indices };
+}
+
 /** Clamp a horizontal offset into the walk disc. */
 export function clampOffset(x, z, radius) {
 	const len = Math.hypot(x, z);

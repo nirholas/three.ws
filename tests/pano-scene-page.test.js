@@ -12,6 +12,7 @@ import {
 	walkRadius,
 	clampOffset,
 	deviceQuaternion,
+	backdropGrid,
 } from '../src/pano-scene-core.js';
 
 describe('classifyFile', () => {
@@ -130,5 +131,43 @@ describe('errorCopy upload_failed', () => {
 		const copy = errorCopy('upload_failed', 'Upload failed (HTTP 401).');
 		expect(copy.body).toContain('HTTP 401');
 		expect(copy.pasteLink).toBe(true);
+	});
+});
+
+describe('backdropGrid', () => {
+	// The depth worker culls shell faces that bridge a depth jump, so the stage
+	// draws the photo on a far sphere behind the shell. It must sample the photo
+	// in the worker's frame (workers/model-panodepth/shell_mesh.py directions():
+	// centre pixel looks along -Z, u grows toward +X, v from the top grows down),
+	// or the gaps would show a rotated photo instead of the missing pixels.
+	const grid = backdropGrid(8, 4, 100);
+	const vertex = (u, v) => {
+		for (let i = 0; i < grid.uvs.length / 2; i++) {
+			if (Math.abs(grid.uvs[2 * i] - u) < 1e-9 && Math.abs(grid.uvs[2 * i + 1] - v) < 1e-9) return Array.from(grid.positions.slice(3 * i, 3 * i + 3));
+		}
+		throw new Error(`no vertex at ${u},${v}`);
+	};
+	const near = (a, b) => a.forEach((x, i) => expect(x).toBeCloseTo(b[i], 6));
+
+	it('puts the photo centre straight ahead and the right edge behind, at the radius', () => {
+		near(vertex(0.5, 0.5), [0, 0, -100]);
+		near(vertex(0.75, 0.5), [100, 0, 0]);
+		near(vertex(0.25, 0.5), [-100, 0, 0]);
+		near(vertex(0, 0.5), [0, 0, 100]);
+		near(vertex(1, 0.5), [0, 0, 100]);
+	});
+
+	it('puts the top row at the zenith and the bottom row at the nadir', () => {
+		near(vertex(0.5, 0), [0, 100, 0]);
+		near(vertex(0.5, 1), [0, -100, 0]);
+		near(vertex(0.5, 0.25), [0, 100 * Math.SQRT1_2, -100 * Math.SQRT1_2]);
+	});
+
+	it('closes the sphere with two triangles per cell and in-range indices', () => {
+		const verts = grid.positions.length / 3;
+		expect(verts).toBe((8 + 1) * (4 + 1));
+		expect(grid.indices.length).toBe(8 * 4 * 6);
+		expect(Math.max(...grid.indices)).toBe(verts - 1);
+		for (let i = 0; i < verts; i++) expect(Math.hypot(...grid.positions.slice(3 * i, 3 * i + 3))).toBeCloseTo(100, 6);
 	});
 });

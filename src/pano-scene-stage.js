@@ -17,15 +17,22 @@ import {
 	Quaternion,
 	Euler,
 	Color,
+	BufferGeometry,
+	BufferAttribute,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
-import { clampOffset, deviceQuaternion, walkRadius } from './pano-scene-core.js';
+import { backdropGrid, clampOffset, deviceQuaternion, walkRadius } from './pano-scene-core.js';
 
 const DRAG_SPEED = 0.0042;
 const KEY_SPEED_MPS = 0.9;
 const STEP_FRACTION = 0.8;
 const MAX_PITCH = Math.PI / 2 - 0.02;
+// The photo sphere behind the shell: inside the camera's far plane (500 m),
+// drawn first with no depth test, so its radius never hides shell geometry.
+const BACKDROP_RADIUS = 400;
+const BACKDROP_COLS = 128;
+const BACKDROP_ROWS = 64;
 
 export class PanoSceneStage {
 	constructor(host) {
@@ -44,6 +51,7 @@ export class PanoSceneStage {
 		this._last = performance.now();
 		this._raf = 0;
 		this._shell = null;
+		this._backdrop = null;
 		this._euler = new Euler(0, 0, 0, 'YXZ');
 		this._quat = new Quaternion();
 
@@ -116,9 +124,11 @@ export class PanoSceneStage {
 		const gltf = await loader.loadAsync(url);
 		if (this._disposed) return { faces: 0 };
 		let faces = 0;
+		let photo = null;
 		gltf.scene.traverse((node) => {
 			if (!node.isMesh) return;
 			const old = node.material;
+			photo = photo || old.map || null;
 			node.material = new MeshBasicMaterial({
 				map: old.map || null,
 				color: old.map ? 0xffffff : old.color || 0xffffff,
@@ -134,9 +144,34 @@ export class PanoSceneStage {
 		if (this._shell) this.scene.remove(this._shell);
 		this._shell = gltf.scene;
 		this.scene.add(this._shell);
+		this._setBackdrop(photo);
 		this.setMedianDepth(medianDepthM);
 		this.invalidate();
 		return { faces: Math.round(faces) };
+	}
+
+	// The worker drops shell faces that bridge a depth jump (a person against a
+	// far wall, a railing against the sky). Without a backdrop those gaps show
+	// the empty page colour as black outlines; with the same photo on a far
+	// sphere they show exactly the right pixels from the centre.
+	_setBackdrop(map) {
+		if (this._backdrop) {
+			this.scene.remove(this._backdrop);
+			this._backdrop.geometry.dispose();
+			this._backdrop.material.dispose();
+			this._backdrop = null;
+		}
+		if (!map) return;
+		const grid = backdropGrid(BACKDROP_COLS, BACKDROP_ROWS, BACKDROP_RADIUS);
+		const geometry = new BufferGeometry();
+		geometry.setAttribute('position', new BufferAttribute(grid.positions, 3));
+		geometry.setAttribute('uv', new BufferAttribute(grid.uvs, 2));
+		geometry.setIndex(new BufferAttribute(grid.indices, 1));
+		const material = new MeshBasicMaterial({ map, side: DoubleSide, depthTest: false, depthWrite: false });
+		this._backdrop = new Mesh(geometry, material);
+		this._backdrop.renderOrder = -1;
+		this._backdrop.frustumCulled = false;
+		this.scene.add(this._backdrop);
 	}
 
 	setMedianDepth(m) {
@@ -295,6 +330,7 @@ export class PanoSceneStage {
 		c.removeEventListener('keydown', this._onKeyDown);
 		c.removeEventListener('keyup', this._onKeyUp);
 		c.removeEventListener('blur', this._onBlur);
+		this._setBackdrop(null);
 		this._shell?.traverse((n) => {
 			if (!n.isMesh) return;
 			n.geometry?.dispose();
