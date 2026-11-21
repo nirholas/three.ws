@@ -34,6 +34,9 @@ import { CliError, EXIT_CODES } from '../automation.js';
 export const QUALITIES = ['preview', 'standard', 'high'];
 export const PART_CONCURRENCY = 4;
 export const PART_ATTEMPTS = 5;
+// The server's bounds for a multi-photo capture (api/pano-capture.js).
+const MIN_IMAGES = 3;
+const MAX_IMAGES = 600;
 const SIGN_BATCH = 100;
 const PART_TIMEOUT_MS = 10 * 60_000;
 // The completed upload's source_url is signed for 7 days; reuse it for 6.
@@ -75,7 +78,7 @@ function pollMs(ctx, fallback) {
 }
 
 async function authed(ctx) {
-	const bearer = await bearerFor(ctx.env, { origin: ctx.origin });
+	const bearer = ctx.env.vars?.THREE_WS_API_KEY || (await bearerFor(ctx.env, { origin: ctx.origin }));
 	if (!bearer) throw new ApiError('sign in first: `npx three-ws login` (or set THREE_WS_API_KEY)', { code: 'login_required' });
 	return { authorization: `Bearer ${bearer}` };
 }
@@ -141,6 +144,10 @@ export function captureKind(files) {
 	if (kind === 'equirect_video' && files.length > 1) throw usage('Pass one 360 video per capture.');
 	if (kind === 'insv' && files.length > 2) throw usage('Pass one .insv file, or the two files of a split-lens recording.');
 	if (kind === 'insp' && files.length > 1) throw usage('Pass one .insp photo, or stitched 360 photos (.jpg) for a multi-photo capture.');
+	if (kind === 'equirect_images' && files.length < MIN_IMAGES) {
+		throw usage(`A 360 photo capture needs at least ${MIN_IMAGES} photos taken from different spots. For a single photo use: three-ws capture scene <photo>`);
+	}
+	if (kind === 'equirect_images' && files.length > MAX_IMAGES) throw usage(`Pass at most ${MAX_IMAGES} 360 photos per capture.`);
 	return kind;
 }
 

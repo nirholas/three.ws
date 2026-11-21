@@ -318,7 +318,9 @@ describe('three-ws capture', () => {
 		expect(lrv.code).toBe(2);
 		expect(lrv.json.message).toMatch(/\.insv with the same name/);
 		expect((await run(['capture', '360', 'a.mp4', 'b.jpg', '--json'], env)).code).toBe(2);
-		expect((await run(['capture', '360', 'b.jpg', '--trim-start', '2', '--json'], env)).code).toBe(2);
+		const trim = await run(['capture', '360', 'b.jpg', 'b.jpg', 'b.jpg', '--trim-start', '2', '--json'], env);
+		expect(trim.code).toBe(2);
+		expect(trim.json.message).toMatch(/video only/);
 		expect((await run(['capture', '360', 'a.mp4', '--quality', 'ultra', '--json'], env)).code).toBe(2);
 		expect((await run(['capture', '360', 'a.mp4', '--trim-start', '9', '--trim-end', '4', '--json'], env)).code).toBe(2);
 		expect(srv.log).toEqual([]);
@@ -329,6 +331,7 @@ describe('three-ws capture', () => {
 		expect(classifyFile('x.insp')).toMatchObject({ capture: 'insp', scene: 'insp' });
 		expect(captureKind(['a.jpg', 'b.png', 'c.exr'])).toBe('equirect_images');
 		expect(() => captureKind(['a.insv', 'b.insv', 'c.insv'])).toThrow(/split-lens/);
+		expect(() => captureKind(['a.jpg'])).toThrow(/capture scene/);
 	});
 
 	it('shows status, waits on an existing job and lists captures with absolute links', async () => {
@@ -377,5 +380,13 @@ describe('three-ws capture', () => {
 		const off = await run(['capture', '360', 'a.mp4', '--json'], env);
 		expect(off.code).toBe(6);
 		expect(off.json).toMatchObject({ error: 'unconfigured', message: expect.stringContaining('Large capture uploads are not available right now') });
+	});
+
+	it('signs in with THREE_WS_API_KEY when nothing is stored, as the sign-in hint promises', async () => {
+		const keyOnly = tempEnv();
+		keyOnly.vars.THREE_WS_API_KEY = KEY;
+		const r = await run(['capture', 'list', '--json'], keyOnly);
+		expect(r.code).toBe(0);
+		expect(r.json).toHaveProperty('captures');
 	});
 });
