@@ -789,6 +789,8 @@ curl -s -X POST https://three.ws/api/capture-upload/create \
   -d '{"filename":"walk.insv","content_type":"application/octet-stream","size_bytes":3221225472,"kind":"pano"}'
 ```
 
+The full request and response schemas, with examples, are in `/openapi.json` under the "360 capture: uploads" and "360 capture: scenes" tags. `three-ws capture 360 <file>` runs this whole flow from a terminal, resumes an interrupted upload, and starts the reconstruction ([CLI reference](cli.md#360-capture)).
+
 ## Suggested Skills API
 
 Skills an agent drafted for itself from runs that verifiably worked. Owner-only (session, or a bearer token with `agents:read` for reads and `agents:write` for writes). Concepts and the redaction guarantee: [skill-candidates.md](skill-candidates.md).
