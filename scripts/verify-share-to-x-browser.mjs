@@ -20,11 +20,16 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium } from 'playwright';
+import { xIntentUrl } from '../src/shared/share-targets.js';
 
 function arg(name, fallback) {
 	const i = process.argv.indexOf(`--${name}`);
 	return i > 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 }
+
+// The intent base the app builds, taken from the one builder so this check never
+// hand-writes an X intent of its own (tests/x-intent.test.js).
+const X_INTENT_BASE = (({ origin, pathname }) => origin + pathname)(new URL(xIntentUrl({ text: 't' })));
 
 const BASE = arg('base', 'http://localhost:3284');
 const OUT = resolve(arg('out', join(tmpdir(), 'three-ws-share-to-x')));
@@ -52,7 +57,7 @@ function stubPopups() {
 function checkIntent(href, { link, campaign, kind }) {
 	const problems = [];
 	const u = new URL(href);
-	if (u.origin + u.pathname !== 'https://x.com/intent/post') problems.push(`intent base is ${u.origin}${u.pathname}`);
+	if (u.origin + u.pathname !== X_INTENT_BASE) problems.push(`intent base is ${u.origin}${u.pathname}`);
 	const text = u.searchParams.get('text') || '';
 	const shared = u.searchParams.get('url');
 	if (!shared) problems.push('no url param');
