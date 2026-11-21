@@ -3,7 +3,7 @@
 // shelf in a real browser, end to end, without touching production data.
 //
 //   PORT=3349 node scripts/pano-capture-live-server.mjs --cookie-file <path> \
-//     --ply <file.ply> --spz <file.spz> [--worker-port 3348]
+//     --ply <file.ply> --spz <file.spz> [--worker-port 3348] [--api-key-file <path>]
 //   DEV_API_PROXY=http://localhost:3349 npx vite --port 3339 --strictPort
 //
 // Runs the real server/index.mjs (the process that serves production) on a
@@ -17,7 +17,10 @@
 // containing "unreadable" is refused at submit, anything else succeeds.
 //
 // The account's session token is written to --cookie-file (mode 0600) as the
-// value of the __Host-sid cookie, never printed.
+// value of the __Host-sid cookie, never printed. With --api-key-file, a real
+// "read generate" API key for the same account is minted the way the dashboard
+// mints one and written there (mode 0600), for clients that sign in with a key
+// (the Blender extension, the CLI).
 
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
@@ -31,6 +34,7 @@ const COOKIE_FILE = flag('--cookie-file');
 const PLY = flag('--ply');
 const SPZ = flag('--spz');
 const WORKER_PORT = Number(flag('--worker-port', 3348));
+const API_KEY_FILE = flag('--api-key-file');
 const PORT = Number(process.env.PORT || 3349);
 if (!COOKIE_FILE || !PLY || !SPZ) {
 	process.stderr.write('usage: pano-capture-live-server.mjs --cookie-file <path> --ply <file> --spz <file>\n');
@@ -124,6 +128,11 @@ const { createSession } = await import('../api/_lib/auth.js');
 const [user] = await sql`insert into users (email, display_name, email_verified) values ('pano-capture-proof@example.invalid', 'Capture proof', true) returning id`;
 const token = await createSession({ userId: user.id, userAgent: 'pano-capture-live-server', recordActivity: false });
 writeFileSync(COOKIE_FILE, token, { mode: 0o600 });
+if (API_KEY_FILE) {
+	const { mintApiKey } = await import('../api/_lib/api-keys.js');
+	const { secret: apiKey } = await mintApiKey({ userId: user.id, name: 'Capture proof', scopes: ['read', 'generate'], via: 'live-proof' });
+	writeFileSync(API_KEY_FILE, apiKey, { mode: 0o600 });
+}
 process.stdout.write(`pano-capture live server: user ${user.id}, session written to ${COOKIE_FILE}, worker on ${WORKER_PORT}\n`);
 
 await import('../server/index.mjs');
