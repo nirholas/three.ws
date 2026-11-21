@@ -160,6 +160,22 @@
 			.ps-btn--primary { background: var(--text, #f6f6f6); color: #000; border-color: var(--text, #f6f6f6); }
 			.ps-btn--primary:hover { background: #fff; }
 			.ps-stack { display: flex; flex-direction: column; gap: 8px; }
+			.ps-or { display: flex; align-items: center; gap: 10px; margin: 14px 0 10px; font-size: 11px; color: var(--text-3, #8a8a8a); text-transform: uppercase; letter-spacing: 0.06em; }
+			.ps-or::before, .ps-or::after { content: ""; flex: 1; height: 1px; background: var(--hairline, #1f1f1f); }
+			.ps-url { display: flex; gap: 8px; }
+			.ps-url .ps-btn { width: auto; flex: none; }
+			.ps-field {
+				flex: 1; min-width: 0; padding: 10px 12px; border-radius: 9px; font: inherit; font-size: 13px;
+				border: 1px solid var(--hairline-strong, #2a2a2a); background: var(--surface-0, #0a0a0a); color: var(--text, #f6f6f6);
+				transition: border-color var(--duration-fast, 120ms), box-shadow var(--duration-fast, 120ms);
+			}
+			.ps-field::placeholder { color: var(--text-3, #8a8a8a); }
+			.ps-field:hover { border-color: var(--text-3, #8a8a8a); }
+			.ps-field:focus-visible { outline: none; border-color: var(--text, #f6f6f6); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18); }
+			.ps-field[aria-invalid="true"] { border-color: #e5484d; }
+			.ps-url.is-callout .ps-field { border-color: var(--text, #f6f6f6); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22); }
+			.ps-url-msg { margin-top: 6px; font-size: 12px; color: #ff8589; }
+			.ps-url-msg[hidden] { display: none; }
 			.ps-note { font-size: 12px; color: var(--text-3, #8a8a8a); line-height: 1.6; margin: 0; }
 			.ps-note + .ps-note { margin-top: 8px; }
 			.ps-note code { font-size: 11.5px; }
@@ -232,6 +248,7 @@
 							<div class="ps-actions">
 								<a class="ps-btn ps-btn--primary" id="ps-error-signin" href="/login" hidden>Sign in</a>
 								<button class="ps-btn ps-btn--primary" id="ps-error-retry" type="button" hidden>Try again</button>
+								<button class="ps-btn ps-btn--primary" id="ps-error-url" type="button" hidden>Paste a link instead</button>
 								<button class="ps-btn" id="ps-error-pick" type="button">Choose another photo</button>
 							</div>
 						</div>
@@ -256,6 +273,12 @@
 								<input id="ps-file" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png,.insp" hidden aria-label="360 photo file" />
 							</div>
 							<p class="ps-note" style="margin-top:10px">JPEG, PNG or raw .insp, up to 120 MB. A raw .insp is stitched for you first, so the result takes a little longer.</p>
+							<div class="ps-or">or paste a link</div>
+							<form class="ps-url" id="ps-url-form" novalidate>
+								<input class="ps-field" id="ps-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://... 360 JPEG, PNG or .insp" aria-label="Public https link to a 360 photo" aria-describedby="ps-url-msg" />
+								<button class="ps-btn" id="ps-url-go" type="submit">Use link</button>
+							</form>
+							<p class="ps-url-msg" id="ps-url-msg" role="alert" hidden></p>
 						</div>
 
 						<div class="ps-card ps-done" id="ps-done" hidden>

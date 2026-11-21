@@ -19,6 +19,23 @@ export function classifyFile(file) {
 	return null;
 }
 
+/**
+ * A pasted link the page can hand to /api/pano-scene, or null. Only https is
+ * accepted (the server refuses anything else); the source kind follows the
+ * path, the same rule the server applies when source_kind is omitted.
+ * @returns {{ kind: 'equirect_image' | 'insp', url: string } | null}
+ */
+export function classifyUrl(raw) {
+	let parsed;
+	try {
+		parsed = new URL(String(raw ?? '').trim());
+	} catch {
+		return null;
+	}
+	if (parsed.protocol !== 'https:' || !parsed.hostname) return null;
+	return { kind: /\.insp$/i.test(parsed.pathname) ? 'insp' : 'equirect_image', url: parsed.href };
+}
+
 /** An equirectangular photo is exactly twice as wide as it is tall. */
 export function isEquirectSize(width, height) {
 	if (!(width > 0) || !(height > 0)) return false;
@@ -73,6 +90,8 @@ export function stageCopy(stage, progress) {
 export function errorCopy(code, message) {
 	switch (code) {
 		case 'sign_in_required': return { title: 'Sign in to step inside a photo', body: message || 'A three.ws account is free.', signIn: true };
+		case 'storage_unavailable': return { title: 'Uploads are paused for a moment', body: 'Our file storage is recovering, so uploads cannot finish right now. Paste a public https link to your 360 photo instead, or try again in a minute.', pasteLink: true };
+		case 'upload_failed': return { title: 'The upload did not finish', body: `${message || 'The file could not reach our storage.'} Try again, or paste a public https link to the photo instead.`, pasteLink: true };
 		case 'unconfigured': return { title: 'Not switched on yet', body: message || 'Photo-to-3D is not switched on yet on this server.' };
 		case 'not_equirect': return { title: 'That is not a 360 photo', body: 'A 360 photo is exactly twice as wide as it is tall. Export it from your camera app as an equirectangular JPEG, or upload the raw .insp file.' };
 		case 'too_large': return { title: 'That file is too large', body: `Photos up to ${Math.round(MAX_PHOTO_BYTES / 1024 / 1024)} MB work. Export a smaller JPEG from your camera app.` };

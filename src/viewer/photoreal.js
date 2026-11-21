@@ -115,9 +115,11 @@ function loadExrEquirect(path) {
 }
 
 /** The equirect that matches what the live viewer is lit by, or null for none. */
-async function environmentEquirect(renderer, entry) {
+async function environmentEquirect(renderer, entry, viewer) {
 	if (!entry || entry.id === '') return null;
-	if (entry.id === 'neutral') return bakeRoomEquirect(renderer);
+	// The visitor's own photo: the controller owns that texture, so it is traced as is.
+	if (entry.id === 'pano' && viewer?.pano?.image) return viewer.pano.image.texture;
+	if (entry.id === 'neutral' || entry.id === 'pano') return bakeRoomEquirect(renderer);
 	return loadExrEquirect(entry.path);
 }
 
@@ -166,7 +168,7 @@ export async function renderPhotoreal(viewer, opts = {}) {
 	let equirect = null;
 	let tracer = null;
 	try {
-		equirect = await environmentEquirect(renderer, environment);
+		equirect = await environmentEquirect(renderer, environment, viewer);
 		scene.environment = equirect;
 		// The studio backdrop is the PMREM of the same room; show its equirect
 		// twin. Solid colours and transparency carry over unchanged.
@@ -202,7 +204,7 @@ export async function renderPhotoreal(viewer, opts = {}) {
 		scene.environment = saved.environment;
 		scene.background = saved.background;
 		if (viewer.shadowCatcher && saved.catcherVisible !== undefined) viewer.shadowCatcher.visible = saved.catcherVisible;
-		equirect?.dispose();
+		if (equirect !== viewer.pano?.image?.texture) equirect?.dispose();
 		if (viewer.controls && saved.controlsEnabled !== undefined) viewer.controls.enabled = saved.controlsEnabled;
 		viewer._suspended = false;
 		if (!viewer._disposed) {

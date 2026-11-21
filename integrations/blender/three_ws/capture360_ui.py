@@ -65,7 +65,12 @@ def _core():
 # -- background task runner ------------------------------------------------------
 
 class _Task:
-    """One worker thread plus its event queue and cancel flag."""
+    """One worker thread plus its event queue and cancel flag.
+
+    Live progress (``stage_text``, ``fraction``) lives here, not on the scene: every
+    Python write to a scene property repaints the whole window, so the panel reads
+    these and the timer redraws only the sidebar.
+    """
 
     def __init__(self, work, on_result):
         self.events = queue.Queue()
@@ -73,6 +78,8 @@ class _Task:
         self.on_result = on_result
         self.job_id = ""
         self.scene_name = ""
+        self.stage_text = "Starting"
+        self.fraction = 0.0
         self.thread = threading.Thread(target=self._run, args=(work,), daemon=True, name="threews-capture")
 
     def _run(self, work):
@@ -105,8 +112,6 @@ def start_task(context, work, on_result):
     props.busy = True
     props.message = ""
     props.message_error = False
-    props.stage_text = "Starting"
-    props.progress = 0.0
     _task = _Task(work, on_result)
     _task.scene_name = context.scene.name
     _task.thread.start()
@@ -115,11 +120,15 @@ def start_task(context, work, on_result):
 
 
 def _redraw():
+    # Only the sidebar shows progress. Tagging the whole area would also repaint the
+    # 3D viewport (and any splat in it) five times a second for the length of a job.
     wm = bpy.context.window_manager
     for win in wm.windows:
         for area in win.screen.areas:
             if area.type == "VIEW_3D":
-                area.tag_redraw()
+                for region in area.regions:
+                    if region.type == "UI":
+                        region.tag_redraw()
 
 
 def pump():
@@ -131,14 +140,15 @@ def pump():
     scene = bpy.data.scenes.get(task.scene_name)
     props = scene.three_ws_capture if scene is not None else None
     finished = None
+    shown = (task.stage_text, task.fraction)
     try:
         while True:
             kind, payload = task.events.get_nowait()
-            if kind == "progress" and props is not None:
+            if kind == "progress":
                 text, fraction = payload
-                props.stage_text = text
+                task.stage_text = text
                 if fraction is not None:
-                    props.progress = max(0.0, min(1.0, fraction))
+                    task.fraction = max(0.0, min(1.0, fraction))
             elif kind in ("result", "error", "cancelled"):
                 finished = (kind, payload)
     except queue.Empty:
@@ -148,8 +158,6 @@ def pump():
         kind, payload = finished
         if props is not None:
             props.busy = False
-            props.progress = 0.0
-            props.stage_text = ""
         if kind == "result":
             try:
                 message = task.on_result(bpy.context, payload)
@@ -162,7 +170,10 @@ def pump():
             _set_message(props, "Cancelled.", False)
         _redraw()
         return None
-    _redraw()
+    # Repaint only when the bar changed: with the sidebar open, a sidebar repaint also
+    # repaints the 3D viewport, so idle polling ticks must not trigger one.
+    if (task.stage_text, task.fraction) != shown:
+        _redraw()
     return PUMP_INTERVAL
 
 
@@ -215,8 +226,6 @@ class ThreeWSCaptureProps(PropertyGroup):
         default=importer.DEFAULT_UP_AXIS,
     )
     busy: BoolProperty(default=False)
-    stage_text: StringProperty()
-    progress: FloatProperty(default=0.0, min=0.0, max=1.0)
     message: StringProperty()
     message_error: BoolProperty(default=False)
     captures: CollectionProperty(type=ThreeWSCaptureItem)
@@ -427,7 +436,8 @@ class THREEWS_OT_capture_cancel(Operator):
     def execute(self, context):
         if _task:
             _task.cancel.set()
-            context.scene.three_ws_capture.stage_text = "Cancelling"
+            _task.stage_text = "Cancelling"
+            _redraw()
         return {"FINISHED"}
 
 
@@ -633,9 +643,10 @@ class THREEWS_PT_capture(Panel):
         row.scale_y = 1.4
         row.operator(THREEWS_OT_capture_send.bl_idname, icon="EXPORT")
 
-        if props.busy:
+        task = _task
+        if props.busy and task is not None:
             box = layout.box()
-            box.progress(factor=props.progress, type="BAR", text=props.stage_text or "Working")
+            box.progress(factor=task.fraction, type="BAR", text=task.stage_text or "Working")
             box.operator(THREEWS_OT_capture_cancel.bl_idname, icon="CANCEL")
         if props.message:
             box = layout.box()

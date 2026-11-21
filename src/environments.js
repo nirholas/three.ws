@@ -21,4 +21,9 @@ export const environments = [
 		path: 'https://storage.googleapis.com/donmccurdy-static/footprint_court_2k.exr',
 		format: '.exr',
 	},
+	{
+		id: 'pano', // the visitor's own 360 photo, loaded at runtime (src/viewer/pano-stage.js)
+		name: 'Your 360 photo',
+		path: null,
+	},
 ];

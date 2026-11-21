@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T21:54:15.774Z",
+	"generated_at": "2026-11-21T22:15:42.307Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1540,6 +1540,18 @@
 					"title": "Scene Capture: Video to 3D Point Cloud",
 					"description": "Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.",
 					"added": "2026-06-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": "make"
+				},
+				{
+					"path": "/pano-scene",
+					"title": "Step Inside Your 360 Photo",
+					"description": "Drop one 360 photo, or a raw .insp file, and stand inside it in 3D. Depth estimation builds a metric shell you can look around, step through and download as GLB or PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.",
+					"added": "2026-11-21",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

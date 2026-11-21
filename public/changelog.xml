@@ -71,6 +71,14 @@
 			<description>Every Grok call three.ws makes now tells xAI which conversation it belongs to, so follow-up turns with the same agent reach the server that already holds that agent's persona and tools in its cache. Cached input costs a quarter of the normal rate and starts the reply sooner. Only a one-way fingerprint of the prompt is sent, never the text. The Grok usage report now shows how much of each lane's input came from the cache.</description>
 		</item>
 		<item>
+			<title>Premiere Pro panel for 360 capture</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-21:Premiere Pro panel for 360 capture</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A UXP panel for Adobe Premiere Pro 25.6 or later sends a 360 clip (or the selected sequence clip's in and out range) to three.ws, uploads it in resumable parts, shows live progress with cancel, and imports the preview, poster and scene files into a three.ws captures bin, with one button to insert the preview at the playhead. Source and a built .ccx live in integrations/premiere-uxp; the Adobe Exchange listing is an owner step.</description>
+		</item>
+		<item>
 			<title>Resumable uploads for multi-gigabyte 360 capture files</title>
 			<link>https://three.ws/docs/api-reference#capture-upload-api</link>
 			<guid isPermaLink="false">2026-11-21:Resumable uploads for multi-gigabyte 360 capture files</guid>

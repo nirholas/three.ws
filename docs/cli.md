@@ -193,6 +193,7 @@ The selection is enforced whichever way you signed in. With a browser sign-in, s
 | `usage` | Credits, burn rate, days left and recent top-ups |
 | `ask "<prompt>"` | One completion through the active provider |
 | `wallet <init\|address\|export-public>` | A local payer key held in the OS keychain (or an encrypted file behind a passphrase); never printed |
+| `capture 360 <file...>` / `capture status <id>` / `capture list` / `capture scene <photo>` | Upload 360 footage or photos (resumable) and turn them into a 3D scene; `--wait` saves the files. See [360 capture](#360-capture) |
 | `pay <url>` / `pay --dry-run <url>` | Settle an x402 or MPP 402 challenge on Solana with that key, inside `pay-permissions.json`; `pay init`, `pay mcp` (stdio MCP server). See the [package README](../packages/three-ws-cli/README.md#pay-for-x402-and-mpp-resources-from-the-terminal) |
 
 ## One command per client
@@ -266,6 +267,20 @@ npx @three-ws/cli doctor
 ```
 
 `doctor` finds a bad config before you do. It checks the Node version, the credential file and its permissions, that three.ws is reachable, that your sign-in is still valid (expired or revoked), each client's config (unparseable file, missing three.ws entry, a secret stored in plain text, a launcher missing from `PATH`), and a live `tools/list` for every configured server. Every problem comes with the command that fixes it. It exits 1 when anything fails, and `--json` prints the findings for scripts.
+
+## 360 capture
+
+Turn footage from any 360 camera (works with Insta360 `.insv` and `.insp` files) into a 3D scene you own, from the terminal or a script. Needs a three.ws account: `login`, or `THREE_WS_API_KEY`.
+
+```bash
+npx @three-ws/cli capture 360 walk.mp4 --wait          # video to a Gaussian splat: scene.ply, scene.spz, preview.mp4, poster.jpg
+npx @three-ws/cli capture 360 shots/*.jpg --quality high --wait --out lobby
+npx @three-ws/cli capture scene room.jpg --wait        # one 360 photo to a walkable mesh: scene.glb, scene.ply
+npx @three-ws/cli capture status <job-id> --wait
+npx @three-ws/cli capture list --json
+```
+
+Uploads are resumable: if one stops, run the same command again and only the missing parts are sent. Exit codes are 0 done, 1 job failed or cancelled, 2 refused input, 3 not signed in, 6 server or network unavailable. Inputs, flags and resume details: [package README](../packages/three-ws-cli/README.md#turn-360-footage-into-a-3d-scene). The HTTP routes behind it (`/api/capture-upload/*`, `/api/pano-capture`, `/api/pano-scene`) are in `/openapi.json`, the [API reference](api-reference.md#capture-upload-api) and [Scene Capture](capture.md).
 
 ## Agents and teams
 

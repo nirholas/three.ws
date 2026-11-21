@@ -58,6 +58,58 @@ want a video with your avatar performing the motion instead, see
    `POST /api/forge-remesh` (`operation: "convert"`,
    `output_format: "fbx"`), the same converter the Forge export menu uses.
 
+## 360 clips: click the person
+
+Both [/video-to-motion](https://three.ws/video-to-motion) and
+[/motion-swap](https://three.ws/motion-swap) accept a stitched 360 clip from any
+360 camera (Insta360, Ricoh Theta, GoPro Max, and so on). Drop an equirectangular
+MP4, MOV, or WebM and the page reads the container's track size without decoding
+it. A 2:1 frame switches the page into 360 mode with a **360 clip** badge.
+Not a 360 clip after all? **This is a regular video** hands the file back to the
+normal capture path.
+
+1. A sphere preview opens. Drag to look around (arrow keys when it has focus),
+   scrub the clip, then click the person to follow. A ring marks the spot and the
+   readout names the yaw and pitch it sends.
+2. **Track the person I picked** sends the pick. **Pick for me** sends no subject
+   and the worker chooses.
+3. When the worker also returns a `reframe_url`, a **What the tracker followed**
+   panel plays that flat view beside the avatar, synced to the same timeline. A
+   worker that does not return one just leaves the panel hidden.
+
+Raw `.insv`, `.insp`, and `.lrv` files are not stitched, so motion cannot read
+them. The page says so and points to exporting a 360 MP4 from Insta360 Studio or
+the camera app. For a 3D scene from raw files use [/capture](https://three.ws/capture).
+
+### Request fields
+
+On `POST /api/motion-swap` (the job request) the pages add:
+
+```json
+{ "projection": "equirect", "subject": { "yaw_deg": 34.5, "pitch_deg": -28.1, "t_s": 0 } }
+```
+
+- `yaw_deg` is -180 to 180. 0 is the frame centre and it grows to the right.
+- `pitch_deg` is -90 to 90. 0 is the horizon and it grows upward.
+- Pixel mapping: `yaw = (x / W - 0.5) * 360`, `pitch = (0.5 - y / H) * 180`.
+  This is the same convention as ffmpeg's `v360` filter, so
+  `v360=e:flat:yaw=<yaw>:pitch=<pitch>` centres the clicked person.
+- `t_s` is the clip time of the click, so a person picked at a scrubbed position
+  is found at that time. Workers that do not know it ignore it.
+- `subject` is omitted for **Pick for me**. A regular video sends neither field.
+
+The result may carry `reframe_url` and `subject_track`. A failure with
+`error_code` `subject_lost` or `subject_not_found` shows **We lost track of the
+person** with the worker's own message and a one-click way back to the picker.
+
+### Limits
+
+Uploads are capped at 256 MB on both pages, the same as the worker's
+`MAX_VIDEO_BYTES`. A 3840 x 1920 export is plenty for tracking a person; a
+longer or higher-resolution clip should be trimmed or exported smaller. The
+logic lives in [src/motion-360.js](../src/motion-360.js) and is covered by
+[tests/motion-360.test.js](../tests/motion-360.test.js).
+
 ## Why BVH is on the canonical skeleton, not the previewed avatar
 
 A BVH carries no mesh, only a skeleton and its motion. Mixamo's own BVH

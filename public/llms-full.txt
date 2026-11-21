@@ -768,6 +768,12 @@ URL: https://three.ws/capture
 
 Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.
 
+### Step Inside Your 360 Photo
+
+URL: https://three.ws/pano-scene
+
+Drop one 360 photo, or a raw .insp file, and stand inside it in 3D. Depth estimation builds a metric shell you can look around, step through and download as GLB or PLY. Works with Insta360 X3, X4, X5 and X6 photos, and any 360 camera.
+
 ### Turn 360 Footage into 3D You Own
 
 URL: https://three.ws/insta360

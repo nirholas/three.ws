@@ -53,6 +53,40 @@ npx @three-ws/cli create "Nova" --description "A deep-space guide."   # an agent
 npx @three-ws/cli launch --agent <id> --name Nova --symbol NOVA      # prefilled, you sign on three.ws/launch
 ```
 
+## Turn 360 footage into a 3D scene
+
+`capture` uploads footage from any 360 camera (it works with Insta360 `.insv` and `.insp` files) and turns it into a 3D scene you own. It needs a three.ws account: `login`, or `THREE_WS_API_KEY` in CI.
+
+```bash
+npx @three-ws/cli capture 360 walk.mp4 --wait                    # a walk-through video to a Gaussian splat, saved in ./capture-<id>
+npx @three-ws/cli capture 360 VID_0001.insv --quality high --trim-start 3 --trim-end 41.5 --wait --out lobby
+npx @three-ws/cli capture 360 shots/*.jpg --wait                 # 3 to 600 stitched 360 photos from different spots
+npx @three-ws/cli capture status <job-id> --wait --out lobby     # follow a capture started elsewhere and save its files
+npx @three-ws/cli capture list                                   # your captures, newest first
+npx @three-ws/cli capture scene room.jpg --wait                  # one 360 photo (or .insp, or an https URL) to a walkable mesh
+```
+
+| Input | Lane |
+| --- | --- |
+| `.mp4`, `.mov`, `.m4v` (stitched 2:1 video) | `capture 360`, kind `equirect_video` |
+| `.insv` (one file, or the two halves of a split-pair recording) | `capture 360`, kind `insv` |
+| 3 to 600 `.jpg`, `.png` or `.exr` stitched photos | `capture 360`, kind `equirect_images` |
+| one `.insp` | `capture 360` (kind `insp`) or `capture scene` |
+| one stitched `.jpg` or `.png` photo | `capture scene` |
+
+`.lrv` proxy files are refused: pass the `.insv` beside them.
+
+- `--quality preview|standard|high` (default `standard`) trades time for detail; the server quotes 15, 30 or 45 minutes.
+- `--trim-start` and `--trim-end` (seconds) apply to video only.
+- `--wait` polls until the job ends and downloads every file: `scene.ply`, `scene.spz`, `preview.mp4` and `poster.jpg` for a capture, `scene.glb` and `scene.ply` for a scene. `--out <dir>` picks the folder.
+- Without `--wait` the command prints the job id and returns; `capture status <id>` picks it up later.
+
+Uploads go straight to storage in parallel 8 MiB parts, with retries. If one stops (a dropped connection, Ctrl+C), run the same command again: finished parts are kept and only the missing ones are sent. A file that already finished uploading in the last six days is not sent again. Resume state lives in `~/.config/three-ws/capture-uploads.json` and holds no credentials.
+
+`--json` prints one document per command (the job, or the list) and progress stays on stderr. Exit codes: 0 done, 1 the job failed or was cancelled, 2 a refused input (wrong file type, too few photos, a trim on a photo), 3 not signed in, 6 the server or network is unavailable (the message says which, for example when 360 capture is switched off on a deployment).
+
+The same routes are in [`/openapi.json`](https://three.ws/openapi.json) under the "360 capture" tags, and the free studio MCP server offers them as tools.
+
 ## Pay for x402 and MPP resources from the terminal
 
 `three-ws pay <url>` fetches a URL, reads its HTTP 402 challenge (x402 v2 `PAYMENT-REQUIRED`, x402 v1 body, or an MPP Solana charge), picks a Solana option, signs with a key that never leaves your machine, retries once and prints the body. Every payment is checked against a permissions file you own before anything is signed.

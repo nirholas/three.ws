@@ -46,6 +46,15 @@ describe('source-kind detection', () => {
 		expect(r).toMatchObject({ ok: true, sourceKind: 'insv' });
 		expect(r.second).toBeUndefined();
 	});
+	it('pairs lens files whose names drop the trailing counter', async () => {
+		const a = f('exemplar_00.insv');
+		const b = f('exemplar_10.insv');
+		expect(matchingLensName('exemplar_00.insv')).toBe('exemplar_10.insv');
+		const r = await classifyFiles([b, a]);
+		expect(r).toMatchObject({ ok: true, sourceKind: 'insv' });
+		expect(r.second).toBeTruthy();
+	});
+
 	it('pairs the _00_ and _10_ lens files by name, in either order', async () => {
 		const a = f('VID_20260814_132640_00_013.insv');
 		const b = f('VID_20260814_132640_10_013.insv');
@@ -205,6 +214,13 @@ describe('stage view', () => {
 		const last = stageView({ status: 'running', stage: 'upload', progress: 0.5 }, 'equirect_video');
 		expect(last.at(-1).state).toBe('active');
 	});
+	it('maps the API save stage to Export, and a queued job to Upload done', () => {
+		const saving = stageView({ status: 'running', stage: 'save', progress: 0.99 }, 'equirect_video');
+		expect(saving.at(-1).state).toBe('active');
+		const queued = stageView({ status: 'queued', stage: 'queued', progress: 0 }, 'equirect_video');
+		expect(queued[0].state).toBe('done');
+		expect(queued.filter((s) => s.state === 'active')).toHaveLength(1);
+	});
 	it('is all done on success and computes overall progress', () => {
 		const v = stageView({ status: 'succeeded' }, 'equirect_video');
 		expect(v.every((s) => s.state === 'done')).toBe(true);
@@ -246,6 +262,16 @@ describe('error copy', () => {
 		expect(describeCaptureError('x', { status: 429 }).action).toBe('wait');
 		expect(describeCaptureError('x', { status: 503 }).title).toMatch(/not switched on/);
 		expect(describeCaptureError('network').message).toMatch(/resumes by itself/);
+	});
+	it('covers every code the API and worker can return with a title, message and action', () => {
+		const codes = ['unconfigured', 'too_few_registered', 'registration_too_low', 'file_too_large', 'source_too_large', 'unauthorized', 'sign_in_required', 'too_many_active', 'too_many_open_uploads', 'daily_quota_exceeded', 'invalid_content_type', 'rate_limited', 'unsupported_input', 'no_calibration', 'corrupt_input', 'no_frames_decoded', 'no_video_stream', 'no_images', 'upload_not_found', 'internal_error', 'stage_failed', 'worker_lost', 'nvenc_error', 'storage_error', 'cancelled', 'network', 'etag_unreadable', 'empty_file', 'aborted'];
+		for (const c of codes) {
+			const e = describeCaptureError(c);
+			expect(e.title, c).not.toBe('Something went wrong');
+			expect(e.message.length, c).toBeGreaterThan(20);
+			expect(e.action, c).toBeTruthy();
+			expect(`${e.title} ${e.message}`, c).not.toMatch(/\u2014|\u2013/);
+		}
 	});
 	it('passes through a visitor-readable server message for unknown codes', () => {
 		expect(describeCaptureError('weird', { message: 'The clip has no video track.' }).message).toBe('The clip has no video track.');

@@ -1,0 +1,62 @@
+# Builds the model-pano2splat image and pushes it to Artifact Registry. It creates no
+# Cloud Run service: creating or updating the service is an owner step (see README).
+#
+#   TMPDIR=/home/user/.cache/gcloud-tmp gcloud builds submit workers/model-pano2splat \
+#     --config workers/model-pano2splat/cloudbuild.yaml --region us-central1 --project aerial-vehicle-466722-p5
+#
+# The COLMAP compile (about half an hour) is cached as its own image, so only the first
+# build, or a COLMAP_TAG change, pays for it.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  _REPO: model-pano2splat
+
+steps:
+  - id: pull-cache
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/colmap-build:cache || true
+        docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest || true
+
+  - id: build-colmap
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --target=colmap-build
+      - --cache-from=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/colmap-build:cache
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/colmap-build:cache
+      - .
+    timeout: 5400s
+
+  - id: push-colmap-cache
+    name: gcr.io/cloud-builders/docker
+    args: [push, "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/colmap-build:cache"]
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --cache-from=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/colmap-build:cache
+      - --cache-from=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+    timeout: 5400s
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server"]
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+
+timeout: 14400s
+options:
+  machineType: E2_HIGHCPU_32
+  diskSizeGb: 300
+  logging: CLOUD_LOGGING_ONLY

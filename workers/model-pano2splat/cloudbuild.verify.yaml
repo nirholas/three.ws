@@ -1,0 +1,90 @@
+# Rebuild and verify in one command: builds and pushes the image (cloudbuild.yaml's steps),
+# creates or updates the Cloud Run JOB `pano2splat-verify` with a GPU, runs verify.py over every
+# `verify: true` fixture in gs://three-ws-capture-fixtures/insta360/MANIFEST.json, and waits.
+# A job execution is a verification run, not a deploy: no Cloud Run service is touched.
+#
+#   TMPDIR=/home/user/.cache/gcloud-tmp gcloud builds submit workers/model-pano2splat \
+#     --config workers/model-pano2splat/cloudbuild.verify.yaml --region us-central1 \
+#     --project aerial-vehicle-466722-p5 [--substitutions _JOB_REGION=europe-west4,_ONLY=<ids>,_QUALITY=preview]
+#
+# The report lands in gs://three-ws-pano-captures/verify-<date>/verify-report.json.
+
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  _REPO: model-pano2splat
+  _JOB_REGION: europe-west1
+  _JOB: pano2splat-verify
+  _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+  _ONLY: ""
+  _QUALITY: standard
+  _RUN_ID: ""
+
+steps:
+  - id: pull-cache
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/colmap-build:cache || true
+        docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest || true
+
+  - id: build-colmap
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --target=colmap-build
+      - --cache-from=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/colmap-build:cache
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/colmap-build:cache
+      - .
+    timeout: 5400s
+
+  - id: push-colmap-cache
+    name: gcr.io/cloud-builders/docker
+    args: [push, "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/colmap-build:cache"]
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --cache-from=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/colmap-build:cache
+      - --cache-from=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+    timeout: 5400s
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server"]
+
+  - id: verify-job
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        gcloud run jobs deploy ${_JOB} \
+          --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID \
+          --region=${_JOB_REGION} \
+          --service-account=${_RUN_SA} \
+          --gpu=1 --gpu-type=nvidia-l4 --no-gpu-zonal-redundancy \
+          --cpu=8 --memory=32Gi \
+          --task-timeout=28800s --max-retries=0 \
+          --command=python --args=verify.py \
+          --set-env-vars=FIXTURE_BUCKET=three-ws-capture-fixtures,RESULT_BUCKET=three-ws-pano-captures,VERIFY_QUALITY=${_QUALITY},VERIFY_ONLY=${_ONLY},VERIFY_RUN_ID=${_RUN_ID}
+        gcloud run jobs execute ${_JOB} --region=${_JOB_REGION} --wait
+    timeout: 30000s
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+
+timeout: 36000s
+options:
+  machineType: E2_HIGHCPU_32
+  diskSizeGb: 300
+  logging: CLOUD_LOGGING_ONLY

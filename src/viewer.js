@@ -52,6 +52,9 @@ import {
 } from './viewer/internal.js';
 import { addLights, removeLights } from './viewer/lights.js';
 import { getCubeMapTexture } from './viewer/environment.js';
+import { PanoController } from './viewer/pano-stage.js';
+import { attachPanoDrop, createPanoOverlay, createPanoPanel } from './viewer/pano-panel.js';
+import { parseEnvParam } from './viewer/pano-photo.js';
 import { takeScreenshot, captureScreenshot } from './viewer/screenshot.js';
 import { setClips, playAllClips } from './viewer/animation.js';
 import { computeFramingExtent, computeFramingWidth } from './viewer/framing.js';
@@ -509,6 +512,7 @@ export class Viewer {
 		this._tempVec = new Vector3();
 
 		this.addAxesHelper();
+		this._initPano();
 		this.addGUI();
 		if (options.kiosk) this.gui.close();
 
@@ -1042,6 +1046,7 @@ export class Viewer {
 		// generator; clearing the slot first stops getCubeMapTexture from
 		// disposing the dead texture.
 		this._loadedEnvironment = null;
+		this.pano?.invalidateGpu();
 		this.updateEnvironment();
 	}
 
@@ -1651,7 +1656,8 @@ export class Viewer {
 		}
 		const span = Math.max(bbSize.x, bbSize.z, 0.5) * 3;
 		this.shadowCatcher.scale.set(span, span, 1);
-		this.shadowCatcher.position.y = -bbSize.y / 2 + 0.002;
+		this._shadowBaseY = -bbSize.y / 2 + 0.002;
+		this.shadowCatcher.position.y = this._shadowBaseY + (this._groundOffset || 0);
 
 		// Fit the caster's frustum to the model so shadow texels aren't wasted
 		// on a prop or clipped on an oversized scene.
@@ -1932,15 +1938,25 @@ export class Viewer {
 			(entry) => entry.name === this.state.environment,
 		)[0];
 
+		const panoSelected = environment?.id === 'pano';
 		getCubeMapTexture(this, environment)
-			.then(({ envMap }) => {
+			.then(({ envMap, background }) => {
 				if (this._disposed || !this.scene) return;
 				this.scene.environment = envMap;
-				this.scene.background = this.state.transparentBg
-					? null
-					: this.state.background
-						? envMap
-						: this.backgroundColor;
+				// The visitor's own 360 backdrop wins over a transparent canvas: turning
+				// the photo on is an explicit request to see it behind the avatar.
+				this.scene.background =
+					panoSelected && background
+						? background
+						: this.state.transparentBg
+							? null
+							: background
+								? background
+								: this.state.background
+									? envMap
+									: this.backgroundColor;
+				this.pano?.applyToScene(this.scene, panoSelected && this.pano.active);
+				this.setGroundOffset(panoSelected && this.pano?.active ? this.pano.settings.groundOffset : 0);
 				this.invalidate();
 			})
 			.catch((err) => {
@@ -1961,6 +1977,10 @@ export class Viewer {
 	setEnvironment(preset) {
 		const key = String(preset || '').trim();
 		if (!key) return;
+		if (parseEnvParam(key).kind === 'url') {
+			this.setEnvironmentSource(key);
+			return;
+		}
 		const entry =
 			environments.find((e) => e.id === key) ||
 			environments.find((e) => e.name === key) ||
@@ -1968,6 +1988,78 @@ export class Viewer {
 		if (!entry) return;
 		this.state.environment = entry.name;
 		this.updateEnvironment();
+	}
+
+	/**
+	 * Select an environment from a `?env=` value or an `<agent-3d environment>`
+	 * attribute: a preset id or name, or a public https link to a 360 photo
+	 * (an equirectangular 2:1 image). Resolves true when it took effect.
+	 */
+	setEnvironmentSource(value) {
+		const parsed = parseEnvParam(value);
+		if (parsed.kind === 'preset') {
+			this.setEnvironment(parsed.value);
+			return Promise.resolve(true);
+		}
+		if (parsed.kind === 'url') return this.pano.load(parsed.url);
+		if (parsed.kind === 'invalid') {
+			this.pano._setStatus('error', { error: { code: 'badUrl', message: parsed.reason } });
+		}
+		return Promise.resolve(false);
+	}
+
+	// The user's own 360 photo: lighting, backdrop and grounding all hang off one
+	// controller that survives environment switches and context loss.
+	_initPano() {
+		const chrome = !this.options.kiosk && !this.options.embed;
+		this._panoPanelOpen = false;
+		this.pano = new PanoController({
+			getTarget: () => ({ renderer: this.renderer, pmrem: this.pmremGenerator }),
+			features: { lighting: true, ground: true },
+			onApply: () => {
+				if (this._disposed) return;
+				const entry = environments.find((e) => e.id === 'pano');
+				if (this.pano.active && this.state.environment !== entry.name) {
+					this.state.environment = entry.name;
+					this._envCtrl?.updateDisplay();
+				} else if (!this.pano.active && this.state.environment === entry.name) {
+					this.state.environment = environments.find((e) => e.id === 'neutral').name;
+					this._envCtrl?.updateDisplay();
+				}
+				this.updateEnvironment();
+				if (!this.options.embed) this.notifyScenePrefChange?.();
+			},
+		});
+		this._panoOverlay = createPanoOverlay(this.el, this.pano, { showErrors: () => !this._panoPanelOpen });
+		if (!chrome) return;
+		this._panoDrop = attachPanoDrop(this.el, this.pano);
+		this._panoPanel = createPanoPanel(this.pano, { onClose: () => this.setPanoPanelOpen(false) });
+		const dock = document.createElement('div');
+		dock.className = 'pano-dock';
+		dock.style.cssText = 'position:absolute;left:12px;bottom:12px;z-index:40;max-width:calc(100% - 24px);max-height:calc(100% - 24px);display:flex';
+		dock.hidden = true;
+		dock.append(this._panoPanel.el);
+		this.el.appendChild(dock);
+		this._panoDock = dock;
+		this.pano.restore();
+	}
+
+	/** Show or hide the "Your 360 photo" panel. */
+	setPanoPanelOpen(open) {
+		if (!this._panoDock) return;
+		this._panoPanelOpen = Boolean(open);
+		this._panoDock.hidden = !open;
+		this._panoOverlay?.render();
+		if (open) this._panoDock.querySelector('button, input')?.focus({ preventScroll: true });
+	}
+
+	// Move the contact-shadow plane up or down from the model's feet, so a photo's
+	// floor and the avatar's feet can be lined up by eye.
+	setGroundOffset(metres) {
+		this._groundOffset = Number(metres) || 0;
+		if (this.shadowCatcher && Number.isFinite(this._shadowBaseY)) {
+			this.shadowCatcher.position.y = this._shadowBaseY + this._groundOffset;
+		}
 	}
 
 	updateDisplay() {
@@ -2226,10 +2318,17 @@ export class Viewer {
 			'environment',
 			environments.map((env) => env.name),
 		);
+		this._envCtrl = envMapCtrl;
 		envMapCtrl.onChange(() => {
 			this.updateEnvironment();
 			this.notifyScenePrefChange();
+			// Choosing "Your 360 photo" with none loaded opens the picker.
+			const picked = environments.find((e) => e.name === this.state.environment);
+			if (picked?.id === 'pano' && !this.pano.active) this.setPanoPanelOpen(true);
 		});
+		lightFolder
+			.add({ photo: () => this.setPanoPanelOpen(!this._panoPanelOpen) }, 'photo')
+			.name('Your 360 photo...');
 		const exposureCtrl = lightFolder.add(this.state, 'exposure', -10, 10, 0.01);
 		exposureCtrl.onChange(() => {
 			this.updateLights();
@@ -2942,6 +3041,12 @@ export class Viewer {
 			this._loadedEnvironment.dispose();
 			this._loadedEnvironment = null;
 		}
+		this._panoDrop?.destroy();
+		this._panoPanel?.destroy();
+		this._panoOverlay?.destroy();
+		this._panoDock?.remove();
+		this.pano?.dispose();
+		this.pano = null;
 		if (this.neutralEnvironment) {
 			this.neutralEnvironment.dispose();
 			this.neutralEnvironment = null;

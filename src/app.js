@@ -1812,6 +1812,9 @@ class App {
 			window.VIEWER.editor = this.editor;
 		}
 		window.VIEWER.viewer = this.viewer;
+		// `?env=<preset id>` or `?env=<https link to a 360 photo>`.
+		const envParam = new URLSearchParams(location.search).get('env');
+		if (envParam) this.viewer.setEnvironmentSource(envParam);
 		return this.viewer;
 	}
 

@@ -8,11 +8,12 @@ vi.mock('../api/_lib/auth.js', async (orig) => ({
 	getRequestUser: async () => ({ id: 'creator-test-user' }),
 }));
 
+const storage = vi.hoisted(() => ({ state: { ok: true } }));
 const presign = vi.fn(async ({ key }) => `https://r2.example/${key}?sig=1`);
 vi.mock('../api/_lib/r2.js', () => ({
 	presignUpload: presign,
 	publicUrl: (k) => `https://cdn.example/${k}`,
-	objectStorageUsable: async () => ({ ok: true }),
+	objectStorageUsable: async () => storage.state,
 }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: new Proxy({}, { get: () => async () => ({ success: true, reset: Date.now() + 1000 }) }),
@@ -42,6 +43,7 @@ async function post(body) {
 describe('scene-upload accepts 360 photos', () => {
 	beforeEach(() => {
 		presign.mockClear();
+		storage.state = { ok: true };
 		Object.assign(process.env, {
 			S3_ENDPOINT: 'https://r2.example',
 			S3_BUCKET: 'b',
@@ -77,5 +79,18 @@ describe('scene-upload accepts 360 photos', () => {
 	it('still rejects an unrelated type and keeps video types working', async () => {
 		expect((await post({ content_type: 'image/gif', size_bytes: 10 })).status).toBe(400);
 		expect((await post({ content_type: 'video/mp4', size_bytes: 10 })).status).toBe(200);
+	});
+
+	// A presigned URL signed with a rejected credential answers 401 on the PUT
+	// with no CORS header, which the page can only report as a network error.
+	// Production R2 has refused the platform key since 2026-11-14.
+	it('answers 503 storage_unavailable instead of presigning with a rejected credential', async () => {
+		storage.state = { ok: false, reason: 'rejected', message: 'Unauthorized' };
+		const res = await post({ content_type: 'image/jpeg', size_bytes: 5_000_000 });
+		expect(res.status).toBe(503);
+		expect(res.body.error).toBe('storage_unavailable');
+		expect(res.body.retry_after).toBe(60);
+		expect(res.body.message).toMatch(/public https/i);
+		expect(presign).not.toHaveBeenCalled();
 	});
 });

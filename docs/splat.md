@@ -76,6 +76,10 @@ The client half lives in `src/splat-generate.js` and reports each failure in its
 - **Camera timeline**: play the saved views in order as a smooth camera path.
 - **Video export**: record the playing path in the browser with `MediaRecorder` and download it. Nothing is uploaded.
 
+## Backdrop from your own 360 photo
+
+The **Your 360 photo** card replaces the flat stage colour with an equirectangular photo from any 360 camera. Drop a JPEG, PNG, WebP, AVIF, EXR or HDR file on the stage, pick one with the card, or paste a public `https://` link (also `?env=<https url>`). Rotation, blur and brightness are labelled sliders. The splat scene is untouched: only `scene.background` changes, and it is re-applied after every load because each load builds a fresh renderer. A link is remembered for the next visit; a local file never is. The same card and the same checks as the main viewer are described in [viewer.md](viewer.md#your-360-photo-as-the-environment).
+
 ## States and limits
 
 - **Idle**: prompts you to load a splat, drop a file, or try a sample.

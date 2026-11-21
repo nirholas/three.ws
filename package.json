@@ -294,6 +294,8 @@
 		"verify:solana": "node scripts/verify-solana-parity.mjs",
 		"verify:onchain": "node scripts/verify-onchain-parity.mjs",
 		"x402:probe": "node scripts/probe-x402-live.mjs",
+		"x402:paid-data": "node scripts/x402-paid-data.mjs",
+		"x402:wallet-custody": "node scripts/x402-wallet-custody.mjs",
 		"verify:x402": "node scripts/build-x402-catalog.mjs --out=/tmp/x402-catalog.json && node scripts/verify-x402-discovery.mjs --file=/tmp/x402-catalog.json",
 		"smoke:x402-facilitator": "node scripts/x402-facilitator-smoke-test.mjs",
 		"preview:x402scan-registration": "node scripts/x402scan-registration-gap.mjs",

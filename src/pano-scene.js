@@ -3,6 +3,7 @@ import { PanoSceneStage } from './pano-scene-stage.js';
 import {
 	MAX_PHOTO_BYTES,
 	classifyFile,
+	classifyUrl,
 	isEquirectSize,
 	stepStates,
 	stageCopy,
@@ -16,6 +17,7 @@ let stage = null;
 let pollTimer = null;
 let runId = 0;
 let lastFile = null;
+let lastUrl = null;
 let lanes = null;
 let busyKind = 'equirect_image';
 
@@ -31,6 +33,9 @@ const els = {
 	bar: $('#ps-bar'),
 	file: $('#ps-file'),
 	pick: $('#ps-pick'),
+	urlForm: $('#ps-url-form'),
+	url: $('#ps-url'),
+	urlMsg: $('#ps-url-msg'),
 };
 
 function show(which) {
@@ -64,8 +69,26 @@ function showError(code, message, { retry = false } = {}) {
 	const signin = $('#ps-error-signin');
 	signin.hidden = !copy.signIn;
 	signin.href = `/login?next=${encodeURIComponent('/pano-scene')}`;
-	$('#ps-error-retry').hidden = !retry || !lastFile;
+	$('#ps-error-retry').hidden = !retry || !(lastFile || lastUrl);
+	$('#ps-error-url').hidden = !copy.pasteLink;
 	show('error');
+	if (copy.pasteLink) calloutUrl();
+}
+
+// Draw the eye to the link field: the one path that still works while uploads
+// are paused, since /api/pano-scene reads a public URL directly.
+function calloutUrl({ focus = false } = {}) {
+	els.urlForm.classList.add('is-callout');
+	if (focus) {
+		els.url.focus();
+		els.url.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+	}
+}
+
+function urlError(message) {
+	els.urlMsg.textContent = message;
+	els.urlMsg.hidden = !message;
+	els.url.setAttribute('aria-invalid', message ? 'true' : 'false');
 }
 
 function stopPolling() {
@@ -102,12 +125,19 @@ async function upload(file, cls) {
 		body: JSON.stringify({ content_type: cls.contentType, size_bytes: file.size, filename: file.name }),
 	});
 	if (presign.res.status === 401) throw Object.assign(new Error(presign.body.message), { code: 'sign_in_required' });
-	if (presign.res.status === 503) throw Object.assign(new Error(presign.body.message), { code: 'unconfigured' });
+	if (presign.res.status === 503) {
+		const code = presign.body.error === 'storage_unavailable' ? 'storage_unavailable' : 'unconfigured';
+		throw Object.assign(new Error(presign.body.message), { code });
+	}
 	if (!presign.res.ok) throw new Error(presign.body.message || `Upload could not start (HTTP ${presign.res.status}).`);
+	// A storage-side rejection arrives without CORS headers, so the browser
+	// reports it as a network failure with no status to show.
 	const put = await fetch(presign.body.upload_url, {
 		method: 'PUT',
 		headers: presign.body.headers || { 'content-type': cls.contentType },
 		body: file,
+	}).catch(() => {
+		throw new Error('The file could not reach our storage.');
 	});
 	if (!put.ok) throw new Error(`Upload failed (HTTP ${put.status}).`);
 	return presign.body.public_url;
@@ -118,6 +148,7 @@ async function handleFile(file) {
 	stopPolling();
 	const id = ++runId;
 	lastFile = file;
+	lastUrl = null;
 	const cls = classifyFile(file);
 	if (!cls) return showError('unsupported_type');
 	if (file.size > MAX_PHOTO_BYTES) return showError('too_large');
@@ -139,19 +170,42 @@ async function handleFile(file) {
 		return showError(err.code || 'upload_failed', err.message, { retry: !err.code });
 	}
 	if (id !== runId) return;
+	return startJob(id, publicUrl, cls.kind);
+}
 
+async function handleUrl(raw) {
+	const src = classifyUrl(raw);
+	if (!src) {
+		urlError('Paste a full public link that starts with https://');
+		els.url.focus();
+		return;
+	}
+	urlError('');
+	els.urlForm.classList.remove('is-callout');
+	stopPolling();
+	const id = ++runId;
+	lastUrl = src.url;
+	lastFile = null;
+	if (lanes && lanes[src.kind] === false) return showError('unconfigured', 'Photo-to-3D is not switched on yet on this server.');
+	busyKind = src.kind;
+	show('loading');
+	renderProgress(src.kind, src.kind === 'insp' ? 'stitch' : 'depth', 0, 'running');
+	return startJob(id, src.url, src.kind);
+}
+
+async function startJob(id, imageUrl, kind) {
 	const start = await api('/api/pano-scene', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ image_url: publicUrl, source_kind: cls.kind }),
+		body: JSON.stringify({ image_url: imageUrl, source_kind: kind }),
 	}).catch(() => null);
 	if (id !== runId) return;
 	if (!start) return showError('network', 'Could not reach the server. Check your connection.', { retry: true });
 	if (start.res.status === 401) return showError('sign_in_required', start.body.message);
 	if (start.res.status === 503) return showError('unconfigured', start.body.message);
 	if (!start.res.ok) return showError(start.body.error, start.body.message, { retry: true });
-	renderProgress(cls.kind, start.body.stage || 'depth', start.body.progress, start.body.status);
-	poll(id, start.body.job_id, cls.kind);
+	renderProgress(kind, start.body.stage || 'depth', start.body.progress, start.body.status);
+	poll(id, start.body.job_id, kind);
 }
 
 function poll(id, jobId, kind) {
@@ -202,7 +256,18 @@ function bind() {
 	els.pick.addEventListener('click', choose);
 	els.idle.addEventListener('click', choose);
 	$('#ps-error-pick').addEventListener('click', choose);
-	$('#ps-error-retry').addEventListener('click', () => handleFile(lastFile));
+	$('#ps-error-retry').addEventListener('click', () => (lastFile ? handleFile(lastFile) : handleUrl(lastUrl)));
+	$('#ps-error-url').addEventListener('click', () => {
+		show('idle');
+		calloutUrl({ focus: true });
+	});
+	els.urlForm.addEventListener('submit', (e) => {
+		e.preventDefault();
+		handleUrl(els.url.value);
+	});
+	els.url.addEventListener('input', () => {
+		if (!els.urlMsg.hidden) urlError('');
+	});
 	els.file.addEventListener('change', () => {
 		const f = els.file.files?.[0];
 		els.file.value = '';

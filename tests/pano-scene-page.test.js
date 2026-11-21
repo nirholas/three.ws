@@ -3,6 +3,7 @@ import { Euler, Quaternion } from 'three';
 import {
 	MAX_PHOTO_BYTES,
 	classifyFile,
+	classifyUrl,
 	isEquirectSize,
 	stepsFor,
 	stepStates,
@@ -98,5 +99,36 @@ describe('deviceQuaternion', () => {
 		expect(got[1]).toBeCloseTo(q.y, 6);
 		expect(got[2]).toBeCloseTo(q.z, 6);
 		expect(got[3]).toBeCloseTo(q.w, 6);
+	});
+});
+
+describe('classifyUrl', () => {
+	it('accepts a public https link and infers the source kind from the path', () => {
+		expect(classifyUrl('https://example.com/room.jpg')).toEqual({ kind: 'equirect_image', url: 'https://example.com/room.jpg' });
+		expect(classifyUrl('  https://example.com/raw/IMG_1.INSP?x=1 ').kind).toBe('insp');
+		expect(classifyUrl('https://example.com/photo?id=9').kind).toBe('equirect_image');
+	});
+	it('rejects anything that is not https', () => {
+		expect(classifyUrl('http://example.com/room.jpg')).toBeNull();
+		expect(classifyUrl('javascript:alert(1)')).toBeNull();
+		expect(classifyUrl('room.jpg')).toBeNull();
+		expect(classifyUrl('')).toBeNull();
+	});
+});
+
+describe('errorCopy storage_unavailable', () => {
+	it('tells the visitor uploads are paused and to paste a link instead', () => {
+		const copy = errorCopy('storage_unavailable', 'server text');
+		expect(copy.title).toMatch(/upload/i);
+		expect(copy.body).toMatch(/link/i);
+		expect(copy.pasteLink).toBe(true);
+	});
+});
+
+describe('errorCopy upload_failed', () => {
+	it('keeps the server or network detail and offers the link path', () => {
+		const copy = errorCopy('upload_failed', 'Upload failed (HTTP 401).');
+		expect(copy.body).toContain('HTTP 401');
+		expect(copy.pasteLink).toBe(true);
 	});
 });

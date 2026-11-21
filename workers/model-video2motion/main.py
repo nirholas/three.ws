@@ -25,10 +25,17 @@ the anchors, and hides the subject under the mask. All model inference is
 CPU-friendly — this worker deploys like the segment/rembg lanes, no GPU.
 
 API contract (identical shape to the other model-* workers):
-  POST /infer   { video_url: str, fps?: int=24, max_seconds?: float, job_id?: str }
+  POST /infer   { video_url: str, fps?: int=24, max_seconds?: float, job_id?: str,
+                  projection?: "perspective"|"equirect", subject?: {yaw_deg, pitch_deg} }
                 → 202 { task_id, status: "queued" }
   GET  /tasks/:id → { task_id, status, result_url?, meta_url?, video_url?,
-                      mask_url?, frames?, fps?, error? }
+                      mask_url?, frames?, fps?, error?,
+                      reframe_url?, subject_track?, track_stats? (equirect only) }
+
+projection "equirect" (contract C3): the source is a stitched 2:1 360 video. The
+worker follows the person across the sphere, renders a 1080p perspective reframe
+(equirect.py), runs the unchanged pose pipeline on it, and expresses the solved
+landmarks in the 360 camera's own frame so root orientation is world-space.
   GET  /health    → { ok, models_loaded }
 
 Environment:
@@ -51,13 +58,14 @@ import tempfile
 import time
 import uuid
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Literal, Optional
 
 import numpy as np
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
+import equirect
 from pose_solver import image_anchors, landmarks_to_clip, match_hands_to_sides
 from worker_security import fetch_remote_bytes, require_api_key, safe_error
 
@@ -104,11 +112,20 @@ def _require_api_key(authorization: str) -> None:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
+class Subject(BaseModel):
+    """Initial look direction toward the person (contract C3 yaw/pitch)."""
+
+    yaw_deg: float = Field(..., ge=-180, le=180)
+    pitch_deg: float = Field(..., ge=-90, le=90)
+
+
 class InferRequest(BaseModel):
     video_url: str = Field(..., min_length=12, max_length=2048)
     fps: int = Field(default=DEFAULT_FPS, ge=8, le=30)
     max_seconds: Optional[float] = Field(default=None, gt=0)
     job_id: Optional[str] = None
+    projection: Literal["perspective", "equirect"] = "perspective"
+    subject: Optional[Subject] = None
 
 
 @app.post("/infer", status_code=202)
@@ -117,7 +134,8 @@ async def infer(body: InferRequest, background_tasks: BackgroundTasks, authoriza
     task_id = body.job_id or str(uuid.uuid4())
     _tasks[task_id] = {"task_id": task_id, "status": "queued", "model": "blazepose-heavy"}
     seconds = min(body.max_seconds or MAX_SECONDS, MAX_SECONDS)
-    background_tasks.add_task(_run, task_id, body.video_url, body.fps, seconds)
+    subject = (body.subject.yaw_deg, body.subject.pitch_deg) if body.subject else None
+    background_tasks.add_task(_run, task_id, body.video_url, body.fps, seconds, body.projection, subject)
     return {"task_id": task_id, "status": "queued"}
 
 
@@ -135,14 +153,23 @@ async def health() -> dict:
     return {"ok": True, "models_loaded": _models_loaded}
 
 
-async def _run(task_id: str, video_url: str, fps: int, seconds: float) -> None:
+async def _run(
+    task_id: str,
+    video_url: str,
+    fps: int,
+    seconds: float,
+    projection: str = "perspective",
+    subject: Optional[tuple] = None,
+) -> None:
     assert _sem is not None and _bucket is not None
     async with _sem:
         _tasks[task_id]["status"] = "running"
         started = time.time()
         loop = asyncio.get_event_loop()
         try:
-            result = await loop.run_in_executor(None, _process, task_id, video_url, fps, seconds)
+            result = await loop.run_in_executor(
+                None, _process, task_id, video_url, fps, seconds, projection, subject
+            )
             result["status"] = "done"
             result["elapsed_ms"] = int((time.time() - started) * 1000)
             _tasks[task_id].update(result)
@@ -191,7 +218,14 @@ def _normalize_video(raw_path: str, out_path: str, fps: int, seconds: float) -> 
     )
 
 
-def _process(task_id: str, video_url: str, fps: int, seconds: float) -> dict:
+def _process(
+    task_id: str,
+    video_url: str,
+    fps: int,
+    seconds: float,
+    projection: str = "perspective",
+    subject: Optional[tuple] = None,
+) -> dict:
     workdir = tempfile.mkdtemp(prefix="v2m-")
     try:
         raw_path = os.path.join(workdir, "raw")
@@ -207,12 +241,26 @@ def _process(task_id: str, video_url: str, fps: int, seconds: float) -> dict:
             f.write(data)
 
         norm_path = os.path.join(workdir, "video.mp4")
-        _normalize_video(raw_path, norm_path, fps, seconds)
+        track = None
+        track_stats: dict = {}
+        reframe_path = None
+        if projection == "equirect":
+            reframe_path, track, track_stats = _reframe_equirect(
+                raw_path, workdir, fps, seconds, subject
+            )
+            _normalize_video(reframe_path, norm_path, fps, seconds)
+        else:
+            _normalize_video(raw_path, norm_path, fps, seconds)
 
         world, image, vis, hands, masks, width, height = _analyze(norm_path, fps)
         n_frames = world.shape[0]
         if n_frames < 2:
             raise RuntimeError("no person detected in the video")
+        if track is not None:
+            # The reframe camera moved with the subject; put the landmarks back
+            # in the 360 camera's frame so the solved root is world-space.
+            world = equirect.compensate_camera_rotation(world, track.yaw_deg, track.pitch_deg)
+            hands = equirect.compensate_camera_rotation(hands, track.yaw_deg, track.pitch_deg)
 
         clip = landmarks_to_clip(world, fps=fps, name=f"capture-{task_id[:8]}", hands=hands)
         anchors = image_anchors(image, vis)
@@ -228,6 +276,8 @@ def _process(task_id: str, video_url: str, fps: int, seconds: float) -> dict:
             "height": height,
             "anchors": anchors,
         }
+        if track is not None:
+            meta["projection"] = "equirect"
 
         prefix = f"motion-swap/{task_id}"
         urls = {}
@@ -239,12 +289,15 @@ def _process(task_id: str, video_url: str, fps: int, seconds: float) -> dict:
             blob = _bucket.blob(f"{prefix}/{name}")
             blob.upload_from_string(payload, content_type=ctype)
             urls[name] = f"https://storage.googleapis.com/{GCS_BUCKET}/{prefix}/{name}"
-        for name, path, ctype in (("video.mp4", norm_path, "video/mp4"), ("mask.mp4", mask_path, "video/mp4")):
+        file_uploads = [("video.mp4", norm_path, "video/mp4"), ("mask.mp4", mask_path, "video/mp4")]
+        if reframe_path is not None:
+            file_uploads.append(("reframe.mp4", reframe_path, "video/mp4"))
+        for name, path, ctype in file_uploads:
             blob = _bucket.blob(f"{prefix}/{name}")
             blob.upload_from_filename(path, content_type=ctype)
             urls[name] = f"https://storage.googleapis.com/{GCS_BUCKET}/{prefix}/{name}"
 
-        return {
+        result = {
             "result_url": urls["clip.json"],
             "meta_url": urls["meta.json"],
             "video_url": urls["video.mp4"],
@@ -252,8 +305,57 @@ def _process(task_id: str, video_url: str, fps: int, seconds: float) -> dict:
             "frames": int(n_frames),
             "fps": int(fps),
         }
+        if track is not None:
+            result["reframe_url"] = urls["reframe.mp4"]
+            result["subject_track"] = track.entries(fps)
+            result["track_stats"] = track_stats
+        return result
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
+
+
+def _reframe_equirect(raw_path: str, workdir: str, fps: int, seconds: float, subject: Optional[tuple]):
+    """Track the person across the sphere and render the 1080p reframe.
+
+    Returns (reframe_path, TrackResult, stats). Detection reuses the pose
+    bundle already in the image; the track is a seam-safe constant-velocity
+    Kalman filter with an RTS smoothing pass (see equirect.track_subject).
+    """
+    started = time.time()
+    eq_path = os.path.join(workdir, "equirect-work.mp4")
+    eq_w, eq_h = equirect.decode_working_equirect(raw_path, eq_path, fps, seconds)
+    detector = equirect.PoseBoxDetector(os.path.join(MODELS_DIR, "pose_landmarker_heavy.task"))
+    try:
+        track = equirect.track_subject(
+            lambda: equirect.iter_video_frames(eq_path), detector, float(fps), subject
+        )
+    finally:
+        detector.close()
+    tracked = time.time()
+    reframe_path = os.path.join(workdir, "reframe.mp4")
+    audio = raw_path if _has_audio(raw_path) else None
+    frames = equirect.render_reframe_video(eq_path, track, fps, reframe_path, audio, seconds)
+    stats = {
+        "source_width": eq_w,
+        "source_height": eq_h,
+        "frames": frames,
+        "lost_frames": int(track.lost_frames),
+        "reacquisitions": int(track.reacquisitions),
+        "acquisition": track.acquisition,
+        "track_seconds": round(tracked - started, 2),
+        "reframe_seconds": round(time.time() - tracked, 2),
+    }
+    log.info("equirect reframe %s", stats)
+    return reframe_path, track, stats
+
+
+def _has_audio(path: str) -> bool:
+    out = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_type",
+         "-of", "csv=p=0", path],
+        capture_output=True, text=True, timeout=60,
+    )
+    return out.returncode == 0 and "audio" in out.stdout
 
 
 def _analyze(video_path: str, fps: int):

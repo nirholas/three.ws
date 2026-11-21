@@ -64,8 +64,9 @@ Using `body` with no manifest creates an ad-hoc agent. Its name, instructions, a
 | `poster` | URL | — | Image shown while the model loads. Fades out on completion. |
 | `framing` | `full` \| `portrait` | `full` | Camera framing. `portrait` frames the head and shoulders. |
 | `clip` | clip name | — | Animation clip to play on load. |
+| `environment` | preset id \| https URL | — | The avatar's world. A preset id (for example `venice-sunset`) selects a built-in environment. A public `https://` link to a 360 photo (equirectangular 2:1 JPEG, PNG, WebP, AVIF, EXR or HDR) lights the avatar and shows as the backdrop. The host must send CORS headers; otherwise the viewer shows "That image's host doesn't allow other sites to use it. Download it and drop the file here instead." Non-https values are rejected. See [Your 360 photo](viewer.md#your-360-photo-as-the-environment). |
 
-Lighting, camera orbit, and environment are managed by the built-in viewer; they are not attribute-configurable. For AR placement, use the dedicated AR surfaces described in [AR](#ar) below.
+Camera orbit and the lighting rig are managed by the built-in viewer; they are not attribute-configurable. For AR placement, use the dedicated AR surfaces described in [AR](#ar) below.
 
 ### Brain (LLM runtime)
 

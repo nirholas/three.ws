@@ -191,8 +191,9 @@
 									</div>
 									<h3 data-i18n="video_to_motion.drop_a_video_of_one_person">Drop a video of one person</h3>
 									<p data-i18n="video_to_motion.mp4_mov_or_webm_up_to_256">MP4, MOV, or WebM up to 256 MB. The first 90 seconds are processed. Full body in frame tracks best.</p>
+									<p>Have a 360 clip from any 360 camera? Drop the stitched MP4 and click the person to follow.</p>
 								</div>
-								<input id="vtm-file" type="file" accept="video/mp4,video/quicktime,video/webm" hidden />
+								<input id="vtm-file" type="file" accept="video/mp4,video/quicktime,video/webm,.insv,.insp,.lrv" hidden />
 							</div>
 
 							<div class="vtm-overlay" id="vtm-stage-processing" hidden>
@@ -213,6 +214,8 @@
 								<p class="vtm-note" data-i18n="video_to_motion.too_many_captures_from_this_connection">Too many captures from this connection recently. Wait a bit and try again.</p>
 							</div>
 
+							<div id="vtm-stage-pick" hidden></div>
+
 							<div id="vtm-stage-ready" hidden></div>
 
 							<div class="vtm-controls">
@@ -228,6 +231,7 @@
 								<output id="vtm-trim-end-out">0.0s</output>
 							</div>
 						</div>
+						<div id="vtm-reframe" hidden></div>
 						<p id="vtm-status" hidden></p>
 						<video id="vtm-video" playsinline hidden></video>
 					</div>

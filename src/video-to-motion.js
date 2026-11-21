@@ -8,6 +8,16 @@
 // conversion that preserves the rig, via /api/forge-remesh).
 
 import { applyStudioLook, createRenderLoop } from './render/index.js';
+import {
+	buildCaptureBody,
+	classifyCaptureError,
+	createMotion360Stage,
+	createReframePanel,
+	fileProblem,
+	inspectVideoFile,
+	isRawCameraFile,
+	reframeUrlOf,
+} from './motion-360.js';
 
 const STOCK_AVATARS = [
 	{ id: 'default', name: 'Standard', url: '/avatars/default.glb' },
@@ -17,7 +27,6 @@ const STOCK_AVATARS = [
 ];
 
 const POLL_MS = 3000;
-const MAX_UPLOAD_BYTES = 256 * 1024 * 1024;
 const CONVERT_POLL_MS = 2_500;
 const CONVERT_TIMEOUT_MS = 180_000;
 
@@ -36,7 +45,11 @@ const state = {
 	boundClip: null, // AnimationClip retargeted + trimmed, bound to the current avatar
 	session: false,
 	agents: [],
+	pending: null, // { file, inspection } while the 360 stage is open
 };
+
+let stage360 = null;
+let reframe = null;
 
 function setStatus(text, kind = 'info') {
 	const el = $('vtm-status');
@@ -47,7 +60,9 @@ function setStatus(text, kind = 'info') {
 }
 
 function showStage(stage) {
-	for (const s of ['empty', 'processing', 'failed', 'limit']) {
+	if (stage !== 'pick') stage360?.hide();
+	if (stage !== 'ready') reframe?.hide();
+	for (const s of ['empty', 'processing', 'failed', 'limit', 'pick']) {
 		const el = $(`vtm-stage-${s}`);
 		if (el) el.hidden = s !== stage;
 	}
@@ -66,9 +81,8 @@ function showStage(stage) {
 // ---------------------------------------------------------------------------
 
 async function uploadVideo(file) {
-	if (file.size > MAX_UPLOAD_BYTES) {
-		throw new Error('Video is over 256 MB. Trim it down (90 seconds is the processing cap anyway).');
-	}
+	const problem = fileProblem(file);
+	if (problem) throw new Error(problem);
 	const type = file.type || 'video/mp4';
 	setStatus('Requesting upload slot…');
 	const presign = await fetch('/api/motion-swap', {
@@ -84,17 +98,19 @@ async function uploadVideo(file) {
 		method: slot.method || 'PUT',
 		headers: slot.headers || { 'content-type': type },
 		body: file,
+	}).catch(() => {
+		throw new Error('The upload was interrupted before it finished. Check your connection and try again.');
 	});
 	if (!put.ok) throw new Error(`Upload failed (${put.status}). Try again.`);
 	return slot.public_url;
 }
 
-async function submitJob(videoUrl) {
+async function submitJob(videoUrl, capture) {
 	setStatus('Starting capture…');
 	const res = await fetch('/api/motion-swap', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ video_url: videoUrl }),
+		body: JSON.stringify(buildCaptureBody(videoUrl, capture)),
 	});
 	const data = await res.json();
 	if (res.status === 429) {
@@ -117,7 +133,9 @@ async function pollJob(jobId, etaSeconds) {
 		}
 		if (data.status === 'done' && data.clip_url) return data;
 		if (data.status === 'failed') {
-			throw new Error(data.error || 'Capture failed. Make sure one person is clearly visible.');
+			const err = new Error(data.error || 'Capture failed. Make sure one person is clearly visible.');
+			err.code = data.error_code || '';
+			throw err;
 		}
 		const elapsed = Math.round((Date.now() - started) / 1000);
 		const pct = etaSeconds ? Math.min(95, Math.round((elapsed / etaSeconds) * 100)) : null;
@@ -133,23 +151,78 @@ async function pollJob(jobId, etaSeconds) {
 	}
 }
 
-async function handleFile(file) {
+// A chosen file is inspected first: a stitched 360 clip (2:1) or a raw camera
+// file goes to the 360 stage to pick the person; anything else is captured as
+// before.
+async function onFileChosen(file) {
+	setStatus('Reading the clip…');
+	const inspection = await inspectVideoFile(file);
+	setStatus('');
+	state.pending = { file, inspection };
+	if (inspection.kind === 'raw') {
+		showStage('pick');
+		await stage360.review(file, inspection);
+		return;
+	}
+	const is360 = inspection.kind === 'equirect';
+	const problem = fileProblem(file, { is360 });
+	if (problem) {
+		showStage('pick');
+		stage360.failure({
+			title: 'That file is too large',
+			text: problem,
+			retryLabel: 'Choose another video',
+			onRetry: resetToEmpty,
+			single: true,
+		});
+		return;
+	}
+	if (is360) {
+		showStage('pick');
+		await stage360.review(file, inspection);
+		return;
+	}
+	await handleFile(file, null);
+}
+
+function resetToEmpty() {
+	showStage('empty');
+	setStatus('');
+	state.pending = null;
+}
+
+async function handleFile(file, capture) {
 	try {
 		showStage('processing');
 		const bar = $('vtm-progress-bar');
 		if (bar) bar.style.width = '0%';
+		const note = $('vtm-processing-note');
+		if (note && capture) note.textContent = 'Following the person around the 360 view, then tracking pose.';
 		const videoUrl = await uploadVideo(file);
-		const job = await submitJob(videoUrl);
+		const job = await submitJob(videoUrl, capture);
 		state.job = job.job_id;
 		const done = await pollJob(job.job_id, job.eta_seconds);
 		state.artifacts = done;
 		setStatus('Loading motion…');
 		await loadClip(done);
 		showStage('ready');
+		const reframeUrl = reframeUrlOf(done);
+		if (reframeUrl) reframe.show(reframeUrl);
 		setStatus('');
 	} catch (err) {
 		if (err?.limited) {
 			showStage('limit');
+		} else if (capture && classifyCaptureError(err?.message, err?.code) === 'subject_lost') {
+			showStage('pick');
+			stage360.failure({
+				title: 'We lost track of the person',
+				text: err.message,
+				retryLabel: 'Pick the person again',
+				onRetry: () => {
+					showStage('pick');
+					stage360.review(file, state.pending?.inspection);
+				},
+			});
 		} else {
 			showStage('failed');
 			const reason = $('vtm-fail-reason');
@@ -293,6 +366,7 @@ async function loadClip(artifacts) {
 		renderer: t.renderer,
 		frame: (dt) => {
 			if (t.mixer && t.playing) t.mixer.update(dt);
+			if (reframe?.visible) reframe.sync(state.trimStart + (t.action?.time ?? 0), t.playing);
 			t.renderer.render(t.scene, t.camera);
 		},
 	});
@@ -570,7 +644,7 @@ function wireUI() {
 		}
 	});
 	input.addEventListener('change', () => {
-		if (input.files?.[0]) handleFile(input.files[0]);
+		if (input.files?.[0]) onFileChosen(input.files[0]);
 		input.value = '';
 	});
 	for (const evt of ['dragover', 'dragenter']) {
@@ -587,14 +661,11 @@ function wireUI() {
 	}
 	drop.addEventListener('drop', (e) => {
 		const file = e.dataTransfer?.files?.[0];
-		if (file && file.type.startsWith('video/')) handleFile(file);
+		if (file && (file.type.startsWith('video/') || isRawCameraFile(file))) onFileChosen(file);
 		else if (file) setStatus('That is not a video file.', 'error');
 	});
 
-	$('vtm-retry').addEventListener('click', () => {
-		showStage('empty');
-		setStatus('');
-	});
+	$('vtm-retry').addEventListener('click', resetToEmpty);
 	$('vtm-new').addEventListener('click', () => {
 		const t = state.three;
 		if (t) t.playing = false;
@@ -694,6 +765,26 @@ function wireUI() {
 		if (state.three) layout(state.three);
 	});
 }
+
+stage360 = createMotion360Stage($('vtm-stage-pick'), {
+	onStart: (file, capture) => handleFile(file, capture),
+	onRegular: (file) => {
+		const problem = fileProblem(file);
+		if (problem) {
+			stage360.failure({
+				title: 'That file is too large',
+				text: problem,
+				retryLabel: 'Choose another video',
+				onRetry: resetToEmpty,
+				single: true,
+			});
+			return;
+		}
+		handleFile(file, null);
+	},
+	onCancel: resetToEmpty,
+});
+reframe = createReframePanel($('vtm-reframe'));
 
 wireUI();
 showStage('empty');

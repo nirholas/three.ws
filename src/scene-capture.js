@@ -206,6 +206,8 @@ async function uploadVideo(file) {
 }
 
 async function startCaptureFromFile(file) {
+	// 360 footage (raw .insv or a 2:1 video) belongs to the 360 tab.
+	if (await window.pcVideoRouter?.(file)) return;
 	stopPolling();
 	$('#pc-run').disabled = true;
 	$('#pc-video-pick').disabled = true;
@@ -381,7 +383,8 @@ function init() {
 	stage.addEventListener('drop', (e) => {
 		e.preventDefault(); stage.classList.remove('is-dragover');
 		const file = e.dataTransfer?.files?.[0];
-		if (file) loadFromFile(file);
+		if (!file) return;
+		Promise.resolve(window.pcVideoRouter?.(file)).then((routed) => { if (!routed) loadFromFile(file); });
 	});
 
 	// Deep links: ?src=<ply-url> renders directly; ?video=<url> pre-fills capture.

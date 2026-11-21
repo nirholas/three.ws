@@ -12,6 +12,8 @@ import { Color } from 'three';
 import { loadSpark, detectSplatFormat, mountSplatScene, SPLAT_EXTENSIONS_LABEL } from './splat-stage.js';
 import { initHotspotTimeline } from './splat-hotspots.js';
 import { generateSplat, validatePhoto, SplatGenerateError } from './splat-generate.js';
+import { PanoController } from './viewer/pano-stage.js';
+import { createPanoPanel, createPanoOverlay, attachPanoDrop } from './viewer/pano-panel.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 
@@ -24,6 +26,20 @@ let _token = 0; // guards a slow load finishing after a newer one started
 let _downloadUrl = null; // blob URL backing the download button
 let _lastRender = null; // { buffer, fileType, fileName, label, flip }, for recenter
 let _hotspots = null; // handle from initHotspotTimeline, wired in init()
+let _pano = null; // PanoController: the user's 360 photo as the splat backdrop
+let _baseBackground = null; // the scene's own background, restored when the photo is cleared
+
+// Write the 360 backdrop onto the live scene. mountSplatScene builds a fresh
+// renderer and scene for every load, so this runs after each mount as well as
+// whenever a control changes.
+function applyPano() {
+	const scene = _scene?.scene;
+	if (!scene || !_pano) return;
+	const texture = _pano.getBackgroundTexture();
+	if (_baseBackground === null) _baseBackground = scene.background;
+	scene.background = texture || _baseBackground;
+	_pano.applyToScene(scene, Boolean(texture));
+}
 
 function teardown() {
 	_token++;
@@ -149,6 +165,8 @@ async function renderBuffer(buffer, { label, fileType, fileName, flip = true }) 
 	if (token !== _token) { scene.dispose(); return false; }
 
 	_scene = scene;
+	_baseBackground = scene.scene.background;
+	applyPano();
 	_hotspots?.onSceneChanged(scene);
 	setLive(scene.count ? `${label} \u00b7 ${scene.count.toLocaleString()} splats` : label);
 	return true;
@@ -425,12 +443,32 @@ function initGenerate() {
 	});
 }
 
+// ── 360 photo backdrop ───────────────────────────────────────────────────────
+function initPano() {
+	const card = $('#sp-pano-card');
+	if (!card) return;
+	_pano = new PanoController({
+		getTarget: () => (_scene ? { renderer: _scene.renderer } : null),
+		onApply: applyPano,
+		features: { lighting: false },
+	});
+	card.append(createPanoPanel(_pano).el);
+	createPanoOverlay(STAGE(), _pano);
+	attachPanoDrop(STAGE(), _pano);
+	if (new URLSearchParams(location.search).has('env')) {
+		_pano.load(new URLSearchParams(location.search).get('env'));
+	} else {
+		_pano.restore();
+	}
+}
+
 // ── Wiring ───────────────────────────────────────────────────────────────────
 function init() {
 	if (!STAGE()) return;
 
 	_hotspots = initHotspotTimeline();
 	initGenerate();
+	initPano();
 
 	$('#sp-load-url').addEventListener('click', () => {
 		const url = $('#sp-url').value.trim();

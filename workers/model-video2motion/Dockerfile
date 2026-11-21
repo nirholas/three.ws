@@ -29,6 +29,7 @@ WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY canonical_rest.py /app/canonical_rest.py
 COPY pose_solver.py /app/pose_solver.py
+COPY equirect.py /app/equirect.py
 COPY main.py /app/main.py
 
 EXPOSE 8080

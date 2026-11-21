@@ -173,8 +173,9 @@
 									</div>
 									<h3 data-i18n="motion_swap.drop_a_video_of_one_person">Drop a video of one person</h3>
 									<p data-i18n="motion_swap.mp4_mov_or_webm_up_to_256">MP4, MOV, or WebM up to 256 MB. The first 90 seconds are processed. Full body in frame tracks best.</p>
+									<p>Have a 360 clip from any 360 camera? Drop the stitched MP4 and click the person to swap.</p>
 								</div>
-								<input id="ms-file" type="file" accept="video/mp4,video/quicktime,video/webm" hidden />
+								<input id="ms-file" type="file" accept="video/mp4,video/quicktime,video/webm,.insv,.insp,.lrv" hidden />
 							</div>
 
 							<div class="ms-overlay" id="ms-stage-processing" hidden>
@@ -182,6 +183,8 @@
 								<h3 data-i18n="motion_swap.capturing_your_motion">Capturing your motion</h3>
 								<p data-i18n="motion_swap.tracking_your_pose_frame_by_frame_and">Tracking your pose frame-by-frame and masking you out. A 30-second clip takes about two minutes.</p>
 							</div>
+
+							<div id="ms-stage-pick" hidden></div>
 
 							<div id="ms-stage-ready" hidden></div>
 
@@ -196,6 +199,7 @@
 								</label>
 							</div>
 						</div>
+						<div id="ms-reframe" hidden></div>
 						<p id="ms-status" hidden></p>
 						<video id="ms-video" playsinline hidden></video>
 						<video id="ms-mask" playsinline muted hidden></video>

@@ -1,0 +1,49 @@
+# Build and push the model-panodepth image. Does not create or update any Cloud Run
+# service: the service is an owner step (see README "Deploy").
+#
+#   TMPDIR=/home/user/.cache/gcloud-tmp gcloud builds submit . \
+#     --config workers/model-panodepth/cloudbuild.yaml \
+#     --region <region> --project aerial-vehicle-466722-p5 \
+#     --substitutions _REGION=<region>,_WEIGHTS_BUCKET=<bucket>  (from repo root, source workers/model-panodepth)
+#
+# Builds run as the pinned three-ws-build service account: the project's default
+# compute service account was deleted.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _REGION: us-central1
+  _REPO: model-panodepth
+  _WEIGHTS_BUCKET: three-ws-model-weights
+
+steps:
+  - id: weights
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        mkdir -p weights/moge-2-vitl-normal
+        gcloud storage cp gs://${_WEIGHTS_BUCKET}/panodepth/moge-2-vitl-normal/model.pt weights/moge-2-vitl-normal/model.pt
+        cat > weights/moge-2-vitl-normal/SHA256SUMS <<'SUMS'
+        280741fd09bc3f403ccff9967784c2a391b52d2c0742ae3efdb21d9f90cc1a01  model.pt
+        SUMS
+        sed -i 's/^ *//' weights/moge-2-vitl-normal/SHA256SUMS
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+    timeout: 3000s
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+
+options:
+  machineType: E2_HIGHCPU_32
+  logging: CLOUD_LOGGING_ONLY

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-21",
+			"title": "Click the person in a 360 clip for motion capture",
+			"summary": "/video-to-motion and /motion-swap now accept a stitched 360 clip from any 360 camera. The page detects the 2:1 frame, opens a sphere preview where you drag to look around and click the person to follow (or let it pick), sends that spot as a yaw and pitch with the capture, and shows what the tracker followed beside the avatar when the worker returns it. Raw .insv files get a clear note to export a 360 MP4 first.",
+			"tags": [
+				"feature"
+			],
+			"link": "/video-to-motion"
+		},
+		{
+			"date": "2026-11-21",
 			"title": "Premiere Pro panel for 360 capture",
 			"summary": "A UXP panel for Adobe Premiere Pro 25.6 or later sends a 360 clip (or the selected sequence clip's in and out range) to three.ws, uploads it in resumable parts, shows live progress with cancel, and imports the preview, poster and scene files into a three.ws captures bin, with one button to insert the preview at the playhead. Source and a built .ccx live in integrations/premiere-uxp; the Adobe Exchange listing is an owner step.",
 			"tags": [

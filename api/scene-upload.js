@@ -19,7 +19,7 @@
 import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { presignUpload, publicUrl } from './_lib/r2.js';
+import { objectStorageUsable, presignUpload, publicUrl } from './_lib/r2.js';
 import { ANON_UPLOAD_LIMITS } from './_lib/anon-upload-limits.js';
 import { hashClient } from './_lib/forge-store.js';
 import { requireCreator } from './_lib/creator-account.js';
@@ -70,6 +70,23 @@ export default wrap(async (req, res) => {
 	if (!who) return;
 	const rl = await limits.upload(`scene:${who.user ? `user:${who.user.id}` : clientIp(req)}`);
 	if (!rl.success) return rateLimited(res, rl, 'Upload limit reached. Try again shortly.');
+
+	// A present-but-rejected credential still signs a perfect-looking URL, and
+	// the PUT then answers 401 with no CORS header, which the page can only
+	// report as a network error. Say what is wrong while it is still sayable
+	// (same probe and shape as api/forge-upload.js; cached in r2.js).
+	const storage = await objectStorageUsable();
+	if (!storage.ok && storage.reason === 'rejected') {
+		console.error(`[scene-upload] object storage rejected our credential: ${storage.message}`);
+		res.setHeader('retry-after', '60');
+		return json(res, 503, {
+			error: 'storage_unavailable',
+			message:
+				'File upload is temporarily unavailable while our asset storage recovers. ' +
+				'Paste a public https link to the file instead, or try again shortly.',
+			retry_after: 60,
+		});
+	}
 
 	const body = await readJson(req, 2_000).catch(() => null);
 

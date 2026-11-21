@@ -39,7 +39,8 @@ build() {
 run() {
   run_id="$(date -u +%Y%m%dT%H%M%SZ)"
   count=$(wc -w <<< "$MATRIX")
-  gcloud run jobs deploy "$JOB" --project "$PROJECT" --region "$REGION" --image "$IMAGE" \
+  # GPU tasks longer than 1 h need the BETA launch stage.
+  gcloud beta run jobs deploy "$JOB" --project "$PROJECT" --region "$REGION" --image "$IMAGE" \
     --service-account "three-ws@${PROJECT}.iam.gserviceaccount.com" \
     --gpu 1 --gpu-type nvidia-l4 --no-gpu-zonal-redundancy --cpu 8 --memory 32Gi \
     --tasks "$count" --parallelism "$PARALLELISM" --max-retries 0 --task-timeout 4h \

@@ -34,6 +34,7 @@ const log = createLogger('mine');
 const MAX_LIVE_VIEWERS = 6;
 const AVATAR_LIMIT = 60;
 const MODEL_LIMIT = 48;
+const CAPTURE_LIMIT = 50;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) =>
@@ -154,6 +155,48 @@ function normalizeForgeCreation(c) {
 	};
 }
 
+// 360 captures from /api/pano-capture?mine=1 (docs/pano-capture.md). A scene
+// that is still processing or failed shows its state instead of a viewer link;
+// a finished one opens in /splat. Splats are not GLB, so no <model-viewer>
+// preview: the poster frame the worker rendered stands in.
+const CAPTURE_SOURCE = {
+	equirect_video: '360 video',
+	equirect_images: '360 photo set',
+	insv: '.insv recording',
+	insp: '.insp photo',
+};
+
+function captureStatusLine(c) {
+	if (c.status === 'succeeded') return '360 scene';
+	if (c.status === 'queued') return 'Queued for processing';
+	if (c.status === 'running') {
+		const pct = Math.round((Number(c.progress) || 0) * 100);
+		return pct > 0 ? `Processing ${pct}%` : 'Processing';
+	}
+	if (c.status === 'failed') return truncate(c.error?.message ? `Failed: ${c.error.message}` : 'Failed', 70);
+	return 'Cancelled';
+}
+
+function normalizePanoCapture(c) {
+	const done = c.status === 'succeeded' && c.viewer_url;
+	return {
+		kind: 'capture',
+		key: `capture:${c.job_id}`,
+		id: c.job_id,
+		title: `Scene from ${CAPTURE_SOURCE[c.source_kind] || '360 footage'}`,
+		sub: captureStatusLine(c),
+		poster: c.poster_url || null,
+		model: null,
+		// An unfinished capture has no scene to open yet: send its owner back to
+		// the capture page, where a new upload starts.
+		href: done ? c.viewer_url : '/capture',
+		editHref: done ? null : '/capture',
+		editLabel: c.status === 'failed' || c.status === 'cancelled' ? 'Capture again' : 'Capture page',
+		createdAt: c.created_at || null,
+		flag: c.status === 'queued' || c.status === 'running' ? 'processing' : c.status === 'succeeded' ? '' : c.status,
+	};
+}
+
 /** Items from /api/users/:username/creations: models, worlds and restyles the
  *  creator made while signed in (any browser). Shape differs from the forge
  *  gallery feed, so it gets its own mapper. */
@@ -204,6 +247,7 @@ async function loadEverything(user) {
 	if (user) {
 		jobs.push({ name: 'agents', run: () => getJSON('/api/agents') });
 		jobs.push({ name: 'avatars', run: () => getJSON(`/api/avatars/mine?limit=${AVATAR_LIMIT}`) });
+		jobs.push({ name: 'captures', run: () => getJSON(`/api/pano-capture?mine=1&limit=${CAPTURE_LIMIT}`) });
 	}
 	if (cid) {
 		jobs.push({
@@ -232,6 +276,7 @@ async function loadEverything(user) {
 		const data = result.value || {};
 		if (name === 'agents') items.push(...(data.agents || []).map(normalizeAgent));
 		else if (name === 'avatars') items.push(...(data.avatars || []).map(normalizeAvatar));
+		else if (name === 'captures') items.push(...(data.captures || []).map(normalizePanoCapture));
 		else if (name === 'forge') items.push(...(data.creations || []).map(normalizeForgeCreation));
 		else if (name === 'profile') items.push(...(data.items || []).map(normalizeProfileCreation));
 	});
@@ -342,7 +387,7 @@ function wireThumb(thumb) {
 
 // ── Rendering ───────────────────────────────────────────────────────────────
 
-const KIND_LABEL = { agent: 'Agent', avatar: 'Avatar', model: '3D model', world: 'World' };
+const KIND_LABEL = { agent: 'Agent', avatar: 'Avatar', model: '3D model', world: 'World', capture: '360 scene' };
 
 function monogram(title) {
 	const ch = String(title || '?').trim().charAt(0).toUpperCase();
@@ -521,6 +566,9 @@ async function boot() {
 	renderCounts();
 	$('mn-stats').hidden = !state.items.length;
 	$('mn-controls').hidden = state.items.length < 2;
+	// Most accounts have never made a 360 scene; the chip appears once one exists.
+	const captureChip = document.querySelector('.mn-chip[data-filter="capture"]');
+	if (captureChip) captureChip.hidden = !state.items.some((i) => i.kind === 'capture');
 	$('mn-elsewhere').hidden = false;
 	render();
 }

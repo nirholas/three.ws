@@ -50,6 +50,10 @@ Three stages, split between one CPU worker and your browser:
 Privacy properties: the motion clip contains no imagery (skeleton rotations
 only), and processing artifacts live under an unguessable job id.
 
+## 360 clips
+
+[/motion-swap](https://three.ws/motion-swap) takes a stitched 360 clip too: click the person in a sphere preview and the job carries `projection` and `subject`. The full walkthrough, the yaw and pitch convention and the result fields are in [video-to-motion.md](video-to-motion.md#360-clips-click-the-person).
+
 ## API
 
 ```

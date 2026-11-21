@@ -29,9 +29,10 @@ export function isEquirectRatio(width, height, tolerance = 0.02) {
 }
 
 // Insta360 names split-lens recordings VID_YYYYMMDD_HHMMSS_00_NNN.insv and
-// VID_YYYYMMDD_HHMMSS_10_NNN.insv (one file per lens); the same scheme holds for
+// VID_YYYYMMDD_HHMMSS_10_NNN.insv (one file per lens; the NNN counter is
+// optional because exported or renamed pairs often drop it); the same scheme holds for
 // .lrv low-resolution proxies and for IMG_..._00_NNN.insp photos.
-const LENS_RE = /^(.*_)(00|10)(_\d+\.[a-z0-9]+)$/i;
+const LENS_RE = /^(.*_)(00|10)((?:_\d+)?\.[a-z0-9]+)$/i;
 
 /** The lens-pair stem of an Insta360 file name, or null when the name is not in that scheme. */
 export function lensInfo(name) {
@@ -262,7 +263,7 @@ export const STAGE_LABELS = {
 // The worker reports download|stitch|frames|sfm|train|export|upload. The first
 // ("download") is the worker fetching what we uploaded, so it belongs to our
 // Upload step; the last ("upload") is the worker publishing results.
-const WORKER_STAGE_TO_STEP = { download: 'upload', stitch: 'stitch', frames: 'frames', sfm: 'sfm', train: 'train', export: 'export', upload: 'export' };
+const WORKER_STAGE_TO_STEP = { download: 'upload', stitch: 'stitch', frames: 'frames', sfm: 'sfm', train: 'train', export: 'export', upload: 'export', save: 'export', done: 'export' };
 
 /** The steps a job of this kind shows. Only raw recordings are stitched on our servers. */
 export function stagesFor(sourceKind) {
@@ -277,8 +278,10 @@ export function stagesFor(sourceKind) {
 export function stageView(job, sourceKind) {
 	const steps = stagesFor(sourceKind);
 	const succeeded = job?.status === 'succeeded' || job?.status === 'done';
-	const active = succeeded ? steps.length : steps.indexOf(WORKER_STAGE_TO_STEP[job?.stage] || 'upload');
-	const idx = active < 0 ? 0 : active;
+	// A queued job has been uploaded and is waiting for a worker: Upload is done.
+	const queued = job?.stage === 'queued' || (job?.status === 'queued' && !job?.stage);
+	const active = succeeded ? steps.length : queued ? 1 : steps.indexOf(WORKER_STAGE_TO_STEP[job?.stage] || 'upload');
+	const idx = active < 0 ? 0 : Math.min(active, steps.length - 1);
 	return steps.map((key, i) => {
 		const state = succeeded || i < idx ? 'done' : i === idx ? 'active' : 'pending';
 		const fraction = state === 'done' ? 1 : state === 'active' ? Math.max(0, Math.min(1, Number(job?.progress) || 0)) : 0;
@@ -316,6 +319,7 @@ export function describeCaptureError(code, { status = 0, message = '' } = {}) {
 			return { title: '360 capture is not switched on here yet', message: 'This deployment has no reconstruction worker connected. Your file has not been touched. Try again later, or use three.ws.', tone: 'info', action: 'retry' };
 		case 'too_few_registered':
 		case 'registration_failed':
+		case 'registration_too_low':
 			return {
 				title: 'The camera path could not be solved',
 				message: 'Too few frames lined up to rebuild the space. Walk slowly in a lit place with plenty of texture, hold the camera on a stick above your head, keep the same height, and avoid mirrors and bare white walls. Then try again.',
@@ -323,20 +327,44 @@ export function describeCaptureError(code, { status = 0, message = '' } = {}) {
 				action: 'pick_other',
 			};
 		case 'file_too_large':
+		case 'source_too_large':
 			return { title: 'That file is too large', message: 'Files up to 8 GB can be uploaded. Trim the recording in your camera app, or export a lower-resolution version.', tone: 'error', action: 'pick_other' };
 		case 'unauthorized':
 		case 'unauthenticated':
 		case 'sign_in_required':
 			return { title: 'Sign in to capture in 360', message: 'Uploads and captures belong to your account so you can find them later.', tone: 'info', action: 'sign_in' };
+		case 'too_many_active':
+			return { title: 'You already have captures running', message: 'Each account can process a few captures at a time. Wait for one to finish, or cancel one in Your captures, then start this one.', tone: 'info', action: 'wait' };
+		case 'too_many_open_uploads':
+			return { title: 'You have uploads in progress', message: 'Finish or cancel an open upload before starting another. Choosing the same file again resumes it instead of starting over.', tone: 'info', action: 'wait' };
+		case 'daily_quota_exceeded':
+			return { title: 'Daily upload limit reached', message: 'Accounts can upload up to 32 GB of 360 footage a day. Try again tomorrow, or trim the recording in your camera app first.', tone: 'info', action: 'wait' };
+		case 'invalid_content_type':
+		case 'invalid_filename':
+			return { title: 'That file type is not accepted', message: 'Use an .insv, .insp or .lrv file, an mp4 or mov 360 video, or 360 photos as JPEG or PNG.', tone: 'error', action: 'pick_other' };
 		case 'rate_limited':
 		case 'too_many_requests':
 			return { title: 'Too many captures at once', message: 'You have reached the hourly limit. Wait a few minutes, then start again. Your uploaded file is kept.', tone: 'info', action: 'wait' };
 		case 'unsupported_camera':
 		case 'unsupported_input':
+		case 'no_calibration':
 			return { title: 'That camera format is not supported yet', message: message || 'We could not read that recording. Export a stitched 360 video from your camera app and upload that instead.', tone: 'error', action: 'pick_other' };
 		case 'corrupt_input':
 		case 'unreadable_input':
+		case 'no_frames_decoded':
+		case 'no_video_stream':
+		case 'no_images':
 			return { title: 'That file looks damaged', message: 'The recording could not be read to the end. Copy it from the card again and retry.', tone: 'error', action: 'pick_other' };
+		case 'upload_not_found':
+			return { title: 'This upload expired', message: 'The partial upload is no longer on our servers. Choose the file again to start fresh.', tone: 'info', action: 'pick_other' };
+		case 'internal_error':
+		case 'stage_failed':
+		case 'worker_lost':
+		case 'nvenc_error':
+		case 'storage_error':
+			return { title: 'Our side hit a problem', message: 'The capture did not finish because of a fault on our servers, not your footage. Try again; your upload is kept for seven days.', tone: 'error', action: 'retry' };
+		case 'cancelled':
+			return { title: 'Capture cancelled', message: 'This capture was stopped before it finished.', tone: 'info', action: 'pick_other' };
 		case 'network':
 			return { title: 'Connection lost', message: 'Your connection dropped. The upload resumes by itself when you are back online; nothing already sent is lost.', tone: 'info', action: 'retry' };
 		case 'etag_unreadable':

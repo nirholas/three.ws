@@ -237,7 +237,12 @@
 					<p><a href="/pano-scene">Just have one 360 photo? Step inside it.</a></p>
 				</div>
 
-				<div class="pc-layout">
+				<div class="c3-tabs" role="tablist" aria-label="Capture type" id="c3-tabs">
+					<button class="c3-tab" role="tab" id="c3-tab-standard" type="button" aria-selected="true" aria-controls="pc-standard" tabindex="0">Standard video</button>
+					<button class="c3-tab" role="tab" id="c3-tab-360" type="button" aria-selected="false" aria-controls="c3-section" tabindex="-1">360 video</button>
+				</div>
+
+				<div class="pc-layout" id="pc-standard">
 					<div class="pc-stage" id="pc-stage">
 						<div class="pc-host" id="pc-host"></div>
 
@@ -381,6 +386,107 @@
 						</div>
 					</aside>
 				</div>
+
+				<section class="c3" id="c3-section" role="tabpanel" aria-labelledby="c3-tab-360" hidden>
+					<div class="c3-alert" id="c3-alert" role="alert" hidden>
+						<div>
+							<strong id="c3-alert-title"></strong>
+							<p id="c3-alert-msg"></p>
+						</div>
+						<div class="c3-alert-actions" id="c3-alert-actions"></div>
+					</div>
+
+					<div class="c3-resume" id="c3-resume" hidden>
+						<div>
+							<strong>Pick up where you left off</strong>
+							<p id="c3-resume-msg"></p>
+						</div>
+						<div class="c3-alert-actions">
+							<button class="pc-btn pc-btn--primary" type="button" id="c3-resume-go">Resume upload</button>
+							<button class="pc-btn" type="button" id="c3-resume-discard">Start over</button>
+						</div>
+					</div>
+
+					<div class="c3-pick" id="c3-pick">
+						<button class="c3-drop" id="c3-drop" type="button">
+							<span class="pc-glyph" aria-hidden="true">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg>
+							</span>
+							<span class="c3-drop-title">Drop 360 footage here, or choose a file</span>
+							<span class="c3-drop-sub">Works with Insta360 cameras and any 360 camera: raw .insv or .insp, a stitched 2:1 mp4, or a set of 360 photos. Files up to 8 GB.</span>
+						</button>
+						<input id="c3-file" type="file" multiple hidden aria-label="360 footage" accept=".insv,.insp,.lrv,.mp4,.mov,.m4v,.jpg,.jpeg,.png,video/mp4,video/quicktime,image/jpeg,image/png" />
+					</div>
+
+					<div class="c3-review" id="c3-review" hidden>
+						<div class="c3-review-grid">
+							<div class="c3-preview-col">
+								<div class="c3-preview" id="c3-preview" tabindex="-1" aria-label="360 preview"></div>
+								<p class="c3-preview-note" id="c3-preview-note" role="status"></p>
+								<div class="c3-trim" id="c3-trim-wrap" hidden>
+									<h3 class="c3-h">Trim</h3>
+									<p class="c3-hint">Best results: 30 s to 3 min walking slowly, camera on a stick above your head.</p>
+									<div id="c3-trim"></div>
+								</div>
+							</div>
+							<div class="c3-side">
+								<div class="pc-card">
+									<h2>Your file</h2>
+									<div id="c3-summary" class="c3-summary"></div>
+									<ul class="c3-warnings" id="c3-warnings"></ul>
+									<div class="c3-pair" id="c3-pair" hidden>
+										<p id="c3-pair-msg"></p>
+										<button class="pc-btn" type="button" id="c3-pair-add">Add the matching file</button>
+									</div>
+									<button class="c3-link" type="button" id="c3-change">Choose different files</button>
+								</div>
+								<fieldset class="pc-card c3-quality" id="c3-quality-box">
+									<legend class="c3-legend">Quality</legend>
+									<div id="c3-quality" role="radiogroup" aria-label="Quality"></div>
+									<p class="c3-hint" id="c3-estimate"></p>
+								</fieldset>
+								<button class="pc-btn pc-btn--primary c3-start" type="button" id="c3-start">Upload and build my scene</button>
+								<p class="c3-hint" id="c3-start-hint">You need to be signed in to build a scene. Your footage is uploaded privately and used only for this scene.</p>
+							</div>
+						</div>
+					</div>
+
+					<div class="c3-work" id="c3-work" hidden>
+						<div class="pc-card">
+							<div class="c3-work-head">
+								<h2 id="c3-work-title">Working</h2>
+								<span class="c3-pill" id="c3-work-pill"></span>
+							</div>
+							<ol class="c3-steps" id="c3-steps" aria-label="Progress"></ol>
+							<div class="c3-meter" id="c3-meter" hidden>
+								<div class="c3-bar"><span id="c3-bar-fill"></span></div>
+								<p class="c3-meter-text" id="c3-meter-text" role="status"></p>
+							</div>
+							<p class="c3-hint" id="c3-work-note"></p>
+							<div class="c3-work-actions" id="c3-work-actions"></div>
+						</div>
+					</div>
+
+					<div class="c3-result" id="c3-result" hidden>
+						<div class="c3-result-grid">
+							<div class="c3-result-stage" id="c3-result-stage" aria-label="Your 3D scene"></div>
+							<div class="c3-side">
+								<div class="pc-card">
+									<h2>Your scene is ready</h2>
+									<p class="c3-hint" id="c3-result-stats"></p>
+									<div class="c3-result-actions" id="c3-result-actions"></div>
+								</div>
+								<video class="c3-result-video" id="c3-result-video" controls playsinline muted loop preload="metadata" hidden></video>
+							</div>
+						</div>
+					</div>
+
+					<div class="c3-captures" id="c3-captures-wrap">
+						<h2 class="c3-h2">Your captures</h2>
+						<div id="c3-captures" aria-live="polite"></div>
+					</div>
+				</section>
+
 			</div>
 
 			<div id="footer-container"></div>
@@ -388,6 +494,7 @@
 		</div>
 
 		<script type="module" src="/src/scene-capture.js"></script>
+		<script type="module" src="/src/capture-360.js"></script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>

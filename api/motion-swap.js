@@ -6,12 +6,19 @@
  *       Presigns a direct-to-storage PUT for the source video so multi-MB
  *       uploads never proxy through this handler (same flow as /api/forge-upload).
  *
- *   POST /api/motion-swap  { video_url: string, fps?: number, max_seconds?: number }
+ *   POST /api/motion-swap  { video_url: string, fps?: number, max_seconds?: number,
+ *                            projection?: "perspective" | "equirect",
+ *                            subject?: { yaw_deg: -180..180, pitch_deg: -90..90 } }
  *     → 202 { job_id, status, eta_seconds }
+ *       projection "equirect" sends a stitched 2:1 360 video: the worker follows
+ *       the person across the sphere (subject, when given, is the initial look
+ *       direction toward them; yaw 0 / pitch 0 is the centre pixel, yaw grows to
+ *       the right, pitch grows upward) and renders a perspective reframe.
  *
  *   GET  /api/motion-swap?job=<id>
  *     → { job_id, status, clip_url?, meta_url?, video_url?, mask_url?,
- *         frames?, fps?, error? }
+ *         frames?, fps?, error?,
+ *         reframe_url?, subject_track?, track_stats? (equirect jobs only) }
  *
  * The worker (workers/model-video2motion) tracks the person with MediaPipe
  * pose, solves the motion onto the canonical Wolf3D skeleton (a three.js
@@ -36,6 +43,37 @@ import { createRegenProvider } from './_providers/gcp.js';
 const JOB_ID_RE = /^[A-Za-z0-9_-]{20,600}$/;
 const MAX_VIDEO_BYTES = ANON_UPLOAD_LIMITS['motion-swap/uploads/'];
 const MAX_SECONDS = 90;
+const PROJECTIONS = Object.freeze(['perspective', 'equirect']);
+
+/**
+ * Validate the optional 360 fields. Returns { projection, subject } or an
+ * { error } payload for a 400. `subject` is only meaningful for equirect.
+ */
+function parseProjection(body) {
+	const projection = body?.projection ?? 'perspective';
+	if (typeof projection !== 'string' || !PROJECTIONS.includes(projection)) {
+		return {
+			error: {
+				error: 'invalid_projection',
+				message: 'projection must be "perspective" or "equirect".',
+			},
+		};
+	}
+	const raw = body?.subject;
+	if (raw === undefined || raw === null) return { projection, subject: null };
+	const yaw = typeof raw?.yaw_deg === 'number' ? raw.yaw_deg : NaN;
+	const pitch = typeof raw?.pitch_deg === 'number' ? raw.pitch_deg : NaN;
+	if (!(yaw >= -180 && yaw <= 180) || !(pitch >= -90 && pitch <= 90)) {
+		return {
+			error: {
+				error: 'invalid_subject',
+				message:
+					'subject must be { yaw_deg: -180..180, pitch_deg: -90..90 }, the direction toward the person.',
+			},
+		};
+	}
+	return { projection, subject: { yaw_deg: yaw, pitch_deg: pitch } };
+}
 
 const VIDEO_CONTENT_TYPE_EXT = Object.freeze({
 	'video/mp4': 'mp4',
@@ -140,6 +178,8 @@ async function startJob(req, res, body) {
 			message: 'Pass an https video_url (or use action:"upload" to get one).',
 		});
 	}
+	const parsed = parseProjection(body);
+	if (parsed.error) return json(res, 400, parsed.error);
 	const fps = Math.max(8, Math.min(30, Number(body?.fps) || 24));
 	const maxSeconds = Math.max(1, Math.min(MAX_SECONDS, Number(body?.max_seconds) || MAX_SECONDS));
 
@@ -155,7 +195,13 @@ async function startJob(req, res, body) {
 		const job = await provider.submit({
 			mode: 'video2motion',
 			sourceUrl: videoUrl.href,
-			params: { fps, max_seconds: maxSeconds },
+			params: {
+				fps,
+				max_seconds: maxSeconds,
+				...(parsed.projection === 'equirect'
+					? { projection: 'equirect', ...(parsed.subject ? { subject: parsed.subject } : {}) }
+					: {}),
+			},
 		});
 		return json(res, 202, {
 			job_id: job.extJobId,
@@ -194,6 +240,9 @@ async function pollJob(req, res, jobId) {
 		meta_url: result.metaUrl || null,
 		video_url: result.videoUrl || null,
 		mask_url: result.maskUrl || null,
+		reframe_url: result.reframeUrl || null,
+		subject_track: Array.isArray(result.subjectTrack) ? result.subjectTrack : null,
+		track_stats: result.trackStats || null,
 		frames: typeof result.frames === 'number' ? result.frames : null,
 		fps: typeof result.fps === 'number' ? result.fps : null,
 		error: result.error || null,

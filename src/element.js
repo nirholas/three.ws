@@ -745,6 +745,7 @@ class Agent3DElement extends HTMLElement {
 			'key-proxy',
 			'responsive',
 			'background',
+			'environment',
 			'name-plate',
 			'tracked-mint',
 			'avatar-chat',
@@ -1048,6 +1049,10 @@ class Agent3DElement extends HTMLElement {
 		}
 		if (name === 'framing') {
 			this._viewer?.setFraming?.(newVal === 'portrait' ? 'portrait' : 'full');
+		}
+		// A preset id (`venice-sunset`) or a public https link to a 360 photo.
+		if (name === 'environment' && newVal) {
+			this._viewer?.setEnvironmentSource?.(newVal);
 		}
 		// Acoustic hand control is capability-gated, never auto-started: opening a
 		// microphone and putting a 20 kHz tone into someone's room is the viewer's
@@ -1966,6 +1971,9 @@ class Agent3DElement extends HTMLElement {
 			// that the viewer exists. They are also re-applied on attribute change.
 			// A bare avatar carries no name-plate unless the embedder asks for one.
 			this._applyBackground();
+			if (this.getAttribute('environment')) {
+				viewer.setEnvironmentSource(this.getAttribute('environment'));
+			}
 			this._setNamePlateText(this._isChatMode() ? manifest.name || '' : '');
 			if (this._inputEl) this._inputEl.placeholder = this._composerPlaceholder();
 			this._applyNamePlate();

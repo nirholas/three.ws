@@ -1,0 +1,6 @@
+pycolmap==4.2.1
+opencv-python-headless>=4.8,<6
+numpy>=1.26,<3
+Pillow>=10.0
+torch>=2.2
+torchvision>=0.17

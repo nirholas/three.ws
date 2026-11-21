@@ -11,8 +11,9 @@
 // Spread into api/openapi-json.js (tags, components.schemas, paths). Every
 // example below is a body these handlers really returned, captured against the
 // real server on 2026-11-21. Opaque upload ids and signed storage URLs are
-// abridged; nothing else is edited. Prose reference: docs/pano-capture.md,
-// docs/capture-upload.md, and `three-ws capture` in docs/cli.md.
+// abridged; nothing else is edited. Prose reference: docs/capture.md,
+// docs/api-reference.md "Capture upload API", and `three-ws capture` in
+// docs/cli.md.
 
 const TAG_UPLOAD = '360 capture: uploads';
 const TAG_CAPTURE = '360 capture: scenes';
