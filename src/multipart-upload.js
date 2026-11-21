@@ -328,6 +328,14 @@ export async function uploadFile(file, opts = {}) {
 			resumed = true;
 		}
 	}
+	if (record) {
+		const verified = await reconcileWithServer({ api, file, record, store });
+		if (!verified) {
+			await store.delete(fp);
+			record = null;
+			resumed = false;
+		}
+	}
 	if (!record) {
 		const created = await api('create', {
 			filename: file.name,
@@ -374,6 +382,33 @@ export async function uploadFile(file, opts = {}) {
 	const done = await api('complete', { upload_id: record.upload_id, key: record.key, parts });
 	await store.delete(fp);
 	return { source_url: done.source_url, size_bytes: done.size_bytes, key: record.key, upload_id: record.upload_id, resumed: outcome.resumed };
+}
+
+/**
+ * Ask the server which parts R2 really holds (C4 /parts) and make the local
+ * record agree: a part whose PUT finished just before a crash is kept, and a
+ * part the bucket does not have is sent again. Returns false when the upload
+ * is gone. Servers without /parts leave the local record as it was.
+ */
+async function reconcileWithServer({ api, file, record, store }) {
+	let listed;
+	try {
+		listed = await api('parts', { upload_id: record.upload_id, key: record.key });
+	} catch (err) {
+		if (err instanceof UploadError && err.code === 'upload_not_found') return false;
+		if (err instanceof UploadError && err.code === 'aborted') throw err;
+		return true;
+	}
+	if (!Array.isArray(listed?.parts)) return true;
+	const plan = planParts(file.size, record.part_size);
+	const parts = {};
+	for (const sp of listed.parts) {
+		const p = plan[sp.part_number - 1];
+		if (p && sp.etag && sp.size === p.end - p.start) parts[sp.part_number] = sp.etag;
+	}
+	record.parts = parts;
+	await store.put(record);
+	return true;
 }
 
 async function abortUpload({ apiBase, fetchImpl, record, store, fp }) {

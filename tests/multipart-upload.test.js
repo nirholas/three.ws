@@ -37,6 +37,7 @@ function resetState() {
 		inflight: 0,
 		maxInflight: 0,
 		partDelayMs: 0,
+		noParts: false,
 	};
 }
 
@@ -107,6 +108,12 @@ beforeAll(async () => {
 			const joined = Buffer.concat([...up.parts.keys()].sort((a, b) => a - b).map((n) => up.parts.get(n).body));
 			up.assembled = joined;
 			return send(200, { source_url: `${base}/files/${body.upload_id}`, size_bytes: joined.length });
+		}
+		if (url.pathname === '/api/capture-upload/parts') {
+			if (state.noParts) return send(404, { error: 'not_found' });
+			if (state.goneIds.has(body.upload_id)) return send(404, { error: 'upload_not_found', message: 'Expired.' });
+			const up = state.uploads.get(body.upload_id);
+			return send(200, { parts: [...up.parts.entries()].map(([n, v]) => ({ part_number: n, etag: v.etag, size: v.body.length })) });
 		}
 		if (url.pathname === '/api/capture-upload/abort') {
 			state.aborts.push(body.upload_id);
@@ -294,6 +301,39 @@ describe('resume', () => {
 		expect(progress[0].fraction).toBeCloseTo(0.5, 5);
 		const up = [...state.uploads.values()][0];
 		expect(Buffer.compare(up.assembled, Buffer.from(await file.arrayBuffer()))).toBe(0);
+	});
+
+	it('adopts a part the bucket stored but the local record never saw, and resends one it lost', async () => {
+		const file = makeFile(PART_SIZE * 4);
+		const o = opts({ parallel: 1 });
+		state.failPart.set(3, 99);
+		await expect(uploadFile(file, o)).rejects.toThrow();
+		state.failPart.clear();
+		const up = [...state.uploads.values()][0];
+		const rec = await o.store.get(fingerprint(file));
+		// The crash window: part 2 reached R2, its etag was never saved.
+		delete rec.parts[2];
+		await o.store.put(rec);
+		// And R2 lost part 1 even though the record has it.
+		up.parts.delete(1);
+		state.puts.length = 0;
+		const result = await uploadFile(file, { ...o, parallel: 4 });
+		expect(result.resumed).toBe(true);
+		expect(state.puts.sort()).toEqual([1, 3, 4]);
+		expect(Buffer.compare([...state.uploads.values()][0].assembled, Buffer.from(await file.arrayBuffer()))).toBe(0);
+	});
+
+	it('trusts the local record when the server has no parts endpoint', async () => {
+		const file = makeFile(PART_SIZE * 3);
+		const o = opts({ parallel: 1 });
+		state.failPart.set(3, 99);
+		await expect(uploadFile(file, o)).rejects.toThrow();
+		state.failPart.clear();
+		state.noParts = true;
+		state.puts.length = 0;
+		const result = await uploadFile(file, o);
+		expect(result.resumed).toBe(true);
+		expect(state.puts).toEqual([3]);
 	});
 
 	it('does not offer resume for a different file with the same name', async () => {
