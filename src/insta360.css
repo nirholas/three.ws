@@ -527,6 +527,10 @@
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-lg);
 }
+.i360-table-wrap:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+}
 .i360-table {
 	width: 100%;
 	border-collapse: collapse;

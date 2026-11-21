@@ -30,6 +30,8 @@
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/footer.css" />
+		<link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="preload" href="/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/src/insta360.css" />
 
@@ -262,7 +264,7 @@
 						<h2 id="i360-cameras-title">Cameras</h2>
 						<p>"Should work" means the format is supported by design but that camera's real footage has not yet been run end to end. Rows move to "Verified" as each one is.</p>
 					</div>
-					<div class="i360-table-wrap">
+					<div class="i360-table-wrap" tabindex="0" role="region" aria-label="Camera support table, scrolls sideways on small screens">
 						<table class="i360-table">
 							<thead>
 								<tr><th scope="col">Camera</th><th scope="col">Stitched 360 export (MP4, JPG)</th><th scope="col">Raw files (.insv, .insp)</th></tr>

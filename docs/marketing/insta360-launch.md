@@ -15,15 +15,15 @@ Wording rules: Insta360 is named only to say which files work. No partnership cl
 
 ## Reddit: r/Insta360
 
-Read the subreddit rules on the day of posting (old.reddit.com/r/Insta360/about/rules) and quote the self-promotion rule here before posting: `[QUOTE RULE ON THE DAY]`. If the rule requires a mod pre-approval or a participation ratio, do that first. Do not post if it forbids tool links.
+**Rules check (gate before posting).** On 2026-11-21 the drafting agent tried to read https://www.reddit.com/r/Insta360/about/rules, the old.reddit.com copy and the JSON API: Reddit answered HTTP 403 to every automated read, and no search index holds a copy of this subreddit's rules. So the rule could not be quoted on drafting day. On the day you post, open that page signed in, paste the self-promotion rule (number and full text) into this line, and follow it: if it requires mod pre-approval, a weekly promo thread or a participation ratio, do that instead of a top-level post; if it forbids links to your own tools, do not post.
 
-Title: I made a free way to turn 360 walkaround footage into a splat you can download (works with X3 to X6 files)
+Title: I made a way to turn 360 walkaround footage into a splat you can download (works with X3 to X6 files)
 
 Body: I built this because I wanted the actual file, not just a view in an app. Upload a raw .insv or a stitched equirect video and you get a Gaussian splat as PLY and SPZ, plus a flythrough MP4. Shooting guide and error-code troubleshooting are in the tutorial: three.ws/tutorials/insta360-to-3d. I am the maker, and I would like to hear which cameras and clip lengths fail for you. [RESULT: flythrough gif or mp4]
 
 ## Reddit: r/GaussianSplatting
 
-Read the rules on the day (old.reddit.com/r/GaussianSplatting/about/rules), quote the self-promotion rule here: `[QUOTE RULE ON THE DAY]`. Lead with the technical content, not the product.
+**Rules check (gate before posting).** Same result on 2026-11-21 for https://www.reddit.com/r/GaussianSplatting/about/rules: HTTP 403 to automated reads and no indexed copy, so the rule is not quoted here. On the day you post, open it signed in, paste the self-promotion rule into this line and follow it. Whatever it says, lead with the technical content, not the product, and disclose that you made it.
 
 Title: 360 walkaround to 3DGS without a rig: equirect to perspective views, SfM, training, with PLY and SPZ out
 
