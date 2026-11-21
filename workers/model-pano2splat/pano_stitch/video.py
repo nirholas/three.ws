@@ -101,21 +101,33 @@ class Reader:
         return errors
 
 
-def encoder_plan(ten_bit, backend_name):
-    """H.265 10-bit for 10-bit sources, else H.264; the GPU encoder when ffmpeg has one and a GPU is present."""
+# Largest frame NVENC opens per codec (NVIDIA Video Codec SDK support matrix,
+# Turing and later, the L4 included). H.264 stops at 4096, so a 5.7K source at
+# the standard preset needs HEVC, and anything past 8192 needs a software encoder.
+NVENC_MAX_SIDE = {"h264_nvenc": 4096, "hevc_nvenc": 8192}
+
+
+def encoder_plan(ten_bit, backend_name, out_w, out_h):
+    """H.265 10-bit for 10-bit sources, else H.264; the GPU encoder when ffmpeg has one, a GPU is present and the frame fits it."""
     codecs = subprocess.run(["ffmpeg", "-hide_banner", "-encoders"], capture_output=True, text=True).stdout
     use_gpu = backend_name == "cuda"
+
+    def nvenc(name):
+        return use_gpu and name in codecs and max(out_w, out_h) <= NVENC_MAX_SIDE[name]
+
     if ten_bit:
-        if use_gpu and "hevc_nvenc" in codecs:
-            return ["-c:v", "hevc_nvenc", "-preset", "p5", "-cq", "21", "-pix_fmt", "p010le", "-profile:v", "main10"], "hevc_nvenc"
+        if nvenc("hevc_nvenc"):
+            return ["-c:v", "hevc_nvenc", "-preset", "p5", "-cq", "21", "-pix_fmt", "p010le", "-profile:v", "main10", "-tag:v", "hvc1"], "hevc_nvenc"
         return ["-c:v", "libx265", "-preset", "fast", "-crf", "20", "-pix_fmt", "yuv420p10le", "-tag:v", "hvc1"], "libx265"
-    if use_gpu and "h264_nvenc" in codecs:
+    if nvenc("h264_nvenc"):
         return ["-c:v", "h264_nvenc", "-preset", "p5", "-cq", "19", "-pix_fmt", "yuv420p"], "h264_nvenc"
+    if nvenc("hevc_nvenc"):
+        return ["-c:v", "hevc_nvenc", "-preset", "p5", "-cq", "19", "-pix_fmt", "yuv420p", "-profile:v", "main", "-tag:v", "hvc1"], "hevc_nvenc"
     return ["-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p"], "libx264"
 
 
 def open_encoder(out_path, source, start, duration, out_w, out_h, fps, ten_bit, backend_name):
-    codec_args, codec = encoder_plan(ten_bit, backend_name)
+    codec_args, codec = encoder_plan(ten_bit, backend_name, out_w, out_h)
     cmd = [
         "ffmpeg", "-v", "error", "-nostdin", "-y", "-f", "rawvideo", "-pix_fmt", "rgb48le" if ten_bit else "rgb24",
         "-s", f"{out_w}x{out_h}", "-r", f"{fps:.6f}", "-i", "-",

@@ -405,3 +405,53 @@ def test_insp_photo_end_to_end_writes_gpano_and_keeps_exif(tmp_path):
     got = result.getexif()
     assert got[0x010F] == "Test Maker" and got.get_ifd(0x8769)[0x9003] == "2024:05:06 07:08:09"
     assert got.get_ifd(0x8825)[1] == "N"
+
+
+# NVENC opens H.264 only up to 4096 pixels wide; HEVC goes to 8192. A 5.7K X3
+# clip at the standard preset (max width 7680) is 5760 wide, so picking
+# h264_nvenc for it failed with "Error while opening encoder" on the L4.
+def _fake_encoders(monkeypatch, names):
+    from pano_stitch import video
+
+    listing = "\n".join(f" V....D {n}  encoder" for n in names)
+
+    class Done:
+        stdout = listing
+
+    monkeypatch.setattr(video.subprocess, "run", lambda *a, **k: Done())
+    return video
+
+
+ALL_ENCODERS = ["h264_nvenc", "hevc_nvenc", "libx264", "libx265"]
+
+
+def test_eight_bit_within_h264_nvenc_limits_stays_on_h264(monkeypatch):
+    video = _fake_encoders(monkeypatch, ALL_ENCODERS)
+    _, codec = video.encoder_plan(False, "cuda", 3840, 1920)
+    assert codec == "h264_nvenc"
+
+
+def test_eight_bit_wider_than_h264_nvenc_uses_hevc_nvenc(monkeypatch):
+    video = _fake_encoders(monkeypatch, ALL_ENCODERS)
+    args, codec = video.encoder_plan(False, "cuda", 5760, 2880)
+    assert codec == "hevc_nvenc"
+    assert args[args.index("-pix_fmt") + 1] == "yuv420p"
+    assert args[args.index("-profile:v") + 1] == "main"
+
+
+def test_wider_than_any_nvenc_falls_back_to_software(monkeypatch):
+    video = _fake_encoders(monkeypatch, ALL_ENCODERS)
+    assert video.encoder_plan(False, "cuda", 11520, 5760)[1] == "libx264"
+    assert video.encoder_plan(True, "cuda", 11520, 5760)[1] == "libx265"
+
+
+def test_wide_eight_bit_without_hevc_nvenc_uses_libx264(monkeypatch):
+    video = _fake_encoders(monkeypatch, ["h264_nvenc", "libx264", "libx265"])
+    assert video.encoder_plan(False, "cuda", 5760, 2880)[1] == "libx264"
+
+
+def test_ten_bit_and_cpu_choices_are_unchanged(monkeypatch):
+    video = _fake_encoders(monkeypatch, ALL_ENCODERS)
+    assert video.encoder_plan(True, "cuda", 7680, 3840)[1] == "hevc_nvenc"
+    assert video.encoder_plan(False, "cpu", 3840, 1920)[1] == "libx264"
+    assert video.encoder_plan(True, "cpu", 3840, 1920)[1] == "libx265"
