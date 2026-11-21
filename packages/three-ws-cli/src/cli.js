@@ -47,6 +47,9 @@ ${c.bold('Commands')}
   evals run|list|show   Score an agent on a suite (--suite, --model), its history, or one report
   orders list           An agent's programmable orders (--agent, --network)
   report run <id>       One run as a single self-contained HTML file (--out report.html)
+  capture 360 <file...> Turn 360 footage (any 360 camera; .insv/.insp from Insta360 cameras too) into a 3D scene
+  capture status|list   One capture's progress (--wait, --out saves the files), or all of yours
+  capture scene <photo> One 360 photo into a 3D room (GLB and PLY); a local file or an https URL
   proxy <url>           Run a stdio bridge to a hosted server (written into client configs by setup)
   fund                  Top up credits from an agent wallet (--amount, --agent); mints an inference key once
   provider use three-ws Point this machine's model clients at three.ws, billed to your credits
@@ -101,6 +104,14 @@ ${c.bold('Agent options')} (create, launch)
   --creator-fee <bps>   Creator fee in basis points within the range the program allows (launch --intent)
   --network <net>       mainnet (default) or devnet, where a dry run never touches mainnet (launch --intent)
   --watch               Keep polling until the intent settles (launch status)
+
+${c.bold('Capture options')} (capture)
+  --quality <q>         preview, standard (default) or high: more training time, finer detail (360)
+  --trim-start <s>      Skip the first seconds of a video, e.g. the camera on its stick (360)
+  --trim-end <s>        Stop at this second of the video (360)
+  --wait                Stay on one live progress line, then download the results (360, status, scene)
+  --out <dir>           Where results land (default ./capture-<job> or ./scene-<job>)
+  Uploads resume: rerun the same command after a dropped connection and only missing parts are sent.
 
 ${c.bold('Inference options')} (fund, provider, usage)
   --amount <usdc>       USDC to move from the agent wallet into credits (fund)
@@ -177,6 +188,10 @@ const OPTIONS = {
 	'creator-fee': { type: 'string' },
 	network: { type: 'string' },
 	watch: { type: 'boolean' },
+	quality: { type: 'string' },
+	'trim-start': { type: 'string' },
+	'trim-end': { type: 'string' },
+	wait: { type: 'boolean' },
 	'dry-run': { type: 'boolean' },
 	max: { type: 'string' },
 	method: { type: 'string' },
@@ -255,6 +270,7 @@ const COMMANDS = {
 	runs: async (ctx) => (await import('./commands/automation.js')).runs(ctx),
 	orders: async (ctx) => (await import('./commands/automation.js')).orders(ctx),
 	report: async (ctx) => (await import('./commands/automation.js')).report(ctx),
+	capture: async (ctx) => (await import('./commands/capture.js')).capture(ctx),
 	pay: async (ctx) => (await import('./commands/pay.js')).payCommand(ctx),
 	wallet: async (ctx) => (await import('./commands/wallet.js')).wallet(ctx),
 	fund: async (ctx) => (await import('./commands/inference.js')).fund(ctx),
