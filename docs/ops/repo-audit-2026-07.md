@@ -106,7 +106,6 @@ endpoint. Build from `github-to-mcp` and `UCAI` (the public, newer lines). Effor
   **Sperax-branded platforms** (`sperax`, `SperaxOS`, `HQ`, `folio`, `tg-auth`, `valuecell`) —
   different products with different branding. Nothing here that our stack needs.
 - **`browser`** — a Chrome DevTools frontend fork. Not ours to maintain.
-- **`3D-Agent`** — the retired three.ws mirror. Per the operating rules, never pull from it.
 
 ---
 

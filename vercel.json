@@ -13,7 +13,7 @@
 		"silent": true
 	},
 	"functions": {
-		"api/cron/{economy-tick,copy-fanout,mirror-fanout,signal-fanout,three-holders-snapshot,x402-autonomous-loop,pulse-tick,coin-intel-observe,launcher-tick,reflect-sweep,solana-autodeploy,db-retention,purge-deleted-accounts,custody-attest,sniper-optimize,sniper-evolve,oracle-realized-labels,oracle-calibrate,arena-tick}.js": {
+		"api/cron/{economy-tick,copy-fanout,mirror-fanout,signal-fanout,three-holders-snapshot,x402-autonomous-loop,pulse-tick,coin-intel-observe,launcher-tick,reflect-sweep,solana-autodeploy,db-retention,purge-deleted-accounts,custody-attest,x402-wallet-custody-audit,sniper-optimize,sniper-evolve,oracle-realized-labels,oracle-calibrate,arena-tick}.js": {
 			"maxDuration": 120
 		},
 		"api/cron/{strategy-fanout,gmgn-seed,nvidia-lane-probes,nim-release-eval}.js": {
@@ -8044,6 +8044,10 @@
 		{
 			"path": "/api/cron/custody-attest",
 			"schedule": "17 */6 * * *"
+		},
+		{
+			"path": "/api/cron/x402-wallet-custody-audit",
+			"schedule": "41 4 * * *"
 		},
 		{
 			"path": "/api/cron/pumpfun-monitor",

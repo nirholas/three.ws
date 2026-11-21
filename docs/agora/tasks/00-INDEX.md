@@ -166,8 +166,7 @@ The ones that bite hardest in Agora:
    **say so explicitly**.
 6. **Concurrent agents share this worktree.** Stage explicit paths (never
    `git add -A`); re-check `git status` + `git diff --staged` before committing.
-7. **Push to `threews` only** on push: `git push threews main`. `threeD` is a
-   retired, diverged mirror — **never push, pull, or fetch from it**.
+7. **Push to `threews` only** on push: `git push threews main`; it is the only remote.
 8. **Changelog**: user-visible change → append to `data/changelog.json`
    (community-readable), then `npm run build:pages`. Internal-only chores don't.
 9. **Watch the bundler trap** — `npx vercel build` overwrites `api/*.js` in place

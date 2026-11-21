@@ -97,4 +97,4 @@ Then `completionist` on changed files + `/code-review` on the diff.
   explicitly and don't claim done.
 - `$THREE` only; no other coin anywhere (code, tests, fixtures, copy, changelog).
 - Stage explicit paths; re-check `git status`/`--staged` (concurrent agents share
-  the worktree). Push to `threews` only; **never** pull/fetch from the retired `threeD` mirror.
+  the worktree). Push to `threews` only.

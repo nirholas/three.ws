@@ -9,8 +9,7 @@ This directory (`docs/ops/`) is excluded from the public docs build by the
 
 **The one-line model:** the monorepo is the only source of truth. The examples
 repo is a strictly one-way export, its git history is disposable, and it is
-never pulled, fetched, or merged from (same rule as the retired `3D-Agent`
-mirror). No CI is involved: GitHub Actions are unavailable on this account, so
+never pulled, fetched, or merged from. No CI is involved: GitHub Actions are unavailable on this account, so
 the export runs locally from the push routine or the satellite rots.
 
 ## What the export does

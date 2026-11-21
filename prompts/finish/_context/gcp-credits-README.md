@@ -28,8 +28,7 @@ the fleet and quota position live in `docs/ops/gcp-credits-plan.md`.
 - **Never commit secrets.** Service-account JSON lives in the Cloud Run service env and local
   `.env` only.
 - **Prefer GCP over any paid third party**, and never downgrade quality to save credits.
-- Push target, when the owner asks for a push, is `git push threews main`. Never push, pull,
-  fetch or merge `threeD`.
+- Push target, when the owner asks for a push, is `git push threews main`.
 
 ## Retire this file when the campaign is done (required)
 

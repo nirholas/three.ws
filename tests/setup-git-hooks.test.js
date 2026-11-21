@@ -210,7 +210,6 @@ describe('setup-git-hooks (documented remote)', () => {
 		'### Remotes',
 		'',
 		'- `threews` -> `https://github.com/nirholas/three.ws`',
-		'- `threeD` -> `https://github.com/nirholas/3D-Agent`',
 		'',
 		'When the user asks you to push: `git push threews main`.',
 		'',
@@ -238,12 +237,10 @@ describe('setup-git-hooks (documented remote)', () => {
 		expect(git(dir, ['remote', 'get-url', 'threews']).trim()).toBe('https://github.com/nirholas/three.ws');
 	});
 
-	it('never creates the retired mirror, which the doc forbids fetching from', () => {
-		const dir = cloneLikeRepo('no-mirror');
+	it('creates no remote other than the documented push target', () => {
+		const dir = cloneLikeRepo('only-push-target');
 		install(dir);
-		// `threeD` is in the documented table but is not the push target, so it must
-		// not be created. Fetching from it has corrupted this repo's history before.
-		expect(remotesOf(dir)).not.toContain('threeD');
+		expect(remotesOf(dir).sort()).toEqual(['origin', 'threews']);
 	});
 
 	it('leaves an existing remote of that name untouched', () => {

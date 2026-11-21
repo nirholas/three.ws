@@ -87,9 +87,6 @@ export const SCOUT_LENSES = [
  */
 export const DENY_RULES = [
 	'Bash(git push:*)',
-	'Bash(git fetch threeD:*)',
-	'Bash(git pull threeD:*)',
-	'Bash(git merge threeD:*)',
 	'Bash(gcloud builds submit:*)',
 	'Bash(gcloud run deploy:*)',
 	'Bash(gcloud run services replace:*)',

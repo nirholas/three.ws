@@ -161,7 +161,7 @@ so the contract-mediated `pay(bytes32)` "direct" scheme is the only option (see
 on-chain record; the Base x402 flow has no code path that calls it, and Base payments
 have been settling correctly to the EOA all along.
 
-Deploy command (run from 3D-Agent repo where `scripts/deploy-multichain.mjs` lives):
+Deploy command (run from the repo root, where `scripts/deploy-multichain.mjs` lives):
 ```
 PK=<deployer-private-key> \
 PAYMENTS_SALT=0x5ef7540f7c609d04ab6d3997bc8c38f0f31ce09acccff2c11bcb3909ad542cde \
