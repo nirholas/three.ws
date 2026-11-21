@@ -13,7 +13,7 @@
  * workers/model-pano2splat (contract C1) at GCP_PANO2SPLAT_URL. Jobs live in
  * pano_captures and belong to the account that made them; finished files are
  * copied into our bucket so they outlive the worker's 7-day URLs. Logic lives
- * in api/_lib/pano-capture.js, docs in docs/pano-capture.md.
+ * in api/_lib/pano-capture.js, docs in docs/api-reference.md and docs/capture.md.
  */
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';

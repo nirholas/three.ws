@@ -155,7 +155,7 @@ function normalizeForgeCreation(c) {
 	};
 }
 
-// 360 captures from /api/pano-capture?mine=1 (docs/pano-capture.md). A scene
+// 360 captures from /api/pano-capture?mine=1 (docs/api-reference.md). A scene
 // that is still processing or failed shows its state instead of a viewer link;
 // a finished one opens in /splat. Splats are not GLB, so no <model-viewer>
 // preview: the poster frame the worker rendered stands in.

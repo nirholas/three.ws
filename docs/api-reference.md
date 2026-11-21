@@ -791,6 +791,38 @@ curl -s -X POST https://three.ws/api/capture-upload/create \
 
 The full request and response schemas, with examples, are in `/openapi.json` under the "360 capture: uploads" and "360 capture: scenes" tags. `three-ws capture 360 <file>` runs this whole flow from a terminal, resumes an interrupted upload, and starts the reconstruction ([CLI reference](cli.md#360-capture)).
 
+## 360 Video to Splat Scene API
+
+`/api/pano-capture` turns 360 footage from any 360 camera into a Gaussian splat scene you can walk through, the API behind the 360 tab of [/capture](https://three.ws/capture). A capture is a persistent job owned by the account that started it: it is stored in the database, keeps advancing after the tab closes, and its finished files are copied into platform storage. Every call needs an account (`Authorization: Bearer sk_live_...` or a session cookie); signed-out calls get `401 sign_in_required`. Errors are `{ error, message }`, where `message` is written for visitors and `hint` (on `503 unconfigured` only) is for the operator.
+
+| Call | Body or query | Response |
+| --- | --- | --- |
+| `POST /api/pano-capture` | `{ source_url, source_urls?, source_kind, trim?, quality? }` | `202 { job_id, status: "queued", eta_seconds }` |
+| `GET /api/pano-capture?job=<job_id>` | | `{ job_id, status, stage, progress, source_kind, quality, created_at, updated_at, finished_at, result?, stats?, error? }` |
+| `GET /api/pano-capture?mine=1&limit=50` | `limit` 1 to 100 | `{ captures: [{ job_id, status, stage, progress, created_at, poster_url, viewer_url, source_kind, error }] }`, newest first, the caller's own only |
+| `DELETE /api/pano-capture?job=<job_id>` | | An active job: `{ job_id, status: "cancelled" }` (the worker task is stopped and the row kept). A finished, failed or cancelled job: `{ job_id, deleted: true }` (its stored files and its row are removed). |
+
+- `source_kind` is `equirect_video` (one stitched 2:1 video), `insv` (a raw recording: one file, or two for a split-pair recording, in `source_urls`) or `equirect_images` (3 to 600 stitched 360 photos in `source_urls`, taken from different spots). A single `.insp` photo is refused with `unsupported_source_kind`: it has no camera movement, so send it to `/api/pano-scene` instead. Every URL must be public https; private, loopback and metadata hosts are refused before the worker sees them. Upload local files first with `/api/capture-upload` and pass the returned `source_url`.
+- `trim` is `{ start_s, end_s? }` in seconds and applies to video kinds only. `quality` is `preview`, `standard` (default) or `high`; `eta_seconds` is the typical processing time on one GPU for that preset (900, 1800, 2700), counted from the moment the worker starts.
+- `job_id` is a UUID. Another account's id answers `404 not_found`, exactly as an id that does not exist.
+- `status` is `queued`, `running`, `succeeded`, `failed` or `cancelled`. `stage` is the worker's: `download`, `stitch` (raw files only), `frames`, `sfm` (camera solve), `train`, `export`, then `save` while the files are copied and `done`. `progress` runs 0 to 1.
+- On success, `result` is `{ ply_url, spz_url, preview_url, poster_url, viewer_url }`. The files live under `captures/pano/<user>/<job>/` in platform storage, so the URLs keep working after the worker's own 7-day links expire; `viewer_url` is `/splat?src=<encoded spz_url>`. `preview_url` and `poster_url` are `null` when the worker did not make them. `stats` is the worker's report, nested by stage, for example `{ sfm: { frames_used, registered_images }, train: { gaussians } }`.
+- Poll every few seconds. Polls closer than 5 seconds apart return the stored state without asking the worker. Nobody has to keep polling: a cron (`/api/cron/pano-captures`, every 5 minutes) advances any active job no one has polled for a minute and saves its files, so a capture finishes with the tab closed.
+- At most 2 captures per account can be queued or running at once.
+
+Error codes: `invalid_body`, `missing_source_url`, `invalid_source_url`, `invalid_source_urls`, `invalid_source_kind`, `unsupported_source_kind`, `too_few_images`, `too_many_images`, `too_many_files`, `invalid_trim`, `invalid_quality`, `missing_job`, `invalid_job` (400); `not_found` (404); `rate_limited` (429, the shared 3D generation bucket); `too_many_active` (429, two captures already processing); a worker code with its own `message` such as `unsupported_layout`, `bad_pair` or `bad_trim` (422, the worker refused the footage; the job is kept as failed and its `job_id` is in the body); the worker's `busy` (503 with `retry-after: 120`, its queue is full; no job is kept, so retry the same request); `worker_unreachable` or another worker code (502); `unconfigured` (503, the pano2splat worker or object storage is not set on this deployment). A job that fails later carries `error: { code, message }`, where `code` is the worker's (`too_few_frames`, `too_few_registered`, `quality_too_low`, `corrupt_calibration`, `corrupt_trailer` and so on) or one of `submit_lost`, `task_lost` and `result_unavailable`, with a message that says what to do next.
+
+```bash
+curl -s -X POST https://three.ws/api/pano-capture \
+  -H "Authorization: Bearer $THREE_WS_API_KEY" -H 'content-type: application/json' \
+  -d '{"source_url":"https://example.org/walk-2to1.mp4","source_kind":"equirect_video","trim":{"start_s":4,"end_s":64},"quality":"standard"}'
+# {"job_id":"b920a142-0eb0-49f0-b714-4a12e2ac9e31","status":"queued","eta_seconds":1800}
+curl -s "https://three.ws/api/pano-capture?job=b920a142-0eb0-49f0-b714-4a12e2ac9e31" -H "Authorization: Bearer $THREE_WS_API_KEY"
+curl -s "https://three.ws/api/pano-capture?mine=1" -H "Authorization: Bearer $THREE_WS_API_KEY"
+```
+
+Captures also appear on [/mine](https://three.ws/mine) next to the account's other creations. The full schemas are in `/openapi.json` under the "360 capture: scenes" tag, and `three-ws capture 360 <file>` drives the job from a terminal.
+
 ## 360 Photo to 3D Scene API
 
 `/api/pano-scene` turns one 360 photo into a textured shell in real metres, the API behind the [/pano-scene](https://three.ws/pano-scene) page. A stitched equirectangular JPEG or PNG goes straight to depth estimation; a raw Insta360 `.insp` is stitched first by the pano2splat worker. Starting and polling a job need an account (`Authorization: Bearer sk_live_...` or a session cookie); signed-out calls get `401 sign_in_required`. Errors are `{ error, message }`, where `message` is written for visitors and `hint` (on `503 unconfigured` only) is for the operator.
