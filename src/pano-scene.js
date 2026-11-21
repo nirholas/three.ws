@@ -69,7 +69,7 @@ function showError(code, message, { retry = false } = {}) {
 	const signin = $('#ps-error-signin');
 	signin.hidden = !copy.signIn;
 	signin.href = `/login?next=${encodeURIComponent('/pano-scene')}`;
-	$('#ps-error-retry').hidden = !retry || !(lastFile || lastUrl);
+	$('#ps-error-retry').hidden = !retry || copy.permanent || !(lastFile || lastUrl);
 	$('#ps-error-url').hidden = !copy.pasteLink;
 	show('error');
 	if (copy.pasteLink) calloutUrl();

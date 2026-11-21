@@ -134,6 +134,31 @@ describe('errorCopy upload_failed', () => {
 	});
 });
 
+describe('errorCopy for a file the stitcher refuses', () => {
+	it('names the camera problem, keeps the worker detail and offers no pointless retry', () => {
+		const message = "The camera model found in the file is 'Insta360 ONE'. Only the dual lens Insta360 ONE X, ONE X2, ONE R, ONE RS and X2 to X6 are supported.";
+		const copy = errorCopy('unsupported_camera', message);
+		expect(copy.title).toMatch(/camera/i);
+		expect(copy.body).toContain('Insta360 ONE');
+		expect(copy.body).toMatch(/JPEG/);
+		expect(copy.permanent).toBe(true);
+	});
+
+	it('treats an unreadable or damaged raw file as permanent too', () => {
+		for (const code of ['corrupt_input', 'corrupt_trailer', 'corrupt_calibration', 'unreadable_input', 'no_calibration', 'unsupported_layout']) {
+			const copy = errorCopy(code, 'detail from the worker');
+			expect(copy.title).not.toBe('Something went wrong');
+			expect(copy.body).toContain('detail from the worker');
+			expect(copy.permanent).toBe(true);
+		}
+	});
+
+	it('keeps retry for transient failures', () => {
+		expect(errorCopy('task_lost', 'restarted').permanent).toBeFalsy();
+		expect(errorCopy('weird', 'boom').permanent).toBeFalsy();
+	});
+});
+
 describe('backdropGrid', () => {
 	// The depth worker culls shell faces that bridge a depth jump, so the stage
 	// draws the photo on a far sphere behind the shell. It must sample the photo

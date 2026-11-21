@@ -96,6 +96,15 @@ export function errorCopy(code, message) {
 		case 'not_equirect': return { title: 'That is not a 360 photo', body: 'A 360 photo is exactly twice as wide as it is tall. Export it from your camera app as an equirectangular JPEG, or upload the raw .insp file.' };
 		case 'too_large': return { title: 'That file is too large', body: `Photos up to ${Math.round(MAX_PHOTO_BYTES / 1024 / 1024)} MB work. Export a smaller JPEG from your camera app.` };
 		case 'unsupported_type': return { title: 'That file type does not work here', body: 'Use a 360 photo as JPEG or PNG, or a raw .insp file.' };
+		// The stitcher's refusals (workers/model-pano2splat/pano_stitch/errors.py)
+		// are about the file itself, so running it again cannot help.
+		case 'unsupported_camera': return { title: 'That camera is not supported for raw files', body: `${message || 'This camera model cannot be stitched here.'} Export a stitched 360 JPEG from your camera app or Insta360 Studio and upload that instead.`, permanent: true };
+		case 'corrupt_input':
+		case 'corrupt_trailer':
+		case 'corrupt_calibration':
+		case 'unreadable_input':
+		case 'no_calibration':
+		case 'unsupported_layout': return { title: 'This raw file could not be read', body: `${message || 'The .insp file is damaged or incomplete.'} Copy it from the camera again, or export a stitched 360 JPEG and upload that instead.`, permanent: true };
 		default: return { title: 'Something went wrong', body: message || 'Try again in a minute.' };
 	}
 }
