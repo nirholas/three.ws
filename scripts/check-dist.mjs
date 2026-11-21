@@ -5,6 +5,7 @@ import { resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LEDGER_REL, RELEASE_FILES, checkPins, readLedger, releasedVersions, sri } from './lib/agent-3d-releases.mjs';
 import { LENS_ENTRIES, LENS_JS_BUDGET_BYTES, firstPaintScripts } from './lib/lens-surfaces.mjs';
+import { isPrivateDoc } from './lib/private-docs.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -278,6 +279,35 @@ for (const name of LENS_ENTRIES) {
 		ok = false;
 	} else {
 		console.log(`[check-dist] lens page dist/${name}: ${(total / 1024).toFixed(1)} KB gzipped JS across ${scripts.length} file(s), budget ${LENS_JS_BUDGET_BYTES / 1024} KB`);
+	}
+}
+
+// Operator-only docs (scripts/lib/private-docs.mjs) must never ship. Until
+// 2026-11-21 dist/docs carried partner prospect lists, the fundraising deck and
+// the live-ops runbook, and /docs/ALL.md concatenated them.
+{
+	const docsDist = resolve(root, 'dist/docs');
+	const leaked = [];
+	const walkDocs = (dir, rel) => {
+		for (const entry of readdirSync(dir, { withFileTypes: true })) {
+			const childRel = rel ? `${rel}/${entry.name}` : entry.name;
+			if (isPrivateDoc(childRel)) leaked.push(childRel);
+			else if (entry.isDirectory()) walkDocs(resolve(dir, entry.name), childRel);
+		}
+	};
+	if (existsSync(docsDist)) walkDocs(docsDist, '');
+	const allMd = resolve(docsDist, 'ALL.md');
+	if (existsSync(allMd)) {
+		for (const m of readFileSync(allMd, 'utf8').matchAll(/^> \*\*Source:\*\* `docs\/([^`\n]+)`/gm)) {
+			if (isPrivateDoc(m[1])) leaked.push(`ALL.md section docs/${m[1]}`);
+		}
+	}
+	if (leaked.length) {
+		console.error(`[check-dist] ${leaked.length} operator-only doc path(s) would be published under /docs:`);
+		for (const p of leaked.slice(0, 20)) console.error(`[check-dist]   PRIVATE: ${p}`);
+		ok = false;
+	} else {
+		console.log('[check-dist] docs OK - no operator-only doc in dist/docs');
 	}
 }
 

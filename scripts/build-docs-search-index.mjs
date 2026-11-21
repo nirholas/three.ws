@@ -37,6 +37,7 @@
 import { readdirSync, readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs';
 import { join, relative, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isPrivateDoc } from './lib/private-docs.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS_DIR = join(ROOT, 'docs');
@@ -280,6 +281,8 @@ export function buildIndex(dir = DOCS_DIR) {
 
 	for (const file of files) {
 		const rel = relative(dir, file).replace(/\\/g, '/');
+		// The index ships to every visitor; operator-only docs never enter it.
+		if (isPrivateDoc(rel)) continue;
 		const slug = rel.replace(/\.md$/, '');
 		const md = readFileSync(file, 'utf8');
 		if (isGenerated(md)) {

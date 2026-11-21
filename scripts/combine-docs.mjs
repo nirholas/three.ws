@@ -6,17 +6,15 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { dirname, relative, resolve, sep } from 'node:path';
+import { isPrivateDoc } from './lib/private-docs.mjs';
 
 const ROOT = process.cwd();
 const DOCS_DIR = 'docs';
 const OUT = `${DOCS_DIR}/ALL.md`;
 
 // ALL.md ships to the public site as /docs/ALL.md, so it must never absorb the
-// operator-only subtrees that vite's copy-static-docs plugin deliberately keeps
-// out of dist/: the ops runbooks name the GCP project, its service accounts, and
-// which env vars gate which routes, and the security reviews describe attacks
-// against live code. Keep this set in sync with PRIVATE_DOCS in vite.config.js.
-const PRIVATE_DOCS = new Set(['internal', 'ops', 'security']);
+// operator-only docs that vite's copy-static-docs plugin keeps out of dist/.
+// The rule lives in scripts/lib/private-docs.mjs, shared by every docs output.
 
 // Group by the first path segment under docs/ ("root" for docs/*.md directly).
 const groupOf = (p) => {
@@ -35,7 +33,7 @@ const files = execSync(
   .split('\n')
   .map((p) => p.replace(/^\.\//, ''))
   .filter(Boolean)
-  .filter((p) => !PRIVATE_DOCS.has(groupOf(p)))
+  .filter((p) => !isPrivateDoc(relative(DOCS_DIR, p)))
   .sort();
 
 const sections = files.map((path, i) => {

@@ -21,6 +21,7 @@ import { cspEvalProbes } from './scripts/vite/csp-eval-probes.mjs';
 import { rewriteCopiedSrc } from './scripts/vite/src-public-imports.mjs';
 import { vendorChunkFor } from './scripts/vite/vendor-chunks.mjs';
 import { isLensEntry } from './scripts/lib/lens-surfaces.mjs';
+import { isPrivateDoc } from './scripts/lib/private-docs.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 import { createAnatomyHeadRenderer, anatomyIdFromPath, apiDesignLoader } from './server/anatomy-head.mjs';
 import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
@@ -3651,18 +3652,13 @@ const appConfig = {
 			closeBundle() {
 				// dist/docs is served publicly: /docs/<topic>.md is fetched by the docs
 				// SPA, and every other file under it is reachable as a static asset.
-				// These subtrees are written for operators, not readers — the ops
-				// runbooks name the GCP project, service accounts, and which env vars
-				// gate which routes; the security reviews describe attacks against
-				// live code, some still open. Keep them in the repo, off the website.
-				const PRIVATE_DOCS = new Set(['internal', 'ops', 'security']);
+				// Operator-only docs (runbooks, security reviews, partner and
+				// fundraising material, unsent drafts) stay in the repo, off the
+				// website. The rule is shared with ALL.md and the search index.
 				const docsRoot = resolve(__dirname, 'docs');
 				cpSync(docsRoot, resolve(__dirname, 'dist/docs'), {
 					recursive: true,
-					filter: (src) => {
-						const rel = relative(docsRoot, src);
-						return !rel || !PRIVATE_DOCS.has(rel.split(sep)[0]);
-					},
+					filter: (src) => !isPrivateDoc(relative(docsRoot, src)),
 				});
 			},
 		},
