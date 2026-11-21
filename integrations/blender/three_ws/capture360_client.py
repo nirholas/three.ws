@@ -66,6 +66,10 @@ class Cancelled(Exception):
     """The user cancelled the operation."""
 
 
+class _Stopped(Exception):
+    """A part stopped early because another part failed; the failure is what gets raised."""
+
+
 def file_ext(path: str) -> str:
     return path.rsplit(".", 1)[-1].lower() if "." in os.path.basename(path) else ""
 
@@ -377,7 +381,7 @@ class Capture360Client(ThreeWSClient):
             last: Optional[Exception] = None
             for attempt in range(self.part_attempts):
                 if stop.is_set():
-                    raise Cancelled()
+                    raise _Stopped()
                 if should_cancel and should_cancel():
                     raise Cancelled()
                 try:
@@ -403,6 +407,9 @@ class Capture360Client(ThreeWSClient):
                 code="part_failed",
             )
 
+        # Every future is drained before raising, so the error raised is the part that
+        # actually failed (or the user's Cancelled), never a sibling's early _Stopped.
+        failure: Optional[BaseException] = None
         with ThreadPoolExecutor(max_workers=self.parallel, thread_name_prefix="threews-part") as pool:
             pending = {pool.submit(send, n): n for n in todo}
             try:
@@ -410,6 +417,16 @@ class Capture360Client(ThreeWSClient):
                     finished, _ = wait(pending, return_when=FIRST_COMPLETED)
                     for fut in finished:
                         number = pending.pop(fut)
+                        if fut.cancelled():
+                            continue
+                        exc = fut.exception()
+                        if exc is not None:
+                            if failure is None and not isinstance(exc, _Stopped):
+                                failure = exc
+                            stop.set()
+                            for other in pending:
+                                other.cancel()
+                            continue
                         etag = fut.result()
                         with lock:
                             parts[number] = etag
@@ -422,6 +439,8 @@ class Capture360Client(ThreeWSClient):
                 for fut in pending:
                     fut.cancel()
                 raise
+        if failure is not None:
+            raise failure
 
     # -- pano-capture (splat) ---------------------------------------------------
 

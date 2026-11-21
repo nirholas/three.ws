@@ -107,6 +107,34 @@ def test_resume_skips_parts_already_stored(server, tmp_path):
     assert server.files[key] == open(path, "rb").read()
 
 
+def test_a_failed_part_is_reported_as_the_failure_not_a_cancel(server, tmp_path):
+    # When one part fails, the parts still queued stop early. Their early stop must
+    # never surface as Cancelled: upload_file treats Cancelled as the user's cancel,
+    # aborts the multipart upload and deletes the resume file, so a dropped
+    # connection would lose the resume point and the panel would say "Cancelled."
+    # The race depends on which finished future is read first, so run it repeatedly.
+    path = make_file(tmp_path, 64 * 1024 * 6)
+    for run in range(25):
+        c = client(server, tmp_path, parallel=1, part_attempts=1)
+        original = c._put_part
+        count = {"n": 0}
+
+        def flaky(url, data, count=count, original=original):
+            count["n"] += 1
+            if count["n"] == 2:
+                raise ThreeWSError("network dropped", code="unreachable")
+            return original(url, data)
+
+        c._put_part = flaky
+        with pytest.raises(ThreeWSError) as info:
+            c.upload_file(path)
+        assert info.value.code == "part_failed", f"run {run}: {info.value.code}"
+        state_dir = tmp_path / "state" / "uploads"
+        assert os.listdir(state_dir), f"run {run}: the resume file was deleted"
+        for name in os.listdir(state_dir):
+            os.remove(state_dir / name)
+
+
 def test_cancel_aborts_the_upload_and_drops_resume_state(server, tmp_path):
     path = make_file(tmp_path, 64 * 1024 * 6)
     flag = threading.Event()
