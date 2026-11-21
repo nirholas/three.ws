@@ -233,5 +233,14 @@ reclaim, the controlled-wallet set and the leak scanner cover them unchanged.
   of fees); ATA rent and USDC return to the funder and treasury. Throughput per
   tick is lower than the shared payer, so watch the tick duration after turning
   it on.
+- Headroom gate: before minting, `buyerFor` reads the SOL funder's balance
+  (it must stay above `X402_SPONSOR_SOL_FLOOR_LAMPORTS` after the wallet's SOL,
+  ATA rent and fee) and the treasury's USDC (it must cover the call price). When
+  either is short, or a balance cannot be read, no wallet is minted, the call
+  pays from the seed payer, and the tick reports `fresh_payer.noHeadroom`. This
+  stops the lane from writing one unfunded wallet row per call while the fee
+  wallet sits at the floor.
+- Every wallet it mints carries two key copies and every response it buys is
+  stored: see [Paid data and wallet custody](./x402-paid-data-and-custody.md).
 - Turn on (config-only): `gcloud run services update three-ws-api --region
   us-central1 --update-env-vars X402_RING_FRESH_PAYER=true`.

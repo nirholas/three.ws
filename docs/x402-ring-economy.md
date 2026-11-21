@@ -1296,6 +1296,9 @@ activation runbook above is the fix.
   controlled-wallet set + spend invariants
 - [api/cron/x402-ring-leak-scan.js](../api/cron/x402-ring-leak-scan.js) — the
   on-chain leak scanner
+- [Paid data and wallet custody](./x402-paid-data-and-custody.md): every paid
+  call's full response is stored for accounting and reuse, and every loop wallet
+  key has a second Cloud KMS copy and a daily audit
 - [Fresh-wallet workers](./x402-fresh-workers.md): the lane that runs beside
   the ring, paying from a brand-new wallet per job and buying real work (3D
   props for /forged, datasets for /data-desk) instead of canaries
