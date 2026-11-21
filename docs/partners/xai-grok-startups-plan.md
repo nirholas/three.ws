@@ -145,7 +145,7 @@ Per-order detail and status: [grok-OWNER-ACTIONS.md](../../prompts/finish/_conte
 | # | Action | Unblocks | Where |
 |---|---|---|---|
 | 1 | Complete xAI onboarding in the startups portal | The remaining 80% of credits | Acceptance email |
-| 2 | Create the production API key on the credited team and run `npm run setup:xai-key` | Every live Grok lane (874 to 879), orders 927 and 941 | [order 927](../../prompts/archive/927-x-grok-46-owner-grok-api-key.md) |
+| 2 | On hold until the spend plan in [docs/grok-roadmap.md](../grok-roadmap.md) is settled (owner decision 2026-11-21). Then create the production API key on the credited team and run `npm run setup:xai-key` | Every live Grok lane (874 to 879), orders 927 and 941 | [order 927](../../prompts/archive/927-x-grok-46-owner-grok-api-key.md) |
 | 3 | Record the credit amount and expiry privately: `node scripts/partner-programs.mjs --benefit xai-grok-for-startups --name "Grok API, Grok and Grok Build credits" --state received --note "<expiry only>"` and set the grant amount as a Cloud Run env var (order 878 names it) | Burn tracking | Tracker CLI |
 | 4 | Decide the public home for the plugin repos (a GitHub organization reads better to reviewers than a personal account) and push the exported trees | Cursor Marketplace, Grok Bot marketplace, Grok Build PR | Orders 871, 872, 885, 886 |
 | 5 | Approve and send the marketplace submissions | Listings | Orders 873, 929 |

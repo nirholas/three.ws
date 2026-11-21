@@ -53,9 +53,11 @@ The campaign builds on three.ws's admission to xAI's **Grok for Startups** progr
 8. **Model and endpoint ids.** New xAI ids go into `api/_lib/chat-models.js` next to `GROK_MODELS` (hot file, rule 2) and are read from there.
 9. **New files more than one order may create.** `scripts/export-plugin-repo.mjs` (orders 871, 872, 885) and `api/_lib/xai-pricing.js` (orders 878, 879) can be created by whichever order gets there first. Immediately before creating one, check both the disk and `git log -1 -- <path>`. If it exists in either place (committed, or uncommitted from a sibling still working), extend it with anchored edits and keep its existing CLI flags and exports backward compatible; never overwrite it. If it does not exist, create the smallest complete version your order needs, with its test, and commit those two paths on their own at once, before building on them, so the first commit wins and siblings find it.
 
-## When there is no xAI key (the normal state until order 927 lands)
+## When there is no xAI key (held on purpose by the owner)
 
-The missing key is never a reason to stop or to build less. Build the whole feature, wire it behind `GROK_API_KEY`, and prove it three ways: (1) unit tests with recorded real response shapes copied from `docs.x.ai` (a documented example is a real shape; an invented one is not), (2) a live call that reaches xAI and gets its documented 401 or 400 (proves endpoint, auth header and body shape), (3) the feature's no-key path visibly degrades to the existing lane with an honest message, never a fake result. Put "live run after order 927" in the owner message with the exact command that proves it.
+The owner is deliberately holding the production key back until the credit spend plan in `docs/grok-roadmap.md` is settled (decision of 2026-11-21, recorded in CLAUDE.md). Do not remind the owner about it, and do not list it in your owner message.
+
+The missing key is never a reason to stop or to build less. Build the whole feature, wire it behind `GROK_API_KEY`, and prove it three ways: (1) unit tests with recorded real response shapes copied from `docs.x.ai` (a documented example is a real shape; an invented one is not), (2) a live call that reaches xAI and gets its documented 401 or 400 (proves endpoint, auth header and body shape), (3) the feature's no-key path visibly degrades to the existing lane with an honest message, never a fake result. Write the exact command that proves it live into the feature's doc.
 
 ## Owner gates (batch into ONE message at the end of your session)
 

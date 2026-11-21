@@ -76,6 +76,14 @@ If a task cannot be 100% finished inside this session (an external review must l
 - **Build and innovate freely on Robinhood Crypto surfaces.** Trading tools, agent integrations, MCP work, portfolio and market-data tooling are all in scope and welcome.
 - **Solana still leads.** Robinhood Crypto is another venue alongside our Solana rail, not a replacement for it. The chain-priority rules above still apply.
 
+## The xAI key is held on purpose (owner decision 2026-11-21)
+
+**The owner is deliberately not installing the production xAI key (`GROK_API_KEY`) yet, so the Grok for Startups credits are not burned before the spend plan in `docs/grok-roadmap.md` is settled.** A missing key is the intended state, not a blocker.
+
+- **Never remind the owner about the key.** Do not list it as a blocker, a gate, a next step, or an owner action in reports, and do not open a report with it. Mention it only when the owner asks.
+- **Never install or hunt for a key.** Do not run `npm run setup:xai-key`, and do not look for xAI keys in env files, Secret Manager or Cloud Run.
+- **Keep building key-ready.** Build Grok features completely and prove them without a key, using the no-key rules in `prompts/finish/_context/grok-startups-00-CONTEXT.md`. Record the one command that proves each feature live in its doc, not in your report.
+
 ## Engineering excellence
 
 Load the `engineering-standards` skill (`.claude/skills/engineering-standards/SKILL.md`) before any non-trivial feature or UI. It holds the architecture, open-source-first, UI/UX and innovation standards, plus the founder mindset and the pre-completion self-review.

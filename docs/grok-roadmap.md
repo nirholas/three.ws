@@ -4,9 +4,17 @@ Gap analysis of the xAI developer docs against what three.ws already ships on Gr
 
 The local reference copy of the docs lives in `docs/vendor/xai-docs/`. It is gitignored because the text is xAI's copyright. Refresh it with `npm run sync:xai-docs`. Agents can also query the docs live through the `xai-docs` MCP server in `.mcp.json`. Routes below are docs.x.ai paths, and each one is also a file under that folder.
 
-## Blocker before any of this matters
+## The key waits for this plan
 
-The production `GROK_API_KEY` from the Grok for Startups team is not installed. Until it is, every Grok lane falls back to another provider and the credits sit unused while their six-month clock runs. The owner creates the key at console.x.ai on the three.ws team, then runs `npm run setup:xai-key`. Everything below assumes that key.
+The owner is holding the production `GROK_API_KEY` back on purpose until this plan is settled, so the credits are not burned early (decision of 2026-11-21, recorded in CLAUDE.md). Until then every Grok lane falls back to another provider, and that is intended. Features are built and proven key-ready, so turning them on later is one command per feature.
+
+Before the key goes in, settle these:
+
+1. **Which lanes spend first.** Pick the items below to turn on at launch and leave the rest dark.
+2. **A daily cap.** Set `XAI_DAILY_SPEND_CAP_USD` on Cloud Run so healthz fails before a runaway lane drains the grant ([ops/xai-credits.md](ops/xai-credits.md)).
+3. **Per-lane budgets.** Check the lane split in `npm run grok:usage` against the plan in the first week.
+
+When the plan is settled, the owner creates the key at console.x.ai on the three.ws team and runs `npm run setup:xai-key`.
 
 ## Already in place
 
