@@ -724,6 +724,7 @@
 		"@bnb-chain/greenfield-js-sdk": "^2.2.2",
 		"@bnb-chain/reed-solomon": "^1.1.4",
 		"@bonfida/spl-name-service": "^4.0.1",
+		"@bubo-squared/gyroview": "^0.10.1",
 		"@chenglou/pretext": "^1.0.0",
 		"@coin-communities/sdk": "^2.0.0",
 		"@coinbase/cdp-sdk": "^1.61.0",
