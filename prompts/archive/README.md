@@ -59,3 +59,30 @@ Microsoft campaign orders below were archived on 2026-11-16 with every agent-sid
 | 845 OData usage feed | 845 commits | OData tests pass; CSDL valid; feed read with Basic auth on an isolated DB |
 | 846 Teams activity feed | 846 commits | `tests/teams-activity.test.js` and `tests/teams-identity.test.js` pass |
 | 847 Teams approvals | 847 commits | `tests/teams-approvals.test.js` 30/30; all card states validate against AC 1.5 |
+
+Grok campaign orders below (`grok-startups-` 871 to 886, and the `x-grok-` owner orders 927 to 931 and 941) were archived on 2026-11-21 at the owner's instruction, with every agent-side definition-of-done line verified. The steps that need the owner (the xAI key and the disclosure that ships with it, the deploy, public plugin repositories, marketplace and directory submissions, the co-marketing email, X posts, player-card submission) are tracked in [../finish/_context/grok-OWNER-ACTIONS.md](../finish/_context/grok-OWNER-ACTIONS.md). Per-order evidence is in [grok-startups-PROGRESS.md](../finish/_context/grok-startups-PROGRESS.md) and [x-grok-PROGRESS.md](../finish/_context/x-grok-PROGRESS.md). Scoped suites were run for this archive; the full `npm test` was not.
+
+| Order | Shipped in | Verified 2026-11-21 |
+|---|---|---|
+| 871 Cursor plugin marketplace-ready | `cbe4b45a5`, `be2a97e73`, `ebecc3483`, `ce1e67760`, `d11aac253` | `validate-cursor-plugin.mjs` 0 errors, 0 warnings; cursor-plugin validate, export, tool-surface and plugin suites pass |
+| 872 Grok Build plugin | `182eccbb7`, `054e7be6a`, `0bd303e5c` | `tests/grok-build-plugin-copy.test.js` and `-tools.test.js` pass; Grok Build 1.0.45 install and `grok mcp doctor` recorded 2026-11-20 |
+| 873 official Grok Bot marketplace package | `4ce69c2a0`, `048ba8874`, `e3e7d6cfe` | `tests/grok-connector-review-check.test.js` passes; production review check 10/10 recorded 2026-11-20 |
+| 874 Grok Imagine reference-image lane | `f642f9c52`, `1a18446c2`, `d0f104eb6`, `fcc20516f` | `xai-image` and the three `forge-reference-image*` suites pass; no-key baseline committed in `docs/evals/grok-imagine-ref-image.md` |
+| 875 Grok Imagine Video hero clips | `67fd74d28`, `10f55e76e`, `03abe41f2`, `9fe17b758` | `xai-video`, `glb-turntable-refs` and the three `hero-clip*` suites pass; six angle renders and UI state screenshots in `docs/img/hero-clips/`; `/docs/hero-clips` added to `data/pages.json` in `9fe17b758` |
+| 876 Grok Voice realtime avatar | `5ce30d2b5`, `f2ec59253`, `a05b976d4`, `877620ae2`, `13d41fa2b` | the three `grok-voice*` suites pass; `/docs/voice-grok` in the page index |
+| 877 examples pack | `7c53e0fc3`, `38bd97fa9`, `90b164be3`, `a8619ebe8` | `grok:examples-smoke` 6/6 recorded 2026-11-20 |
+| 878 xAI credit usage ledger | `3d52de561`, `d7a1f28e5`, `9d6af8ca9` | `xai-usage`, `xai-pricing` and `xai-credit-health` suites pass; migration applied in production |
+| 879 Grok eval and routing | `19e7be5ec`, `3fbe93419`, `393ce3cf4`, `662af1690` | `llm-route-override` and `llm-eval-graders` suites pass; Nemotron baseline report committed |
+| 880 connector reliability probe | `7f900b409`, `de58ba434`, `b4c86c4d8` | `mcp-probe*` suites pass; production probe 20/20 recorded 2026-11-20; migration applied |
+| 881 /grok hub | `95428f20d`, `08caeedd0` | `tests/grok-stats.test.js` passes; `pages/grok.html` claim and token grep empty |
+| 882 co-marketing kit | `16d63f526` | kit and nine `draft` queue items committed |
+| 883 rocket engine anatomy | `58bf8efe3`, `e8f265bb5`, `573bab188`, `b674e58b5` | `anatomy-featured` and `anatomy-narrate` suites pass (38 tests, every figure sourced); sources and review docs in `docs/anatomy/` |
+| 884 Share on X and Ask @grok | `cae78aad1`, `ef98d1e47`, `258fe6e7a`, `75814aaef` | `x-intent` and `share-cards` suites pass after `75814aaef` removed the last hand-built intent (the share verifier) |
+| 885 three.js craft plugin | `d97cbe857`, `fcc20516f`, `9fe17b758` | `node scripts/grok-craft-verify.mjs` exits 0: 12/12 JS blocks and 2/2 glTF Transform blocks; `grok:craft-verify` npm script added in `9fe17b758`; token grep empty |
+| 886 grok-3d-starter | `268e6dc50`, `7db8595c2` | `satellites/grok-3d-starter` `npm test` 0 failures and `npm run check` all passed; token grep empty |
+| 927 production xAI key | `d7f107201` | `npm run setup:xai-key` installer and its test shipped; no key exists yet (owner step 2) |
+| 928 mention bot go-live | `5c4e37a5c` | status endpoint and health shipped; go-live is the owner's |
+| 929 connector directory listings | `bf3028ddf` | `docs/partners/grok-bot-listings.md` committed; submissions are the owner's |
+| 930 launch announcement | `bbce29792` | drafts queued in `data/x-content/queue.json`; posting is the owner's |
+| 931 X player card | `bbce29792` | `docs/partners/x-player-card-submission.md`; production `/forge/embed` sends `frame-ancestors *` |
+| 941 xAI remote MCP e2e | `150c5c4ec` | dry run matches the xAI remote MCP docs; the live run comes with the key (owner step 2) |

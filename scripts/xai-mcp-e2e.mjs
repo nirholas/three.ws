@@ -137,7 +137,7 @@ async function main() {
 	const { key, source } = resolveKey();
 	if (!key) {
 		console.error('No GROK_API_KEY or XAI_API_KEY in process.env, .env/.env.local, or the three-ws-api Cloud Run service.');
-		console.error('Order 927 (prompts/finish/927-x-grok-46-owner-grok-api-key.md) owns creating one.');
+		console.error('Create one at console.x.ai and run npm run setup:xai-key (prompts/finish/_context/grok-OWNER-ACTIONS.md, step 2).');
 		console.error('Printing the dry-run request instead:');
 		console.error(JSON.stringify(request, null, '\t'));
 		return 1;

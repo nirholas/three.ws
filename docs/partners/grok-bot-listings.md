@@ -2,8 +2,9 @@
 
 Re-derived 2026-11-14 (first pass 2026-10-23, xAI marketplace and awesome-grok-bot added
 2026-11-04). Nothing here has been submitted. Every submission publishes to an external
-site, so each one waits for the owner's yes (CLAUDE.md gate 2). Owner order:
-`prompts/finish/929-x-grok-48-connector-directory-listings.md`.
+site, so each one waits for the owner's yes (CLAUDE.md gate 2). Owner steps:
+`prompts/finish/_context/grok-OWNER-ACTIONS.md` (order 929, archived in
+`prompts/archive/929-x-grok-48-connector-directory-listings.md`).
 
 ## How Grok Bot users find connectors (2026-11-14)
 

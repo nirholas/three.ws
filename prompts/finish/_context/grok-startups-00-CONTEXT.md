@@ -4,16 +4,16 @@ Not a work order. Never run this file. Every `prompts/finish/8NN-grok-startups-*
 
 The campaign builds on three.ws's admission to xAI's **Grok for Startups** program (admitted 2026-11-20). The opportunity map and the reasoning behind every order is [docs/partners/xai-grok-startups-plan.md](../../../docs/partners/xai-grok-startups-plan.md). Read its "Rules that bind every route" section before writing any copy.
 
-**The 15 orders are independent by design: all of them can run at the same time in separate chats.** No order waits on another, and none may assume another has landed. If a sibling's work is already on disk, reuse it when it fits, but never require it. The older `x-grok-` campaign (context: [x-grok-00-CONTEXT.md](x-grok-00-CONTEXT.md)) owns the Grok Bot connector surface, the @-mention bot and these still-open gated orders. **Never redo them; reference them:**
+**The 15 orders are independent by design: all of them can run at the same time in separate chats.** No order waits on another, and none may assume another has landed. If a sibling's work is already on disk, reuse it when it fits, but never require it. The older `x-grok-` campaign (context: [x-grok-00-CONTEXT.md](x-grok-00-CONTEXT.md)) owns the Grok Bot connector surface, the @-mention bot and these gated orders, archived on 2026-11-21 with only owner steps left ([grok-OWNER-ACTIONS.md](grok-OWNER-ACTIONS.md)). **Never redo them; reference them:**
 
 | Order | Owns |
 |---|---|
-| [927](../927-x-grok-46-owner-grok-api-key.md) | The production xAI key. `npm run setup:xai-key` ([scripts/install-xai-key.mjs](../../../scripts/install-xai-key.mjs)) stores it as secret `grok-api-key` and mounts it as `GROK_API_KEY` on `three-ws-api` |
-| [928](../928-x-grok-47-go-live-mention-bot.md) | Turning the @-mention bot live (`X_MENTION_BOT_LIVE`) |
-| [929](../929-x-grok-48-connector-directory-listings.md) | The 13 third-party connector directories in [docs/partners/grok-bot-listings.md](../../../docs/partners/grok-bot-listings.md), including the prepared Cursor Marketplace, cursor.directory and `xai-org/plugin-marketplace` submissions |
-| [930](../930-x-grok-49-launch-announcement.md) | The Grok Bot and mention-bot launch posts in [data/x-content/queue.json](../../../data/x-content/queue.json) |
-| [931](../931-x-grok-50-player-card-approval.md) | X player card approval |
-| [941](../941-x-grok-17-xai-remote-mcp-e2e.md) | The live `npm run e2e:xai-mcp` proof against production |
+| [927](../../archive/927-x-grok-46-owner-grok-api-key.md) | The production xAI key. `npm run setup:xai-key` ([scripts/install-xai-key.mjs](../../../scripts/install-xai-key.mjs)) stores it as secret `grok-api-key` and mounts it as `GROK_API_KEY` on `three-ws-api` |
+| [928](../../archive/928-x-grok-47-go-live-mention-bot.md) | Turning the @-mention bot live (`X_MENTION_BOT_LIVE`) |
+| [929](../../archive/929-x-grok-48-connector-directory-listings.md) | The 13 third-party connector directories in [docs/partners/grok-bot-listings.md](../../../docs/partners/grok-bot-listings.md), including the prepared Cursor Marketplace, cursor.directory and `xai-org/plugin-marketplace` submissions |
+| [930](../../archive/930-x-grok-49-launch-announcement.md) | The Grok Bot and mention-bot launch posts in [data/x-content/queue.json](../../../data/x-content/queue.json) |
+| [931](../../archive/931-x-grok-50-player-card-approval.md) | X player card approval |
+| [941](../../archive/941-x-grok-17-xai-remote-mcp-e2e.md) | The live `npm run e2e:xai-mcp` proof against production |
 
 ## Facts every order needs (re-derive the ones you use in step 0)
 

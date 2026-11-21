@@ -140,3 +140,8 @@ No xAI key exists in `process.env`, `.env`, `.env.local` or the `three-ws-api` s
 - Shipped `docs/partners/grok-bot-listings.md`: 13-row directory table (method, requirements, status), the exact submission text, the prepared diff for every PR-based list, and the form values for every form-based one. The xAI entry was dry-run in a clone: `validate-catalog.py` prints `Catalog OK`, `generate-plugin-index.py` exits 0 at SHA 60226f15515e089f3675471b07f97a557973d11a, `--check` prints `Plugin index OK`.
 - Commits: `bf3028ddf` (listings doc). The index-result paragraph landed in `a31feccc7`, a concurrent agent's workers commit that swept the shared index; not rewritten because other agents build on main. This entry is its own commit.
 - Open: the owner approves submissions (1+2) to (9) in the doc's "Owner approval" list. Then each submission is made, its URL goes into the doc's "Submission log", and order 929 is deleted. Owner: nirholas. The order file stays in place until then.
+
+## 2026-11-21: orders 927 to 931 and 941 archived, owner steps moved to grok-OWNER-ACTIONS.md
+- At the owner's instruction the six owner-gated orders moved to `prompts/archive/`. Nothing left in them is agent work except order 927's xAI subprocessor and privacy disclosure, which that order says ships in the same change as the live key, so it is step 3 of [grok-OWNER-ACTIONS.md](grok-OWNER-ACTIONS.md).
+- Checked today: no xAI key in `.env`, `.env.local`, Secret Manager or the `three-ws-api` service; production `/forge/embed` sends `frame-ancestors *`, so the October player-card blocker (931) is fixed.
+- The x-grok campaign has no open orders left in `prompts/finish/`.

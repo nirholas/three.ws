@@ -96,28 +96,29 @@ The emails, case study, post drafts, asset commands and tracking for this route 
 
 ## Work orders
 
-All sixteen are independent and can run at the same time in separate chats. Each one names the
-shared context file in its first lines and ends with a batched owner message for the steps only the
-owner can take.
+All sixteen were independent and ran at the same time in separate chats. Every agent-side line is
+built and verified, and the orders were archived on 2026-11-21. The steps only the owner can take
+(the xAI key, the deploy, public repositories, submissions, email and posts) are tracked row by row
+in [prompts/finish/_context/grok-OWNER-ACTIONS.md](../../prompts/finish/_context/grok-OWNER-ACTIONS.md).
 
 | Order | Work order | Routes |
 |---|---|---|
-| 871 | [Cursor plugin passes Marketplace review](../../prompts/finish/871-grok-startups-01-cursor-plugin-marketplace-ready.md) | A1 |
-| 872 | [Grok Build plugin, correct and installable](../../prompts/finish/872-grok-startups-02-grok-build-plugin.md) | A2 |
-| 873 | [Official Grok Bot marketplace package, templates, grok.com connector](../../prompts/finish/873-grok-startups-03-official-grok-bot-marketplace.md) | A3 |
-| 874 | [Grok Imagine reference-image lane with head-to-head eval](../../prompts/finish/874-grok-startups-04-imagine-reference-image-lane.md) | B1 |
-| 875 | [Grok Imagine Video hero clips from real renders](../../prompts/finish/875-grok-startups-05-imagine-video-hero-clips.md) | B2 |
-| 876 | [Grok Voice realtime talking avatar, LiveKit and Pipecat](../../prompts/finish/876-grok-startups-06-voice-realtime-avatar.md) | B3 |
-| 877 | [Runnable examples pack with smoke test](../../prompts/finish/877-grok-startups-07-examples-pack.md) | B4, C1 |
-| 878 | [xAI credit usage ledger, burn and expiry alerts](../../prompts/finish/878-grok-startups-08-credit-usage-ledger.md) | B6 |
-| 879 | [Grok 4.7 eval on real tasks, routing by evidence](../../prompts/finish/879-grok-startups-09-grok-eval-and-routing.md) | B5 |
-| 880 | [Synthetic connector probe and public uptime](../../prompts/finish/880-grok-startups-10-connector-reliability-probe.md) | C5 |
-| 881 | [/grok hub as the campaign landing page](../../prompts/finish/881-grok-startups-11-grok-hub-upgrade.md) | C2 |
-| 882 | [Co-marketing kit, startups email, case study, post drafts](../../prompts/finish/882-grok-startups-12-comarketing-kit.md) | D1, D2, D5 |
-| 883 | [Rocket engine and launch stack cutaways, Grok narration](../../prompts/finish/883-grok-startups-13-rocket-engine-anatomy.md) | C4, D4 |
-| 884 | [Ask @grok share intents on models, avatars, anatomy](../../prompts/finish/884-grok-startups-14-share-to-x-with-grok.md) | C3, D3 |
-| 885 | [Account-free three.js craft plugin for Grok Build](../../prompts/finish/885-grok-startups-15-threejs-craft-pack.md) | A5 |
-| 886 | [Forkable Grok 3D starter app](../../prompts/finish/886-grok-startups-16-grok-3d-starter-app.md) | C6 |
+| 871 | [Cursor plugin passes Marketplace review](../../prompts/archive/871-grok-startups-01-cursor-plugin-marketplace-ready.md) | A1 |
+| 872 | [Grok Build plugin, correct and installable](../../prompts/archive/872-grok-startups-02-grok-build-plugin.md) | A2 |
+| 873 | [Official Grok Bot marketplace package, templates, grok.com connector](../../prompts/archive/873-grok-startups-03-official-grok-bot-marketplace.md) | A3 |
+| 874 | [Grok Imagine reference-image lane with head-to-head eval](../../prompts/archive/874-grok-startups-04-imagine-reference-image-lane.md) | B1 |
+| 875 | [Grok Imagine Video hero clips from real renders](../../prompts/archive/875-grok-startups-05-imagine-video-hero-clips.md) | B2 |
+| 876 | [Grok Voice realtime talking avatar, LiveKit and Pipecat](../../prompts/archive/876-grok-startups-06-voice-realtime-avatar.md) | B3 |
+| 877 | [Runnable examples pack with smoke test](../../prompts/archive/877-grok-startups-07-examples-pack.md) | B4, C1 |
+| 878 | [xAI credit usage ledger, burn and expiry alerts](../../prompts/archive/878-grok-startups-08-credit-usage-ledger.md) | B6 |
+| 879 | [Grok 4.7 eval on real tasks, routing by evidence](../../prompts/archive/879-grok-startups-09-grok-eval-and-routing.md) | B5 |
+| 880 | [Synthetic connector probe and public uptime](../../prompts/archive/880-grok-startups-10-connector-reliability-probe.md) | C5 |
+| 881 | [/grok hub as the campaign landing page](../../prompts/archive/881-grok-startups-11-grok-hub-upgrade.md) | C2 |
+| 882 | [Co-marketing kit, startups email, case study, post drafts](../../prompts/archive/882-grok-startups-12-comarketing-kit.md) | D1, D2, D5 |
+| 883 | [Rocket engine and launch stack cutaways, Grok narration](../../prompts/archive/883-grok-startups-13-rocket-engine-anatomy.md) | C4, D4 |
+| 884 | [Ask @grok share intents on models, avatars, anatomy](../../prompts/archive/884-grok-startups-14-share-to-x-with-grok.md) | C3, D3 |
+| 885 | [Account-free three.js craft plugin for Grok Build](../../prompts/archive/885-grok-startups-15-threejs-craft-pack.md) | A5 |
+| 886 | [Forkable Grok 3D starter app](../../prompts/archive/886-grok-startups-16-grok-3d-starter-app.md) | C6 |
 
 ## Rules that bind every route
 
@@ -139,10 +140,12 @@ owner can take.
 
 ## Owner actions (in order)
 
+Per-order detail and status: [grok-OWNER-ACTIONS.md](../../prompts/finish/_context/grok-OWNER-ACTIONS.md).
+
 | # | Action | Unblocks | Where |
 |---|---|---|---|
 | 1 | Complete xAI onboarding in the startups portal | The remaining 80% of credits | Acceptance email |
-| 2 | Create the production API key on the credited team and run `npm run setup:xai-key` | Every live Grok lane (874 to 879), orders 927 and 941 | [order 927](../../prompts/finish/927-x-grok-46-owner-grok-api-key.md) |
+| 2 | Create the production API key on the credited team and run `npm run setup:xai-key` | Every live Grok lane (874 to 879), orders 927 and 941 | [order 927](../../prompts/archive/927-x-grok-46-owner-grok-api-key.md) |
 | 3 | Record the credit amount and expiry privately: `node scripts/partner-programs.mjs --benefit xai-grok-for-startups --name "Grok API, Grok and Grok Build credits" --state received --note "<expiry only>"` and set the grant amount as a Cloud Run env var (order 878 names it) | Burn tracking | Tracker CLI |
 | 4 | Decide the public home for the plugin repos (a GitHub organization reads better to reviewers than a personal account) and push the exported trees | Cursor Marketplace, Grok Bot marketplace, Grok Build PR | Orders 871, 872, 885, 886 |
 | 5 | Approve and send the marketplace submissions | Listings | Orders 873, 929 |
