@@ -348,6 +348,13 @@ const ERR = {
 		message: 'Photo-to-3D is not switched on yet on this server.',
 		hint: 'Set GCP_PANODEPTH_URL and GCP_RECONSTRUCTION_KEY to the deployed workers/model-panodepth service and the shared reconstruction bearer secret.',
 	},
+	sceneInspUnconfigured: {
+		error: 'unconfigured',
+		message: 'Photo-to-3D is not switched on yet on this server.',
+		hint:
+			'Set GCP_PANODEPTH_URL, GCP_PANO2SPLAT_URL and GCP_RECONSTRUCTION_KEY to the deployed workers/model-panodepth ' +
+			'and workers/model-pano2splat services and the shared reconstruction bearer secret.',
+	},
 };
 
 const examples = (map) =>
@@ -643,6 +650,7 @@ export function panoPaths() {
 							{ error: 'missing_image_url', message: 'Pass a public https URL to a 360 photo (JPEG, PNG or .insp) as image_url.' },
 						],
 						invalid_source_kind: ['Unknown kind', { error: 'invalid_source_kind', message: 'source_kind must be "equirect_image" or "insp".' }],
+						invalid_image_url: ['Not https', { error: 'invalid_image_url', message: 'image_url rejected: scheme not allowed: http:' }],
 					}),
 					401: errorResponse('No account.', {
 						signed_out: [
@@ -660,6 +668,7 @@ export function panoPaths() {
 					502: errorResponse('pano_scene_failed: the 3D server could not start the job. Try again in a minute.'),
 					503: errorResponse('The photo lane or object storage is not configured on this deployment.', {
 						unconfigured: ['Lane switched off', ERR.sceneUnconfigured],
+						unconfigured_insp: ['Raw .insp lane switched off', ERR.sceneInspUnconfigured],
 					}),
 				},
 			},

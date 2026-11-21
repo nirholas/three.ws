@@ -791,6 +791,34 @@ curl -s -X POST https://three.ws/api/capture-upload/create \
 
 The full request and response schemas, with examples, are in `/openapi.json` under the "360 capture: uploads" and "360 capture: scenes" tags. `three-ws capture 360 <file>` runs this whole flow from a terminal, resumes an interrupted upload, and starts the reconstruction ([CLI reference](cli.md#360-capture)).
 
+## 360 Photo to 3D Scene API
+
+`/api/pano-scene` turns one 360 photo into a textured shell in real metres, the API behind the [/pano-scene](https://three.ws/pano-scene) page. A stitched equirectangular JPEG or PNG goes straight to depth estimation; a raw Insta360 `.insp` is stitched first by the pano2splat worker. Starting and polling a job need an account (`Authorization: Bearer sk_live_...` or a session cookie); signed-out calls get `401 sign_in_required`. Errors are `{ error, message }`, where `message` is written for visitors and `hint` (on `503 unconfigured` only) is for the operator.
+
+| Call | Body or query | Response |
+| --- | --- | --- |
+| `GET /api/pano-scene` | none, no account needed | `{ lanes: { equirect_image, insp } }`: which inputs this deployment can turn into a scene right now |
+| `POST /api/pano-scene` | `{ image_url, source_kind? }` | `202 { job_id, status: "queued", stage, progress: 0 }` |
+| `GET /api/pano-scene?job=<job_id>` | | `{ job_id, status, stage, progress, result?, error? }` |
+
+- `image_url` must be a public https URL (private, loopback and link-local addresses are refused). `source_kind` is `equirect_image` or `insp`; when omitted it is `insp` for a path ending in `.insp` and `equirect_image` otherwise. Upload a local file first with `/api/scene-upload` (or `/api/capture-upload` for very large files) and pass the returned URL.
+- `job_id` is a signed token (HMAC over the owner, job id, input kind and worker task id). It is opaque: keep it and pass it back unchanged. Only the account that started the job can poll it; anyone else gets `404 job_not_found`.
+- `status` is `queued`, `running`, `succeeded` or `failed`. `stage` is `stitch` (`.insp` only), `depth`, `mesh` or `save`. `progress` runs 0 to 1, and stitching is the first 0.2 of it for an `.insp`.
+- On success, `result` is `{ glb_url, ply_url, viewer_url, stats }`. The files are copied to `captures/pano-scene/<user>/<job>/` in platform storage, so the URLs stay valid after the worker forgets the task. On failure, `error` is `{ code, message }`.
+- Poll every few seconds. A poll moves the job forward (it submits the depth task after stitching and saves the results), so the job finishes only while someone polls it.
+
+Error codes: `missing_image_url`, `invalid_source_kind`, `invalid_image_url` (400), `invalid_job` (400, the token was altered or is not a scene token), `job_not_found` (404), `rate_limited` (429), a worker code such as `unsafe_url` (422, the worker refused the photo; `message` gives its reason), `pano_scene_failed` (502, the worker could not start the job; try again in a minute), `unconfigured` (503, the depth worker, the stitch worker for `.insp`, or object storage is not set on this deployment).
+
+```bash
+curl -s -X POST https://three.ws/api/pano-scene \
+  -H "Authorization: Bearer $THREE_WS_API_KEY" -H 'content-type: application/json' \
+  -d '{"image_url":"https://example.org/room.jpg"}'
+# {"job_id":"ps1.eyJ...","status":"queued","stage":"depth","progress":0}
+curl -s "https://three.ws/api/pano-scene?job=ps1.eyJ..." -H "Authorization: Bearer $THREE_WS_API_KEY"
+```
+
+`POST /api/scene-upload` presigns a single PUT for the photo (`image/jpeg`, `image/png`, or `application/octet-stream` for `.insp`). While object storage refuses the platform credential it answers `503 storage_unavailable` with `retry-after: 60` instead of a presigned URL that would fail, so a client can offer the paste-a-link path above. The full schemas and captured examples are in `/openapi.json` under the "360 capture: scenes" tag.
+
 ## Suggested Skills API
 
 Skills an agent drafted for itself from runs that verifiably worked. Owner-only (session, or a bearer token with `agents:read` for reads and `agents:write` for writes). Concepts and the redaction guarantee: [skill-candidates.md](skill-candidates.md).
