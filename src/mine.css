@@ -32,8 +32,9 @@
 .mn-note-body strong { color: var(--ink-bright, #fff); font-weight: 600; }
 
 /* ── Stat tiles (also act as filters) ───────────────────────────────────── */
-.mn-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-sm, 12px); margin-bottom: var(--space-lg, 24px); }
+.mn-stats { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-sm, 12px); margin-bottom: var(--space-lg, 24px); }
 .mn-stats[hidden] { display: none; }
+.mn-stat[hidden] { display: none; }
 .mn-stat { display: flex; flex-direction: column; gap: 4px; padding: var(--space-md, 16px); text-decoration: none; border: 1px solid var(--stroke, rgba(255,255,255,.07)); border-radius: var(--radius-lg, 14px); background: var(--surface-1, rgba(255,255,255,.03)); transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
 .mn-stat:hover { background: var(--surface-2, rgba(255,255,255,.06)); border-color: var(--stroke-strong, rgba(255,255,255,.16)); transform: translateY(-1px); }
 .mn-stat:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
@@ -62,7 +63,7 @@
 .mn-card:hover { border-color: var(--stroke-strong, rgba(255,255,255,.18)); background: var(--surface-2, rgba(255,255,255,.05)); transform: translateY(-2px); }
 .mn-card:focus-within { border-color: var(--stroke-strong, rgba(255,255,255,.24)); }
 
-.mn-thumb { position: relative; display: block; aspect-ratio: 4 / 3; background: var(--surface-2, rgba(255,255,255,.05)); overflow: hidden; }
+.mn-thumb { position: relative; display: block; text-decoration: none; aspect-ratio: 4 / 3; background: var(--surface-2, rgba(255,255,255,.05)); overflow: hidden; }
 .mn-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity var(--duration-base) var(--ease-standard); }
 .mn-thumb model-viewer { position: absolute; inset: 0; width: 100%; height: 100%; --poster-color: transparent; }
 .mn-thumb.is-live img { opacity: 0; }

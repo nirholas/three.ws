@@ -186,12 +186,13 @@ function normalizePanoCapture(c) {
 		title: `Scene from ${CAPTURE_SOURCE[c.source_kind] || '360 footage'}`,
 		sub: captureStatusLine(c),
 		poster: c.poster_url || null,
+		mono: '360',
 		model: null,
-		// An unfinished capture has no scene to open yet: send its owner back to
-		// the capture page, where a new upload starts.
-		href: done ? c.viewer_url : '/capture',
-		editHref: done ? null : '/capture',
-		editLabel: c.status === 'failed' || c.status === 'cancelled' ? 'Capture again' : 'Capture page',
+		// An unfinished capture has no scene yet: its card opens the capture page
+		// on that job, which shows live progress or the reason it stopped.
+		href: done ? c.viewer_url : `/capture?mode=360&job=${encodeURIComponent(c.job_id)}`,
+		editHref: c.status === 'failed' || c.status === 'cancelled' ? '/capture?mode=360' : null,
+		editLabel: 'Capture again',
 		createdAt: c.created_at || null,
 		flag: c.status === 'queued' || c.status === 'running' ? 'processing' : c.status === 'succeeded' ? '' : c.status,
 	};
@@ -397,7 +398,7 @@ function monogram(title) {
 function cardHTML(item) {
 	const posterHTML = item.poster
 		? `<img src="${esc(item.poster)}" alt="" loading="lazy" decoding="async" data-mn-poster />`
-		: `<span class="mn-mono" aria-hidden="true">${esc(monogram(item.title))}</span>`;
+		: `<span class="mn-mono" aria-hidden="true">${esc(item.mono || monogram(item.title))}</span>`;
 	const previewBtn = item.model
 		? `<button type="button" class="mn-preview-btn">3D</button>`
 		: '';
@@ -508,6 +509,11 @@ function renderCounts() {
 	$('mn-stat-agents').textContent = String(count('agent'));
 	$('mn-stat-avatars').textContent = String(count('avatar'));
 	$('mn-stat-models').textContent = String(count('model') + count('world'));
+	// The scenes tile only appears once the account has a capture, so the row
+	// stays three wide for everyone who never used /capture.
+	const captures = count('capture');
+	$('mn-stat-captures').textContent = String(captures);
+	$('mn-stat-captures').closest('.mn-stat').hidden = captures === 0;
 }
 
 function setFilter(next) {
