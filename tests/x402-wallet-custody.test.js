@@ -178,6 +178,8 @@ describe('auditWalletCustody', () => {
 		d.sealBackup = async () => { throw new Error('KMS 503'); };
 		const report = await custody.auditWalletCustody({ sql, deps: d });
 		expect(report.backup_broken[0].backup).toBe('backfill_failed');
+		// The operator has to see why, or a fleet-wide failure is undiagnosable.
+		expect(report.backup_broken[0].error).toBe('KMS 503');
 		const [row] = await sql`SELECT custody_verified_at FROM x402_fresh_wallets`;
 		expect(row.custody_verified_at).toBeNull();
 	});

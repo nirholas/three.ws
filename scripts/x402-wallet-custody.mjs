@@ -46,24 +46,34 @@ const { ensurePoolSchema } = await import('../api/_lib/x402/pool.js');
 const { ensureFreshSchema } = await import('../api/_lib/x402/fresh-workers/wallets.js');
 const custody = await import('../api/_lib/x402/wallet-custody.js');
 
-// KMS as the operator: the gcloud login's token, re-minted well inside its hour.
+// KMS as the operator's gcloud login. gcloud hands back its cached token, which
+// can be minutes from expiry, so re-mint often and retry once on an auth refusal:
+// a long backfill otherwise fails every wallet after the token lapses.
 const { gcloud } = await import('./lib/cloud-run-env.mjs');
 const { sealWithKms, openKmsEnvelope, kmsWrap, kmsUnwrap } = await import('../api/_lib/kms-envelope.js');
 const { encryptSecret, decryptSecret } = await import('../api/_lib/secret-box.js');
 let tokenAt = 0;
 let operatorToken = null;
-const token = () => {
-	if (!operatorToken || Date.now() - tokenAt > 30 * 60_000) {
+const token = (force = false) => {
+	if (force || !operatorToken || Date.now() - tokenAt > 5 * 60_000) {
 		operatorToken = gcloud(['auth', 'print-access-token']).trim();
 		tokenAt = Date.now();
 	}
 	return operatorToken;
 };
+const withOperatorToken = async (call) => {
+	try {
+		return await call(token());
+	} catch (err) {
+		if (!/\((401|403)\)/.test(String(err?.message))) throw err;
+		return call(token(true));
+	}
+};
 const deps = {
 	encrypt: encryptSecret,
 	decrypt: decryptSecret,
-	sealBackup: (plaintext, keyName) => sealWithKms(plaintext, keyName, { wrap: (dek, k) => kmsWrap(dek, k, { token: token() }) }),
-	openBackup: (ciphertext) => openKmsEnvelope(ciphertext, { unwrap: (w, k) => kmsUnwrap(w, k, { token: token() }) }),
+	sealBackup: (plaintext, keyName) => sealWithKms(plaintext, keyName, { wrap: (dek, k) => withOperatorToken((t) => kmsWrap(dek, k, { token: t })) }),
+	openBackup: (ciphertext) => openKmsEnvelope(ciphertext, { unwrap: (w, k) => withOperatorToken((t) => kmsUnwrap(w, k, { token: t })) }),
 	backupKeyName: custody.walletBackupKeyName(),
 };
 

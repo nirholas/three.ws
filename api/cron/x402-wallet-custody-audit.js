@@ -51,6 +51,11 @@ async function runCustody() {
 const listed = (rows) => rows.slice(0, LIST_LIMIT).map((r) => `${r.table}:${r.pubkey} (${r.primary ?? r.backup}${r.backup && r.primary ? `/${r.backup}` : ''})`).join(', ')
 	+ (rows.length > LIST_LIMIT ? `, and ${rows.length - LIST_LIMIT} more` : '');
 
+const reasons = (rows) => {
+	const distinct = [...new Set(rows.map((r) => r.error).filter(Boolean))].slice(0, 3);
+	return distinct.length ? `Reason: ${distinct.join(' | ')}. ` : '';
+};
+
 async function alertCustody(report) {
 	if (report.unrecoverable.length) {
 		await sendOpsAlert(
@@ -72,6 +77,7 @@ async function alertCustody(report) {
 		await sendOpsAlert(
 			`x402 custody: ${report.backup_broken.length} wallet backup copy fault(s)`,
 			`The KMS backup is wrong, unopenable, or could not be written. ${listed(report.backup_broken)}. ` +
+			`${reasons(report.backup_broken)}` +
 			'Check that the runtime service account holds cloudkms.cryptoKeyEncrypterDecrypter on X402_WALLET_BACKUP_KMS_KEY.',
 			{ signature: 'x402-wallet-custody:backup-broken' },
 		);

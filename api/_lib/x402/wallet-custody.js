@@ -171,8 +171,8 @@ export async function auditWalletCustody({ sql = defaultSql, tables = CUSTODY_TA
 							             WHERE pubkey = ${v.pubkey} AND backup_secret IS NULL RETURNING pubkey`;
 						if (updated.length) { t.backfilled += 1; backupOk = true; }
 					}
-				} catch {
-					report.backup_broken.push({ table, pubkey: v.pubkey, backup: 'backfill_failed' });
+				} catch (err) {
+					report.backup_broken.push({ table, pubkey: v.pubkey, backup: 'backfill_failed', error: String(err?.message || err).slice(0, 200) });
 				}
 			}
 			if (!backupOk && v.backup === 'missing') t.missing_backup += 1;
