@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-21",
+			"title": "360 captures train into a real Gaussian splat with a flythrough preview",
+			"summary": "The pano2splat worker has a splat_train stage: it trains a splat from the reconstructed camera poses, checks quality on held-out frames, and writes a PLY, a compact SPZ and a 20 second 1080p preview video.",
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-21",
 			"title": "Use your own 360 photo as your avatar's world",
 			"summary": "Drop an equirectangular photo from any 360 camera on the viewer, or paste a link, and it becomes both the light on your avatar and the backdrop behind it. Lighting and background are separate switches with rotation, blur and brightness sliders, and a brighten-highlights option makes a clipped sun light the avatar like a real one. Huge photos are resized safely on phones, a non-360 image or a blocked link explains itself, and the same backdrop control is on the Splat Viewer. Embeds accept it through the environment attribute.",
 			"tags": ["feature"],

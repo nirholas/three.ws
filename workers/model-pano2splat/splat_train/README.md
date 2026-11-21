@@ -49,3 +49,26 @@ SPZ is written with the official library, converting RDF to the SPZ RUB conventi
 `requirements.d/splat_train.txt` lists them with the install order. GPU training needs CUDA; the
 CLI contract, PLY, SPZ and video paths are tested without a GPU (`pytest tests/test_splat_train.py`).
 Set `SPLAT_TRAIN_TEST_DATASET` to a COLMAP dataset to include the GPU end-to-end test.
+
+## Measured on an L4 (Cloud Run Job, europe-west1)
+
+Image: CUDA 12.4, torch 2.4.1, gsplat 1.5.3 prebuilt wheel (`pt24cu124`), spz built from source.
+Training images are downscaled to 1600 px on the long side, 30 holdout images (one per 8).
+
+| dataset | iterations | Gaussians | holdout PSNR | holdout SSIM | scene.ply | scene.spz | wall time | peak GPU |
+|---|---|---|---|---|---|---|---|---|
+| Mip-NeRF 360 `counter` (240 images) | 7000 | 2,996,756 | 28.21 dB (28.53 unpruned) | 0.9166 | 743 MB | 56 MB | 1710 s (1643 s training) | 4.26 GB |
+
+`preview.mp4` for that run: 1920x1080, 30 fps, 600 frames, 20.0 s, h264 yuv420p, 29 MB. The PLY and SPZ
+both open in `/splat` without console errors. Orders 335 and 347 add the 30000 iteration rows and a
+second dataset as they are measured.
+
+Do not install gsplat from source on the job image: the JIT build of its CUDA extension took
+441 s on first import. Use the prebuilt wheel from `https://docs.gsplat.studio/whl/pt24cu124`.
+
+## Licenses
+
+gsplat is Apache-2.0, the SPZ library is MIT. The Inria 3DGS code and its forks are not used (non
+commercial). Mip-NeRF 360 does not state a data license, so it is used only to measure and its
+images and outputs are never shipped. Datasets that ship in product demos must carry an explicit
+commercial-compatible license (CC0 or CC BY) recorded in the fixtures manifest.
