@@ -2,6 +2,10 @@
 
 All notable changes to this plugin are documented here. Versions follow [semver](https://semver.org).
 
+## Unreleased
+
+- Added Cursor manifests (`.cursor-plugin/plugin.json`, `mcp.json`) and applied to the Cursor Marketplace on 2026-11-21 (pending review). See `SUBMISSION.md`.
+
 ## 1.0.0 — 2026-07-01
 
 Initial release. Generate textured 3D models and rigged, animation-ready avatars

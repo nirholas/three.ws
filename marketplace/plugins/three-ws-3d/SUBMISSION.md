@@ -70,3 +70,23 @@ Users then install with:
 
 Bump `version` in `.claude-plugin/plugin.json` (and add a `CHANGELOG.md` entry) so
 existing installs receive the update.
+
+## Cursor Marketplace
+
+Applied on 2026-11-21 through the Cursor publisher form (`cursor.com/marketplace/publish`),
+submitted as the three.ws team. Cursor confirmed receipt and will follow up at
+marketplace-publishing@cursor.com once it has reviewed the plugin. Status: **pending review**.
+
+| Field | Value |
+| --- | --- |
+| Organization name / handle | `three.ws` |
+| Namespace | `three-ws` |
+| Contact email | nich@three.ws |
+| Logotype | `https://raw.githubusercontent.com/nirholas/three.ws/main/public/brand/three-ws-app-icon-512.png` |
+| GitHub repository | `https://github.com/nirholas/three.ws` |
+| Website | `https://three.ws` |
+
+Cursor reads `.cursor-plugin/marketplace.json` at the repo root and
+`.cursor-plugin/plugin.json` plus `mcp.json` in this directory. Keep `mcp.json` in sync with
+the `mcpServers` block in `.claude-plugin/plugin.json` when servers change. Cursor reviews
+the public repo, so these files must be on `github.com/nirholas/three.ws` `main`.
