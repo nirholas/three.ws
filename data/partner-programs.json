@@ -4142,6 +4142,12 @@
 					"date": "2026-11-20",
 					"action": "Admitted and accepted into Grok for Startups (acceptance email from the xAI startups team)",
 					"status": "member"
+				},
+				{
+					"date": "2026-11-20",
+					"action": "Credits on hold: the startups team says the submitted Team ID is invalid or the applying address (nich@) is not a member of that team; owner to resend the Grok dashboard Team ID from a team nich@ belongs to",
+					"status": "member",
+					"ref": "email: Grok for Startups: Action Needed for three.ws (2026-11-20)"
 				}
 			],
 			"received": [

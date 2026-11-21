@@ -361,6 +361,7 @@ Every application, form, email, and portal action, newest first. Add one with `n
 |---|---|---|---|---|
 | 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Application in review: xAI startups team asked for a grok.com Team ID before admission; owner created the team and replied with the ID (now: Submitted, waiting) |  |
 | 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Admitted and accepted into Grok for Startups (acceptance email from the xAI startups team) (now: Member / live) |  |
+| 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Credits on hold: the startups team says the submitted Team ID is invalid or the applying address (nich@) is not a member of that team; owner to resend the Grok dashboard Team ID from a team nich@ belongs to (now: Member / live) | email: Grok for Startups: Action Needed for three.ws (2026-11-20) |
 | 2026-10-11 | [OpenAI Partner Network (Select Partner)](https://openai.com/index/introducing-openai-partner-network/) | OpenAI | Partner benefits provisioned; two invitations waiting to be accepted |  |
 | 2026-09-30 | [Official MCP Registry and GitHub MCP Registry](https://modelcontextprotocol.io/registry/quickstart) | GitHub | Published blender-mcp, herald-mcp, home-mcp and knock-mcp and updated agent-sniper with mcp-publisher v1.8.1 (now: Member / live) |  |
 | 2026-09-29 | [ChatGPT App Directory](https://developers.openai.com/apps-sdk) | OpenAI | Third rejection: every generation outlived the 60-second tool-call limit. v1.0.1 fix built, awaiting deploy (now: In progress) |  |
