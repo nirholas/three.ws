@@ -224,6 +224,12 @@ export const NAV_GROUPS = [
 						desc: 'Video → 3D scene — reconstruct any space into an explorable point cloud, rendered live in the browser',
 					},
 					{
+						title: '360 Camera to 3D',
+						href: '/insta360',
+						badge: 'New',
+						desc: 'Turn 360 footage into 3D you own: a splat walkaround, a room from one photo, your own light and 360 motion capture',
+					},
+					{
 						title: 'Avatar Engines Atlas',
 						href: '/avatar-engines',
 						desc: 'Every engine for high-quality & photoreal 3D avatars — technique, license & how three.ws uses each',
