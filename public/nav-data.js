@@ -230,6 +230,11 @@ export const NAV_GROUPS = [
 						desc: 'Turn 360 footage into 3D you own: a splat walkaround, a room from one photo, your own light and 360 motion capture',
 					},
 					{
+						title: 'Step Inside a 360 Photo',
+						href: '/pano-scene',
+						desc: 'One 360 photo → a 3D shell you can stand inside, with GLB and PLY downloads',
+					},
+					{
 						title: 'Avatar Engines Atlas',
 						href: '/avatar-engines',
 						desc: 'Every engine for high-quality & photoreal 3D avatars — technique, license & how three.ws uses each',
