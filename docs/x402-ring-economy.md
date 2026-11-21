@@ -3,8 +3,8 @@
 A self-contained agent-to-agent payment loop: **three.ws-controlled wallets pay
 three.ws's own x402 endpoints in real USDC, settled by three.ws's own
 facilitator.** No user funds, no external facilitator, no wallet outside the
-platform. It exists to dogfood and load-test the agent economy end to end —
-proving every paid endpoint settles real money, continuously — while costing only
+platform. It exists to dogfood and load-test the agent economy end to end
+(proving every paid endpoint settles real money, continuously) while costing only
 Solana network fees, because the principal recirculates between wallets you
 control.
 
@@ -12,7 +12,7 @@ control.
 > endpoint tags it `internal: true`, and the ring settlement endpoint is
 > `discoverable: false` (never advertised on the public x402 bazaar /
 > agentic.market catalog). Do **not** present self-cycled ring volume as organic
-> third-party demand — that is the one thing this system is deliberately built
+> third-party demand: that is the one thing this system is deliberately built
 > *not* to do.
 
 ## The runway governor: funding IS the throttle
