@@ -26,7 +26,7 @@ for (const v of ['S3_ENDPOINT', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCE
 	}
 }
 
-process.env.DATABASE_URL = 'postgres://isolated:isolated@isolated.invalid/isolated';
+process.env.DATABASE_URL = 'postgres://isolated.invalid/isolated';
 process.env.JWT_SECRET = randomBytes(32).toString('hex');
 for (const v of ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'REDIS_URL', 'KV_REST_API_URL', 'KV_REST_API_TOKEN', 'RESEND_API_KEY']) {
 	delete process.env[v];

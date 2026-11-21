@@ -47,7 +47,7 @@ process.env.S3_ACCESS_KEY_ID = secret('cloudflare-r2-access-key-id');
 process.env.S3_SECRET_ACCESS_KEY = secret('cloudflare-r2-secret-access-key');
 delete process.env.STORAGE_FALLBACK_BUCKET;
 
-process.env.DATABASE_URL = 'postgres://isolated:isolated@isolated.invalid/isolated';
+process.env.DATABASE_URL = 'postgres://isolated.invalid/isolated';
 process.env.JWT_SECRET = randomBytes(32).toString('hex');
 process.env.APP_ORIGIN = `http://localhost:${PORT}`;
 for (const v of ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'REDIS_URL', 'KV_REST_API_URL', 'KV_REST_API_TOKEN', 'RESEND_API_KEY']) {
