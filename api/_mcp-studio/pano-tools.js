@@ -35,7 +35,8 @@ const JOB_ID_PROP = {
 
 const HTTPS_URL = { type: 'string', format: 'uri', pattern: '^https://', maxLength: 4096 };
 
-const CAPTURE_KINDS = ['equirect_video', 'equirect_images', 'insv', 'insp'];
+// A single raw .insp photo has no parallax for a splat (C1 refuses it); it goes to pano_scene_create.
+const CAPTURE_KINDS = ['equirect_video', 'equirect_images', 'insv'];
 const SCENE_KINDS = ['equirect_image', 'insp'];
 const QUALITIES = ['preview', 'standard', 'high'];
 
@@ -199,8 +200,9 @@ const DEFS = [
 		description:
 			'Start a job that turns 360 footage into a Gaussian splat scene you can walk through. Input is one public https URL ' +
 			'(source_url) or several (source_urls) and the kind: equirect_video (a stitched 2:1 equirectangular video from any 360 ' +
-			'camera), equirect_images (a set of stitched 360 photos), insv (raw Insta360 video; pass both files of a split pair in ' +
-			'source_urls) or insp (a raw 360 photo). MCP clients cannot stream multi-gigabyte files, so the file must already be at a ' +
+			'camera), equirect_images (a set of stitched 360 photos) or insv (raw Insta360 video; pass both files of a split pair in ' +
+			'source_urls). A single 360 photo, raw .insp included, has no camera movement to build a splat from: use ' +
+			'pano_scene_create for it. MCP clients cannot stream multi-gigabyte files, so the file must already be at a ' +
 			'public https URL; for a file on disk use the CLI, which uploads it in parts: `npx three-ws capture 360 <file>`. Optional ' +
 			'trim ({start_s, end_s}) limits a long video and quality is preview, standard (default) or high. Returns a job_id at once; ' +
 			'the job runs on a GPU and takes minutes to over an hour (conservatively 10 to 25 minutes for preview, 25 to 60 for ' +
@@ -213,7 +215,7 @@ const DEFS = [
 			required: ['source_kind'],
 			anyOf: [{ required: ['source_url'] }, { required: ['source_urls'] }],
 			properties: {
-				source_url: { ...HTTPS_URL, description: 'Public https URL of one file: a stitched 360 video, one raw .insv or .insp, or one 360 photo.' },
+				source_url: { ...HTTPS_URL, description: 'Public https URL of one file: a stitched 360 video or one raw .insv.' },
 				source_urls: {
 					type: 'array',
 					minItems: 1,
@@ -221,7 +223,7 @@ const DEFS = [
 					items: HTTPS_URL,
 					description: 'Public https URLs of a split pair of .insv files (both lenses), or of a set of equirect photos.',
 				},
-				source_kind: { type: 'string', enum: CAPTURE_KINDS, description: 'What the URL points at: equirect_video, equirect_images, insv or insp.' },
+				source_kind: { type: 'string', enum: CAPTURE_KINDS, description: 'What the URL points at: equirect_video, equirect_images or insv.' },
 				trim: {
 					type: 'object',
 					additionalProperties: false,

@@ -189,7 +189,7 @@ export const PANO_SCHEMAS = {
 				items: { type: 'string', format: 'uri' },
 				description: 'equirect_images: 3 to 600 photos. insv: the two halves of a split-pair recording. Other kinds take one file.',
 			},
-			source_kind: { type: 'string', enum: ['equirect_video', 'equirect_images', 'insv', 'insp'] },
+			source_kind: { type: 'string', enum: ['equirect_video', 'equirect_images', 'insv'] },
 			trim: {
 				type: 'object',
 				description: 'Video kinds only (equirect_video, insv).',
@@ -218,7 +218,7 @@ export const PANO_SCHEMAS = {
 			status: JOB_STATUS,
 			stage: { type: ['string', 'null'], description: 'Current pipeline stage, for example queued, frames, colmap, splat_train, save, done.' },
 			progress: { type: 'number', minimum: 0, maximum: 1 },
-			source_kind: { type: 'string', enum: ['equirect_video', 'equirect_images', 'insv', 'insp'] },
+			source_kind: { type: 'string', enum: ['equirect_video', 'equirect_images', 'insv'] },
 			quality: { type: 'string', enum: ['preview', 'standard', 'high'] },
 			created_at: { type: ['string', 'null'], format: 'date-time' },
 			updated_at: { type: ['string', 'null'], format: 'date-time' },
@@ -539,7 +539,7 @@ export function panoPaths() {
 						{
 							invalid_source_kind: [
 								'Unknown kind',
-								{ error: 'invalid_source_kind', message: 'source_kind must be one of equirect_video, equirect_images, insv, insp.' },
+								{ error: 'invalid_source_kind', message: 'source_kind must be one of equirect_video, equirect_images, insv.' },
 							],
 							too_few_images: [
 								'One photo in a photo set',

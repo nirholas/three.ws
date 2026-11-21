@@ -151,6 +151,17 @@ describe('pano tools: argument validation', () => {
 		expect(scene.error?.code).toBe(-32602);
 		expect(seen).toHaveLength(0);
 	});
+
+	it('sends a single raw .insp to pano_scene_create, never to the splat lane (C1 refuses it there)', async () => {
+		const insp = await call('pano_capture_start', { source_url: 'https://example.com/IMG_001.insp', source_kind: 'insp' });
+		expect(insp.error?.code).toBe(-32602);
+		expect(seen).toHaveLength(0);
+		const start = PANO_TOOL_CATALOG.find((t) => t.name === 'pano_capture_start');
+		expect(start.inputSchema.properties.source_kind.enum).toEqual(['equirect_video', 'equirect_images', 'insv']);
+		expect(start.description).toMatch(/pano_scene_create/);
+		const scene = PANO_TOOL_CATALOG.find((t) => t.name === 'pano_scene_create');
+		expect(scene.inputSchema.properties.source_kind.enum).toContain('insp');
+	});
 });
 
 describe('pano_capture_start', () => {

@@ -70,9 +70,9 @@ npx @three-ws/cli capture scene room.jpg --wait                  # one 360 photo
 | --- | --- |
 | `.mp4`, `.mov`, `.m4v` (stitched 2:1 video) | `capture 360`, kind `equirect_video` |
 | `.insv` (one file, or the two halves of a split-pair recording) | `capture 360`, kind `insv` |
-| 3 to 600 `.jpg`, `.png` or `.exr` stitched photos | `capture 360`, kind `equirect_images` |
-| one `.insp` | `capture 360` (kind `insp`) or `capture scene` |
-| one stitched `.jpg` or `.png` photo | `capture scene` |
+| 3 to 600 `.jpg` or `.png` stitched photos | `capture 360`, kind `equirect_images` |
+| one `.insp` | `capture scene` (stitched first; a single photo has no camera movement to build a splat from) |
+| one stitched `.jpg`, `.png` or `.exr` photo | `capture scene` |
 
 `.lrv` proxy files are refused: pass the `.insv` beside them.
 

@@ -170,6 +170,8 @@ describe('/openapi.json: 360 capture lanes', () => {
 		const capture = compile({ $ref: '#/components/schemas/PanoCaptureRequest' });
 		expect(capture({ source_url: 'https://example.org/a.mp4', source_kind: 'mp4' })).toBe(false);
 		expect(capture({ source_url: 'https://example.org/a.mp4', source_kind: 'insv', quality: 'ultra' })).toBe(false);
+		// /api/pano-capture answers 400 unsupported_source_kind for a lone .insp: it belongs to /api/pano-scene.
+		expect(capture({ source_url: 'https://example.org/IMG_001.insp', source_kind: 'insp' })).toBe(false);
 		const error = compile({ $ref: '#/components/schemas/CaptureError' });
 		expect(error({ message: 'no code' })).toBe(false);
 	});
