@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-21T22:49:13.938Z",
+	"generated_at": "2026-11-21T22:54:53.158Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -182,6 +182,16 @@
 			"tags": [
 				"sdk",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-21",
+			"type": "update",
+			"title": "Use your own 360 photo as your avatar's world",
+			"summary": "Drop an equirectangular photo from any 360 camera on the viewer, or paste a link, and it becomes both the light on your avatar and the backdrop behind it. Lighting and background are separate switches with rotation, blur and brightness sliders, and a brighten-highlights option makes a clipped sun light the avatar like a real one. Huge photos are resized safely on phones, a non-360 image or a blocked link explains itself, and the same backdrop control is on the Splat Viewer. Embeds accept it through the environment attribute.",
+			"link": "/splat",
+			"tags": [
+				"feature"
 			]
 		},
 		{

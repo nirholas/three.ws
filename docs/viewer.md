@@ -192,6 +192,20 @@ Toggle `viewer.state.background` to show or hide the HDR environment as the scen
 
 Call `viewer.updateBackground()` after changing these values programmatically.
 
+### Your 360 photo as the environment
+
+Pick **Your 360 photo** in the environment picker, drop an image on the canvas, or open the viewer with `?env=<https url>` to turn an equirectangular photo from any 360 camera into the avatar's world. Accepted: JPEG, PNG, WebP, AVIF, EXR and HDR, as a file or a public `https://` link.
+
+- **Two independent switches.** "Use as lighting" feeds `scene.environment` (image-based light, with intensity and rotation). "Show as background" feeds `scene.background` (blur and intensity). A shadow-catcher height offset keeps the avatar grounded on the photo's floor.
+- **Brighten highlights** (on by default) inverse-tonemaps an LDR photo for lighting only, so a sun that clipped to white in the JPEG still casts a sun-strength key light. The backdrop is untouched. On a real outdoor 360 photo with a chrome reference sphere, the lit highlight percentile moved from 213 to 244 of 255.
+- **2:1 check.** Anything else shows "This isn't a 360 photo. Export an equirectangular 2:1 image from your camera app." Header sizes are read before any decode.
+- **Size clamp.** Decoded at most 8192x4096 on desktop and 4096x2048 on mobile, never above the GPU `maxTextureSize`, resized off the main thread with `createImageBitmap`. A 72 MP (11968x5984) photo on mobile emulation decodes to 4096x2048 in about 3.0 s with no context loss. A 6528x3264 photo takes about 0.9 s warm.
+- **Persistence.** A link is remembered per page in `localStorage` (inside try/catch); a local file never is.
+- **Errors.** A host that blocks cross-origin use shows "That image's host doesn't allow other sites to use it. Download it and drop the file here instead."
+- **Embed.** `<agent-3d environment="https://...">` loads the same photo (see [web-component.md](web-component.md)). On `/splat` the same card sets the backdrop ([splat.md](splat.md)).
+
+To export an equirectangular image, use the camera's own app (for example the Insta360 app: Export, then 360 photo) or Insta360 Studio (Export Image, with "Export as 360" on), and keep the 2:1 shape.
+
 ### Cinematic FX (GUI → Cinematic FX folder)
 
 `src/viewer/cinematic.js` owns the post chain (the preset table lives in `src/viewer/cinematic-presets.js`, shared with the WebGPU twin; switching presets keeps every slider bound to the live parameters): RenderPass, ambient occlusion, depth of field, bloom, then one merged grade pass (saturation, contrast, brightness, chromatic aberration, film grain, vignette). Pick a look with `viewer.state.cinematicPreset` (`Off`, `Studio`, `Cinematic`, `Portrait`, `Vivid`, `Neon`, `Noir`) or the preset picker; every slider writes straight into the live pipeline. `Studio` is the default and reproduces the historical look exactly.
