@@ -172,6 +172,18 @@ describe('auditWalletCustody', () => {
 		expect(custody.custodyNeedsAttention(report)).toBe(true);
 	});
 
+	it('stops at its deadline so the cron finishes inside its time limit, and resumes with the unverified rows', async () => {
+		for (let i = 0; i < 3; i++) await insertFresh(Keypair.generate());
+		const out = await custody.auditWalletCustody({ sql, tables: ['x402_fresh_wallets'], deps: deps(), deadlineAt: Date.now() - 1 });
+		expect(out.truncated).toBe(true);
+		expect(out.checked).toBe(0);
+		const next = await custody.auditWalletCustody({ sql, tables: ['x402_fresh_wallets'], deps: deps(), concurrency: 2 });
+		expect(next.truncated).toBe(false);
+		expect(next.backfilled).toBe(3);
+		const [{ n }] = await sql`SELECT count(*)::int AS n FROM x402_fresh_wallets WHERE custody_verified_at IS NULL`;
+		expect(n).toBe(0);
+	});
+
 	it('records a backfill failure when KMS is down and leaves the row unverified', async () => {
 		await insertFresh(Keypair.generate());
 		const d = deps();

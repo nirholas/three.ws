@@ -105,6 +105,7 @@ if (flag('--json')) {
 		section('re-sealed primary from backup', resealed.resealed);
 		section('re-seal failed', resealed.failed);
 	}
+	if (report.truncated) console.log('\nStopped at the deadline before every row was checked; run again to continue.');
 	if (report.backup_key_configured && report.missing_backup && !flag('--backfill')) console.log('\nRun again with --backfill to write the missing KMS copies.');
 	console.log(attention ? '\nNEEDS ATTENTION' : '\nall loop wallets recoverable');
 }

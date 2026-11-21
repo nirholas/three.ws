@@ -134,13 +134,18 @@ export async function verifyCustodyRow(row, deps = defaultDeps()) {
 /**
  * Audit custody across the loop's wallet tables, least recently verified first.
  * With `backfill`, a wallet whose primary opens but has no KMS copy gets one.
+ * `concurrency` rows run at once; past `deadlineAt` (epoch ms) the audit stops,
+ * sets `truncated`, and the untouched rows lead the next run.
  *
- * @param {{ sql?: Function, tables?: string[], limit?: number, backfill?: boolean, deps?: object }} opts
+ * @param {{ sql?: Function, tables?: string[], limit?: number, backfill?: boolean, deps?: object, deadlineAt?: number, concurrency?: number }} opts
  */
-export async function auditWalletCustody({ sql = defaultSql, tables = CUSTODY_TABLES, limit = 500, backfill = true, deps = defaultDeps() } = {}) {
+export async function auditWalletCustody({
+	sql = defaultSql, tables = CUSTODY_TABLES, limit = 500, backfill = true, deps = defaultDeps(),
+	deadlineAt = Infinity, concurrency = 8,
+} = {}) {
 	const report = {
 		checked: 0, ok: 0, backfilled: 0, backup_key_configured: Boolean(deps.backupKeyName),
-		missing_backup: 0, unrecoverable: [], primary_broken: [], backup_broken: [], tables: {},
+		missing_backup: 0, unrecoverable: [], primary_broken: [], backup_broken: [], tables: {}, truncated: false,
 	};
 	for (const table of tables) {
 		if (!CUSTODY_TABLES.includes(table)) throw new Error(`wallet custody: unknown table ${table}`);
@@ -150,7 +155,7 @@ export async function auditWalletCustody({ sql = defaultSql, tables = CUSTODY_TA
 			: await sql`SELECT pubkey, encrypted_secret, backup_secret FROM x402_fresh_wallets
 			             ORDER BY custody_verified_at NULLS FIRST, id LIMIT ${limit}`;
 		const t = { checked: 0, ok: 0, backfilled: 0, missing_backup: 0 };
-		for (const row of rows) {
+		const auditRow = async (row) => {
 			t.checked += 1;
 			const v = await verifyCustodyRow(row, deps);
 			if (v.primary !== 'ok' && v.backup !== 'ok') report.unrecoverable.push({ table, pubkey: v.pubkey, primary: v.primary, backup: v.backup });
@@ -183,6 +188,13 @@ export async function auditWalletCustody({ sql = defaultSql, tables = CUSTODY_TA
 				if (table === 'x402_ring_pool') await sql`UPDATE x402_ring_pool SET custody_verified_at = now() WHERE pubkey = ${v.pubkey}`;
 				else await sql`UPDATE x402_fresh_wallets SET custody_verified_at = now() WHERE pubkey = ${v.pubkey}`;
 			}
+		};
+		// Rows are independent; a few KMS round trips in flight at once keep a
+		// daily run inside the cron's time limit. Past the deadline the rest wait:
+		// they are still unverified, so the next run takes them first.
+		for (let i = 0; i < rows.length; i += Math.max(1, concurrency)) {
+			if (Date.now() >= deadlineAt) { report.truncated = true; break; }
+			await Promise.all(rows.slice(i, i + Math.max(1, concurrency)).map(auditRow));
 		}
 		report.tables[table] = t;
 		report.checked += t.checked;

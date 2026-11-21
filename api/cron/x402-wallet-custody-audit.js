@@ -24,6 +24,9 @@ import { auditWalletCustody, custodyNeedsAttention } from '../_lib/x402/wallet-c
 import { drainPaidSpool, ensurePaidResponsesSchema } from '../_lib/x402/paid-responses.js';
 
 const LIST_LIMIT = 20;
+// The function limit is 120s (vercel.json). The audit gets 80s, leaving the
+// spool drain and the response room; whatever it does not reach leads tomorrow.
+const CUSTODY_BUDGET_MS = 80_000;
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
@@ -38,7 +41,7 @@ async function runCustody() {
 	try {
 		await ensurePoolSchema(sql);
 		await ensureFreshSchema(sql);
-		const report = await auditWalletCustody({ sql, limit: 2000 });
+		const report = await auditWalletCustody({ sql, limit: 2000, deadlineAt: Date.now() + CUSTODY_BUDGET_MS });
 		if (custodyNeedsAttention(report)) await alertCustody(report);
 		return report;
 	} catch (err) {
