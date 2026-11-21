@@ -280,6 +280,17 @@ describe('error copy', () => {
 		expect(describeCaptureError('x', { status: 503 }).title).toMatch(/not switched on/);
 		expect(describeCaptureError('network').message).toMatch(/resumes by itself/);
 	});
+	it('treats a stitch or encode fault as ours and never shows the raw ffmpeg log', () => {
+		// The real X3 .insv run on an L4 failed with this message under the generic
+		// "Something went wrong" title (work order 347).
+		const raw = 'ffmpeg (h264_nvenc) failed:  @ 0x560021856480] Error while opening encoder - maybe incorrect parameters such as bit_rate, rate, width or height.';
+		for (const code of ['encode_failed', 'ffmpeg_missing', 'frame_extraction_mismatch', 'bad_arguments', 'no_input', 'unsafe_source_url']) {
+			const e = describeCaptureError(code, { message: raw });
+			expect(e.title).toBe('Our side hit a problem');
+			expect(e.message).not.toMatch(/ffmpeg|0x[0-9a-f]+|encoder/i);
+			expect(e.action).toBe('retry');
+		}
+	});
 	it('covers every code the API and worker can return with a title, message and action', () => {
 		const codes = ['quality_too_low', 'too_few_frames', 'bad_trim', 'corrupt_calibration', 'corrupt_trailer', 'unsupported_layout', 'bad_pair', 'single_photo', 'unconfigured', 'too_few_registered', 'registration_too_low', 'file_too_large', 'source_too_large', 'unauthorized', 'sign_in_required', 'too_many_active', 'too_many_open_uploads', 'daily_quota_exceeded', 'invalid_content_type', 'rate_limited', 'unsupported_input', 'no_calibration', 'corrupt_input', 'no_frames_decoded', 'no_video_stream', 'no_images', 'upload_not_found', 'internal_error', 'stage_failed', 'worker_lost', 'nvenc_error', 'storage_error', 'cancelled', 'network', 'etag_unreadable', 'empty_file', 'aborted'];
 		for (const c of codes) {

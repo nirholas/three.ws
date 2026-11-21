@@ -382,6 +382,14 @@ export function describeCaptureError(code, { status = 0, message = '' } = {}) {
 		case 'worker_lost':
 		case 'nvenc_error':
 		case 'storage_error':
+		// Stitcher and stage faults (workers/model-pano2splat): the worker's message
+		// is an ffmpeg or tool log, so it is never shown.
+		case 'encode_failed':
+		case 'ffmpeg_missing':
+		case 'frame_extraction_mismatch':
+		case 'bad_arguments':
+		case 'no_input':
+		case 'unsafe_source_url':
 			return { title: 'Our side hit a problem', message: 'The capture did not finish because of a fault on our servers, not your footage. Try again; your upload is kept for seven days.', tone: 'error', action: 'retry' };
 		case 'cancelled':
 			return { title: 'Capture cancelled', message: 'This capture was stopped before it finished.', tone: 'info', action: 'pick_other' };
