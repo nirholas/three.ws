@@ -143,6 +143,28 @@ if (PHASE === 'upload' || PHASE === 'all') {
 	await page.close();
 }
 
+// ── result: reopen the newest job from its URL (what a returning user does) ──
+if (PHASE === 'result') {
+	const res = await fetch(`${BASE}/api/pano-capture?mine=1`, { headers: { authorization: `Bearer ${KEY}` } });
+	const { captures } = await res.json();
+	const job = captures[0];
+	log('newest job:', job.job_id, job.status, job.stage);
+	const page = await ctx.newPage();
+	page.on('console', (m) => { if (['error', 'warning'].includes(m.type()) && !/GL Driver Message/.test(m.text())) errors.push(`${m.type()}: ${m.text()}`); });
+	page.on('response', (r) => { if (r.status() >= 400) errors.push(`http ${r.status()} ${r.url()}`); });
+	page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+	await page.goto(`${BASE}/capture?mode=360&job=${job.job_id}`, { waitUntil: 'domcontentloaded' });
+	await page.waitForSelector('#c3-result:not([hidden])', { timeout: 120000 });
+	log('result stats:', (await page.textContent('#c3-result-stats')).trim());
+	await page.waitForSelector('#c3-result-stage canvas', { timeout: 120000 });
+	await page.waitForTimeout(4000);
+	log('actions:', (await page.locator('#c3-result-actions a, #c3-result-actions button').allTextContents()).map((t) => t.trim()).join(' | '));
+	log('preview video src set:', await page.evaluate(() => !!document.querySelector('#c3-result-video')?.src), 'visible:', await page.isVisible('#c3-result-video'));
+	await shot(page, 'result');
+	log('captures rows:', await page.locator('#c3-captures > *').count());
+	await page.close();
+}
+
 await browser.close();
 log('console errors/warnings:', errors.length);
 for (const e of errors) log('  ', e);

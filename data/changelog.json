@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-21",
+			"title": "Turn 360 footage into a 3D scene on /capture",
+			"summary": "A new 360 video tab on /capture previews your footage on a sphere right in the browser, lets you trim it, and uploads big files in resumable parts you can pick up after a reload. Then it shows the scene being built step by step and hands you a viewer, a preview clip, and SPZ and PLY downloads. Works with any 360 camera.",
+			"tags": ["feature"],
+			"link": "/capture?mode=360"
+		},
+		{
+			"date": "2026-11-21",
 			"title": "Start a 360 scene from a link when uploads are down",
 			"summary": "The /pano-scene page now takes a public https link to a 360 photo or .insp as well as a file. While our file storage is recovering, an upload says so plainly and offers that link box instead of failing on a broken request, and /api/scene-upload answers 503 storage_unavailable with retry-after so other clients can do the same. When the 3D server refuses a photo, you now see its reason instead of a bare status code, and the progress shows the Mesh step while the shell is being built.",
 			"tags": ["fix"],
