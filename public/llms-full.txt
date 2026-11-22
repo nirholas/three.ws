@@ -4322,12 +4322,6 @@ URL: https://three.ws/docs/powerpoint
 
 Export any three.ws model as a PowerPoint slide with an interactive 3D object, and the three.ws 3D Models add-in: the Office-safe GLB pass, the am3d:model3d slide, the limits PowerPoint imposes and how to sideload the add-in.
 
-### Docs · Microsoft distribution and offer plan
-
-URL: https://three.ws/docs/microsoft-marketplace-offer-plan
-
-How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.
-
 ### Docs · Microsoft Marketplace SaaS offer
 
 URL: https://three.ws/docs/microsoft-marketplace-saas
@@ -5281,12 +5275,6 @@ How three.ws protects your data, wallet, and agents, and what you are responsibl
 URL: https://three.ws/docs/trust
 
 How the three.ws trust center, subprocessor list and security.txt are sourced from the code, and the rules for keeping every claim cited.
-
-### Docs · Incident response
-
-URL: https://three.ws/docs/incident-response
-
-How three.ws detects, triages, contains and discloses a security incident, with severity levels and customer notification steps.
 
 ### Docs · The catalog quality gate
 

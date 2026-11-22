@@ -57,3 +57,29 @@ describe('docs search index', () => {
 		}
 	});
 });
+
+describe('data/pages.json', () => {
+	// A declared page goes into the sitemap and the smoke:prod sweep. Declaring a
+	// doc the build withholds advertises a 404 and fails every post-deploy smoke.
+	it('declares no private doc', async () => {
+		const { readFileSync } = await import('node:fs');
+		const pages = JSON.parse(readFileSync(new URL('../data/pages.json', import.meta.url), 'utf8'));
+		const paths = [];
+		const walk = (node) => {
+			if (Array.isArray(node)) return node.forEach(walk);
+			if (node && typeof node === 'object') {
+				if (typeof node.path === 'string') paths.push(node.path);
+				Object.values(node).forEach(walk);
+			}
+		};
+		walk(pages);
+		const leaked = paths
+			.filter((p) => p.startsWith('/docs/'))
+			.filter((p) => {
+				// The docs SPA renders /docs/<slug> from /docs/<slug>.md.
+				const rel = p.slice('/docs/'.length).replace(/\/+$/, '');
+				return isPrivateDoc(`${rel}.md`);
+			});
+		expect(leaked).toEqual([]);
+	});
+});

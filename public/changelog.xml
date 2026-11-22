@@ -1423,14 +1423,6 @@
 			<description>Sign in with Microsoft for work, school and personal accounts, claiming your organisation's Entra tenant so colleagues join your team, and step-by-step SCIM provisioning from Microsoft Entra ID with the supported filters, PATCH shapes and limits.</description>
 		</item>
 		<item>
-			<title>Docs · Incident response</title>
-			<link>https://three.ws/docs/incident-response</link>
-			<guid isPermaLink="false">2026-11-11:Docs · Incident response</guid>
-			<pubDate>Wed, 11 Nov 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>How three.ws detects, triages, contains and discloses a security incident, with severity levels and customer notification steps.</description>
-		</item>
-		<item>
 			<title>Docs · Microsoft 365 Copilot connector</title>
 			<link>https://three.ws/docs/microsoft-365-copilot-connector</link>
 			<guid isPermaLink="false">2026-11-11:Docs · Microsoft 365 Copilot connector</guid>
@@ -2165,14 +2157,6 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How an agent connects third-party MCP servers: the catalog, OAuth and token sign-in, tool tiers and acknowledgements, custom-server review, the HTTP API, the three-ws mcp install CLI, and how to add a server to the catalog.</description>
-		</item>
-		<item>
-			<title>Docs · Microsoft distribution and offer plan</title>
-			<link>https://three.ws/docs/microsoft-marketplace-offer-plan</link>
-			<guid isPermaLink="false">2026-11-04:Docs · Microsoft distribution and offer plan</guid>
-			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.</description>
 		</item>
 		<item>
 			<title>Docs · Microsoft Marketplace SaaS offer</title>

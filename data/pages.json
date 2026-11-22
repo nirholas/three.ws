@@ -5693,14 +5693,6 @@
 					"added": "2026-11-11"
 				},
 				{
-					"path": "/docs/microsoft-marketplace-offer-plan",
-					"title": "Docs · Microsoft distribution and offer plan",
-					"description": "How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.",
-					"priority": 0.5,
-					"changefreq": "monthly",
-					"added": "2026-11-04"
-				},
-				{
 					"path": "/docs/microsoft-marketplace-saas",
 					"title": "Docs · Microsoft Marketplace SaaS offer",
 					"description": "How a Microsoft Marketplace purchase becomes a three.ws plan: the landing page, Entra sign-in, the fulfilment webhook, hourly metered billing and its retry rules, the env vars, and how to test against a preview offer.",
@@ -6863,14 +6855,6 @@
 					"path": "/docs/trust",
 					"title": "Docs · Trust center",
 					"description": "How the three.ws trust center, subprocessor list and security.txt are sourced from the code, and the rules for keeping every claim cited.",
-					"priority": 0.4,
-					"changefreq": "monthly",
-					"added": "2026-11-11"
-				},
-				{
-					"path": "/docs/incident-response",
-					"title": "Docs · Incident response",
-					"description": "How three.ws detects, triages, contains and discloses a security incident, with severity levels and customer notification steps.",
 					"priority": 0.4,
 					"changefreq": "monthly",
 					"added": "2026-11-11"
