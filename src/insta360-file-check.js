@@ -9,7 +9,8 @@
 /**
  * Every surface this checker can point at, keyed by lane id. `status` is
  * 'rolling-out' while the 360 mode of that surface is still being built and
- * null for surfaces that already take this input. The badges on
+ * null for surfaces that already take this input (all of them since the
+ * Insta360 campaign shipped its GPU workers, work order 347). The badges on
  * pages/insta360.html must match (tests/insta360-landing.test.js pins it);
  * flip both when a lane ships.
  */
@@ -18,25 +19,25 @@ export const LANES = {
 		title: 'Walk around, get a splat',
 		path: '/capture',
 		action: 'Open Scene Capture',
-		status: 'rolling-out',
+		status: null,
 	},
 	panoScene: {
 		title: 'Step inside one photo',
 		path: '/pano-scene',
 		action: 'Open Pano Scene',
-		status: 'rolling-out',
+		status: null,
 	},
 	environment: {
 		title: "Your 360 photo as your avatar's world",
 		path: '/app',
 		action: 'Open the viewer',
-		status: 'rolling-out',
+		status: null,
 	},
 	motion: {
 		title: '360 motion capture',
 		path: '/video-to-motion',
 		action: 'Open Video to Motion',
-		status: 'rolling-out',
+		status: null,
 	},
 	flatCapture: {
 		title: 'Video to 3D point cloud',
