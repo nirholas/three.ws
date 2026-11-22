@@ -460,3 +460,21 @@ def test_health_reports_stage_packages(monkeypatch, tmp_path):
     assert body["stages"]["pano_sfm"] == {"present": True, "imports": True}
     assert body["stages"]["splat_train"] == {"present": False, "imports": False}
     health._cache.clear()
+
+
+def test_stage_crash_message_carries_the_last_output_and_signal(monkeypatch, tmp_path):
+    import stages
+
+    pkg = tmp_path / "pano_sfm"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "__main__.py").write_text(
+        "import os, sys\nsys.stderr.write('terminate called after throwing an instance of std::bad_alloc\\n')\n"
+        "sys.stderr.flush()\nos.abort()\n"
+    )
+    monkeypatch.setattr(stages, "STAGES_DIR", tmp_path)
+    runner = stages.StageRunner()
+    with pytest.raises(stages.StageError) as exc:
+        runner.run("pano_sfm", [], lambda *_: None)
+    assert "signal 6" in exc.value.message
+    assert "bad_alloc" in exc.value.message

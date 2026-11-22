@@ -43,6 +43,9 @@ from stages import Cancelled, StageRunner
 
 FIXTURE_BUCKET = os.environ.get("FIXTURE_BUCKET", "three-ws-capture-fixtures")
 RESULT_BUCKET = os.environ.get("RESULT_BUCKET", "three-ws-pano-captures")
+# The service takes these source kinds; other manifest entries (for example colmap_dataset) belong to
+# the stage-level proofs of their own packages and are listed as skipped, not failed.
+SERVICE_SOURCE_KINDS = ("equirect_video", "equirect_images", "insv", "insp")
 MANIFEST_KEY = "insta360/MANIFEST.json"
 
 
@@ -170,6 +173,8 @@ def main() -> int:
     only = {s for s in os.environ.get("VERIFY_ONLY", "").split(",") if s}
 
     entries = [e for e in load_manifest(client) if e.get("verify") is True]
+    skipped = [e for e in entries if e.get("source_kind") not in SERVICE_SOURCE_KINDS]
+    entries = [e for e in entries if e.get("source_kind") in SERVICE_SOURCE_KINDS]
     if only:
         entries = [e for e in entries if e.get("id") in only]
 
@@ -195,6 +200,7 @@ def main() -> int:
         "environment": env_report,
         "fixtures_selected": len(entries),
         "fixtures": results,
+        "skipped": [{"id": e.get("id"), "source_kind": e.get("source_kind"), "reason": "not a service source kind"} for e in skipped],
         "summary": {s: sum(1 for r in results if r["status"] == s) for s in ("ok", "failed", "stage_missing")},
     }
     key = f"{run_id}/verify-report.json"

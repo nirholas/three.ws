@@ -222,8 +222,10 @@ class StageRunner:
             err = _last_json_line(stderr_tail)
             if err is not None:
                 raise StageError(str(err.get("error")), str(err.get("message", "")), code)
+            tail = " | ".join(str(l).strip() for l in list(stderr_tail)[-4:] if str(l).strip())[-600:]
+            how = f"was killed by signal {-code}" if code < 0 else f"exited with code {code}"
             raise StageError(
                 EXIT_MEANING.get(code, "stage_failed"),
-                f"The {module} stage exited with code {code} without an error report.",
+                f"The {module} stage {how} without an error report." + (f" Last output: {tail}" if tail else ""),
                 code,
             )
