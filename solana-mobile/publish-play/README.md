@@ -172,6 +172,14 @@ The em dash and en dash are banned repo wide, including in translated copy, whic
 these languages reach for by default: the script says so in the system prompt and strips any
 that survive, so the generated CSV passes `npm run check:rules` like any other file.
 
+## Foreground service declaration
+
+The app targets API 36 and declares `FOREGROUND_SERVICE_MICROPHONE` and `FOREGROUND_SERVICE_MEDIA_PLAYBACK` for `DriveWebService` (three.ws Drive on Android Auto). Play Console blocks the release until App content > Foreground service permissions is filled in. Tick **Microphone** and **Media playback**, and describe the use as: "During an Android Auto session the user talks to their three.ws agent by voice. Android Auto owns the phone screen, so the conversation runs in a foreground service that holds the microphone and plays the agent's spoken reply. It starts only when the user opens three.ws in Android Auto and stops when the session ends." Attach a short screen recording of a Drive session started from the car screen (the Desktop Head Unit works).
+
+## Compliance scan
+
+[compliance-scan.md](compliance-scan.md) holds the latest Google Play scan with the App Store Compliance Playbook, what each finding turned out to be, and the command to re-run it.
+
 ## What Play will reject
 
 Read [`listing/financial-features.md`](listing/financial-features.md) before building anything
