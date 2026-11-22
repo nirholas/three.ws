@@ -4,7 +4,7 @@ How to run: paste this file's repo path into a fresh Claude Code chat in this re
 
 ## Operating clause (binding)
 
-- Read CLAUDE.md, then [_context/insta360-00-CONTEXT.md](_context/insta360-00-CONTEXT.md) (you own the `/capture` 360 mode and the browser multipart uploader; you call C4 endpoints over HTTP). CLAUDE.md overrides both.
+- Read CLAUDE.md, then [_context/insta360-00-CONTEXT.md](../finish/_context/insta360-00-CONTEXT.md) (you own the `/capture` 360 mode and the browser multipart uploader; you call C4 endpoints over HTTP). CLAUDE.md overrides both.
 - Finish 100% in this session. Never end with a question, an option list or an unexecuted plan; judgment calls go in one line of the report.
 - The only stops are the CLAUDE.md gates. Batch every owner step (push, deploy) into ONE message at the end.
 - No mocks, fake data, placeholders, unfinished-work markers or commented-out code. No em-dash or en-dash characters. Bug fixes are test-first.
@@ -57,5 +57,5 @@ Record the current capture flow and states, whether 338 and 339 endpoints exist 
 
 1. Verify every Definition of done line with the command output or browser evidence in front of you.
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
-3. All lines pass: `git mv` this file to `prompts/archive/` in its own closing commit and repoint inbound links. If an owner step is last: leave the file, put a dated status line under the title naming what remains, and add it to the owner message. Either way append to [_context/insta360-PROGRESS.md](_context/insta360-PROGRESS.md).
+3. All lines pass: `git mv` this file to `prompts/archive/` in its own closing commit and repoint inbound links. If an owner step is last: leave the file, put a dated status line under the title naming what remains, and add it to the owner message. Either way append to [_context/insta360-PROGRESS.md](../finish/_context/insta360-PROGRESS.md).
 4. Report: what step 0 measured; files and SHAs; evidence per Definition of done line; the one batched owner message; one-line judgment calls. No trailing questions.

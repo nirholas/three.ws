@@ -4,7 +4,7 @@ How to run: paste this file's repo path into a fresh Claude Code chat in this re
 
 ## Operating clause (binding)
 
-- Read CLAUDE.md, then [_context/insta360-00-CONTEXT.md](_context/insta360-00-CONTEXT.md) (contract C1: you own `pano_sfm/` and its CLI, outputs and exit codes; file rules for the shared worker directory). CLAUDE.md overrides both.
+- Read CLAUDE.md, then [_context/insta360-00-CONTEXT.md](../finish/_context/insta360-00-CONTEXT.md) (contract C1: you own `pano_sfm/` and its CLI, outputs and exit codes; file rules for the shared worker directory). CLAUDE.md overrides both.
 - Finish 100% in this session. Never end with a question, an option list or an unexecuted plan; judgment calls go in one line of the report.
 - The only stops are the CLAUDE.md gates. Never contact a third party.
 - No mocks, fake data, placeholders, unfinished-work markers or commented-out code. No em-dash or en-dash characters. Bug fixes are test-first.
@@ -54,5 +54,5 @@ Read COLMAP's current `python/examples/panorama_sfm.py` and the rig documentatio
 
 1. Verify every Definition of done line with the command output in front of you.
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
-3. All lines pass: `git mv` this file to `prompts/archive/` in its own closing commit and repoint inbound links. Append to [_context/insta360-PROGRESS.md](_context/insta360-PROGRESS.md) with the registration table.
+3. All lines pass: `git mv` this file to `prompts/archive/` in its own closing commit and repoint inbound links. Append to [_context/insta360-PROGRESS.md](../finish/_context/insta360-PROGRESS.md) with the registration table.
 4. Report: what step 0 measured; files and SHAs; evidence per Definition of done line; the measured numbers; one-line judgment calls. No trailing questions.
