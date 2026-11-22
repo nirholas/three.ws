@@ -460,8 +460,11 @@ async function waitAndCollect(ctx, auth, { pathname, job, intervalMs, label, fil
 	return { job: data, saved };
 }
 
+// A scene token's payload opens with the same encoded owner for every scene,
+// so its folder is named from the signature, which is unique per scene.
 function outName(prefix, job) {
-	return `${prefix}-${String(job).replace(/[^A-Za-z0-9]/g, '').slice(0, 12)}`;
+	const id = /^ps1\./.test(job) ? String(job).split('.').pop() : String(job);
+	return `${prefix}-${id.replace(/[^A-Za-z0-9]/g, '').slice(0, 12)}`;
 }
 
 function seconds(flag, name) {
@@ -526,21 +529,31 @@ async function capture360(ctx) {
 	return exitFor(job);
 }
 
+// A scene job id is the signed token api/_lib/pano-scene-job.js issues
+// (ps1.<payload>.<signature>); capture ids are UUIDs. One status command
+// serves both, so the id picks the lane.
+function laneFor(job) {
+	return /^ps1\./.test(job)
+		? { pathname: '/api/pano-scene', label: '360 scene', files: SCENE_FILES, pollMs: SCENE_POLL_MS, kind: 'scene' }
+		: { pathname: '/api/pano-capture', label: '360 capture', files: CAPTURE_FILES, pollMs: CAPTURE_POLL_MS, kind: 'capture' };
+}
+
 async function captureStatus(ctx) {
 	const [job] = ctx.positionals;
 	if (!job) throw usage('usage: three-ws capture status <job> [--wait] [--out <dir>]');
 	const auth = await authed(ctx);
+	const lane = laneFor(job);
 	if (ctx.flags.wait) {
-		const out = await waitAndCollect(ctx, auth, { pathname: '/api/pano-capture', job, intervalMs: pollMs(ctx, CAPTURE_POLL_MS), label: '360 capture', files: CAPTURE_FILES, defaultOut: outName('capture', job) });
+		const out = await waitAndCollect(ctx, auth, { pathname: lane.pathname, job, intervalMs: pollMs(ctx, lane.pollMs), label: lane.label, files: lane.files, defaultOut: outName(lane.kind, job) });
 		if (ctx.flags.json) printJson({ ...out.job, files: out.saved });
-		else printResult(out.job, CAPTURE_FILES, out.saved);
+		else printResult(out.job, lane.files, out.saved);
 		return exitFor(out.job);
 	}
-	const data = finishedJob(ctx, await api(ctx, auth, `/api/pano-capture?job=${encodeURIComponent(job)}`));
+	const data = finishedJob(ctx, await api(ctx, auth, `${lane.pathname}?job=${encodeURIComponent(job)}`));
 	let saved = [];
-	if (ctx.flags.out && data.status === 'succeeded' && data.result) saved = await downloadResults(ctx, data.result, CAPTURE_FILES, ctx.flags.out);
+	if (ctx.flags.out && data.status === 'succeeded' && data.result) saved = await downloadResults(ctx, data.result, lane.files, ctx.flags.out);
 	if (ctx.flags.json) printJson({ ...data, ...(saved.length ? { files: saved } : {}) });
-	else if (TERMINAL.has(data.status)) printResult(data, CAPTURE_FILES, saved);
+	else if (TERMINAL.has(data.status)) printResult(data, lane.files, saved);
 	else line(`${sym.arrow} ${data.job_id || job}: ${data.status}${data.stage ? `, ${data.stage}` : ''}${Number.isFinite(Number(data.progress)) ? `, ${Math.round(Number(data.progress) * 100)}%` : ''}`);
 	return data.status === 'failed' || data.status === 'cancelled' ? EXIT_CODES.ERROR : EXIT_CODES.OK;
 }
@@ -589,7 +602,8 @@ async function captureScene(ctx) {
 		if (ctx.flags.json) printJson(summary);
 		else {
 			line(`${c.green(sym.ok)} scene started: ${c.bold(summary.job_id)}`);
-			line(c.dim('  usually 1 to 5 minutes; rerun with --wait to watch it and save the GLB and PLY'));
+			line(c.dim('  usually 1 to 5 minutes'));
+			line(c.dim(`  check it: three-ws capture status ${summary.job_id} --wait`));
 		}
 		return EXIT_CODES.OK;
 	}

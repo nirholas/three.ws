@@ -133,6 +133,8 @@ function c4Server() {
 				});
 			}
 			const job = url.searchParams.get('job');
+			// The real handler only takes capture UUIDs; a scene token is refused the same way.
+			if (job.startsWith('ps1.')) return send(res, 400, { error: 'invalid_job', message: 'Malformed capture id.' });
 			const n = (s.polls.get(job) || 0) + 1;
 			s.polls.set(job, n);
 			if (n === 1) return send(res, 200, { job_id: job, status: 'running', stage: 'train', progress: 0.42 });
@@ -157,7 +159,7 @@ function c4Server() {
 			if (req.method === 'POST') {
 				const b = json();
 				s.sceneBodies.push(b);
-				return send(res, 202, { job_id: 'psj.signed.token', status: 'queued', stage: b.source_kind === 'insp' ? 'stitch' : 'depth', progress: 0 });
+				return send(res, 202, { job_id: SCENE_TOKEN, status: 'queued', stage: b.source_kind === 'insp' ? 'stitch' : 'depth', progress: 0 });
 			}
 			const job = url.searchParams.get('job');
 			const n = (s.polls.get(job) || 0) + 1;
@@ -215,6 +217,9 @@ async function run(argv, env) {
 		e.mockRestore();
 	}
 }
+
+// The shape api/_lib/pano-scene-job.js issues: ps1.<payload>.<signature>.
+const SCENE_TOKEN = 'ps1.eyJqIjoiN2U2NiJ9.sPAusKWI-KB-nWyeq9TOMx';
 
 describe('three-ws capture', () => {
 	let env;
@@ -358,9 +363,31 @@ describe('three-ws capture', () => {
 		expect(r.code).toBe(0);
 		expect(srv.sceneBodies[0]).toEqual({ image_url: expect.stringMatching(/\/storage\/object\//), source_kind: 'insp' });
 		expect(Buffer.compare([...srv.objects.values()].find((o) => o.length === data.length), data)).toBe(0);
-		expect(r.json).toMatchObject({ job_id: 'psj.signed.token', status: 'succeeded', source_kind: 'insp', result: { viewer_url: `${srv.origin}/viewer?src=g&title=360%20scene` } });
+		expect(r.json).toMatchObject({ job_id: SCENE_TOKEN, status: 'succeeded', source_kind: 'insp', result: { viewer_url: `${srv.origin}/viewer?src=g&title=360%20scene` } });
 		expect(Buffer.compare(fs.readFileSync(path.join(env.home, 'room', 'scene.glb')), RESULT['scene.glb'])).toBe(0);
 		expect(Buffer.compare(fs.readFileSync(path.join(env.home, 'room', 'scene.ply')), RESULT['room.ply'])).toBe(0);
+	});
+
+	it('checks on a started scene with capture status, as the scene command tells you to', async () => {
+		const started = await run(['capture', 'scene', 'https://example.org/pano.jpg'], env);
+		expect(started.code).toBe(0);
+		expect(started.out).toContain(`three-ws capture status ${SCENE_TOKEN} --wait`);
+
+		const status = await run(['capture', 'status', SCENE_TOKEN, '--json'], env);
+		expect(status.code).toBe(0);
+		expect(status.json).toMatchObject({ job_id: SCENE_TOKEN, status: 'running', stage: 'depth' });
+
+		const waited = await run(['capture', 'status', SCENE_TOKEN, '--wait', '--out', 'room', '--json'], env);
+		expect(waited.code).toBe(0);
+		expect(waited.json.status).toBe('succeeded');
+		expect(Buffer.compare(fs.readFileSync(path.join(env.home, 'room', 'scene.glb')), RESULT['scene.glb'])).toBe(0);
+		expect(srv.log.filter((l) => l.includes('/api/pano-capture'))).toEqual([]);
+
+		// Every scene token starts with the same encoded owner, so the default folder
+		// is named from the signature, which differs per scene.
+		const again = await run(['capture', 'status', SCENE_TOKEN, '--wait', '--json'], env);
+		expect(again.code).toBe(0);
+		expect(fs.existsSync(path.join(env.home, 'scene-sPAusKWIKBnW', 'scene.glb'))).toBe(true);
 	});
 
 	it('passes an https photo URL straight to the scene lane', async () => {
