@@ -164,6 +164,21 @@ def test_capture_job_polls_to_result_and_lists(server, tmp_path):
     assert dest.read_bytes() == b"ply"
 
 
+def test_a_poll_slower_than_the_request_timeout_does_not_end_the_capture(tmp_path):
+    # Order 347: the API copied a 3M-Gaussian PLY into the bucket inside the poll that saw
+    # the worker finish (51 s against the 30 s request timeout). urllib raised a bare
+    # TimeoutError, the wait gave up, and Blender reported a capture that had succeeded.
+    s = C4Server(polls_to_finish=3, slow_poll_at=1, slow_poll_s=1.0).start()
+    try:
+        s.results = {"capture": {"ply_url": "scene.ply"}}
+        c = client(s, tmp_path, timeout=0.3)
+        job = c.create_capture("https://x/y.mp4", "equirect_video")["job_id"]
+        body = c.wait_for_job(lambda: c.get_capture(job), interval=0.01)
+        assert body["status"] == "succeeded"
+    finally:
+        s.stop()
+
+
 def test_cancel_a_running_capture_sends_delete(server, tmp_path):
     c = client(server, tmp_path)
     job = c.create_capture("https://x/y.mp4", "equirect_video")["job_id"]

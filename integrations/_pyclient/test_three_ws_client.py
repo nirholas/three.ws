@@ -11,9 +11,10 @@ from __future__ import annotations
 import json
 import os
 import threading
+import time
 import unittest
 import urllib.parse
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 
 from three_ws_client import ThreeWSClient, ThreeWSError, content_type_for_path, is_glb, slugify
 
@@ -581,6 +582,49 @@ class CachedSubmitTest(unittest.TestCase):
     def test_wait_returns_cached_url(self):
         sub = self.client.submit_text_to_3d("a small wooden chair", tier="draft")
         self.assertEqual(self.client.wait(sub), "https://three.ws/cdn/forge/x/y.glb")
+
+
+class _SlowHandler(BaseHTTPRequestHandler):
+    """Answers every request after ``server.delay`` seconds."""
+
+    def log_message(self, *args):
+        pass
+
+    def do_GET(self):
+        time.sleep(self.server.delay)
+        body = b'{"status": "running"}'
+        try:
+            self.send_response(200)
+            self.send_header("content-type", "application/json")
+            self.send_header("content-length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
+
+class SlowResponseTest(unittest.TestCase):
+    def setUp(self):
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), _SlowHandler)
+        self.server.daemon_threads = True
+        self.server.delay = 0.6
+        self.base = f"http://127.0.0.1:{self.server.server_address[1]}"
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join(timeout=2)
+
+    def test_a_read_timeout_is_a_client_error_not_a_bare_timeout(self):
+        # urllib raises TimeoutError (not URLError) when the server accepts the request but
+        # answers after the timeout. Every caller handles ThreeWSError, so a bare TimeoutError
+        # escaped them all and ended an 18-minute Blender capture that had succeeded.
+        client = ThreeWSClient(self.base, timeout=0.1)
+        with self.assertRaises(ThreeWSError) as ctx:
+            client._request("GET", "/api/forge?job=j1")
+        self.assertEqual(ctx.exception.code, "unreachable")
 
 
 if __name__ == "__main__":

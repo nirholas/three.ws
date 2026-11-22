@@ -20,11 +20,16 @@ STAGES = ["download", "stitch", "frames", "sfm", "train", "export", "upload"]
 
 
 class C4Server:
-    def __init__(self, *, part_size=1024 * 1024, results=None, polls_to_finish=len(STAGES), put_delay=0.0):
+    def __init__(self, *, part_size=1024 * 1024, results=None, polls_to_finish=len(STAGES), put_delay=0.0,
+                 slow_poll_at=None, slow_poll_s=0.0):
         self.part_size = part_size
         self.results = results or {}
         self.polls_to_finish = polls_to_finish
         self.put_delay = put_delay
+        # The real API finalises a capture inside the poll that first sees the worker
+        # finish (it copies the results into the bucket), so that one poll is slow.
+        self.slow_poll_at = slow_poll_at
+        self.slow_poll_s = slow_poll_s
         self.fail_puts = 0
         self.expire_first_put_with_403 = False
         self.uploads = {}
@@ -101,6 +106,10 @@ class C4Server:
                     job = server.jobs.get(q["job"][0])
                     if not job:
                         return self._send(404, {"error": "not_found", "message": "No such job."})
+                    if server.slow_poll_at is not None and job["polls"] == server.slow_poll_at:
+                        body = server._job_body(job)
+                        time.sleep(server.slow_poll_s)
+                        return self._send(200, body)
                     return self._send(200, server._job_body(job))
                 self._send(404, {"error": "not_found"})
 

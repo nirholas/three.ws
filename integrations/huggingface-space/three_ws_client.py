@@ -234,6 +234,13 @@ class ThreeWSClient:
                 f"Could not reach {self.base_url}: {exc.reason}",
                 code="unreachable",
             ) from exc
+        except (TimeoutError, ConnectionError) as exc:
+            # A server that accepts the request and answers late (or drops the
+            # connection mid-response) raises these directly, not as URLError.
+            raise ThreeWSError(
+                f"{self.base_url} did not answer in time. Try again.",
+                code="unreachable",
+            ) from exc
         return _safe_json(payload)
 
     # -- catalog -------------------------------------------------------------

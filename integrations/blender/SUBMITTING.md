@@ -25,8 +25,8 @@ instead, with the changelog below.
 
 | | |
 |---|---|
-| File | `three_ws-1.1.0.zip` (44,339 bytes, 8 files) |
-| SHA-256 | `0aafc744f5c62e26fbca2500505c1c625ece4eb9fac424abe81cdf7daceafd2a` |
+| File | `three_ws-1.1.0.zip` (44,440 bytes, 8 files) |
+| SHA-256 | `d62a5f9dfe99dea857ee8100bb5dd4186498f7e1a679718c6ea06f8a30cc70cb` |
 | Built with | `blender --command extension build` on Blender 4.2.23 LTS |
 | Contents | `blender_manifest.toml`, `__init__.py`, `three_ws_client.py`, `capture360_client.py`, `capture360_import.py`, `capture360_ui.py`, `ply_reader.py`, `LICENSE` |
 
@@ -49,6 +49,9 @@ the code changed since.
   and a **Your captures** list with Import, Preview video (a sequencer strip)
   and Open on three.ws.
 - The manifest's tagline and permission reasons now cover 360 files.
+- A server answer that arrives after the request timeout (the API copies a
+  finished splat into storage inside the poll that sees it finish) no longer
+  ends the wait; the poll is retried and the capture imports.
 
 ### Listing changelog (paste into the version's release notes)
 
@@ -103,8 +106,9 @@ the code changed since.
   viewport repainted twice in that time, Cancel stopped the worker thread in
   144 ms, and the sidebar drew the panel on the active three.ws tab. A
   screenshot of the panel is written to `dist/panel-1.1.0.png`.
-- `pytest` (15 tests) on the client and PLY reader, including resume after a
-  failed part and Cancel aborting the upload.
+- `pytest` (16 tests) on the client and PLY reader, including resume after a
+  failed part, Cancel aborting the upload, and a poll slower than the request
+  timeout.
 - Live, against a real three.ws server (the production `server/index.mjs` on an
   isolated database, writing to the production object store,
   `tests/blender_live_check.py`): the installed extension uploaded a 360 clip,
