@@ -32,6 +32,10 @@ const log = (...a) => process.stdout.write(a.join(' ') + '\n');
 const problems = [];
 const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await browser.newContext({ viewport: { width: WIDTH, height: 900 } });
+// Any file another agent saves makes the Vite dev server full-reload the page over
+// its HMR socket, which wipes the scene mid-run. The socket is answered here and
+// never forwarded, so the page only changes when the visitor acts.
+await ctx.routeWebSocket(/\/(\?token=[^/]*)?$/, () => {});
 await ctx.route(/\/api\//, (route) => {
 	if (new URL(route.request().url()).origin !== new URL(BASE).origin) return route.continue();
 	return route.continue({ headers: { ...route.request().headers(), authorization: `Bearer ${KEY}` } });
