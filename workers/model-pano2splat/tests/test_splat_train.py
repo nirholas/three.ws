@@ -303,6 +303,19 @@ def test_preview_video_is_1080p30_h264_and_short(tmp_path):
     assert data.find(b'moov') != -1 and data.find(b'moov') < (data.find(b'mdat') if b'mdat' in data else 1 << 30)
 
 
+def test_preview_video_bitrate_is_capped_for_web_playback(tmp_path):
+    # A 3M-Gaussian flythrough at CRF 18 came out at 34.6 Mbps (86.5 MB for 20 s) on the
+    # L4 measurement run. Fresh noise in every frame is the worst case for the encoder;
+    # the VBV cap must still hold the file to MAX_BITRATE over its length plus one buffer.
+    out = str(tmp_path / 'preview.mp4')
+    rng = np.random.default_rng(1)
+    frames = 90
+    video.encode_frames(out, (rng.integers(0, 255, (360, 640, 3), dtype=np.uint8) for _ in range(frames)), width=640, height=360)
+    seconds = frames / video.FPS
+    limit_bytes = (video.MAX_BITRATE * seconds + video.BUFFER_BITS) / 8
+    assert os.path.getsize(out) <= limit_bytes * 1.05
+
+
 def test_preview_length_is_capped():
     assert preview.preview_frame_count(10_000) == video.MAX_SECONDS * video.FPS
     assert preview.preview_frame_count(2) == 8 * video.FPS

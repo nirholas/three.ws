@@ -60,8 +60,28 @@ Training images are downscaled to 1600 px on the long side, 30 holdout images (o
 | Mip-NeRF 360 `counter` (240 images) | 7000 | 2,996,756 | 28.21 dB (28.53 unpruned) | 0.9166 | 743 MB | 56 MB | 1710 s (1643 s training) | 4.26 GB |
 
 `preview.mp4` for that run: 1920x1080, 30 fps, 600 frames, 20.0 s, h264 yuv420p, 29 MB. The PLY and SPZ
-both open in `/splat` without console errors. Orders 335 and 347 add the 30000 iteration rows and a
-second dataset as they are measured.
+both open in `/splat` without console errors.
+
+Matrix run `20261121T222338Z` (Cloud Run Job, europe-west4, one L4 per cell, package defaults:
+`--max-image-side 1600`, SH 3, holdout every 8th, `--preview-video`). Billed L4 seconds run from container
+start to exit and include 253 to 287 s of copying the dataset off gcsfuse. Peak GPU memory was 3.95 to
+4.5 GB. Results: `gs://three-ws-pano-captures/splat_train-measure/20261121T222338Z/<scene>-<iters>/`.
+
+| dataset | iterations | holdout PSNR (unpruned) | SSIM | Gaussians | scene.ply | scene.spz | training s | billed L4 s |
+|---|---|---|---|---|---|---|---|---|
+| `garden` (23 holdout) | 7000 | 26.46 dB (26.63) | 0.833 | 2,999,708 | 743.9 MB | 61.4 MB | 980 | 1406 |
+| `counter` (30 holdout) | 7000 | 28.03 dB (28.58) | 0.915 | 2,996,983 | 743.3 MB | 56.2 MB | 1230 | 1674 |
+| `garden` | 30000 | 27.22 dB (27.50) | 0.858 | 2,999,450 | 743.9 MB | 82.3 MB | 4155 | 4606 |
+| `counter` | 30000 | 29.46 dB (29.93) | 0.929 | 2,998,829 | 743.7 MB | 74.8 MB | 5329 | 5774 |
+
+Every cell reaches the 3,000,000 Gaussian cap, so the 744 MB PLY is the cap, not a property of the
+scene. 30000 iterations buy +0.76 dB (garden) and +1.44 dB (counter) for about four times the training
+time: that is the gap between the `preview` preset (7000) and `standard` and `high` (30000). `scene.spz` is SPZ version 4, which `/splat`
+reads unchanged.
+
+The preview encoder used CRF 18 with no rate cap and produced 34.6 Mbps (86.5 MB for 20 s) on `garden`.
+It now runs CRF 23 under a 12 Mbps VBV cap (24 Mbit buffer): the same flythrough re-encoded that way is
+30.0 MB at SSIM 0.922 against the CRF 18 file, where an 8 Mbps cap smeared the grass (20.3 MB, SSIM 0.885).
 
 Do not install gsplat from source on the job image: the JIT build of its CUDA extension took
 441 s on first import. Use the prebuilt wheel from `https://docs.gsplat.studio/whl/pt24cu124`.
