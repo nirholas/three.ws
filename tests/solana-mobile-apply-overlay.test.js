@@ -125,6 +125,31 @@ describe('apply-overlay.mjs', () => {
 		);
 	});
 
+	it('keeps the glance widget token out of cloud backup and device transfer', () => {
+		// Bubblewrap generates android:allowBackup="true" with no rules, so the
+		// widget's bearer token (SharedPreferences "glance_widget") was copied into
+		// Google Drive backups and onto any phone restored from them. Flagged by the
+		// app-store-compliance guard (ANDROID-INSECURE-BACKUP) on 2026-11-22.
+		const dir = generatedTree();
+		apply(dir);
+		apply(dir);
+		const phone = read(dir, 'app/src/main/AndroidManifest.xml');
+		const appTag = phone.match(/<application\b[^>]*>/)[0];
+		expect(count(appTag, 'android:fullBackupContent="@xml/glance_backup_rules"')).toBe(1);
+		expect(count(appTag, 'android:dataExtractionRules="@xml/glance_data_extraction_rules"')).toBe(1);
+
+		const legacy = read(dir, 'app/src/main/res/xml/glance_backup_rules.xml');
+		expect(legacy).toContain('<exclude domain="sharedpref" path="glance_widget.xml"');
+		expect(legacy).toContain('<exclude domain="file" path="glance/"');
+
+		const modern = read(dir, 'app/src/main/res/xml/glance_data_extraction_rules.xml');
+		for (const section of ['cloud-backup', 'device-transfer']) {
+			const body = modern.split(`<${section}`)[1].split(`</${section}>`)[0];
+			expect(body).toContain('<exclude domain="sharedpref" path="glance_widget.xml"');
+			expect(body).toContain('<exclude domain="file" path="glance/"');
+		}
+	});
+
 	it('still refuses to overwrite a generated file it does not own', () => {
 		const dir = generatedTree();
 		const overlay = mkdtempSync(join(tmpdir(), 'three-ws-overlay-src-'));

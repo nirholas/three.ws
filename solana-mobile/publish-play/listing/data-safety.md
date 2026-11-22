@@ -35,7 +35,7 @@ embedding, the crop, or the capture URL. Keep this form and that clause in step.
 | App info and performance > Crash logs | Yes | No | Optional | Analytics | Client error reports posted to `/api/client-errors` |
 | Device or other IDs | No | No | | | No advertising ID, no device fingerprinting. Session records store a hashed IP and the user agent, which Play does not classify as a device ID |
 
-**Home screen widget (1.1+).** Linking a widget from three.ws/glance stores one revocable widget token on the device (app-private storage). About every 30 minutes the widget fetches a card image from `/api/glance/mine` with that token, and the request is counted under the "API calls and widget load events" row above. The widget collects nothing else: no location, no contacts, no extra identifiers. Revoking the widget at three.ws/glance invalidates the token; uninstalling the app deletes it from the device.
+**Home screen widget (1.1+).** Linking a widget from three.ws/glance stores one revocable widget token on the device (app-private storage). About every 30 minutes the widget fetches a card image from `/api/glance/mine` with that token, and the request is counted under the "API calls and widget load events" row above. The widget collects nothing else: no location, no contacts, no extra identifiers. Revoking the widget at three.ws/glance invalidates the token; uninstalling the app deletes it from the device. The token is excluded from Android cloud backup and device transfer, so it never leaves the phone it was linked on.
 
 Everything not listed is **not collected**: no location, no contacts, no calendar, no SMS, no
 call logs, no health data, no financial account or payment information (all value transfer is

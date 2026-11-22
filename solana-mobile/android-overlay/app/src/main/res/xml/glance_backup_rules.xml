@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto Backup rules for Android 11 (API 30) and below.
+     The glance widget's bearer token lives in SharedPreferences "glance_widget",
+     and its rendered cards live under files/glance/. Neither may leave the
+     device: a token restored onto another phone is a credential the owner never
+     linked there. Everything else keeps Bubblewrap's default backup behaviour.
+     Android 12 and above read glance_data_extraction_rules.xml instead. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="glance_widget.xml" />
+    <exclude domain="file" path="glance/" />
+</full-backup-content>

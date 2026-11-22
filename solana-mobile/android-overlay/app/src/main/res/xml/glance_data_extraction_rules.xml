@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backup and device-transfer rules for Android 12 (API 31) and above.
+     Same intent as glance_backup_rules.xml: the glance widget token
+     (SharedPreferences "glance_widget") and its card cache (files/glance/)
+     stay on this device. The owner relinks the widget from /glance on a new
+     phone, which issues a fresh token for that device. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="glance_widget.xml" />
+        <exclude domain="file" path="glance/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="glance_widget.xml" />
+        <exclude domain="file" path="glance/" />
+    </device-transfer>
+</data-extraction-rules>

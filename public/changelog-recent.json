@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-22T00:29:45.346Z",
+	"generated_at": "2026-11-22T08:13:05.226Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4701,
+	"total": 4702,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -18,6 +18,17 @@
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-22",
+			"type": "update",
+			"title": "The Android widget token stays on the phone it was linked on",
+			"summary": "The three.ws Android app no longer copies the home screen widget's sign-in token into Google Drive backups or onto a phone restored from one. A new phone gets its own token when you link the widget from three.ws/glance. Found by a Google Play compliance scan of the 1.1.0 build, which now passes with no critical findings.",
+			"link": null,
+			"tags": [
+				"security",
+				"fix"
 			]
 		},
 		{
@@ -1561,17 +1572,6 @@
 			"summary": "GitHub fee-claim lookups used to page the whole PumpFees program, which handles about 500 transactions a second, so one page of history covered about a second and the feed came back empty. The listener, its backfill, and the API's RPC fallback now follow the one account that signs every GitHub fee claim and nothing else. That account's key is read from chain, and one page of its history covers days. The table now holds real claims, GET /api/pump/first-claims serves them from it, and the backfill resumes where it stopped instead of re-fetching claims it already stored.",
 			"link": null,
 			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "The marketplace opens on a picture and loads 3D only when you reach for it",
-			"summary": "The featured carousel at the top of the marketplace used to download the 3D viewer and a model of around 2 MB on every visit, showing a placeholder letter until it arrived. It now shows each avatar's picture straight away and turns it into the spinning 3D model the moment you hover, focus or tap it, so a visit that never touches a 3D preview never downloads one. Hovering an agent card in the grid now also loads its 3D preview wherever the pointer rests on the card; before, only the picture area counted, and in practice agent cards often never woke at all.",
-			"link": "/marketplace",
-			"tags": [
-				"improvement",
 				"fix"
 			]
 		}

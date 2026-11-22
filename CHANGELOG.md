@@ -7,6 +7,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-11-22
 
 - **360 video and photos now solve into camera positions on our own GPUs**: The new pano_sfm stage splits each stitched 360 frame into a rig of flat views and solves where the camera was with COLMAP 4.2.1, so the splat trainer can start from a real 360 walk. Measured on an L4 GPU: a 30 second indoor clip registered every view in 3 minutes, an Insta360 X6 outdoor walk registered all 816 views (0.52 px error), and an Insta360 X5 walking tour registered 85 percent. Footage the solver cannot place now fails with a plain walk-slower message instead of a bad scene. `[feature, infra]`
+- **The Android widget token stays on the phone it was linked on**: The three.ws Android app no longer copies the home screen widget's sign-in token into Google Drive backups or onto a phone restored from one. A new phone gets its own token when you link the widget from three.ws/glance. Found by a Google Play compliance scan of the 1.1.0 build, which now passes with no critical findings. `[security, fix]`
 
 ## 2026-11-21
 

@@ -145,8 +145,31 @@ const withApp = spliceFenced(manifest, 'application', appBody, (text) => text.la
 if (withApp === null) fail('cannot find </application>');
 manifest = withApp;
 
+// Backup rules. Bubblewrap emits android:allowBackup="true" with no rules, which
+// would copy the glance widget's bearer token into Google Drive backups and onto
+// any phone restored from them. Point the generated <application> at the
+// overlay's rules (API 30 and below read fullBackupContent, API 31+ read
+// dataExtractionRules). An attribute already present is replaced, so a re-apply
+// or a generator that starts emitting its own value still ends with ours, once.
+const BACKUP_ATTRS = {
+	'android:fullBackupContent': '@xml/glance_backup_rules',
+	'android:dataExtractionRules': '@xml/glance_data_extraction_rules',
+};
+const appOpen = manifest.match(/<application\b[^>]*>/);
+if (!appOpen) fail('cannot find the <application> opening tag');
+let appTag = appOpen[0];
+for (const [attr, value] of Object.entries(BACKUP_ATTRS)) {
+	const existing = new RegExp(`\\s${attr}="[^"]*"`);
+	appTag = existing.test(appTag)
+		? appTag.replace(existing, ` ${attr}="${value}"`)
+		: appTag.replace(/<application\b/, `<application\n        ${attr}="${value}"`);
+}
+manifest = manifest.slice(0, appOpen.index) + appTag + manifest.slice(appOpen.index + appOpen[0].length);
+
 fs.writeFileSync(manifestPath, manifest);
 for (const needle of [
+	'android:fullBackupContent="@xml/glance_backup_rules"',
+	'android:dataExtractionRules="@xml/glance_data_extraction_rules"',
 	'.glance.GlanceWidget',
 	'.glance.GlanceLinkActivity',
 	'android.permission.INTERNET',
