@@ -59,27 +59,38 @@ run() {
 
 report() {
   run_id="${1:?RUN_ID}"
+  url="gs://three-ws-pano-captures/splat_train-measure/${run_id}"
   dir="$(mktemp -d)"
-  gsutil -m -q cp -r "gs://three-ws-pano-captures/splat_train-measure/${run_id}" "$dir/" 2>/dev/null || true
-  python3 - "$dir/$run_id" "$run_id" <<'PY'
-import json, os, sys
+  for f in $(gsutil ls "$url/*/exit.json" "$url/*/train.json" 2>/dev/null); do
+    cell="$(basename "$(dirname "$f")")"
+    mkdir -p "$dir/$cell"
+    gsutil -q cp "$f" "$dir/$cell/"
+  done
+  gsutil du "$url/*/preview.mp4" 2>/dev/null > "$dir/mp4-sizes.txt" || true
+  python3 - "$dir" "$run_id" <<'PY'
+import json, os, re, sys
 root, run_id = sys.argv[1], sys.argv[2]
+sizes = {}
+for line in open(os.path.join(root, 'mp4-sizes.txt')):
+    size, url = line.split()
+    sizes[url.rstrip('/').split('/')[-2]] = int(size)
+def load(cell, name):
+    path = os.path.join(root, cell, name)
+    return json.load(open(path)) if os.path.exists(path) else {}
+mb = lambda b: f'{b / 1e6:.1f} MB' if b else '-'
 print(f'run {run_id}  gs://three-ws-pano-captures/splat_train-measure/{run_id}/')
-print('| scene | iterations | PSNR | SSIM | Gaussians | scene.ply | scene.spz | preview.mp4 | train s | wall s | peak GPU GB | exit |')
-print('|---|---|---|---|---|---|---|---|---|---|---|---|')
-for name in sorted(os.listdir(root)) if os.path.isdir(root) else []:
-    d = os.path.join(root, name)
-    ex = json.load(open(os.path.join(d, 'exit.json'))) if os.path.exists(os.path.join(d, 'exit.json')) else {}
-    tj = json.load(open(os.path.join(d, 'train.json'))) if os.path.exists(os.path.join(d, 'train.json')) else {}
-    mp4 = os.path.join(d, 'preview.mp4')
-    mb = lambda b: f'{b / 1e6:.1f} MB' if b else '-'
-    scene, it = name.rsplit('-', 1)
-    print(f"| {scene} | {it} | {tj.get('psnr_holdout', '-')} | {tj.get('ssim_holdout', '-')} | {tj.get('gaussians', '-'):,} | "
-          f"{mb(tj.get('bytes_ply'))} | {mb(tj.get('bytes_spz'))} | {mb(os.path.getsize(mp4) if os.path.exists(mp4) else 0)} | "
-          f"{tj.get('train_seconds', '-')} | {tj.get('duration_s', '-')} | {tj.get('peak_gpu_gb', '-')} | {ex.get('exit', '-')} |"
-          if tj else f'| {scene} | {it} | - | - | - | - | - | - | - | - | - | {ex.get("exit", "-")} |')
+print('| scene | iterations | PSNR | SSIM | Gaussians | scene.ply | scene.spz | preview.mp4 | train s | splat_train s | task wall s (L4 GPU-s) | peak GPU GB | exit |')
+print('|---|---|---|---|---|---|---|---|---|---|---|---|---|')
+cells = [c for c in os.listdir(root) if re.fullmatch(r'.+-\d+', c) and os.path.isdir(os.path.join(root, c))]
+for cell in sorted(cells, key=lambda c: (int(c.rsplit('-', 1)[1]), c)):
+    scene, iters = cell.rsplit('-', 1)
+    ex, tj = load(cell, 'exit.json'), load(cell, 'train.json')
+    g = tj.get('gaussians')
+    print(f"| {scene} | {iters} | {tj.get('psnr_holdout', '-')} | {tj.get('ssim_holdout', '-')} | {f'{g:,}' if g else '-'} | "
+          f"{mb(tj.get('bytes_ply'))} | {mb(tj.get('bytes_spz'))} | {mb(sizes.get(cell))} | "
+          f"{tj.get('train_seconds', '-')} | {tj.get('duration_s', '-')} | {ex.get('wall_s', '-')} | {tj.get('peak_gpu_gb', '-')} | {ex.get('exit', '-')} |")
 PY
-  echo "local copy: $dir/$run_id"
+  rm -rf "$dir"
 }
 
 cleanup() {
