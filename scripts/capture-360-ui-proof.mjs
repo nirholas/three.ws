@@ -3,9 +3,9 @@
 //
 // Drives Chromium against a Vite dev server that proxies /api to
 // scripts/capture-upload-live-server.mjs (the real server/index.mjs, real R2 bucket,
-// throwaway Postgres) with the stand-in pano2splat worker behind it
-// (scripts/capture-360-live-worker.mjs). The browser makes real multipart PUTs to
-// the bucket; only the worker is a stand-in.
+// throwaway Postgres) with a pano2splat worker behind it: a real GPU worker
+// (GCP_PANO2SPLAT_URL) or the stand-in scripts/capture-360-live-worker.mjs. The
+// browser makes real multipart PUTs to the bucket either way.
 //
 //   node scripts/capture-360-ui-proof.mjs --base http://localhost:3340 --key-file <c3key> \
 //     --dir <folder with metro.mp4 hof.mp4 *_00.insv *_10.insv> --out <screenshot dir> [--phase preview|raw|upload|all]
@@ -32,6 +32,10 @@ const log = (...a) => process.stdout.write(a.join(' ') + '\n');
 const errors = [];
 const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await browser.newContext({ viewport: { width: WIDTH, height: 900 } });
+// A real GPU job runs for many minutes, and any file another agent saves makes the
+// Vite dev server full-reload the page over its HMR socket. The socket is answered
+// here and never forwarded, so only the reloads this proof makes on purpose happen.
+await ctx.routeWebSocket(/\/(\?token=[^/]*)?$/, () => {});
 await ctx.route(/\/api\//, (route) => {
 	const u = new URL(route.request().url());
 	if (u.origin !== new URL(BASE).origin) return route.continue();

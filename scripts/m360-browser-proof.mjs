@@ -2,26 +2,37 @@
 // the click marker and the request body. Usage:
 //   node scripts/m360-browser-proof.mjs <clip.mp4> [--wait-job] [--page=/video-to-motion] [--width=400]
 //     [--pick=x,y] [--fake-worker=pre341|341]   (fake-worker needs M360_CLIP_JSON and M360_REFRAME_MP4)
-// Needs a dev server on :3342 and .auth/audit-state.json (npm run audit:web:login).
+//     [--base=http://localhost:3342] [--key-file=<api key file>]
+// Signs in with .auth/audit-state.json (npm run audit:web:login), or with a Bearer
+// API key from --key-file (scripts/capture-upload-live-server.mjs writes one).
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
+
+const opt = (name, fallback) => (process.argv.find((a) => a.startsWith(`--${name}=`)) || `--${name}=${fallback}`).slice(name.length + 3);
 
 const clip = process.argv[2];
 const waitJob = process.argv.includes('--wait-job');
 const fakeWorker = (process.argv.find((a) => a.startsWith('--fake-worker=')) || '').slice(14);
 const pickAt = (process.argv.find((a) => a.startsWith('--pick=')) || '--pick=0.52,0.55').slice(7).split(',').map(Number);
 const pagePath = (process.argv.find((a) => a.startsWith('--page=')) || '--page=/video-to-motion').slice(7);
-const base = 'http://localhost:3342';
+const base = opt('base', 'http://localhost:3342');
+const keyFile = opt('key-file', '');
 // Inputs for --fake-worker and where screenshots land (all set by the caller).
 const CLIP_JSON = process.env.M360_CLIP_JSON;
 const REFRAME_MP4 = process.env.M360_REFRAME_MP4;
 const OUT_DIR = process.env.M360_OUT_DIR || '.';
-const state = JSON.parse(readFileSync('.auth/audit-state.json', 'utf8'));
 const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await browser.newContext({ viewport: { width: Number((process.argv.find((a) => a.startsWith('--width=')) || '--width=1280').slice(8)), height: 900 } });
-const cookie = state.cookies.map((c) => `${c.name}=${c.value}`).join('; ');
-await ctx.route('**/localhost:3342/api/**', async (route) => {
-	const response = await route.fetch({ headers: { ...route.request().headers(), cookie } }).catch(() => null);
+// Against the Vite dev server, any file another agent saves triggers a full page
+// reload over the HMR socket, which wiped the 360 stage mid-run. The HMR socket
+// is answered here and never forwarded, so the page under test only changes
+// when the visitor acts.
+await ctx.routeWebSocket(/\/(\?token=[^/]*)?$/, () => {});
+const auth = keyFile
+	? { authorization: `Bearer ${readFileSync(keyFile, 'utf8').trim()}` }
+	: { cookie: JSON.parse(readFileSync('.auth/audit-state.json', 'utf8')).cookies.map((c) => `${c.name}=${c.value}`).join('; ') };
+await ctx.route(`${base}/api/**`, async (route) => {
+	const response = await route.fetch({ headers: { ...route.request().headers(), ...auth } }).catch(() => null);
 	if (!response) return route.abort();
 	await route.fulfill({ response });
 });
@@ -79,9 +90,31 @@ await page.waitForTimeout(15000);
 console.log('request bodies:', bodies);
 await page.screenshot({ path: `${OUT_DIR}/shot-submitted.png` });
 if (waitJob) {
-	await page.waitForFunction(() => document.querySelector('#vtm-stage-failed:not([hidden])') || document.querySelector('#vtm-stage-pick .m360-message') || document.querySelector('#vtm-play')?.offsetParent || document.querySelector('.m360-reframe:not([hidden])') || document.querySelector('#ms-result:not([hidden])'), null, { timeout: 600000 }).catch((e) => console.log('wait ended:', e.message));
+	// Only terminal stages count, and each must be shown, not just present: the pick-stage
+	// alert stays in the DOM after the pick, and the player controls are always on screen,
+	// so matching either ended the wait while the job was still tracking.
+	const terminal = ['#vtm-stage-ready', '#vtm-stage-failed', '#vtm-stage-limit', '#vtm-stage-pick .m360-message', '#ms-result'];
+	const shown = (sels) => sels.filter((sel) => {
+		const el = document.querySelector(sel);
+		return Boolean(el && !el.closest('[hidden]') && el.offsetParent);
+	});
+	const anyShown = (sels) => sels.some((sel) => {
+		const el = document.querySelector(sel);
+		return Boolean(el && !el.closest('[hidden]') && el.offsetParent);
+	});
+	await page.waitForFunction(anyShown, terminal, { timeout: 1200000, polling: 1000 }).catch((e) => console.log('wait ended:', e.message));
+	console.log('final state:', (await page.evaluate(shown, terminal)).join(', ') || 'none shown');
+	console.log('reframe panel visible:', await page.isVisible('#vtm-reframe:not([hidden])'));
+	// The reframed MP4 streams from the bucket after the ready stage shows, so the
+	// screenshot waits for its first decoded frame instead of catching an empty box.
+	await page.waitForFunction(() => (document.querySelector('#vtm-reframe video')?.readyState || 0) >= 2, null, { timeout: 120000, polling: 500 })
+		.catch((e) => console.log('reframe wait ended:', e.message));
+	console.log('reframe video:', await page.evaluate(() => {
+		const v = document.querySelector('#vtm-reframe video');
+		return v ? { readyState: v.readyState, width: v.videoWidth, height: v.videoHeight, duration: v.duration, src: v.currentSrc.split('?')[0] } : null;
+	}));
+	await page.locator('#vtm-reframe').scrollIntoViewIfNeeded().catch(() => {});
 	await page.screenshot({ path: `${OUT_DIR}/shot-result.png` });
-	console.log('reframe panel visible:', await page.isVisible('.m360-reframe:not([hidden])'));
 }
 console.log('console problems:', problems);
 await browser.close();
