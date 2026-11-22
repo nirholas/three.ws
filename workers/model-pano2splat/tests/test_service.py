@@ -29,7 +29,12 @@ class Files(BaseHTTPRequestHandler):
     routes: dict = {}
 
     def do_GET(self):  # noqa: N802
-        body = self.routes.get(self.path.split("?")[0])
+        path = self.path.split("?")[0]
+        if path == "/busy.mp4":
+            self.send_response(429, "Too many requests")
+            self.end_headers()
+            return
+        body = self.routes.get(path)
         if body is None:
             self.send_response(404)
             self.end_headers()
@@ -183,6 +188,19 @@ def test_missing_source_is_reported(http_files, tmp_path):
     with pytest.raises(SourceError) as exc:
         download_source(http_files + "/nope.mp4", tmp_path / "f", "equirect_video", ByteBudget())
     assert exc.value.code == "source_unreachable"
+
+
+def test_rate_limited_source_names_the_status_and_the_way_out(http_files, tmp_path, monkeypatch):
+    # upload.wikimedia.org answers Cloud Run egress with 429 while serving the
+    # same file elsewhere; the visitor needs the status and the upload path,
+    # not the name of a Python exception.
+    monkeypatch.setattr(source_fetch.time, "sleep", lambda s: None)
+    with pytest.raises(SourceError) as exc:
+        download_source(http_files + "/busy.mp4", tmp_path / "f", "equirect_video", ByteBudget())
+    assert exc.value.code == "source_unreachable"
+    assert "429" in exc.value.message
+    assert "HTTPStatusError" not in exc.value.message
+    assert "upload" in exc.value.message.lower()
 
 
 # -- orchestration --------------------------------------------------------------

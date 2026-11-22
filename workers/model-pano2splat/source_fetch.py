@@ -116,17 +116,32 @@ def download_source(
             if status not in (429, 500, 502, 503, 504):
                 raise SourceError(
                     "source_unreachable",
-                    f"The source file could not be fetched (the server answered {status}).",
+                    f"The source file could not be fetched: its host answered {_status_text(exc.response)}. {UPLOAD_HINT}",
                 ) from exc
             last_exc = exc
         except httpx.TransportError as exc:
             last_exc = exc
         budget.used = start_used
         time.sleep(2.0 * (attempt + 1))
+    if isinstance(last_exc, httpx.HTTPStatusError):
+        why = f"its host kept answering {_status_text(last_exc.response)}"
+    else:
+        why = f"its host could not be reached ({type(last_exc).__name__})"
     raise SourceError(
         "source_unreachable",
-        f"The source file could not be fetched after {ATTEMPTS} attempts ({type(last_exc).__name__}).",
+        f"The source file could not be fetched after {ATTEMPTS} attempts: {why}. {UPLOAD_HINT}",
     )
+
+
+# Some hosts refuse cloud egress outright (upload.wikimedia.org answers Cloud
+# Run with 429 while serving the same file to anyone else, measured
+# 2026-11-22), so the way out is to hand over the file instead of a link.
+UPLOAD_HINT = "Some hosts refuse downloads from cloud servers; upload the file itself instead of linking to it."
+
+
+def _status_text(resp: httpx.Response) -> str:
+    phrase = (resp.reason_phrase or "").split(".")[0].strip()
+    return f"HTTP {resp.status_code} {phrase}".strip()
 
 
 def _download_once(url, dest_stem, source_kind, budget, on_bytes, cancelled) -> Path:
