@@ -55,7 +55,9 @@ export function warnCapExceeded(url, priceAtomic, capAtomic) {
 		`but the remaining per-run cap is ${(capAtomic / 1e6).toFixed(6)} USDC, so the call was SKIPPED ` +
 		`(never settled). Raise the applicable cap to fit: X402_RING_TICK_CAP_ATOMIC (per-minute ring tick), ` +
 		`X402_VOLUME_PER_RUN_CAP_ATOMIC (5-min volume loop), X402_RING_DAILY_CAP_ATOMIC / ` +
-		`X402_AUTONOMOUS_DAILY_CAP_ATOMIC (daily), or lower X402_PRICE_RING_SETTLE.`,
+		`X402_AUTONOMOUS_DAILY_CAP_ATOMIC (daily), or lower X402_PRICE_RING_SETTLE. ` +
+		`The autonomous loop folds the payer's token balance into this cap, so if the cap shown is tiny ` +
+		`the payer wallet is underfunded: fund it instead of raising caps.`,
 	);
 }
 
