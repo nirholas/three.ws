@@ -68,11 +68,13 @@ RUN set -e; \
         echo "== stage $n"; \
         PYTHONPATH="$BASE" /opt/stages/$n/bin/pip install --no-build-isolation -r "$f"; \
     done
-# gsplat has no cp312 prebuilt wheel, so compile its CUDA extension here (nvcc is in this stage).
+# PyPI serves gsplat as a pure-Python wheel, which would leave the CUDA extension to a JIT build
+# at first use, and the runtime image has no nvcc. --no-binary forces the sdist so setup.py
+# compiles gsplat.csrc here, where nvcc is; importing gsplat.csrc fails the build if it did not.
 RUN set -e; BASE="$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"; \
     if [ -d /opt/stages/splat_train ]; then \
-        PYTHONPATH="$BASE" /opt/stages/splat_train/bin/pip install --no-build-isolation gsplat==1.5.3; \
-        /opt/stages/splat_train/bin/python -c "import gsplat, torch, numpy; print('gsplat', gsplat.__version__, 'torch', torch.__version__, 'numpy', numpy.__version__)"; \
+        PYTHONPATH="$BASE" /opt/stages/splat_train/bin/pip install --no-build-isolation --no-binary gsplat gsplat==1.5.3; \
+        /opt/stages/splat_train/bin/python -c "from gsplat import csrc; import gsplat, torch, numpy; print('gsplat', gsplat.__version__, csrc.__file__, 'torch', torch.__version__, 'numpy', numpy.__version__)"; \
     fi
 
 FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS runtime
@@ -104,7 +106,9 @@ WORKDIR /app
 COPY --chown=app:app . /app
 USER app
 RUN python -c "import main, verify; print('service imports clean')" \
-    && for s in /opt/stages/*; do echo "stage venv $s"; $s/bin/python -c "import numpy, torch; print(numpy.__version__, torch.__version__)"; done
+    && for s in /opt/stages/*; do echo "stage venv $s"; $s/bin/python -c "import numpy, torch; print(numpy.__version__, torch.__version__)"; done \
+    && /opt/stages/splat_train/bin/python -c "from gsplat import csrc; print('gsplat extension', csrc.__file__)" \
+    && /opt/stages/pano_sfm/bin/python -c "from torchvision.models.segmentation import DeepLabV3_MobileNet_V3_Large_Weights as W; W.DEFAULT.get_state_dict(progress=False); print('operator mask weights cached')"
 
 EXPOSE 8080
 # Cloud Run sets $PORT. One uvicorn worker: the task manager is in-process and one
