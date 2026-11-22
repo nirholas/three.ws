@@ -5,7 +5,7 @@
 // 360 lane fits it and why. The file never leaves the device: no fetch, no
 // upload, and every object URL is revoked once its metadata is read.
 
-import { assessFile, kindOf } from './insta360-file-check.js';
+import { TRAILER_TAIL, assessFile, cameraModelFromTrailer, kindOf, trailerLength } from './insta360-file-check.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -48,9 +48,24 @@ function readVideoMeta(file) {
 	});
 }
 
+// The camera model from the trailer at the end of a raw .insv or .insp, read
+// locally with Blob.slice: only the trailer bytes are loaded and nothing is uploaded.
+async function readCameraModel(file) {
+	if (file.size <= TRAILER_TAIL) return '';
+	const tail = new Uint8Array(await file.slice(file.size - TRAILER_TAIL).arrayBuffer());
+	const length = trailerLength(tail, file.size);
+	if (!length) return '';
+	return cameraModelFromTrailer(new Uint8Array(await file.slice(file.size - length).arrayBuffer()));
+}
+
 async function measure(file) {
 	const kind = kindOf(file.name, file.type);
 	const base = { name: file.name, mime: file.type };
+	if (kind === 'insv' || kind === 'insp') {
+		// An unreadable trailer only means the camera stays unknown; the raw-file advice still holds.
+		const cameraModel = await readCameraModel(file).catch(() => '');
+		return cameraModel ? { ...base, cameraModel } : base;
+	}
 	try {
 		if (kind === 'image') return { ...base, ...(await readImageSize(file)) };
 		if (kind === 'video') return { ...base, ...(await readVideoMeta(file)) };

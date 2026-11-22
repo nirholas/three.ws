@@ -119,17 +119,129 @@ function walkLengthNotes(durationS) {
 	return [`${formatDuration(durationS)} is inside the 30 s to 3 min range that reconstructs well.`];
 }
 
+// The binary trailer Insta360 appends to .insv and .insp files. Same layout and
+// field as the stitcher reads (workers/model-pano2splat/pano_stitch/trailer.py):
+// the last 72 bytes hold 32 reserved bytes, the trailer size (u32 LE), a version
+// and a 32 byte ASCII magic; before them a run of records, each closed by a 6 byte
+// footer (format u8, id u8, length u32 LE), or on X4 and later an index record
+// (id 0) of 10 byte entries. Record 1 is a protobuf whose field 2 names the camera.
+const TRAILER_MAGIC = '8db42d694ccc418790edff439fe026bf';
+export const TRAILER_TAIL = 72;
+export const MAX_TRAILER_BYTES = 64 * 1024 * 1024;
+const FOOTER = 6;
+const INDEX_ENTRY = 10;
+// pano_stitch/layout.py SUPPORTED_MODEL: the dual lens cameras it can stitch.
+const STITCHABLE_MODEL = /\b(one\s?x2?|one\s?rs?|x[2-9])\b/i;
+
+function u32le(b, at) {
+	return (b[at] | (b[at + 1] << 8) | (b[at + 2] << 16) | (b[at + 3] << 24)) >>> 0;
+}
+
+/** Bytes the trailer takes at the end of the file (payload plus tail), or 0 when there is none. */
+export function trailerLength(tail, fileSize) {
+	if (!tail || tail.length < TRAILER_TAIL) return 0;
+	const t = tail.subarray(tail.length - TRAILER_TAIL);
+	for (let i = 0; i < 32; i++) if (t[40 + i] !== TRAILER_MAGIC.charCodeAt(i)) return 0;
+	const size = u32le(t, 32);
+	return size >= TRAILER_TAIL && size <= fileSize && size <= MAX_TRAILER_BYTES ? size : 0;
+}
+
+function readVarint(buf, pos) {
+	let value = 0;
+	let scale = 1;
+	for (let i = 0; i < 10; i++) {
+		if (pos >= buf.length) return null;
+		const b = buf[pos++];
+		value += (b & 0x7f) * scale;
+		if (!(b & 0x80)) return [value, pos];
+		scale *= 128;
+	}
+	return null;
+}
+
+function protoText(buf, wanted) {
+	let pos = 0;
+	while (pos < buf.length) {
+		const key = readVarint(buf, pos);
+		if (!key) return '';
+		pos = key[1];
+		const field = Math.floor(key[0] / 8);
+		const wire = key[0] % 8;
+		if (wire === 0) {
+			const v = readVarint(buf, pos);
+			if (!v) return '';
+			pos = v[1];
+		} else if (wire === 1) pos += 8;
+		else if (wire === 5) pos += 4;
+		else if (wire === 2) {
+			const len = readVarint(buf, pos);
+			if (!len || len[1] + len[0] > buf.length) return '';
+			if (field === wanted) return new TextDecoder().decode(buf.subarray(len[1], len[1] + len[0])).replace(/\0+$/, '').trim();
+			pos = len[1] + len[0];
+		} else return '';
+	}
+	return '';
+}
+
+function metadataRecord(payload) {
+	const n = payload.length;
+	if (n < FOOTER) return null;
+	const at = n - FOOTER;
+	const length = u32le(payload, at + 2);
+	if (payload[at + 1] === 0 && payload[at] === 0 && length % INDEX_ENTRY === 0 && length <= at) {
+		for (let i = at - length; i < at; i += INDEX_ENTRY) {
+			const len = u32le(payload, i + 2);
+			const off = u32le(payload, i + 6);
+			if (payload[i] === 1 && len > 0 && off + len <= n) return payload.subarray(off, off + len);
+		}
+		return null;
+	}
+	let pos = n;
+	while (pos >= FOOTER) {
+		const len = u32le(payload, pos - 4);
+		const start = pos - FOOTER - len;
+		if (start < 0) return null;
+		if (payload[pos - 5] === 1) return payload.subarray(start, pos - FOOTER);
+		pos = start;
+	}
+	return null;
+}
+
+/** The camera model named in a trailer (the last trailerLength() bytes of the file), or ''. */
+export function cameraModelFromTrailer(trailer) {
+	if (!trailer || trailer.length < TRAILER_TAIL + FOOTER) return '';
+	const meta = metadataRecord(trailer.subarray(0, trailer.length - TRAILER_TAIL));
+	return meta ? protoText(meta, 2) : '';
+}
+
+/** Whether the raw stitcher accepts files from this camera. */
+export function isStitchableCamera(model) {
+	return STITCHABLE_MODEL.test(String(model || ''));
+}
+
+function unstitchableRaw(cameraModel, kind) {
+	const photo = kind === 'insp';
+	return {
+		verdict: 'raw',
+		title: `Raw 360 ${photo ? 'photo' : 'video'} from an ${cameraModel}`,
+		summary: `Raw files from the ${cameraModel} cannot be stitched on three.ws. Export a stitched 360 ${photo ? 'JPEG' : 'MP4'} from the Insta360 app or Insta360 Studio, then use that file.`,
+		notes: ['Only the dual lens Insta360 ONE X, ONE X2, ONE R, ONE RS and X2 to X6 are stitched from raw files here.'],
+		lanes: photo ? lanes('panoScene', 'environment') : lanes('splat', 'motion'),
+	};
+}
+
 function lanes(...ids) {
 	return ids.map((id) => ({ id, ...LANES[id] }));
 }
 
 /**
- * @param {{ name: string, mime?: string, width?: number, height?: number, durationS?: number, readError?: boolean }} file
+ * @param {{ name: string, mime?: string, width?: number, height?: number, durationS?: number, readError?: boolean, cameraModel?: string }} file
  * @returns {{ verdict: 'raw'|'equirect'|'flat'|'unknown', title: string, summary: string, notes: string[], lanes: Array<{id:string,title:string,path:string,action:string}> }}
  */
 export function assessFile(file) {
-	const { name, mime = '', width = 0, height = 0, durationS = 0, readError = false } = file;
+	const { name, mime = '', width = 0, height = 0, durationS = 0, readError = false, cameraModel = '' } = file;
 	const kind = kindOf(name, mime);
+	if ((kind === 'insv' || kind === 'insp') && cameraModel && !isStitchableCamera(cameraModel)) return unstitchableRaw(cameraModel, kind);
 	const sized = width > 0 && height > 0;
 	const sizeLabel = sized ? `${width} x ${height}` : '';
 

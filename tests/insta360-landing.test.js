@@ -10,7 +10,10 @@ import {
 	LANES,
 	SHARP_EQUIRECT_WIDTH,
 	assessFile,
+	cameraModelFromTrailer,
 	extensionOf,
+	isStitchableCamera,
+	trailerLength,
 	isEquirect,
 	isSplitLensName,
 	kindOf,
@@ -247,5 +250,77 @@ describe('copy rules', () => {
 
 	it('has every new file on disk', () => {
 		for (const f of NEW_FILES) expect(existsSync(resolve(ROOT, f)), f).toBe(true);
+	});
+});
+
+// The trailer Insta360 appends to .insv and .insp files, built byte for byte the
+// way workers/model-pano2splat/pano_stitch/trailer.py reads it: records each closed
+// by a 6 byte footer (format u8, id u8, length u32 LE), then 32 reserved bytes, the
+// trailer size, a version and the 32 byte magic.
+const MAGIC = '8db42d694ccc418790edff439fe026bf';
+const enc = new TextEncoder();
+function protoString(field, text) {
+	const bytes = enc.encode(text);
+	return [(field << 3) | 2, bytes.length, ...bytes];
+}
+function footer(fmt, id, length) {
+	return [fmt, id, length & 255, (length >> 8) & 255, (length >> 16) & 255, (length >>> 24) & 255];
+}
+function u32(n) {
+	return [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+}
+function withTail(payload) {
+	const size = payload.length + 72;
+	return Uint8Array.from([...payload, ...new Array(32).fill(0), ...u32(size), ...u32(3), ...enc.encode(MAGIC)]);
+}
+function walkedTrailer(model) {
+	const meta = [...protoString(1, 'IAEBA1234'), ...protoString(2, model)];
+	const imu = [1, 2, 3, 4, 5, 6, 7, 8];
+	return withTail([...meta, ...footer(0, 1, meta.length), ...imu, ...footer(0, 3, imu.length)]);
+}
+function indexedTrailer(model) {
+	const meta = [...protoString(2, model), ...protoString(3, 'v1.2.3')];
+	const pad = new Array(5).fill(0);
+	const entry = (id, len, off) => [id, 0, ...u32(len), ...u32(off)];
+	const dir = [...entry(1, meta.length, pad.length), ...entry(0, 0, 0)];
+	return withTail([...pad, ...meta, ...dir, ...footer(0, 0, dir.length)]);
+}
+
+describe('camera model from the raw file trailer', () => {
+	it('finds the trailer length from the last 72 bytes, or 0 when there is none', () => {
+		const t = walkedTrailer('Insta360 X3');
+		expect(trailerLength(t.slice(-72), 5_000_000)).toBe(t.length);
+		expect(trailerLength(new Uint8Array(72), 5_000_000)).toBe(0);
+		expect(trailerLength(t.slice(-72), 10)).toBe(0);
+	});
+
+	it('reads the model from a walked trailer (X3 and older) and an indexed one (X4 and later)', () => {
+		expect(cameraModelFromTrailer(walkedTrailer('Insta360 ONE'))).toBe('Insta360 ONE');
+		expect(cameraModelFromTrailer(indexedTrailer('Insta360 X5'))).toBe('Insta360 X5');
+		expect(cameraModelFromTrailer(new Uint8Array(100))).toBe('');
+	});
+
+	it('accepts exactly the cameras the stitcher accepts', () => {
+		for (const m of ['Insta360 ONE X', 'Insta360 ONE X2', 'Insta360 ONE R', 'Insta360 ONE RS', 'Insta360 X3', 'Insta360 X4', 'Insta360 X6']) {
+			expect(isStitchableCamera(m)).toBe(true);
+		}
+		expect(isStitchableCamera('Insta360 ONE')).toBe(false);
+		expect(isStitchableCamera('Insta360 Pro2')).toBe(false);
+	});
+
+	it('warns before upload when a raw file comes from a camera the stitcher refuses', () => {
+		const photo = assessFile({ name: 'IMG_20180318_205851_239.insp', cameraModel: 'Insta360 ONE' });
+		expect(photo.title).toContain('Insta360 ONE');
+		expect(photo.summary).toMatch(/cannot be stitched/);
+		expect(photo.summary).toMatch(/JPEG/);
+		expect(photo.notes.join(' ')).not.toMatch(/Upload it as it is/);
+		const video = assessFile({ name: 'VID_1_00_001.insv', cameraModel: 'Insta360 ONE' });
+		expect(video.summary).toMatch(/MP4/);
+		expect(video.notes.join(' ')).not.toMatch(/Upload it as it is/);
+	});
+
+	it('keeps the upload-as-is copy for a supported camera or an unread trailer', () => {
+		expect(assessFile({ name: 'a.insp', cameraModel: 'Insta360 X3' }).notes[0]).toMatch(/Upload it as it is/);
+		expect(assessFile({ name: 'a.insp' }).notes[0]).toMatch(/Upload it as it is/);
 	});
 });
