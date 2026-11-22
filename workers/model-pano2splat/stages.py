@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 log = logging.getLogger("pano2splat.stages")
+DETAIL_LINES = 30
 
 STAGES_DIR = Path(os.environ.get("STAGES_DIR", Path(__file__).resolve().parent))
 
@@ -42,11 +43,14 @@ TERM_GRACE_S = 10.0
 class StageError(Exception):
     """A stage failed. ``code`` and ``message`` are surfaced to the caller unchanged."""
 
-    def __init__(self, code: str, message: str, exit_code: Optional[int] = None):
+    def __init__(self, code: str, message: str, exit_code: Optional[int] = None, detail: Optional[list[str]] = None):
         super().__init__(message)
         self.code = code
         self.message = message
         self.exit_code = exit_code
+        # The stage's last stderr lines (a traceback, a CUDA error) for operators
+        # and the verify report; never shown to visitors.
+        self.detail = detail or []
 
 
 class Cancelled(Exception):
@@ -220,12 +224,14 @@ class StageRunner:
             )
         if code != 0:
             err = _last_json_line(stderr_tail)
+            detail = [l for l in list(stderr_tail)[-DETAIL_LINES - 1:] if l.strip() and _last_json_line([l]) is None][-DETAIL_LINES:]
             if err is not None:
-                raise StageError(str(err.get("error")), str(err.get("message", "")), code)
+                raise StageError(str(err.get("error")), str(err.get("message", "")), code, detail)
             tail = " | ".join(str(l).strip() for l in list(stderr_tail)[-4:] if str(l).strip())[-600:]
             how = f"was killed by signal {-code}" if code < 0 else f"exited with code {code}"
             raise StageError(
                 EXIT_MEANING.get(code, "stage_failed"),
                 f"The {module} stage {how} without an error report." + (f" Last output: {tail}" if tail else ""),
                 code,
+                detail,
             )

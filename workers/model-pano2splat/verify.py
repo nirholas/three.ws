@@ -25,6 +25,7 @@ other than a missing stage package, 2 when no fixture was selected.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -151,6 +152,9 @@ def run_fixture(entry: dict, client, out_prefix: str, quality_default: str) -> d
     except PipelineError as exc:
         record["status"] = "stage_missing" if exc.code == "stage_missing" else "failed"
         record["error"] = {"code": exc.code, "message": exc.message}
+        detail = getattr(exc.__cause__, "detail", None)
+        if detail:
+            record["error"]["detail"] = detail
     except Cancelled:
         record["status"] = "failed"
         record["error"] = {"code": "cancelled", "message": "cancelled"}
@@ -166,6 +170,9 @@ def run_fixture(entry: dict, client, out_prefix: str, quality_default: str) -> d
 
 def main() -> int:
     from google.cloud import storage
+
+    # Stream every stage's stderr (pano2splat.stages logs it line by line) into the job log.
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
     client = storage.Client()
     run_id = os.environ.get("VERIFY_RUN_ID") or f"verify-{datetime.now(timezone.utc):%Y-%m-%d}"

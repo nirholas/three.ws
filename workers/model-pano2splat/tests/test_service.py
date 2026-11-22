@@ -478,3 +478,45 @@ def test_stage_crash_message_carries_the_last_output_and_signal(monkeypatch, tmp
         runner.run("pano_sfm", [], lambda *_: None)
     assert "signal 6" in exc.value.message
     assert "bad_alloc" in exc.value.message
+
+
+def test_stage_error_report_keeps_the_traceback_as_detail(monkeypatch, tmp_path):
+    # splat_train answers an unexpected exception with a generic internal_error
+    # report after printing the traceback; the verify report must keep that
+    # traceback or a GPU failure cannot be diagnosed from the report.
+    import stages
+
+    pkg = tmp_path / "splat_train"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "__main__.py").write_text(
+        "import json, sys\n"
+        "sys.stderr.write('Traceback (most recent call last):\\n')\n"
+        "sys.stderr.write('RuntimeError: CUDA error: an illegal memory access was encountered\\n')\n"
+        "sys.stderr.write(json.dumps({'error': 'internal_error', 'message': 'Training failed unexpectedly.'}) + '\\n')\n"
+        "sys.exit(1)\n"
+    )
+    monkeypatch.setattr(stages, "STAGES_DIR", tmp_path)
+    with pytest.raises(stages.StageError) as exc:
+        stages.StageRunner().run("splat_train", [], lambda *_: None)
+    assert exc.value.code == "internal_error"
+    assert exc.value.message == "Training failed unexpectedly."
+    assert any("illegal memory access" in line for line in exc.value.detail)
+    assert not any('"error"' in line for line in exc.value.detail)
+
+
+def test_verify_records_the_stage_detail_of_a_failed_fixture(monkeypatch, tmp_path):
+    import stages
+    import verify
+    from pipeline import PipelineError
+
+    def boom(*_a, **_k):
+        try:
+            raise stages.StageError("internal_error", "Training failed unexpectedly.", 1, ["RuntimeError: out of bounds"])
+        except stages.StageError as exc:
+            raise PipelineError(exc.code, exc.message) from exc
+
+    monkeypatch.setattr(verify, "run_pipeline", boom)
+    record = verify.run_fixture({"id": "f", "source_kind": "equirect_video", "objects": ["a.mp4"]}, None, "run", "standard")
+    assert record["status"] == "failed"
+    assert record["error"]["detail"] == ["RuntimeError: out of bounds"]
