@@ -47,3 +47,16 @@ Cross-chat handoff log for orders 331 to 347. Context and contract: [insta360-00
 | .insp photo | tested on a synthetic JPEG with a real trailer, unverified on real footage |
 
 2026-11-21: 332 model-panodepth worker (three-ws, session 37ac5ba8). Image europe-west4-docker.pkg.dev/aerial-vehicle-466722-p5/model-panodepth/server@sha256:861d00986a5d67cbd00db92fbf041acf3bc893555ae8d0b4cd2812ed1556165e (build 5f5ef545), region europe-west4, NVIDIA L4. Proof: Cloud Run job panodepth-verify-967wz over 5 real 360 photos, median 64.6 s per photo (53 to 79 s), model load 9.3 s; service path proven by job panodepth-selftest-kw76c (POST /infer 202, task succeeded in 108 s cold, glb/ply/depth signed URLs 200, SSRF 400). gltf-validator 0 errors on all 5 GLBs. Contract extension: `POST /infer` also accepts `max_faces` (default 1.5M). The Cloud Run SERVICE is not created (owner step in 347, README "Deploy").
+
+2026-11-22: 334 pano_sfm stage (three-ws, session 37ac5ba8). Package `workers/model-pano2splat/pano_sfm/` (code swept into cbe317633 and 454f42984 by sibling commits; README, manifest rows, changelog and STRUCTURE in the closing commit), 27 passing tests in `tests/test_pano_sfm.py` against six real CC0 frames. COLMAP and pycolmap 4.2.1. GPU proof: Cloud Run Job `pano-sfm-proof` (europe-west4, NVIDIA L4, driver 580.126.20, image digest sha256:0b0fde010220105e7992693a3bcac411b05b71fb83ae1384f33c865903c48a19), `colmap model_analyzer` loads every `sparse/0`. Fix found by the GPU run: COLMAP aborts the process when its vocabulary tree download fails, so `resolve_vocab_tree` fetches and verifies it in Python and falls back to no loop detection with a warning (`PANO_SFM_VOCAB_TREE` overrides the path).
+
+| Clip | Where | Frames | Registered | Ratio | Reproj px | Points | Time |
+|---|---|---|---|---|---|---|---|
+| Moscow metro interior, 3840x1920, indoor (CC0) | GPU, `pano-sfm-proof-rs6m8` | 48 | 384 / 384 | 1.000 | 1.096 | 11,738 | 187 s |
+| Moscow metro interior | CPU | 37 | 296 / 296 | 1.000 | 1.105 | 8,875 | 401 s |
+| Hof Insta360 X6, 7680x3840, outdoor (CC BY-SA 4.0) | GPU, `pano-sfm-proof-5mzvv` | 102 | 816 / 816 | 1.000 | 0.520 | 196,255 | 874 s |
+| Norah Head Insta360 X5, 7680x3840, outdoor (CC BY 3.0) | GPU, `pano-sfm-proof-dcns4` | 150 | 1024 / 1200 | 0.853 | 0.866 | 69,815 | 1,309 s |
+| 20 stills from the metro clip (photo path) | CPU | 20 | 160 / 160 | 1.000 | 1.043 | 5,647 | 468 s |
+| Metro, `--mask-operator --mask-sky`, 20 frames | CPU | 20 | 160 / 160 | 1.000 | 0.618 | 4,360 | 402 s |
+
+Not solved, by design or by data: the NASA clip is 3840x2048 and is refused with `not_equirectangular` (exit 2); the 12 Gunsan equirect photos exit 4 `too_few_registered` at 8 and at 14 views; the Old Ghost Road run could not start (execution creation failed, the throwaway job was then removed). Judgment call: no permissive single-scene set of 20 or more real equirect photos was found, so the photo path is proven on 20 stills from the metro clip and the Gunsan 12 stay as the honest negative case. Manifest gained `commons-hof-insta360-x6-7680` and `commons-gunsan-hirotsu-house-69-80`. Owner steps: none for 334; 337 wires `python -m pano_sfm` into the worker image and must bake the vocabulary tree or set `PANO_SFM_VOCAB_TREE`.

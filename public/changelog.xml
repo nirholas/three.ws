@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>360 video and photos now solve into camera positions on our own GPUs</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-22:360 video and photos now solve into camera positions on our own GPUs</guid>
+			<pubDate>Sun, 22 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new pano_sfm stage splits each stitched 360 frame into a rig of flat views and solves where the camera was with COLMAP 4.2.1, so the splat trainer can start from a real 360 walk. Measured on an L4 GPU: a 30 second indoor clip registered every view in 3 minutes, an Insta360 X6 outdoor walk registered all 816 views (0.52 px error), and an Insta360 X5 walking tour registered 85 percent. Footage the solver cannot place now fails with a plain walk-slower message instead of a bad scene.</description>
+		</item>
+		<item>
 			<title>Docs · Hero clips with Grok Imagine Video</title>
 			<link>https://three.ws/docs/hero-clips</link>
 			<guid isPermaLink="false">2026-11-21:Docs · Hero clips with Grok Imagine Video</guid>
@@ -61,6 +69,14 @@
 			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>The pano2splat worker has a splat_train stage: it trains a splat from the reconstructed camera poses, checks quality on held-out frames, and writes a PLY, a compact SPZ and a 20 second 1080p preview video.</description>
+		</item>
+		<item>
+			<title>A 360 photo becomes a metric depth shell</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-21:A 360 photo becomes a metric depth shell</guid>
+			<pubDate>Sat, 21 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new model-panodepth GPU worker turns one equirectangular photo into a metric depth shell (GLB, PLY and a depth map) with MoGe-2 (MIT). It was proven end to end on five real 360 photos on an L4 GPU, about 80 seconds each, and every GLB passes the glTF validator with zero errors.</description>
 		</item>
 		<item>
 			<title>A page and tutorial for turning 360 footage into 3D</title>

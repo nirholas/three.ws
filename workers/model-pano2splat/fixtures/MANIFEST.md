@@ -18,6 +18,8 @@ SHA-256 as it went.
 | `commons-kasidetma-x3-72mp` | equirect_image (JPEG, Insta360 X3), order 331 | 11968x5984 | n/a | 6,758,721 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | kasidetma |
 | `commons-teotihuacan-oners-sunny` | equirect_image (JPEG, Insta360 ONE RS), order 331 | 6528x3264 | n/a | 5,068,589 | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) | Fuzheado |
 | `commons-tashkent-oners-sunny` | equirect_image (JPEG, Insta360 ONE RS), order 331 | 6528x3264 | n/a | 12,879,550 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | Aleksey Chalabyan |
+| `commons-hof-insta360-x6-7680` | equirect_video (WebM), Insta360 X6, order 334 | 7680x3840 | n/a | 1,633,356,717 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | PantheraLeo1359531 |
+| `commons-gunsan-hirotsu-house-69-80` | 12 equirect_image JPEGs, order 334 (pano_sfm negative case) | 7680x3840 | n/a | 12 files | KOGL Type 1 | Korea Heritage Service |
 
 Source pages, which state each license:
 
@@ -59,6 +61,7 @@ python3 fixtures/mirror_fixture.py --id <kebab-id> --url <direct file URL> \
   --page-url <license page> --license "<name>" --license-url <url> \
   --author "<name>" --camera-model "<model>" --source-kind equirect_video \
   --content-type video/webm --verify --added-by <order>
+93f00dd71a133b2c8ecb627fafd9b509d7b999b6e1eb50a31a93fbf27f49461e  commons-hof-insta360-x6-7680.webm
 ```
 
 The manifest merge is guarded by the object's generation, so concurrent writers
