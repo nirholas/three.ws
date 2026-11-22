@@ -57,4 +57,6 @@ Defaults throughout (`--max-image-side 1600`, SH degree 3, holdout every 8th ima
 - Orientation: a 40k-splat subsample of garden-7000 `scene.spz` loaded in `/splat` with zero console
   errors and renders upright (lawn, table and vase seen from above after an orbit up). Full-size 3M-splat
   files cannot be rendered in headless swiftshader, so that check used the subsample.
+- The `preview.mp4` sizes predate 2af5a586b, which capped the encoder at CRF 23 under a 12 Mbps VBV
+  limit: the garden-7000 preview re-encodes to 30.0 MB (SSIM 0.922 against the file above).
 - `scene.spz` is SPZ version 4 (spz v3.0.0 library); `/splat` reads it without changes.
