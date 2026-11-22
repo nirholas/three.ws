@@ -361,6 +361,42 @@ def test_split_pair_video_end_to_end(tmp_path, capsys):
     assert all({"stage", "progress"} == set(ln) for ln in lines)
 
 
+def test_sample_indices_keep_the_first_frame_of_each_output_interval():
+    from pano_stitch.video import sample_indices
+
+    assert sample_indices(50, 25.0, 2.0) == [0, 13, 25, 38]
+    assert sample_indices(10, 30.0, None) == list(range(10))
+    assert sample_indices(10, 30.0, 60.0) == list(range(10))
+    assert sample_indices(1808, 30000 / 1001, 2.0)[:3] == [0, 15, 30]
+    assert len(sample_indices(1808, 30000 / 1001, 2.0)) == 121
+
+
+@needs_ffmpeg
+def test_fps_stitches_only_the_sampled_frames_and_keeps_the_lenses_in_step(tmp_path):
+    # Every source frame is a flat grey of 16 + 4 x its index (inside TV range), in both lenses, so the
+    # stitched frames show exactly which source frames were kept.
+    a = tmp_path / "VID_20240101_101010_00_001.insv"
+    b = tmp_path / "VID_20240101_101010_10_001.insv"
+    for p in (a, b):
+        run_ffmpeg(["-f", "lavfi", "-i", "color=c=gray:size=320x320:rate=25:duration=2", "-f", "lavfi", "-i", "sine=duration=2",
+                    "-vf", "geq=lum='16+N*4':cb=128:cr=128", "-c:v", "libx264", "-qp", "0", "-pix_fmt", "yuv420p", "-c:a", "aac",
+                    "-shortest", "-f", "mp4", str(p)])
+    with open(a, "ab") as f:
+        f.write(X3.read_bytes())
+    out = tmp_path / "out"
+    assert run(["--input", f"{a},{b}", "--out", str(out), "--max-width", "320", "--fps", "2"]) == 0
+    rep = json.loads((out / "stitch.json").read_text())
+    assert rep["frames"] == 4 and rep["fps"] == 2.0
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(out / "equirect.mp4"), "-vf", "crop=32:32:144:64,extractplanes=y", "-f", "rawvideo", "-pix_fmt", "gray", "-"],
+                         capture_output=True, check=True).stdout
+    lum = [float(np.frombuffer(raw[i * 1024:(i + 1) * 1024], np.uint8).mean()) for i in range(len(raw) // 1024)]
+    assert len(lum) == 4
+    assert [round((v - 16) / 4) for v in lum] == [0, 13, 25, 38]
+    probe = json.loads(subprocess.run(["ffprobe", "-v", "error", "-print_format", "json", "-show_streams", str(out / "equirect.mp4")],
+                                      capture_output=True, text=True).stdout)
+    assert {s["codec_type"] for s in probe["streams"]} == {"video"}
+
+
 @needs_ffmpeg
 def test_missing_imu_is_reported_as_a_warning_not_a_failure(tmp_path):
     t = T.read_trailer(X3)

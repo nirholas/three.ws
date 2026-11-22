@@ -187,6 +187,10 @@ def run_pipeline(
                 args += ["--trim-start", str(req.trim_start_s)]
             if req.trim_end_s is not None:
                 args += ["--trim-end", str(req.trim_end_s)]
+            if req.task == "splat":
+                # pano_sfm samples the equirect at the preset rate, so warping the
+                # other frames only burns GPU time; a stitch task keeps them all.
+                args += ["--fps", str(preset["fps"])]
         progress.update("stitch", "stitch", 0.0)
         with timed("stitch"):
             guard(lambda: runner.run("pano_stitch", args, lambda _s, f: progress.update("stitch", "stitch", f)))

@@ -26,6 +26,7 @@ def parse_args(argv):
     p.add_argument("--max-width", type=int, default=7680, help="cap on the output width in pixels (default 7680)")
     p.add_argument("--trim-start", type=float, default=None, help="seconds to drop from the start")
     p.add_argument("--trim-end", type=float, default=None, help="seconds to drop from the end")
+    p.add_argument("--fps", type=float, default=None, help="stitch only one frame per 1/FPS seconds (default: every frame); the output plays at FPS and has no audio")
     p.add_argument("--backend", choices=("auto", "cpu", "cuda"), default="auto", help="where the per frame warp runs")
     return p.parse_args(argv)
 
@@ -46,6 +47,8 @@ def run(argv):
     try:
         if args.max_width < 256:
             raise UnsupportedInput("bad_arguments", "--max-width must be at least 256.")
+        if args.fps is not None and not args.fps > 0:
+            raise UnsupportedInput("bad_arguments", "--fps must be greater than zero.")
         os.makedirs(args.out, exist_ok=True)
         source = open_source(split_paths(args.input))
         if source.photo:
@@ -56,7 +59,7 @@ def run(argv):
             from .video import emit_progress, stitch_video
 
             emit_progress("stitch", 0.0)
-            result = stitch_video(source, args.out, args.max_width, args.level_horizon, args.trim_start, args.trim_end, args.backend)
+            result = stitch_video(source, args.out, args.max_width, args.level_horizon, args.trim_start, args.trim_end, args.backend, args.fps)
         from .report import build_report, write_report
 
         write_report(args.out, build_report(source, result))

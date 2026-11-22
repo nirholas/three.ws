@@ -231,6 +231,9 @@ def test_splat_from_insv_pair_stitches_first(http_files, fake_stages, mgr, tmp_p
     assert "--trim-start" not in made[1]["argv"]
     assert made[1]["argv"][made[1]["argv"].index("--input") + 1].endswith("equirect.mp4")
     assert body["result"]["stats"]["stitch"]["camera_model"] == "X5"
+    # A splat only uses the frames pano_sfm samples, so the stitcher warps just those.
+    assert stitch[stitch.index("--fps") + 1] == "2"
+    assert made[1]["argv"][made[1]["argv"].index("--fps") + 1] == "2"
 
 
 def test_splat_from_equirect_images_passes_a_directory(http_files, fake_stages, mgr, tmp_path):
@@ -248,6 +251,14 @@ def test_stitch_task_returns_only_equirect(http_files, fake_stages, mgr, tmp_pat
     assert body["result"]["equirect_url"].endswith("equirect.jpg")
     assert "ply_url" not in body["result"]
     assert [c["module"] for c in calls(tmp_path)] == ["pano_stitch"]
+    assert "--fps" not in calls(tmp_path)[0]["argv"]
+
+
+def test_stitch_task_on_video_keeps_every_frame(http_files, fake_stages, mgr, tmp_path):
+    urls = [http_files + "/raw.insv", http_files + "/raw.insv?part=2"]
+    tid = mgr.submit(req(task="stitch", source_kind="insv", source_url=None, source_urls=urls), urls)
+    assert wait_for(mgr, tid)["status"] == "succeeded"
+    assert "--fps" not in calls(tmp_path)[0]["argv"]
 
 
 def test_stage_failure_surfaces_code_and_message_unchanged(http_files, fake_stages, mgr, monkeypatch):

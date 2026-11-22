@@ -1,4 +1,5 @@
-"""Video path: decode both lenses with ffmpeg, stitch every frame, encode with ffmpeg."""
+"""Video path: decode both lenses with ffmpeg, stitch every frame (or one per output
+interval when an output rate is asked for), encode with ffmpeg."""
 
 import json
 import math
@@ -38,17 +39,48 @@ def trim_window(source, trim_start, trim_end):
     return start, end - start
 
 
-def _decode_cmd(path, stream, start, duration, width, height, pix):
+# Added before the floor so a frame that lands exactly on an interval boundary
+# is kept the same way in Python and in ffmpeg's expression evaluator.
+_SAMPLE_EPS = 1e-9
+
+
+def sample_ratio(src_fps, out_fps):
+    """Output frames per source frame, or None when every frame is kept."""
+    if not out_fps or not src_fps or out_fps >= src_fps:
+        return None
+    return float(out_fps) / float(src_fps)
+
+
+def sample_indices(count, src_fps, out_fps):
+    """Source frame indices kept at `out_fps`: the first frame of each output interval.
+
+    Frame i is kept when floor(i * R) steps up from frame i - 1, with R the
+    output to source rate ratio. The decoder applies the same rule through
+    ffmpeg's select filter, so the indices name exactly the frames it emits.
+    """
+    ratio = sample_ratio(src_fps, out_fps)
+    if ratio is None:
+        return list(range(count))
+    return [i for i in range(count) if math.floor(i * ratio + _SAMPLE_EPS) > math.floor((i - 1) * ratio + _SAMPLE_EPS)]
+
+
+def _decode_cmd(path, stream, start, duration, width, height, pix, ratio=None):
+    scale = f"scale={width}:{height}:flags=area:in_color_matrix=bt709"
+    vf = scale
+    passthrough = []
+    if ratio is not None:
+        vf = f"select='gt(floor(n*{ratio!r}+{_SAMPLE_EPS!r}),floor((n-1)*{ratio!r}+{_SAMPLE_EPS!r}))',{scale}"
+        passthrough = ["-fps_mode", "passthrough"]
     return [
         "ffmpeg", "-v", "error", "-nostdin", "-ss", f"{start:.6f}", "-i", path, "-map", f"0:v:{stream}", "-t", f"{duration:.6f}",
-        "-vf", f"scale={width}:{height}:flags=area:in_color_matrix=bt709", "-pix_fmt", pix, "-f", "rawvideo", "-",
+        "-vf", vf, *passthrough, "-pix_fmt", pix, "-f", "rawvideo", "-",
     ]
 
 
 class Reader:
     """Yields [lens0, lens1] frames as arrays."""
 
-    def __init__(self, source, start, duration, lens_side, ten_bit):
+    def __init__(self, source, start, duration, lens_side, ten_bit, ratio=None):
         self.pix = "rgb48le" if ten_bit else "rgb24"
         self.dtype = np.uint16 if ten_bit else np.uint8
         self.side = lens_side
@@ -56,11 +88,11 @@ class Reader:
         self.bytes_per = lens_side * lens_side * 3 * (2 if ten_bit else 1)
         self.procs = []
         if self.sbs:
-            cmd = _decode_cmd(source.files[0], 0, start, duration, 2 * lens_side, lens_side, self.pix)
+            cmd = _decode_cmd(source.files[0], 0, start, duration, 2 * lens_side, lens_side, self.pix, ratio)
             self.procs.append(subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
         else:
             for file_idx, stream in source.lens_inputs:
-                cmd = _decode_cmd(source.files[file_idx], stream, start, duration, lens_side, lens_side, self.pix)
+                cmd = _decode_cmd(source.files[file_idx], stream, start, duration, lens_side, lens_side, self.pix, ratio)
                 self.procs.append(subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
     def _read(self, proc, count):
@@ -126,13 +158,13 @@ def encoder_plan(ten_bit, backend_name, out_w, out_h):
     return ["-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p"], "libx264"
 
 
-def open_encoder(out_path, source, start, duration, out_w, out_h, fps, ten_bit, backend_name):
+def open_encoder(out_path, source, start, duration, out_w, out_h, fps, ten_bit, backend_name, keep_audio=True):
     codec_args, codec = encoder_plan(ten_bit, backend_name, out_w, out_h)
     cmd = [
         "ffmpeg", "-v", "error", "-nostdin", "-y", "-f", "rawvideo", "-pix_fmt", "rgb48le" if ten_bit else "rgb24",
         "-s", f"{out_w}x{out_h}", "-r", f"{fps:.6f}", "-i", "-",
     ]
-    audio = source.has_audio
+    audio = source.has_audio and keep_audio
     if audio:
         cmd += ["-ss", f"{start:.6f}", "-t", f"{duration:.6f}", "-i", source.files[0]]
     cmd += ["-map", "0:v:0"]
@@ -183,7 +215,7 @@ def build_rotations(source, times, level, warnings):
     return imu_mod.frame_rotations(times, t, quats), len(t), True
 
 
-def stitch_video(source, out_dir, max_width, level, trim_start, trim_end, backend_pref="auto"):
+def stitch_video(source, out_dir, max_width, level, trim_start, trim_end, backend_pref="auto", out_fps=None):
     warnings = []
     cal = calibration_from_metadata(source.trailer.metadata)
     native, out_w, out_h = plan_size(source, max_width)
@@ -193,18 +225,24 @@ def stitch_video(source, out_dir, max_width, level, trim_start, trim_end, backen
     ten_bit = info.ten_bit
     scale = out_w / native
     lens_side = max(64, int(round(info.height * min(1.0, scale) / 2.0)) * 2)
-    expected = max(1, int(math.floor(duration * fps + 1e-6)))
+    source_frames = max(1, int(math.floor(duration * fps + 1e-6)))
     start_frame = int(round(start * fps))
-    times = frame_times(source.trailer, start_frame, expected, fps, warnings)
+    # A sampled stitch (a splat only needs the frames SfM will look at) warps one
+    # frame per output interval and drops the audio, which no longer lines up.
+    ratio = sample_ratio(fps, out_fps)
+    kept = sample_indices(source_frames, fps, out_fps)
+    expected = len(kept)
+    out_rate = float(out_fps) if ratio is not None else fps
+    times = frame_times(source.trailer, start_frame, source_frames, fps, warnings)[kept]
     rotations, imu_samples, levelled = build_rotations(source, times, level, warnings)
 
     backend = pick_backend(backend_pref)
     geo = Geometry(out_w, out_h)
     gains = GainState()
     peak = 65535 if ten_bit else 255
-    reader = Reader(source, start, duration, lens_side, ten_bit)
+    reader = Reader(source, start, duration, lens_side, ten_bit, ratio)
     out_path = os.path.join(out_dir, "equirect.mp4")
-    encoder, codec = open_encoder(out_path, source, start, duration, out_w, out_h, fps, ten_bit, backend.name)
+    encoder, codec = open_encoder(out_path, source, start, duration, out_w, out_h, out_rate, ten_bit, backend.name, keep_audio=ratio is None)
     frames_done = 0
     static = not levelled
     coarse_static = None
@@ -245,7 +283,7 @@ def stitch_video(source, out_dir, max_width, level, trim_start, trim_end, backen
     if level and not levelled and not any(w.startswith(("no_imu", "imu_out")) for w in warnings):
         warnings.append("not_levelled: the horizon was not levelled")
     return {
-        "width": out_w, "height": out_h, "fps": round(fps, 4), "duration_s": round(frames_done / fps, 3), "frames": frames_done,
+        "width": out_w, "height": out_h, "fps": round(out_rate, 4), "duration_s": round(frames_done / out_rate, 3), "frames": frames_done,
         "horizon_leveled": levelled, "imu_samples": imu_samples, "calibration_model": cal.model, "warnings": warnings,
         "backend": backend.name, "encoder": codec,
     }

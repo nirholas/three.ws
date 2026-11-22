@@ -4,12 +4,12 @@ Turns raw Insta360 `.insv` video and `.insp` photo files into level equirect vid
 
 ```
 python -m pano_stitch --input <file.insv[,file2.insv] | file.insp> --out <dir> \
-    [--level-horizon] [--max-width 7680] [--trim-start S] [--trim-end S] [--backend auto|cpu|cuda]
+    [--level-horizon] [--max-width 7680] [--trim-start S] [--trim-end S] [--fps F] [--backend auto|cpu|cuda]
 ```
 
 Outputs in `--out`: `equirect.mp4` or `equirect.jpg`, and `stitch.json` with `camera_model, lens_layout (two_track | side_by_side | split_pair), calibration_model (equidistant | mei | mei_r5), width, height, fps, duration_s, frames, horizon_leveled, imu_samples, warnings[]`. Progress goes to stdout as JSON lines `{"stage", "progress"}`. Exit codes: 0 success, 1 internal, 2 unsupported input (`unsupported_camera` names the model string, also `no_insta360_trailer`, `bad_pair`, `no_calibration`), 3 corrupt or unreadable input. On failure the last stderr line is one JSON object `{"error", "message"}`.
 
-`--trim-end` is seconds removed from the end. Trimming seeks and stops the decoder, so the unused part is never decoded or encoded. A split pair is passed as two comma separated paths in any order (paired by name, falling back to trailer presence when names were lost).
+`--trim-end` is seconds removed from the end. Trimming seeks and stops the decoder, so the unused part is never decoded or encoded. `--fps F` (video only, below the source rate) stitches one frame per 1/F seconds: frame i is kept when `floor(i * F / source_fps)` steps up, both lens decoders apply that rule through ffmpeg's `select` filter, and only those frames are warped. The output plays at F, has no audio, and `stitch.json` reports `fps` = F. The splat pipeline passes its preset rate, because `pano_sfm` samples the equirect at that rate anyway; a 60 s X3 clip (29.97 fps) at the standard preset warps 120 frames instead of 1,798. A stitch task keeps every frame and the audio. A split pair is passed as two comma separated paths in any order (paired by name, falling back to trailer presence when names were lost).
 
 ## Pipeline
 
