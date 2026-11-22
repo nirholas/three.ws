@@ -79,8 +79,8 @@ def load(cell, name):
     return json.load(open(path)) if os.path.exists(path) else {}
 mb = lambda b: f'{b / 1e6:.1f} MB' if b else '-'
 print(f'run {run_id}  gs://three-ws-pano-captures/splat_train-measure/{run_id}/')
-print('| scene | iterations | PSNR | SSIM | Gaussians | scene.ply | scene.spz | preview.mp4 | train s | splat_train s | task wall s (L4 GPU-s) | peak GPU GB | exit |')
-print('|---|---|---|---|---|---|---|---|---|---|---|---|---|')
+print('| scene | iterations | PSNR | SSIM | Gaussians | scene.ply | scene.spz | preview.mp4 | train s | splat_train s | fetch s | splat_train wall s | peak GPU GB | exit |')
+print('|---|---|---|---|---|---|---|---|---|---|---|---|---|---|')
 cells = [c for c in os.listdir(root) if re.fullmatch(r'.+-\d+', c) and os.path.isdir(os.path.join(root, c))]
 for cell in sorted(cells, key=lambda c: (int(c.rsplit('-', 1)[1]), c)):
     scene, iters = cell.rsplit('-', 1)
@@ -88,8 +88,9 @@ for cell in sorted(cells, key=lambda c: (int(c.rsplit('-', 1)[1]), c)):
     g = tj.get('gaussians')
     print(f"| {scene} | {iters} | {tj.get('psnr_holdout', '-')} | {tj.get('ssim_holdout', '-')} | {f'{g:,}' if g else '-'} | "
           f"{mb(tj.get('bytes_ply'))} | {mb(tj.get('bytes_spz'))} | {mb(sizes.get(cell))} | "
-          f"{tj.get('train_seconds', '-')} | {tj.get('duration_s', '-')} | {ex.get('wall_s', '-')} | {tj.get('peak_gpu_gb', '-')} | {ex.get('exit', '-')} |")
+          f"{tj.get('train_seconds', '-')} | {tj.get('duration_s', '-')} | {ex.get('fetch_s', '-')} | {ex.get('wall_s', '-')} | {tj.get('peak_gpu_gb', '-')} | {ex.get('exit', '-')} |")
 PY
+  echo "Billed L4 seconds per task (container start to exit): gcloud run jobs executions tasks list --execution <EXECUTION> --project $PROJECT --region $REGION"
   rm -rf "$dir"
 }
 

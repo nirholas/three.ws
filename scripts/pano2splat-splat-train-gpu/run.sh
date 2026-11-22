@@ -41,7 +41,7 @@ python -m splat_train --colmap "$work/colmap" --out "$work/out" --iterations "$i
 code=$?
 wait
 t2=$(date +%s)
-echo "{\"task\":\"$name\",\"exit\":$code,\"wall_s\":$((t2 - t1))}" | tee "$work/out/exit.json"
+echo "{\"task\":\"$name\",\"exit\":$code,\"fetch_s\":$((t1 - t0)),\"wall_s\":$((t2 - t1))}" | tee "$work/out/exit.json"
 
 mkdir -p "$dest"
 cp -r "$work/out/." "$dest/"
