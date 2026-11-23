@@ -768,7 +768,7 @@
 		"@napi-rs/canvas": "1.1.1",
 		"@neondatabase/serverless": "^1.2.1",
 		"@neynar/nodejs-sdk": "^3.177.0",
-		"@nirholas/pump-sdk": "^3.0.0",
+		"@nirholas/pump-sdk": "^3.1.0",
 		"@noble/curves": "^2.2.0",
 		"@noble/hashes": "^1.8.0",
 		"@node-saml/node-saml": "^5.2.0",
