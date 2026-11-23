@@ -883,7 +883,7 @@
 		"p-limit": "^7.3.2",
 		"papaparse": "^5.7.1",
 		"postprocessing": "^6.39.5",
-		"puppeteer-core": "^25.17.0",
+		"puppeteer-core": "^25.18.1",
 		"qrcode": "^1.5.4",
 		"resend": "^6.38.1",
 		"sas-lib": "^1.0.10",
