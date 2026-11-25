@@ -159,7 +159,9 @@ in [prompts/finish/_context/grok-OWNER-ACTIONS.md](../../prompts/finish/_context
   `node scripts/grok-startups-announce-card.mjs` renders the announcement images into
   `public/x-media/grok-startups-announce/`: the program card in the format SpaceXSI members
   post (`head.png` 16:9, `head-square.png` 1:1, badge "Super Intelligence | Grok for Startups")
-  and the plain logo pairing (`pair.png`, `pair-dark.png`). If SpaceXSI sends an official
+  and the plain logo pairing (`pair.png`, `pair-dark.png`); `--motion` renders the program cards
+  as seamless 6 s loops (`head.mp4` 1920x1080, `head-square.mp4` 1080x1080, needs ffmpeg) for X,
+  which autoplays and loops them. If SpaceXSI sends an official
   program badge, it replaces the badge block in that script.
 - **X automation rules.** Reply only when addressed, carry the automated-account label, never
   bulk-tag accounts. A share intent is a user action, never an automated post.
