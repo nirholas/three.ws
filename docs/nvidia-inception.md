@@ -33,7 +33,7 @@ be set to **Shipping**, distinguish technology currently used from technology on
 considered, include supporting Product Description and Technical Details, and carry a
 product logo and brand color.
 
-**Where we are.** three.ws filed its product record, **three.ws 3D AI Studio**, on
+**Where we are.** three.ws filed its product record (first named "three.ws 3D AI Studio", renamed **three.ws Forge** on 2026-11-25 at NVIDIA's request) on
 2026-10-25: Shipping, GPU Accelerated, with the NVIDIA technology it runs in production (CUDA
 Toolkit, cuDNN, cuBLAS, CUDA Python, Kaolin, Riva, Audio2Face) listed separately from what is
 only under evaluation (TensorRT, Triton Inference Server, Omniverse Kit). On 2026-11-02 we

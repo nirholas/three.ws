@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "The text and image to 3D page now carries its product name, three.ws Forge",
+			"summary": "The /forge page heading and its browser, search and share titles now read three.ws Forge, the same name the desktop build already uses, instead of a bare Forge. It is the same free text and photo to 3D studio, now under one name everywhere it appears.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-25",
 			"title": "An avatar whose model file was deleted now reports not found instead of a server error",
 			"summary": "When the main storage credential is rejected and neither the backup bucket nor the public storage domain has an avatar's model, the model endpoint now answers 404 not found. It used to answer 502, which told viewers and embeds to keep retrying a file that no longer exists.",
 			"tags": [

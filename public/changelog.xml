@@ -287,6 +287,14 @@
 			<description>curl three.ws/tty/walk plays a person walking in profile. The same stream now has a flock of birds, a lit torus, a raymarched shader, a lathed solid, and a point garden whose banner states the real point count. A parade plays two walks in turn, meet draws both characters in one frame, and say puts your words above the walker. Glyph styles are half-block, braille, density, ASCII, a green matrix tint, and points.</description>
 		</item>
 		<item>
+			<title>The text and image to 3D page now carries its product name, three.ws Forge</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-25:The text and image to 3D page now carries its product name, three.ws Forge</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The /forge page heading and its browser, search and share titles now read three.ws Forge, the same name the desktop build already uses, instead of a bare Forge. It is the same free text and photo to 3D studio, now under one name everywhere it appears.</description>
+		</item>
+		<item>
 			<title>Token holder and due-diligence panels load while busy Solana nodes refuse</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Token holder and due-diligence panels load while busy Solana nodes refuse</guid>

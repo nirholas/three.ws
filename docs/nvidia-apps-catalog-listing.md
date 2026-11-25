@@ -23,6 +23,13 @@ company-profile alignment in section 2 is still open.
 The only remaining step is NVIDIA's periodic review. Check the public catalog monthly. The
 history below records the state before this save.
 
+**2026-11-25: NVIDIA App Publishing is reviewing the record.** They asked whether we want a
+catalog listing and noted that the record's name, "three.ws 3D AI Studio", does not appear
+on `/forge`, which says "Forge". The product name is now **three.ws Forge**, and `/forge`
+uses it in its heading and page title. Two steps remain before replying: deploy, then
+rename the portal record. The reply text and the send steps are in
+[nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md#app-publishing-reply-2026-11-25).
+
 **Catalog checks since the save:**
 
 - 2026-11-02: the Inception startup catalog search for `three` returns 4 items (Deepwave
@@ -86,7 +93,7 @@ The old 2026-09-25 no-response follow-up is cancelled: NVIDIA answered on 2026-0
 
 | Portal field | Value |
 |---|---|
-| Product/Service Name | **three.ws 3D AI Studio** |
+| Product/Service Name | **three.ws Forge** (renamed from "three.ws 3D AI Studio" on 2026-11-25 at NVIDIA's request; see below) |
 | Product/Service Webpage | **https://three.ws/forge** |
 | Product/Service Type | **Application** |
 | Development Stage | **Shipping** |
@@ -203,7 +210,7 @@ no further catalog email to send unless NVIDIA answers or requests information.
 
 ## Core fields
 
-**App name:** three.ws 3D AI Studio
+**App name:** three.ws Forge
 
 **Company name:** three.ws LLC
 
@@ -341,7 +348,7 @@ separate digital-human record.
 ## Submission checklist
 
 1. Log in to the Inception portal and edit the existing `three.ws` product.
-2. Change its name to **three.ws 3D AI Studio** and its URL to **https://three.ws/forge**.
+2. Change its name to **three.ws Forge** and its URL to **https://three.ws/forge**.
 3. Verify Development Stage is **Shipping** and acceleration is **GPU Accelerated**.
 4. Replace Product Description and Technical Details with the character-counted blocks above.
 5. Move Riva, Audio2Face, and applicable NIM services to Currently Used; retain the verified

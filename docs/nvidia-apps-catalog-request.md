@@ -26,6 +26,12 @@ The Inception portal has no "publish to the catalog" control. A product record m
   complete and when the next review runs, reports the SimReady library and the site-wide
   Inception badge, and repeats the Showcase and ACE questions. Announced to the community in
   the changelog the same day. No further email is due until NVIDIA answers.
+- **NVIDIA App Publishing asked two questions:** 2026-11-25 (email dated 2026-11-24, from
+  Jiyeon on the AppPublishingRequests team, after the program forwarded our 2026-10-25
+  reply). Are we asking for a catalog listing, and what exact product name should show,
+  with a page that uses it? The record said "three.ws 3D AI Studio", but /forge only said
+  "Forge". Answer and send steps in
+  [App Publishing reply, 2026-11-25](#app-publishing-reply-2026-11-25).
 
 ## What the reply changed
 
@@ -333,6 +339,65 @@ Nicholas
 three.ws
 https://three.ws
 ```
+
+## App Publishing reply, 2026-11-25
+
+NVIDIA's App Publishing team (Jiyeon, AppPublishingRequests@exchange.nvidia.com) is reviewing
+the record for the catalog. They asked two things:
+
+1. Are we asking them to list three.ws in the Accelerated Apps Catalog?
+2. The record names the product "three.ws 3D AI Studio" and points to
+   `https://three.ws/forge`, but that page calls the product "Forge" and never says
+   "3D AI Studio". What exact name should they show, and which page on our site uses it?
+
+**Decision: the product name is "three.ws Forge".** "3D AI Studio" was a descriptive label
+that we only ever used in the portal. "three.ws Forge" is the name the product already uses
+across the site: the desktop build at `/forge-desktop`, the sitemap, the partners page, and
+the viewer. We dropped the label rather than adding it to the site, because a catalog entry
+should carry the name visitors actually see.
+
+To make the product page match, `/forge` now uses the name exactly. Its heading and its
+`<title>`, `og:title`, `twitter:title`, and JSON-LD `name` all read
+"three.ws Forge" (`pages/forge.html` plus the `forge.*` keys in `public/locales/en.json`).
+
+### Send steps (in order)
+
+1. **Deploy** so the live `/forge` shows the new name (`npm run deploy:gcp:full`, owner
+   approval). Before you send, check it:
+   `curl -s https://three.ws/forge | grep -o "<title[^>]*>[^<]*"` should print
+   `three.ws Forge · Text & Image → 3D`, and the page heading should read **three.ws Forge**.
+   Reviewers read the rendered page in English, and the runtime English catalog comes from
+   `/api/locale`, so the new name only shows once the deploy is live.
+2. **Rename the portal record:** Portal > Profile > Products > edit `three.ws 3D AI Studio`,
+   set Product/Service Name to **three.ws Forge**, and keep the URL as
+   `https://three.ws/forge`. Save it.
+3. **Reply all** in the same thread, so the reply reaches AppPublishingRequests and the
+   Inception program together:
+
+> Hi Jiyeon,
+>
+> Thank you for reviewing the record.
+>
+> 1. Yes. Please consider three.ws for listing in the NVIDIA Accelerated Apps Catalog.
+>
+> 2. The product name is **three.ws Forge**. "three.ws 3D AI Studio" was a descriptive label
+> I used only in the portal. I have renamed the portal record to three.ws Forge so the two
+> match.
+>
+> The name is used on the product page in the record, https://three.ws/forge. It is the
+> page heading and the page title ("three.ws Forge · Text & Image to 3D"). The desktop
+> build of the same product uses it too, at https://three.ws/forge-desktop.
+>
+> Please let me know if you need anything else for the listing.
+>
+> Best regards,
+>
+> Nicholas Resendez
+> nich@three.ws
+> three.ws
+
+4. Record the send date in the header bullets at the top of this doc. Then, once a month,
+   search the public catalog for `three.ws Forge`.
 
 ## After you send
 

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T22:10:14.250Z",
+	"generated_at": "2026-11-25T22:14:24.918Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4739,
+	"total": 4740,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -357,6 +357,16 @@
 			"link": "/tty",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "The text and image to 3D page now carries its product name, three.ws Forge",
+			"summary": "The /forge page heading and its browser, search and share titles now read three.ws Forge, the same name the desktop build already uses, instead of a bare Forge. It is the same free text and photo to 3D studio, now under one name everywhere it appears.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1548,17 +1558,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Written security policies and an evidence collector",
-			"summary": "The trust center now links the full set of written security policies (information security, access control, change management, patching, logging, backup and recovery, retention, secure development, suppliers) and a risk register that lists the gaps we have not closed. The off-provider backup row is now marked in place, with the measured 215 second recovery time.",
-			"link": "/trust",
-			"tags": [
-				"security",
-				"docs"
 			]
 		}
 	]
