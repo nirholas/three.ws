@@ -132,13 +132,14 @@ in [prompts/finish/_context/grok-OWNER-ACTIONS.md](../../prompts/finish/_context
 - **Marks are nominative.** Grok, xAI, SpaceXSI, Cursor, X, Starship and Raptor are named only to
   describe compatibility or a real subject. No xAI, SpaceX or X logo is used unless a published
   brand kit allows it. The rocket cutaway describes the engine cycle generically and cites public
-  sources; it is not presented as an official SpaceX asset. The Grok logo the owner approved for
-  announcements is `public/marks/grok-full-logomark-light.svg`, and the SpaceXAI wordmark is
-  `public/marks/spacexai-wordmark-white-transparent.svg`. Both are unaltered files from the
+  sources; it is not presented as an official SpaceX asset. The Grok logos the owner approved for
+  announcements are `public/marks/grok-full-logomark-dark.svg` (for light backgrounds) and
+  `public/marks/grok-full-logomark-light.svg` (for dark ones), unaltered files from the
   `SpaceXAI_Grok_Assets` kit linked at
   [x.ai/legal/brand-guidelines](https://x.ai/legal/brand-guidelines). Those guidelines
-  require it exactly as provided, with nothing beside it that reads as a combined mark; the
-  announcement card (`node scripts/grok-startups-announce-card.mjs`) follows that.
+  require the logo exactly as provided, with nothing beside it that reads as a combined mark.
+  The announcement card (`node scripts/grok-startups-announce-card.mjs`, `--dark` for the dark
+  version) follows that: our lockup and the Grok logo split by a rule, with no text.
 - **X automation rules.** Reply only when addressed, carry the automated-account label, never
   bulk-tag accounts. A share intent is a user action, never an automated post.
 - **Solana first, GCP preferred.** Grok runs where it is the best or the only source; GCP lanes
