@@ -95,6 +95,14 @@
 			<description>/api/crypto/holders, /security, /due-diligence and /token now read a token passed as ?mint=, the name /bonding and /whales already use, instead of answering 400 missing_address for a mint the caller plainly sent.</description>
 		</item>
 		<item>
+			<title>Delegation revocations stay indexed on busy chain days</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Delegation revocations stay indexed on busy chain days</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The ERC-7710 delegation indexer skipped every event from delegations three.ws never issued only after paying an RPC call for each one, so a busy block range on the shared DelegationManager outlasted the five-minute cron and replayed forever. It now discards foreign events from the log itself, so revocations and redemptions of your agent's delegations are recorded every tick.</description>
+		</item>
+		<item>
 			<title>Exchange links in a coin's Markets table open the right venue</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Exchange links in a coin's Markets table open the right venue</guid>

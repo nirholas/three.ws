@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T21:08:50.498Z",
+	"generated_at": "2026-11-25T21:20:09.110Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -111,6 +111,16 @@
 			"type": "update",
 			"title": "Crypto Data API token endpoints accept ?mint= as well as ?address=",
 			"summary": "/api/crypto/holders, /security, /due-diligence and /token now read a token passed as ?mint=, the name /bonding and /whales already use, instead of answering 400 missing_address for a mint the caller plainly sent.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Delegation revocations stay indexed on busy chain days",
+			"summary": "The ERC-7710 delegation indexer skipped every event from delegations three.ws never issued only after paying an RPC call for each one, so a busy block range on the shared DelegationManager outlasted the five-minute cron and replayed forever. It now discards foreign events from the log itself, so revocations and redemptions of your agent's delegations are recorded every tick.",
 			"link": null,
 			"tags": [
 				"fix"

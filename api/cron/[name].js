@@ -1408,6 +1408,8 @@ async function idxIndexChain(chainId, contract, deadline = Date.now() + IDX_TIME
 	let revokedCount = 0;
 	let redeemedCount = 0;
 	let logErrorCount = 0;
+	let skippedForeign = 0;
+	let tracked = null;
 	let earlyExit = false;
 
 	while (fromBlock <= latestBlock) {
@@ -1475,6 +1477,18 @@ async function idxIndexChain(chainId, contract, deadline = Date.now() + IDX_TIME
 				break;
 			}
 			throw fetchErr;
+		}
+
+		// The DelegationManager is shared by every app built on ERC-7710, so most
+		// events in a batch belong to delegations this platform never issued.
+		// Drop those on a local decode before any RPC call or DB write: paying an
+		// eth_call per foreign redemption is what pushed busy batches past the
+		// route's 300s cap and replayed them every tick.
+		if (logs.length > 0) {
+			tracked ??= await idxTrackedDelegators(chainId);
+			const relevant = logs.filter((l) => idxIsTrackedLog(l, tracked));
+			skippedForeign += logs.length - relevant.length;
+			logs = relevant;
 		}
 
 		if (logs.length > 0) {
@@ -1585,8 +1599,44 @@ async function idxIndexChain(chainId, contract, deadline = Date.now() + IDX_TIME
 		revokedCount,
 		redeemedCount,
 		logErrorCount,
+		skippedForeign,
 		earlyExit,
 	};
+}
+
+// Every delegator address this platform holds a delegation from on the chain,
+// lowercased. Any status: a redemption of a revoked or expired delegation still
+// counts against its record.
+async function idxTrackedDelegators(chainId) {
+	const rows = await sql`
+		SELECT DISTINCT lower(delegator_address) AS delegator_address
+		FROM agent_delegations
+		WHERE chain_id = ${chainId}
+	`;
+	return new Set(rows.map((r) => String(r.delegator_address).toLowerCase()));
+}
+
+function idxTopicAddress(topic) {
+	return typeof topic === 'string' && topic.length === 66 ? '0x' + topic.slice(26).toLowerCase() : null;
+}
+
+// Whether a DelegationManager log can concern a delegation we track. Decided
+// from the log alone, with no RPC: DisabledDelegation indexes the delegator
+// (topics[2]); RedeemedDelegation indexes the chain's root delegator (topics[1])
+// and carries the redeemed leaf delegation in its data. A log that cannot be
+// classified is kept, so the per-log handler reports it instead of it vanishing.
+function idxIsTrackedLog(log, tracked) {
+	if (!tracked.size) return false;
+	const topic = log.topics?.[0];
+	if (topic === DISABLED_TOPIC) return tracked.has(idxTopicAddress(log.topics[2]));
+	if (topic !== REDEEMED_TOPIC) return true;
+	if (tracked.has(idxTopicAddress(log.topics[1]))) return true;
+	try {
+		const parsed = dmIface.parseLog({ topics: log.topics, data: log.data });
+		return tracked.has(String(parsed.args.delegation.delegator).toLowerCase());
+	} catch {
+		return true;
+	}
 }
 
 async function idxRpc(urls, method, params) {

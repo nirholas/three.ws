@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Delegation revocations stay indexed on busy chain days",
+			"summary": "The ERC-7710 delegation indexer skipped every event from delegations three.ws never issued only after paying an RPC call for each one, so a busy block range on the shared DelegationManager outlasted the five-minute cron and replayed forever. It now discards foreign events from the log itself, so revocations and redemptions of your agent's delegations are recorded every tick.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Avatar thumbnails render again while the storage signing key is refused",
 			"summary": "The thumbnail backfill read each model through a signed storage link, and while that signing key was refused every render failed and the avatar was retired after three tries. Models are now read through the storage fallback chain, so thumbnails keep filling in, and avatars retired by that outage are put back in the queue automatically.",
 			"tags": [

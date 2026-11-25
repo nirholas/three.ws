@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T21:08:50.550Z",
+	"generated_at": "2026-11-25T21:20:09.199Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4732,
+	"total": 4733,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -114,6 +114,16 @@
 			"type": "update",
 			"title": "Crypto Data API token endpoints accept ?mint= as well as ?address=",
 			"summary": "/api/crypto/holders, /security, /due-diligence and /token now read a token passed as ?mint=, the name /bonding and /whales already use, instead of answering 400 missing_address for a mint the caller plainly sent.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Delegation revocations stay indexed on busy chain days",
+			"summary": "The ERC-7710 delegation indexer skipped every event from delegations three.ws never issued only after paying an RPC call for each one, so a busy block range on the shared DelegationManager outlasted the five-minute cron and replayed forever. It now discards foreign events from the log itself, so revocations and redemptions of your agent's delegations are recorded every tick.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1549,16 +1559,6 @@
 			"title": "Parts you hide in the GLB editor stay hidden in the /viewer page",
 			"summary": "A part you hid in the GLB editor came back when the exported model was opened from a /viewer link, because that page's 3D engine ignores the standard hidden-node marker the editor writes. /viewer now reads the marker and keeps those parts hidden, with their size untouched, so the shared link shows exactly what you exported. Emissive glow already carried over and still does.",
 			"link": "/viewer",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-15",
-			"type": "update",
-			"title": "The site header fits on one row at every width",
-			"summary": "Signed in, the header could run past the right edge of the screen on laptops and small desktops: a long account name pushed the row wider than the window, and between tablet and desktop widths the Sign in and account buttons wrapped onto two lines. Your name now shortens with an ellipsis and shows in full when you hover it, the duplicate Dashboard link steps aside because your name already opens the dashboard, labels collapse to icons as the window narrows, and below 1080px the header switches to the menu button. The page no longer scrolls sideways at any width.",
-			"link": null,
 			"tags": [
 				"fix"
 			]
