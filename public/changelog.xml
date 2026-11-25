@@ -47,6 +47,14 @@
 			<description>Hugging Face stopped routing FLUX.1-schnell through nscale, so the second Hugging Face rung of the text-to-image ladder failed on every call. It now runs on WaveSpeed, which Hugging Face still maps to the model. /api/v1/ai/image?health=1 now asks each Hugging Face route whether it would actually serve, so an empty credit balance or a retired route shows as down with the reason instead of passing on a valid token. Images made on Hugging Face or the Livepeer network are now credited to that lane instead of to NVIDIA.</description>
 		</item>
 		<item>
+			<title>Exchange links in a coin's Markets table open the right venue</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Exchange links in a coin's Markets table open the right venue</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When a coin page's Markets table is served by a backup data source, each venue now links to its CoinGecko exchange profile, matched by id or name against CoinGecko's own exchange list. A venue with no clear match shows as plain text instead of a link to a page that could not load, and an exchange id that does not exist now answers not found instead of an upstream error.</description>
+		</item>
+		<item>
 			<title>Long-tail coin pages load during CoinGecko throttling, and Fear &amp; Greed has a working backup</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Long-tail coin pages load during CoinGecko throttling, and Fear &amp; Greed has a working backup</guid>

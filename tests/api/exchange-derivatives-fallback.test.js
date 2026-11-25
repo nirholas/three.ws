@@ -32,6 +32,7 @@ vi.mock('../../api/_lib/coingecko.js', () => ({
 }));
 
 const handler = (await import('../../api/coin/exchange.js')).default;
+const { resetGeckoExchangeCatalog } = await import('../../api/_lib/gecko-exchange-ids.js');
 
 const HOLLOW_SPOT = {
 	name: 'Acme Futures',
@@ -97,8 +98,15 @@ const notFound = () => {
 	return err;
 };
 
-beforeEach(() => {
+const throttled = () => {
+	const err = new Error('CoinGecko 429');
+	err.status = 429;
+	return err;
+};
+
+beforeEach(async () => {
 	geckoFetch.mockReset();
+	await resetGeckoExchangeCatalog();
 });
 
 describe('GET /api/coin/exchange namespace choice', () => {
@@ -153,5 +161,42 @@ describe('GET /api/coin/exchange namespace choice', () => {
 		const { res, body } = await call('nosuchvenue');
 		expect(res.statusCode).toBe(404);
 		expect(body.error).toBe('not_found');
+	});
+});
+
+// Measured 2026-11-25 in production: about 60 502s in three hours, nearly all
+// for ids CoinGecko does not have in either namespace (fallback Markets rows
+// linked CoinPaprika venue ids). The spot lookup 404'd, the derivatives lookup
+// was throttled, and a dead link alerted as an upstream outage. CoinGecko's
+// derivatives catalog settles which of the two it is.
+describe('GET /api/coin/exchange with a throttled derivatives lookup', () => {
+	const DERIVATIVES_CATALOG = [{ id: 'acme_futures', name: 'Acme Futures' }];
+	const route = ({ catalog }) => async (path) => {
+		if (path === '/derivatives/exchanges/list') {
+			if (catalog) return DERIVATIVES_CATALOG;
+			throw throttled();
+		}
+		if (path.startsWith('/derivatives/exchanges/')) throw throttled();
+		if (path.startsWith('/exchanges?')) return [];
+		throw notFound(); // spot namespace and its volume chart
+	};
+
+	it('404s an id the derivatives catalog does not list', async () => {
+		geckoFetch.mockImplementation(route({ catalog: true }));
+		const { res, body } = await call('pastevenue');
+		expect(res.statusCode).toBe(404);
+		expect(body.error).toBe('not_found');
+	});
+
+	it('still reports an outage for a listed derivatives venue it could not read', async () => {
+		geckoFetch.mockImplementation(route({ catalog: true }));
+		const { res } = await call('acme_futures');
+		expect(res.statusCode).toBe(502);
+	});
+
+	it('still reports an outage when the catalog cannot be read either', async () => {
+		geckoFetch.mockImplementation(route({ catalog: false }));
+		const { res } = await call('pastevenue');
+		expect(res.statusCode).toBe(502);
 	});
 });

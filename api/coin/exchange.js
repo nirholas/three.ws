@@ -16,6 +16,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch, htmlToText } from '../_lib/coingecko.js';
 import { fetchCoinPriceUsdOrNull } from '../_lib/market-fallbacks.js';
+import { isGeckoDerivativesVenue } from '../_lib/gecko-exchange-ids.js';
 
 const ID_RE = /^[a-z0-9_-]{1,60}$/i;
 const DAYS = new Set([1, 7, 14, 30, 90, 180, 365]);
@@ -245,7 +246,10 @@ export default wrap(async (req, res) => {
 		// derivatives one is still a real venue. Serve the thin record rather
 		// than turning a page that used to load into a 404.
 		if (spotOk) return serveSpot();
-		if (err?.status === 404) {
+		// The spot namespace already said 404. A throttled derivatives lookup
+		// only means "unknown" when CoinGecko's derivatives catalog lists the id;
+		// an id it does not list is a dead link, not an upstream outage.
+		if (err?.status === 404 || (await isGeckoDerivativesVenue(id)) === false) {
 			return error(res, 404, 'not_found', `no exchange found for "${id}"`);
 		}
 		return error(res, 502, 'upstream_error', 'exchange data is unavailable right now — retry shortly');

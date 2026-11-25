@@ -28,6 +28,7 @@ import {
 	isDexLookupAddress,
 	DEX_TICKER_MAX_ADDRESSES,
 } from '../_lib/coin-fallbacks.js';
+import { linkGeckoExchanges } from '../_lib/gecko-exchange-ids.js';
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const str = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -115,12 +116,12 @@ export default wrap(async (req, res) => {
 	} catch (err) {
 		if (err?.status === 404)
 			return error(res, 404, 'not_found', `no coin found for "${id}"`);
-		const tickers = await fetchFallbackTickers(id, { page });
+		const tickers = await linkGeckoExchanges(await fetchFallbackTickers(id, { page }));
 		if (tickers) {
 			console.warn(`[coin/tickers] ${id}: coingecko failed (${err?.status || err?.name}); served from coinpaprika`);
 			return json(res, 200, { tickers, page, count: tickers.length, source: 'coinpaprika' }, cacheHeaders);
 		}
-		const dexTickers = contracts.length ? await fetchDexTickers(contracts, { page }) : null;
+		const dexTickers = contracts.length ? await linkGeckoExchanges(await fetchDexTickers(contracts, { page })) : null;
 		if (dexTickers) {
 			console.warn(`[coin/tickers] ${id}: coingecko failed (${err?.status || err?.name}); served from dexscreener`);
 			return json(res, 200, { tickers: dexTickers, page, count: dexTickers.length, source: 'dexscreener' }, cacheHeaders);
