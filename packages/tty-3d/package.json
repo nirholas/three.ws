@@ -15,6 +15,8 @@
 		"./model": "./src/model.js",
 		"./raster": "./src/raster.js",
 		"./term": "./src/term.js",
+		"./scenes": "./src/scenes.js",
+		"./solid": "./src/solid.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {

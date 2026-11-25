@@ -17,7 +17,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { createRenderer, loadModel } from '../packages/tty-3d/src/index.js';
+import { createRenderer, createScene, isScene, loadModel, normalizeStyle } from '../packages/tty-3d/src/index.js';
 import { ansi, ColorMode } from '../packages/tty-3d/src/term.js';
 import { getAvatar } from './_lib/avatars.js';
 import { error, rateLimited, redirect, wantsHtmlNavigation, wrap } from './_lib/http.js';
@@ -79,6 +79,17 @@ export function colorModeFor(query, headers = {}) {
 	return ColorMode.ANSI256;
 }
 
+/**
+ * A path like /tty/walk arrives as avatar=walk. Those names are scenes, not
+ * avatar ids (ids are UUIDs). An explicit src= still wins: the caller named a
+ * model.
+ */
+export function sceneFromQuery(query) {
+	if (query.src) return null;
+	const name = String(query.scene || query.avatar || '').toLowerCase();
+	return isScene(name) ? name : null;
+}
+
 /** Resolve what to draw: an explicit GLB URL, an avatar id, or the default. */
 export async function resolveSource(query) {
 	if (query.src) {
@@ -112,11 +123,36 @@ async function loadSource(url) {
 	return loadModel(url);
 }
 
-function banner(label, info, cols) {
+function bannerLine(label, right, cols) {
 	const left = `three.ws  ${label}`;
-	const right = `${info.triangles.toLocaleString('en-US')} tris${info.skinned ? '  rigged' : ''}`;
 	const gap = Math.max(1, cols - left.length - right.length);
 	return `${left}${' '.repeat(gap)}${right}`;
+}
+
+function modelDetail(model) {
+	const tris = Math.round(model.triangleCount).toLocaleString('en-US');
+	return `${tris} tris${model.skinned ? '  rigged' : ''}`;
+}
+
+function readBodyText(req, limit = 256) {
+	if (req.method !== 'POST' && req.method !== 'PUT') return Promise.resolve('');
+	return new Promise((resolve) => {
+		const chunks = [];
+		let size = 0;
+		let settled = false;
+		const finish = () => {
+			if (settled) return;
+			settled = true;
+			resolve(Buffer.concat(chunks).toString('utf8'));
+		};
+		req.on('data', (chunk) => {
+			size += chunk.length;
+			if (size <= limit) chunks.push(Buffer.from(chunk));
+			else finish();
+		});
+		req.on('end', finish);
+		req.on('error', finish);
+	});
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -125,9 +161,18 @@ export default wrap(async function handler(req, res) {
 	const url = new URL(req.url, 'http://localhost');
 	const query = Object.fromEntries(url.searchParams);
 
+	const sceneName = sceneFromQuery(query);
+
 	// A browser that lands here would see escape codes as literal mojibake, so
-	// send it somewhere that explains the trick instead.
+	// send it somewhere that explains the trick instead. A scene keeps its name
+	// so the page can open the same picture.
 	if (wantsHtmlNavigation(req) && !query.raw) {
+		if (sceneName) {
+			const target = new URLSearchParams({ scene: sceneName });
+			if (query.text) target.set('text', String(query.text).slice(0, 42));
+			if (query.style) target.set('style', normalizeStyle(query.style));
+			return redirect(res, `/tty?${target}`, 302);
+		}
 		const to = query.avatar ? `/tty?avatar=${encodeURIComponent(String(query.avatar))}` : '/tty';
 		return redirect(res, to, 302);
 	}
@@ -135,6 +180,48 @@ export default wrap(async function handler(req, res) {
 	const rate = await limits.ttyIp(clientIp(req) || 'anon');
 	if (!rate.success) {
 		return rateLimited(res, rate, `Too many terminal renders. Limit: ${rate.limit} per 10m.`);
+	}
+
+	const cols = clampInt(query.w ?? query.cols, MIN_COLS, MAX_COLS, 76);
+	const rows = clampInt(query.h ?? query.rows, MIN_ROWS, MAX_ROWS, 30);
+	const fpsDefault = sceneName === 'shader' ? 8 : sceneName === 'splats' ? 12 : 18;
+	const fps = clampInt(query.fps, 4, 30, fpsDefault);
+	const frames = clampInt(query.frames, 1, Math.min(MAX_FRAMES, fps * MAX_SECONDS), fps * 8);
+	const style = normalizeStyle(query.style);
+	const camera = {
+		yaw: query.yaw === undefined ? undefined : clampFloat(query.yaw, -6.3, 6.3, undefined),
+		pitch: query.pitch === undefined ? undefined : clampFloat(query.pitch, -1.4, 1.4, undefined),
+		zoom: query.zoom === undefined ? undefined : clampFloat(query.zoom, 0.3, 6, undefined),
+		spin: query.spin === undefined ? undefined : clampFloat(query.spin, -4, 4, undefined),
+	};
+
+	if (sceneName) {
+		let text = query.text ? String(query.text) : '';
+		if (!text) text = await readBodyText(req);
+		let scene;
+		try {
+			scene = await createScene(sceneName, {
+				width: cols,
+				height: rows,
+				mode: colorModeFor(query, req.headers),
+				style,
+				text,
+				...camera,
+			});
+		} catch (err) {
+			if (/missing avatar/.test(err?.message || '')) return error(res, 404, 'not_found', 'no model to render');
+			throw err;
+		}
+		return writeStream(req, res, {
+			cols,
+			rows,
+			fps,
+			frames,
+			startTime: clampFloat(query.t ?? query.time, 0, 600, 0),
+			label: scene.label,
+			detail: scene.detail,
+			render: (time) => scene.frame(time),
+		});
 	}
 
 	let source;
@@ -146,11 +233,7 @@ export default wrap(async function handler(req, res) {
 	}
 	if (!source) return error(res, 404, 'not_found', 'no model to render');
 
-	const cols = clampInt(query.w ?? query.cols, MIN_COLS, MAX_COLS, 76);
-	const rows = clampInt(query.h ?? query.rows, MIN_ROWS, MAX_ROWS, 30);
-	const fps = clampInt(query.fps, 4, 30, 18);
-	const spin = clampFloat(query.spin, -4, 4, 0.9);
-	const frames = clampInt(query.frames, 1, Math.min(MAX_FRAMES, fps * MAX_SECONDS), fps * 8);
+	const spin = camera.spin ?? 0.9;
 
 	let model;
 	try {
@@ -166,11 +249,26 @@ export default wrap(async function handler(req, res) {
 		height: rows,
 		mode: colorModeFor(query, req.headers),
 		animation: query.clip ?? undefined,
+		style,
 		spin,
-		pitch: clampFloat(query.pitch, -1.4, 1.4, 0.08),
-		zoom: clampFloat(query.zoom, 0.3, 6, 1),
+		yaw: camera.yaw ?? 0,
+		pitch: camera.pitch ?? 0.08,
+		zoom: camera.zoom ?? 1,
 	});
 
+	return writeStream(req, res, {
+		cols,
+		rows,
+		fps,
+		frames,
+		startTime: clampFloat(query.t ?? query.time, 0, 600, 0),
+		label: source.label,
+		detail: modelDetail(model),
+		render: (time) => renderer.frame(time),
+	});
+});
+
+function writeStream(req, res, { cols, rows, fps, frames, startTime, label, detail, render }) {
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/plain; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');
@@ -180,12 +278,7 @@ export default wrap(async function handler(req, res) {
 	res.setHeader('x-content-type-options', 'nosniff');
 	if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
-	const info = { triangles: model.triangleCount, skinned: model.skinned };
 	const single = frames === 1;
-	// A single frame can be asked for at any point in the clip, which is what
-	// makes `?frames=1&t=` a usable still-image API and not just a first frame.
-	const startTime = clampFloat(query.t ?? query.time, 0, 600, 0);
-
 	// A client that hangs up mid-animation (Ctrl-C on curl) must stop the render
 	// loop, not keep rasterizing frames into a dead socket for another 40s.
 	let aborted = false;
@@ -195,19 +288,22 @@ export default wrap(async function handler(req, res) {
 
 	if (!single) res.write(ansi.hideCursor + '\n'.repeat(rows + 1));
 
-	try {
-		for (let i = 0; i < frames && !aborted; i += 1) {
-			const time = startTime + i / fps;
-			const frame = renderer.frame(time);
-			const head = single ? '' : ansi.up(rows + 1);
-			res.write(`${head}${frame}\n${banner(source.label, info, cols)}\n`);
-			if (single) break;
-			await sleep(Math.round(1000 / fps));
+	const pump = async () => {
+		try {
+			for (let i = 0; i < frames && !aborted; i += 1) {
+				const time = startTime + i / fps;
+				const frame = render(time);
+				const head = single ? '' : ansi.up(rows + 1);
+				res.write(`${head}${frame}\n${bannerLine(label, detail, cols)}\n`);
+				if (single) break;
+				await sleep(Math.round(1000 / fps));
+			}
+		} finally {
+			if (!aborted) {
+				if (!single) res.write(ansi.showCursor);
+				res.end();
+			}
 		}
-	} finally {
-		if (!aborted) {
-			if (!single) res.write(ansi.showCursor);
-			res.end();
-		}
-	}
-});
+	};
+	return pump();
+}

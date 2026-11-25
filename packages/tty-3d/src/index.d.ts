@@ -30,8 +30,17 @@ export interface RendererOptions {
 	transparent?: boolean;
 	/** Turntable speed, radians per second. Default 1. */
 	spin?: number;
+	/** Starting azimuth in radians. Default 0. `frame` adds `time * spin` to this. */
+	yaw?: number;
 	pitch?: number;
 	zoom?: number;
+	/**
+	 * half (default), density, braille, ascii, points, or matrix.
+	 * points plots vertices. matrix tints the frame green. braille uses a 2x4 dot cell.
+	 */
+	style?: 'half' | 'density' | 'braille' | 'ascii' | 'points' | 'matrix';
+	/** Pixel radius when style is points. Default 0 (one pixel). */
+	pointRadius?: number;
 	tint?: [number, number, number];
 }
 
@@ -74,6 +83,43 @@ export function describeModel(model: Model): {
 	skinned: boolean;
 	animations: Array<{ name: string; duration: number }>;
 };
+
+export const SCENE_NAMES: readonly string[];
+export const STYLE_NAMES: readonly string[];
+export const GLYPH_STYLES: readonly string[];
+
+export function isScene(name: string): boolean;
+export function normalizeStyle(value?: string): 'half' | 'density' | 'braille' | 'ascii' | 'points' | 'matrix';
+export function cleanBalloon(text: string, fallback?: string): string;
+
+export interface Scene {
+	name: string;
+	label: string;
+	/** Honest banner text: triangle count, bird count, or point count. */
+	detail: string;
+	width: number;
+	height: number;
+	/** Framebuffer written by the most recent `frame` call. */
+	buffer: {
+		width: number;
+		height: number;
+		color: Float32Array;
+		depth: Float32Array;
+		coverage: Uint8Array;
+	};
+	readonly orbit: Orbit;
+	setOrbit(next: Partial<Orbit> & { spin?: number }): Orbit & { spin: number };
+	frame(time?: number): string;
+}
+
+export interface SceneOptions extends RendererOptions {
+	/** Words drawn above the walker when the scene is `say`. */
+	text?: string;
+	/** Directory that contains public/avatars. Defaults to the process cwd. */
+	cwd?: string;
+}
+
+export function createScene(name: string, options?: SceneOptions): Promise<Scene>;
 
 export function detectColorMode(env?: NodeJS.ProcessEnv, stream?: NodeJS.WriteStream): ColorModeValue;
 export function detectTerminalColor(env?: NodeJS.ProcessEnv, stream?: NodeJS.WriteStream): ColorModeValue;
