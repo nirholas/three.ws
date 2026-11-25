@@ -59,9 +59,37 @@ export function mountEmptyState(editor, container) {
 		openImportDialog(editor, e.currentTarget);
 	});
 
+	let rendererFailed = false;
 	const sync = () => {
-		el.hidden = editor.scene.children.length > 0;
+		el.hidden = !rendererFailed && editor.scene.children.length > 0;
 	};
+
+	// No renderer could start (WebGL blocked or unsupported). The viewport would
+	// otherwise be a blank panel, so the card says why and how to recover.
+	// Sidebar.Project.Renderer records the failure on the editor, and may do so
+	// before this module mounts, so both the flag and the event are honoured.
+	const showRendererFailure = () => {
+		if (rendererFailed) return;
+		rendererFailed = true;
+		el.classList.add('tws-se-error');
+		el.querySelector('.tws-se-card').innerHTML = `
+			<p class="tws-se-eyebrow">3D unavailable</p>
+			<h2 class="tws-se-title">This browser could not start 3D rendering</h2>
+			<p class="tws-se-copy">
+				Scene Studio needs WebGL. Turn on <strong>hardware acceleration</strong>
+				in your browser settings, update your graphics driver, or open this page in
+				a current version of Chrome, Edge, Firefox or Safari.
+			</p>
+			<div class="tws-se-actions">
+				<button type="button" class="tws-se-btn tws-se-primary" data-se="reload">Reload</button>
+				<a class="tws-se-btn" href="https://get.webgl.org/" target="_blank" rel="noopener">Check WebGL support</a>
+			</div>
+		`;
+		el.querySelector('[data-se="reload"]').addEventListener('click', () => location.reload());
+		sync();
+	};
+	window.addEventListener('tws-scene-renderer-failed', showRendererFailure);
+	if (editor.rendererError) showRendererFailure();
 
 	editor.signals.sceneGraphChanged.add(sync);
 	editor.signals.editorCleared.add(sync);
@@ -129,6 +157,7 @@ const CSS = `
 .tws-se-primary { background: #e8e8ec; color: #0a0a0f; border-color: transparent; }
 .tws-se-primary:hover { background: #fff; }
 .tws-se-foot { font-size: 12px; }
+.tws-se-error .tws-se-eyebrow { color: #fca5a5; }
 @media (prefers-reduced-motion: reduce) {
 	.tws-se-card { animation: none; }
 	.tws-se-btn { transition: none; }

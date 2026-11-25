@@ -17,8 +17,7 @@ import { SetPositionCommand } from './commands/SetPositionCommand.js';
 import { SetRotationCommand } from './commands/SetRotationCommand.js';
 import { SetScaleCommand } from './commands/SetScaleCommand.js';
 
-import { ColorEnvironment } from 'three/addons/environments/ColorEnvironment.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { applySceneEnvironment } from './Viewport.Environment.js';
 import { ViewportPathtracer } from './Viewport.Pathtracer.js';
 
 function Viewport( editor ) {
@@ -394,7 +393,10 @@ function Viewport( editor ) {
 
 		container.dom.appendChild( renderer.domElement );
 
-		signals.sceneEnvironmentChanged.dispatch( editor.environmentType );
+		signals.sceneEnvironmentChanged.dispatch(
+			editor.environmentType,
+			editor.environmentType === 'Equirectangular' ? scene.environment : undefined
+		);
 
 		render();
 
@@ -576,50 +578,9 @@ function Viewport( editor ) {
 
 		editor.environmentType = environmentType;
 
-		scene.environment = null;
-
-		useBackgroundAsEnvironment = false;
-
-		switch ( environmentType ) {
-
-			case 'Equirectangular':
-
-				if ( environmentEquirectangularTexture ) {
-
-					scene.environment = environmentEquirectangularTexture;
-					scene.environment.mapping = THREE.EquirectangularReflectionMapping;
-
-				}
-
-				break;
-
-			case 'Default':
-
-				useBackgroundAsEnvironment = true;
-
-				if ( scene.background !== null ) {
-
-					if ( scene.background.isColor ) {
-
-						scene.environment = pmremGenerator.fromScene( new ColorEnvironment( scene.background ), 0.04 ).texture;
-
-					} else if ( scene.background.isTexture ) {
-
-						scene.environment = scene.background;
-						scene.environment.mapping = THREE.EquirectangularReflectionMapping;
-						scene.environmentRotation.y = scene.backgroundRotation.y;
-
-					}
-
-				} else {
-
-					scene.environment = pmremGenerator.fromScene( new RoomEnvironment(), 0.04 ).texture;
-
-				}
-
-				break;
-
-		}
+		// Without a renderer yet, PMREM-backed environments are deferred; the
+		// rendererCreated handler re-dispatches the current type once it exists.
+		( { useBackgroundAsEnvironment } = applySceneEnvironment( scene, environmentType, environmentEquirectangularTexture, pmremGenerator ) );
 
 		updatePTEnvironment();
 		render();

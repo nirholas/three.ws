@@ -59,6 +59,8 @@ function SidebarProjectRenderer( editor ) {
 
 	function updateShadows() {
 
+		if ( currentRenderer === null ) return;
+
 		currentRenderer.shadowMap.enabled = shadowsBoolean.getValue();
 		currentRenderer.shadowMap.type = parseFloat( shadowTypeSelect.getValue() );
 
@@ -96,6 +98,8 @@ function SidebarProjectRenderer( editor ) {
 
 		toneMappingExposure.setDisplay( toneMappingSelect.getValue() === '0' ? 'none' : '' );
 
+		if ( currentRenderer === null ) return;
+
 		currentRenderer.toneMapping = parseFloat( toneMappingSelect.getValue() );
 		currentRenderer.toneMappingExposure = toneMappingExposure.getValue();
 		signals.rendererUpdated.dispatch();
@@ -109,16 +113,44 @@ function SidebarProjectRenderer( editor ) {
 		const rendererType = rendererTypeSelect.getValue();
 		const antialias = antialiasBoolean.getValue();
 
-		if ( rendererType === 'WebGPURenderer' ) {
+		// Upstream let a failed context creation reject unhandled, leaving a blank
+		// viewport with no explanation. A failed WebGPU start falls back to WebGL;
+		// when WebGL cannot start either, the editor records why and announces it
+		// so the page can tell the visitor what to do (empty-state.js).
+		try {
 
-			currentRenderer = new WebGPURenderer( { antialias: antialias, logarithmicDepthBuffer: true } );
-			await currentRenderer.init();
+			if ( rendererType === 'WebGPURenderer' ) {
 
-		} else {
+				try {
 
-			currentRenderer = new THREE.WebGLRenderer( { antialias: antialias, logarithmicDepthBuffer: true } );
+					const webgpu = new WebGPURenderer( { antialias: antialias, logarithmicDepthBuffer: true } );
+					await webgpu.init();
+					currentRenderer = webgpu;
+
+				} catch ( e ) {
+
+					console.warn( 'Scene Studio: WebGPU renderer failed to start, using WebGL:', e?.message || e );
+					rendererTypeSelect.setValue( 'WebGLRenderer' );
+					currentRenderer = new THREE.WebGLRenderer( { antialias: antialias, logarithmicDepthBuffer: true } );
+
+				}
+
+			} else {
+
+				currentRenderer = new THREE.WebGLRenderer( { antialias: antialias, logarithmicDepthBuffer: true } );
+
+			}
+
+		} catch ( e ) {
+
+			editor.rendererError = String( e?.message || e || 'unknown error' );
+			console.warn( 'Scene Studio: no 3D renderer could start:', editor.rendererError );
+			window.dispatchEvent( new CustomEvent( 'tws-scene-renderer-failed', { detail: { message: editor.rendererError } } ) );
+			return;
 
 		}
+
+		editor.rendererError = null;
 
 		currentRenderer.shadowMap.enabled = shadowsBoolean.getValue();
 		currentRenderer.shadowMap.type = parseFloat( shadowTypeSelect.getValue() );
@@ -137,16 +169,22 @@ function SidebarProjectRenderer( editor ) {
 
 	signals.editorCleared.add( function () {
 
-		currentRenderer.shadowMap.enabled = true;
-		currentRenderer.shadowMap.type = THREE.PCFShadowMap;
-		currentRenderer.toneMapping = THREE.NeutralToneMapping;
-		currentRenderer.toneMappingExposure = 1;
+		// The widgets carry the defaults; a renderer still starting up (WebGPU
+		// init is async) picks them up in createRenderer().
+		shadowsBoolean.setValue( true );
+		shadowTypeSelect.setValue( THREE.PCFShadowMap );
+		toneMappingSelect.setValue( THREE.NeutralToneMapping );
+		toneMappingExposure.setValue( 1 );
+		toneMappingExposure.setDisplay( '' );
 
-		shadowsBoolean.setValue( currentRenderer.shadowMap.enabled );
-		shadowTypeSelect.setValue( currentRenderer.shadowMap.type );
-		toneMappingSelect.setValue( currentRenderer.toneMapping );
-		toneMappingExposure.setValue( currentRenderer.toneMappingExposure );
-		toneMappingExposure.setDisplay( currentRenderer.toneMapping === 0 ? 'none' : '' );
+		if ( currentRenderer !== null ) {
+
+			currentRenderer.shadowMap.enabled = true;
+			currentRenderer.shadowMap.type = THREE.PCFShadowMap;
+			currentRenderer.toneMapping = THREE.NeutralToneMapping;
+			currentRenderer.toneMappingExposure = 1;
+
+		}
 
 		signals.rendererUpdated.dispatch();
 
