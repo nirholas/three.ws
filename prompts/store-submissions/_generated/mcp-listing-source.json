@@ -23,9 +23,9 @@
     "icon": "Card/avatar image on all directories."
   },
   "counts": {
-    "total": 54,
-    "remote": 8,
-    "stdio": 46
+    "total": 58,
+    "remote": 9,
+    "stdio": 49
   },
   "servers": [
     {
@@ -35,7 +35,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/mcp-server",
       "npmPackage": "@three-ws/mcp-server",
-      "version": "1.2.3",
+      "version": "1.3.0",
       "description": "MCP tools from three.ws: free + paid text-to-3D, rigging, agent reputation, market intel.",
       "tagline": "Full three.ws 3D + agent toolkit: free and paid text-to-3D, rigging, agent reputation, market intel.",
       "category": "3d",
@@ -389,7 +389,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/autopilot-mcp",
       "npmPackage": "@three-ws/autopilot-mcp",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "description": "Set autopilot scopes and a daily SOL spend cap, then propose, execute, and undo agent actions.",
       "tagline": "Set autopilot scopes and a daily SOL spend cap, then propose, execute, and undo agent actions.",
       "category": "agent-economy",
@@ -1128,7 +1128,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/scene-mcp",
       "npmPackage": "@three-ws/scene-mcp",
-      "version": "0.2.2",
+      "version": "0.3.0",
       "description": "Compose a placed 3D diorama from one sentence, export a forged world, browse saved scenes.",
       "tagline": "Speak a placed 3D diorama into being from one sentence, then browse the saved scene gallery.",
       "category": "3d",
@@ -1354,6 +1354,37 @@
       "icon": "https://three.ws/three-ws-mcp-icon.svg"
     },
     {
+      "name": "io.github.nirholas/threews-agent-trader",
+      "title": "three.ws Agent Trader",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/agent-trader-mcp",
+      "npmPackage": "@three-ws/agent-trader-mcp",
+      "version": "1.0.0",
+      "description": "Can move real SOL. Arm agents on Oracle calls (simulate default), watch them, kill switch.",
+      "tagline": "Arm your three.ws agents on Oracle calls with hard caps and a kill switch. Simulates by default.",
+      "category": "trading",
+      "tags": [
+        "solana",
+        "agents",
+        "guardrails",
+        "kill-switch",
+        "simulate"
+      ],
+      "examplePrompts": [
+        "Arm my agent on Oracle calls in simulate mode.",
+        "Show my agent's positions and performance today.",
+        "Disarm every agent now."
+      ],
+      "requiredEnv": [
+        "THREE_WS_API_KEY"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fthreews-agent-trader",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
       "name": "io.github.nirholas/threews-avatar",
       "title": "three.ws Avatars",
       "type": "stdio",
@@ -1412,6 +1443,66 @@
       "icon": "https://three.ws/three-ws-mcp-icon.svg"
     },
     {
+      "name": "io.github.nirholas/threews-oracle",
+      "title": "three.ws Oracle",
+      "type": "remote",
+      "transport": "streamable-http",
+      "connect": "https://three.ws/api/mcp-oracle",
+      "npmPackage": null,
+      "version": "1.0.0",
+      "description": "Free read-only Solana pump.fun Oracle: feed, scored calls, wins, backtest, leaderboard. No account.",
+      "tagline": "Free Solana launch Oracle: scored calls, verified wins, backtests and a caller leaderboard. No account.",
+      "category": "market-data",
+      "tags": [
+        "solana",
+        "oracle",
+        "launches",
+        "backtest",
+        "leaderboard",
+        "read-only"
+      ],
+      "examplePrompts": [
+        "What are the Oracle's highest-conviction calls right now?",
+        "Backtest the Oracle's calls from the last seven days.",
+        "Who is on top of the Oracle leaderboard this week?"
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fthreews-oracle",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/threews-oracle-mcp",
+      "title": "three.ws Oracle (stdio)",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/oracle-mcp",
+      "npmPackage": "@three-ws/oracle-mcp",
+      "version": "1.0.0",
+      "description": "Read-only Oracle for pump.fun: conviction feed, coin verdicts, wins, backtest, calibration. No key.",
+      "tagline": "The three.ws Oracle over stdio: conviction feed, coin verdicts, wins, backtests and calibration. No key.",
+      "category": "market-data",
+      "tags": [
+        "solana",
+        "oracle",
+        "launches",
+        "calibration",
+        "stdio",
+        "read-only"
+      ],
+      "examplePrompts": [
+        "Give me the Oracle's verdict on this mint.",
+        "How well calibrated have the Oracle's scores been?",
+        "Show the biggest movers among recent Oracle calls."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws/oracle",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fthreews-oracle-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
       "name": "io.github.nirholas/threews-pumpfun",
       "title": "three.ws pump.fun MCP",
       "type": "remote",
@@ -1467,6 +1558,37 @@
       "websiteUrl": "https://three.ws",
       "repository": "https://github.com/nirholas/three.ws",
       "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fthreews-x402-bazaar",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/trading-mcp",
+      "title": "three.ws Trading",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/trading-mcp",
+      "npmPackage": "@three-ws/trading-mcp",
+      "version": "0.1.0",
+      "description": "Quote and fill guarded Solana swaps from a three.ws agent wallet. Never sells $THREE.",
+      "tagline": "Quote and fill guarded Solana swaps from a three.ws agent wallet. Every guard runs server side.",
+      "category": "trading",
+      "tags": [
+        "solana",
+        "swaps",
+        "agent-wallet",
+        "guardrails",
+        "positions"
+      ],
+      "examplePrompts": [
+        "Quote a 0.1 SOL buy of $THREE from my agent wallet.",
+        "List my agent's positions with cost basis and P&L.",
+        "Show me the guard verdict before you fill this trade."
+      ],
+      "requiredEnv": [
+        "THREE_WS_API_KEY"
+      ],
+      "websiteUrl": "https://three.ws",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Ftrading-mcp",
       "icon": "https://three.ws/three-ws-mcp-icon.svg"
     },
     {
