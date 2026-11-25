@@ -34,6 +34,11 @@ What it asserts, and why each one is the thing that breaks:
      reason, not as an opaque internal error. That distinction is what decides
      whether the user is told to reword their prompt or shown "Generation
      failed" (see `face_pipeline.InputError`).
+  8. A face too small for FaceLandmarker's own detector (the same photo shrunk
+     to a sixth and placed on a large canvas, as in a full-body render) is still
+     found by the small-face rescue, all 478 landmarks of it, landing on the
+     face. The full-range detector misses faces that small on a whole-image
+     pass, so this pins the tiled search that rescues them.
 """
 
 from __future__ import annotations
@@ -168,7 +173,33 @@ def main(argv: list[str]) -> int:
     else:
         raise AssertionError("a faceless photo produced an avatar instead of a rejection")
 
-    print("\nall 7 smoke assertions passed, core path is healthy")
+    # ── 8. the small-face rescue ──────────────────────────────────────────────
+    photo = face_pipeline._decode_image(source).convert("RGB")
+    full = face_pipeline._get_landmarks(photo)
+    assert full is not None and len(full) == 478, "no 478-point mesh on the full photo"
+    canvas_w, canvas_h = photo.width * 3, photo.height * 3
+    small = photo.resize((photo.width // 6, photo.height // 6), Image.LANCZOS)
+    canvas = Image.new("RGB", (canvas_w, canvas_h), (128, 128, 128))
+    off_x, off_y = canvas_w // 2 - small.width // 2, canvas_h // 5
+    canvas.paste(small, (off_x, off_y))
+    rescued = face_pipeline._get_landmarks_small_face(canvas)
+    assert rescued is not None and len(rescued) == 478, (
+        "small-face rescue found no face on a 1/6-scale copy of the photo"
+    )
+    # Map the rescued points back into the original photo's pixels and compare
+    # them with the full-resolution mesh: they must land on the same face.
+    errs = [
+        np.hypot(
+            (r.x * canvas_w - off_x) * 6 - f.x * photo.width,
+            (r.y * canvas_h - off_y) * 6 - f.y * photo.height,
+        )
+        for r, f in zip(rescued, full)
+    ]
+    mean_err = float(np.mean(errs)) / photo.width
+    assert mean_err < 0.02, f"rescued landmarks miss the face (mean error {mean_err:.3f} of width)"
+    print(f"ok  small-face rescue recovered 478 landmarks (mean error {mean_err * 100:.2f}% of width)")
+
+    print("\nall 8 smoke assertions passed, core path is healthy")
     return 0
 
 

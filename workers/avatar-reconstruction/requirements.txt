@@ -1,31 +1,31 @@
 # ── Face detection & landmarks ────────────────────────────────────────────────
-# 0.10.21 is the last release that ships the legacy `mp.solutions` FaceMesh /
-# FaceDetection API face_pipeline.py is built on (0.10.30 removed it), and it
-# caps numpy below 2.
-mediapipe==0.10.21
+# face_pipeline.py runs MediaPipe's Tasks API (FaceLandmarker, FaceDetector with
+# the full-range BlazeFace model). The model files are baked into the image by the
+# Dockerfile. mediapipe pulls opencv-contrib-python, which provides `cv2`: it is
+# pinned below and opencv-python-headless is NOT listed, because two OpenCV
+# distributions installed together overwrite each other's cv2 package.
+mediapipe==1.2.3
+opencv-contrib-python==4.14.0.94
 
 # ── GLB manipulation ──────────────────────────────────────────────────────────
 pygltflib==1.16.2
 
 # ── Interpolation (TPS warp) ──────────────────────────────────────────────────
-scipy>=1.11.0
+scipy>=1.16.3,<2
 
 # ── Image processing ──────────────────────────────────────────────────────────
 Pillow==13.0.0  # clears every 11.x/12.x decoder advisory; needs Python 3.11 (see Dockerfile)
-numpy<2.0
-opencv-python-headless>=4.9.0
+numpy>=2.3,<3
 
 # ── Background removal ────────────────────────────────────────────────────────
 # [gpu] pulls in onnxruntime-gpu so rembg uses CUDA when the L4 is present.
-# 2.0.69 is the newest rembg that runs on numpy 1.x: 2.0.75+ needs numpy 2.3,
-# and mediapipe 0.10.21 (above) holds numpy<2. The advisories fixed after 2.0.69
-# live in rembg's own HTTP server (`rembg s`) and its custom-model session
-# loader, neither of which this worker reaches: it only calls rembg.remove with
-# the bundled default model.
-rembg[gpu]==2.0.69
+# 2.0.86 clears every published rembg advisory (path traversal in custom model
+# loading, SSRF in `rembg s`, SAM model injection; fixed in 2.0.75 and 2.0.82).
+# It needs numpy 2.3 and Python 3.11, which is why mediapipe is on the Tasks API.
+rembg[gpu]==2.0.86
 
 # ── Mesh operations (UV pre-computation, runs once at build time) ─────────────
-trimesh==4.4.0
+trimesh==4.12.2
 
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 # requests: build-time UV-map download (precompute_uv.py) from a fixed GitHub URL.

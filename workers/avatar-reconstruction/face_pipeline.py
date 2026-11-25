@@ -8,7 +8,7 @@ Material names, tint strength and eye handling come from the template spec.
 Steps:
   1. Decode and select the best frontal photo.
   2. Background removal (rembg).
-  3. MediaPipe FaceLandmarker -> 468 normalised (x, y) landmarks.
+  3. MediaPipe FaceLandmarker (Tasks API) -> 478 normalised landmarks (468 + iris).
   4. Load the template's pre-computed UV map.
   5. TPS warp: map user's face into the skin texture's UV space.
   6. Composite warped face onto existing skin texture using face-oval alpha mask.
@@ -20,11 +20,13 @@ Steps:
 
 from __future__ import annotations
 
+import atexit
 import base64
 import io
 import json
 import logging
 import os
+import threading
 import time
 from pathlib import Path
 from typing import Optional
@@ -33,6 +35,8 @@ import cv2
 import httpx
 import mediapipe as mp
 import numpy as np
+from mediapipe.tasks import python as mp_tasks
+from mediapipe.tasks.python import vision as mp_vision
 from PIL import Image, ImageFilter
 from scipy.interpolate import RBFInterpolator
 
@@ -110,8 +114,107 @@ def _get_face_map() -> Optional[face_geometry.FaceMap]:
     return _FACE_MAPS[path]
 
 # ── MediaPipe setup ────────────────────────────────────────────────────────────
+#
+# MediaPipe Tasks API (the legacy `mp.solutions` graphs were removed upstream in
+# 0.10.30). FaceLandmarker returns the same 478-point topology the old FaceMesh
+# gave with refine_landmarks=True (468 face points plus 10 iris points, 468 being
+# the left iris centre); FaceDetector with the full-range BlazeFace model is the
+# old FaceDetection(model_selection=1). The model files are baked into the image
+# by the Dockerfile; FACE_LANDMARKER_MODEL / FACE_DETECTOR_MODEL override the path.
 
-_mp_face_mesh = mp.solutions.face_mesh
+_MODELS_DIR = HERE / "models"
+FACE_LANDMARKER_MODEL = Path(
+    os.environ.get("FACE_LANDMARKER_MODEL", str(_MODELS_DIR / "face_landmarker.task"))
+)
+FACE_DETECTOR_MODEL = Path(
+    os.environ.get("FACE_DETECTOR_MODEL", str(_MODELS_DIR / "blaze_face_full_range.tflite"))
+)
+
+# Thresholds carried over from the legacy calls: FaceMesh ran with
+# min_detection_confidence=0.4 in static-image mode (which had no separate presence
+# gate, so presence uses the same floor), FaceDetection with 0.3.
+_LANDMARK_MIN_CONFIDENCE = 0.4
+_DETECTOR_MIN_CONFIDENCE = 0.3
+
+# Each task is built once per process and shared. Jobs run concurrently in
+# executor threads and a task graph is not re-entrant, so every call holds the
+# task's lock; inference is tens of milliseconds, far below a job's runtime.
+_task_init_lock = threading.Lock()
+_landmarker: Optional[mp_vision.FaceLandmarker] = None
+_detector: Optional[mp_vision.FaceDetector] = None
+_landmarker_lock = threading.Lock()
+_detector_lock = threading.Lock()
+
+
+def _require_model(path: Path) -> str:
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"MediaPipe model {path} not found. The Dockerfile downloads it into "
+            f"{_MODELS_DIR}; set FACE_LANDMARKER_MODEL / FACE_DETECTOR_MODEL to "
+            "point elsewhere."
+        )
+    return str(path)
+
+
+def _face_landmarker() -> mp_vision.FaceLandmarker:
+    global _landmarker
+    if _landmarker is None:
+        with _task_init_lock:
+            if _landmarker is None:
+                _landmarker = mp_vision.FaceLandmarker.create_from_options(
+                    mp_vision.FaceLandmarkerOptions(
+                        base_options=mp_tasks.BaseOptions(
+                            model_asset_path=_require_model(FACE_LANDMARKER_MODEL)
+                        ),
+                        running_mode=mp_vision.RunningMode.IMAGE,
+                        num_faces=1,
+                        min_face_detection_confidence=_LANDMARK_MIN_CONFIDENCE,
+                        min_face_presence_confidence=_LANDMARK_MIN_CONFIDENCE,
+                    )
+                )
+    return _landmarker
+
+
+def _face_detector() -> mp_vision.FaceDetector:
+    global _detector
+    if _detector is None:
+        with _task_init_lock:
+            if _detector is None:
+                _detector = mp_vision.FaceDetector.create_from_options(
+                    mp_vision.FaceDetectorOptions(
+                        base_options=mp_tasks.BaseOptions(
+                            model_asset_path=_require_model(FACE_DETECTOR_MODEL)
+                        ),
+                        running_mode=mp_vision.RunningMode.IMAGE,
+                        min_detection_confidence=_DETECTOR_MIN_CONFIDENCE,
+                    )
+                )
+    return _detector
+
+
+def warm_face_models() -> None:
+    """Load both MediaPipe tasks now, so a missing model fails the boot, not a job."""
+    _face_landmarker()
+    _face_detector()
+
+
+@atexit.register
+def _close_face_models() -> None:
+    """Close the tasks while the interpreter is still whole: left to __del__ at
+    shutdown, the task's native close runs after module teardown and raises."""
+    global _landmarker, _detector
+    with _task_init_lock:
+        for task in (_landmarker, _detector):
+            if task is not None:
+                task.close()
+        _landmarker = _detector = None
+
+
+def _mp_image(img: Image.Image) -> mp.Image:
+    return mp.Image(
+        image_format=mp.ImageFormat.SRGB,
+        data=np.ascontiguousarray(np.asarray(img.convert("RGB"), dtype=np.uint8)),
+    )
 
 # The 36 landmark indices that form the face oval in MediaPipe's topology.
 _FACE_OVAL = [
@@ -182,48 +285,112 @@ def _select_best_photo(images: list[Image.Image]) -> tuple[Image.Image, list]:
     best_landmarks = None
     best_score = -1.0
 
-    with _mp_face_mesh.FaceMesh(
-        static_image_mode=True,
-        max_num_faces=1,
-        refine_landmarks=True,
-        min_detection_confidence=0.4,
-    ) as fm:
-        for img in images:
-            arr = np.array(img)
-            result = fm.process(arr)
-            if not result.multi_face_landmarks:
-                continue
-            lm = result.multi_face_landmarks[0].landmark
+    for img in images:
+        lm = _get_landmarks(img)
+        if lm is None:
+            continue
 
-            # Face size heuristic: bounding box area in image coords.
-            xs = [l.x for l in lm]
-            ys = [l.y for l in lm]
-            area = (max(xs) - min(xs)) * (max(ys) - min(ys))
+        # Face size heuristic: bounding box area in image coords.
+        xs = [l.x for l in lm]
+        ys = [l.y for l in lm]
+        area = (max(xs) - min(xs)) * (max(ys) - min(ys))
 
-            # Frontality heuristic: nose tip z should be near 0 (facing camera).
-            nose_z = abs(lm[4].z)  # landmark 4 = nose tip
-            frontality = 1.0 / (1.0 + nose_z * 10)
+        # Frontality heuristic: nose tip z should be near 0 (facing camera).
+        nose_z = abs(lm[4].z)  # landmark 4 = nose tip
+        frontality = 1.0 / (1.0 + nose_z * 10)
 
-            score = area * frontality
-            if score > best_score:
-                best_score = score
-                best_img = img
-                best_landmarks = lm
+        score = area * frontality
+        if score > best_score:
+            best_score = score
+            best_img = img
+            best_landmarks = lm
 
     return best_img, best_landmarks
 
 
 def _get_landmarks(img: Image.Image) -> Optional[list]:
-    """Run MediaPipe on a single image, return landmark list or None."""
-    with _mp_face_mesh.FaceMesh(
-        static_image_mode=True,
-        max_num_faces=1,
-        refine_landmarks=True,
-        min_detection_confidence=0.4,
-    ) as fm:
-        result = fm.process(np.array(img))
-        if result.multi_face_landmarks:
-            return result.multi_face_landmarks[0].landmark
+    """Run FaceLandmarker on a single image; return its 478 normalised landmarks
+    (objects with .x, .y, .z) or None when no face is found."""
+    landmarker = _face_landmarker()
+    frame = _mp_image(img)
+    with _landmarker_lock:
+        result = landmarker.detect(frame)
+    if result.face_landmarks:
+        return result.face_landmarks[0]
+    return None
+
+
+class _RelativeBox:
+    """A detection box normalised to the image, like the legacy relative_bounding_box."""
+
+    __slots__ = ("xmin", "ymin", "width", "height")
+
+    def __init__(self, xmin: float, ymin: float, width: float, height: float):
+        self.xmin, self.ymin, self.width, self.height = xmin, ymin, width, height
+
+
+# Tile divisors for the tiled detector pass. The Tasks full-range BlazeFace model
+# stops firing once a face spans less than roughly a fifth of its (letterboxed)
+# input, so a head in a full-body render is invisible to a whole-image pass.
+# Running the detector on overlapping square tiles of min(w, h) / 2, / 3, / 4
+# makes the same face fill a far larger share of what the model sees.
+_TILE_DIVISORS = (2, 3, 4)
+_MIN_TILE_SIDE = 160
+
+
+def _tile_windows(img_w: int, img_h: int, side: int) -> list[tuple[int, int, int, int]]:
+    """Overlapping square windows (left, top, right, bottom) of ``side`` px at a
+    half-tile stride that cover the whole image, the last row and column flush
+    with the far edges so no strip is skipped."""
+    side = min(side, img_w, img_h)
+    stride = max(1, side // 2)
+
+    def starts(extent: int) -> list[int]:
+        out = list(range(0, extent - side + 1, stride))
+        if out[-1] != extent - side:
+            out.append(extent - side)
+        return out
+
+    return [(x, y, x + side, y + side) for y in starts(img_h) for x in starts(img_w)]
+
+
+def _detect_best(img: Image.Image):
+    """The highest-scoring detection in ``img`` (pixel box, score) or None."""
+    detector = _face_detector()
+    frame = _mp_image(img)
+    with _detector_lock:
+        det = detector.detect(frame)
+    if not det.detections:
+        return None
+    best = max(det.detections, key=lambda d: d.categories[0].score)
+    bb = best.bounding_box
+    return (bb.origin_x, bb.origin_y, bb.width, bb.height), best.categories[0].score
+
+
+def _find_face_box(img: Image.Image) -> Optional[_RelativeBox]:
+    """Locate the most confident face with the full-range detector: a whole-image
+    pass first, then the tiled passes from the largest tile down, stopping at the
+    first tile size that finds one. Boxes are returned image-normalised (the Tasks
+    detector reports pixels)."""
+    img_w, img_h = img.size
+    hit = _detect_best(img)
+    if hit is not None:
+        (x, y, w, h), _ = hit
+        return _RelativeBox(x / img_w, y / img_h, w / img_w, h / img_h)
+
+    for div in _TILE_DIVISORS:
+        side = min(img_w, img_h) // div
+        if side < _MIN_TILE_SIDE:
+            break
+        found = None
+        for left, top, right, bottom in _tile_windows(img_w, img_h, side):
+            tile_hit = _detect_best(img.crop((left, top, right, bottom)))
+            if tile_hit is not None and (found is None or tile_hit[1] > found[1]):
+                (x, y, w, h), score = tile_hit
+                found = ((left + x, top + y, w, h), score)
+        if found is not None:
+            (x, y, w, h), _ = found
+            return _RelativeBox(x / img_w, y / img_h, w / img_w, h / img_h)
     return None
 
 
@@ -238,26 +405,21 @@ class _Landmark:
 
 def _get_landmarks_small_face(img: Image.Image) -> Optional[list]:
     """
-    Rescue pass for images whose face is too small for FaceMesh's built-in
+    Rescue pass for images whose face is too small for FaceLandmarker's built-in
     detector: full-body renders (the text-to-avatar lane generates head-to-feet
-    reference images) and selfies taken at a distance. BlazeFace's full-range
-    model still finds those small faces; crop around its box with generous
-    margin, upscale the crop to a size FaceMesh is reliable at, run FaceMesh on
-    the crop, then map the landmarks back to full-image normalised coordinates
-    so every downstream consumer (UV warp, skin/hair/eye sampling) is untouched.
+    reference images) and selfies taken at a distance. The full-range BlazeFace
+    detector, run whole-image and then tiled (``_find_face_box``), still finds
+    those small faces; crop around its box with generous margin, upscale the crop
+    to a size FaceLandmarker is reliable at, run it on the crop, then map the
+    landmarks back to full-image normalised coordinates so every downstream
+    consumer (UV warp, skin/hair/eye sampling) is untouched.
     """
-    arr = np.array(img)
-    with mp.solutions.face_detection.FaceDetection(
-        model_selection=1,  # full-range model: small faces in wide shots
-        min_detection_confidence=0.3,
-    ) as fd:
-        det = fd.process(arr)
-    if not det.detections:
+    box = _find_face_box(img)
+    if box is None:
         return None
-    box = max(det.detections, key=lambda d: d.score[0]).location_data.relative_bounding_box
 
     img_w, img_h = img.size
-    # FaceMesh needs forehead / chin / ear context around the raw face box.
+    # FaceLandmarker needs forehead / chin / ear context around the raw face box.
     margin = 0.75
     left = int(max(0.0, box.xmin - box.width * margin) * img_w)
     top = int(max(0.0, box.ymin - box.height * margin) * img_h)
@@ -697,8 +859,8 @@ def process(
         landmarks = _get_landmarks(images[0])
     if landmarks is None:
         # Small-face rescue: full-body renders and distant selfies defeat
-        # FaceMesh's detector but not BlazeFace's full-range model. Crop, zoom,
-        # and retry on each image until one yields landmarks.
+        # FaceLandmarker's detector but not the tiled full-range BlazeFace
+        # search. Crop, zoom, and retry on each image until one yields landmarks.
         for idx, img in enumerate(images):
             landmarks = _get_landmarks_small_face(img)
             if landmarks is not None:

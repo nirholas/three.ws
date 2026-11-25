@@ -78,6 +78,9 @@ async def lifespan(app: FastAPI):
     log.info("reconstruction template: %s (%s)", spec.key, spec.glb_path.name)
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(None, face_pipeline._get_uv_map)
+    # Build the MediaPipe FaceLandmarker / FaceDetector once, so a missing model
+    # file fails the boot (and the revision's health check) instead of a job.
+    await loop.run_in_executor(None, face_pipeline.warm_face_models)
     if dense_fit.enabled():
         # Pay the CUDA context and PyTorch3D kernel start-up now: left to the
         # first job it ate the 20 s fit budget and that job kept the morph output.

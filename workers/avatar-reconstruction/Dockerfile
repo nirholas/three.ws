@@ -21,10 +21,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.11 python3.11-dev python3-pip \
         git curl wget \
-        # OpenCV headless runtime deps
+        # OpenCV runtime deps
         libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
-        # MediaPipe runtime deps
-        libgomp1 \
+        # MediaPipe runtime deps: libmediapipe.so links libEGL and libGLESv2
+        # even when every task runs on the CPU delegate
+        libgomp1 libegl1 libgles2 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
     && ln -sf /usr/bin/python3.11 /usr/bin/python \
@@ -33,6 +34,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ── Python dependencies ───────────────────────────────────────────────────────
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
+
+# ── MediaPipe task models ─────────────────────────────────────────────────────
+# FaceLandmarker (478 landmarks incl. iris) and the full-range BlazeFace detector,
+# pinned to versioned URLs and checked by sha256 so a republished model cannot
+# change the landmarks silently. face_pipeline.py loads them from /app/models.
+RUN mkdir -p /app/models \
+ && curl -fsSL -o /app/models/face_landmarker.task \
+      https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task \
+ && curl -fsSL -o /app/models/blaze_face_full_range.tflite \
+      https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_full_range/float16/1/blaze_face_full_range.tflite \
+ && printf '%s  %s\n' \
+      64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff /app/models/face_landmarker.task \
+      3698b18f063835bc609069ef052228fbe86d9c9a6dc8dcb7c7c2d69aed2b181b /app/models/blaze_face_full_range.tflite \
+    | sha256sum -c -
 
 # ── App code ──────────────────────────────────────────────────────────────────
 # Files are copied individually, so ADDING A NEW MODULE MEANS ADDING A LINE HERE.

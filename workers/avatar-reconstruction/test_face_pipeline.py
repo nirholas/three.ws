@@ -153,6 +153,30 @@ def test_body_type_changes_the_reconstruction_template():
     print("ok  body_type male, female and neutral load three distinct bodies")
 
 
+def test_detector_tiles_cover_every_pixel_with_overlap():
+    """The tiled detector pass only rescues a small face if some tile holds the
+    whole face, so the windows must cover the image edge to edge (last row and
+    column flush with the far edges, whatever the remainder) and overlap by half
+    a tile, which puts any face smaller than half a tile wholly inside one."""
+    for img_w, img_h, side in ((2400, 3200, 800), (1000, 1000, 333), (517, 911, 200)):
+        wins = fp._tile_windows(img_w, img_h, side)
+        assert all(r - l == side and b - t == side for l, t, r, b in wins), "non-square tile"
+        assert all(0 <= l and 0 <= t and r <= img_w and b <= img_h for l, t, r, b in wins)
+        covered = np.zeros((img_h, img_w), dtype=bool)
+        for l, t, r, b in wins:
+            covered[t:b, l:r] = True
+        assert covered.all(), f"{img_w}x{img_h} @ {side}: {int((~covered).sum())} px never tiled"
+        stride = side // 2
+        for (fx, fy) in ((0, 0), (img_w - stride, img_h - stride), (img_w // 3, img_h // 2)):
+            fx, fy = min(fx, img_w - stride), min(fy, img_h - stride)
+            assert any(
+                l <= fx and t <= fy and fx + stride <= r and fy + stride <= b
+                for l, t, r, b in wins
+            ), f"a half-tile face at ({fx}, {fy}) straddles every tile"
+    assert fp._tile_windows(300, 200, 800) == [(0, 0, 200, 200), (100, 0, 300, 200)]
+    print("ok  detector tiles cover the image with half-tile overlap")
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     try:

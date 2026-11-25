@@ -21,7 +21,12 @@ generate an arbitrary mesh). Three stages, all commercial-clean:
 
 1. **Face texture transfer** (`face_pipeline.py`) - MediaPipe FaceLandmarker →
    TPS-warp the selfie into the template's skin UV → composite over the face
-   oval → sample and tint skin / hair / eye colour.
+   oval → sample and tint skin / hair / eye colour. Landmarks come from the
+   MediaPipe Tasks API (478 points, 468 mesh + iris). When the face is too small
+   for FaceLandmarker's own detector (full-body renders, distant selfies), the
+   full-range BlazeFace detector finds it, first on the whole image and then on
+   overlapping tiles at half, a third and a quarter of the short side, and the
+   landmarks are re-run on an upscaled crop around it.
 2. **Face geometry morph** (`face_geometry.py`) - recover the person's actual 3D
    face shape (width, jaw, nose projection, brow, cheekbones) from the same 468
    MediaPipe landmarks and reshape the template head to match, so the avatar
@@ -112,6 +117,7 @@ gcloud run services update avatar-reconstruction --region us-central1 --update-e
 | `RECON_VIEW_MODEL` | no (`gemini-2.5-flash-image`) | Vertex image model. A 404 retries once on `RECON_VIEW_FALLBACK_MODEL` (`gemini-3.1-flash-image`). |
 | `RECON_VIEW_BUDGET_S` | no (45) | Hard wall-clock cap for the whole batch of view requests. |
 | `RECON_VIEW_REQUEST_TIMEOUT_S` / `RECON_VIEW_MAX` / `RECON_VIEW_LOCATION` | no (30 / 5 / `us-central1`) | Per-request timeout, views per job, Vertex region. |
+| `FACE_LANDMARKER_MODEL` / `FACE_DETECTOR_MODEL` | no (`/app/models/face_landmarker.task` / `/app/models/blaze_face_full_range.tflite`) | MediaPipe task model paths. The Dockerfile bakes both in from pinned, sha256-checked URLs; a missing file fails the boot, not a job. Set these only to run the pipeline outside the image. |
 
 `GOOGLE_CLOUD_PROJECT` (or `GCP_PROJECT`) is read only when `RECON_VIEW_SYNTHESIS` is on.
 
@@ -164,7 +170,14 @@ gcloud builds submit \
 The build runs the geometry, projection, texture and smoke tests as image-build
 steps, so a regression fails the build instead of shipping. It also needs network
 access: `precompute_uv.py` downloads the canonical face model (~200 KB from
-GitHub) and the smoke test fetches one benchmark reference photo.
+GitHub), the MediaPipe task models (~5 MB, sha256-pinned) come from
+`storage.googleapis.com/mediapipe-models`, and the smoke test fetches one
+benchmark reference photo.
+
+Running outside the image: Python 3.11 with `requirements.txt`, the two model
+files (URLs and hashes in the Dockerfile) pointed to by `FACE_LANDMARKER_MODEL` /
+`FACE_DETECTOR_MODEL`, and `libegl1` + `libgles2` installed, since MediaPipe's
+native library links EGL even when it runs on the CPU.
 
 These are already set on the production `three-ws-api` service so the site
 reaches this worker:

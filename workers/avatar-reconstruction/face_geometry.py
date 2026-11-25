@@ -9,7 +9,7 @@ the difference between "a face sticker on a mannequin" and an avatar that reads
 as the same person (the gap vs Avaturn).
 
 Approach — sparse-to-dense identity transfer, fully commercial-clean:
-  1. MediaPipe FaceMesh (Apache-2.0, already a dependency) → 468 3D landmarks.
+  1. MediaPipe FaceLandmarker (Apache-2.0, already a dependency) → 468 3D landmarks.
   2. Umeyama similarity-align the detected landmarks onto MediaPipe's neutral
      canonical face model (shared frame). The residual (person - canonical) on a
      stable identity subset IS the person's face-shape deviation from neutral.
