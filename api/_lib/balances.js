@@ -776,18 +776,48 @@ async function getEvmBalancesAlchemy(address, alchemyKey) {
 	};
 }
 
-export async function getBalances({ chain, address }) {
+const DEADLINE_HIT = Symbol('deadline');
+
+/**
+ * Live balances for one wallet, cached 60s, with a 24h last-known-good copy.
+ *
+ * `deadlineMs` is the caller's latency budget. The RPC walk tries lane after
+ * lane, and a lane that stalls instead of failing can hold it far past any
+ * request deadline (a 30s walk is normal while the paid lanes are out). A
+ * caller that raced its own timer against this call threw away the
+ * last-known-good snapshot it was waiting for. With a deadline, a live read
+ * still running at that point yields the snapshot (flagged stale) at once and
+ * keeps going in the background, so its result refreshes the cache for the
+ * next read. A wallet with no snapshot fails at the deadline with a 503
+ * `rpc_unavailable`.
+ *
+ * @param {{ chain: string, address: string, deadlineMs?: number }} opts
+ */
+export async function getBalances({ chain, address, deadlineMs = 0 }) {
 	const key = `bal:${chain}:${address}`;
 	const cached = await cacheGet(key);
 	if (cached) return cached;
 	const lkgKey = `bal:lkg:${chain}:${address}`;
-	try {
+	const live = (async () => {
 		const value = chain === 'solana' ? await getSolanaBalances(address) : await getEvmBalances(address);
 		await cacheSet(key, value, BALANCES_TTL_S);
 		// Durable last-known-good so a transient upstream outage serves the wallet's
 		// real prior balances (flagged stale) instead of a 502.
 		await cacheSet(lkgKey, value, BALANCES_LKG_TTL_S);
 		return value;
+	})();
+	let timer;
+	const outcome = deadlineMs > 0
+		? Promise.race([
+			live,
+			new Promise((resolve) => {
+				timer = setTimeout(() => resolve(DEADLINE_HIT), deadlineMs);
+			}),
+		])
+		: live;
+	try {
+		const value = await outcome;
+		if (value !== DEADLINE_HIT) return value;
 	} catch (err) {
 		// Stale-on-error: every live RPC path failed. Serve the last-known-good
 		// snapshot tagged `stale` so the caller holds the wallet's last real look.
@@ -795,7 +825,18 @@ export async function getBalances({ chain, address }) {
 		const lkg = await cacheGet(lkgKey);
 		if (lkg) return { ...lkg, stale: true };
 		throw err;
+	} finally {
+		clearTimeout(timer);
 	}
+	// Deadline hit. The walk keeps running to refresh the cache; a failure there
+	// is already logged per lane and has no caller left to reach.
+	live.catch(() => {});
+	const lkg = await cacheGet(lkgKey);
+	if (lkg) return { ...lkg, stale: true };
+	throw Object.assign(new Error(`balance read exceeded ${deadlineMs}ms deadline`), {
+		status: 503,
+		code: 'rpc_unavailable',
+	});
 }
 
 export async function invalidateBalances({ chain, address }) {

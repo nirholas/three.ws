@@ -209,7 +209,9 @@ export default wrap(async (req, res) => {
 	// CDN read, so awaiting it separately added its own budget on top of the
 	// slowest enrichment on every cold unfurl instead of overlapping with them.
 	const [balances, rep, pnl, tipsCount, achievements, avatarData] = await Promise.all([
-		solAddress ? withTimeout(getBalances({ chain: 'solana', address: solAddress }), 3000, null) : null,
+		// deadlineMs under the 3s guard: a slow RPC walk then yields the wallet's
+		// last-known-good balances instead of a card with none.
+		solAddress ? withTimeout(getBalances({ chain: 'solana', address: solAddress, deadlineMs: 2500 }), 3000, null) : null,
 		withTimeout(getAgentReputation(id, { lite: true }), 3000, null),
 		withTimeout(realizedPnlFor(id), 2000, { sol: 0, wins: 0 }),
 		solAddress ? withTimeout(tipsCountFor(id), 1500, 0) : 0,

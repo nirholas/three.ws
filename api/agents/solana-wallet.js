@@ -1896,6 +1896,9 @@ function warnNetworthThrottled(agentId, msg) {
 // PUT  /api/agents/:id/solana/networth — owner-only: persist the reactivity prefs
 //   (CSRF-gated). Visitors render the agent exactly as the owner configured it.
 const NETWORTH_BALANCE_DEADLINE_MS = 6_000;
+// getBalances answers by NETWORTH_BALANCE_DEADLINE_MS itself (last-known-good or
+// a typed 503). This outer guard only catches a hang in its cache round trips.
+const NETWORTH_BALANCE_GUARD_MS = NETWORTH_BALANCE_DEADLINE_MS + 2_000;
 
 async function handleNetWorth(req, res, id) {
 	if (cors(req, res, { methods: 'GET,PUT,OPTIONS', credentials: true })) return;
@@ -1970,8 +1973,14 @@ async function handleNetWorth(req, res, id) {
 	try {
 		// Hard deadline: getBalances walks the RPC chain lane by lane, and a lane
 		// that stalls (instead of failing) would hold this request past the gateway
-		// timeout. Failing fast here lands in the same typed 503 path below.
-		balances = await withDeadline(getBalances({ chain: 'solana', address }), NETWORTH_BALANCE_DEADLINE_MS, 'networth balances');
+		// timeout. Passing the deadline in lets getBalances serve the wallet's
+		// last-known-good snapshot when the walk overruns, rather than our own
+		// timer discarding it; only a wallet never read lands in the 503 below.
+		balances = await withDeadline(
+			getBalances({ chain: 'solana', address, deadlineMs: NETWORTH_BALANCE_DEADLINE_MS }),
+			NETWORTH_BALANCE_GUARD_MS,
+			'networth balances',
+		);
 	} catch (e) {
 		// Hold-last-state contract: getBalances already serves a stale last-known-good
 		// snapshot when the live read fails, so reaching here means we have never read

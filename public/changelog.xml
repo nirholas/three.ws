@@ -39,6 +39,14 @@
 			<description>The Create-Agent &quot;describe it&quot; generator used to take the first answer any model gave, so a model that replied in prose or ran out of room mid-answer ended the request with &quot;unreadable result&quot; even though other models were ready. It now moves on to the next model until one returns a complete agent spec.</description>
 		</item>
 		<item>
+			<title>Agent net worth holds the last known balance while Solana RPC is slow</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Agent net worth holds the last known balance while Solana RPC is slow</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An agent's net-worth look, and its social card, now fall back to the wallet's last known balance when the Solana RPC lanes are slow to answer, instead of showing an error or an empty card. Only a wallet that has never been read still reports that it is temporarily unavailable.</description>
+		</item>
+		<item>
 			<title>Agent profiles stop requesting a private body they cannot show</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Agent profiles stop requesting a private body they cannot show</guid>

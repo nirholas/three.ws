@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Agent net worth holds the last known balance while Solana RPC is slow",
+			"summary": "An agent's net-worth look, and its social card, now fall back to the wallet's last known balance when the Solana RPC lanes are slow to answer, instead of showing an error or an empty card. Only a wallet that has never been read still reports that it is temporarily unavailable.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Coin charts load on every timeframe and ride out data-provider throttling",
 			"summary": "The 3m, 30m, 2H, 6H, 8H, 3D, 1W and 1M chart timeframes asked our candle provider for groupings it does not offer, so they often showed \"Price history is unavailable\". They are now built from the nearest supported candles. Charts also fall back to the last good candles from the past day when the provider rate-limits us, instead of failing.",
 			"tags": [

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T21:37:14.042Z",
+	"generated_at": "2026-11-25T21:44:46.413Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4736,
+	"total": 4737,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -44,6 +44,16 @@
 			"type": "update",
 			"title": "Agent ideas no longer fail when one model answers in the wrong shape",
 			"summary": "The Create-Agent \"describe it\" generator used to take the first answer any model gave, so a model that replied in prose or ran out of room mid-answer ended the request with \"unreadable result\" even though other models were ready. It now moves on to the next model until one returns a complete agent spec.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Agent net worth holds the last known balance while Solana RPC is slow",
+			"summary": "An agent's net-worth look, and its social card, now fall back to the wallet's last known balance when the Solana RPC lanes are slow to answer, instead of showing an error or an empty card. Only a wallet that has never been read still reports that it is temporarily unavailable.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1549,16 +1559,6 @@
 			"link": null,
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-15",
-			"type": "update",
-			"title": "3D pages download far less on phones",
-			"summary": "Every page with a 3D element, including the walk companion that follows you around the site, used to download one 2.4 MB bundle of 3D loaders it mostly never used. Each page now loads only the 3D code it needs: the companion drops from about 741 KB to 280 KB, and /forge and /play each start with about 440 KB less. Agent profiles also stop competing with their own avatar download to read its stats, so the avatar appears sooner on slow connections.",
-			"link": "/forge",
-			"tags": [
-				"improvement"
 			]
 		}
 	]
