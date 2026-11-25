@@ -1,23 +1,10 @@
 # Deploy three.ws staging on Cloudflare
 
-Prepared 2026-11-24 for the existing nirholas/three.ws repository. The source
-inspection identified main commit e989601bee236b89621b75cf07ee83f39dbabf45.
-Review these additions against your latest branch before merging.
+Prepared 2026-11-24 for the existing nirholas/three.ws repository.
 
-## Add the files first
-
-Extract this archive. Add its contents to the repository root, preserving paths:
-
-- wrangler.jsonc
-- deploy/cloudflare/worker.mjs
-- deploy/cloudflare/Dockerfile
-- docs/ops/cloudflare-staging-setup.md
-
-The owner selected main as the source branch for this separate staging Worker.
-In the GitHub browser UI, select main, choose Add file, then Upload files, and drag the extracted
-files and directories onto the upload area. Upload the extracted contents, not
-the ZIP or an extra enclosing cloudflare_setup directory. Commit the additions.
-These additions do not replace the existing root Dockerfile or GCP configuration.
+The deployment files are committed to main, the source branch selected by the
+owner for this separate staging Worker. They do not replace the existing root
+Dockerfile or GCP configuration.
 
 ## Values for the Cloudflare application form
 
@@ -77,6 +64,54 @@ The deployment intentionally has no scheduler and rejects /api/cron requests.
 Schedule migration is a separate production cutover task, not an automatic
 side effect of deploying this staging Worker.
 
+## Import Cloud Run configuration from Cloud Shell
+
+Complete the Worker's first deployment, including runtime-env.mjs, before import.
+Create a Cloudflare custom API token with Account > Workers Scripts > Edit,
+restricted to the destination account. Copy its 32-character account ID from
+the Cloudflare dashboard. Open https://shell.cloud.google.com/ with a Google
+account allowed to describe the service and access its referenced secrets.
+
+Download the importer and run it. No local software installation is needed:
+
+```sh
+curl -fL https://raw.githubusercontent.com/nirholas/three.ws/main/scripts/migrate-cloudflare-env.py -o /tmp/three-ws-env-migration.py
+python3 /tmp/three-ws-env-migration.py --apply
+```
+
+The defaults read three-ws-api in us-central1 in project
+aerial-vehicle-466722-p5 and update Cloudflare Worker three-ws-staging. Override
+--project, --region, --service, or --worker if the intended source differs.
+The script displays its source and destination and prompts for the account ID
+and API token. The token prompt hides input. It reads literal runtime values
+and referenced Secret Manager versions, preserves Unicode and newlines, and
+uploads the configuration through Cloudflare's bulk secrets endpoint. It does
+not modify GCP, create a file of secret values, or print those values.
+
+For a names-only inventory, omit --apply. Use --exclude NAME repeatedly to
+leave out individual keys or --only NAME repeatedly to select a smaller set.
+Importing production credentials gives staging access to the same services.
+Exclude DATABASE_URL when using a separate staging database, then add its
+staging value as an individual runtime secret in the dashboard. Existing
+individual bindings for a selected source name cause import to stop; exclude
+those names if the bindings should remain in use.
+
+Values are stored in encrypted THREE_WS_ENV_000 and subsequent numbered
+bindings, plus THREE_WS_ENV_PARTS. The adapter reassembles them before starting
+Node. This avoids one Worker binding per application variable and splits large
+configuration into chunks below the per-binding size limit. The importer
+checks the paid plan's 128-variable limit and uses at most 96 bundle bindings.
+Manage an individual application key by adding a runtime binding with its
+original name, which overrides the imported value. Do not edit individual
+numbered chunks. Rerunning the importer replaces the selected configuration
+bundle; it does not merge excluded keys from a previous import.
+
+After a successful import, restart the staging container through Cloudflare
+and test its staging URL. Imported credentials alone do not migrate private
+Redis connections, GCP attached identity, secret file mounts, external GPU
+workers, scheduled jobs, OAuth callback registrations, or build-time variables.
+Secret references using latest resolve to the version current at import time.
+
 ## Runtime shape
 
 - The Worker forwards requests to the existing server on port 8080.
@@ -98,9 +133,18 @@ side effect of deploying this staging Worker.
 Completed in this session:
 
 - Node syntax check of the Worker source.
+- Node tests for environment decoding, overrides, and safe validation failures.
+- Python tests for configuration parsing and exact Python-to-Worker transport.
 - Wrangler 4.168.0 configuration validation and Worker bundling using:
 
   npx --yes wrangler@4.168.0 deploy --dry-run --containers-rollout=none
+
+Run the importer's focused checks without installing project dependencies:
+
+```sh
+node --test tests/cloudflare-runtime-env.node.mjs
+python3 -m unittest discover -s tests -p 'test_cloudflare_env_migration.py'
+```
 
 Not completed:
 
@@ -145,6 +189,8 @@ Worker merely because the homepage renders.
 - https://developers.cloudflare.com/containers/get-started/
 - https://developers.cloudflare.com/containers/guides/deploy/
 - https://developers.cloudflare.com/containers/examples/env-vars-and-secrets/
+- https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/secrets/methods/bulk_update/
+- https://docs.cloud.google.com/sdk/gcloud/reference/secrets/versions/access
 - https://developers.cloudflare.com/workers/ci-cd/builds/build-image/
 - https://developers.cloudflare.com/workers/ci-cd/builds/limits-and-pricing/
 - https://developers.cloudflare.com/containers/platform/pricing/

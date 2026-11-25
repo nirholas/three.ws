@@ -1,22 +1,8 @@
 import { DurableObject } from 'cloudflare:workers';
+import { runtimeEnvironment } from './runtime-env.mjs';
 
 const PORT = 8080;
 const STARTUP_TIMEOUT_MS = 90_000;
-
-function runtimeEnvironment(workerEnv, origin) {
-	// Bindings such as Durable Object namespaces are objects. Forward only
-	// runtime strings, including Worker secrets, to the Node process.
-	const controls = new Set(['THREE_WS_INSTANCE', 'THREE_WS_SLEEP_MS']);
-	const configured = Object.fromEntries(Object.entries(workerEnv).filter(([key, value]) =>
-		typeof value === 'string' && !controls.has(key),
-	));
-	return {
-		...configured,
-		NODE_ENV: 'production',
-		PORT: String(PORT),
-		PUBLIC_APP_ORIGIN: configured.PUBLIC_APP_ORIGIN || origin,
-	};
-}
 
 export class ThreeWsContainer extends DurableObject {
 	starting;
