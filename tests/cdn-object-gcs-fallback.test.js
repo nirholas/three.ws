@@ -161,6 +161,8 @@ describe('/cdn with a GCS fallback bucket', () => {
 		const res = makeRes();
 		await handler(req('thumb/old.png'), res);
 		expect(fetchUpstream.mock.calls[0][0]).toBe('https://pub-example.r2.dev/thumb/old.png');
+		// A throttled multi-megabyte body must not be cut at the header timeout.
+		expect(fetchUpstream.mock.calls[0][2].bodyIdleMs).toBeGreaterThan(0);
 		expect(res.written()).toEqual(Buffer.from([9]));
 	});
 });

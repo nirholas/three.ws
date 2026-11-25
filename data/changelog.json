@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Large 3D models no longer stop downloading at 20 seconds when storage is slow",
+			"summary": "While the main storage credential is being replaced, some files are served from the public storage domain, which throttles. A model file larger than a few megabytes that downloaded slowly was cut off exactly 20 seconds in, leaving viewers with a broken model. The download now continues for as long as data keeps arriving and is stopped only if it stalls completely.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "The text and image to 3D page now carries its product name, three.ws Forge",
 			"summary": "The /forge page heading and its browser, search and share titles now read three.ws Forge, the same name the desktop build already uses, instead of a bare Forge. It is the same free text and photo to 3D studio, now under one name everywhere it appears.",
 			"tags": [

@@ -94,6 +94,56 @@ function composeSignal(callerSignal, timeoutMs) {
 	return AbortSignal.any([callerSignal, timeout]);
 }
 
+// A fetch signal keeps governing the response body after the headers arrive,
+// so composeSignal's timeout is a budget for the WHOLE read. That is right for
+// a JSON call and wrong for a proxy streaming megabytes to a client: a large
+// object that a throttled upstream trickles out was cut off mid-body once the
+// budget ran out, after the status and content-length were already sent
+// (/cdn/<key> GLBs truncated at exactly 20s on 2026-11-25). With `bodyIdleMs`
+// the timer is disarmed when the headers land and the body gets a watchdog
+// that fires only when no chunk has arrived for that long.
+function attemptSignal(callerSignal, timeoutMs) {
+	const controller = new AbortController();
+	const timer = setTimeout(
+		() => controller.abort(new DOMException(`timed out after ${timeoutMs}ms waiting for headers`, 'TimeoutError')),
+		timeoutMs,
+	);
+	const signal = callerSignal ? AbortSignal.any([callerSignal, controller.signal]) : controller.signal;
+	return {
+		signal,
+		headersArrived: () => clearTimeout(timer),
+		abort: (reason) => controller.abort(reason),
+	};
+}
+
+function withBodyIdleTimeout(res, guard, idleMs) {
+	if (!res.body) return res;
+	let timer;
+	const arm = () => {
+		clearTimeout(timer);
+		timer = setTimeout(
+			() => guard.abort(new DOMException(`body stalled for ${idleMs}ms`, 'TimeoutError')),
+			idleMs,
+		);
+		// A reader that stops early leaves one pending timer behind; firing it
+		// only aborts a fetch nobody is reading, so it must not hold the process.
+		timer.unref?.();
+	};
+	arm();
+	const body = res.body.pipeThrough(
+		new TransformStream({
+			transform(chunk, controller) {
+				arm();
+				controller.enqueue(chunk);
+			},
+			flush() {
+				clearTimeout(timer);
+			},
+		}),
+	);
+	return new Response(body, { status: res.status, statusText: res.statusText, headers: res.headers });
+}
+
 /**
  * @typedef {object} UpstreamOptions
  * @property {number} [timeoutMs]        per-attempt budget (default 8000)
@@ -104,6 +154,9 @@ function composeSignal(callerSignal, timeoutMs) {
  * @property {number} [halfOpenAfterMs]  breaker cooldown (default 30000)
  * @property {(res: Response) => boolean} [okWhen] override "success" (default res.ok)
  * @property {string} [label]            prefix for thrown error messages
+ * @property {number} [bodyIdleMs]       streaming callers: `timeoutMs` then bounds only the wait
+ *                                       for the headers, and the body is aborted only after it
+ *                                       delivers nothing for this long (see attemptSignal)
  */
 
 /**
@@ -167,6 +220,7 @@ async function fetchUpstreamImpl(url, init, opts, span) {
 		halfOpenAfterMs = 30_000,
 		okWhen = (res) => res.ok,
 		label,
+		bodyIdleMs,
 	} = opts;
 	const shown = safeUrl(url);
 
@@ -190,7 +244,19 @@ async function fetchUpstreamImpl(url, init, opts, span) {
 			const send = /** @type {typeof fetch} */ (init.dispatcher ? pinnedFetch : fetch);
 			if (span) span.setAttribute('upstream.attempts', (span.attrs['upstream.attempts'] || 0) + 1);
 			const sendInit = span ? { ...init, headers: withTraceparent(init.headers, span) } : init;
-			if (!res) res = await send(url, { ...sendInit, signal: composeSignal(init.signal, timeoutMs) });
+			if (!res) {
+				if (bodyIdleMs) {
+					const guard = attemptSignal(init.signal, timeoutMs);
+					try {
+						res = await send(url, { ...sendInit, signal: guard.signal });
+					} finally {
+						guard.headersArrived();
+					}
+					res = withBodyIdleTimeout(res, guard, bodyIdleMs);
+				} else {
+					res = await send(url, { ...sendInit, signal: composeSignal(init.signal, timeoutMs) });
+				}
+			}
 		} catch (err) {
 			if (init.signal?.aborted) throw err;
 			const e = new UpstreamError(`${shown}: ${err?.name === 'TimeoutError' ? `timed out after ${timeoutMs}ms` : err?.message || 'network error'}`, { url: shown, cause: err });

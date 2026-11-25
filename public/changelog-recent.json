@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T22:14:24.918Z",
+	"generated_at": "2026-11-25T22:15:23.538Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4740,
+	"total": 4741,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -184,6 +184,16 @@
 			"type": "update",
 			"title": "Image understanding says when an image link is the problem",
 			"summary": "POST /api/vision with an imageUrl that points at a missing file, a host that does not exist, or a web page instead of an image used to run every model in the chain and answer 502 as if the models were down. It now answers 400 invalid_image_url straight away with the reason, and an image served under a generic content type is recognised from its bytes.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Large 3D models no longer stop downloading at 20 seconds when storage is slow",
+			"summary": "While the main storage credential is being replaced, some files are served from the public storage domain, which throttles. A model file larger than a few megabytes that downloaded slowly was cut off exactly 20 seconds in, leaving viewers with a broken model. The download now continues for as long as data keeps arriving and is stopped only if it stalls completely.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1547,17 +1557,6 @@
 			"tags": [
 				"security",
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Use the three.ws app in Outlook and the Microsoft 365 app, not only Teams",
-			"summary": "The same three.ws Microsoft 365 app now runs in Outlook and the Microsoft 365 app. In a new Outlook email you can search agents and paste an agent link to get a card, built to the Adaptive Card version and limits Outlook supports. The Agents tab opens in Outlook's app bar and in the Microsoft 365 app, follows the host's light, dark and high contrast themes, and offers the right share action in each place: the Teams share dialog in Teams, a ready email in Outlook, and copy link in a plain browser. Creating a 3D model from chat stays in Teams, where its live card can run.",
-			"link": null,
-			"tags": [
-				"feature",
-				"improvement"
 			]
 		}
 	]

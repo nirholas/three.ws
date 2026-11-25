@@ -199,7 +199,7 @@ async function degradedSource(source) {
 	const response = await fetchUpstream(
 		url,
 		{},
-		{ name: 'r2:public-object', timeoutMs: 20_000, attempts: 2, okWhen: (r) => r.ok || r.status === 404 },
+		{ name: 'r2:public-object', timeoutMs: 20_000, bodyIdleMs: 20_000, attempts: 2, okWhen: (r) => r.ok || r.status === 404 },
 	).catch((err) => {
 		console.error('[cdn-object] variant public bucket domain failed:', source, err?.message);
 		return null;
@@ -462,7 +462,10 @@ export default wrap(async (req, res) => {
 					{ headers: range ? { range } : {} },
 					{
 						name: 'r2:public-object',
+						// 20s to the headers, then cut only a body that stops moving:
+						// a throttled multi-megabyte GLB used to be truncated at 20s.
 						timeoutMs: 20_000,
+						bodyIdleMs: 20_000,
 						attempts: 2,
 						// A 404 on the public domain is the object genuinely being
 						// absent, not an outage: the signed error never got far

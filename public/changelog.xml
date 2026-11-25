@@ -151,6 +151,14 @@
 			<description>POST /api/vision with an imageUrl that points at a missing file, a host that does not exist, or a web page instead of an image used to run every model in the chain and answer 502 as if the models were down. It now answers 400 invalid_image_url straight away with the reason, and an image served under a generic content type is recognised from its bytes.</description>
 		</item>
 		<item>
+			<title>Large 3D models no longer stop downloading at 20 seconds when storage is slow</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Large 3D models no longer stop downloading at 20 seconds when storage is slow</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>While the main storage credential is being replaced, some files are served from the public storage domain, which throttles. A model file larger than a few megabytes that downloaded slowly was cut off exactly 20 seconds in, leaving viewers with a broken model. The download now continues for as long as data keeps arriving and is stopped only if it stalls completely.</description>
+		</item>
+		<item>
 			<title>Long-tail coin pages load during CoinGecko throttling, and Fear &amp; Greed has a working backup</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Long-tail coin pages load during CoinGecko throttling, and Fear &amp; Greed has a working backup</guid>

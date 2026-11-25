@@ -161,10 +161,11 @@ describe('avatar glb proxy: GCS fallback bucket', () => {
 		expect(res.statusCode).toBe(404);
 	});
 
-	// Production on 2026-11-25: two avatars point at draft GLBs no store holds.
-	// R2 rejected the credential, the fallback bucket had no such object and the
-	// public bucket domain answered 404, yet the route said 502 upstream_error,
-	// which tells every client to retry a read that can never succeed.
+	// With R2 rejecting the credential, the fallback bucket lacking the key and
+	// the public bucket domain answering 404, no store has the object (the row
+	// points at a deleted file), yet the route said 502 upstream_error, which
+	// tells every client to retry a read that can never succeed. /cdn/<key>
+	// already answers 404 here.
 	it('answers 404 when R2 rejects the credential and every other store says the object does not exist', async () => {
 		sendImpl = async () => { throw unauthorized(); };
 		const res = await invoke();
@@ -183,7 +184,8 @@ describe('avatar glb proxy: GCS fallback bucket', () => {
 
 	it('falls through to the public bucket domain when the fallback bucket does not hold the key', async () => {
 		sendImpl = async () => { throw unauthorized(); };
-		fetchUpstreamImpl = async () => ({
+		let opts;
+		fetchUpstreamImpl = async (_url, _init, o) => (opts = o, {
 			ok: true,
 			status: 200,
 			headers: new Headers({ 'content-length': String(GLB_BYTES.length) }),
@@ -192,6 +194,8 @@ describe('avatar glb proxy: GCS fallback bucket', () => {
 		const res = await invoke();
 		expect(res.statusCode).toBe(200);
 		expect(Buffer.concat(res.chunks).equals(GLB_BYTES)).toBe(true);
+		// A throttled multi-megabyte body must not be cut at the header timeout.
+		expect(opts.bodyIdleMs).toBeGreaterThan(0);
 		// ...and copies it into the fallback bucket, so the next read is in-region.
 		expect(gcsPuts).toHaveLength(1);
 		expect(gcsPuts[0].url).toBe(`https://storage.googleapis.com/fallback-bucket/${KEY}`);

@@ -615,7 +615,9 @@ async function streamPublicGlb(res, url, { name, cacheControl, mirrorKey = null 
 	const upstream = await fetchUpstream(
 		url,
 		{ headers: { accept: 'model/gltf-binary,*/*' } },
-		{ name, timeoutMs: 20_000, attempts: 2 },
+		// 20s to the headers, then cut only a body that stops moving: a
+		// throttled multi-megabyte GLB used to be truncated at 20s mid-stream.
+		{ name, timeoutMs: 20_000, bodyIdleMs: 20_000, attempts: 2 },
 	);
 	await streamGlbResponse(res, upstream, cacheControl, mirrorKey);
 }
