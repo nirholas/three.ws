@@ -12,11 +12,12 @@
 
 import { loadModelFromBytes, loadModelFromFile, poseModel } from './model.js';
 import { computeFraming, createFramebuffer, poseCenter, renderToFramebuffer } from './raster.js';
-import { ColorMode, detectColorMode, framebufferToText } from './term.js';
+import { ColorMode, detectColorMode, framebufferToText, GLYPH_STYLES } from './term.js';
 
 export { loadModelFromBytes, loadModelFromFile, poseModel } from './model.js';
 export { createFramebuffer, renderToFramebuffer, computeFraming, poseCenter, poseBounds } from './raster.js';
-export { ColorMode, detectColorMode, framebufferToText, toAnsi256, ansi } from './term.js';
+export { ColorMode, detectColorMode, framebufferToText, toAnsi256, ansi, GLYPH_STYLES } from './term.js';
+export { createScene, isScene, SCENE_NAMES, normalizeStyle, STYLE_NAMES } from './scenes.js';
 
 const MAX_REMOTE_BYTES = 64 * 1024 * 1024;
 
@@ -69,23 +70,33 @@ export function createRenderer(model, options = {}) {
 		spin = 1,
 		pitch = 0.08,
 		zoom = 1,
+		yaw = 0,
+		style = 'half',
+		pointRadius = 0,
 		tint = [1, 1, 1],
 	} = options;
 
-	// The framebuffer is twice as tall as the character grid: one text row is
-	// two vertical pixels via the half-block.
-	const fb = createFramebuffer(Math.max(2, Math.round(width)), Math.max(2, Math.round(height)) * 2);
+	const asked = GLYPH_STYLES.includes(style) ? style : 'half';
+	const braille = asked === 'braille';
+	const cols = Math.max(2, Math.round(width));
+	const rows = Math.max(2, Math.round(height));
+	// Half blocks store two vertical pixels per text row. Braille stores a 2x4
+	// dot grid per cell, so the buffer is wider and taller and the text is not.
+	const fb = createFramebuffer(braille ? cols * 2 : cols, braille ? rows * 4 : rows * 2);
 	const clip = selectAnimation(model, animation);
 	const framing = computeFraming(model, clip);
 
-	const state = { yaw: 0, pitch, zoom };
+	const state = { yaw, pitch, zoom };
+	const tintMul = asked === 'matrix' ? [0.45, 1, 0.55] : [1, 1, 1];
+	const appliedTint = [tint[0] * tintMul[0], tint[1] * tintMul[1], tint[2] * tintMul[2]];
+	const glyph = asked === 'points' || asked === 'matrix' ? 'half' : asked;
 
 	return {
 		model,
 		animation: clip,
 		framing,
-		width: fb.width,
-		height: fb.height / 2,
+		width: cols,
+		height: rows,
 		get orbit() { return { ...state }; },
 
 		/** Absolute camera control, for interactive use. */
@@ -110,9 +121,11 @@ export function createRenderer(model, options = {}) {
 				zoom: state.zoom,
 				center: poseCenter(model),
 				framing,
-				tint,
+				tint: appliedTint,
+				points: asked === 'points',
+				pointRadius: asked === 'points' ? pointRadius : 0,
 			});
-			return framebufferToText(fb, { mode, background, transparent });
+			return framebufferToText(fb, { mode, background, transparent, style: glyph });
 		},
 	};
 }

@@ -15,6 +15,11 @@ const RESET = `${ESC}[0m`;
 // Dense to sparse. Only used when the terminal cannot do colour at all, where
 // luminance has to carry the whole image on its own.
 const RAMP = '@%#*+=-:. ';
+// Bright ink is a solid block. The ASCII ramp above is inverted on purpose
+// (dense characters for dark pixels); density mode is the positive image.
+const BLOCKS = ' ░▒▓█';
+
+export const GLYPH_STYLES = ['half', 'density', 'braille', 'ascii', 'points', 'matrix'];
 
 export const ColorMode = {
 	TRUECOLOR: 'truecolor',
@@ -65,13 +70,17 @@ function luminance(r, g, b) {
 /**
  * Render a framebuffer to a string of terminal rows.
  *
- * @param {object} fb                  framebuffer; height should be even
+ * @param {object} fb                  framebuffer; height should be even for half blocks
  * @param {object} [opts]
  * @param {string} [opts.mode]         a ColorMode value
+ * @param {string} [opts.style]        half (default), density, braille, or ascii
  * @param {number[]} [opts.background] rgb 0..1 painted where nothing was drawn
  * @param {boolean} [opts.transparent] leave uncovered cells as plain spaces
  */
 export function framebufferToText(fb, opts = {}) {
+	const style = opts.style ?? 'half';
+	if (style === 'braille') return brailleText(fb, opts);
+	if (style === 'density' || style === 'ascii') return glyphText(fb, opts, style);
 	const mode = opts.mode ?? ColorMode.TRUECOLOR;
 	const bg = opts.background ?? [0.031, 0.031, 0.078];
 	const transparent = opts.transparent ?? false;
@@ -135,6 +144,124 @@ export function framebufferToText(fb, opts = {}) {
 			painted = true;
 		}
 
+		rows.push(mode === ColorMode.MONO || !painted ? line : line + RESET);
+	}
+	return rows.join('\n');
+}
+
+function sample(fb, x, y, bg) {
+	if (x < 0 || y < 0 || x >= fb.width || y >= fb.height) return { on: false, r: bg[0], g: bg[1], b: bg[2] };
+	const idx = y * fb.width + x;
+	const on = fb.coverage[idx] === 1;
+	const o = idx * 3;
+	return {
+		on,
+		r: on ? fb.color[o] : bg[0],
+		g: on ? fb.color[o + 1] : bg[1],
+		b: on ? fb.color[o + 2] : bg[2],
+	};
+}
+
+/**
+ * One character per cell. Density uses block glyphs and keeps colour. ASCII
+ * uses the luminance ramp and drops colour, matching a mono terminal.
+ */
+function glyphText(fb, opts, style) {
+	const mode = style === 'ascii' ? ColorMode.MONO : (opts.mode ?? ColorMode.TRUECOLOR);
+	const bg = opts.background ?? [0.031, 0.031, 0.078];
+	const transparent = opts.transparent ?? false;
+	const ramp = style === 'ascii' ? RAMP : BLOCKS;
+	const rows = [];
+	for (let y = 0; y < fb.height; y += 2) {
+		let line = '';
+		let lastFg = null;
+		let painted = false;
+		for (let x = 0; x < fb.width; x += 1) {
+			const top = sample(fb, x, y, bg);
+			const bot = sample(fb, x, Math.min(fb.height - 1, y + 1), bg);
+			const on = top.on || bot.on;
+			if (transparent && !on) {
+				if (lastFg !== null) { line += RESET; lastFg = null; painted = true; }
+				line += ' ';
+				continue;
+			}
+			const r = (top.r + bot.r) / 2;
+			const g = (top.g + bot.g) / 2;
+			const b = (top.b + bot.b) / 2;
+			const lit = luminance(r, g, b);
+			// ASCII keeps the historical ramp (bright pixels go sparse). Density
+			// is a positive image: a lit pixel is a solid block.
+			const glyph = style === 'ascii'
+				? (on ? ramp[Math.min(ramp.length - 1, Math.floor((1 - lit) * ramp.length))] : ' ')
+				: (on ? ramp[Math.min(ramp.length - 1, Math.floor(lit * (ramp.length - 1)))] : ' ');
+			if (mode === ColorMode.MONO || style === 'ascii') {
+				line += glyph;
+				continue;
+			}
+			const f = mode === ColorMode.ANSI256
+				? String(toAnsi256(r, g, b))
+				: `${clamp255(r)};${clamp255(g)};${clamp255(b)}`;
+			const fgSeq = f === lastFg ? '' : (mode === ColorMode.ANSI256 ? `${ESC}[38;5;${f}m` : `${ESC}[38;2;${f}m`);
+			lastFg = f;
+			line += fgSeq + glyph;
+			painted = true;
+		}
+		rows.push(mode === ColorMode.MONO || style === 'ascii' || !painted ? line : line + RESET);
+	}
+	return rows.join('\n');
+}
+
+// Braille dot bits, left column then right, top to bottom.
+const BRAILLE_BIT = [0x01, 0x02, 0x04, 0x40, 0x08, 0x10, 0x20, 0x80];
+
+/** 2x4 pixels per cell. The framebuffer is cols*2 by rows*4. */
+function brailleText(fb, opts) {
+	const mode = opts.mode ?? ColorMode.TRUECOLOR;
+	const bg = opts.background ?? [0.031, 0.031, 0.078];
+	const transparent = opts.transparent ?? false;
+	const cols = Math.floor(fb.width / 2);
+	const rowCount = Math.floor(fb.height / 4);
+	const rows = [];
+	for (let row = 0; row < rowCount; row += 1) {
+		let line = '';
+		let lastFg = null;
+		let painted = false;
+		for (let col = 0; col < cols; col += 1) {
+			let mask = 0;
+			let r = 0;
+			let g = 0;
+			let b = 0;
+			let n = 0;
+			for (let dy = 0; dy < 4; dy += 1) {
+				for (let dx = 0; dx < 2; dx += 1) {
+					const px = sample(fb, col * 2 + dx, row * 4 + dy, bg);
+					if (!px.on) continue;
+					mask |= BRAILLE_BIT[dx * 4 + dy];
+					r += px.r; g += px.g; b += px.b;
+					n += 1;
+				}
+			}
+			if (!mask) {
+				if (transparent && lastFg !== null) { line += RESET; lastFg = null; painted = true; }
+				line += ' ';
+				continue;
+			}
+			const ch = String.fromCodePoint(0x2800 + mask);
+			if (mode === ColorMode.MONO) {
+				line += ch;
+				continue;
+			}
+			const cr = r / n;
+			const cg = g / n;
+			const cb = b / n;
+			const f = mode === ColorMode.ANSI256
+				? String(toAnsi256(cr, cg, cb))
+				: `${clamp255(cr)};${clamp255(cg)};${clamp255(cb)}`;
+			const fgSeq = f === lastFg ? '' : (mode === ColorMode.ANSI256 ? `${ESC}[38;5;${f}m` : `${ESC}[38;2;${f}m`);
+			lastFg = f;
+			line += fgSeq + ch;
+			painted = true;
+		}
 		rows.push(mode === ColorMode.MONO || !painted ? line : line + RESET);
 	}
 	return rows.join('\n');

@@ -105,6 +105,10 @@ const FILL_LIGHT = normalize([0.7, 0.1, 0.35]);
  * @param {object} opts.framing  fixed framing extents from computeFraming
  * @param {number[]} opts.center world-space point to look at
  * @param {number[]} opts.tint   optional rgb multiplier in 0..1
+ * @param {boolean} [opts.clear] when false, composite onto the framebuffer
+ * @param {number[]} [opts.translate] world-space offset applied to every vertex
+ * @param {boolean} [opts.points] plot vertices instead of triangles
+ * @param {number} [opts.pointRadius] splat radius in pixels; 0 is a single pixel
  */
 export function renderToFramebuffer(fb, model, opts) {
 	const { yaw = 0, pitch = 0.05, zoom = 1, tint = [1, 1, 1] } = opts;
@@ -149,7 +153,7 @@ export function renderToFramebuffer(fb, model, opts) {
 		const { outPositions: P, outNormals: N, indices, color } = transformPrimitive(model, prim);
 
 		if (opts.points) {
-			plotPoints(fb, P, viewProj, tx, ty, tz, color, tint);
+			plotPoints(fb, P, viewProj, tx, ty, tz, color, tint, opts.pointRadius ?? 0);
 			continue;
 		}
 
@@ -228,4 +232,47 @@ export function renderToFramebuffer(fb, model, opts) {
 		}
 	}
 	return fb;
+}
+
+/** Project each vertex and stamp a small disc. Used by the point-cloud scene. */
+function plotPoints(fb, positions, viewProj, tx, ty, tz, color, tint, radius) {
+	const clip = new Float64Array(4);
+	const rad = Math.max(0, radius);
+	const rad2 = rad * rad;
+	const span = Math.ceil(rad);
+	for (let i = 0; i < positions.length; i += 3) {
+		const x = positions[i] + tx;
+		const y = positions[i + 1] + ty;
+		const z = positions[i + 2] + tz;
+		clip[0] = viewProj[0] * x + viewProj[4] * y + viewProj[8] * z + viewProj[12];
+		clip[1] = viewProj[1] * x + viewProj[5] * y + viewProj[9] * z + viewProj[13];
+		clip[2] = viewProj[2] * x + viewProj[6] * y + viewProj[10] * z + viewProj[14];
+		clip[3] = viewProj[3] * x + viewProj[7] * y + viewProj[11] * z + viewProj[15];
+		if (clip[3] <= 1e-6) continue;
+		const inv = 1 / clip[3];
+		const sx = (clip[0] * inv * 0.5 + 0.5) * fb.width;
+		const sy = (1 - (clip[1] * inv * 0.5 + 0.5)) * fb.height;
+		const sz = clip[2] * inv;
+		const cx = Math.round(sx);
+		const cy = Math.round(sy);
+		for (let dy = -span; dy <= span; dy += 1) {
+			for (let dx = -span; dx <= span; dx += 1) {
+				const d2 = dx * dx + dy * dy;
+				if (span > 0 && d2 > rad2) continue;
+				const px = cx + dx;
+				const py = cy + dy;
+				if (px < 0 || py < 0 || px >= fb.width || py >= fb.height) continue;
+				const idx = py * fb.width + px;
+				if (sz >= fb.depth[idx]) continue;
+				fb.depth[idx] = sz;
+				fb.coverage[idx] = 1;
+				const fall = span === 0 ? 1 : 1 - Math.sqrt(d2) / (rad + 1e-4);
+				const lit = 0.42 + 0.58 * fall;
+				const o = idx * 3;
+				fb.color[o] = Math.min(1, color[0] * lit * tint[0]);
+				fb.color[o + 1] = Math.min(1, color[1] * lit * tint[1]);
+				fb.color[o + 2] = Math.min(1, color[2] * lit * tint[2]);
+			}
+		}
+	}
 }
