@@ -1,9 +1,10 @@
 /**
  * Root cause of the 2026-10-12 /api/3d/generate 502 storm: the Vertex image
  * lane (billing dunning hold, 403 on every call) and the two HF-routed
- * providers (fal-ai/nscale, 402 "no remaining credits") had no circuit
- * breaker, unlike NIM FLUX. Every single request re-paid the full timeout of
- * each known-dead lane before ever reaching keyless Pollinations, which often
+ * providers (fal-ai and nscale, since replaced by WaveSpeed; 402 "no
+ * remaining credits") had no circuit breaker, unlike NIM FLUX. Every single
+ * request re-paid the full timeout of each known-dead lane before ever
+ * reaching keyless Pollinations, which often
  * blew the shared ladder budget and surfaced as a 502 instead of a served
  * image. This pins that an auth/billing fault (401/402/403) parks the lane
  * for AUTH_COOLDOWN_SECONDS so the next request skips straight past it.
@@ -62,7 +63,8 @@ globalThis.fetch = vi.fn(async (url) => {
 	hits.push(u);
 	if (u.includes('ai.api.nvidia.com')) return lane.nim();
 	if (u.includes('router.huggingface.co/fal-ai')) return lane.fal();
-	if (u.includes('router.huggingface.co/nscale')) return lane.nscale();
+	if (u.includes('router.huggingface.co/wavespeed')) return lane.wavespeed();
+	if (u.includes('cdn.wavespeed.test')) return bytes(JPG, 'image/jpeg');
 	if (u.includes('image.pollinations.ai')) return lane.pollinations();
 	throw new Error(`unexpected fetch ${u}`);
 });
@@ -73,7 +75,7 @@ beforeEach(async () => {
 	persisted.calls = 0;
 	lane.nim = () => json(502, { error: 'gateway' });
 	lane.fal = () => json(402, { error: 'You have no remaining credits.' });
-	lane.nscale = () => json(402, { error: 'You have no remaining credits.' });
+	lane.wavespeed = () => json(402, { error: 'You have no remaining credits.' });
 	lane.pollinations = () => bytes(JPG, 'image/jpeg');
 	// Each test starts with every breaker clear: these keys live in the real
 	// (in-memory, since getRedis -> null) shared cache, so a cooldown one test
@@ -81,7 +83,7 @@ beforeEach(async () => {
 	await Promise.all([
 		clearProviderCooldown(VERTEX_IMAGE_COOLDOWN_KEY),
 		clearProviderCooldown('forge-hf-image-fal-ai'),
-		clearProviderCooldown('forge-hf-image-nscale'),
+		clearProviderCooldown('forge-hf-image-wavespeed'),
 	]);
 });
 
@@ -100,19 +102,19 @@ describe('a billing-hold Vertex lane cools down after one auth fault', () => {
 });
 
 describe('an out-of-credit HF provider cools down after one 402, independently of its sibling', () => {
-	it('tries fal-ai once, then skips it (not nscale) on the next request', async () => {
-		lane.nscale = () => json(200, { data: [{ b64_json: Buffer.from(JPG).toString('base64') }] });
+	it('tries fal-ai once, then skips it (not WaveSpeed) on the next request', async () => {
+		lane.wavespeed = () => json(200, { code: 200, message: 'success', data: { id: 't1', status: 'completed', outputs: ['https://cdn.wavespeed.test/t1.png'] } });
 
 		const first = await textToImage('a fox', { budgetMs: 20_000 });
-		expect(first.model).toBe('hf/nscale/flux-schnell');
+		expect(first.model).toBe('hf/wavespeed/flux-schnell');
 		expect(hits.filter((u) => u.includes('fal-ai'))).toHaveLength(1);
-		expect(hits.filter((u) => u.includes('nscale'))).toHaveLength(1);
+		expect(hits.filter((u) => u.includes('router.huggingface.co/wavespeed'))).toHaveLength(1);
 
 		hits.length = 0;
 		const second = await textToImage('a fox', { budgetMs: 20_000 });
-		expect(second.model).toBe('hf/nscale/flux-schnell');
+		expect(second.model).toBe('hf/wavespeed/flux-schnell');
 		// Without the breaker fal-ai would be re-dialed (and re-fail) every request.
 		expect(hits.filter((u) => u.includes('fal-ai'))).toHaveLength(0);
-		expect(hits.filter((u) => u.includes('nscale'))).toHaveLength(1);
+		expect(hits.filter((u) => u.includes('router.huggingface.co/wavespeed'))).toHaveLength(1);
 	});
 });

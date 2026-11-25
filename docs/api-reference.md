@@ -3203,7 +3203,11 @@ curl -s 'https://three.ws/api/v1/ai/image?health=1'
 ```
 
 Returns per-lane `configured`/`status` (`ok` | `down` | `degraded` | `unconfigured`)
-and `missing_env` when nothing is wired. A plain `GET /api/v1/ai/image` returns a
+and `missing_env` when nothing is wired. The `hf` lane lists each Hugging Face router
+rung under `providers` (`id`, `mapped`, `status`, and the router's own `detail` when it
+refuses), so an out-of-credit account or a retired route reads `down` with the reason
+instead of a green token check. A successful generation names its lane in `provider`:
+`nvidia-nim`, `vertex`, `huggingface`, `livepeer`, `pollinations` or `replicate`. A plain `GET /api/v1/ai/image` returns a
 discovery doc (price, free-tier width, which lanes are configured).
 
 **Errors**

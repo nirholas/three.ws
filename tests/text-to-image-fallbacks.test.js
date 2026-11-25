@@ -1,6 +1,6 @@
 /**
  * The concept-image ladder (api/_mcp3d/text-to-image.js) has five independent
- * rungs: Vertex, NIM FLUX.1-dev, HF-routed fal-ai, HF-routed nscale, and
+ * rungs: Vertex, NIM FLUX.1-dev, HF-routed fal-ai, HF-routed WaveSpeed, and
  * keyless Pollinations. On 2026-08-27 the first two were both out (billing
  * hold, stalled gateway) and text-to-3D failed for hours; these pin that every
  * later rung is reached, in order, and that the keyless one is always there.
@@ -39,7 +39,8 @@ globalThis.fetch = vi.fn(async (url, init) => {
 	if (u.includes('ai.api.nvidia.com')) return lane.nim(init);
 	if (u.includes('router.huggingface.co/fal-ai')) return lane.fal(init);
 	if (u.includes('fal.media')) return bytes(JPG, 'image/jpeg');
-	if (u.includes('router.huggingface.co/nscale')) return lane.nscale(init);
+	if (u.includes('router.huggingface.co/wavespeed')) return lane.wavespeed(init);
+	if (u.includes('cdn.wavespeed.test')) return bytes(PNG, 'image/png');
 	if (u.includes('image.pollinations.ai')) return lane.pollinations(init);
 	throw new Error(`unexpected fetch ${u}`);
 });
@@ -49,7 +50,7 @@ beforeEach(() => {
 	persisted.calls = 0;
 	lane.nim = () => json(502, { error: 'gateway' });
 	lane.fal = () => json(503, {});
-	lane.nscale = () => json(503, {});
+	lane.wavespeed = () => json(503, {});
 	lane.pollinations = () => bytes(JPG, 'image/jpeg');
 });
 
@@ -66,13 +67,13 @@ describe('the ladder reaches every rung in order', () => {
 		const out = await textToImage('a fox', { budgetMs: 20_000 });
 		expect(out.model).toBe('hf/fal-ai/flux-schnell');
 		expect(out.imageUrl).toMatch(/^https:\/\/cdn\.test\//);
-		expect(hits.some((u) => u.includes('nscale'))).toBe(false);
+		expect(hits.some((u) => u.includes('wavespeed'))).toBe(false);
 	});
 
-	it('falls to HF nscale when fal-ai fails too', async () => {
-		lane.nscale = () => json(200, { data: [{ b64_json: Buffer.from(PNG).toString('base64') }] });
+	it('falls to HF WaveSpeed when fal-ai fails too', async () => {
+		lane.wavespeed = () => json(200, { code: 200, message: 'success', data: { id: 't1', status: 'completed', outputs: ['https://cdn.wavespeed.test/t1.png'] } });
 		const out = await textToImage('a fox', { budgetMs: 20_000 });
-		expect(out.model).toBe('hf/nscale/flux-schnell');
+		expect(out.model).toBe('hf/wavespeed/flux-schnell');
 	});
 
 	it('ends on keyless Pollinations when every keyed rung is down', async () => {

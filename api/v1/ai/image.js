@@ -102,7 +102,7 @@ const OUTPUT_SCHEMA = {
 	required: ['url', 'provider', 'width', 'height'],
 	properties: {
 		url: { type: 'string', format: 'uri', description: 'Durable https URL to the rendered image.' },
-		provider: { type: 'string', description: 'Lane that served the image: nvidia-nim | vertex | replicate.' },
+		provider: { type: 'string', description: 'Lane that served the image: nvidia-nim | vertex | huggingface | livepeer | pollinations | replicate.' },
 		model: { type: 'string' },
 		width: { type: 'integer' },
 		height: { type: 'integer' },

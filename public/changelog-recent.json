@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T17:22:44.520Z",
+	"generated_at": "2026-11-25T17:30:55.949Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4706,
+	"total": 4707,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -35,6 +35,16 @@
 			"title": "Chat stops wasting turns on free models that no longer exist",
 			"summary": "OpenRouter quietly retired eight free model routes, including the Nemotron 3 Super option in the agent, avatar, editor and chat model pickers. Picking it now runs Nemotron 3.5 Super, agents that saved a retired model keep answering on its closest live successor, and the fallback chain and image understanding no longer spend a request on a dead route before reaching one that answers. The nightly free-model audit now watches every route the chain actually calls, so the next retirement is caught the day it happens.",
 			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Concept images keep a second Hugging Face route, and image health tells the truth",
+			"summary": "Hugging Face stopped routing FLUX.1-schnell through nscale, so the second Hugging Face rung of the text-to-image ladder failed on every call. It now runs on WaveSpeed, which Hugging Face still maps to the model. /api/v1/ai/image?health=1 now asks each Hugging Face route whether it would actually serve, so an empty credit balance or a retired route shows as down with the reason instead of passing on a valid token. Images made on Hugging Face or the Livepeer network are now credited to that lane instead of to NVIDIA.",
+			"link": "/docs/api-reference",
 			"tags": [
 				"fix"
 			]
@@ -1559,16 +1569,6 @@
 			"title": "Private worlds now keep strangers out of the live world too",
 			"summary": "A Silver holder's private world already hid its saved build from anyone not invited, but the live multiplayer world was still open: anyone could walk in and watch what was being built, and the game server could not read the private build at all, so the world opened empty and new building was lost. The game server now reads private worlds properly, and it seats only the owner and the people they invited. Making a world private or removing an invite takes effect within seconds for anyone already inside, who is told the world is private and sent back to the lobby. An invitee who was there when the world went private stays in.",
 			"link": "/three",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "Robinhood Chain launches keep their names and launch times when the chain is busy",
-			"summary": "The Robinhood Chain coins table reads each new coin's name, symbol and launch time from the public chain RPC. When that RPC was rate-limiting, rows showed up with a blank name and no age, even though the launch watcher had already read the same details on chain. The table now fills those gaps from the watcher, so every row keeps its name, ticker and age alongside its venue, deployer record and dev-sold flag.",
-			"link": "/markets/robinhood",
 			"tags": [
 				"fix"
 			]

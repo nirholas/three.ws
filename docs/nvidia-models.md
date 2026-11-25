@@ -80,7 +80,7 @@ FLUX.1-dev is the **free NVIDIA text-to-image lane** (the hosted FLUX.1-schnell 
 - **The reference-image step of the image-intermediate 3D path.** When a prompt is reconstructed to a mesh, FLUX paints the reference view first, which the free reconstruction lanes (TRELLIS / Hunyuan3D) then turn into geometry. A photo-quality reference reconstructs into a far better mesh than a busy scene, so the lane steers FLUX toward a clean, centered subject.
 - General text→image wherever the platform needs a synthesized image.
 
-**Ladder order.** When `GOOGLE_CLOUD_PROJECT` is set, Vertex Imagen leads by default because it outdraws distilled FLUX for photoreal reference images and spends the GCP credit pool the platform is funded to burn (`VERTEX_IMAGEN_FIRST=0` restores the NIM-first order). After that: NVIDIA FLUX.1-dev (free) → the Hugging Face router (`HF_TOKEN`; fal-ai, then nscale, both serving FLUX.1-schnell in 2-5 s) → the Livepeer federation lane (behind `LIVEPEER_FEDERATION_ENABLED`) → Pollinations (keyless, so a fallback always exists past every keyed rung) → Replicate `flux-schnell` ($0.003/image, the paid backstop). The whole ladder shares one budget, `TEXT_TO_IMAGE_BUDGET_MS` (default 60 s): each lane gets a bounded slice of what remains so a stalled provider cannot hold a Forge submit for minutes, and exhausting the budget returns a retryable `rate_limited` error (`retryAfter: 15`) rather than a hung request.
+**Ladder order.** When `GOOGLE_CLOUD_PROJECT` is set, Vertex Imagen leads by default because it outdraws distilled FLUX for photoreal reference images and spends the GCP credit pool the platform is funded to burn (`VERTEX_IMAGEN_FIRST=0` restores the NIM-first order). After that: NVIDIA FLUX.1-dev (free) → the Hugging Face router (`HF_TOKEN`; fal-ai, then WaveSpeed, both serving FLUX.1-schnell in a few seconds; `/api/v1/ai/image?health=1` probes each rung for credit and route) → the Livepeer federation lane (behind `LIVEPEER_FEDERATION_ENABLED`) → Pollinations (keyless, so a fallback always exists past every keyed rung) → Replicate `flux-schnell` ($0.003/image, the paid backstop). The whole ladder shares one budget, `TEXT_TO_IMAGE_BUDGET_MS` (default 60 s): each lane gets a bounded slice of what remains so a stalled provider cannot hold a Forge submit for minutes, and exhausting the budget returns a retryable `rate_limited` error (`retryAfter: 15`) rather than a hung request.
 
 ---
 
@@ -271,7 +271,7 @@ Run it by hand: `node scripts/nvidia-lane-eval.mjs --model <id>` (one model, wri
 | `FORGE_PREFER_FREE` | Free-first reconstruct ordering (default on) |
 | `TEXT_TO_IMAGE_BUDGET_MS` | Shared deadline for the whole text-to-image ladder (§2), default 60000 |
 | `VERTEX_IMAGEN_FIRST=0` | Puts the free NIM FLUX lane ahead of Vertex Imagen again (§2) |
-| `HF_TOKEN` | Unlocks the Hugging Face router rungs (fal-ai, nscale) in the text-to-image ladder (§2) |
+| `HF_TOKEN` | Unlocks the Hugging Face router rungs (fal-ai, WaveSpeed) in the text-to-image ladder (§2) |
 | `COSMOS_WORKER_URL`, `COSMOS_WORKER_KEY` | The self-hosted Cosmos 3 Nano world rung (§10) |
 | `NVIDIA_COSMOS_INVOKE_URL` | Pins the hosted Cosmos predict1 rungs to one endpoint (§10) |
 

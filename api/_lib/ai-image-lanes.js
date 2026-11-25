@@ -16,6 +16,7 @@
 import { getGcpAccessToken, gcpAuthConfigured } from './gcp-auth.js';
 import { providersInCooldown } from './provider-health.js';
 import { imageModelChain, isModelNotFound, resolveImageModel } from './image-model.js';
+import { HF_IMAGE_PROVIDERS } from '../_mcp3d/text-to-image.js';
 
 function readEnv(name) {
 	if (typeof process !== 'undefined' && process.env?.[name]) return process.env[name];
@@ -103,6 +104,8 @@ export function providerLabel(result) {
 	const model = String(result?.model || '');
 	if (model.startsWith('vertex-ai/')) return 'vertex';
 	if (model.startsWith('pollinations/')) return 'pollinations';
+	if (model.startsWith('hf/')) return 'huggingface';
+	if (result?.lane === 'livepeer') return 'livepeer';
 	if (result?.predictionId) return 'replicate';
 	if (model) return 'nvidia-nim';
 	return 'unknown';
@@ -263,19 +266,66 @@ async function probeReplicate() {
  * network call. `healthy` is true when at least one lane is reachable, so the
  * probe distinguishes "not wired yet" from "wired but every lane is down".
  */
-async function probeHf() {
-	if (!readEnv('HF_TOKEN')) return { configured: false, status: 'unconfigured' };
+// HF: ask each router rung the forge actually calls (HF_IMAGE_PROVIDERS), not
+// whoami. A valid token says nothing about serving: on 2026-11-25 whoami was
+// 200 while every Inference Providers call answered 402 "Purchase pre-paid
+// credits" and /nscale/... answered 400 "no longer supported", and this probe
+// read `ok` over a lane that could not paint one image. The router checks
+// credit and route before it validates the body, so an empty POST costs
+// nothing: 402 means no credit, 400 "no longer supported" or 404 means the
+// route is gone, and a validation refusal (400/422) means the request reached
+// a provider that would have served it. HF's provider mapping for
+// FLUX.1-schnell names a provider HF dropped even before a request fails.
+const HF_MAPPING_URL = 'https://huggingface.co/api/models/black-forest-labs/FLUX.1-schnell?expand[]=inferenceProviderMapping';
+
+function hfErrorMessage(text) {
 	try {
-		const res = await fetch('https://huggingface.co/api/whoami-v2', {
-			headers: { authorization: `Bearer ${readEnv('HF_TOKEN')}` },
+		const body = JSON.parse(text);
+		if (typeof body?.error === 'string') return body.error;
+		if (typeof body?.error?.message === 'string') return body.error.message;
+		if (typeof body?.message === 'string') return body.message;
+	} catch {
+		/* a non-JSON body keeps its raw prefix */
+	}
+	return String(text || '').replace(/\s+/g, ' ').trim();
+}
+
+async function probeHfProvider(provider, token, mapping) {
+	const mapped = mapping ? mapping[provider.id]?.status === 'live' : null;
+	try {
+		const res = await fetch(provider.url, {
+			method: 'POST',
+			headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', accept: 'application/json' },
+			body: '{}',
 			signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
 		});
-		if (res.status === 200) return { configured: true, status: 'ok', providers: ['fal-ai', 'nscale'] };
-		if (res.status === 401) return { configured: true, status: 'down', detail: 'invalid token' };
-		return { configured: true, status: res.status < 500 ? 'ok' : 'down', httpStatus: res.status };
+		const message = hfErrorMessage(await res.text().catch(() => '')).slice(0, 160);
+		const retired = res.status === 404 || /no longer supported/i.test(message);
+		const reachedProvider = res.ok || ((res.status === 400 || res.status === 422) && !retired);
+		return {
+			id: provider.id,
+			mapped,
+			status: reachedProvider ? 'ok' : 'down',
+			httpStatus: res.status,
+			...(reachedProvider ? {} : { detail: message || `HTTP ${res.status}` }),
+		};
 	} catch (err) {
-		return { configured: true, status: 'down', detail: err?.message?.slice(0, 120) };
+		return { id: provider.id, mapped, status: 'down', detail: err?.message?.slice(0, 120) };
 	}
+}
+
+async function probeHf() {
+	const token = readEnv('HF_TOKEN');
+	if (!token) return { configured: false, status: 'unconfigured' };
+	const mapping = await fetch(HF_MAPPING_URL, { signal: AbortSignal.timeout(PROBE_TIMEOUT_MS) })
+		.then((res) => (res.ok ? res.json() : null))
+		.then((body) => body?.inferenceProviderMapping || null)
+		.catch(() => null);
+	const providers = await Promise.all(HF_IMAGE_PROVIDERS.map((p) => probeHfProvider(p, token, mapping)));
+	const serving = providers.filter((p) => p.status === 'ok');
+	if (serving.length) return { configured: true, status: 'ok', providers };
+	const reasons = [...new Set(providers.map((p) => p.detail).filter(Boolean))];
+	return { configured: true, status: 'down', detail: reasons.join('; ').slice(0, 200) || 'no provider reachable', providers };
 }
 
 async function probePollinations() {

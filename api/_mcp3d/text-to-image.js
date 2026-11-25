@@ -246,10 +246,60 @@ function parseRetryAfter(headers, message) {
 // FLUX and SDXL, verified 2026-08-27), but the same HF_TOKEN routes to the
 // inference providers HF fronts, billed through the HF account the 3D lane
 // already uses. Two independent providers, two rungs: a fal-ai outage does
-// not take nscale with it. Both serve FLUX.1-schnell in 2-5 s.
+// not take WaveSpeed with it. Both serve FLUX.1-schnell in a few seconds.
+//
+// The second rung was nscale until the router began refusing every
+// /nscale/... request with 400 "Direct requests to /nscale are no longer
+// supported" and HF dropped nscale from FLUX.1-schnell's provider mapping
+// (probed 2026-11-25). The live mappings are listed at
+// https://huggingface.co/api/models/black-forest-labs/FLUX.1-schnell?expand[]=inferenceProviderMapping
 const HF_ROUTER = 'https://router.huggingface.co';
 const HF_IMAGE_TIMEOUT_MS = 45_000;
-const HF_IMAGE_PROVIDERS = Object.freeze([
+const WAVESPEED_POLL_INTERVAL_MS = 500;
+
+function waitOrAbort(ms, signal) {
+	return new Promise((resolve, reject) => {
+		if (signal.aborted) return reject(signal.reason);
+		const onAbort = () => { clearTimeout(timer); reject(signal.reason); };
+		const timer = setTimeout(() => { signal.removeEventListener('abort', onAbort); resolve(); }, ms);
+		signal.addEventListener('abort', onAbort, { once: true });
+	});
+}
+
+// WaveSpeed answers a submit with a task, not an image: poll its result URL
+// until the task completes, then download the first output. The poll goes
+// through the HF router (same path, /wavespeed prefix) so the HF token
+// authorizes it, exactly as HF's own client does
+// (huggingface.js packages/inference/src/providers/wavespeed.ts).
+async function wavespeedResult(data, { signal, headers }) {
+	const task = data?.data;
+	if (task?.status === 'completed' && task.outputs?.[0]) return downloadWavespeedOutput(task.outputs[0], signal);
+	const getUrl = task?.urls?.get;
+	if (!getUrl) throw new Error(`wavespeed returned no task: ${String(data?.message || '').slice(0, 120)}`);
+	const resultUrl = `${HF_ROUTER}/wavespeed${new URL(getUrl).pathname}`;
+	for (;;) {
+		const res = await fetch(resultUrl, { headers: { authorization: headers.authorization, accept: 'application/json' }, signal });
+		if (!res.ok) {
+			const detail = await res.text().catch(() => '');
+			throw Object.assign(new Error(`wavespeed task status ${res.status}: ${detail.slice(0, 160)}`), { providerStatus: res.status });
+		}
+		const result = (await res.json())?.data;
+		if (result?.status === 'completed') {
+			if (!result.outputs?.[0]) throw new Error('wavespeed completed with no output url');
+			return downloadWavespeedOutput(result.outputs[0], signal);
+		}
+		if (result?.status === 'failed') throw new Error(`wavespeed task failed: ${String(result.error || 'no reason given').slice(0, 160)}`);
+		await waitOrAbort(WAVESPEED_POLL_INTERVAL_MS, signal);
+	}
+}
+
+async function downloadWavespeedOutput(url, signal) {
+	if (!/^https:\/\//.test(url)) throw new Error('wavespeed returned a non-https output url');
+	const res = await fetchUpstream(url, { signal }, { name: 'wavespeed:image-download', timeoutMs: 30_000, attempts: 2 });
+	return Buffer.from(await res.arrayBuffer());
+}
+
+export const HF_IMAGE_PROVIDERS = Object.freeze([
 	{
 		id: 'fal-ai',
 		model: 'hf/fal-ai/flux-schnell',
@@ -263,7 +313,7 @@ const HF_IMAGE_PROVIDERS = Object.freeze([
 		}),
 		// fal answers with a hosted URL; the bytes are fetched and persisted so the
 		// reference image lives on our storage like every other lane's.
-		extract: async (data, signal) => {
+		extract: async (data, { signal }) => {
 			const url = data?.images?.[0]?.url;
 			if (!url || !/^https:\/\//.test(url)) throw new Error('fal-ai returned no image url');
 			// The caller's signal cancels an abandoned request, but it does not bound
@@ -278,22 +328,18 @@ const HF_IMAGE_PROVIDERS = Object.freeze([
 		},
 	},
 	{
-		id: 'nscale',
-		model: 'hf/nscale/flux-schnell',
-		url: `${HF_ROUTER}/nscale/v1/images/generations`,
+		id: 'wavespeed',
+		model: 'hf/wavespeed/flux-schnell',
+		url: `${HF_ROUTER}/wavespeed/api/v3/wavespeed-ai/flux-schnell`,
+		// WaveSpeed takes the size as "W*H", not "WxH" or an object.
 		body: (prompt, width, height, seed) => ({
-			model: 'black-forest-labs/FLUX.1-schnell',
 			prompt,
-			n: 1,
-			size: `${width}x${height}`,
-			response_format: 'b64_json',
+			size: `${width}*${height}`,
+			num_inference_steps: 4,
+			num_images: 1,
 			...(Number.isInteger(seed) ? { seed } : {}),
 		}),
-		extract: async (data) => {
-			const b64 = data?.data?.[0]?.b64_json;
-			if (!b64) throw new Error('nscale returned no image');
-			return Buffer.from(b64, 'base64');
-		},
+		extract: wavespeedResult,
 	},
 ]);
 
@@ -301,19 +347,23 @@ async function hfRoutedImage(provider, prompt, aspectRatio, seed, { timeoutMs = 
 	const token = readEnv('HF_TOKEN');
 	const [width, height] = NIM_DIMENSIONS[aspectRatio] || NIM_DIMENSIONS['1:1'];
 	const signal = AbortSignal.timeout(Math.max(1_000, Math.min(HF_IMAGE_TIMEOUT_MS, timeoutMs)));
+	const headers = { authorization: `Bearer ${token}`, 'content-type': 'application/json', accept: 'application/json' };
+	const transportError = (err) => {
+		const aborted = err?.name === 'AbortError' || err?.name === 'TimeoutError';
+		return Object.assign(new Error(aborted ? `hf ${provider.id} timed out` : `hf ${provider.id} unreachable: ${err?.message}`), {
+			code: aborted ? 'rate_limited' : 'provider_unreachable',
+		});
+	};
 	let res;
 	try {
 		res = await fetch(provider.url, {
 			method: 'POST',
-			headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', accept: 'application/json' },
+			headers,
 			body: JSON.stringify(provider.body(prompt, width, height, seed)),
 			signal,
 		});
 	} catch (err) {
-		const aborted = err?.name === 'AbortError' || err?.name === 'TimeoutError';
-		throw Object.assign(new Error(aborted ? `hf ${provider.id} timed out` : `hf ${provider.id} unreachable: ${err?.message}`), {
-			code: aborted ? 'rate_limited' : 'provider_unreachable',
-		});
+		throw transportError(err);
 	}
 	if (!res.ok) {
 		const detail = await res.text().catch(() => '');
@@ -322,7 +372,14 @@ async function hfRoutedImage(provider, prompt, aspectRatio, seed, { timeoutMs = 
 		if (res.status === 429 || res.status === 402) err.code = 'rate_limited';
 		throw err;
 	}
-	const bytes = await provider.extract(await res.json(), signal);
+	let bytes;
+	try {
+		bytes = await provider.extract(await res.json(), { signal, headers });
+	} catch (err) {
+		// A task that outlives the lane's deadline mid-poll is a timeout, not a fault.
+		if (signal.aborted) throw transportError(err);
+		throw err;
+	}
 	if (!looksLikeImageBytes(bytes)) throw new Error(`hf ${provider.id} returned a non-image body`);
 	return { imageUrl: await persistImageBytes(bytes), model: provider.model };
 }
@@ -700,7 +757,7 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 		if (served) return served;
 	}
 
-	// ── Hugging Face routed providers (fal-ai, then nscale) ──────────────────
+	// ── Hugging Face routed providers (fal-ai, then WaveSpeed) ───────────────
 	if (hasHf) {
 		const hfCooling = await providersInCooldown(
 			HF_IMAGE_PROVIDERS.map((provider) => `${HF_IMAGE_COOLDOWN_PREFIX}${provider.id}`),

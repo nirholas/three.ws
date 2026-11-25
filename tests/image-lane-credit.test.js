@@ -16,6 +16,16 @@ describe('providerLabel', () => {
 		expect(providerLabel({ model: 'black-forest-labs/flux.1-schnell' })).toBe('nvidia-nim');
 		expect(providerLabel({})).toBe('unknown');
 	});
+	// Both used to fall through to the catch-all and read as nvidia-nim, so an
+	// API caller (and our own lane stats) credited NVIDIA for images HF or the
+	// Livepeer network painted.
+	it('labels the Hugging Face router rungs as huggingface', () => {
+		expect(providerLabel({ model: 'hf/fal-ai/flux-schnell' })).toBe('huggingface');
+		expect(providerLabel({ model: 'hf/wavespeed/flux-schnell' })).toBe('huggingface');
+	});
+	it('labels the Livepeer federation lane as livepeer', () => {
+		expect(providerLabel({ model: 'ByteDance/SDXL-Lightning', lane: 'livepeer' })).toBe('livepeer');
+	});
 });
 
 describe('Pollinations credit', () => {
