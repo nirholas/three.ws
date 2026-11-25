@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A prompt, a photo, or a video frame becomes a model in the terminal</title>
+			<link>https://three.ws/tty</link>
+			<guid isPermaLink="false">2026-11-25:A prompt, a photo, or a video frame becomes a model in the terminal</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>On /tty, describe an object, drop a photo, or pick a video and the page builds a real model, then draws it in the terminal panel. The same thing works from the shell: three-tty --prompt, three-tty photo.jpg, or three-tty --find, which uses the newest image in the folder. A video contributes one frame, reconstructed as an object. A full walkthrough cloud stays on /capture. Making a model needs a free three.ws account.</description>
+		</item>
+		<item>
 			<title>The terminal can walk, flock, shade, and splat</title>
 			<link>https://three.ws/tty</link>
 			<guid isPermaLink="false">2026-11-25:The terminal can walk, flock, shade, and splat</guid>
@@ -11276,7 +11284,7 @@
 			<guid isPermaLink="false">2026-08-28:Terminal renderer</guid>
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.</description>
+			<description>curl three.ws/tty/walk and a person walks in your terminal. A prompt, a photo, or a video frame becomes a model on the same page, and three-tty does it from a folder on your machine.</description>
 		</item>
 		<item>
 			<title>three.ws on iOS</title>

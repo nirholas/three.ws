@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-25T00:43:03.919Z",
+	"generated_at": "2026-11-25T01:31:00.448Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4703,
+	"total": 4704,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "A prompt, a photo, or a video frame becomes a model in the terminal",
+			"summary": "On /tty, describe an object, drop a photo, or pick a video and the page builds a real model, then draws it in the terminal panel. The same thing works from the shell: three-tty --prompt, three-tty photo.jpg, or three-tty --find, which uses the newest image in the folder. A video contributes one frame, reconstructed as an object. A full walkthrough cloud stays on /capture. Making a model needs a free three.ws account.",
+			"link": "/tty",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-11-25",
 			"type": "update",
@@ -1563,16 +1573,6 @@
 			"tags": [
 				"infra",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "Talking to an agent through three.ws Glass gets an answer again",
-			"summary": "On the /glass lens app, picking a reply to start talking to an agent could come back blank: the chat model spent its whole answer thinking to itself and returned nothing to show on the lens, along with no suggested next replies. Lens conversations now ask that model for a direct answer, so the agent replies and offers the next things to say. The lens app is also tested end to end against real agents placed on the map, walking from scanning to the nearby list, the agent card, a conversation and the phone handoff with only the arrow keys, Enter and Escape that the Neural Band produces. The lens page also loads about a third of the code it did, because desktop extras like the search palette and hidden keyboard surprises no longer ride along onto a display driven by the same arrow keys.",
-			"link": "/glass",
-			"tags": [
-				"fix"
 			]
 		}
 	]

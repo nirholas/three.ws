@@ -1181,7 +1181,7 @@ Sell several of an agent's skills as one purchase, priced from your own sales in
 
 URL: https://three.ws/tty
 
-curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.
+curl three.ws/tty/walk and a person walks in your terminal. A prompt, a photo, or a video frame becomes a model on the same page, and three-tty does it from a folder on your machine.
 
 ### Progressive Avatars
 

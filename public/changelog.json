@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-25T00:43:03.891Z",
+	"generated_at": "2026-11-25T01:31:00.422Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "A prompt, a photo, or a video frame becomes a model in the terminal",
+			"summary": "On /tty, describe an object, drop a photo, or pick a video and the page builds a real model, then draws it in the terminal panel. The same thing works from the shell: three-tty --prompt, three-tty photo.jpg, or three-tty --find, which uses the newest image in the folder. A video contributes one frame, reconstructed as an object. A full walkthrough cloud stays on /capture. Making a model needs a free three.ws account.",
+			"link": "/tty",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-11-25",
 			"type": "update",
@@ -14651,7 +14661,7 @@
 			"date": "2026-08-28",
 			"type": "launch",
 			"title": "Terminal renderer",
-			"summary": "curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.",
+			"summary": "curl three.ws/tty/walk and a person walks in your terminal. A prompt, a photo, or a video frame becomes a model on the same page, and three-tty does it from a folder on your machine.",
 			"link": "/tty",
 			"tags": [
 				"launch"
