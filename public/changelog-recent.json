@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T20:52:56.661Z",
+	"generated_at": "2026-11-25T20:59:02.312Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4730,
+	"total": 4731,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -194,6 +194,16 @@
 			"type": "update",
 			"title": "Pump.fun bonding curves show the SOL they have really raised",
 			"summary": "Pump.fun renamed the curve fields that hold a coin's SOL, and some of our readers still asked for the old names. The on-chain curve read behind coin pages and agent alpha failed on every live coin, the pump.fun MCP worker and the stats snapshot reported every live curve as 0 SOL raised, and Strategy Battle paper sells returned almost nothing because the SOL held in the curve was read as lamports. All of them now read the current fields, so curve progress, liquidity and paper-trade results match the chain again.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Saved animations play again while object storage refuses its key",
+			"summary": "Opening or playing a saved animation clip no longer fails with a storage error when the signed storage read is refused: the clip is read from the bucket's public copy, the same fallback avatar models already use. Who may see a private or paid clip is unchanged.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1549,16 +1559,6 @@
 			"title": "Docs · Following a trader and hot-streak pushes",
 			"summary": "How the free Follow button on a Trading Arena trader profile works: what counts as a hot streak, the milestones that trigger a push, who is notified (followers and active copiers, once each), and how the notification is delivered and muted.",
 			"link": "/docs/trader-follows",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-14",
-			"type": "launch",
-			"title": "Docs · Vercel AI SDK tools",
-			"summary": "@three-ws/ai-sdk: forge, rig, render and animate 3D models and chat with a three.ws agent from any Vercel AI SDK agent loop. Four of the five tools are free; forge, rig and render take a free account's API key.",
-			"link": "/docs/ai-sdk",
 			"tags": [
 				"launch"
 			]

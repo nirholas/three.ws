@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T20:52:56.608Z",
+	"generated_at": "2026-11-25T20:59:02.260Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -191,6 +191,16 @@
 			"type": "update",
 			"title": "Pump.fun bonding curves show the SOL they have really raised",
 			"summary": "Pump.fun renamed the curve fields that hold a coin's SOL, and some of our readers still asked for the old names. The on-chain curve read behind coin pages and agent alpha failed on every live coin, the pump.fun MCP worker and the stats snapshot reported every live curve as 0 SOL raised, and Strategy Battle paper sells returned almost nothing because the SOL held in the curve was read as lamports. All of them now read the current fields, so curve progress, liquidity and paper-trade results match the chain again.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Saved animations play again while object storage refuses its key",
+			"summary": "Opening or playing a saved animation clip no longer fails with a storage error when the signed storage read is refused: the clip is read from the bucket's public copy, the same fallback avatar models already use. Who may see a private or paid clip is unchanged.",
 			"link": null,
 			"tags": [
 				"fix"

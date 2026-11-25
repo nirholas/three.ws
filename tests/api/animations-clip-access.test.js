@@ -33,13 +33,13 @@ vi.mock('../../api/_lib/auth.js', () => ({
 }));
 
 vi.mock('../../api/_lib/r2.js', () => ({
-	getObjectBuffer: vi.fn(async () => Buffer.from('{"name":"offloaded","duration":1,"tracks":[]}')),
+	getPublicObjectBuffer: vi.fn(async () => Buffer.from('{"name":"offloaded","duration":1,"tracks":[]}')),
 	putObject: vi.fn(async () => ({})),
 	thumbnailUrl: vi.fn((key) => (key ? `https://cdn.test/${key}` : null)),
 }));
 
 const { default: handler } = await import('../../api/animations/[id].js');
-const { getObjectBuffer } = await import('../../api/_lib/r2.js');
+const { getPublicObjectBuffer } = await import('../../api/_lib/r2.js');
 
 const OWNER = '11111111-1111-4111-8111-111111111111';
 const CLIP_ID = '22222222-2222-4222-8222-222222222222';
@@ -168,7 +168,7 @@ describe('paid listings stay behind the x402 paywall', () => {
 		db.rows = [row({ ...paid, clip: null, storage_key: 'u/x/animations/big.json' })];
 		const { clip } = (await get(CLIP_ID)).json();
 		expect(clip.clip).toBeNull();
-		expect(getObjectBuffer).not.toHaveBeenCalled();
+		expect(getPublicObjectBuffer).not.toHaveBeenCalled();
 	});
 
 	it('does not count a play for a fetch that delivered no motion', async () => {
@@ -205,7 +205,7 @@ describe('paid listings stay behind the x402 paywall', () => {
 		db.rows = [row({ clip: null, storage_key: 'u/x/animations/big.json' })];
 		const { clip } = (await get(CLIP_ID)).json();
 		expect(clip.clip.name).toBe('offloaded');
-		expect(getObjectBuffer).toHaveBeenCalledWith('u/x/animations/big.json');
+		expect(getPublicObjectBuffer).toHaveBeenCalledWith('u/x/animations/big.json');
 	});
 });
 

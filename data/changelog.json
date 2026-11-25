@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Saved animations play again while object storage refuses its key",
+			"summary": "Opening or playing a saved animation clip no longer fails with a storage error when the signed storage read is refused: the clip is read from the bucket's public copy, the same fallback avatar models already use. Who may see a private or paid clip is unchanged.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Crypto Data API token endpoints accept ?mint= as well as ?address=",
 			"summary": "/api/crypto/holders, /security, /due-diligence and /token now read a token passed as ?mint=, the name /bonding and /whales already use, instead of answering 400 missing_address for a mint the caller plainly sent.",
 			"tags": ["fix"]

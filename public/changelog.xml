@@ -159,6 +159,14 @@
 			<description>Pump.fun renamed the curve fields that hold a coin's SOL, and some of our readers still asked for the old names. The on-chain curve read behind coin pages and agent alpha failed on every live coin, the pump.fun MCP worker and the stats snapshot reported every live curve as 0 SOL raised, and Strategy Battle paper sells returned almost nothing because the SOL held in the curve was read as lamports. All of them now read the current fields, so curve progress, liquidity and paper-trade results match the chain again.</description>
 		</item>
 		<item>
+			<title>Saved animations play again while object storage refuses its key</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Saved animations play again while object storage refuses its key</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Opening or playing a saved animation clip no longer fails with a storage error when the signed storage read is refused: the clip is read from the bucket's public copy, the same fallback avatar models already use. Who may see a private or paid clip is unchanged.</description>
+		</item>
+		<item>
 			<title>Solana API endpoints answer a clear 400 for a mistyped address</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Solana API endpoints answer a clear 400 for a mistyped address</guid>

@@ -13,7 +13,7 @@
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
-import { getObjectBuffer, thumbnailUrl } from '../_lib/r2.js';
+import { getPublicObjectBuffer, thumbnailUrl } from '../_lib/r2.js';
 import { isUuid } from '../_lib/validate.js';
 import {
 	clipSchema,
@@ -87,11 +87,15 @@ async function handleGet(req, res, auth, id) {
 	const paywalled =
 		!ownerView && !!row.listed && row.visibility !== 'public' && Number(row.price_amount || 0) > 0;
 
-	// Resolve the baked clip body from R2 when it was offloaded.
+	// Resolve the baked clip body from R2 when it was offloaded. The read falls
+	// back to the bucket's public domain when the signed read is refused (a
+	// rejected R2 secret answered 502 for every clip stored before the outage):
+	// the visibility and paywall gates above have already decided who may see
+	// it, and clip keys carry a timestamp, so a public copy is never stale.
 	let clip = paywalled ? null : row.clip || null;
 	if (!paywalled && !clip && row.storage_key) {
 		try {
-			const buf = await getObjectBuffer(row.storage_key);
+			const buf = await getPublicObjectBuffer(row.storage_key);
 			clip = JSON.parse(buf.toString('utf8'));
 		} catch (err) {
 			console.error('[animations/get] R2 resolve failed', err?.message || err);

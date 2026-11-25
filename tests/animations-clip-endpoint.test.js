@@ -25,7 +25,7 @@ vi.mock('../api/_lib/auth.js', () => ({
 
 const getObjectBufferMock = vi.fn();
 vi.mock('../api/_lib/r2.js', () => ({
-	getObjectBuffer: (...a) => getObjectBufferMock(...a),
+	getPublicObjectBuffer: (...a) => getObjectBufferMock(...a),
 	thumbnailUrl: () => null,
 	putObject: vi.fn(),
 	publicUrl: () => null,
