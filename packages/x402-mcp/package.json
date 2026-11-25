@@ -56,7 +56,7 @@
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@solana/kit": "^8.6.0",
 		"@solana/spl-token": "^0.4.14",
-		"@solana/web3.js": "^3.2.1",
+		"@solana/web3.js": "^1.98.4",
 		"@x402/core": "^2.32.0",
 		"@x402/fetch": "^2.31.0",
 		"@x402/svm": "^2.31.0",

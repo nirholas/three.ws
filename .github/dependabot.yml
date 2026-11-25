@@ -60,6 +60,16 @@ updates:
       - dependency-name: "@upstash/ratelimit"
         versions:
           - ">=2.1.0"
+      # @solana/web3.js 2.x and 3.x are a different library under the same
+      # name: Keypair.generate() returns a Promise, so every caller written for
+      # 1.x read `.publicKey` off a Promise and got undefined, and spl-token,
+      # anchor and bonfida (which require ^1.x) were handed 3.x hoisted. The
+      # 2026-11-25 bump to 3.2.1 was merged and broke the Solana suites before
+      # it could ship. Move to @solana/kit deliberately, never through a bump.
+      # tests/solana-web3-v1-pin.test.js holds every manifest on 1.x.
+      - dependency-name: "@solana/web3.js"
+        versions:
+          - ">=2.0.0"
       # The Teams meeting stage runs on @microsoft/live-share 1.x, which peers on
       # the Fluid 1.x client (fluid-framework ^1.2.3, azure-client ^1.0.0). Fluid
       # 2+ drops packages Live Share loads, and legacy-peer-deps lets the bump

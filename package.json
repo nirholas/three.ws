@@ -801,7 +801,7 @@
 		"@solana/pay": "^1.0.26",
 		"@solana/spl-token": "^0.4.14",
 		"@solana/subscriptions": "^0.5.0",
-		"@solana/web3.js": "^3.2.1",
+		"@solana/web3.js": "^1.99.0",
 		"@sparkjsdev/spark": "^2.3.1",
 		"@sparticuz/chromium-min": "^153.0.0",
 		"@tetsuo-ai/protocol": "^0.5.2",

@@ -22,7 +22,7 @@
 		"LICENSE"
 	],
 	"dependencies": {
-		"@solana/web3.js": "^3.2.1",
+		"@solana/web3.js": "^1.99.0",
 		"bs58": "^6.0.0",
 		"lru-cache": "^11.5.3"
 	}
