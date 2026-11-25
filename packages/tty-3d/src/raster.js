@@ -108,7 +108,7 @@ const FILL_LIGHT = normalize([0.7, 0.1, 0.35]);
  */
 export function renderToFramebuffer(fb, model, opts) {
 	const { yaw = 0, pitch = 0.05, zoom = 1, tint = [1, 1, 1] } = opts;
-	clearFramebuffer(fb);
+	if (opts.clear !== false) clearFramebuffer(fb);
 
 	const center = opts.center ?? poseCenter(model);
 	const framing = opts.framing ?? computeFraming(model, null);
@@ -142,15 +142,22 @@ export function renderToFramebuffer(fb, model, opts) {
 	const clip = new Float64Array(4);
 	const sx = new Float64Array(3), sy = new Float64Array(3), sz = new Float64Array(3);
 	const nx = new Float64Array(3), ny = new Float64Array(3), nz = new Float64Array(3);
+	const translate = opts.translate ?? [0, 0, 0];
+	const tx = translate[0], ty = translate[1], tz = translate[2];
 
 	for (const prim of model.primitives) {
 		const { outPositions: P, outNormals: N, indices, color } = transformPrimitive(model, prim);
+
+		if (opts.points) {
+			plotPoints(fb, P, viewProj, tx, ty, tz, color, tint);
+			continue;
+		}
 
 		for (let t = 0; t < indices.length; t += 3) {
 			let behind = false;
 			for (let v = 0; v < 3; v += 1) {
 				const o = indices[t + v] * 3;
-				const x = P[o], y = P[o + 1], z = P[o + 2];
+				const x = P[o] + tx, y = P[o + 1] + ty, z = P[o + 2] + tz;
 				clip[0] = viewProj[0] * x + viewProj[4] * y + viewProj[8] * z + viewProj[12];
 				clip[1] = viewProj[1] * x + viewProj[5] * y + viewProj[9] * z + viewProj[13];
 				clip[2] = viewProj[2] * x + viewProj[6] * y + viewProj[10] * z + viewProj[14];
