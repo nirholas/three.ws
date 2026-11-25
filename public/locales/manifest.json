@@ -127,6 +127,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "mr",
+			"name": "मराठी",
+			"dir": "ltr"
+		},
+		{
 			"code": "ms",
 			"name": "Bahasa Melayu",
 			"dir": "ltr"
@@ -137,8 +142,18 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "no",
+			"name": "Norsk",
+			"dir": "ltr"
+		},
+		{
 			"code": "fi",
 			"name": "Suomi",
+			"dir": "ltr"
+		},
+		{
+			"code": "el",
+			"name": "Ελληνικά",
 			"dir": "ltr"
 		},
 		{
@@ -172,8 +187,53 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "ne",
+			"name": "नेपाली",
+			"dir": "ltr"
+		},
+		{
+			"code": "kk",
+			"name": "Қазақша",
+			"dir": "ltr"
+		},
+		{
+			"code": "uz",
+			"name": "Oʻzbekcha",
+			"dir": "ltr"
+		},
+		{
+			"code": "pa",
+			"name": "ਪੰਜਾਬੀ",
+			"dir": "ltr"
+		},
+		{
+			"code": "hy",
+			"name": "Հայերեն",
+			"dir": "ltr"
+		},
+		{
+			"code": "mn",
+			"name": "Монгол",
+			"dir": "ltr"
+		},
+		{
+			"code": "ky",
+			"name": "Кыргызча",
+			"dir": "ltr"
+		},
+		{
 			"code": "tg",
 			"name": "Тоҷикӣ",
+			"dir": "ltr"
+		},
+		{
+			"code": "my",
+			"name": "မြန်မာ",
+			"dir": "ltr"
+		},
+		{
+			"code": "sr",
+			"name": "Српски",
 			"dir": "ltr"
 		},
 		{
@@ -182,13 +242,63 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "lt",
+			"name": "Lietuvių",
+			"dir": "ltr"
+		},
+		{
+			"code": "mk",
+			"name": "Македонски",
+			"dir": "ltr"
+		},
+		{
 			"code": "sq",
 			"name": "Shqip",
 			"dir": "ltr"
 		},
 		{
+			"code": "bs",
+			"name": "Bosanski",
+			"dir": "ltr"
+		},
+		{
+			"code": "is",
+			"name": "Íslenska",
+			"dir": "ltr"
+		},
+		{
+			"code": "cy",
+			"name": "Cymraeg",
+			"dir": "ltr"
+		},
+		{
+			"code": "gl",
+			"name": "Galego",
+			"dir": "ltr"
+		},
+		{
+			"code": "eu",
+			"name": "Euskara",
+			"dir": "ltr"
+		},
+		{
+			"code": "be",
+			"name": "Беларуская",
+			"dir": "ltr"
+		},
+		{
+			"code": "ha",
+			"name": "Hausa",
+			"dir": "ltr"
+		},
+		{
 			"code": "yo",
 			"name": "Yorùbá",
+			"dir": "ltr"
+		},
+		{
+			"code": "zu",
+			"name": "isiZulu",
 			"dir": "ltr"
 		},
 		{
