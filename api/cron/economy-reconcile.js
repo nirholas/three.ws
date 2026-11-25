@@ -109,6 +109,26 @@ async function ledgerSignatures(masterPubkey) {
 	return new Set(rows.map((r) => r.tx_signature));
 }
 
+// On-chain signatures a previous run already classified benign (inbound
+// funding, fee-only, internal topup). They are immutable history, so fetching
+// them again only spends RPC quota: before this, the same ~170 unbooked
+// signatures were re-fetched on all 48 runs a day (8082 calls/24h, the top
+// Solana RPC caller, 2026-11-25). Unrecorded outbound stays unreconciled and
+// is re-checked every run; an unreadable tx is never recorded, so it retries.
+async function benignSignatures(sigs) {
+	if (!sigs.length) return new Set();
+	try {
+		const rows = await withDbRetry(() => sql`
+			SELECT source_ref FROM payment_reconciliation
+			WHERE source = 'economy_master_onchain' AND reconciled = true
+			  AND source_ref = ANY(${sigs})
+		`);
+		return new Set(rows.map((r) => r.source_ref));
+	} catch {
+		return new Set();
+	}
+}
+
 async function recentLedgerTransfers(masterPubkey) {
 	return withDbRetry(() => sql`
 		SELECT seq, tx_signature, lamports FROM economy_master_ledger
@@ -215,10 +235,12 @@ async function reconcileMaster(conn, masterPubkey, runId) {
 		summary.onchain_scan_error = e?.message || 'sig_fetch_failed';
 	}
 	summary.scanned_onchain = sigInfos.length;
-	for (const info of sigInfos) {
+	const candidates = sigInfos.filter((info) => !recorded.has(info.signature) && !info.err);
+	const known = await benignSignatures(candidates.map((info) => info.signature));
+	summary.skipped_known_benign = known.size;
+	for (const info of candidates) {
 		const sig = info.signature;
-		if (recorded.has(sig)) continue; // matched to a book entry — fine
-		if (info.err) continue; // a failed tx moved nothing
+		if (known.has(sig)) continue; // classified benign by an earlier run
 		let tx = null;
 		try {
 			tx = await conn.getParsedTransaction(sig, { maxSupportedTransactionVersion: 1 });
@@ -227,7 +249,18 @@ async function reconcileMaster(conn, masterPubkey, runId) {
 		}
 		const debitLamports = tx ? masterNetDebit(tx, masterPubkey) : null;
 		if (debitLamports == null) continue;
-		if (debitLamports <= OUTBOUND_FEE_FLOOR_SOL * LAMPORTS_PER_SOL) continue; // dust / fee only
+		if (debitLamports <= OUTBOUND_FEE_FLOOR_SOL * LAMPORTS_PER_SOL) {
+			// Inbound funding or a fee-only tx: nothing left the master. Remember
+			// the verdict so later runs do not pay to fetch it again.
+			const inbound = debitLamports < 0;
+			await upsertVerdict({
+				source: 'economy_master_onchain', sourceRef: sig, txSig: sig, network: 'mainnet',
+				amountAtomic: Math.abs(debitLamports), dbStatus: 'not_in_ledger',
+				chainStatus: inbound ? 'inbound' : 'fee_only', reconciled: true, discrepancy: null,
+				detail: { blockTime: info.blockTime ?? null, slot: info.slot ?? null }, runId,
+			});
+			continue;
+		}
 
 		const recipients = masterOutboundRecipients(tx, masterPubkey);
 		const external = recipients.filter((r) => !controlled.has(r));
