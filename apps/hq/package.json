@@ -79,6 +79,7 @@
     "@loaders.gl/textures": "4.5.4",
     "deepmerge": "$deepmerge",
     "minimatch@>=7.0.0 <11.0.1": "$minimatch",
-    "re2js@2.8.6": "^2.8.7"
+    "re2js@2.8.6": "^2.8.7",
+    "glob@>=9.0.0 <14.0.2": "^14.0.6"
   }
 }

@@ -23,6 +23,7 @@
     "uuid@^8": "^11.1.1",
     "jayson@^4": "^5.0.0",
     "bigint-buffer": "$bigint-buffer",
-    "minimatch@>=7.0.0 <11.0.1": "$minimatch"
+    "minimatch@>=7.0.0 <11.0.1": "$minimatch",
+    "glob@>=9.0.0 <14.0.2": "^14.0.6"
   }
 }
