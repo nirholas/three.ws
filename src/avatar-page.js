@@ -39,6 +39,7 @@ import { moodEngine } from './agents/mood-engine.js';
 import { skillLabel } from './shared/skill-label.js';
 import { mountCoinStatus } from './pump/coin-status-card.js';
 import { mountEarningsCard } from './shared/agent-earnings-card.js';
+import { agentBodyReadable } from './shared/agent-body-access.js';
 import { renderHomeConfirmation } from './home-confirm-card.js';
 import { GROK_MENU_MODELS, grokMenuModelId } from '../api/_lib/chat-models.js';
 import { wireModelViewerFallback } from './shared/model-viewer-fallback.js';
@@ -368,7 +369,7 @@ async function fetchAgentRecord(id) {
  * model URL, which the stage renders as the "give this agent a body" state.
  */
 async function agentStudioRecord(rec) {
-	const body = rec.avatar_id ? await fetchAvatarRecord(rec.avatar_id).catch(() => null) : null;
+	const body = agentBodyReadable(rec) ? await fetchAvatarRecord(rec.avatar_id).catch(() => null) : null;
 	const base = body || {
 		id: null,
 		name: rec.name,

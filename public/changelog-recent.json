@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T20:39:45.379Z",
+	"generated_at": "2026-11-25T20:41:46.830Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4727,
+	"total": 4728,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -37,6 +37,16 @@
 			"link": "/tty",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Agent profiles stop requesting a private body they cannot show",
+			"summary": "When a public agent wears a private avatar, its profile asked for that avatar anyway and was always refused, for every visitor. Both agent profile layouts now skip that request unless you own the agent, so the page loads with one fewer failed call and the owner still sees the body.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1551,16 +1561,6 @@
 			"link": "/dashboard",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-14",
-			"type": "update",
-			"title": "Community skills now lists 60 external skills from four open-source repositories",
-			"summary": "The community skills page and API now include a separate External skills section with 60 skills from obra/superpowers (MIT), huggingface/skills, cloudflare/skills and getsentry/skills (all Apache-2.0). Each source is pinned to one commit, so what you read cannot change underneath you, and every card shows its source repository, commit and license. External skills are not reviewed by three.ws and are never turned on for an agent automatically: you read one, then install it through the usual scan and approval step, or with `three-ws skills import`. Skills that break the registry rules (a description over 400 characters, a body over 12,000) are left out, with the reason listed in the API response.",
-			"link": "/skills/community",
-			"tags": [
-				"feature"
 			]
 		}
 	]

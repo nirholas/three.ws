@@ -39,6 +39,7 @@ import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { mountViewSwitcher } from './view-switcher.js';
 import { mountCoinStatus } from './pump/coin-status-card.js';
 import { mountEarningsCard } from './shared/agent-earnings-card.js';
+import { agentBodyReadable } from './shared/agent-body-access.js';
 import { mountAgentTokenPlan } from './agent-token-plan.js';
 import { mountAgentLaunchCard } from './agent-launch-card.js';
 import { consumeCsrfToken } from './api.js';
@@ -3328,7 +3329,7 @@ async function loadAgent(id) {
 	}
 
 	let avatar = null;
-	if (rec.avatar_id) {
+	if (agentBodyReadable(rec)) {
 		try {
 			const json = await fetchJson(`/api/avatars/${encodeURIComponent(rec.avatar_id)}`);
 			avatar = json.avatar || null;

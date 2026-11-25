@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T20:39:45.324Z",
+	"generated_at": "2026-11-25T20:41:46.777Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -34,6 +34,16 @@
 			"link": "/tty",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Agent profiles stop requesting a private body they cannot show",
+			"summary": "When a public agent wears a private avatar, its profile asked for that avatar anyway and was always refused, for every visitor. Both agent profile layouts now skip that request unless you own the agent, so the page loads with one fewer failed call and the owner still sees the body.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

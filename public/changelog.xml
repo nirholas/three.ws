@@ -31,6 +31,14 @@
 			<description>On /tty, describe an object, drop a photo, or pick a video and the page builds a real model, then draws it in the terminal panel. The same thing works from the shell: three-tty --prompt, three-tty photo.jpg, or three-tty --find, which uses the newest image in the folder. A video contributes one frame, reconstructed as an object. A full walkthrough cloud stays on /capture. Making a model needs a free three.ws account.</description>
 		</item>
 		<item>
+			<title>Agent profiles stop requesting a private body they cannot show</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Agent profiles stop requesting a private body they cannot show</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When a public agent wears a private avatar, its profile asked for that avatar anyway and was always refused, for every visitor. Both agent profile layouts now skip that request unless you own the agent, so the page loads with one fewer failed call and the owner still sees the body.</description>
+		</item>
+		<item>
 			<title>Avatars created during the storage outage load again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Avatars created during the storage outage load again</guid>
