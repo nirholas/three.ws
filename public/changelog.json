@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T18:08:34.780Z",
+	"generated_at": "2026-11-25T18:27:30.638Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -61,6 +61,16 @@
 			"type": "update",
 			"title": "Model and image requests stop paying for a rejected storage credential",
 			"summary": "While the main storage credential is rejected, every model and image request first made a failing call to it before the backup bucket answered. After one rejection the platform now goes straight to the backup for a minute, then retries the main bucket once so a fixed credential recovers on its own. The storage health check shows when this is active.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Models and thumbnails made during the storage outage load everywhere",
+			"summary": "Every link we hand out for a stored file (Explore cards, fresh upload links, share and wallet-embed previews, pinning, PowerPoint export) now goes through our own /cdn/ address, which serves both the primary store and the Google Cloud backup bucket. Before this, links pointed at the primary store's public domain, so anything saved while that store was refusing our credential answered 404 there.",
 			"link": null,
 			"tags": [
 				"fix"

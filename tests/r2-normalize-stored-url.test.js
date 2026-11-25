@@ -24,11 +24,11 @@ beforeAll(() => {
 	});
 });
 
-const { normalizeStoredUrl, thumbnailUrl, publicUrl, cdnUrl } = await import('../api/_lib/r2.js');
+const { normalizeStoredUrl, thumbnailUrl, bucketDomainUrl, cdnUrl } = await import('../api/_lib/r2.js');
 
 describe('normalizeStoredUrl', () => {
 	it('rewrites a legacy raw-bucket-domain URL to the same-origin /cdn/ form', () => {
-		const legacy = publicUrl('forge/thumb/abc-123.png');
+		const legacy = bucketDomainUrl('forge/thumb/abc-123.png');
 		expect(legacy).toMatch(/^https:\/\/pub-abc123\.r2\.dev\//);
 		expect(normalizeStoredUrl(legacy)).toBe(cdnUrl('forge/thumb/abc-123.png'));
 		expect(normalizeStoredUrl(legacy)).not.toMatch(/r2\.dev/);
@@ -62,7 +62,7 @@ describe('normalizeStoredUrl', () => {
 // domain instead of the same-origin /cdn/ proxy.
 describe('thumbnailUrl', () => {
 	it('rewrites a legacy raw-bucket-domain thumbnail_key to the /cdn/ form', () => {
-		const legacy = publicUrl('thumb/legacy-avatar.png');
+		const legacy = bucketDomainUrl('thumb/legacy-avatar.png');
 		expect(thumbnailUrl(legacy)).toBe(cdnUrl('thumb/legacy-avatar.png'));
 		expect(thumbnailUrl(legacy)).not.toMatch(/r2\.dev/);
 	});

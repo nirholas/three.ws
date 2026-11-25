@@ -50,8 +50,13 @@ thumbnailUrl('thumb/abc.png')                       // → https://three.ws/cdn/
 The URL is a same-origin `/cdn/<key>` address (`cdnUrlOrNull()` in the same file),
 not the raw public `r2.dev` domain. The first-party proxy in `api/cdn-object.js`
 streams the object and fails over by itself when the public domain is blocked or
-storage is unhealthy, so every API consumer gets that for free. If both the signed read and the public domain fail with the same storage-infrastructure fault, an image key is answered with a bundled flat 64x64 PNG (HTTP 200, `cache-control: public, max-age=30, s-maxage=30`) instead of a 502, so pages show a neutral tile rather than a broken-image icon and real content returns within 30 s of storage recovering. Non-image keys such as `.glb` still get the 502. Upload-side code
-that needs the raw bucket address still uses `publicUrl()`.
+storage is unhealthy, so every API consumer gets that for free. If both the signed read and the public domain fail with the same storage-infrastructure fault, an image key is answered with a bundled flat 64x64 PNG (HTTP 200, `cache-control: public, max-age=30, s-maxage=30`) instead of a 502, so pages show a neutral tile rather than a broken-image icon and real content returns within 30 s of storage recovering. Non-image keys such as `.glb` still get the 502. Since 2026-11-25
+`publicUrl()` hands out the same `/cdn/<key>` form: the raw `r2.dev` domain only
+serves objects that live in R2, so every object written to the GCS fallback bucket
+during the R2 credential outage answered 404 there. The raw address survives only as
+`bucketDomainUrl()` / `bucketDomainUrlOrNull()`, which the `/cdn/` proxy and the
+avatar GLB proxy use for their own last-resort read (a `/cdn/` URL there would point
+the proxy back at itself).
 
 The helper is built on the `OrNull` variants rather than bare `cdnUrl()` or
 `publicUrl()` because building a URL can throw on a deployment without object

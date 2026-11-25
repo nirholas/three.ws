@@ -39,6 +39,7 @@ vi.mock('../api/_lib/r2.js', async (importOriginal) => {
 		deleteObject: vi.fn(async () => {}),
 		objectStorageConfigured: () => true,
 		publicUrl: actual.publicUrl,
+		bucketDomainUrl: actual.bucketDomainUrl,
 		keyFromPublicUrl: actual.keyFromPublicUrl,
 		normalizeStoredUrl: actual.normalizeStoredUrl,
 		cdnUrl: actual.cdnUrl,
@@ -49,10 +50,10 @@ const {
 	listCreations, listCreationsByUser, listShowcase, listRecentCreations, listRemixable, listMostRemixed,
 	getPublicCreation, listRelated, getLineage,
 } = await import('../api/_lib/forge-store.js');
-const { publicUrl, cdnUrl } = await import('../api/_lib/r2.js');
+const { bucketDomainUrl, cdnUrl } = await import('../api/_lib/r2.js');
 
-const LEGACY_GLB = publicUrl('forge/client-1/legacy.glb');
-const LEGACY_PREVIEW = publicUrl('forge/thumb/legacy.png');
+const LEGACY_GLB = bucketDomainUrl('forge/client-1/legacy.glb');
+const LEGACY_PREVIEW = bucketDomainUrl('forge/thumb/legacy.png');
 
 afterEach(() => {
 	sqlMock.mockClear();

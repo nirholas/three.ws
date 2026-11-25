@@ -33,7 +33,7 @@ afterAll(() => {
 	else process.env.S3_PUBLIC_DOMAIN = savedPublicDomain;
 });
 
-const { publicUrlOrNull, thumbnailUrl, publicUrl, cdnUrl, cdnUrlOrNull } = await import('../api/_lib/r2.js');
+const { publicUrlOrNull, thumbnailUrl, publicUrl, bucketDomainUrl, cdnUrl, cdnUrlOrNull } = await import('../api/_lib/r2.js');
 
 // Load a second, independent instance of the module with storage unconfigured.
 async function withStorageUnset(fn) {
@@ -52,7 +52,7 @@ describe('publicUrlOrNull with object storage configured', () => {
 	it('resolves a bucket key exactly like publicUrl', () => {
 		const key = 'u/42/avatar.glb';
 		expect(publicUrlOrNull(key)).toBe(publicUrl(key));
-		expect(publicUrlOrNull(key)).toBe('https://cdn.example.com/u/42/avatar.glb');
+		expect(publicUrlOrNull(key)).toBe('https://three.ws/cdn/u/42/avatar.glb');
 	});
 
 	it('passes an already-absolute storage key through untouched', () => {
@@ -76,7 +76,7 @@ describe('publicUrlOrNull with object storage configured', () => {
 describe('cdnUrl / cdnUrlOrNull', () => {
 	it('builds a same-origin /cdn/<key> URL instead of the raw bucket domain', () => {
 		expect(cdnUrl('u/42/avatar.glb')).toBe('https://three.ws/cdn/u/42/avatar.glb');
-		expect(cdnUrl('u/42/avatar.glb')).not.toBe(publicUrl('u/42/avatar.glb'));
+		expect(cdnUrl('u/42/avatar.glb')).not.toBe(bucketDomainUrl('u/42/avatar.glb'));
 	});
 
 	it('percent-encodes each key segment, same as publicUrl', () => {

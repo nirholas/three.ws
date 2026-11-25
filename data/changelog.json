@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Models and thumbnails made during the storage outage load everywhere",
+			"summary": "Every link we hand out for a stored file (Explore cards, fresh upload links, share and wallet-embed previews, pinning, PowerPoint export) now goes through our own /cdn/ address, which serves both the primary store and the Google Cloud backup bucket. Before this, links pointed at the primary store's public domain, so anything saved while that store was refusing our credential answered 404 there.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Avatars created during the storage outage load again",
 			"summary": "While our primary object store refuses its credential, new avatar models are saved to a Google Cloud backup bucket. The avatar model endpoint that the widget, /walk and every embed read never looked there, so those avatars failed to load and showed the robot placeholder instead. It now reads the backup bucket, and pinning such an avatar to IPFS works too.",
 			"tags": [

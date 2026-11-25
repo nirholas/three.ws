@@ -55,6 +55,14 @@
 			<description>While the main storage credential is rejected, every model and image request first made a failing call to it before the backup bucket answered. After one rejection the platform now goes straight to the backup for a minute, then retries the main bucket once so a fixed credential recovers on its own. The storage health check shows when this is active.</description>
 		</item>
 		<item>
+			<title>Models and thumbnails made during the storage outage load everywhere</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Models and thumbnails made during the storage outage load everywhere</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every link we hand out for a stored file (Explore cards, fresh upload links, share and wallet-embed previews, pinning, PowerPoint export) now goes through our own /cdn/ address, which serves both the primary store and the Google Cloud backup bucket. Before this, links pointed at the primary store's public domain, so anything saved while that store was refusing our credential answered 404 there.</description>
+		</item>
+		<item>
 			<title>News analysis and AI answers fail less often when traffic spikes</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:News analysis and AI answers fail less often when traffic spikes</guid>

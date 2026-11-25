@@ -34,6 +34,7 @@ vi.mock('../api/_lib/r2.js', async (importOriginal) => {
 		putObject: vi.fn(async () => {}),
 		objectStorageConfigured: () => true,
 		publicUrl: actual.publicUrl,
+		bucketDomainUrl: actual.bucketDomainUrl,
 		keyFromPublicUrl: actual.keyFromPublicUrl,
 		normalizeStoredUrl: actual.normalizeStoredUrl,
 		cdnUrl: actual.cdnUrl,
@@ -51,10 +52,10 @@ vi.mock('../api/_lib/streaks.js', () => ({
 }));
 
 const { uploadArtifacts, getDesign, getLineage, listDesigns } = await import('../api/_lib/cad/store.js');
-const { publicUrl, cdnUrl } = await import('../api/_lib/r2.js');
+const { bucketDomainUrl, cdnUrl } = await import('../api/_lib/r2.js');
 
-const LEGACY_THUMB = publicUrl('cad/d1/thumb.svg');
-const LEGACY_GLB = publicUrl('cad/d1/part.glb');
+const LEGACY_THUMB = bucketDomainUrl('cad/d1/thumb.svg');
+const LEGACY_GLB = bucketDomainUrl('cad/d1/part.glb');
 
 afterEach(() => {
 	sqlMock.mockClear();

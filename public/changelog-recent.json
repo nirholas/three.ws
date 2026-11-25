@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T18:08:34.837Z",
+	"generated_at": "2026-11-25T18:27:30.689Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4714,
+	"total": 4715,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -64,6 +64,16 @@
 			"type": "update",
 			"title": "Model and image requests stop paying for a rejected storage credential",
 			"summary": "While the main storage credential is rejected, every model and image request first made a failing call to it before the backup bucket answered. After one rejection the platform now goes straight to the backup for a minute, then retries the main bucket once so a fixed credential recovers on its own. The storage health check shows when this is active.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Models and thumbnails made during the storage outage load everywhere",
+			"summary": "Every link we hand out for a stored file (Explore cards, fresh upload links, share and wallet-embed previews, pinning, PowerPoint export) now goes through our own /cdn/ address, which serves both the primary store and the Google Cloud backup bucket. Before this, links pointed at the primary store's public domain, so anything saved while that store was refusing our credential answered 404 there.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1557,16 +1567,6 @@
 			"link": "/diorama",
 			"tags": [
 				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "Drops and rare threews.sol names show the holder early window before you try",
-			"summary": "During a drop's holder-only window, its page now shows a live countdown to public open and checks your own $THREE tier. Gold-and-up holders see an Early access banner and can reveal right away; everyone else sees which tier opens it now, with a link to the tiers page. Rare names on threews.sol/claim work the same way during a Genesis first-dibs window. If you are below the tier, the page tells you how far short you are and when the name or drop opens to everyone, instead of failing with a bare error.",
-			"link": "/three",
-			"tags": [
 				"improvement"
 			]
 		}

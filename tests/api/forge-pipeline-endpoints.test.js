@@ -653,7 +653,20 @@ describe('forge-share', () => {
 		expect(res.body).toContain(`/api/forge-og?id=${UUID}`);
 	});
 
+	// X renders nothing at all for a player card on an unapproved domain, so the
+	// card is served only once the approval is recorded (X_PLAYER_CARD_APPROVED).
+	it('serves a large image card, not a player card, until X approves the domain', async () => {
+		delete process.env.X_PLAYER_CARD_APPROVED;
+		sqlMock.mockResolvedValueOnce([
+			{ id: UUID, prompt: 'a brass lantern', preview_image_url: null, status: 'done', glb_url: MESH, web_glb_url: null, web_size_bytes: null, size_bytes: 1_800_000 },
+		]);
+		const res = await call(share, { url: `/api/forge-share?id=${UUID}` });
+		expect(res.body).toContain('name="twitter:card" content="summary_large_image"');
+		expect(res.body).not.toContain('twitter:player');
+	});
+
 	it('serves an X player card for a finished creation, embedding the real GLB via /forge/embed', async () => {
+		vi.stubEnv('X_PLAYER_CARD_APPROVED', '1');
 		sqlMock.mockResolvedValueOnce([
 			{
 				id: UUID,
@@ -673,6 +686,7 @@ describe('forge-share', () => {
 		expect(res.body).toContain('name="twitter:player:height" content="480"');
 		// Fallback image stays present for clients that only read twitter:image/og:image.
 		expect(res.body).toMatch(/name="twitter:image" content="[^"]+"/);
+		vi.unstubAllEnvs();
 	});
 
 	it('falls back to summary_large_image, with no twitter:player tag, for a creation still in progress', async () => {

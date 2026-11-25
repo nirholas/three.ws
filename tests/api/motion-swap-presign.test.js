@@ -93,8 +93,10 @@ describe('POST /api/motion-swap action=upload', () => {
 		expect(json.method).toBe('PUT');
 		expect(json.headers['content-type']).toBe('video/quicktime');
 		expect(json.upload_url).toContain('.mov?');
-		expect(json.public_url).toBe(
-			`https://cdn.example.com/${new URL(json.upload_url).pathname.replace(/^\//, '')}`,
+		// The /cdn/ proxy, which serves the object from R2 or the GCS fallback.
+		expect(json.public_url).toMatch(/^https:\/\/[^/]+\/cdn\/motion-swap\/uploads\//);
+		expect(new URL(json.public_url).pathname.replace(/^\/cdn\//, '')).toBe(
+			new URL(json.upload_url).pathname.replace(/^\//, ''),
 		);
 	});
 
