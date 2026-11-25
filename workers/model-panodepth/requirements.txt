@@ -14,4 +14,4 @@ pydantic==2.11.9
 httpx==0.28.1
 google-cloud-storage==3.4.0
 google-auth==2.63.1
-pytest==8.4.2
+pytest==9.1.1
