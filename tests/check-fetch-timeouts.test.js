@@ -104,6 +104,27 @@ describe('check-fetch-timeouts under api/', () => {
 		expect(scanApi(`const res = await fetch(url.toString(), { ...init, redirect: 'manual' });`)).toEqual([]);
 	});
 
+	it('accepts a wrapper that hands its own init parameter to fetch unchanged', () => {
+		// api/_lib/tracing.js tracedFetch: outside a request span it is exactly
+		// fetch, so the caller's init (and its deadline) goes through untouched.
+		const src = [
+			`export async function tracedFetch(name, url, init = {}) {`,
+			`	if (!als.getStore()) return fetch(url, init);`,
+			`}`,
+		].join('\n');
+		expect(scanApi(src)).toEqual([]);
+	});
+
+	it('still flags a local init object with no deadline', () => {
+		const src = [
+			`export async function post(url, body) {`,
+			`	const init = { method: 'POST', body };`,
+			`	return fetch(url, init);`,
+			`}`,
+		].join('\n');
+		expect(scanApi(src)).toHaveLength(1);
+	});
+
 	it('ignores a data: URL and a client snippet quoted as a string', () => {
 		expect(scanApi(`const buf = await (await fetch('data:application/octet-stream;base64,' + b64)).arrayBuffer();`)).toEqual([]);
 		expect(scanApi(`\t\t"const _r = await fetch('/api/mcp', {",`)).toEqual([]);

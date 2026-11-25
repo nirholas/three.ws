@@ -64,6 +64,23 @@ const DATA_URL_RE = /fetch\(\s*[`'"]data:/;
 // override the AI SDK calls with its own abortSignal, the Solana RPC sender).
 const DELEGATED_INIT_RE = /\{\s*\.\.\.\s*(init|opts|options|requestInit)\b/;
 
+// The same delegation without a spread: a wrapper that hands its own `init`
+// parameter to fetch unchanged (`tracedFetch(name, url, init = {})` outside a
+// request span). The name must be one of the delegated ones AND a parameter of
+// the nearest enclosing function, so a local options object built without a
+// signal is still reported.
+const DELEGATED_NAMES = new Set(['init', 'opts', 'options', 'requestInit']);
+function isOwnParameter(lines, at, name) {
+	if (!DELEGATED_NAMES.has(name)) return false;
+	for (let i = at; i >= Math.max(0, at - 40); i--) {
+		const sig = /(?:function\b[^(]*|^\s*(?:async\s+)?(?!(?:if|for|while|switch|catch)\b)[A-Za-z_$][\w$]*\s*)\(([^)]*)\)\s*(?:=>|\{)|\(([^)]*)\)\s*=>/.exec(lines[i]);
+		if (!sig) continue;
+		const params = (sig[1] ?? sig[2] ?? '').split(',').map((p) => p.trim().split(/[\s=]/)[0]);
+		return params.includes(name);
+	}
+	return false;
+}
+
 function listFiles() {
 	const cmd = `grep -rl 'fetch(' ${ROOTS.join(' ')} --include=*.js --include=*.mjs 2>/dev/null || true`;
 	return execSync(cmd, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
@@ -184,6 +201,7 @@ export function scanFile(file, src) {
 		if (serverSide && DELEGATED_INIT_RE.test(win)) continue;
 		const initIdent = /fetch\([^,()]+,\s*([A-Za-z_$][\w$]*)\s*\)/.exec(win)?.[1];
 		if (initIdent && initObjectBounded(lines, initIdent)) continue;
+		if (serverSide && initIdent && isOwnParameter(lines, i, initIdent)) continue;
 		out.push({ file, line: i + 1, code: line.trim().slice(0, 100) });
 	}
 	return out;
