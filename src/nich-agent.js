@@ -1020,9 +1020,9 @@ const MODEL_OPTIONS = [
 	{ id: 'auto', label: 'Auto (GPT-OSS 120B)', provider: null, model: null },
 	{
 		id: 'openrouter:gpt-oss',
-		label: 'Nemotron 3 Super 120B (free)',
+		label: 'Nemotron 3.5 Super (free)',
 		provider: 'openrouter',
-		model: 'nvidia/nemotron-3-super-120b-a12b:free',
+		model: 'nvidia/nemotron-3.5-super-vl:free',
 	},
 	{ id: 'anthropic:sonnet', label: 'Claude Sonnet 4.6', provider: 'anthropic', model: 'claude-sonnet-4-6' },
 	{

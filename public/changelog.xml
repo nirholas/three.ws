@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Incident response</title>
+			<link>https://three.ws/docs/incident-response</link>
+			<guid isPermaLink="false">2026-11-25:Docs · Incident response</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws detects, contains, communicates and closes a production incident, including a security incident or a personal-data breach, with the code or runbook behind each step.</description>
+		</item>
+		<item>
 			<title>A prompt, a photo, or a video frame becomes a model in the terminal</title>
 			<link>https://three.ws/tty</link>
 			<guid isPermaLink="false">2026-11-25:A prompt, a photo, or a video frame becomes a model in the terminal</guid>
 			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>On /tty, describe an object, drop a photo, or pick a video and the page builds a real model, then draws it in the terminal panel. The same thing works from the shell: three-tty --prompt, three-tty photo.jpg, or three-tty --find, which uses the newest image in the folder. A video contributes one frame, reconstructed as an object. A full walkthrough cloud stays on /capture. Making a model needs a free three.ws account.</description>
+		</item>
+		<item>
+			<title>Chat stops wasting turns on free models that no longer exist</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Chat stops wasting turns on free models that no longer exist</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>OpenRouter quietly retired eight free model routes, including the Nemotron 3 Super option in the agent, avatar, editor and chat model pickers. Picking it now runs Nemotron 3.5 Super, agents that saved a retired model keep answering on its closest live successor, and the fallback chain and image understanding no longer spend a request on a dead route before reaching one that answers. The nightly free-model audit now watches every route the chain actually calls, so the next retirement is caught the day it happens.</description>
 		</item>
 		<item>
 			<title>The terminal can walk, flock, shade, and splat</title>

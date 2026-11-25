@@ -196,7 +196,7 @@ export const ROSTER = [
 		id: 'qwen3.8-27b',
 		label: 'Qwen 3.8 27B',
 		family: 'Qwen',
-		description: 'Latest dense Qwen 3. Fast, sharp tool use, three free lanes behind it.',
+		description: 'Latest dense Qwen 3. Fast, sharp tool use, two free lanes behind it.',
 		context: 131_072,
 		maxOutput: 8192,
 		tools: true,
@@ -204,7 +204,6 @@ export const ROSTER = [
 		price: [0.42, 3],
 		routes: [
 			{ lane: 'groq', model: 'qwen/qwen3.8-27b' },
-			{ lane: 'openrouter', model: 'qwen/qwen3.8-27b:free' },
 			{ lane: 'ovh', model: 'Qwen3.8-27B' },
 		],
 	},

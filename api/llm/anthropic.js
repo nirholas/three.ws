@@ -96,7 +96,7 @@ const MODELS = {
 		provider: 'openrouter',
 		envKey: 'OPENROUTER_API_KEY',
 	},
-	'nvidia/nemotron-3-super-120b-a12b:free': {
+	'nvidia/nemotron-3.5-super-vl:free': {
 		kind: 'openai',
 		provider: 'openrouter',
 		envKey: 'OPENROUTER_API_KEY',
@@ -327,13 +327,22 @@ const FREE_DEFAULT_MODEL = 'google/gemma-4-31b-it:free';
 // Resolve the model to run: the caller's choice when it costs the host nothing
 // or matches what the owner configured, otherwise the policy's own model. The
 // response echoes the model actually used, so a clamped caller sees what it got.
-// A Grok id xAI has retired, or a Groq id Groq has retired (saved in a policy
-// or sent by an embed), resolves to its successor first, so it neither 404s
+// A Grok id xAI has retired, a Groq id Groq has retired, or an OpenRouter free
+// route OpenRouter has retired (saved in a policy or sent by an embed), resolves to its successor first, so it neither 404s
 // upstream nor falls out of the allowlist.
 const RETIRED_MODEL_IDS = {
 	'llama-3.3-70b-versatile': 'qwen/qwen3.8-27b',
 	'llama-3.1-8b-instant': 'qwen/qwen3.8-27b',
+	// OpenRouter `:free` routes retired by 2026-11-25 (404 on call). Saved embed
+	// policies and the editor's old picker still name them.
+	'nvidia/nemotron-3-super-120b-a12b:free': 'nvidia/nemotron-3.5-super-vl:free',
+	'qwen/qwen3.8-27b:free': 'qwen/qwen3.8-27b',
+	'meta-llama/llama-3.1-8b-instruct:free': 'qwen/qwen3.8-27b',
+	'google/gemini-2.0-flash-exp:free': 'google/gemma-4-31b-it:free',
 };
+
+/** Every model id the proxy can route, for /api/cron/free-model-audit. */
+export const PROXY_MODEL_IDS = Object.freeze(Object.keys(MODELS));
 
 function liveModelId(id) {
 	return resolveGrokModelId(RETIRED_MODEL_IDS[id] || id);

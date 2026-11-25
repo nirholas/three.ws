@@ -496,8 +496,11 @@ const BRAIN_LABELS = {
 	'nvidia/nemotron-3-ultra-550b-a55b': 'Nemotron 3 Ultra 550B · NVIDIA',
 	'nvidia/nemotron-3.5-lightning-30b-a3b': 'Nemotron 3.5 Lightning 30B · NVIDIA',
 	'google/gemma-4-31b-it:free': 'Gemma 4 31B · OpenRouter',
-	'meta-llama/llama-3.1-8b-instruct:free': 'Llama 3.1 8B · OpenRouter',
-	'nvidia/nemotron-3-super-120b-a12b:free': 'Nemotron 3 Super 120B · OpenRouter',
+	'nvidia/nemotron-3.5-super-vl:free': 'Nemotron 3.5 Super · OpenRouter',
+	// Retired OpenRouter free routes still stored on older agents run on their
+	// successors (api/_lib/chat-models.js RETIRED_MODEL_ALIASES).
+	'meta-llama/llama-3.1-8b-instruct:free': 'Qwen3 27B · Groq',
+	'nvidia/nemotron-3-super-120b-a12b:free': 'Nemotron 3.5 Super · OpenRouter',
 };
 
 function brainLabel(agent) {

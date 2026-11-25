@@ -162,13 +162,18 @@ export const VISION_TASK_LEAD = Object.freeze({
 // nex-agi routes lost their free tier (404 "unavailable for free") and both
 // inkling routes are now restricted to OpenRouter's agentic surfaces (403), so
 // every vision request was paying five dead round trips. qwen3.8-27b:free was
-// pruned on 2026-11-11 for the same reason (404 "unavailable for free").
+// pruned on 2026-11-11 for the same reason (404 "unavailable for free"), and
+// dots-3-note-preview:free left the catalog by 2026-11-25. Nemotron 3.5 Super VL
+// took its slot: a vision-language model that described a real image correctly
+// in 8.9s on the free route that day.
 const OPENROUTER_VISION_MODELS = [
 	{ model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', extraBody: { reasoning: { effort: 'none' } } },
-	{ model: 'dots-studio/dots-3-note-preview:free' },
+	{ model: 'nvidia/nemotron-3.5-super-vl:free' },
 	{ model: 'google/gemma-4-31b-it:free' },
 	{ model: 'google/gemma-4-26b-a4b-it:free' },
 ];
+/** The vision lane's OpenRouter ids, for /api/cron/free-model-audit. */
+export const OPENROUTER_VISION_MODEL_IDS = Object.freeze(OPENROUTER_VISION_MODELS.map((m) => m.model));
 // Cloudflare Workers AI's vision route. Llama 4 Scout, not the 11B Llama 3.2
 // vision model the NIM lane uses: on Workers AI that one sits behind a Meta
 // license click-through (403 "Model Agreement") that has to be accepted on the

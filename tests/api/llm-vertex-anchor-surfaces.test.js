@@ -104,7 +104,7 @@ describe('shared vertex-gemini helper (api/_lib/vertex-gemini.js)', () => {
 });
 
 describe('brain (api/brain/chat.js): freeFallbackChain anchor', () => {
-	const spec = { openrouterModel: 'nvidia/nemotron-3-super-120b-a12b:free' };
+	const spec = { openrouterModel: 'nvidia/nemotron-3.5-super-vl:free' };
 
 	it('appends the anchor at the tail when a GCP project is set', () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';

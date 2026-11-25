@@ -108,12 +108,17 @@ const CEREBRAS_MODEL = 'llama-3.3-70b';
 const OPENROUTER_FREE_MODEL = DEFAULT_FREE_MODEL;
 // Further `:free` routes, each on its own upstream pool. A saturated free model
 // 429s every key at once ("Provider returned error"), so a second and third
-// model, not a fourth key, is what keeps the lane serving. Verified live
-// 2026-09-30: all three answered plain text and tool calls while one of them
-// was 429ing. Every id keeps the ':free' suffix so the lane can never bill.
-const OPENROUTER_ALT_FREE_MODELS = Object.freeze([
-	'nvidia/nemotron-3-super-120b-a12b:free',
-	'qwen/qwen3.8-27b:free',
+// model, not a fourth key, is what keeps the lane serving. Every id keeps the
+// ':free' suffix so the lane can never bill.
+// Re-pinned 2026-11-25: nemotron-3-super-120b-a12b:free and qwen3.8-27b:free
+// left OpenRouter's catalog and answered 404 on every call, so a Groq burst fell
+// past both rungs into an exhausted chain. Both replacements are NVIDIA-served
+// functions with their own queues (Super VL 1.3s, Ultra 1.1s, clean content and
+// tool calls, measured that day while both Gemma routes answered 429).
+// Exported so /api/cron/free-model-audit pages ops when one of them dies.
+export const OPENROUTER_ALT_FREE_MODELS = Object.freeze([
+	'nvidia/nemotron-3.5-super-vl:free',
+	'nvidia/nemotron-3-ultra-550b-a55b:free',
 ]);
 // Hugging Face Inference Providers (router.huggingface.co): OpenAI-compatible,
 // routed to whichever partner serves the model, billed to the token's monthly
@@ -171,7 +176,9 @@ export const NVIDIA_PINNED_MODELS = Object.freeze([NVIDIA_ULTRA_MODEL, NVIDIA_NE
 const KILO_URL = 'https://api.kilo.ai/api/gateway/chat/completions';
 const KILO_RUNGS = Object.freeze([
 	{ name: 'kilo', model: 'nvidia/nemotron-3-ultra-550b-a55b:free' },
-	{ name: 'kilo:super', model: 'nvidia/nemotron-3-super-120b-a12b:free' },
+	// nemotron-3-super-120b-a12b:free left Kilo's catalog by 2026-11-25 (404
+	// "does not exist"); Super VL is the live Super-class route there.
+	{ name: 'kilo:super', model: 'nvidia/nemotron-3.5-super-vl:free' },
 ]);
 export const KILO_FREE_MODELS = Object.freeze(KILO_RUNGS.map((r) => r.model));
 const KILO_NO_REASONING = Object.freeze({ reasoning: { enabled: false } });

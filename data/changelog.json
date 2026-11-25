@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Chat stops wasting turns on free models that no longer exist",
+			"summary": "OpenRouter quietly retired eight free model routes, including the Nemotron 3 Super option in the agent, avatar, editor and chat model pickers. Picking it now runs Nemotron 3.5 Super, agents that saved a retired model keep answering on its closest live successor, and the fallback chain and image understanding no longer spend a request on a dead route before reaching one that answers. The nightly free-model audit now watches every route the chain actually calls, so the next retirement is caught the day it happens.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "A prompt, a photo, or a video frame becomes a model in the terminal",
 			"summary": "On /tty, describe an object, drop a photo, or pick a video and the page builds a real model, then draws it in the terminal panel. The same thing works from the shell: three-tty --prompt, three-tty photo.jpg, or three-tty --find, which uses the newest image in the folder. A video contributes one frame, reconstructed as an object. A full walkthrough cloud stays on /capture. Making a model needs a free three.ws account.",
 			"tags": ["feature"],

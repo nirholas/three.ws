@@ -183,7 +183,7 @@ describe('llmComplete — free platform providers', () => {
 		expect(out.text).toBe('from ovh anonymous');
 		expect(calls.map((c) => c.body.model)).toEqual([
 			'nvidia/nemotron-3-ultra-550b-a55b:free',
-			'nvidia/nemotron-3-super-120b-a12b:free',
+			'nvidia/nemotron-3.5-super-vl:free',
 			'Meta-Llama-3_3-70B-Instruct',
 		]);
 		expect(calls.at(-1).headers.authorization).toBeUndefined();

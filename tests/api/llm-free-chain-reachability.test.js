@@ -51,8 +51,8 @@ const FREE_CHAIN = [
 	{ provider: 'openrouter', host: HOSTS.openrouter, model: 'google/gemma-4-31b-it:free' },
 	// A saturated free model 429s every key at once, so the lane also rotates
 	// across alternate ':free' models, each on its own upstream pool.
-	{ provider: 'openrouter:nemotron-3-super-120b-a12b', host: HOSTS.openrouter, model: 'nvidia/nemotron-3-super-120b-a12b:free' },
-	{ provider: 'openrouter:qwen3.8-27b', host: HOSTS.openrouter, model: 'qwen/qwen3.8-27b:free' },
+	{ provider: 'openrouter:nemotron-3.5-super-vl', host: HOSTS.openrouter, model: 'nvidia/nemotron-3.5-super-vl:free' },
+	{ provider: 'openrouter:nemotron-3-ultra-550b-a55b', host: HOSTS.openrouter, model: 'nvidia/nemotron-3-ultra-550b-a55b:free' },
 	// One NIM rung per nvapi key; same host and model, told apart by the key.
 	// Ultra leads since NVIDIA retired Super on 2026-10-03.
 	{ provider: 'nvidia', host: HOSTS.nvidia, model: 'nvidia/nemotron-3-ultra-550b-a55b', auth: 'nvapi-x' },
@@ -66,7 +66,7 @@ const FREE_CHAIN = [
 	{ provider: 'huggingface#2', host: HOSTS.huggingface, model: 'meta-llama/Llama-3.3-70B-Instruct', auth: 'hf-b' },
 	// Kilo Code's keyless free pool, Nemotron on Kilo's own NVIDIA capacity.
 	{ provider: 'kilo', host: HOSTS.kilo, model: 'nvidia/nemotron-3-ultra-550b-a55b:free' },
-	{ provider: 'kilo:super', host: HOSTS.kilo, model: 'nvidia/nemotron-3-super-120b-a12b:free' },
+	{ provider: 'kilo:super', host: HOSTS.kilo, model: 'nvidia/nemotron-3.5-super-vl:free' },
 	{ provider: 'ovh', host: HOSTS.ovh, model: 'Meta-Llama-3_3-70B-Instruct' },
 	{ provider: 'gemini', host: HOSTS.gemini, model: 'gemini-2.5-flash-lite' },
 	{ provider: 'vertex-gemini', host: HOSTS.vertex, model: 'google/gemini-2.5-flash' },
@@ -255,7 +255,7 @@ describe('free chain: every rung is reachable through a transport-level failure'
 		expect(out.text).toBe('keyless floor');
 		expect(order).toEqual([
 			'kilo:nvidia/nemotron-3-ultra-550b-a55b:free',
-			'kilo:nvidia/nemotron-3-super-120b-a12b:free',
+			'kilo:nvidia/nemotron-3.5-super-vl:free',
 			'ovh',
 			'pollinations',
 			'llm7',

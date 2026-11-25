@@ -6,7 +6,9 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-11-25
 
+- **Docs · Incident response** (`/docs/incident-response`): How three.ws detects, contains, communicates and closes a production incident, including a security incident or a personal-data breach, with the code or runbook behind each step.
 - **A prompt, a photo, or a video frame becomes a model in the terminal**: On /tty, describe an object, drop a photo, or pick a video and the page builds a real model, then draws it in the terminal panel. The same thing works from the shell: three-tty --prompt, three-tty photo.jpg, or three-tty --find, which uses the newest image in the folder. A video contributes one frame, reconstructed as an object. A full walkthrough cloud stays on /capture. Making a model needs a free three.ws account. (`/tty`) `[feature]`
+- **Chat stops wasting turns on free models that no longer exist**: OpenRouter quietly retired eight free model routes, including the Nemotron 3 Super option in the agent, avatar, editor and chat model pickers. Picking it now runs Nemotron 3.5 Super, agents that saved a retired model keep answering on its closest live successor, and the fallback chain and image understanding no longer spend a request on a dead route before reaching one that answers. The nightly free-model audit now watches every route the chain actually calls, so the next retirement is caught the day it happens. `[fix]`
 - **The terminal can walk, flock, shade, and splat**: curl three.ws/tty/walk plays a person walking in profile. The same stream now has a flock of birds, a lit torus, a raymarched shader, a lathed solid, and a point garden whose banner states the real point count. A parade plays two walks in turn, meet draws both characters in one frame, and say puts your words above the walker. Glyph styles are half-block, braille, density, ASCII, a green matrix tint, and points. (`/tty`) `[feature]`
 
 ## 2026-11-22

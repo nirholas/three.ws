@@ -386,10 +386,11 @@ export const MODEL_CATALOG = {
 	// _lib/openrouter-free.js resolves models from OpenRouter's live list at
 	// request time. When one of these starts failing, check that module's live
 	// list first rather than assuming a provider outage.
+	// nemotron-3-super-120b-a12b, ling-3.0-flash-fin and minimax-m2.7 lost their
+	// free routes by 2026-11-25 and map forward through RETIRED_MODEL_ALIASES.
 	'google/gemma-4-31b-it:free':                 { provider: 'openrouter', tools: true },
-	'nvidia/nemotron-3-super-120b-a12b:free':     { provider: 'openrouter', tools: true },
-	'inclusionai/ling-3.0-flash-fin:free':        { provider: 'openrouter', tools: true },
-	'minimax/minimax-m2.7:free':                  { provider: 'openrouter', tools: true },
+	'nvidia/nemotron-3.5-super-vl:free':          { provider: 'openrouter', tools: true },
+	'nvidia/nemotron-3-ultra-550b-a55b:free':     { provider: 'openrouter', tools: true },
 
 	// ── OpenRouter paid Claude mirrors: the no-ANTHROPIC_API_KEY escape hatch ──
 	// api/chat.js and _lib/llm.js reach Anthropic ONLY through api.anthropic.com,
@@ -473,6 +474,17 @@ export const MODEL_CATALOG = {
 export const RETIRED_MODEL_ALIASES = {
 	'llama-3.3-70b-versatile': 'llama-3.3-70b',
 	'llama-3.1-8b-instant': 'qwen3.8-27b',
+	// OpenRouter `:free` routes gone from GET /api/v1/models (404 on call),
+	// found 2026-11-25. Each maps to the closest live model the catalog serves:
+	// the same family where one survives, otherwise the free default.
+	'nvidia/nemotron-3-super-120b-a12b:free': 'nvidia/nemotron-3.5-super-vl:free',
+	'qwen/qwen3.8-27b:free': 'qwen/qwen3.8-27b',
+	'minimax/minimax-m2.7:free': 'nvidia/nemotron-3-ultra-550b-a55b:free',
+	'inclusionai/ling-3.0-flash-fin:free': 'google/gemma-4-31b-it:free',
+	'inclusionai/ling-3.0-flash:free': 'google/gemma-4-31b-it:free',
+	'meta-llama/llama-3.1-8b-instruct:free': 'qwen/qwen3.8-27b',
+	'google/gemini-2.0-flash-exp:free': 'google/gemma-4-31b-it:free',
+	'dots-studio/dots-3-note-preview:free': 'nvidia/nemotron-3.5-super-vl:free',
 	...GROK_RETIRED_ALIASES,
 };
 
@@ -711,9 +723,8 @@ export const DEFAULT_PROVIDER_ORDER = ['groq', 'openrouter', 'nvidia', 'sambanov
  */
 export const OPENROUTER_SIBLINGS = [
 	DEFAULT_FREE_MODEL,
-	'nvidia/nemotron-3-super-120b-a12b:free',
-	'inclusionai/ling-3.0-flash-fin:free',
-	'minimax/minimax-m2.7:free',
+	'nvidia/nemotron-3.5-super-vl:free',
+	'nvidia/nemotron-3-ultra-550b-a55b:free',
 ];
 
 /**

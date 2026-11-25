@@ -5276,6 +5276,12 @@ URL: https://three.ws/docs/trust
 
 How the three.ws trust center, subprocessor list and security.txt are sourced from the code, and the rules for keeping every claim cited.
 
+### Docs · Incident response
+
+URL: https://three.ws/docs/incident-response
+
+How three.ws detects, contains, communicates and closes a production incident, including a security incident or a personal-data breach, with the code or runbook behind each step.
+
 ### Docs · The catalog quality gate
 
 URL: https://three.ws/docs/seed-quality

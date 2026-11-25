@@ -39,7 +39,10 @@ import { listFreeModels } from '../_lib/openrouter-free.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { env } from '../_lib/env.js';
-import { NVIDIA_PINNED_MODELS, KILO_FREE_MODELS } from '../_lib/llm.js';
+import { NVIDIA_PINNED_MODELS, KILO_FREE_MODELS, OPENROUTER_ALT_FREE_MODELS } from '../_lib/llm.js';
+import { OPENROUTER_VISION_MODEL_IDS } from '../_lib/vision.js';
+import { ROSTER } from '../_lib/model-roster.js';
+import { PROXY_MODEL_IDS } from '../llm/anthropic.js';
 import { enqueueReleaseEvals } from '../_lib/nim-release-store.js';
 
 const NIM_BASE = 'https://integrate.api.nvidia.com/v1';
@@ -55,8 +58,15 @@ const RELEASE_SNAPSHOT_TTL_S = 90 * 24 * 3600;
  * Every OpenRouter `:free` id hardcoded in the codebase, with the constants
  * (and files) that reference it. Sources: MODEL_CATALOG's openrouter entries,
  * DEFAULT_FREE_MODEL (also the providerChain rung in api/_lib/llm.js via
- * OPENROUTER_FREE_MODEL), and OPENROUTER_SIBLINGS (the per-model failover list
- * consumed by api/chat.js).
+ * OPENROUTER_FREE_MODEL), OPENROUTER_SIBLINGS (the per-model failover list
+ * consumed by api/chat.js), the LLM chain's alternate OpenRouter rungs, the
+ * vision lane's OpenRouter rungs, the model roster's OpenRouter routes, and the
+ * embed proxy's routable ids.
+ *
+ * Until 2026-11-25 only the first three were read, so the rungs that actually
+ * died that day (the chain's two alternates and the vision lane's dots-3) were
+ * never audited. tests/openrouter-retired-free-ids.test.js now fails when a
+ * `:free` literal in api/ is outside this list.
  * @returns {{ id: string, refs: string[] }[]}
  */
 export function collectHardcodedFreeIds() {
@@ -75,6 +85,20 @@ export function collectHardcodedFreeIds() {
 	add(DEFAULT_FREE_MODEL, 'DEFAULT_FREE_MODEL (api/_lib/chat-models.js; providerChain rung in api/_lib/llm.js)');
 	for (const id of OPENROUTER_SIBLINGS) {
 		add(id, 'OPENROUTER_SIBLINGS (api/_lib/chat-models.js; failover list in api/chat.js)');
+	}
+	for (const id of OPENROUTER_ALT_FREE_MODELS) {
+		add(id, 'OPENROUTER_ALT_FREE_MODELS (api/_lib/llm.js; alternate providerChain rungs)');
+	}
+	for (const id of OPENROUTER_VISION_MODEL_IDS) {
+		add(id, 'OPENROUTER_VISION_MODELS (api/_lib/vision.js; /api/vision rungs)');
+	}
+	for (const model of ROSTER) {
+		for (const route of model.routes || []) {
+			if (route.lane === 'openrouter') add(route.model, `ROSTER ${model.id} route (api/_lib/model-roster.js)`);
+		}
+	}
+	for (const id of PROXY_MODEL_IDS) {
+		add(id, 'MODELS (api/llm/anthropic.js; embed proxy allowlist)');
 	}
 
 	return [...refs.entries()].map(([id, r]) => ({ id, refs: r }));
