@@ -161,6 +161,26 @@ describe('avatar glb proxy: GCS fallback bucket', () => {
 		expect(res.statusCode).toBe(404);
 	});
 
+	// Production on 2026-11-25: two avatars point at draft GLBs no store holds.
+	// R2 rejected the credential, the fallback bucket had no such object and the
+	// public bucket domain answered 404, yet the route said 502 upstream_error,
+	// which tells every client to retry a read that can never succeed.
+	it('answers 404 when R2 rejects the credential and every other store says the object does not exist', async () => {
+		sendImpl = async () => { throw unauthorized(); };
+		const res = await invoke();
+		expect(res.statusCode).toBe(404);
+		expect(JSON.parse(res.body).error).toBe('not_found');
+	});
+
+	it('still answers 502 when the public bucket domain itself is failing', async () => {
+		sendImpl = async () => { throw unauthorized(); };
+		fetchUpstreamImpl = async () => {
+			throw Object.assign(new Error('timed out after 20000ms'), { name: 'TimeoutError' });
+		};
+		const res = await invoke();
+		expect(res.statusCode).toBe(502);
+	});
+
 	it('falls through to the public bucket domain when the fallback bucket does not hold the key', async () => {
 		sendImpl = async () => { throw unauthorized(); };
 		fetchUpstreamImpl = async () => ({

@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "An avatar whose model file was deleted now reports not found instead of a server error",
+			"summary": "When the main storage credential is rejected and neither the backup bucket nor the public storage domain has an avatar's model, the model endpoint now answers 404 not found. It used to answer 502, which told viewers and embeds to keep retrying a file that no longer exists.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "The live pump.fun trade stream recovers from socket drops in a fraction of a second",
 			"summary": "The public Solana lane that feeds coin intel and the sniper's trade stream drops its socket every 10 to 30 seconds. The stream now resubscribes on the same lane within a few hundred milliseconds instead of a full second, so far fewer trades are missed, and a closed stream no longer keeps reconnecting to a lane in the background.",
 			"tags": [

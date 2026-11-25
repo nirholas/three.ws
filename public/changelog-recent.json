@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T22:03:37.417Z",
+	"generated_at": "2026-11-25T22:10:14.250Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4738,
+	"total": 4739,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -64,6 +64,16 @@
 			"type": "update",
 			"title": "Agent profiles stop requesting a private body they cannot show",
 			"summary": "When a public agent wears a private avatar, its profile asked for that avatar anyway and was always refused, for every visitor. Both agent profile layouts now skip that request unless you own the agent, so the page loads with one fewer failed call and the owner still sees the body.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "An avatar whose model file was deleted now reports not found instead of a server error",
+			"summary": "When the main storage credential is rejected and neither the backup bucket nor the public storage domain has an avatar's model, the model endpoint now answers 404 not found. It used to answer 502, which told viewers and embeds to keep retrying a file that no longer exists.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1549,16 +1559,6 @@
 			"tags": [
 				"security",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-11-15",
-			"type": "update",
-			"title": "@trythreews posts in more formats, for more readers, five times a day",
-			"summary": "The @trythreews feed now rotates code cards from files that ship, live captures of three.ws pages, polls, GIFs, filmed demos and X Articles, and writes each post for one reader: developers, teachers, students, founders, creators or the community. Posts that read as machine-written are rejected before they are queued, two posts in a row never open the same way, and the account posts five times a day inside US hours. A post the account owner must approve now arrives in the approval inbox showing every post, poll and video exactly as it will go out, approved with one tap.",
-			"link": null,
-			"tags": [
-				"improvement"
 			]
 		}
 	]

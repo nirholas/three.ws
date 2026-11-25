@@ -825,8 +825,18 @@ async function handleGlb(req, res) {
 				await streamPublicGlb(res, fallbackUrl, { name: 'r2:public-glb', cacheControl: 'no-store', mirrorKey: key });
 				return;
 			} catch (fallbackErr) {
-				console.error('[avatars/glb] public bucket domain failed too:', key, fallbackErr?.message);
 				if (res.headersSent) return res.destroy(fallbackErr);
+				// The public domain serves this bucket's objects, and the fallback
+				// bucket (when configured) was asked above, so its 404 means no
+				// store has the key: the row points at a deleted object. Say so,
+				// as the signed read would, instead of a 502 that invites retries.
+				if (fallbackErr?.status === 404) {
+					res.removeHeader('content-length');
+					res.removeHeader('etag');
+					console.warn('[avatars/glb] glb missing from every store:', key);
+					return error(res, 404, 'not_found', 'avatar glb missing from storage');
+				}
+				console.error('[avatars/glb] public bucket domain failed too:', key, fallbackErr?.message);
 				// Nothing has been written yet, so the 502 below still gets to
 				// answer, but only if the GLB's own length and etag come back
 				// off first. json() refuses to touch a committed response and

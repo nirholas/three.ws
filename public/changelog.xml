@@ -55,6 +55,14 @@
 			<description>When a public agent wears a private avatar, its profile asked for that avatar anyway and was always refused, for every visitor. Both agent profile layouts now skip that request unless you own the agent, so the page loads with one fewer failed call and the owner still sees the body.</description>
 		</item>
 		<item>
+			<title>An avatar whose model file was deleted now reports not found instead of a server error</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:An avatar whose model file was deleted now reports not found instead of a server error</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the main storage credential is rejected and neither the backup bucket nor the public storage domain has an avatar's model, the model endpoint now answers 404 not found. It used to answer 502, which told viewers and embeds to keep retrying a file that no longer exists.</description>
+		</item>
+		<item>
 			<title>Avatar thumbnails render again while the storage signing key is refused</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Avatar thumbnails render again while the storage signing key is refused</guid>
