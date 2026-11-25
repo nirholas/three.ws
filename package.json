@@ -888,7 +888,7 @@
 		"postprocessing": "^6.39.5",
 		"puppeteer-core": "^25.18.1",
 		"qrcode": "^1.5.4",
-		"resend": "^6.38.1",
+		"resend": "^6.39.0",
 		"sas-lib": "^1.0.10",
 		"satori": "0.63.2",
 		"sharp": "^0.35.5",
