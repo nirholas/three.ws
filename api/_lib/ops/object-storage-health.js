@@ -29,7 +29,7 @@
 //              needs a human; the platform just is not down while it waits.
 
 import { ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { r2, objectStorageConfigured, isStorageInfrastructureError } from '../r2.js';
+import { r2Unguarded, r2CredentialCooldownActive, objectStorageConfigured, isStorageInfrastructureError } from '../r2.js';
 import { env } from '../env.js';
 import { fallbackBucket, fallbackFetch } from '../storage-fallback.js';
 
@@ -92,7 +92,7 @@ export function classifyObjectStorageProbe(probe) {
  * @returns {Promise<void>}
  */
 async function probeOnce() {
-	await r2.send(new ListObjectsV2Command({ Bucket: env.S3_BUCKET, MaxKeys: 1 }), {
+	await r2Unguarded().send(new ListObjectsV2Command({ Bucket: env.S3_BUCKET, MaxKeys: 1 }), {
 		abortSignal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
 	});
 }
@@ -152,7 +152,7 @@ export async function gatherObjectStorageHealth({ probe = probeOnce, fallback } 
 		};
 	}
 	const v = classifyObjectStorageProbe({ configured: true, ok: false, latencyMs: result.latencyMs, error: result.error });
-	const metrics = { latencyMs: result.latencyMs, retried, credentialFault: isStorageInfrastructureError(result.error) };
+	const metrics = { latencyMs: result.latencyMs, retried, credentialFault: isStorageInfrastructureError(result.error), r2Cooldown: r2CredentialCooldownActive() };
 	const fb = fallback ?? { bucket: fallbackBucket(), probe: probeFallbackOnce };
 	if (fb.bucket) {
 		const fbResult = await timeProbe(fb.probe);

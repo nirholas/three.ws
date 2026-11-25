@@ -150,6 +150,7 @@ function fakeGcs() {
 let gcs;
 beforeEach(() => {
 	send.mockReset();
+	r2mod.resetR2CredentialCooldown();
 	gcs = fakeGcs();
 	vi.stubGlobal('fetch', gcs.impl);
 	process.env.STORAGE_FALLBACK_BUCKET = 'fallback-bucket';
@@ -204,11 +205,13 @@ describe('reads find objects that only exist in the fallback bucket', () => {
 	});
 
 	it('getObjectBuffer serves GCS bytes after R2 recovers but never received the object', async () => {
+		r2mod.resetR2CredentialCooldown(); // R2 recovered: the cooldown would otherwise outlast the test
 		send.mockRejectedValue(noSuchKey());
 		expect((await getObjectBuffer('forge/abc/model.glb')).toString()).toBe('0123456789');
 	});
 
 	it('getObjectBuffer rethrows the R2 error when GCS does not have the key either', async () => {
+		r2mod.resetR2CredentialCooldown(); // R2 recovered: the cooldown would otherwise outlast the test
 		send.mockRejectedValue(noSuchKey());
 		await expect(getObjectBuffer('forge/missing.glb')).rejects.toMatchObject({ name: 'NoSuchKey' });
 	});
@@ -218,6 +221,7 @@ describe('reads find objects that only exist in the fallback bucket', () => {
 		expect(out.body.toString()).toBe('0123456789');
 		expect(out.metadata).toEqual({ etag: 'v1' });
 		expect(out.contentType).toBe('model/gltf-binary');
+		r2mod.resetR2CredentialCooldown(); // R2 recovered: the cooldown would otherwise outlast the test
 		send.mockRejectedValue(noSuchKey());
 		expect(await getObjectWithMetadata('forge/missing.glb')).toBeNull();
 	});
@@ -225,6 +229,7 @@ describe('reads find objects that only exist in the fallback bucket', () => {
 	it('headObject answers in the S3 shape from GCS, and null when absent everywhere', async () => {
 		const head = await headObject('forge/abc/model.glb');
 		expect(head).toMatchObject({ ContentLength: 10, ContentType: 'model/gltf-binary', Metadata: { etag: 'v1' } });
+		r2mod.resetR2CredentialCooldown(); // R2 recovered: the cooldown would otherwise outlast the test
 		send.mockRejectedValue(noSuchKey());
 		expect(await headObject('forge/missing.glb')).toBeNull();
 	});

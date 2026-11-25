@@ -42,10 +42,61 @@ function getR2() {
 	}
 	return _r2;
 }
+// Raw S3 client with no cooldown. The health sensor and credential probe use it
+// so they measure R2 itself instead of reading back our own short-circuit.
+export function r2Unguarded() {
+	return getR2();
+}
+
+// Credential-rejection cooldown. A revoked or rotated R2 token answers 401/403
+// to everything until the owner replaces it, yet with the GCS fallback serving
+// the bytes every /cdn request still paid a doomed R2 round trip first. After
+// one credential rejection the client now fails fast (no network call, same
+// error class callers already route to the fallback) for CooldownMs, then lets
+// one request through to re-test R2, so a fixed credential recovers on its own.
+// Only armed while a fallback bucket exists: without one a fast failure would
+// buy nothing, and callers keep their exact prior behavior.
+const R2_CRED_COOLDOWN_MS = 60_000;
+let _r2CredRejectedUntil = 0;
+
+export function r2CredentialCooldownActive() {
+	return Date.now() < _r2CredRejectedUntil;
+}
+
+export function resetR2CredentialCooldown() {
+	_r2CredRejectedUntil = 0;
+}
+
+function isCredentialRejection(err) {
+	const status = err?.$metadata?.httpStatusCode;
+	if (status === 401 || status === 403) return true;
+	return /^(Unauthorized|SignatureDoesNotMatch|InvalidAccessKeyId)$/.test(String(err?.name || err?.Code || ''));
+}
+
+async function guardedSend(...args) {
+	if (fallbackBucket() && r2CredentialCooldownActive()) {
+		throw Object.assign(new Error('Unauthorized: R2 credential rejected (cooling down)'), {
+			name: 'Unauthorized',
+			$metadata: { httpStatusCode: 401 },
+		});
+	}
+	try {
+		const out = await getR2().send(...args);
+		_r2CredRejectedUntil = 0;
+		return out;
+	} catch (err) {
+		if (fallbackBucket() && isCredentialRejection(err)) {
+			_r2CredRejectedUntil = Date.now() + R2_CRED_COOLDOWN_MS;
+		}
+		throw err;
+	}
+}
+
 export const r2 = /** @type {S3Client} */ (new Proxy(
 	{},
 	{
 		get(_t, prop) {
+			if (prop === 'send') return guardedSend;
 			return getR2()[prop];
 		},
 	},
@@ -137,7 +188,7 @@ let _credProbeInFlight = null;
 async function runCredProbe() {
 	const started = Date.now();
 	try {
-		await r2.send(new ListObjectsV2Command({ Bucket: env.S3_BUCKET, MaxKeys: 1 }), {
+		await r2Unguarded().send(new ListObjectsV2Command({ Bucket: env.S3_BUCKET, MaxKeys: 1 }), {
 			abortSignal: AbortSignal.timeout(3_000),
 		});
 		return { at: started, ok: true, reason: null, message: null };
