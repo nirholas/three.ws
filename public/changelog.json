@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T19:06:28.623Z",
+	"generated_at": "2026-11-25T19:09:56.922Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -111,6 +111,16 @@
 			"type": "update",
 			"title": "Solana reads back off when every RPC lane is rate limited",
 			"summary": "With Helius at its monthly cap and the free lanes answering 429, each page read re-asked the same exhausted lanes and logged a failure on every request. After one read exhausts the chain on rate limits, other reads now wait a few seconds and are served from the last good answer, so pages keep their data and the providers get room to recover. When every lane is resting, reads now try the one closest to recovering first instead of a paid lane that is out of quota for hours.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Stopped code runs say they were stopped",
+			"summary": "Running code in a sandbox run that you (or the safety guard) had already stopped could answer \"backend unavailable\" when the machine that run was tied to was offline, which read like a temporary outage worth retrying. A stopped run now always answers that it was stopped and why, and the safety guard checks a run before anything else.",
 			"link": null,
 			"tags": [
 				"fix"

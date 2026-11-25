@@ -235,6 +235,27 @@ describe('run controls', () => {
 		expect(run.killed_reason).toMatch(/in a row failed/);
 	});
 
+	// A stopped run is final. Its pinned backend being down must not turn the
+	// answer into a 503 "backend unavailable" the caller would retry: docker is
+	// not configured in this suite, so a run pinned to it exercises exactly that.
+	it('reports a killed run as killed even when its pinned backend is down', async () => {
+		const runId = newRun();
+		await store.ensureSandboxRun({ runId, userId: USER, backend: 'docker' });
+		await store.killSandboxRun(runId, 'owner pressed stop');
+		await expect(executeInSandbox({ userId: USER, runId, job: { language: 'python', code: 'print(1)' } })).rejects.toMatchObject({
+			status: 409,
+			code: 'run_killed',
+		});
+	});
+
+	it('runs the anomaly guard before asking for the pinned backend', async () => {
+		const runId = newRun();
+		await store.ensureSandboxRun({ runId, userId: USER, backend: 'docker' });
+		await holder.db.sql`update sandbox_runs set failures_streak = ${ANOMALY.failureStreak} where run_id = ${runId}`;
+		await expect(executeInSandbox({ userId: USER, runId, job: { language: 'python', code: 'print(1)' } })).rejects.toMatchObject({ code: 'run_killed' });
+		expect((await store.getSandboxRun(runId)).status).toBe('killed');
+	});
+
 	it('kills a run that keeps tripping the bridge refusals', async () => {
 		const runId = newRun();
 		await store.ensureSandboxRun({ runId, userId: USER, backend: 'local' });

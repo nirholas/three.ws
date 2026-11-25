@@ -95,6 +95,14 @@
 			<description>With Helius at its monthly cap and the free lanes answering 429, each page read re-asked the same exhausted lanes and logged a failure on every request. After one read exhausts the chain on rate limits, other reads now wait a few seconds and are served from the last good answer, so pages keep their data and the providers get room to recover. When every lane is resting, reads now try the one closest to recovering first instead of a paid lane that is out of quota for hours.</description>
 		</item>
 		<item>
+			<title>Stopped code runs say they were stopped</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Stopped code runs say they were stopped</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Running code in a sandbox run that you (or the safety guard) had already stopped could answer &quot;backend unavailable&quot; when the machine that run was tied to was offline, which read like a temporary outage worth retrying. A stopped run now always answers that it was stopped and why, and the safety guard checks a run before anything else.</description>
+		</item>
+		<item>
 			<title>Stuck avatar jobs now close with a clear reason instead of retrying forever</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Stuck avatar jobs now close with a clear reason instead of retrying forever</guid>

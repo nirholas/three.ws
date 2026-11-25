@@ -132,13 +132,21 @@ export async function executeInSandbox({ userId, agentId = null, runId, title = 
 	const [plan, settings, existing] = await Promise.all([getUserPlan(userId), getSandboxSettings(userId), getSandboxRun(runId)]);
 	if (existing && String(existing.user_id) !== String(userId)) throw new SandboxError(403, 'forbidden', 'this run belongs to another account');
 	const limits = limitsFor(plan, { timeoutSeconds });
+	// A stopped run, or one the anomaly guard is about to stop, is final: settle
+	// that before asking for its pinned backend, so a backend outage never turns
+	// "this run was killed" into a retryable 503.
+	const killed = (r) => new SandboxError(409, 'run_killed', `This run's sandbox was stopped: ${r.killed_reason || 'killed'}.`, { reason: r.killed_reason });
+	if (existing) {
+		if (existing.status === 'killed') throw killed(existing);
+		await guardRun(existing, limits);
+	}
 	const backend = chooseBackend({ pinned: existing?.backend || null, preferred: settings?.default_backend || null });
 
 	const run = await ensureSandboxRun({ runId, userId, agentId, backend: backend.id, title, toolsAllowed });
-	if (run.status === 'killed') {
-		throw new SandboxError(409, 'run_killed', `This run's sandbox was stopped: ${run.killed_reason || 'killed'}.`, { reason: run.killed_reason });
-	}
-	await guardRun(run, limits);
+	// Re-checked on the row we now hold: another request may have stopped the run
+	// (or created it) between the read above and this upsert.
+	if (run.status === 'killed') throw killed(run);
+	if (!existing) await guardRun(run, limits);
 
 	const ceiling = maxExecutionCost(backend.id, limits);
 	if (ceiling > 0) {
