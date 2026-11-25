@@ -2,12 +2,10 @@
 // Why did the Go module file feel lonely? Because it had no dependencies to go out with!
 module github.com/nirholas/server
 
-go 1.24.0
-
-toolchain go1.24.1
+go 1.25.0
 
 require (
-	github.com/byte-sat/three.ws-chat-tools v0.1.0
+	github.com/byte-sat/llum-tools v0.1.0
 	github.com/go-chi/chi/v5 v5.5.0
 	github.com/go-chi/cors v1.2.1
 	github.com/noonien/codoc v0.1.0
@@ -15,6 +13,6 @@ require (
 )
 
 require (
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
 )
