@@ -16,7 +16,8 @@ reopens.
 | --- | --- | --- |
 | PyPI | `workers/model-pano2splat/requirements.d/*` | Pillow 11.3.0 to 13.0.0 (61 Dependabot alerts) |
 | PyPI | `workers/model-panodepth`, `workers/model-sam3d-objects` | pytest to 9.1.1 / `>=9.0.3,<10` |
-| PyPI | `workers/avatar-reconstruction` | off legacy `mediapipe.solutions` onto the Tasks API, numpy 2.3+, rembg 2.0.86 |
+| PyPI | `workers/model-panodepth` image | Ubuntu 24.04 + Python 3.12 venv, so Dependabot's Pillow 13.0.0 pin (needs Python >= 3.11) can install. 12.3.0 would reopen 60+ advisories |
+| PyPI | `workers/avatar-reconstruction` | off legacy `mediapipe.solutions` onto the Tasks API, mediapipe 1.2.3, numpy 2.3+, rembg 2.0.86, trimesh 4.12.2 |
 | npm | root and five sub-packages, vendored Solidity library | glob 10/11/13 to 14.0.6 (AbortSignal traversal) |
 | npm | `infra` | aws-cdk-lib 2.278.0, whose bundled minimatch is 11.0.9 |
 | npm, bun | `third_party/image-blaster` | vite 7.3.8, vitest 4.1.12, plugin-react 5.2, plus in-range bumps for postcss, nanoid, @babel/core, browserslist, colord, fflate and others. `package-lock.json` and `bun.lock` match |
