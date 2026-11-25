@@ -172,7 +172,7 @@ async function renderModels(browser) {
 	const out = {
 		prop: await shot(models.prop.glb_url),
 		chrome: await shot(models.chrome.glb_url),
-		character: await shot(models.character.glb_url, { skeleton: true, yaw: 0.35, pitch: 0.08 }),
+		character: await shot((models.character_rig || models.character).glb_url, { skeleton: true, yaw: 0.35, pitch: 0.08 }),
 	};
 	await page.close();
 	server.close();
@@ -255,7 +255,7 @@ function cards(renders) {
 	const look = models.look || { frames: [], views: [] };
 	const lookFrames = look.frames.map((f, i) => ({ src: dataUrl(join(srcDir, f), 'image/png'), view: (look.views[i] || '').replace('-', ' ') }));
 	const geo = look.geometry || {};
-	const geoLine = [geo.triangles != null && `${Number(geo.triangles).toLocaleString('en-US')} triangles`, geo.materials != null && `${geo.materials} materials`, geo.textures != null && `${geo.textures} textures`].filter(Boolean).join('   ');
+	const geoLine = [geo.triangles != null && `${Number(geo.triangles).toLocaleString('en-US')} triangles`, geo.materials != null && `${geo.materials} material${geo.materials === 1 ? '' : 's'}`, geo.textures != null && `${geo.textures} texture${geo.textures === 1 ? '' : 's'}`].filter(Boolean).join(' · ');
 	const maxWeek = Math.max(...USAGE.weeks.map((w) => w[1]));
 
 	const modelCards = !renders ? {} : {
@@ -264,17 +264,18 @@ function cards(renders) {
 			`<div class="head"><h1>Ask Grok for a 3D model.</h1><div class="sub">A real textured GLB. Rigged when it is a character. Edited when you ask.</div></div>
 			<div class="row">
 				${[
-					['Textured GLB', renders.prop.png, `"${models.prop.prompt.split(',')[0]}"`],
-					['"Make it chrome"', renders.chrome.png, 'the same model, edited'],
+					['Textured GLB', renders.prop.png, `"${models.prop.prompt.split(' with ')[0]}"`],
+					['"Make it chrome"', renders.chrome.png, 'one sentence later, a new version'],
 					['Rigged character', renders.character.png, `${renders.character.bones} bones, ready to animate`],
 				]
-					.map(([label, png, cap]) => `<figure><div class="tile"><img src="${png}"></div><div class="label">${esc(label)}</div><div class="cap">${esc(cap)}</div></figure>`)
+					.map(([label, png, cap], i) => `<figure><div class="tile"><img class="${i === 2 ? 'tall' : ''}" src="${png}"></div><div class="label">${esc(label)}</div><div class="cap">${esc(cap)}</div></figure>`)
 					.join('')}
 			</div>`,
-			`.row { position: absolute; left: 72px; right: 72px; top: 222px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+			`.row { position: absolute; left: 72px; right: 72px; top: 214px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 			figure { margin: 0; }
-			.tile { height: 300px; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; background: radial-gradient(ellipse at 50% 40%, #15161b 0%, #09090c 75%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+			.tile { height: 262px; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; background: radial-gradient(ellipse at 50% 40%, #15161b 0%, #09090c 75%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 			.tile img { height: 112%; width: auto; }
+			.tile img.tall { height: 94%; }
 			.label { margin-top: 16px; color: #e8e8ee; }
 			.cap { margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }`,
 		),
@@ -284,15 +285,14 @@ function cards(renders) {
 			`<div class="head"><h1>Grok checks its own work.</h1><div class="sub">Before it answers, it renders the model from every side and looks.</div></div>
 			<div class="row">${lookFrames.map((f) => `<figure><div class="tile"><img src="${f.src}"></div><div class="label">${esc(f.view)}</div></figure>`).join('')}</div>
 			<div class="stat"><span class="big">${USAGE.renders}</span><span class="label">render checks so far</span>${geoLine ? `<span class="cap">${esc(geoLine)}</span>` : ''}</div>`,
-			`.row { position: absolute; left: 72px; right: 72px; top: 222px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+			`.row { position: absolute; left: 72px; right: 72px; top: 200px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
 			figure { margin: 0; }
-			.tile { aspect-ratio: 1; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; background: #0b0b0e; }
+			.tile { height: 236px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; background: #0b0b0e; }
 			.tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
 			.row .label { margin-top: 12px; }
-			.stat { position: absolute; right: 72px; bottom: 54px; display: flex; align-items: baseline; gap: 14px; }
+			.stat { position: absolute; left: 72px; right: 72px; top: 506px; display: flex; align-items: baseline; gap: 14px; }
 			.stat .big { font-size: 40px; font-weight: 600; letter-spacing: -0.03em; }
-			.stat .cap { margin-left: 18px; }
-			.count { display: none; }`,
+			.stat .cap { margin-left: auto; }`,
 		),
 
 	};

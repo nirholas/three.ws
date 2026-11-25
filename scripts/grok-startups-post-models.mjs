@@ -9,6 +9,7 @@
 //   prop       forge_free     a textured model from a sentence (post 2)
 //   chrome     refine_model   the same model, "make it chrome" (post 2)
 //   character  forge_avatar   a rigged character (post 2)
+//   character_rig  rig_mesh   rigs that mesh when forge_avatar returned it unrigged
 //   look       look_at_model  the render check on the prop (post 3)
 //
 // Writes public/x-media/grok-startups-announce/src/models.json (tool, prompt,
@@ -116,9 +117,17 @@ try {
 		return { tool: 'refine_model', prompt: PROMPTS.chrome, parent: prop.glb_url, glb_url: r.glb_url, seconds: r.seconds };
 	});
 
-	await step('character', async () => {
+	const character = await step('character', async () => {
 		const r = await generate('forge_avatar', { prompt: PROMPTS.character });
-		return { tool: 'forge_avatar', prompt: PROMPTS.character, glb_url: r.glb_url, seconds: r.seconds };
+		return { tool: 'forge_avatar', prompt: PROMPTS.character, glb_url: r.glb_url, seconds: r.seconds, next: r.structured.next || null };
+	});
+
+	// forge_avatar hands back the bare mesh with next: 'rig' when its budget
+	// runs out before the rig stage (the viewer then rigs it itself), so finish
+	// the job the same way: rig_mesh on that mesh.
+	await step('character_rig', async () => {
+		const r = await generate('rig_mesh', { glb_url: character.glb_url });
+		return { tool: 'rig_mesh', parent: character.glb_url, glb_url: r.glb_url, seconds: r.seconds };
 	});
 
 	await step('look', async () => {

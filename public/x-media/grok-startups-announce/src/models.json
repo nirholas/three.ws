@@ -1,0 +1,69 @@
+{
+  "prop": {
+    "tool": "forge_free",
+    "prompt": "a retro tin toy robot with round glass eyes, a boxy body, riveted panels and a small antenna",
+    "glb_url": "https://three.ws/cdn/forge/anon/55d521b6-dee6-4698-9b4f-14231ba57cce.glb",
+    "seconds": 392.2,
+    "made_at": "2026-11-25T21:26:43.074Z"
+  },
+  "chrome": {
+    "tool": "refine_model",
+    "prompt": "make it chrome",
+    "parent": "https://three.ws/cdn/forge/anon/55d521b6-dee6-4698-9b4f-14231ba57cce.glb",
+    "glb_url": "https://three.ws/cdn/forge/anon/6d0cd208-5698-4030-b658-92c75a449584.glb",
+    "seconds": 194.3,
+    "made_at": "2026-11-25T21:29:57.346Z"
+  },
+  "character": {
+    "tool": "forge_avatar",
+    "prompt": "a mountain explorer in a red insulated jacket, dark trousers, hiking boots and a small backpack, full body",
+    "glb_url": "https://three.ws/cdn/forge/anon/2bb57d43-5c61-4dbf-9cfa-f98e0708119d.glb",
+    "seconds": 378.2,
+    "made_at": "2026-11-25T21:36:15.502Z"
+  },
+  "look": {
+    "tool": "look_at_model",
+    "glb_url": "https://three.ws/cdn/forge/anon/55d521b6-dee6-4698-9b4f-14231ba57cce.glb",
+    "views": [
+      "front",
+      "three-quarter",
+      "side",
+      "back"
+    ],
+    "frames": [
+      "look-front.png",
+      "look-three-quarter.png",
+      "look-side.png",
+      "look-back.png"
+    ],
+    "geometry": {
+      "vertices": 31591,
+      "triangles": 49048,
+      "materials": 1,
+      "textures": 3,
+      "animations": 0,
+      "extensions": [
+        "EXT_texture_webp"
+      ],
+      "meshes": 1,
+      "nodes": 1,
+      "scenes": 1,
+      "skins": 0,
+      "joints": 0,
+      "indexedPrimitives": 1,
+      "nonIndexedPrimitives": 0,
+      "extensionsRequired": [],
+      "container": "glb",
+      "generator": "glTF-Transform v4.5.1"
+    },
+    "reading": "Rendered this model from 4 angle(s): front, three-quarter, side, back.\nViewer: https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F55d521b6-dee6-4698-9b4f-14231ba57cce.glb&title=3D%20model\nGLB: https://three.ws/cdn/forge/anon/55d521b6-dee6-4698-9b4f-14231ba57cce.glb\nPoster PNG: https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F55d521b6-dee6-4698-9b4f-14231ba57cce.glb&width=1024&height=1024\nEmbed HTML: <script type=\"module\" src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\" integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\" crossorigin=\"anonymous\" ></script> <model-viewer src=\"https://three.ws/cdn/forge/anon/55d521b6-dee6-4698-9b4f-14231ba57cce.glb\" alt=\"3D model\" camera-controls auto-rotate ar shadow-intensity=\"1\" style=\"width:100%;height:420px\" ></model-viewer>\nGeometry: 49,048 triangles, a normal real-time budget for a hero prop or character.\nLook at the frames below and judge the model: is the subject complete and recognisable, is the far side finished, is anything melted, fused, or missing? If it needs work, generate again with a prompt that names the sp",
+    "made_at": "2026-11-25T21:36:55.122Z"
+  },
+  "character_rig": {
+    "tool": "rig_mesh",
+    "parent": "https://three.ws/cdn/forge/anon/2bb57d43-5c61-4dbf-9cfa-f98e0708119d.glb",
+    "glb_url": "https://three.ws/cdn/forge/anon/6dc4f492-dd94-4728-96af-226143fd74a0.glb",
+    "seconds": 77,
+    "made_at": "2026-11-25T21:39:37.559Z"
+  }
+}
