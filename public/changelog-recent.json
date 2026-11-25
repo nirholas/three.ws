@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T17:52:27.989Z",
+	"generated_at": "2026-11-25T18:08:34.837Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4713,
+	"total": 4714,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -27,6 +27,16 @@
 			"link": "/tty",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Avatars created during the storage outage load again",
+			"summary": "While our primary object store refuses its credential, new avatar models are saved to a Google Cloud backup bucket. The avatar model endpoint that the widget, /walk and every embed read never looked there, so those avatars failed to load and showed the robot placeholder instead. It now reads the backup bucket, and pinning such an avatar to IPFS works too.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1558,17 +1568,6 @@
 			"link": "/three",
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "Fewer Solana reads behind buybacks, token due diligence and agent reputation",
-			"summary": "Three background jobs were spending a large share of the platform's Solana read quota on answers that had not changed. The hourly buyback check now reads every coin's vault in a couple of batched calls instead of four reads per coin, token due-diligence reports reuse a token's launch and each holder's first purchase once they are known, and agent reputation scores are refreshed every 12 hours unless the agent is being viewed. Together that is roughly 120,000 fewer chain reads a day, which leaves more headroom for payments and live pages.",
-			"link": null,
-			"tags": [
-				"improvement",
-				"infra"
 			]
 		}
 	]

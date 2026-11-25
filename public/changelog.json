@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T17:52:27.861Z",
+	"generated_at": "2026-11-25T18:08:34.780Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -24,6 +24,16 @@
 			"link": "/tty",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Avatars created during the storage outage load again",
+			"summary": "While our primary object store refuses its credential, new avatar models are saved to a Google Cloud backup bucket. The avatar model endpoint that the widget, /walk and every embed read never looked there, so those avatars failed to load and showed the robot placeholder instead. It now reads the backup bucket, and pinning such an avatar to IPFS works too.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

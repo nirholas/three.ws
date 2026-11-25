@@ -24,9 +24,11 @@ import {
 	publicUrlOrNull,
 	thumbnailUrl,
 	isStorageInfrastructureError,
+	getObjectBuffer,
 } from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
 import { fetchUpstream } from '../../_lib/upstream-fetch.js';
+import { fallbackBucket, fallbackFetch, noteFallback } from '../../_lib/storage-fallback.js';
 
 import { pinToIPFS, ipfsPinningConfigured } from '../../_lib/ipfs-pin.js';
 export default wrap(async (req, res) => {
@@ -221,26 +223,16 @@ async function handlePinIpfs(req, res) {
 	return json(res, 200, { storage_mode: next, stub: isStub });
 }
 
-// Read the stored object out of R2 and pin it through the shared provider
-// chain (Pinata, then web3.storage; api/_lib/ipfs-pin.js), so one provider's
-// outage fails over instead of failing the pin.
+// Read the stored object and pin it through the shared provider chain
+// (Pinata, then web3.storage; api/_lib/ipfs-pin.js), so one provider's outage
+// fails over instead of failing the pin. getObjectBuffer falls back to the GCS
+// bucket when R2 rejects our credential or never received the object.
 async function pinAvatarObject({ key, name, contentType }) {
-	const obj = await r2.send(new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }));
-	const bytes = await streamToBuffer(obj.Body);
+	const bytes = await getObjectBuffer(key);
 	const filename = /\.(glb|gltf|vrm)$/i.test(name) ? name : `${name}.${contentType === 'model/gltf+json' ? 'gltf' : 'glb'}`;
 	const pinned = await pinToIPFS(bytes, filename);
 	if (!pinned?.cid) throw new Error('no CID in pinning response');
 	return pinned.cid;
-}
-
-async function streamToBuffer(stream) {
-	if (stream instanceof Uint8Array) return stream;
-	if (typeof stream?.transformToByteArray === 'function') {
-		return stream.transformToByteArray();
-	}
-	const chunks = [];
-	for await (const chunk of stream) chunks.push(chunk);
-	return Buffer.concat(chunks);
 }
 
 // ── rollback ───────────────────────────────────────────────────────────────
@@ -622,6 +614,11 @@ async function streamPublicGlb(res, url, { name, cacheControl }) {
 		{ headers: { accept: 'model/gltf-binary,*/*' } },
 		{ name, timeoutMs: 20_000, attempts: 2 },
 	);
+	await streamGlbResponse(res, upstream, cacheControl);
+}
+
+// Pipe an already-open upstream Response into `res` with the GLB headers.
+async function streamGlbResponse(res, upstream, cacheControl) {
 	res.statusCode = 200;
 	res.setHeader('content-type', 'model/gltf-binary');
 	const len = upstream.headers.get('content-length');
@@ -763,9 +760,34 @@ async function handleGlb(req, res) {
 			} catch {}
 		});
 	} catch (err) {
-		// 404 if R2 doesn't know the key (deleted out-of-band).
 		const code = err?.Code || err?.name;
-		if (code === 'NoSuchKey' || code === 'NotFound') {
+		const missing = code === 'NoSuchKey' || code === 'NotFound';
+		// A GLB written while R2 refused our credential lives only in the GCS
+		// fallback bucket under the same key (api/_lib/storage-fallback.js), and
+		// stays there after R2 recovers until the backfill copies it back. Neither
+		// the signed read nor the public r2.dev domain can see it, so this route
+		// 502ed (or 404ed) for every avatar created during an R2 outage while
+		// /cdn/<key> served the same bytes. Read the fallback first: it is
+		// in-region, private, and the only store that has these objects.
+		if (fallbackBucket() && (missing || isStorageInfrastructureError(err))) {
+			try {
+				const upstream = await fallbackFetch(key);
+				if (upstream) {
+					noteFallback('avatar-glb', key, err);
+					// Not cached: the backfill moves the object back to R2, and the
+					// signed read with its long cache must take over from then on.
+					await streamGlbResponse(res, upstream, 'no-store');
+					return;
+				}
+			} catch (fallbackErr) {
+				console.error('[avatars/glb] gcs fallback read failed:', key, fallbackErr?.message);
+				if (res.headersSent) return res.destroy(fallbackErr);
+				res.removeHeader('content-length');
+				res.removeHeader('etag');
+			}
+		}
+		// 404 if no store knows the key (deleted out-of-band).
+		if (missing) {
 			return error(res, 404, 'not_found', 'avatar glb missing from storage');
 		}
 		// The signed read is broken, not the object: the credential is rejected

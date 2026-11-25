@@ -23,6 +23,14 @@
 			<description>On /tty, describe an object, drop a photo, or pick a video and the page builds a real model, then draws it in the terminal panel. The same thing works from the shell: three-tty --prompt, three-tty photo.jpg, or three-tty --find, which uses the newest image in the folder. A video contributes one frame, reconstructed as an object. A full walkthrough cloud stays on /capture. Making a model needs a free three.ws account.</description>
 		</item>
 		<item>
+			<title>Avatars created during the storage outage load again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Avatars created during the storage outage load again</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>While our primary object store refuses its credential, new avatar models are saved to a Google Cloud backup bucket. The avatar model endpoint that the widget, /walk and every embed read never looked there, so those avatars failed to load and showed the robot placeholder instead. It now reads the backup bucket, and pinning such an avatar to IPFS works too.</description>
+		</item>
+		<item>
 			<title>Chat stops wasting turns on free models that no longer exist</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Chat stops wasting turns on free models that no longer exist</guid>

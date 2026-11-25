@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Avatars created during the storage outage load again",
+			"summary": "While our primary object store refuses its credential, new avatar models are saved to a Google Cloud backup bucket. The avatar model endpoint that the widget, /walk and every embed read never looked there, so those avatars failed to load and showed the robot placeholder instead. It now reads the backup bucket, and pinning such an avatar to IPFS works too.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Pump.fun bonding curves show the SOL they have really raised",
 			"summary": "Pump.fun renamed the curve fields that hold a coin's SOL, and some of our readers still asked for the old names. The on-chain curve read behind coin pages and agent alpha failed on every live coin, the pump.fun MCP worker and the stats snapshot reported every live curve as 0 SOL raised, and Strategy Battle paper sells returned almost nothing because the SOL held in the curve was read as lamports. All of them now read the current fields, so curve progress, liquidity and paper-trade results match the chain again.",
 			"tags": ["fix"]
