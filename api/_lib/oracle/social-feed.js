@@ -4,6 +4,7 @@
 // injected, so the cron and the tests share the same code path.
 
 import { fetchGuestTimeline } from '../x-guest/index.js';
+import { cacheGet, cacheSet } from '../cache.js';
 
 const DAY_MS = 86_400_000;
 const CASHTAG_RE = /\$[A-Za-z]{2,10}\b/;
@@ -51,23 +52,53 @@ export function uniqueHandles(lists, cap = MAX_HANDLES_PER_RUN) {
 	return [...seen];
 }
 
+// A suspended / deactivated account stays that way for weeks. Skip it for a day
+// after the first report instead of re-reading and re-failing it every run.
+const UNAVAILABLE_TTL_SECONDS = 24 * 3600;
+
+/** True when the reader says the account itself is gone (not a transient fault). */
+export function isTerminalUnavailable(err) {
+	return err?.reason === 'not_found' && /suspended|deactivated|unavailable/i.test(String(err?.message || ''));
+}
+
+/** Cross-run quarantine of terminally unavailable handles, backed by the shared cache. */
+export const cacheUnavailableStore = {
+	async has(handle) {
+		return Boolean(await cacheGet(`oracle-social:unavailable:${handle}`).catch(() => null));
+	},
+	async mark(handle) {
+		await cacheSet(`oracle-social:unavailable:${handle}`, 1, UNAVAILABLE_TTL_SECONDS).catch(() => {});
+	},
+};
+
 /**
  * Read each handle's timeline and collect the cashtag tweets.
  * Stops reading once the reader reports a rate limit; the remaining handles are
  * reported as skipped so the next run picks them up.
  */
-export async function collectSocialBatch(handles, { reader = fetchGuestTimeline, now = Date.now } = {}) {
+export async function collectSocialBatch(handles, { reader = fetchGuestTimeline, now = Date.now, unavailable = cacheUnavailableStore } = {}) {
 	const tweets = [];
 	const failures = {};
 	const skipped = [];
+	const newlyUnavailable = [];
+	const quarantined = [];
 	let read = 0;
 	for (let i = 0; i < handles.length; i++) {
 		const handle = handles[i];
+		if (await unavailable.has(handle)) {
+			quarantined.push(handle);
+			continue;
+		}
 		try {
 			const { tweets: timeline } = await reader(handle, { limit: 20 });
 			read++;
 			tweets.push(...relevantTweets(timeline, handle, { now: now() }));
 		} catch (err) {
+			if (isTerminalUnavailable(err)) {
+				newlyUnavailable.push(handle);
+				await unavailable.mark(handle);
+				continue;
+			}
 			failures[handle] = `${err?.reason || 'error'}: ${String(err?.message || err).slice(0, 120)}`;
 			if (err?.reason === 'rate_limited') {
 				skipped.push(...handles.slice(i + 1));
@@ -75,5 +106,5 @@ export async function collectSocialBatch(handles, { reader = fetchGuestTimeline,
 			}
 		}
 	}
-	return { tweets: tweets.slice(0, MAX_TWEETS_PER_BATCH), read, failures, skipped };
+	return { tweets: tweets.slice(0, MAX_TWEETS_PER_BATCH), read, failures, skipped, unavailable: newlyUnavailable, quarantined };
 }

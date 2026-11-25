@@ -39,6 +39,10 @@ export default wrapCron(async (req, res) => {
 	const failed = Object.keys(batch.failures).length;
 	if (failed) console.warn('[oracle-social-ingest] timeline reads failed', batch.failures);
 
+	if (batch.unavailable.length) {
+		console.warn('[oracle-social-ingest] handles unavailable on X, skipping for 24h', batch.unavailable);
+	}
+
 	let ingest = null;
 	if (batch.tweets.length) {
 		const r = await fetch(`${origin}/api/oracle/social`, {
@@ -70,6 +74,8 @@ export default wrapCron(async (req, res) => {
 		...(ingest ? { ingest } : {}),
 		...(failed ? { failures: batch.failures } : {}),
 		...(batch.skipped.length ? { skipped: batch.skipped } : {}),
+		...(batch.unavailable.length ? { unavailable: batch.unavailable } : {}),
+		...(batch.quarantined.length ? { quarantined: batch.quarantined } : {}),
 		ms: Date.now() - started,
 	});
 });
