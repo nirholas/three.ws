@@ -195,14 +195,14 @@ Since 2026-10-11 `/` serves the web desktop (`pages/desktop.html`, route `"/" �
 - **Notes:** `/changelog.json` is unchanged and stays the documented public feed; the recent window is a paint optimisation, not a new contract. The header carries the subscribe row (`/changelog.xml` RSS, `/changelog.json`, `/llms.txt`, `/sitemap`). Delivery to the holders' Telegram channel is handled by the `changelog-push` cron off the same feed, not by this page.
 
 ### News index and articles - `/news`, `/news/<slug>`
-- **Source:** `public/news/index.html` plus 112 static article files `public/news/<slug>.html`.
+- **Source:** `scripts/build-news.mjs` (run from `prebuild`) renders the index page plus one static article page per curated item in `data/rss/items.json` (115 as of 2026-11-25) into public/news, which is gitignored build output: edit the items file, never the generated HTML.
 - **Entry point:** `vercel.json` `/news → /news/index.html`, `/news/([a-z0-9_-]+)/? → /news/$1.html`. The home page's press strip links straight into individual `/news/*` slugs, so most arrivals skip the index.
-- **Steps (2):** 1) Scan the index: 112 hardcoded `post-link` cards, newest first, each with a `<time>` date, headline, summary paragraph, and a display-only tag list. 2) Click through to an article and read it; a "News" breadcrumb returns to the index, and inline links point at product routes.
+- **Steps (2):** 1) Scan the index: one generated `post-link` card per curated item, newest first, each with a `<time>` date, headline, summary paragraph, and a display-only tag list. 2) Click through to an article and read it; a "News" breadcrumb returns to the index, and inline links point at product routes.
 - **External calls:** None. Fully static: no fetch, no pagination, no search, and the tags are not filterable.
 - **Success state:** User reads the announcement and follows its product link.
 - **Empty / error states:** N/A (static).
 - **Step count:** 1 required (read) (+1 optional: back to the index).
-- **Notes:** Slug shapes are mixed: readable slugs (`text-to-3d-is-live`, `quicknode-startup-program`) alongside numeric X-article ids (`2061713039624405062`). Enumerate with `ls public/news/*.html` rather than trusting a list here. Distinct from `/blog` (essays) and from `/markets/news` (the live market-news reader, covered in the trading walkthrough).
+- **Notes:** Slug shapes are mixed: readable slugs (`text-to-3d-is-live`, `quicknode-startup-program`) alongside numeric X-article ids (`2061713039624405062`). Enumerate from `data/rss/items.json` (or `ls public/news/*.html` after a build) rather than trusting a list here. Distinct from `/blog` (essays) and from `/markets/news` (the live market-news reader, covered in the trading walkthrough).
 
 ### Press kit - `/press`
 - **Source:** `pages/press/index.html` (static; `vercel.json` `/press → /press/index.html`).
