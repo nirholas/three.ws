@@ -5,7 +5,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 	<title data-i18n="tty.page_title">Your agent, in your terminal · three.ws</title>
-	<meta name="description" content="curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a torus, a raymarched shader, and a point garden. No GPU, no WebGL, no install." data-i18n-attr="content:tty.meta_desc" />
+	<meta name="description" content="curl three.ws/tty/walk and a person walks in your terminal. A prompt, a photo, or a video frame becomes a model in the same panel." data-i18n-attr="content:tty.meta_desc" />
 	<link rel="canonical" href="https://three.ws/tty" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -16,15 +16,15 @@
 	<link rel="stylesheet" href="/mobile.css" />
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Your agent, in your terminal · three.ws" data-i18n-attr="content:tty.share_title" />
-	<meta property="og:description" content="curl three.ws/tty/walk and a person walks in your terminal. Birds, a torus, a shader, and a point garden are on the same stream." data-i18n-attr="content:tty.share_desc" />
+	<meta property="og:description" content="A prompt, a photo, or a video frame becomes a 3D model in your terminal." data-i18n-attr="content:tty.share_desc" />
 	<meta property="og:url" content="https://three.ws/tty" />
-	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Terminal+renderer&amp;d=curl+three.ws%2Ftty%2Fwalk+and+a+person+walks+in+your+terminal.+Birds%2C+a+lit+torus%2C+a+shader%2C+a+lathed+solid%2C+and+a+point+garden&amp;p=%2Ftty" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Terminal+renderer&amp;d=A+prompt%2C+a+photo%2C+or+a+video+frame+becomes+a+3D+model+in+your+terminal&amp;p=%2Ftty" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="Your agent, in your terminal · three.ws" data-i18n-attr="content:tty.share_title" />
-	<meta name="twitter:description" content="curl three.ws/tty/walk and a person walks in your terminal. Birds, a torus, a shader, and a point garden are on the same stream." data-i18n-attr="content:tty.share_desc" />
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Terminal+renderer&amp;d=curl+three.ws%2Ftty%2Fwalk+and+a+person+walks+in+your+terminal.+Birds%2C+a+lit+torus%2C+a+shader%2C+a+lathed+solid%2C+and+a+point+garden&amp;p=%2Ftty" />
+	<meta name="twitter:description" content="A prompt, a photo, or a video frame becomes a 3D model in your terminal." data-i18n-attr="content:tty.share_desc" />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Terminal+renderer&amp;d=A+prompt%2C+a+photo%2C+or+a+video+frame+becomes+a+3D+model+in+your+terminal&amp;p=%2Ftty" />
 	<style>
 		:root {
 			--tty-bg: #07080c;
@@ -110,6 +110,24 @@
 		.btn:focus-visible { outline: 2px solid var(--tty-accent); outline-offset: 2px; }
 		.btn[aria-pressed="true"] { border-color: var(--tty-accent); color: var(--tty-accent); }
 		.btn:disabled { opacity: 0.4; cursor: default; }
+		.make { margin: 8px 0 28px; }
+		.make h2 { font-size: 18px; margin: 4px 0 8px; letter-spacing: 0; }
+		.make p { margin: 0 0 10px; }
+		.make-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+		.make-form input[type="text"] {
+			flex: 1 1 220px; min-width: 0;
+			background: var(--tty-screen); color: var(--tty-text);
+			border: 1px solid var(--tty-border); border-radius: 8px;
+			padding: 9px 12px; font: inherit; font-size: 14px;
+		}
+		.make-form input[type="text"]:hover { border-color: var(--tty-border-hi); }
+		.make-form input[type="text"]:focus-visible { outline: 2px solid var(--tty-accent); outline-offset: 2px; }
+		.make-form input:disabled { opacity: 0.5; }
+		.make-status { font-size: 13.5px; min-height: 1.4em; margin: 8px 0 0; }
+		.sr-only {
+			position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+			overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+		}
 
 		h2 { font-size: clamp(20px, 3vw, 27px); margin: 52px 0 14px; letter-spacing: -0.01em; }
 		h3 { font-size: 15px; margin: 26px 0 8px; color: var(--tty-text); }
@@ -148,7 +166,7 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Terminal renderer - three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Terminal renderer","description":"curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.","url":"https://three.ws/tty","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=Terminal+renderer&d=curl+three.ws%2Ftty%2Fwalk+and+a+person+walks+in+your+terminal.+Birds%2C+a+lit+torus%2C+a+shader%2C+a+lathed+solid%2C+and+a+point+garden&p=%2Ftty"}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Terminal renderer","description":"curl three.ws/tty/walk and a person walks in your terminal. A prompt, a photo, or a video frame becomes a model on the same page, and three-tty does it from a folder on your machine.","url":"https://three.ws/tty","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=Terminal+renderer&d=A+prompt%2C+a+photo%2C+or+a+video+frame+becomes+a+3D+model+in+your+terminal&p=%2Ftty"}]}</script>
 </head>
 <body>
 	<header class="site-header"><div id="nav-container"></div></header>
@@ -160,8 +178,8 @@
 			<h1 data-i18n="tty.hero_title">Your agent, in your terminal.</h1>
 			<p class="lede" data-i18n="tty.hero_lede">
 				One command. A rigged 3D character walks, turns, or plays a whole scene, drawn
-				entirely out of coloured text. There is nothing to install: the frames are
-				rasterized on our servers and streamed to your shell as they are drawn.
+				entirely out of coloured text. Or describe an object, drop a photo, or pick a
+				video, and the model you get is drawn the same way. Nothing to install.
 			</p>
 
 			<div class="cmd">
@@ -219,6 +237,21 @@
 				<button class="btn" type="button" data-style="matrix">Matrix</button>
 				<button class="btn" type="button" data-style="points">Points</button>
 			</div>
+			<div class="make">
+				<h2 id="make-heading" data-i18n="tty.make_h">Make one, then watch it here</h2>
+				<p data-i18n-html="tty.make_p">A prompt, a photo, or one frame of a video. The model is built on three.ws and this panel draws it. A full walkthrough cloud is on <a href="/capture">Capture</a>.</p>
+				<form class="make-form" id="make-form">
+					<label class="sr-only" for="make-prompt" data-i18n="tty.make_prompt_label">Prompt</label>
+					<input id="make-prompt" name="prompt" type="text" maxlength="1000" autocomplete="off" placeholder="a small ceramic teapot" data-i18n-attr="placeholder:tty.make_placeholder" />
+					<button class="btn" type="submit" id="make-go" data-i18n="tty.make_go">Make</button>
+					<button class="btn" type="button" id="make-photo" data-i18n="tty.make_photo">Photo</button>
+					<button class="btn" type="button" id="make-video" data-i18n="tty.make_video">Video</button>
+					<input id="make-photo-file" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+					<input id="make-video-file" type="file" accept="video/mp4,video/webm,video/quicktime" hidden />
+				</form>
+				<p class="make-status" id="make-status" role="status" data-i18n="tty.make_idle">Describe one object, or pick a photo or a video. Making a model needs a free account.</p>
+				<p class="note" data-i18n-html="tty.make_shell">From a terminal on your own machine: <code>three-tty --prompt "a ceramic teapot"</code>, <code>three-tty photo.jpg</code>, <code>three-tty clip.mp4</code>, or <code>three-tty --find</code> to use the newest photo in the folder. Set <code>THREE_WS_API_KEY</code> from <a href="/dashboard/api-keys">your API keys</a>.</p>
+			</div>
 		</section>
 
 		<section>
@@ -232,6 +265,11 @@
 			</p>
 			<pre class="block"><code># a local file
 npx @three-ws/tty-3d ./avatar.glb
+
+# make one from a prompt, a photo, or the newest picture in this folder
+npx @three-ws/tty-3d --prompt "a ceramic teapot"
+npx @three-ws/tty-3d ./photo.jpg
+npx @three-ws/tty-3d --find
 
 # anything on the web
 npx @three-ws/tty-3d https://three.ws/avatars/default.glb --spin 1.4

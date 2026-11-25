@@ -133,3 +133,40 @@ export const ansi: {
 	home: string;
 	up(n: number): string;
 };
+
+export const DEFAULT_ORIGIN: string;
+export const KEYS_URL: string;
+
+export class MakeError extends Error {
+	status: number;
+	code: string;
+	signInUrl: string;
+	keysUrl: string;
+	jobId: string;
+}
+
+export function apiKeyFromEnv(env?: NodeJS.ProcessEnv): string | null;
+
+export function forgeModel(options?: {
+	prompt?: string;
+	imageUrls?: string[];
+	origin?: string;
+	apiKey?: string;
+	credentials?: RequestCredentials;
+	fetchImpl?: typeof fetch;
+	onStatus?: (ev: { phase: string; message?: string }) => void;
+	signal?: AbortSignal;
+	maxWaitMs?: number;
+	now?: () => number;
+	sleep?: (ms: number, signal?: AbortSignal) => Promise<void>;
+}): Promise<{ glbUrl: string; jobId: string; backend: string }>;
+
+export function uploadImage(options: {
+	bytes: Blob | Uint8Array;
+	contentType: string;
+	origin?: string;
+	apiKey?: string;
+	credentials?: RequestCredentials;
+	fetchImpl?: typeof fetch;
+	signal?: AbortSignal;
+}): Promise<string>;

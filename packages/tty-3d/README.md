@@ -42,7 +42,15 @@ Requires Node 18 or newer.
 ```bash
 three-tty <model.glb | https://...> [options]
 three-tty --scene walk [options]
+three-tty --prompt "a ceramic teapot"
+three-tty photo.jpg
+three-tty clip.mp4
+three-tty --find
 ```
+
+`--prompt`, a photo, a video frame, or `--find` uploads to three.ws and waits
+for a GLB. That step needs a free account and `THREE_WS_API_KEY`. Drawing the
+finished model stays on the CPU. A video is one frame, not a walkthrough.
 
 | Option | Meaning | Default |
 | --- | --- | --- |
@@ -54,6 +62,10 @@ three-tty --scene walk [options]
 | `--yaw <r>` | Camera azimuth, radians | 0, or the scene's own |
 | `--style <name>` | `half`, `braille`, `density`, `ascii`, `matrix`, `points` | `half` |
 | `--text <words>` | Words for `--scene say` | `gm` |
+| `--prompt <text>` | Make a model from a description, then draw it. Needs `THREE_WS_API_KEY` | |
+| `--image <file>` | Make a model from a PNG, JPEG, or WebP, then draw it | |
+| `--video <file>` | Read one frame with ffmpeg (at most 1280 wide), reconstruct it, then draw it | |
+| `--find` | Use the newest photo in the current directory, or in a directory argument | |
 | `--clip <name\|n>` | Which animation to play | the first one |
 | `--no-anim` | Hold the rest pose | |
 | `--once` | Draw one frame and exit | implied when piped |

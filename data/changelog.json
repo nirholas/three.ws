@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "A prompt, a photo, or a video frame becomes a model in the terminal",
+			"summary": "On /tty, describe an object, drop a photo, or pick a video and the page builds a real model, then draws it in the terminal panel. The same thing works from the shell: three-tty --prompt, three-tty photo.jpg, or three-tty --find, which uses the newest image in the folder. A video contributes one frame, reconstructed as an object. A full walkthrough cloud stays on /capture. Making a model needs a free three.ws account.",
+			"tags": ["feature"],
+			"link": "/tty"
+		},
+		{
+			"date": "2026-11-25",
 			"title": "The terminal can walk, flock, shade, and splat",
 			"summary": "curl three.ws/tty/walk plays a person walking in profile. The same stream now has a flock of birds, a lit torus, a raymarched shader, a lathed solid, and a point garden whose banner states the real point count. A parade plays two walks in turn, meet draws both characters in one frame, and say puts your words above the walker. Glyph styles are half-block, braille, density, ASCII, a green matrix tint, and points.",
 			"tags": ["feature"],

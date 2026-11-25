@@ -18,6 +18,7 @@ export { loadModelFromBytes, loadModelFromFile, poseModel } from './model.js';
 export { createFramebuffer, renderToFramebuffer, computeFraming, poseCenter, poseBounds } from './raster.js';
 export { ColorMode, detectColorMode, framebufferToText, toAnsi256, ansi, GLYPH_STYLES } from './term.js';
 export { createScene, isScene, SCENE_NAMES, normalizeStyle, STYLE_NAMES } from './scenes.js';
+export { forgeModel, uploadImage, MakeError, apiKeyFromEnv, KEYS_URL, DEFAULT_ORIGIN } from './make.js';
 
 const MAX_REMOTE_BYTES = 64 * 1024 * 1024;
 

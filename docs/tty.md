@@ -3,10 +3,12 @@
 `curl three.ws/tty` streams a 3D model into your terminal. `curl three.ws/tty/walk`
 is a person, walking, in profile.
 
-No GPU is involved, on either side. There is no WebGL, no browser, and nothing to
-install. A software rasterizer decodes the model, evaluates its animation, blends
-the joint matrices per vertex on the CPU, and rasterizes triangles into a buffer
-the size of your terminal. Then it writes the result as coloured text.
+The drawing uses no GPU. There is no WebGL in the terminal, and nothing to
+install for the curl stream. A software rasterizer decodes the model, evaluates
+its animation, blends the joint matrices per vertex on the CPU, and rasterizes
+triangles into a buffer the size of your terminal. Then it writes the result as
+coloured text. Making a new model, further down, is a separate step that runs
+on the three.ws generator.
 
 ```bash
 curl three.ws/tty
@@ -25,6 +27,31 @@ graphics stack to negotiate.
 
 It is also useful on its own. A rigged character, animating, is a good way to
 check what a GLB actually contains before you wire it into anything.
+
+## Make a model, then draw it
+
+The [/tty](/tty) page builds a model and draws it in the same panel. Type a
+prompt, choose a photo, or choose a video. A video contributes one frame, at
+most 1280 pixels wide, and that frame is reconstructed as an object. A full
+walkthrough cloud is [Capture](/capture). The generator is the same free lane
+as [Forge](/forge) and [Image to 3D](/image-to-3d), and it needs a free account.
+When the GLB is ready the panel opens `GET /api/tty?src=` on that URL.
+
+The CLI does the same three things from a folder on your machine. It uploads,
+waits, then draws. Create a key at [/dashboard/api-keys](/dashboard/api-keys)
+and export it as `THREE_WS_API_KEY`.
+
+```bash
+three-tty --prompt "a ceramic teapot"
+three-tty ./photo.jpg
+three-tty ./clip.mp4
+three-tty --find
+three-tty ~/Pictures
+```
+
+`--find`, and a directory argument, use the newest photo in that folder. A
+video needs `ffmpeg` on the machine so one frame can be read. The drawing
+after that is still the CPU rasterizer.
 
 ## The endpoint
 

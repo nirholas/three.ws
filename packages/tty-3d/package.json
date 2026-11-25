@@ -17,6 +17,7 @@
 		"./term": "./src/term.js",
 		"./scenes": "./src/scenes.js",
 		"./solid": "./src/solid.js",
+		"./make": "./src/make.js",
 		"./package.json": "./package.json"
 	},
 	"bin": {

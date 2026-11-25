@@ -8,6 +8,8 @@
 // cursor-up, cursor visibility). A general terminal emulator would be a large
 // dependency to prove a small claim.
 
+import { MakeError, forgeModel, uploadImage } from '../packages/tty-3d/src/make.js';
+
 const ESC = '\x1b';
 
 const screen = document.getElementById('screen');
@@ -98,10 +100,14 @@ function frameToHtml(text) {
 	return open ? html : '';
 }
 
-const state = { spin: true, color: true, scene: '', style: 'half', avatar: '', text: 'gm', controller: null, running: false };
+const state = { spin: true, color: true, scene: '', style: 'half', avatar: '', text: 'gm', src: '', controller: null, running: false };
 
 function commandText() {
 	const style = state.style !== 'half' ? `style=${state.style}` : '';
+	if (state.src && !state.scene) {
+		const q = [`src=${encodeURIComponent(state.src)}`, style].filter(Boolean).join('&');
+		return `curl -L 'three.ws/tty?${q}'`;
+	}
 	if (state.scene === 'say') {
 		const q = [`text=${encodeURIComponent(state.text || 'gm')}`, style].filter(Boolean).join('&');
 		return `curl -L 'three.ws/tty/say?${q}'`;
@@ -180,7 +186,10 @@ async function run() {
 	else params.set('spin', state.spin ? '0.9' : '0');
 	if (state.scene === 'say') params.set('text', state.text || 'gm');
 	if (state.style !== 'half') params.set('style', state.style);
-	if (!state.scene && state.avatar) params.set('avatar', state.avatar);
+	// A model we just made wins over the default agent. The API also lets src
+	// win over a scene name, and the page keeps those from being set together.
+	if (!state.scene && state.src) params.set('src', state.src);
+	else if (!state.scene && state.avatar) params.set('avatar', state.avatar);
 
 	try {
 		const res = await fetch(`/api/tty?${params}`, { signal: controller.signal });
@@ -242,6 +251,7 @@ if (colorBtn) {
 for (const button of document.querySelectorAll('[data-scene]')) {
 	button.addEventListener('click', () => {
 		state.scene = button.getAttribute('data-scene') || '';
+		state.src = '';
 		pressGroup('[data-scene]', 'data-scene', state.scene);
 		showCommand();
 		if (state.running) run();
@@ -266,7 +276,12 @@ const askedStyle = (initial.get('style') || '').toLowerCase();
 if (STYLES.has(askedStyle)) state.style = askedStyle;
 const askedText = (initial.get('text') || '').replace(/[\r\n\t]+/g, ' ').trim().slice(0, 42);
 if (askedText) state.text = askedText;
-pressGroup('[data-scene]', 'data-scene', state.scene);
+const askedSrc = initial.get('src') || '';
+if (/^https?:\/\//i.test(askedSrc)) {
+	state.src = askedSrc;
+	state.scene = '';
+}
+pressGroup('[data-scene]', 'data-scene', state.src ? '__made__' : state.scene);
 pressGroup('[data-style]', 'data-style', state.style);
 showCommand();
 
@@ -296,13 +311,227 @@ for (const button of document.querySelectorAll('[data-copy-target]')) {
 	});
 }
 
+const makeForm = document.getElementById('make-form');
+const makePrompt = document.getElementById('make-prompt');
+const makeGo = document.getElementById('make-go');
+const makePhoto = document.getElementById('make-photo');
+const makeVideo = document.getElementById('make-video');
+const makePhotoFile = document.getElementById('make-photo-file');
+const makeVideoFile = document.getElementById('make-video-file');
+const makeStatus = document.getElementById('make-status');
+let makeAbort = null;
+let makeTimer = null;
+let makeGen = 0;
+
+function setMakeStatus(text, link) {
+	if (!makeStatus) return;
+	makeStatus.replaceChildren();
+	if (text) makeStatus.append(document.createTextNode(text));
+	if (link?.href) {
+		const a = document.createElement('a');
+		a.href = link.href;
+		a.textContent = link.label || 'Sign in';
+		if (text) makeStatus.append(' ');
+		makeStatus.append(a);
+	}
+}
+
+function imageContentType(file) {
+	const type = String(file?.type || '').toLowerCase();
+	if (type === 'image/jpg' || type === 'image/pjpeg' || type === 'image/jpeg' || type === '') return 'image/jpeg';
+	return type;
+}
+
+function frameFromVideo(file, signal) {
+	return new Promise((resolve, reject) => {
+		if (signal?.aborted) {
+			reject(new DOMException('The operation was aborted.', 'AbortError'));
+			return;
+		}
+		const url = URL.createObjectURL(file);
+		const video = document.createElement('video');
+		let settled = false;
+		const finish = (err, blob) => {
+			if (settled) return;
+			settled = true;
+			signal?.removeEventListener('abort', onAbort);
+			URL.revokeObjectURL(url);
+			video.onerror = null;
+			video.onloadeddata = null;
+			video.onseeked = null;
+			video.removeAttribute('src');
+			video.load();
+			if (err) reject(err);
+			else resolve(blob);
+		};
+		const onAbort = () => finish(new DOMException('The operation was aborted.', 'AbortError'));
+		if (signal) signal.addEventListener('abort', onAbort, { once: true });
+		const paint = () => {
+			if (settled) return;
+			const srcW = video.videoWidth || 0;
+			const srcH = video.videoHeight || 0;
+			if (!srcW || !srcH) {
+				finish(new Error('could not read a frame from that video'));
+				return;
+			}
+			const width = Math.min(1280, srcW);
+			const height = Math.max(1, Math.round(width * (srcH / srcW)));
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			const ctx = canvas.getContext('2d');
+			if (!ctx) {
+				finish(new Error('could not read a frame from that video'));
+				return;
+			}
+			ctx.drawImage(video, 0, 0, width, height);
+			canvas.toBlob((blob) => {
+				if (signal?.aborted) finish(new DOMException('The operation was aborted.', 'AbortError'));
+				else if (!blob) finish(new Error('could not read a frame from that video'));
+				else finish(null, blob);
+			}, 'image/jpeg', 0.92);
+		};
+		video.preload = 'auto';
+		video.muted = true;
+		video.playsInline = true;
+		video.onerror = () => finish(new Error('could not read a frame from that video'));
+		video.onloadeddata = () => {
+			if (settled) return;
+			const duration = Number.isFinite(video.duration) ? video.duration : 0;
+			const target = duration > 0.4 ? Math.min(1, duration / 2) : 0;
+			// Setting currentTime to where the element already is does not fire
+			// seeked, so a short clip would wait forever.
+			if (Math.abs((video.currentTime || 0) - target) < 0.05) paint();
+			else video.currentTime = target;
+		};
+		video.onseeked = () => paint();
+		video.src = url;
+	});
+}
+
+function stopMakeClock() {
+	if (makeTimer) clearInterval(makeTimer);
+	makeTimer = null;
+}
+
+async function makeModel({ prompt = '', file = null, video = false } = {}) {
+	const gen = ++makeGen;
+	if (makeAbort) makeAbort.abort();
+	const controller = new AbortController();
+	makeAbort = controller;
+	if (makeForm) makeForm.setAttribute('aria-busy', 'true');
+	if (makeGo) makeGo.textContent = 'Cancel';
+	for (const el of [makePrompt, makePhoto, makeVideo, makePhotoFile, makeVideoFile]) {
+		if (el && el !== makeGo) el.disabled = true;
+	}
+	const started = Date.now();
+	let phase = video ? 'Reading a frame from the video.' : 'Building the model.';
+	const tick = (next) => {
+		if (next) phase = next;
+		setMakeStatus(`${phase} ${Math.round((Date.now() - started) / 1000)}s`);
+	};
+	tick();
+	stopMakeClock();
+	makeTimer = setInterval(() => tick(), 1000);
+
+	try {
+		let imageUrls = [];
+		if (file && video) {
+			const frame = await frameFromVideo(file, controller.signal);
+			tick('Uploading the frame.');
+			imageUrls = [await uploadImage({
+				bytes: frame,
+				contentType: 'image/jpeg',
+				origin: '',
+				credentials: 'include',
+				signal: controller.signal,
+			})];
+		} else if (file) {
+			tick('Uploading the photo.');
+			imageUrls = [await uploadImage({
+				bytes: file,
+				contentType: imageContentType(file),
+				origin: '',
+				credentials: 'include',
+				signal: controller.signal,
+			})];
+		}
+		const made = await forgeModel({
+			prompt,
+			imageUrls,
+			origin: '',
+			credentials: 'include',
+			signal: controller.signal,
+			onStatus(ev) {
+				if (ev.phase === 'done') return;
+				const label = ev.phase === 'submitting' ? 'Sending it to the generator.' : 'Building the model.';
+				tick(label);
+			},
+		});
+		state.src = made.glbUrl;
+		state.scene = '';
+		pressGroup('[data-scene]', 'data-scene', '__made__');
+		showCommand();
+		setMakeStatus('The model is ready. Drawing it above.');
+		run();
+	} catch (err) {
+		if (gen !== makeGen) return;
+		if (err?.name === 'AbortError' || err?.code === 'cancelled') {
+			setMakeStatus('Cancelled.');
+			return;
+		}
+		if (err instanceof MakeError && err.signInUrl) {
+			setMakeStatus(`${err.message}`, { href: err.signInUrl, label: 'Sign in' });
+			return;
+		}
+		setMakeStatus(err?.message || 'the model could not be made');
+	} finally {
+		if (gen !== makeGen) return;
+		stopMakeClock();
+		if (makeForm) makeForm.setAttribute('aria-busy', 'false');
+		if (makeAbort === controller) makeAbort = null;
+		if (makeGo) makeGo.textContent = 'Make';
+		for (const el of [makePrompt, makePhoto, makeVideo, makePhotoFile, makeVideoFile]) {
+			if (el) el.disabled = false;
+		}
+	}
+}
+
+if (makeForm) {
+	makeForm.addEventListener('submit', (event) => {
+		event.preventDefault();
+		if (makeAbort) { makeAbort.abort(); return; }
+		makeModel({ prompt: makePrompt ? makePrompt.value : '' });
+	});
+}
+if (makePhoto && makePhotoFile) {
+	makePhoto.addEventListener('click', () => makePhotoFile.click());
+	makePhotoFile.addEventListener('change', () => {
+		const file = makePhotoFile.files && makePhotoFile.files[0];
+		makePhotoFile.value = '';
+		if (file) makeModel({ prompt: makePrompt ? makePrompt.value : '', file });
+	});
+}
+if (makeVideo && makeVideoFile) {
+	makeVideo.addEventListener('click', () => makeVideoFile.click());
+	makeVideoFile.addEventListener('change', () => {
+		const file = makeVideoFile.files && makeVideoFile.files[0];
+		makeVideoFile.value = '';
+		if (file) makeModel({ prompt: makePrompt ? makePrompt.value : '', file, video: true });
+	});
+}
+
 // Stop the stream when the tab is hidden. A backgrounded tab holding an open
 // render stream is pure server cost for frames nobody sees.
 document.addEventListener('visibilitychange', () => {
 	if (document.hidden && state.running) stop();
+	if (document.hidden && makeAbort) makeAbort.abort();
 });
 
-window.addEventListener('beforeunload', stop);
+window.addEventListener('beforeunload', () => {
+	stop();
+	if (makeAbort) makeAbort.abort();
+});
 
 // Autoplay only where it is cheap and wanted: a real pointer, a wide viewport,
 // and no reduced-motion preference.
