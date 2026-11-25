@@ -1,6 +1,6 @@
 # Grok for Startups announcement thread (2026-11-25)
 
-The thread that announces three.ws joining xAI's Grok for Startups program, posted from @trythreews. Nine posts. The head image is the logo lockup; every post after it shows proof instead of telling.
+The thread that announces three.ws joining xAI's Grok for Startups program, posted from @trythreews. Nine posts. The head image is the program card; every post after it shows proof instead of telling.
 
 House voice: one link per post, no hashtags, no emoji, no dashes. Every post fits 280 characters (X counts each link as 23).
 
@@ -70,12 +70,19 @@ House voice: one link per post, no hashtags, no emoji, no dashes. Every post fit
 
 ## The image
 
-The head is our logo beside the program name in plain type, rendered by [`scripts/grok-startups-announce-card.mjs`](../../scripts/grok-startups-announce-card.mjs) at 2400x1350.
+[`scripts/grok-startups-announce-card.mjs`](../../scripts/grok-startups-announce-card.mjs) renders every option into `public/x-media/grok-startups-announce/` at 2x:
 
-**No xAI, Grok or SpaceX logo appears on it, on purpose.** The plan only allows those marks nominatively, as plain words, unless a published brand kit or permission covers the use. The Program Terms grant the right to "state publicly that you participate in the Program" but say nothing about logos, and they state the program creates no partnership, so a logo lockup would read as the partner claim they rule out. The x.ai footer now links a "Brand" page; it refuses automated fetches, so open it by hand. If it allows a program mark beside a member's logo, or the startups team sends one (ask in email version 1 of the kit), rerender with it: If the startups team sends an approved program mark (ask in email version 1 of the kit), rerender with it:
+| File | Look | Use |
+|---|---|---|
+| `head.png` (1200x675), `head-square.png` (1080x1080) | Program card in the format SpaceXSI members post: our lockup, a wireframe torus, the badge "Super Intelligence \| Grok for Startups" | Post 1 (default) |
+| `head.mp4`, `head-square.mp4` | The same card with the torus drifting in a seamless loop (`--motion`) | Post 1, if you want motion in the timeline |
+| `pair.png`, `pair-dark.png` (1200x675) | Our lockup and the Grok logo split by a rule, in the format of Grok's integration announcements | Alternative head, or a reply |
+
+The Grok and SpaceXAI marks are the owner-approved files from the `SpaceXAI_Grok_Assets` kit linked at [x.ai/legal/brand-guidelines](https://x.ai/legal/brand-guidelines), drawn unaltered with nothing beside them that reads as a combined mark ([plan rule](../partners/xai-grok-startups-plan.md#rules-that-bind-every-route)). The Program Terms grant the right to "state publicly that you participate in the Program" and say the program creates no partnership, so the copy around the image still never says partner. If SpaceXSI sends an official program badge, it replaces the badge block in the script.
 
 ```bash
-node scripts/grok-startups-announce-card.mjs --partner-logo path/to/approved-mark.svg
+node scripts/grok-startups-announce-card.mjs            # the four PNGs
+node scripts/grok-startups-announce-card.mjs --motion   # head.mp4 and head-square.mp4
 ```
 
 ## Wording rules
