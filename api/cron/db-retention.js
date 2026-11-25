@@ -138,19 +138,9 @@ const COMPACT_MAX_TABLES = 3; // per tick; the cron re-runs on its schedule
 //     hole the table exists to close. The rows are tiny (a hash, a route, an
 //     amount), so it cannot be the reason the branch is under pressure.
 //
-// DELIBERATELY UNMANAGED, and the single biggest table this cron does NOT prune:
-// x402_self_facilitator_log (632 MB as of 2026-08-10, third largest in the
-// branch). Every other big grower above is churn; this one is the settle book.
-// It is excluded because /api/x402-ring aggregates it with NO time filter for
-// its `lifetime` period (api/x402-ring.js, sinceFor() returns null), so any
-// retention window silently shrinks published lifetime settlement and fee
-// totals. Every other reader is short-window (healthz 24h, fee-audit and
-// wallet-fee-meter current-day, ring-reconciliation LOOKBACK_HOURS,
-// sponsor-runway X402_SPONSOR_BURN_WINDOW_DAYS), so a window is technically
-// safe for them. Pruning it is therefore a product decision about the public
-// revenue figures, not a mechanical retention one: get owner sign-off on what
-// `lifetime` should mean (and roll the pruned totals into a summary row first)
-// before adding it here.
+// x402_self_facilitator_log is NOT in this list: it is archived, rolled up into
+// x402_self_facilitator_rollup and pruned by the cold-table step (G) via
+// api/_lib/db-archive-tables.js, so /api/x402-ring lifetime totals stay whole.
 const TIME_SERIES_TABLES = [
 	{ table: 'pump_launch_snapshots', tsColumn: 'ts', windowKind: 'firehose' },
 	{ table: 'x402_autonomous_log', tsColumn: 'ts', windowKind: 'audit' },
@@ -469,6 +459,26 @@ const ORPHAN_BUDGET_MS = 45_000;
 const ARCHIVE_MAX_ROWS_PER_TABLE = 50_000;
 
 /**
+ * Fold the per-table archive results into the last-run summary the health
+ * sensor reads. Keeps WHY nothing was pruned: `skipped` (time budget or an
+ * archive outage), `idle` (ran, nothing past the window), and `starved` (every
+ * table skipped on the time budget, i.e. earlier steps ate the tick).
+ *
+ * @param {Array<{table:string, archived?:number, deleted?:number, skipped?:string|null}>} tables
+ */
+export function summarizeArchiveRun(tables) {
+	const skipped = tables.filter((t) => t.skipped).map((t) => ({ table: t.table, reason: String(t.skipped) }));
+	const idle = tables.filter((t) => !t.skipped && !(t.archived > 0) && !(t.deleted > 0)).map((t) => t.table);
+	return {
+		archived: tables.reduce((n, t) => n + (t.archived || 0), 0),
+		deleted: tables.reduce((n, t) => n + (t.deleted || 0), 0),
+		skipped,
+		idle,
+		starved: tables.length > 0 && tables.every((t) => t.skipped === 'time_budget'),
+	};
+}
+
+/**
  * G. Archive-then-prune the large append-only tables. A row is deleted only
  * after its gzip NDJSON part and manifest are verified in the archive bucket;
  * any archive failure reports `skipped` and deletes nothing, so a bucket or
@@ -649,6 +659,28 @@ export default wrapCron(async (req, res) => {
 			{ signature: 'db:firehose-archive-skipped' },
 		);
 	}
+	// G. Cold-table archive runs BEFORE the cheap time-series, audit and regen
+	// steps: it reclaims the most space (agent_onchain_events, the settle book,
+	// usage_events) and its deadline is measured from the tick start, so any
+	// unbounded step ahead of it silently starves it.
+	const archive = await archiveColdTables(started, { store, runId });
+	const archiveSkips = archive.tables.filter((t) => t.skipped && t.skipped !== 'time_budget');
+	const archiveRun = summarizeArchiveRun(archive.tables);
+	if (archiveRun.starved) {
+		sendOpsAlert(
+			'db archive starved',
+			`Every cold-storage archive table was skipped on the ${ARCHIVE_BUDGET_MS / 1000}s time budget, so nothing was archived or pruned this tick (${Date.now() - started}ms elapsed when it started). Earlier steps are eating the tick.`,
+			{ signature: 'db:archive-starved' },
+		);
+	}
+	if (archiveSkips.length) {
+		sendOpsAlert(
+			'db archive skipped',
+			`Cold-storage archive could not run for ${archiveSkips.map((t) => `${t.table} (${t.skipped})`).join(', ')}. Nothing was deleted from those tables; they will keep growing until the archive bucket is reachable again.`,
+			{ signature: 'db:archive-skipped' },
+		);
+	}
+
 	const series = await pruneTimeSeries({
 		firehose: cutoffDays,
 		audit: auditCutoffDays,
@@ -686,16 +718,6 @@ export default wrapCron(async (req, res) => {
 	// IP and user agent), auth nonces, and widget views past 12 months. Deleted,
 	// never archived (api/_lib/privacy-retention.js).
 	const privacy = await purgePrivacyRetention({ sql, tableExists });
-
-	const archive = await archiveColdTables(started, { store, runId });
-	const archiveSkips = archive.tables.filter((t) => t.skipped && t.skipped !== 'time_budget');
-	if (archiveSkips.length) {
-		sendOpsAlert(
-			'db archive skipped',
-			`Cold-storage archive could not run for ${archiveSkips.map((t) => `${t.table} (${t.skipped})`).join(', ')}. Nothing was deleted from those tables; they will keep growing until the archive bucket is reachable again.`,
-			{ signature: 'db:archive-skipped' },
-		);
-	}
 
 	// VACUUM only tables we actually deleted from this tick.
 	const touched = Object.keys(firehose.perTable).filter((t) => firehose.perTable[t] > 0);
@@ -756,8 +778,10 @@ export default wrapCron(async (req, res) => {
 				at: new Date().toISOString(),
 				size_before_mb: sizeBeforeMb,
 				size_after_mb: sizeAfterMb,
-				archived: archive.tables.reduce((n, t) => n + (t.archived || 0), 0),
-				deleted: archive.tables.reduce((n, t) => n + (t.deleted || 0), 0),
+				archived: archiveRun.archived,
+				deleted: archiveRun.deleted,
+				skipped: archiveRun.skipped,
+				idle: archiveRun.idle,
 			},
 			7 * 86_400,
 		);

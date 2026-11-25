@@ -32,8 +32,16 @@ export function classifyDatabaseStorage({ sizeMb, markMb, topTables = [], lastRu
 	const base = { name: 'database_storage', label: 'Database storage vs high-water mark' };
 	const pct = Math.round((sizeMb / markMb) * 100);
 	const top = topTables.slice(0, 3).map((t) => `${t.table} ${t.mb}MB`).join(', ') || 'n/a';
+	let why = '';
+	if (lastRun?.at && !(lastRun.deleted > 0)) {
+		if (lastRun.skipped?.length) {
+			why = `; archive skipped: ${lastRun.skipped.slice(0, 4).map((s) => `${s.table} (${s.reason})`).join(', ')}`;
+		} else if (lastRun.idle?.length) {
+			why = '; archive tables ran with nothing past its window';
+		}
+	}
 	const last = lastRun?.at
-		? `last retention run ${lastRun.at} (${lastRun.size_before_mb}MB to ${lastRun.size_after_mb}MB, ${lastRun.deleted ?? 0} archived rows pruned)`
+		? `last retention run ${lastRun.at} (${lastRun.size_before_mb}MB to ${lastRun.size_after_mb}MB, ${lastRun.deleted ?? 0} archived rows pruned${why})`
 		: 'no retention run recorded in the last 7 days';
 	const detail = `${sizeMb}MB of ${markMb}MB mark (${pct}%). Largest: ${top}. ${last}.`;
 	const extra = { sizeMb, markMb, percentOfMark: pct, topTables: topTables.slice(0, 3), lastRun };

@@ -349,3 +349,12 @@ Raw `mcp_client_sessions` rows are deleted 30 days after their last call. The da
 - `api/cron/db-retention.js` — the cron
 - `api/_lib/db.js` — `isDbCapacityError` / `isDbUnavailableError`
 - [docs/ops/redis.md](redis.md) — the Upstash cache/limiter quota playbook
+
+## Reading a "0 archived" run
+
+The last-run summary (`db-retention:last-run`, shown in healthz `database_storage`)
+now carries `skipped` (tables skipped, with the reason: `time_budget` or an archive
+error) and `idle` (tables that ran with nothing past their window). The cold-table
+archive runs right after the firehose passes, before the time-series, audit and
+regen steps, so a slow earlier step cannot starve it. If every table is skipped on
+`time_budget`, the cron raises the `db:archive-starved` ops alert.
