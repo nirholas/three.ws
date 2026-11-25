@@ -8,7 +8,7 @@ It is the wide net. The narrower docs stay authoritative for what they cover: [p
 
 Sibling pages: [ai company partner programs](./ai-programs.md), [motion partner programs](./motion-programs.md), [global brand partner programs](./brand-programs.md), [crypto ecosystem partner programs](./crypto-programs.md), plus [who promotes partners](./promotion-programs.md) and [moonshots](./moonshots.md) across every sector.
 
-**206 programs across 80 companies.** 14 member / live, 1 submitted, waiting, 10 in progress, 16 ready, one human step, 90 eligible, not started, 58 verify fit first, 2 decided not to pursue, 3 not eligible, 12 retired or closed. We hold at least one membership at 9 of the 80 companies, and 61 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
+**206 programs across 80 companies.** 14 member / live, 2 submitted, waiting, 9 in progress, 16 ready, one human step, 90 eligible, not started, 58 verify fit first, 2 decided not to pursue, 3 not eligible, 12 retired or closed. We hold at least one membership at 9 of the 80 companies, and 61 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
 
 ## Using this page
 
@@ -58,7 +58,7 @@ Memberships we already have where a benefit sits unclaimed or a next step is ope
 
 ### Wave 1: finish what is built
 
-The product, package, or application already exists. What is left is ours: a portal step, a credential, a signature, or pressing submit. 28 programs.
+The product, package, or application already exists. What is left is ours: a portal step, a credential, a signature, or pressing submit. 27 programs.
 
 | # | Program | Company | Score | Next action |
 |---|---|---|---|---|
@@ -89,7 +89,6 @@ The product, package, or application already exists. What is left is ours: a por
 | 25 | [NGC Catalog listing](https://catalog.ngc.nvidia.com/) | NVIDIA | 10 | Sign the NGC partner legal agreement, then run the Ampere or Hopper validation on a GCP GPU worker |
 | 26 | [IBM Champions](https://www.ibm.com/community/champions-program/) | IBM | 9 | Owner self-nominates for the Class of 2027 in the IBM Community Champions group and records qualifying activities before 2026-12-04 |
 | 27 | [OpenAI Developers Showcase](https://developers.openai.com/) | OpenAI | 9 | Submit three.ws through the showcase web form on developers.openai.com |
-| 28 | [NVIDIA Accelerated Applications catalog](https://marketplace.nvidia.com/en-us/enterprise) | NVIDIA | 8 | Complete the catalog record in the Inception portal; NVIDIA confirmed review is portal-driven |
 
 ### Wave 2: apply this month
 
@@ -271,6 +270,7 @@ Submitted. Nothing to do but chase on schedule: a submission with no movement fo
 | Program | Company | Last movement | Follow-up |
 |---|---|---|---|
 | [OpenAI Cookbook contribution](https://github.com/openai/openai-cookbook) | OpenAI | 2026-07-21 | Chase review on PR #2874 |
+| [NVIDIA Accelerated Applications catalog](https://marketplace.nvidia.com/en-us/enterprise/applications/) | NVIDIA | 2026-11-25 | Deploy so /forge shows three.ws Forge, rename the portal record to three.ws Forge, then send the App Publishing reply (docs/nvidia-apps-catalog-request.md) |
 
 ## Who promotes partners
 
@@ -351,7 +351,7 @@ What we hold, what we are entitled to and have not claimed, and when each expire
 | Entitled, not claimed | Inception co-brand kit access |  | [NVIDIA Inception](https://www.nvidia.com/en-us/startups/) | 2026-09-14 |  | Access restored; the kit has not been downloaded yet |
 | Entitled, not claimed | My Digital Marketing (co-branded campaigns) |  | [IBM Partner Plus (Build track)](https://ibm.com/partnerplus/isv) |  |  | Never requested |
 | Received, in use | Google Cloud credits (Web3 tier) | Up to USD 200,000 over 2 years, metered monthly, USD 10,000 initial | [Google for Startups Cloud Program (Web3 tier)](https://startup.google.com/cloud/) | 2026-08-04 | **2028-08-04** | Year 1 covers 100% up to USD 100,000; year 2 covers 20% up to another USD 100,000 |
-| Received, in use | Grok API, Grok and Grok Build credits |  | [Grok for Startups](https://x.ai/startups) | 2026-11-21 |  | First tranche visible in the Grok dashboard billing page on the three.ws team; amount stays in XAI_CREDIT_GRANT_USD on Cloud Run. Dashboard labels this balance as never expiring, while program terms say six months; the ledger assumes six months until xAI confirms |
+| Received, in use | Grok API, Grok and Grok Build credits |  | [Grok for Startups](https://x.ai/startups) | 2026-11-21 |  | First tranche visible in the Grok dashboard billing page on the three.ws team; amount stays in XAI_CREDIT_GRANT_USD on Cloud Run. Dashboard labels this balance as never expiring, but the Program Terms set six months from application unless the approval email says otherwise, so the ledger uses six months |
 
 ## Submissions log
 
@@ -359,10 +359,12 @@ Every application, form, email, and portal action, newest first. Add one with `n
 
 | Date | Program | Company | What happened | Reference |
 |---|---|---|---|---|
+| 2026-11-25 | [NVIDIA Accelerated Applications catalog](https://marketplace.nvidia.com/en-us/enterprise/applications/) | NVIDIA | NVIDIA App Publishing asked us to confirm the listing request and the exact product name; product renamed three.ws Forge to match /forge, reply drafted | docs/nvidia-apps-catalog-request.md |
 | 2026-11-21 | [Grok for Startups](https://x.ai/startups) | xAI | Team ID issue resolved: credits applied to the three.ws team (Grok dashboard team ID confirmed, nich@ is creator) (now: Member / live) | grok.com/dashboard/billing |
 | 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Application in review: xAI startups team asked for a grok.com Team ID before admission; owner created the team and replied with the ID (now: Submitted, waiting) |  |
 | 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Admitted and accepted into Grok for Startups (acceptance email from the xAI startups team) (now: Member / live) |  |
 | 2026-11-20 | [Grok for Startups](https://x.ai/startups) | xAI | Credits on hold: the startups team says the submitted Team ID is invalid or the applying address (nich@) is not a member of that team; owner to resend the Grok dashboard Team ID from a team nich@ belongs to (now: Member / live) | email: Grok for Startups: Action Needed for three.ws (2026-11-20) |
+| 2026-10-25 | [NVIDIA Accelerated Applications catalog](https://marketplace.nvidia.com/en-us/enterprise/applications/) | NVIDIA | Product record saved in the portal as Shipping, GPU Accelerated, with runtime NVIDIA stack, logo and brand color (now: Submitted, waiting) | docs/nvidia-apps-catalog-listing.md |
 | 2026-10-11 | [OpenAI Partner Network (Select Partner)](https://openai.com/index/introducing-openai-partner-network/) | OpenAI | Partner benefits provisioned; two invitations waiting to be accepted |  |
 | 2026-09-30 | [Official MCP Registry and GitHub MCP Registry](https://modelcontextprotocol.io/registry/quickstart) | GitHub | Published blender-mcp, herald-mcp, home-mcp and knock-mcp and updated agent-sniper with mcp-publisher v1.8.1 (now: Member / live) |  |
 | 2026-09-29 | [ChatGPT App Directory](https://developers.openai.com/apps-sdk) | OpenAI | Third rejection: every generation outlived the 60-second tool-call limit. v1.0.1 fix built, awaiting deploy (now: In progress) |  |
@@ -370,6 +372,7 @@ Every application, form, email, and portal action, newest first. Add one with `n
 | 2026-09-21 | [NVIDIA Developer Program and forums](https://developer.nvidia.com/developer-program) | NVIDIA | Forum post 1 live |  |
 | 2026-09-14 | [NVIDIA Inception](https://www.nvidia.com/en-us/startups/) | NVIDIA | NVIDIA replied: catalog review is portal-driven, co-brand asset access restored, GTC Pavilion is invite-only |  |
 | 2026-09-12 | [ChatGPT App Directory](https://developers.openai.com/apps-sdk) | OpenAI | Submitted version 1.0.0 with 11 tools, 3 prompts and the demo recording; status Review (now: Submitted, waiting) |  |
+| 2026-09-04 | [NVIDIA Accelerated Applications catalog](https://marketplace.nvidia.com/en-us/enterprise/applications/) | NVIDIA | Catalog listing requested by email to the Inception program | docs/nvidia-apps-catalog-request.md |
 | 2026-09-04 | [NVIDIA Inception](https://www.nvidia.com/en-us/startups/) | NVIDIA | Emailed Inception about the catalog listing, co-brand assets and the GTC Pavilion |  |
 | 2026-08-21 | [Open Source Friday livestream](https://github.com/githubevents/open-source-friday) | GitHub | Opened the guest request issue #254 at GitHub's invitation; GitHub has since approved it | [link](https://github.com/githubevents/open-source-friday/issues/254) |
 | 2026-08-04 | [Google for Startups Cloud Program (Web3 tier)](https://startup.google.com/cloud/) | Google | Accepted into the Web3 tier; welcome email received (now: Member / live) |  |
@@ -541,8 +544,8 @@ Closed doors (do not re-research):
 |---|---|---|---|---|---|---|---|
 | [NVIDIA Inception](https://www.nvidia.com/en-us/startups/) | Accelerator | Free self-paced DLI courses and discounted expert-led workshops; Preferred pricing on select NVIDIA hardware and software; Cloud credits from NVIDIA and partners (amounts not stated on the official page); Inception Capital Connect introductions to NVIDIA VC network (eligibility based); Co-branded badges, content and event assets; networking events | Partner badge, Co-marketing, Social posts, Event or speaking slot, Featured placement, Blog post | Incorporated, working website, under 10 years old, clear use case for NVIDIA tech, operated by a founder. Excludes consulting/outsourced dev, resellers, CSPs, public companies and companies associated with the digital-asset sector (check this against our positioning). Cost: free. | Member / live | Download the restored co-brand kit, then ask the two unanswered Showcase and ACE questions in the existing Inception thread Apply: [form](https://programs.nvidia.com/phoenix/application (pitch deck required per FAQ)). Cadence: rolling, no cohorts or deadlines. [kit](../../docs/nvidia-inception.md) [kit](../../docs/nvidia-visibility-map.md) | 4·4·5 = **13** |
 | [NVIDIA Developer Program and forums](https://developer.nvidia.com/developer-program) | Developer program | SDK and NIM access, forum presence, DLI courses |  | Free | Member / live | Post forum post 3 (drafted in docs/nvidia-forum-browser-digital-human.md) once the owner approves the external post [kit](../../docs/nvidia-visibility-map.md) [kit](../../docs/nvidia-forum-browser-digital-human.md) | 4·3·5 = **12** |
+| [NVIDIA Accelerated Applications catalog](https://marketplace.nvidia.com/en-us/enterprise/applications/) | Marketplace | Listing among GPU/DPU-accelerated applications; RTX ISV certification tiers (Certified / Supported) tied to the catalog |  | Inception member product that uses NVIDIA technology at runtime, Development Stage Shipping, with description, technical details, logo and brand color Cost: unclear. | Submitted, waiting | Deploy so /forge shows three.ws Forge, rename the portal record to three.ws Forge, then send the App Publishing reply (docs/nvidia-apps-catalog-request.md) Apply: The Inception portal product record is the application (NVIDIA, 2026-09-14); the App Publishing team reviews it. Cadence: rolling. [kit](../../docs/nvidia-apps-catalog-listing.md) [kit](../../docs/nvidia-apps-catalog-request.md) [kit](../../docs/nvidia-visibility-map.md) | 2·3·3 = **8** |
 | [NGC Catalog listing](https://catalog.ngc.nvidia.com/) | Marketplace | Our GPU worker containers listed in NVIDIA's catalog |  | NGC partner agreement plus validation on Ampere or Hopper GPUs | In progress | Sign the NGC partner legal agreement, then run the Ampere or Hopper validation on a GCP GPU worker [kit](../../docs/nvidia-ngc-listing.md) | 4·3·3 = **10** |
-| [NVIDIA Accelerated Applications catalog](https://marketplace.nvidia.com/en-us/enterprise) | Marketplace | Listing among GPU/DPU-accelerated applications; RTX ISV certification tiers (Certified / Supported) tied to the catalog |  | ISV application tested against NVIDIA hardware/drivers; process not published Cost: unclear. | In progress | Complete the catalog record in the Inception portal; NVIDIA confirmed review is portal-driven Apply: Listing route not public in sources found; likely via NPN/Inception contact. Cadence: rolling. [kit](../../docs/nvidia-visibility-map.md) | 2·3·3 = **8** |
 | [NVIDIA AI Podcast guest nomination](https://ai-podcast.nvidia.com/) | Co-marketing | A guest episode on NVIDIA's podcast | Podcast or video | Self-nomination invited through the embedded form | Ready, one human step | Paste the drafted answers into the guest form (docs/nvidia-visibility-map.md, AI Podcast nomination) [kit](../../docs/nvidia-visibility-map.md) | 3·4·4 = **11** |
 | [GTC 2027 call for submissions (technical posters)](https://www.nvidia.com/gtc/call-for-submissions/) | Event or call | Poster slot at GTC San Jose, March 15-18, 2027 (in person and online gallery); Notification rolling from mid-December | Event or speaking slot | Original technical or research work; promotional, business-use-case or conceptual posters are rejected. Speaker/session CFP not found open for 2027. Cost: free to submit (GTC registration separate). | Ready, one human step | Submit Poster A through the GTC call for submissions before 5pm PT on 2026-11-10 Apply: GTC submission portal linked from https://www.nvidia.com/gtc/call-for-submissions/. Cadence: DEADLINE 2026-11-10 5pm PT (per NVIDIA page via search); notifications from mid-December. [kit](../../docs/nvidia-gtc-2027-poster.md) | 3·4·3 = **10** |
 | [NVIDIA ACE digital human ecosystem (NGC / build.nvidia.com / Developer forum)](https://developer.nvidia.com/ace) | Developer program | ACE microservices in NGC Catalog and GitHub (Audio2Face, Riva etc.); Digital Human Technologies forum; Partner showcase: NPN service-delivery partners include Convai, Inworld AI, UneeQ |  | Any developer to start; partner showcase via NVIDIA relationships Cost: free to start; AI Enterprise license for production NIM. | Eligible, not started | Apply: Self-serve via developer.nvidia.com (NVIDIA Developer Program); NIMs need AI Enterprise license for self-hosting Cadence: rolling. | 5·3·4 = **12** |
@@ -551,8 +554,8 @@ Closed doors (do not re-research):
 
 - **NVIDIA Inception.** Already a member; the work now is using the perks (co-marketing badges, Capital Connect, partner offers, GTC Startup Pavilion) rather than joining. Caveat: Inception's eligibility page excludes crypto-associated companies, so describe three.ws by its 3D and digital-human product.
 - **NVIDIA Developer Program and forums.** Two forum posts are live.
+- **NVIDIA Accelerated Applications catalog.** Our product runs on NVIDIA GPUs and NVIDIA-hosted models end to end; NVIDIA App Publishing is now reviewing the record and asked us to confirm the product name.
 - **NGC Catalog listing.** The listing kit is written; legal and validation are the remaining steps.
-- **NVIDIA Accelerated Applications catalog.** Our GPU workers could justify a listing, but there is no self-serve path visible; ask the Inception contact.
 - **NVIDIA AI Podcast guest nomination.** Answers are drafted and the form was re-verified live 2026-09-04.
 - **GTC 2027 call for submissions (technical posters).** A technical poster (e.g. text-to-GLB pipeline with meshopt/canonicalization, MCP-driven avatar rigging on GPU workers) fits; marketing framing will be rejected.
 - **NVIDIA ACE digital human ecosystem (NGC / build.nvidia.com / Developer forum).** Direct technical match (speaking 3D avatars); integrating Audio2Face lipsync and then pitching a case study to the Inception team is the natural co-marketing route.
@@ -965,7 +968,7 @@ Closed doors (do not re-research):
 
 | Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
 |---|---|---|---|---|---|---|---|
-| [Grok for Startups](https://x.ai/startups) | Startup credits | credits sized to stage and usage, no fixed tier (per i10x / vandatateam coverage); Credits sized to 6-12 months of usage across Grok, Grok Build and the Grok API; 20% on approval, 80% after onboarding |  | Checks for venture backing (disputed by one aggregator), live product, company email matching website; credits expire 6 months Cost: free. | Member / live | Complete xAI onboarding to release the remaining 80% of credits, record the expiry with --benefit (never the amount, which stays in the XAI_CREDIT_GRANT_USD env var on Cloud Run), and route the Grok lane through the credited team. Build and co-marketing plan: docs/partners/xai-grok-startups-plan.md (work orders 871 to 886) Apply: Application at x.ai/startups. Cadence: rolling; launched late Oct 2026. | 2·3·3 = **8** |
+| [Grok for Startups](https://x.ai/startups) | Startup credits | credits sized to stage, funding, revenue and current AI spend, aiming at six to twelve months of real usage (program page and Program Terms, checked 2026-11-25); One credit balance across Grok, Grok Build, Grok Bot and the Grok API; Credits sized to six to twelve months of real usage; Hands-on onboarding and a direct line to the startups team; 20% on approval, 80% released automatically after the initial onboarding steps |  | Program page checks venture backing, a live product, and a work email on the company website domain (three.ws was admitted bootstrapped). Credits expire six months after they are applied unless the approval email says otherwise; own business use only, no resale (Program Terms, last updated 2026-10-27) Cost: free. | Member / live | Complete xAI onboarding to release the remaining 80% of credits, record the expiry with --benefit (never the amount, which stays in the XAI_CREDIT_GRANT_USD env var on Cloud Run), and route the Grok lane through the credited team. Build and co-marketing plan: docs/partners/xai-grok-startups-plan.md (work orders 871 to 886) Apply: Application at x.ai/startups. Cadence: rolling; launched late Oct 2026. | 2·3·3 = **8** |
 
 - **Grok for Startups.** Admitted 2026-11-20 as a bootstrapped applicant. Grok is already one of our model lanes (docs/grok.md, docs/ops/llm-lanes.md) and three.ws ships a Grok connector, so the credits cut that lane cost directly. The program email signs as SpaceXSI, matching the branding seen in coverage.
 

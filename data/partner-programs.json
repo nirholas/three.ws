@@ -1811,26 +1811,46 @@
 			"company": "NVIDIA",
 			"program": "NVIDIA Accelerated Applications catalog",
 			"kind": "marketplace",
-			"status": "preparing",
-			"url": "https://marketplace.nvidia.com/en-us/enterprise",
-			"apply": "Listing route not public in sources found; likely via NPN/Inception contact",
+			"status": "submitted",
+			"url": "https://marketplace.nvidia.com/en-us/enterprise/applications/",
+			"apply": "The Inception portal product record is the application (NVIDIA, 2026-09-14); the App Publishing team reviews it",
 			"benefits": [
 				"Listing among GPU/DPU-accelerated applications",
 				"RTX ISV certification tiers (Certified / Supported) tied to the catalog"
 			],
-			"eligibility": "ISV application tested against NVIDIA hardware/drivers; process not published",
+			"eligibility": "Inception member product that uses NVIDIA technology at runtime, Development Stage Shipping, with description, technical details, logo and brand color",
 			"cost": "unclear",
 			"cadence": "rolling",
 			"fit": 2,
 			"reach": 3,
 			"access": 3,
-			"next": "Complete the catalog record in the Inception portal; NVIDIA confirmed review is portal-driven",
-			"why": "Our GPU workers could justify a listing, but there is no self-serve path visible; ask the Inception contact.",
+			"next": "Deploy so /forge shows three.ws Forge, rename the portal record to three.ws Forge, then send the App Publishing reply (docs/nvidia-apps-catalog-request.md)",
+			"why": "Our product runs on NVIDIA GPUs and NVIDIA-hosted models end to end; NVIDIA App Publishing is now reviewing the record and asked us to confirm the product name.",
 			"assets": [
+				"docs/nvidia-apps-catalog-listing.md",
+				"docs/nvidia-apps-catalog-request.md",
 				"docs/nvidia-visibility-map.md"
 			],
 			"source": "https://marketplace.nvidia.com/en-us/enterprise",
-			"checked": "2026-11-06"
+			"checked": "2026-11-25",
+			"log": [
+				{
+					"date": "2026-09-04",
+					"action": "Catalog listing requested by email to the Inception program",
+					"ref": "docs/nvidia-apps-catalog-request.md"
+				},
+				{
+					"date": "2026-10-25",
+					"action": "Product record saved in the portal as Shipping, GPU Accelerated, with runtime NVIDIA stack, logo and brand color",
+					"status": "submitted",
+					"ref": "docs/nvidia-apps-catalog-listing.md"
+				},
+				{
+					"date": "2026-11-25",
+					"action": "NVIDIA App Publishing asked us to confirm the listing request and the exact product name; product renamed three.ws Forge to match /forge, reply drafted",
+					"ref": "docs/nvidia-apps-catalog-request.md"
+				}
+			]
 		},
 		{
 			"id": "nvidia-nvidia-connect",
@@ -4119,7 +4139,9 @@
 			"apply": "Application at x.ai/startups",
 			"value": "credits sized to stage, funding, revenue and current AI spend, aiming at six to twelve months of real usage (program page and Program Terms, checked 2026-11-25)",
 			"benefits": [
-				"One credit balance across Grok, Grok Build, Grok Bot and the Grok API", "Credits sized to six to twelve months of real usage", "Hands-on onboarding and a direct line to the startups team",
+				"One credit balance across Grok, Grok Build, Grok Bot and the Grok API",
+				"Credits sized to six to twelve months of real usage",
+				"Hands-on onboarding and a direct line to the startups team",
 				"20% on approval, 80% released automatically after the initial onboarding steps"
 			],
 			"eligibility": "Program page checks venture backing, a live product, and a work email on the company website domain (three.ws was admitted bootstrapped). Credits expire six months after they are applied unless the approval email says otherwise; own business use only, no resale (Program Terms, last updated 2026-10-27)",
