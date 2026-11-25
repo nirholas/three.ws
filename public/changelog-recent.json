@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T17:39:49.025Z",
+	"generated_at": "2026-11-25T17:41:52.358Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4709,
+	"total": 4712,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -52,6 +52,16 @@
 		{
 			"date": "2026-11-25",
 			"type": "update",
+			"title": "Model and image requests stop paying for a rejected storage credential",
+			"summary": "While the main storage credential is rejected, every model and image request first made a failing call to it before the backup bucket answered. After one rejection the platform now goes straight to the backup for a minute, then retries the main bucket once so a fixed credential recovers on its own. The storage health check shows when this is active.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
 			"title": "News analysis and AI answers fail less often when traffic spikes",
 			"summary": "When many readers or a crawler opened the same story at once, every request ran its own article analysis, and those duplicate runs used up the free AI providers for everyone else on the platform. Requests for a story that is already being analyzed now share that one run. The AI fallback chain also stopped skipping a fast model just because a slower model on the same provider timed out, so NVIDIA's quick Nemotron model now gets its turn instead of the request failing.",
 			"link": null,
@@ -63,7 +73,27 @@
 			"date": "2026-11-25",
 			"type": "update",
 			"title": "Solana reads back off when every RPC lane is rate limited",
-			"summary": "With Helius at its monthly cap and the free lanes answering 429, each page read re-asked the same exhausted lanes and logged a failure on every request. After one read exhausts the chain on rate limits, other reads now wait a few seconds and are served from the last good answer, so pages keep their data and the providers get room to recover.",
+			"summary": "With Helius at its monthly cap and the free lanes answering 429, each page read re-asked the same exhausted lanes and logged a failure on every request. After one read exhausts the chain on rate limits, other reads now wait a few seconds and are served from the last good answer, so pages keep their data and the providers get room to recover. When every lane is resting, reads now try the one closest to recovering first instead of a paid lane that is out of quota for hours.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Stuck avatar jobs now close with a clear reason instead of retrying forever",
+			"summary": "About 17 avatar generations stayed in the rigging step for days: their un-rigged model had been saved to the backup bucket while the main bucket was rejecting writes, and the recovery read only looked at the main bucket's URL, so it failed with a 404 every five minutes. Recovery now also reads the backup copy, and a model that is genuinely gone is closed as failed with a message to generate again.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "The Oracle social feed skips suspended X accounts instead of failing on them every run",
+			"summary": "A suspended handle in the tracked list was read and logged as a failure on every run of the social ingest. A suspended, deactivated or unavailable account is now reported once and skipped for 24 hours, so the failure log only shows faults worth acting on.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1537,38 +1567,6 @@
 			"title": "HQ answer summaries keep working after the larger AI models run out for the day",
 			"summary": "HQ's agent tools can add a short written summary to a DeFi answer. The AI provider caps each model's daily usage separately, and once both models HQ used were capped the summaries stopped, even though a third model on the same account still had room. HQ now falls back to that third model, so summaries keep coming for longer each day. The data answers themselves never depended on it.",
 			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "IBM Granite Guardian is live in production on our own GPU",
-			"summary": "The governance check that screens agent messages, new agent identities and autonomous sends now runs on real IBM Granite Guardian in production. Until today it answered with a not-configured error and the identity check let every agent through unscreened. We deployed IBM's open-weight Granite Guardian 3.3 model on a dedicated Cloud Run GPU and connected the site to it. In a live check, a friendly greeting came back allowed and a jailbreak that tried to drain an agent's SOL came back blocked with 99.98 percent confidence, each verdict scored from the model's own probabilities and labelled with the model that produced it. The health dashboard now shows the Guardian lane as healthy. Granite embeddings for the agent galaxy still need IBM's hosted watsonx.ai service, which is not connected yet.",
-			"link": "/docs/ibm",
-			"tags": [
-				"feature",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "Marketplace and Discover cards load small WebP images, and Forge's starter prompts stop jumping",
-			"summary": "Avatar renders, maker posters and social cards were sent at full size into small card boxes. Every first-party image on three.ws now also has a display-sized WebP form, built once per image version and cached, and the Marketplace and Discover grids use it: a typical avatar card image drops from about 160 KB to under 3 KB, while the original file stays available for downloads, prints and exports. The 18,184 older Forge thumbnails that were still full-size PNGs are now 512 px WebP, after a fix to the background job that had been skipping them. On Forge, the starter prompts under the empty viewer no longer slide sideways when they change on load, and each one shows its full prompt on hover.",
-			"link": "/marketplace",
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "Native $THREE launchpad coins can be quoted, bought and sold again, and the creator's launch buy shows as a buy",
-			"summary": "$THREE is a Token-2022 token, and after a bonding-curve SDK upgrade every price quote, buy and sell on a native launchpad coin failed with an error about a missing quote mint and epoch. Quotes now read the $THREE mint and the current epoch with every request, so the curve prices trades again, anti-snipe fee included. The coin page's trade list also showed the creator's own first buy, the one bundled into the launch, as a sell of the whole curve supply; it now shows as a buy of the tokens the creator actually received. Both were caught by rerunning the launchpad's end-to-end test (launch, decaying-fee check, buy, sell, trade history) against the real bonding-curve program before the lane opens on mainnet.",
-			"link": "/docs/native-launchpad",
 			"tags": [
 				"fix"
 			]

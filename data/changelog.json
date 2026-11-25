@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Stuck avatar jobs now close with a clear reason instead of retrying forever",
+			"summary": "About 17 avatar generations stayed in the rigging step for days: their un-rigged model had been saved to the backup bucket while the main bucket was rejecting writes, and the recovery read only looked at the main bucket's URL, so it failed with a 404 every five minutes. Recovery now also reads the backup copy, and a model that is genuinely gone is closed as failed with a message to generate again.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
+			"title": "Model and image requests stop paying for a rejected storage credential",
+			"summary": "While the main storage credential is rejected, every model and image request first made a failing call to it before the backup bucket answered. After one rejection the platform now goes straight to the backup for a minute, then retries the main bucket once so a fixed credential recovers on its own. The storage health check shows when this is active.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
+			"title": "The Oracle social feed skips suspended X accounts instead of failing on them every run",
+			"summary": "A suspended handle in the tracked list was read and logged as a failure on every run of the social ingest. A suspended, deactivated or unavailable account is now reported once and skipped for 24 hours, so the failure log only shows faults worth acting on.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "News analysis and AI answers fail less often when traffic spikes",
 			"summary": "When many readers or a crawler opened the same story at once, every request ran its own article analysis, and those duplicate runs used up the free AI providers for everyone else on the platform. Requests for a story that is already being analyzed now share that one run. The AI fallback chain also stopped skipping a fast model just because a slower model on the same provider timed out, so NVIDIA's quick Nemotron model now gets its turn instead of the request failing.",
 			"tags": ["fix"]
@@ -10,7 +28,7 @@
 		{
 			"date": "2026-11-25",
 			"title": "Solana reads back off when every RPC lane is rate limited",
-			"summary": "With Helius at its monthly cap and the free lanes answering 429, each page read re-asked the same exhausted lanes and logged a failure on every request. After one read exhausts the chain on rate limits, other reads now wait a few seconds and are served from the last good answer, so pages keep their data and the providers get room to recover.",
+			"summary": "With Helius at its monthly cap and the free lanes answering 429, each page read re-asked the same exhausted lanes and logged a failure on every request. After one read exhausts the chain on rate limits, other reads now wait a few seconds and are served from the last good answer, so pages keep their data and the providers get room to recover. When every lane is resting, reads now try the one closest to recovering first instead of a paid lane that is out of quota for hours.",
 			"tags": ["fix"]
 		},
 		{

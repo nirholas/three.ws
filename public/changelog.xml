@@ -39,6 +39,14 @@
 			<description>Hugging Face stopped routing FLUX.1-schnell through nscale, so the second Hugging Face rung of the text-to-image ladder failed on every call. It now runs on WaveSpeed, which Hugging Face still maps to the model. /api/v1/ai/image?health=1 now asks each Hugging Face route whether it would actually serve, so an empty credit balance or a retired route shows as down with the reason instead of passing on a valid token. Images made on Hugging Face or the Livepeer network are now credited to that lane instead of to NVIDIA.</description>
 		</item>
 		<item>
+			<title>Model and image requests stop paying for a rejected storage credential</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Model and image requests stop paying for a rejected storage credential</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>While the main storage credential is rejected, every model and image request first made a failing call to it before the backup bucket answered. After one rejection the platform now goes straight to the backup for a minute, then retries the main bucket once so a fixed credential recovers on its own. The storage health check shows when this is active.</description>
+		</item>
+		<item>
 			<title>News analysis and AI answers fail less often when traffic spikes</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:News analysis and AI answers fail less often when traffic spikes</guid>
@@ -52,7 +60,23 @@
 			<guid isPermaLink="false">2026-11-25:Solana reads back off when every RPC lane is rate limited</guid>
 			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
-			<description>With Helius at its monthly cap and the free lanes answering 429, each page read re-asked the same exhausted lanes and logged a failure on every request. After one read exhausts the chain on rate limits, other reads now wait a few seconds and are served from the last good answer, so pages keep their data and the providers get room to recover.</description>
+			<description>With Helius at its monthly cap and the free lanes answering 429, each page read re-asked the same exhausted lanes and logged a failure on every request. After one read exhausts the chain on rate limits, other reads now wait a few seconds and are served from the last good answer, so pages keep their data and the providers get room to recover. When every lane is resting, reads now try the one closest to recovering first instead of a paid lane that is out of quota for hours.</description>
+		</item>
+		<item>
+			<title>Stuck avatar jobs now close with a clear reason instead of retrying forever</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Stuck avatar jobs now close with a clear reason instead of retrying forever</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>About 17 avatar generations stayed in the rigging step for days: their un-rigged model had been saved to the backup bucket while the main bucket was rejecting writes, and the recovery read only looked at the main bucket's URL, so it failed with a 404 every five minutes. Recovery now also reads the backup copy, and a model that is genuinely gone is closed as failed with a message to generate again.</description>
+		</item>
+		<item>
+			<title>The Oracle social feed skips suspended X accounts instead of failing on them every run</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:The Oracle social feed skips suspended X accounts instead of failing on them every run</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A suspended handle in the tracked list was read and logged as a failure on every run of the social ingest. A suspended, deactivated or unavailable account is now reported once and skipped for 24 hours, so the failure log only shows faults worth acting on.</description>
 		</item>
 		<item>
 			<title>The terminal can walk, flock, shade, and splat</title>

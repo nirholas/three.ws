@@ -2023,9 +2023,19 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 			{ ignoreCooldown: true, ignoreCapability: true },
 		];
 		let attempts = 0;
+		// A pass that forgives cooldowns starts with the lane whose cooldown ends
+		// soonest (stable, so ties keep config order). In config order the paid
+		// lanes lead, and a quota-dead one sits on a 6h park while a keyless lane on
+		// a 10m rate-limit window has likely recovered: on 2026-11-25 Helius and
+		// Alchemy at their monthly caps took all three of a read's attempts on every
+		// request while the free tail was never asked.
+		const bySoonestRecovery = endpoints
+			.map((url, i) => ({ url, i, until: _endpointCooldown.get(url) || 0 }))
+			.sort((x, y) => x.until - y.until || x.i - y.i)
+			.map((e) => e.url);
 		for (const pass of PASSES) {
 			let attempted = false;
-			for (const url of endpoints) {
+			for (const url of pass.ignoreCooldown ? bySoonestRecovery : endpoints) {
 				if (attempts >= cap) break;
 				if (!pass.ignoreCooldown && isEndpointCooling(url)) continue;
 				if (!pass.ignoreCapability && isAnyMethodDemoted(url, methods)) continue;
