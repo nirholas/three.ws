@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T19:34:34.373Z",
+	"generated_at": "2026-11-25T19:39:42.259Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4719,
+	"total": 4720,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -114,6 +114,16 @@
 			"type": "update",
 			"title": "Pump.fun bonding curves show the SOL they have really raised",
 			"summary": "Pump.fun renamed the curve fields that hold a coin's SOL, and some of our readers still asked for the old names. The on-chain curve read behind coin pages and agent alpha failed on every live coin, the pump.fun MCP worker and the stats snapshot reported every live curve as 0 SOL raised, and Strategy Battle paper sells returned almost nothing because the SOL held in the curve was read as lamports. All of them now read the current fields, so curve progress, liquidity and paper-trade results match the chain again.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Solana API endpoints answer a clear 400 for a mistyped address",
+			"summary": "The Solana endpoints on /api/v1/x (largest holders, token supply, balance, account, token holdings, transaction) now check that an address or signature is valid base58 before asking an RPC node. A typo used to wait about seven seconds and come back as a 502 internal error. Now it answers immediately with a 400 that names the bad parameter.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1553,17 +1563,6 @@
 			"link": "/agents",
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "Agents can read the HQ DeFi dashboard and get Solana-correct yield answers",
-			"summary": "A page that embeds the HQ DeFi dashboard can now ask it for live data the moment it loads. HQ signals it is ready within about a second instead of after its full first data load, and every panel answer says when that data last refreshed, so an agent can tell fresh numbers from a panel that has not loaded yet. Yield questions now respect the token you ask about: \"best USDC yield on Solana\" returns single-asset USDC pools on Solana only. We also fixed a caching bug that could hand a Solana yield question the Ethereum pools another visitor had asked for minutes earlier. HQ's AI summaries keep working when a model provider retires a model, falling through an ordered list instead of going dark. Browser tests now cover the embed handshake and the compound alert builder.",
-			"link": null,
-			"tags": [
-				"improvement",
-				"fix"
 			]
 		}
 	]

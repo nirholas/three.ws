@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Solana API endpoints answer a clear 400 for a mistyped address",
+			"summary": "The Solana endpoints on /api/v1/x (largest holders, token supply, balance, account, token holdings, transaction) now check that an address or signature is valid base58 before asking an RPC node. A typo used to wait about seven seconds and come back as a 502 internal error. Now it answers immediately with a 400 that names the bad parameter.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Older avatars and models load faster and stop timing out during the storage outage",
 			"summary": "Models saved before our main storage provider started refusing us were only reachable through a slow, rate-limited public link, so some avatars and GLBs took over 10 seconds or failed outright. The first time one of them is opened now, a copy is kept in our own Google Cloud bucket, and every later load comes from there.",
 			"tags": [

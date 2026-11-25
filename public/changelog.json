@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T19:34:34.286Z",
+	"generated_at": "2026-11-25T19:39:42.178Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -111,6 +111,16 @@
 			"type": "update",
 			"title": "Pump.fun bonding curves show the SOL they have really raised",
 			"summary": "Pump.fun renamed the curve fields that hold a coin's SOL, and some of our readers still asked for the old names. The on-chain curve read behind coin pages and agent alpha failed on every live coin, the pump.fun MCP worker and the stats snapshot reported every live curve as 0 SOL raised, and Strategy Battle paper sells returned almost nothing because the SOL held in the curve was read as lamports. All of them now read the current fields, so curve progress, liquidity and paper-trade results match the chain again.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Solana API endpoints answer a clear 400 for a mistyped address",
+			"summary": "The Solana endpoints on /api/v1/x (largest holders, token supply, balance, account, token holdings, transaction) now check that an address or signature is valid base58 before asking an RPC node. A typo used to wait about seven seconds and come back as a 502 internal error. Now it answers immediately with a 400 that names the bad parameter.",
 			"link": null,
 			"tags": [
 				"fix"

@@ -53,6 +53,32 @@ function required(value, name) {
 	return v;
 }
 
+// Solana addresses are base58 public keys (32 to 44 chars); transaction
+// signatures are base58 64-byte values (64 to 88 chars). Checked here, before
+// any RPC call, because RPC lanes disagree on how they refuse a malformed key:
+// some answer -32602 (a 400), others -32603 "Internal error", which rpcResult
+// can only treat as a 502. A caller typo must never look like an outage.
+const BASE58 = /^[1-9A-HJ-NP-Za-km-z]+$/;
+
+function invalidParam(name, what) {
+	const err = new Error(`query param "${name}" must be ${what}`);
+	err.status = 400;
+	err.code = 'invalid_param';
+	throw err;
+}
+
+function solanaAddress(value, name) {
+	const v = required(value, name);
+	if (v.length < 32 || v.length > 44 || !BASE58.test(v)) invalidParam(name, 'a base58 Solana address');
+	return v;
+}
+
+function solanaSignature(value, name) {
+	const v = required(value, name);
+	if (v.length < 64 || v.length > 88 || !BASE58.test(v)) invalidParam(name, 'a base58 Solana transaction signature');
+	return v;
+}
+
 // ── DexScreener helpers ──────────────────────────────────────────────────────
 
 // Cap a comma-separated address list at `cap` entries (DexScreener's own
@@ -919,7 +945,7 @@ export const PROVIDERS = [
 				// endpoint. See `upstreamMethod` in the descriptor contract above.
 				upstreamMethod: 'POST',
 				path: '',
-				body: (q) => rpcBody('getBalance', [required(q.address, 'address')]),
+				body: (q) => rpcBody('getBalance', [solanaAddress(q.address, 'address')]),
 				// Verified live 2026-07-08: { result: { context, value: <lamports> } }.
 				transform: (data) => {
 					const result = rpcResult(data);
@@ -941,7 +967,7 @@ export const PROVIDERS = [
 				path: '',
 				body: (q) =>
 					rpcBody('getTokenAccountsByOwner', [
-						required(q.owner, 'owner'),
+						solanaAddress(q.owner, 'owner'),
 						{ programId: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' },
 						{ encoding: 'jsonParsed' },
 					]),
@@ -979,7 +1005,7 @@ export const PROVIDERS = [
 				method: 'GET',
 				upstreamMethod: 'POST',
 				path: '',
-				body: (q) => rpcBody('getTokenSupply', [required(q.mint, 'mint')]),
+				body: (q) => rpcBody('getTokenSupply', [solanaAddress(q.mint, 'mint')]),
 				// Verified live 2026-07-08 ($THREE mint): { result: { value: {
 				// amount, decimals, uiAmount, uiAmountString } } }.
 				transform: (data) => {
@@ -1001,7 +1027,7 @@ export const PROVIDERS = [
 				method: 'GET',
 				upstreamMethod: 'POST',
 				path: '',
-				body: (q) => rpcBody('getTokenLargestAccounts', [required(q.mint, 'mint')]),
+				body: (q) => rpcBody('getTokenLargestAccounts', [solanaAddress(q.mint, 'mint')]),
 				// Documented shape (getTokenLargestAccounts, top 20 by protocol limit):
 				// { result: { value: [{ address, amount, decimals, uiAmount,
 				// uiAmountString }] } }.
@@ -1027,7 +1053,7 @@ export const PROVIDERS = [
 				path: '',
 				body: (q) =>
 					rpcBody('getTransaction', [
-						required(q.signature, 'signature'),
+						solanaSignature(q.signature, 'signature'),
 						{ encoding: 'jsonParsed', maxSupportedTransactionVersion: 1 },
 					]),
 				// Verified live 2026-07-08 (real $THREE transfer signature): { result: {
@@ -1085,7 +1111,7 @@ export const PROVIDERS = [
 				method: 'GET',
 				upstreamMethod: 'POST',
 				path: '',
-				body: (q) => rpcBody('getAccountInfo', [required(q.address, 'address'), { encoding: 'jsonParsed' }]),
+				body: (q) => rpcBody('getAccountInfo', [solanaAddress(q.address, 'address'), { encoding: 'jsonParsed' }]),
 				// Verified live 2026-07-08 ($THREE mint): { result: { value: {
 				// owner, lamports, executable, data: { program, parsed: { type } } } } }.
 				// result.value is null for an unfunded/nonexistent address.
