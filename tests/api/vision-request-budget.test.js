@@ -20,6 +20,8 @@ const state = {
 	// upload without actually sleeping for that long in the test.
 	readDelayMs: 0,
 	describeCalls: [],
+	// When set, describeImage rejects with it (a whole-chain failure).
+	describeError: null,
 };
 
 vi.mock('../../api/_lib/auth.js', () => ({
@@ -40,6 +42,7 @@ vi.mock('../../api/_lib/vision.js', () => ({
 	visionConfigured: vi.fn(() => state.configured),
 	describeImage: vi.fn(async (opts) => {
 		state.describeCalls.push(opts);
+		if (state.describeError) throw state.describeError;
 		return { text: 'a blue robot', provider: 'test-lane', model: 'test-model' };
 	}),
 	VisionUnavailableError: class VisionUnavailableError extends Error {},
@@ -88,7 +91,9 @@ beforeEach(() => {
 	state.configured = true;
 	state.readDelayMs = 0;
 	state.describeCalls = [];
+	state.describeError = null;
 	vi.useFakeTimers();
+	vi.restoreAllMocks();
 });
 
 describe('/api/vision request budget', () => {
@@ -118,5 +123,31 @@ describe('/api/vision request budget', () => {
 		expect(r.body.error).toBe('deadline_exceeded');
 		// No point starting a lane that cannot finish: the chain is never called.
 		expect(state.describeCalls).toHaveLength(0);
+	});
+
+	// The response body names every lane that was tried, but the operator reads
+	// logs, not the caller's response: on 2026-11-25 production answered 25
+	// vision 502s and logged nothing for any of them.
+	it('logs which lanes failed when the whole chain fails', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		state.describeError = Object.assign(new Error('all vision lanes failed'), {
+			lanes: [
+				{ provider: 'nvidia', status: 429 },
+				{ provider: 'vertex', status: null },
+			],
+		});
+		const r = await invoke();
+		expect(r.status).toBe(502);
+		const line = warn.mock.calls.map((c) => c.join(' ')).find((l) => l.startsWith('[vision]'));
+		expect(line).toContain('nvidia=429');
+		expect(line).toContain('vertex=unreachable');
+	});
+
+	it('does not log a caller error as an upstream failure', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		state.describeError = Object.assign(new Error('bad url'), { code: 'invalid_image_url' });
+		const r = await invoke();
+		expect(r.status).toBe(400);
+		expect(warn.mock.calls.filter((c) => String(c[0]).startsWith('[vision]'))).toEqual([]);
 	});
 });

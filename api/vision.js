@@ -172,6 +172,12 @@ export default wrap(async function handler(req, res) {
 		const summary = lanes.length
 			? ` Chain: ${lanes.map((l) => `${l.provider}=${l.status ?? 'unreachable'}`).join(', ')}.`
 			: '';
+		// The response tells the caller; this line tells the operator. Without it a
+		// 502 here left no trace in the logs (2026-11-25: 25 failures, none
+		// attributable to a lane).
+		if (status >= 500) {
+			console.warn(`[vision] ${status} ${e?.code || 'upstream_error'}: ${String(e?.message || 'unknown error').slice(0, 300)}.${summary}`);
+		}
 		return error(
 			res,
 			status,
