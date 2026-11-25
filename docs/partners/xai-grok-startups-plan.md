@@ -133,8 +133,10 @@ in [prompts/finish/_context/grok-OWNER-ACTIONS.md](../../prompts/finish/_context
   describe compatibility or a real subject. No xAI, SpaceX or X logo is used unless a published
   brand kit allows it. The rocket cutaway describes the engine cycle generically and cites public
   sources; it is not presented as an official SpaceX asset. The Grok logo the owner approved for
-  announcements is `public/marks/grok-full-logomark-light.svg`, the unaltered file from the kit
-  linked at [x.ai/legal/brand-guidelines](https://x.ai/legal/brand-guidelines). Those guidelines
+  announcements is `public/marks/grok-full-logomark-light.svg`, and the SpaceXAI wordmark is
+  `public/marks/spacexai-wordmark-white-transparent.svg`. Both are unaltered files from the
+  `SpaceXAI_Grok_Assets` kit linked at
+  [x.ai/legal/brand-guidelines](https://x.ai/legal/brand-guidelines). Those guidelines
   require it exactly as provided, with nothing beside it that reads as a combined mark; the
   announcement card (`node scripts/grok-startups-announce-card.mjs`) follows that.
 - **X automation rules.** Reply only when addressed, carry the automated-account label, never
