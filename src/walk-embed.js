@@ -40,6 +40,7 @@ import { getMeshoptDecoder } from './viewer/internal.js';
 
 import { AnimationManager } from './animation-manager.js';
 import { log } from './shared/log.js';
+import { agentBodyGlbPath } from './shared/agent-body-access.js';
 import { applyCinematicDefaults, detectQualityTier, loadEnvironment } from './shared/cinematic-render.js';
 import {
 	OUTBOUND,
@@ -162,10 +163,11 @@ async function resolveAgentAvatarUrl(agentId) {
 	const rec = body?.agent || body;
 	const direct = rec?.avatar_model_url || rec?.avatar_glb_url || rec?.glb_url;
 	if (typeof direct === 'string' && GLB_PATH_RE.test(direct)) {
-		return validateAvatarUrl(direct) || `/api/avatars/${encodeURIComponent(rec.avatar_id)}/glb`;
+		return validateAvatarUrl(direct) || agentBodyGlbPath(rec) || AVATAR_URL_DEFAULT;
 	}
-	if (rec?.avatar_id) return `/api/avatars/${encodeURIComponent(rec.avatar_id)}/glb`;
-	return AVATAR_URL_DEFAULT;
+	// A private body the viewer does not own 404s at the proxy, so it resolves
+	// straight to the default body instead of failing first.
+	return agentBodyGlbPath(rec) || AVATAR_URL_DEFAULT;
 }
 
 // Resolve the avatar to load from the embed params. Precedence: explicit

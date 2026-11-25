@@ -11,3 +11,22 @@ export function agentBodyReadable(rec) {
 	if (rec.avatar_visibility !== 'private') return true;
 	return rec.is_owner === true || !!rec.user_id;
 }
+
+// Same-origin GLB proxy path for the agent's body, or null when the viewer cannot
+// read it (no body, or a private body they do not own). Embeds that resolve
+// ?agent=<id> fall back to their default body on null instead of requesting a
+// path that can only 404.
+/** @param {Parameters<typeof agentBodyReadable>[0]} rec */
+export function agentBodyGlbPath(rec) {
+	if (!agentBodyReadable(rec)) return null;
+	return `/api/avatars/${encodeURIComponent(rec.avatar_id)}/glb`;
+}
+
+// Why an agent's body cannot be placed in AR for this viewer: 'none' when the
+// agent has no body, 'private' when it wears a body only its owner can read, or
+// null when the body is readable.
+/** @param {Parameters<typeof agentBodyReadable>[0]} rec */
+export function agentBodyArBlocker(rec) {
+	if (!rec?.avatar_id) return 'none';
+	return agentBodyReadable(rec) ? null : 'private';
+}

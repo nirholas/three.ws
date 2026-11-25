@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T22:50:26.620Z",
+	"generated_at": "2026-11-25T23:22:11.275Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4745,
+	"total": 4746,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -64,6 +64,16 @@
 			"type": "update",
 			"title": "Agent profiles stop requesting a private body they cannot show",
 			"summary": "When a public agent wears a private avatar, its profile asked for that avatar anyway and was always refused, for every visitor. Both agent profile layouts now skip that request unless you own the agent, so the page loads with one fewer failed call and the owner still sees the body.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Agents with a private body load cleanly for visitors",
+			"summary": "When a public agent wears a 3D body its owner keeps private, its profile, classic view and walking preview now show the default body straight away instead of first requesting the private model and failing. The agent's AR page explains that the body is private and links back to the agent rather than reporting a load error, and the save-avatar card no longer fetches the same avatar twice.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1544,16 +1554,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Text to 3D keeps working when model storage is having trouble",
-			"summary": "When our primary model storage rejects a write, generated reference images are saved to the backup store, but the 3D engines were still being pointed at the primary copy and every one of those generations failed. They now read the image through three.ws itself, which finds it wherever it was saved, so text to 3D carries on through a storage outage.",
-			"link": null,
-			"tags": [
-				"fix"
 			]
 		}
 	]

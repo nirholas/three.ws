@@ -395,11 +395,20 @@ function avatarDataUri(name) {
 
 function shortAddr(s, head = 4, tail = 4) { return shortAddress(s, head, tail, { empty: '\u2014' }); }
 
+// The avatar id this viewer may hand to a body loader. A public agent can wear
+// a private body, which /api/avatars/:id (and its /glb proxy) answers 404 to
+// everyone but the owner, so for a visitor the id is withheld and each surface
+// falls back to the agent's resolvable GLB or the mannequin.
+function visibleBodyId(agent) {
+	if (!agent?.avatar_id || agent.body_readable === false) return null;
+	return agent.avatar_id;
+}
+
 // Deep-link this agent into /irl. Prefer the avatar id (resolveAvatarUrl reads it
 // directly); fall back to the always-real GLB (custom or mannequin) so the body
 // is never missing. `agent=` lets /irl pre-focus this agent's pin + inspect card.
-function irlHref(agent) {
-	const av = agent?.avatar_id || agentAvatarGlb(agent); // agentAvatarGlb never returns empty
+export function irlHref(agent) {
+	const av = visibleBodyId(agent) || agentAvatarGlb(agent); // agentAvatarGlb never returns empty
 	const sp = new URLSearchParams();
 	if (av) sp.set('avatar', av);
 	if (agent?.id) sp.set('agent', agent.id);
@@ -410,8 +419,8 @@ function irlHref(agent) {
 // Deep-link into /xr. Its resolver takes an avatar id (a raw GLB URL would 404 and
 // fall back to the default body), so pass the id when present, else let /xr load
 // its default — the link is always live either way.
-function xrHref(agent) {
-	const id = agent?.avatar_id;
+export function xrHref(agent) {
+	const id = visibleBodyId(agent);
 	return id ? `/xr?avatar=${encodeURIComponent(id)}` : '/xr';
 }
 
@@ -421,9 +430,10 @@ function xrHref(agent) {
 // `agent=` so the runtime can resolve the body (and any future persona) even when
 // no avatar id is attached, falling back to the mannequin. Joystick controls so a
 // visitor can immediately drive the avatar.
-function walkAppHref(agent) {
+export function walkAppHref(agent) {
 	const sp = new URLSearchParams();
-	if (agent?.avatar_id) sp.set('avatar', agent.avatar_id);
+	const bodyId = visibleBodyId(agent);
+	if (bodyId) sp.set('avatar', bodyId);
 	if (agent?.id) sp.set('agent', agent.id);
 	sp.set('controls', 'joystick');
 	return `/walk/app?${sp.toString()}`;
@@ -433,9 +443,10 @@ function walkAppHref(agent) {
 // circle) and joystick-driven, on the studio environment. We force a transparent
 // background and hide the ground disc so the avatar floats free on the page —
 // just the body, its soft contact shadow, and the joystick, with no framed box.
-function walkEmbedSrc(agent) {
+export function walkEmbedSrc(agent) {
 	const sp = new URLSearchParams();
-	if (agent?.avatar_id) sp.set('avatar', agent.avatar_id);
+	const bodyId = visibleBodyId(agent);
+	if (bodyId) sp.set('avatar', bodyId);
 	if (agent?.id) sp.set('agent', agent.id);
 	sp.set('controls', 'joystick');
 	sp.set('autoplay', 'true');
@@ -1076,7 +1087,7 @@ function render(agent) {
 	// Let visitors save this agent's avatar as their own fork (its wallet is
 	// already managed in the holdings panel below, so fork-only here).
 	const fork = $('ad-avatar-actions');
-	if (fork && agent.avatar_id) {
+	if (fork && visibleBodyId(agent)) {
 		if (!customElements.get('avatar-actions') && !document.querySelector('script[data-avatar-actions]')) {
 			const s = document.createElement('script');
 			s.type = 'module';
@@ -3201,6 +3212,7 @@ export function normalize(rec, avatar) {
 	return {
 		id: rec.id,
 		avatar_id: rec.avatar_id || avatar?.id || null,
+		body_readable: agentBodyReadable(rec),
 		name: rec.name || 'Unnamed agent',
 		assetKind: rec.is_registered ? 'Core Asset' : 'Off-chain',
 		// "Active" is a liveness signal, NOT an on-chain one. An agent is live as

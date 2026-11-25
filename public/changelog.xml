@@ -55,6 +55,14 @@
 			<description>When a public agent wears a private avatar, its profile asked for that avatar anyway and was always refused, for every visitor. Both agent profile layouts now skip that request unless you own the agent, so the page loads with one fewer failed call and the owner still sees the body.</description>
 		</item>
 		<item>
+			<title>Agents with a private body load cleanly for visitors</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Agents with a private body load cleanly for visitors</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When a public agent wears a 3D body its owner keeps private, its profile, classic view and walking preview now show the default body straight away instead of first requesting the private model and failing. The agent's AR page explains that the body is private and links back to the agent rather than reporting a load error, and the save-avatar card no longer fetches the same avatar twice.</description>
+		</item>
+		<item>
 			<title>An avatar whose model file was deleted now reports not found instead of a server error</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:An avatar whose model file was deleted now reports not found instead of a server error</guid>

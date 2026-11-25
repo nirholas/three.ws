@@ -138,10 +138,13 @@ class AvatarActions extends HTMLElement {
 		this._agent = null;
 		this._me = null;
 		this._busy = false;
+		this._initFor = null;
 	}
 
 	set avatar(v) {
 		this._avatar = v || null;
+		// A handed-in record is new information, so it always re-renders.
+		this._initFor = null;
 		if (this.isConnected) this._init();
 	}
 	get avatar() {
@@ -165,9 +168,15 @@ class AvatarActions extends HTMLElement {
 		// No id, or a stand-in that can never resolve (default mannequin): stay
 		// invisible without issuing requests the server is guaranteed to reject.
 		if (!id || !UUID_RE.test(String(id))) {
+			this._initFor = null;
 			this.shadowRoot.innerHTML = '';
 			return;
 		}
+		// Upgrading an element whose avatar-id is already set runs
+		// attributeChangedCallback and then connectedCallback, and a re-attach runs
+		// connectedCallback again: one load per id is enough.
+		if (this._initFor === id) return;
+		this._initFor = id;
 		this._render(); // initial skeleton
 		try {
 			this._me = await me();

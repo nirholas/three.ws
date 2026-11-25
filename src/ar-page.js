@@ -10,6 +10,7 @@
 
 import { log } from './shared/log.js';
 import { mountViewSwitcher } from './view-switcher.js';
+import { agentBodyArBlocker } from './shared/agent-body-access.js';
 
 const segments = location.pathname.split('/').filter(Boolean);
 // /avatars/:id/ar → ['avatars', 'uuid', 'ar']; /agents/:id/ar → ['agents', ...]
@@ -40,10 +41,18 @@ async function init() {
 	if (mode === 'agent') {
 		const agent = await fetchAgent(entityId);
 		if (!agent) return;
-		if (!agent.avatar_id) {
+		const blocker = agentBodyArBlocker(agent);
+		if (blocker === 'none') {
 			showError(
 				`${agent.name || 'This agent'} has no 3D body yet, so there is nothing to place in your room. Give it one in the studio, then come back.`,
 				{ browseHref: '/create', browseLabel: 'Create a body' },
+			);
+			return;
+		}
+		if (blocker === 'private') {
+			showError(
+				`${agent.name || 'This agent'} wears a 3D body its owner keeps private, so it cannot be placed in your room. You can still meet the agent on its page.`,
+				{ browseHref: `/agents/${encodeURIComponent(entityId)}`, browseLabel: 'Open the agent' },
 			);
 			return;
 		}

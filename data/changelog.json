@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Agents with a private body load cleanly for visitors",
+			"summary": "When a public agent wears a 3D body its owner keeps private, its profile, classic view and walking preview now show the default body straight away instead of first requesting the private model and failing. The agent's AR page explains that the body is private and links back to the agent rather than reporting a load error, and the save-avatar card no longer fetches the same avatar twice.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "The Trenches page keeps showing recent data when the market service is slow",
 			"summary": "When the live market service stalls, Trenches now shows the last real data it received, labelled with the time it was taken, and keeps refreshing in the background instead of going offline. It only shows the offline panel when no recent data exists at all.",
 			"tags": [
