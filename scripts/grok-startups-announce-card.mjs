@@ -71,7 +71,7 @@ await page.evaluate(() => {
 		node('sub', 'Grok can make, rig and explain real 3D through three.ws.'),
 	);
 	const chips = node('chips', '');
-	for (const text of ['5,547 tool calls from Grok', '44 of 44 days live', '2 errors']) chips.append(node('', text));
+	for (const text of ['5,547 tool calls from Grok', 'Used every day for 44 days']) chips.append(node('', text));
 	card.append(node('brand', 'three.ws'), middle, chips);
 	document.body.append(card);
 	window.dispatchEvent(new Event('resize'));
