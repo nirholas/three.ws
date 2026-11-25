@@ -32,7 +32,7 @@ vi.mock('../api/_lib/db.js', () => ({ sql: (...a) => sqlMock(...a) }));
 
 const headObjectMock = vi.fn();
 const putObjectMock = vi.fn();
-const presignGetMock = vi.fn(async ({ key }) => `https://signed.example/${key}`);
+const getPublicObjectBufferMock = vi.fn(async (key) => Buffer.from(`glb:${key}`));
 // Only the IO is faked. The failure classifiers come from the real modules: they
 // decide whether a failed render costs the avatar one of its three lifetime
 // attempts, and a hand-copied stand-in drifts from production silently, which is
@@ -41,7 +41,7 @@ vi.mock('../api/_lib/r2.js', async (importActual) => ({
 	...(await importActual()),
 	headObject: (...a) => headObjectMock(...a),
 	putObject: (...a) => putObjectMock(...a),
-	presignGet: (...a) => presignGetMock(...a),
+	getPublicObjectBuffer: (...a) => getPublicObjectBufferMock(...a),
 	publicUrl: (key) => `https://cdn.example/${key}`,
 	isLegacyOgThumbnailKey: (k) => /^https?:\/\/.*_og\.png$/i.test(String(k || '')),
 }));
@@ -144,11 +144,11 @@ describe('renderThumbnail — render then commit', () => {
 		expect(r.key).toBe('thumb/av-9.png');
 	});
 
-	it('presigns the durable storage key rather than trusting a stale URL', async () => {
+	it('reads the durable storage key through the storage ladder rather than trusting a stale URL', async () => {
 		renderGlbToPngMock.mockResolvedValue(Buffer.from('png'));
 		await renderThumbnail({ id: 'av-9', storage_key: 'u/1/model.glb' });
-		expect(presignGetMock).toHaveBeenCalledWith(expect.objectContaining({ key: 'u/1/model.glb' }));
-		expect(renderGlbToPngMock.mock.calls[0][0].glbUrl).toBe('https://signed.example/u/1/model.glb');
+		expect(getPublicObjectBufferMock).toHaveBeenCalledWith('u/1/model.glb');
+		expect(renderGlbToPngMock.mock.calls[0][0].glbBytes.toString()).toBe('glb:u/1/model.glb');
 	});
 
 	it('commits thumbnail_key only after the upload resolves', async () => {
@@ -185,8 +185,8 @@ describe('renderBatch — bounded drain', () => {
 				{ id: 'bad-1', storage_key: 'b.glb', name: 'Bad' },
 			] },
 		];
-		renderGlbToPngMock.mockImplementation(async ({ glbUrl }) => {
-			if (glbUrl.includes('b.glb')) throw new Error('corrupt glb');
+		renderGlbToPngMock.mockImplementation(async ({ glbBytes }) => {
+			if (String(glbBytes).includes('b.glb')) throw new Error('corrupt glb');
 			return Buffer.from('png');
 		});
 

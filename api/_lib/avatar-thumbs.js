@@ -34,7 +34,7 @@
 
 import { sql } from './db.js';
 import {
-	presignGet,
+	getPublicObjectBuffer,
 	putObject,
 	headObject,
 	publicUrl,
@@ -71,9 +71,6 @@ export const MAX_ATTEMPTS = 3;
 
 // A claimed-but-unresolved row (container OOM'd mid-render) frees up after this.
 export const LEASE_MINUTES = 15;
-
-// Source GLB presign lifetime — chromium must fetch the bytes within it.
-const SOURCE_TTL_SECONDS = 120;
 
 export function thumbKeyFor(avatarId) {
 	return `thumb/${avatarId}.png`;
@@ -249,11 +246,19 @@ export async function renderThumbnail({ id, storage_key: storageKey }) {
 	const { renderGlbToPng } = await import('./render-glb.js');
 
 	// storage_key is normally a bucket key; first-party avatars store an absolute
-	// URL. presignGet() passes those through untouched.
-	const glbUrl = await presignGet({ key: storageKey, expiresIn: SOURCE_TTL_SECONDS });
+	// URL, which is fetched as one. A bucket key is read through the storage
+	// fallback ladder (signed R2, the GCS fallback bucket, the public bucket
+	// domain) rather than a presigned URL: while the R2 signing credential was
+	// rejected, every presigned URL answered 401, both render lanes failed on
+	// it, and "upstream returned 401" charged each blameless avatar an attempt
+	// until the whole visible backlog was retired. If every rung fails, the
+	// read throws the storage error itself, which renderBatch hands back.
+	const source = /^https?:\/\//i.test(String(storageKey))
+		? { glbUrl: storageKey }
+		: { glbBytes: await getPublicObjectBuffer(storageKey) };
 
 	const png = await renderGlbToPng({
-		glbUrl,
+		...source,
 		width: THUMB_SIZE,
 		height: THUMB_SIZE,
 		background: THUMB_BACKGROUND,
@@ -369,6 +374,32 @@ export async function queueRestyle({ limit = 100 } = {}) {
 		await sql`DELETE FROM avatar_thumbnail_backfill WHERE avatar_id = any(${ids}::uuid[])`.catch(() => {});
 	}
 	return { queued: rows.length };
+}
+
+// Repair for one specific era. Bucket-held GLBs used to reach the renderer as
+// presigned R2 URLs, and while the R2 signing credential was rejected every one
+// of them answered 401, which both render lanes reported as
+// "glb fetch failed: upstream returned 401". Neither classifier recognised that
+// string, so each tick charged eight blameless avatars an attempt and retired
+// them for good after three. renderThumbnail now reads bucket keys through the
+// storage fallback ladder and never produces that error for one, so these rows
+// are released back into the candidate set. Scoped to bucket keys: a 401/403
+// from an absolute, externally hosted model URL can be the model's own fault.
+// Idempotent and cheap (a small ledger joined on its key), so the backfill cron
+// runs it every tick until nothing matches.
+export const SIGNED_READ_ERROR_PATTERN = 'glb fetch failed: upstream returned 40[13]';
+const ABSOLUTE_URL_PATTERN = '^https?://';
+
+export async function releaseSignedReadFailures() {
+	const rows = await sql`
+		DELETE FROM avatar_thumbnail_backfill b
+		 USING avatars a
+		 WHERE a.id = b.avatar_id
+		   AND b.last_error ~* ${SIGNED_READ_ERROR_PATTERN}
+		   AND a.storage_key !~* ${ABSOLUTE_URL_PATTERN}
+		RETURNING b.avatar_id
+	`;
+	return { released: rows.length };
 }
 
 // Repair: forget every ledger row whose failure was the environment's fault

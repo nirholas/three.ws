@@ -41,6 +41,7 @@ import { logger } from '../_lib/usage.js';
 import {
 	ensureBackfillSchema,
 	adoptForgePreviews,
+	releaseSignedReadFailures,
 	renderBatch,
 	coverage,
 } from '../_lib/avatar-thumbs.js';
@@ -83,6 +84,15 @@ export default wrapCron(async (req, res) => {
 		} catch (err) {
 			log.warn('adopt_failed', { message: err?.message });
 		}
+	}
+
+	// Give back avatars a rejected R2 signing credential retired before bucket
+	// keys were read through the storage ladder (see releaseSignedReadFailures).
+	try {
+		const { released } = await releaseSignedReadFailures();
+		if (released) log.info('signed_read_retirements_released', { released });
+	} catch (err) {
+		log.warn('release_signed_read_failed', { message: err?.message });
 	}
 
 	// Step 2 — render what's left, most-visible first.

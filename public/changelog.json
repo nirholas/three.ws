@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T20:59:02.260Z",
+	"generated_at": "2026-11-25T21:08:50.498Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -41,6 +41,16 @@
 			"type": "update",
 			"title": "Agent profiles stop requesting a private body they cannot show",
 			"summary": "When a public agent wears a private avatar, its profile asked for that avatar anyway and was always refused, for every visitor. Both agent profile layouts now skip that request unless you own the agent, so the page loads with one fewer failed call and the owner still sees the body.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Avatar thumbnails render again while the storage signing key is refused",
+			"summary": "The thumbnail backfill read each model through a signed storage link, and while that signing key was refused every render failed and the avatar was retired after three tries. Models are now read through the storage fallback chain, so thumbnails keep filling in, and avatars retired by that outage are put back in the queue automatically.",
 			"link": null,
 			"tags": [
 				"fix"

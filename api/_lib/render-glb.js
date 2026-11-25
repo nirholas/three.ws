@@ -13,7 +13,7 @@
 // so Vercel's NFT doesn't statically trace the chromium tree for every route
 // that transitively imports this module — that trace caused 45-min build hangs.
 import { env } from './env.js';
-import { fetchModel } from './fetch-model.js';
+import { fetchModel, suppliedModelBytes } from './fetch-model.js';
 import { scriptJson, safeCssColor } from './render-safe.js';
 import { DEFAULT_THREE_BASE, resolveThreeCdn, THREE_CDN_HOSTS, THREE_VERSION, threeImportMap } from './three-cdn.js';
 import { thumbnailPoseClip, thumbnailPoseModules, THUMBNAIL_POSE_SPECIFIER } from './pose-runtime.js';
@@ -364,7 +364,7 @@ async function onLoaded(gltf) {
  * @returns {Promise<Buffer>} PNG buffer
  */
 export async function renderGlbToPng(opts = {}) {
-	if (!opts.glbUrl || typeof opts.glbUrl !== 'string') {
+	if (!opts.glbBytes && (!opts.glbUrl || typeof opts.glbUrl !== 'string')) {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
 	// Read from process.env rather than ./env.js: that module exposes an
@@ -391,6 +391,9 @@ export async function renderGlbToPng(opts = {}) {
  *
  * @param {object} opts
  * @param {string} opts.glbUrl  - publicly reachable URL of the .glb
+ * @param {Uint8Array} [opts.glbBytes] - the model itself, in place of glbUrl,
+ *   for a caller that already read it (object storage through the fallback
+ *   ladder); held to the same byte cap as a fetch
  * @param {number} [opts.width=1200]
  * @param {number} [opts.height=630]
  * @param {string} [opts.background='#0a0a0a'] - 'transparent' or hex color
@@ -408,8 +411,8 @@ export async function renderGlbToPng(opts = {}) {
  * @param {number} [opts.fov] vertical field of view (default 28)
  * @returns {Promise<Buffer>} PNG buffer
  */
-export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630, background = '#0a0a0a', backdrop = null, maxBytes = DEFAULT_MAX_GLB_BYTES, pose = 'rest', onPose = null, yaw, pitch, fov } = {}) {
-	if (!glbUrl || typeof glbUrl !== 'string') {
+export async function renderGlbToPngBrowser({ glbUrl, glbBytes = null, width = 1200, height = 630, background = '#0a0a0a', backdrop = null, maxBytes = DEFAULT_MAX_GLB_BYTES, pose = 'rest', onPose = null, yaw, pitch, fov } = {}) {
+	if (!glbBytes && (!glbUrl || typeof glbUrl !== 'string')) {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
 	// Pull the GLB through the SSRF-pinned fetcher (DNS-pinned per hop, redirects
@@ -418,7 +421,7 @@ export async function renderGlbToPngBrowser({ glbUrl, width = 1200, height = 630
 	// touches the network — defeating DNS-rebinding and redirect-to-internal SSRF.
 	let glbBase64;
 	try {
-		const { bytes } = await fetchModel(glbUrl, { maxBytes });
+		const bytes = glbBytes ? suppliedModelBytes(glbBytes, { maxBytes }) : (await fetchModel(glbUrl, { maxBytes })).bytes;
 		glbBase64 = Buffer.from(bytes).toString('base64');
 	} catch (err) {
 		throw Object.assign(new Error(`glb fetch failed: ${err?.message || err}`), {

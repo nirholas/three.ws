@@ -5,7 +5,7 @@
 // The autonomous x402 spend loop (api/cron/x402-autonomous-loop.js, entry
 // `avatar-thumbnail-regen`) pays /api/x402/asset-download for the stalest
 // marketplace listing and enqueues a job in avatar_thumbnail_regen_jobs. This
-// cron drains that queue: for each claimed job it re-presigns the source GLB,
+// cron drains that queue: for each claimed job it reads the source GLB,
 // renders it to a fresh PNG with the same headless-chromium pipeline used for
 // OG cards, uploads the PNG to R2, and writes the new key back onto
 // paid_assets.thumbnail_r2_key (+ thumbnail_generated_at) and the linked
@@ -23,7 +23,7 @@
 
 import { json, wrapCron } from '../_lib/http.js';
 import { logger } from '../_lib/usage.js';
-import { presignGet, putObject, publicUrl, objectStorageConfigured } from '../_lib/r2.js';
+import { getPublicObjectBuffer, putObject, publicUrl, objectStorageConfigured } from '../_lib/r2.js';
 import { renderGlbToPng } from '../_lib/render-glb.js';
 import { thumbBackdropFor } from '../_lib/avatar-thumbs.js';
 import {
@@ -41,19 +41,20 @@ const log = logger('avatar-thumbnail-render');
 
 const BATCH = Math.max(1, Number(process.env.THUMBNAIL_RENDER_BATCH || 3));
 const BACKGROUND = (process.env.THUMBNAIL_RENDER_BG || '#0a0a0a').trim();
-// Source GLB presign lifetime — long enough for chromium to fetch the bytes.
-const SOURCE_TTL_SECONDS = 120;
 
 async function renderOne(job) {
 	const t0 = Date.now();
-	// 1. Re-presign the durable source key (the loop's downloadUrl has expired).
-	const glbUrl = await presignGet({ key: job.r2_key, expiresIn: SOURCE_TTL_SECONDS });
+	// 1. Read the durable source key (the loop's downloadUrl has expired) through
+	// the storage fallback ladder: signed R2, the GCS fallback bucket, then the
+	// public bucket domain. A presigned URL fails outright the moment the R2
+	// signing credential is rejected, and both render lanes then fail on its 401.
+	const glbBytes = await getPublicObjectBuffer(job.r2_key);
 
 	// 2. Render the current model to a PNG. The per-asset tinted backdrop keeps
 	// regen renders interchangeable with backfill renders (avatar-thumbs.js);
 	// an explicit THUMBNAIL_RENDER_BG override still wins.
 	const png = await renderGlbToPng({
-		glbUrl,
+		glbBytes,
 		width: job.width || 768,
 		height: job.height || 768,
 		background: BACKGROUND,
@@ -74,7 +75,7 @@ export default wrapCron(async (req, res) => {
 	if (req.method !== 'GET') return json(res, 405, { error: 'method_not_allowed' });
 	if (!requireCron(req, res)) return;
 
-	// renderOne presigns the source key and uploads the PNG, so unconfigured
+	// renderOne reads the source key and uploads the PNG, so unconfigured
 	// storage fails every claimed job identically while charging each one a retry
 	// out of its bounded budget. Leave the queue alone until storage is back.
 	if (!objectStorageConfigured()) {

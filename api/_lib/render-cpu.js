@@ -15,7 +15,7 @@
 // byte-capped treatment it got before.
 
 import { AvatarModel, renderFrame, renderFrames, encodePng, encodeApng, parseClipJson } from '@three-ws/render';
-import { fetchModel } from './fetch-model.js';
+import { fetchModel, suppliedModelBytes } from './fetch-model.js';
 import { thumbnailPoseClip } from './pose-runtime.js';
 
 // Framing constants shared with the chromium lane so a CPU render and a
@@ -110,7 +110,14 @@ function backdropToBackground(background, backdrop) {
 	return background;
 }
 
-async function loadCached(glbUrl, { maxBytes, animationUrl }) {
+async function loadCached(glbUrl, { maxBytes, animationUrl, glbBytes = null }) {
+	// Caller-held bytes have no stable URL to key on, and the caller (a thumbnail
+	// backfill, one render per model) never asks for the same model twice, so
+	// they load uncached.
+	if (glbBytes) {
+		const bytes = suppliedModelBytes(glbBytes, { maxBytes });
+		return AvatarModel.load(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+	}
 	const key = `${glbUrl}|${animationUrl || ''}`;
 	const cached = cacheGet(key);
 	if (cached) return cached;
@@ -172,6 +179,7 @@ async function ensureClip(model, clipJson) {
  *
  * @param {object} opts
  * @param {string} opts.glbUrl publicly reachable URL of the .glb
+ * @param {Uint8Array} [opts.glbBytes] the model itself in place of glbUrl (same byte cap)
  * @param {number} [opts.width=1200]
  * @param {number} [opts.height=630]
  * @param {string} [opts.background='#0a0a0a'] 'transparent' or a hex colour
@@ -192,6 +200,7 @@ async function ensureClip(model, clipJson) {
  */
 export async function renderGlbToPngCpu({
 	glbUrl,
+	glbBytes = null,
 	width = 1200,
 	height = 630,
 	background = '#0a0a0a',
@@ -210,10 +219,10 @@ export async function renderGlbToPngCpu({
 	pose = 'rest',
 	onPose = null,
 } = {}) {
-	if (!glbUrl || typeof glbUrl !== 'string') {
+	if (!glbBytes && (!glbUrl || typeof glbUrl !== 'string')) {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
-	const model = await loadCached(glbUrl, { maxBytes, animationUrl });
+	const model = await loadCached(glbUrl, { maxBytes, animationUrl, glbBytes });
 	const frameOptions = {
 		width,
 		height,

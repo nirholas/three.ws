@@ -48,6 +48,26 @@ function validateUrl(rawUrl) {
 }
 
 /**
+ * Model bytes a caller already holds, for example a GLB read from object
+ * storage through the fallback ladder instead of a presigned URL. They get the
+ * same byte cap and error shape the network path enforces, so a renderer treats
+ * both sources alike.
+ *
+ * @param {Uint8Array|Buffer|ArrayBuffer} bytes
+ * @param {{ maxBytes?: number }} [opts]
+ * @returns {Uint8Array}
+ */
+export function suppliedModelBytes(bytes, opts = {}) {
+	const maxBytes = opts.maxBytes ?? DEFAULT_MAX_BYTES;
+	const view = bytes instanceof Uint8Array ? bytes : bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : null;
+	if (!view || !view.byteLength) throw new FetchModelError('model bytes are empty', 'no_body');
+	if (view.byteLength > maxBytes) {
+		throw new FetchModelError(`file too large (${view.byteLength} > ${maxBytes} bytes)`, 'file_too_large');
+	}
+	return view;
+}
+
+/**
  * Fetch bytes from an untrusted URL with SSRF protection.
  *
  * @param {string} rawUrl
