@@ -28,7 +28,7 @@ import {
 } from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
 import { fetchUpstream } from '../../_lib/upstream-fetch.js';
-import { fallbackBucket, fallbackFetch, noteFallback } from '../../_lib/storage-fallback.js';
+import { fallbackBucket, fallbackFetch, noteFallback, mirrorWhileServing, holdEndUntil } from '../../_lib/storage-fallback.js';
 
 import { pinToIPFS, ipfsPinningConfigured } from '../../_lib/ipfs-pin.js';
 export default wrap(async (req, res) => {
@@ -608,17 +608,20 @@ async function handleThumb(req, res) {
 // Throws before anything is written when the upstream cannot be read, so the
 // caller can still answer with an error; a mid-stream failure rejects after
 // headers are committed and the caller destroys the socket.
-async function streamPublicGlb(res, url, { name, cacheControl }) {
+// `mirrorKey` names the bucket key a public-domain read belongs to: its bytes
+// are then copied into the GCS fallback bucket on the way (storage-fallback.js
+// mirrorWhileServing), so the next read of an R2-only GLB is in-region.
+async function streamPublicGlb(res, url, { name, cacheControl, mirrorKey = null }) {
 	const upstream = await fetchUpstream(
 		url,
 		{ headers: { accept: 'model/gltf-binary,*/*' } },
 		{ name, timeoutMs: 20_000, attempts: 2 },
 	);
-	await streamGlbResponse(res, upstream, cacheControl);
+	await streamGlbResponse(res, upstream, cacheControl, mirrorKey);
 }
 
 // Pipe an already-open upstream Response into `res` with the GLB headers.
-async function streamGlbResponse(res, upstream, cacheControl) {
+async function streamGlbResponse(res, upstream, cacheControl, mirrorKey = null) {
 	res.statusCode = 200;
 	res.setHeader('content-type', 'model/gltf-binary');
 	const len = upstream.headers.get('content-length');
@@ -626,6 +629,11 @@ async function streamGlbResponse(res, upstream, cacheControl) {
 	const etag = upstream.headers.get('etag');
 	if (etag) res.setHeader('etag', etag);
 	res.setHeader('cache-control', cacheControl);
+	if (mirrorKey) {
+		const { body, settled } = mirrorWhileServing(mirrorKey, upstream);
+		await pipeline(Readable.fromWeb(body), holdEndUntil(settled), res);
+		return;
+	}
 	await pipeline(Readable.fromWeb(upstream.body), res);
 }
 
@@ -814,7 +822,7 @@ async function handleGlb(req, res) {
 				// Never cache the degraded path: the moment the credential is
 				// healthy again traffic has to return to the signed read with no
 				// stale hop pinned at the edge.
-				await streamPublicGlb(res, fallbackUrl, { name: 'r2:public-glb', cacheControl: 'no-store' });
+				await streamPublicGlb(res, fallbackUrl, { name: 'r2:public-glb', cacheControl: 'no-store', mirrorKey: key });
 				return;
 			} catch (fallbackErr) {
 				console.error('[avatars/glb] public bucket domain failed too:', key, fallbackErr?.message);

@@ -51,6 +51,26 @@ vi.mock('../../api/_lib/upstream-fetch.js', async (importOriginal) => ({
 	fetchUpstream: (...args) => fetchUpstreamImpl(...args),
 }));
 
+// The public-domain rung copies the GLB into the fallback bucket on the way
+// (storage-fallback.js mirrorWhileServing). Its token minter and the GCS PUT
+// are stubbed so the copy never leaves the test.
+vi.mock('../../api/_lib/gcp-auth.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	getGcpAccessToken: async () => 'test-token',
+}));
+const gcsPuts = [];
+const realFetch = global.fetch;
+global.fetch = async (url, init = {}) => {
+	if (String(url).startsWith('https://storage.googleapis.com/') && init.method === 'PUT') {
+		gcsPuts.push({ url: String(url), body: Buffer.from(await new Response(init.body).arrayBuffer()), headers: init.headers });
+		return new Response('', { status: 200 });
+	}
+	throw new Error(`unexpected fetch in test: ${url}`);
+};
+afterAll(() => {
+	global.fetch = realFetch;
+});
+
 let fallbackFetchImpl;
 vi.mock('../../api/_lib/storage-fallback.js', async (importOriginal) => ({
 	...(await importOriginal()),
@@ -109,6 +129,7 @@ beforeEach(() => {
 	vi.spyOn(console, 'error').mockImplementation(() => {});
 	vi.spyOn(console, 'warn').mockImplementation(() => {});
 	vi.spyOn(console, 'log').mockImplementation(() => {});
+	gcsPuts.length = 0;
 	sendImpl = async () => { throw new Error('r2.send not stubbed'); };
 	fetchUpstreamImpl = publicDomain404;
 	fallbackFetchImpl = async () => null;
@@ -151,5 +172,10 @@ describe('avatar glb proxy: GCS fallback bucket', () => {
 		const res = await invoke();
 		expect(res.statusCode).toBe(200);
 		expect(Buffer.concat(res.chunks).equals(GLB_BYTES)).toBe(true);
+		// ...and copies it into the fallback bucket, so the next read is in-region.
+		expect(gcsPuts).toHaveLength(1);
+		expect(gcsPuts[0].url).toBe(`https://storage.googleapis.com/fallback-bucket/${KEY}`);
+		expect(gcsPuts[0].body.equals(GLB_BYTES)).toBe(true);
+		expect(gcsPuts[0].headers['x-goog-meta-mirrored-from']).toBe('r2-public-domain');
 	});
 });

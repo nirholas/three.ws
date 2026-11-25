@@ -19,6 +19,23 @@ vi.mock('../api/_lib/r2.js', async (importOriginal) => {
 	return { ...actual, r2: { send: (...args) => send(...args) } };
 });
 
+// Public-domain reads copy the object into the fallback bucket on the way
+// (storage-fallback.js mirrorWhileServing). Stub the token minter and accept the
+// GCS PUT so the copy never leaves the test.
+vi.mock('../api/_lib/gcp-auth.js', async (importOriginal) => {
+	const actual = await importOriginal();
+	return { ...actual, getGcpAccessToken: async () => 'test-token' };
+});
+const gcsPuts = [];
+const realFetch = global.fetch;
+global.fetch = async (url, init = {}) => {
+	if (String(url).startsWith('https://storage.googleapis.com/') && init.method === 'PUT') {
+		gcsPuts.push({ url: String(url), body: Buffer.from(await new Response(init.body).arrayBuffer()) });
+		return new Response('', { status: 200 });
+	}
+	return realFetch(url, init);
+};
+
 const fetchUpstream = vi.fn();
 vi.mock('../api/_lib/upstream-fetch.js', async (importOriginal) => {
 	const actual = await importOriginal();
@@ -126,6 +143,21 @@ describe('/cdn/_v on a rejected storage credential', () => {
 		expect(fetchUpstream).not.toHaveBeenCalled();
 		expect(res.statusCode).toBe(200);
 		expect((await sharp(res.body).metadata()).width).toBe(256);
+	});
+
+	it('copies an R2-only source into the fallback bucket while building from the public domain', async () => {
+		process.env.STORAGE_FALLBACK_BUCKET = 'three-ws-fallback';
+		gcsPuts.length = 0;
+		send.mockRejectedValue(headCredentialFault());
+		fallbackFetch.mockResolvedValue(null);
+		fetchUpstream.mockResolvedValue(new Response(new Uint8Array(bigPng), { headers: { 'content-length': String(bigPng.length), 'content-type': 'image/png' } }));
+		const res = makeRes();
+		await handler(req('_v/256/thumb/r2-only.png'), res);
+		expect(res.statusCode).toBe(200);
+		expect((await sharp(res.body).metadata()).width).toBe(256);
+		expect(gcsPuts).toHaveLength(1);
+		expect(gcsPuts[0].url).toBe('https://storage.googleapis.com/three-ws-fallback/thumb/r2-only.png');
+		expect(gcsPuts[0].body.equals(Buffer.from(bigPng))).toBe(true);
 	});
 
 	it('answers 404 when the public domain says the object does not exist', async () => {

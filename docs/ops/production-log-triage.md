@@ -207,6 +207,18 @@ from ~300-550 successes a day to 1 of 44, because every finished GLB died in
   `/api/print/upload` and every other presign endpoint keep working. The bucket's PUT
   CORS rule is in [`deploy/storage-fallback/`](../../deploy/storage-fallback/README.md);
   a browser upload that dies as a network error with no status means that rule is missing.
+- **Reads of pre-outage objects copy themselves over (since 2026-11-25).** An object
+  written before R2 started refusing us exists in R2 only, so `/cdn/<key>`, `/cdn/_v/`
+  and `/api/avatars/:id/glb` can serve it solely from the rate-limited r2.dev public
+  domain (5000+ reads a day, about 20 of them timing out at 20s as a 502). The first
+  public-domain read of a complete, uncompressed object up to 64 MB now also writes it
+  into the fallback bucket under the same key (`mirrorWhileServing` in
+  `api/_lib/storage-fallback.js`, custom metadata `mirrored-from: r2-public-domain`), so
+  every later read is the in-region GCS rung. The response holds its final end up to 5s
+  for the copy to commit, because Cloud Run throttles CPU once a response finishes. A
+  failed copy logs `[storage-fallback] mirror of <key> into the fallback bucket failed`
+  and the reader is still served in full. The backfill skips these copies (R2 holds the
+  same size) and `--delete-after` clears them.
 - **What still fails:** the routes that call `r2.send` directly (agent
   token/register/onchain, erc8004 metadata writes, capture multipart uploads) rather
   than the helpers.
@@ -227,9 +239,8 @@ from ~300-550 successes a day to 1 of 44, because every finished GLB died in
   already holds at the same size, and deletes a GCS copy only after R2 verifies it.
   Reads keep falling back for anything not yet moved, so a partial run is safe.
 
-The read paths that bypass the helpers still fall back to the public bucket domain
-(`/api/avatars/:id/glb` streams it through), which is rate-limited, and does not help
-when Cloudflare's whole account is refusing us.
+The public bucket domain remains the last rung for an object no other store holds yet.
+It is rate-limited, and it does not help when Cloudflare's whole account is refusing us.
 
 ---
 

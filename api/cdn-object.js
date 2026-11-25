@@ -22,7 +22,7 @@ import { pipeline } from 'node:stream/promises';
 import { GetObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { cors, error, wrap } from './_lib/http.js';
 import { r2, isStorageInfrastructureError, bucketDomainUrlOrNull } from './_lib/r2.js';
-import { fallbackBucket, fallbackFetch, fallbackHead, noteFallback } from './_lib/storage-fallback.js';
+import { fallbackBucket, fallbackFetch, fallbackHead, noteFallback, mirrorWhileServing, holdEndUntil, mirrorSettledWithin } from './_lib/storage-fallback.js';
 import { fetchUpstream } from './_lib/upstream-fetch.js';
 import { env } from './_lib/env.js';
 import { parseVariantKey, variantObjectKey } from '../src/shared/cdn-variant.js';
@@ -136,7 +136,10 @@ function redirectToSource(res, source) {
 // Stream a fetch Response (the GCS fallback bucket or the public bucket domain)
 // as this object, with the same headers the signed read sets. The edge cache is
 // kept short (60s) so traffic returns to R2 within a minute of it recovering.
-async function streamDegraded(req, res, key, upstream, range) {
+// `mirror` marks a public-domain read: its bytes are copied into the fallback
+// bucket on the way (storage-fallback.js mirrorWhileServing), so the next read
+// of an R2-only object is the in-region GCS rung instead of r2.dev.
+async function streamDegraded(req, res, key, upstream, range, { mirror = false } = {}) {
 	const type = contentTypeFor(key, upstream.headers.get('content-type'));
 	res.statusCode = upstream.status === 206 ? 206 : 200;
 	res.setHeader('content-type', type);
@@ -154,6 +157,11 @@ async function streamDegraded(req, res, key, upstream, range) {
 	if (req.method === 'HEAD' || !upstream.body) {
 		upstream.body?.cancel?.();
 		return res.end();
+	}
+	if (mirror && !range) {
+		const { body, settled } = mirrorWhileServing(key, upstream);
+		await pipeline(Readable.fromWeb(body), holdEndUntil(settled), res);
+		return;
 	}
 	await pipeline(Readable.fromWeb(upstream.body), res);
 }
@@ -201,7 +209,11 @@ async function degradedSource(source) {
 		response.body?.cancel?.();
 		return { notFound: true };
 	}
-	return { response };
+	// Copy the source into the fallback bucket while it is read, so the next
+	// variant build (and every plain read) of this R2-only object stays in-region.
+	const { body, settled } = mirrorWhileServing(source, response);
+	if (body === response.body) return { response, settled };
+	return { response: new Response(body, { status: response.status, headers: response.headers }), settled };
 }
 
 // R2 cannot answer for the source, but the bytes are still readable elsewhere.
@@ -233,6 +245,7 @@ async function serveDegradedVariant(req, res, { width, source }) {
 	res.setHeader('cross-origin-resource-policy', 'cross-origin');
 	res.setHeader('cache-control', 'public, max-age=60, s-maxage=60');
 	res.setHeader('content-length', String(bytes.length));
+	if (found.settled) await mirrorSettledWithin(found.settled);
 	if (req.method === 'HEAD') return res.end();
 	return res.end(bytes);
 }
@@ -463,7 +476,7 @@ export default wrap(async (req, res) => {
 					upstream.body?.cancel?.();
 					return error(res, 404, 'not_found', 'object not found');
 				}
-				return await streamDegraded(req, res, key, upstream, range);
+				return await streamDegraded(req, res, key, upstream, range, { mirror: true });
 			} catch (fallbackErr) {
 				console.error('[cdn-object] public bucket domain failed too:', key, fallbackErr?.message);
 				if (res.headersSent) return res.destroy(fallbackErr);

@@ -27,6 +27,7 @@
 // is no SDK dependency and no key on disk.
 
 import { createHash, createSign } from 'node:crypto';
+import { Transform } from 'node:stream';
 import { getGcpAccessToken, parseServiceAccount } from './gcp-auth.js';
 
 const GCS_XML = 'https://storage.googleapis.com';
@@ -42,7 +43,7 @@ function objectUrl(bucket, key) {
 	return `${GCS_XML}/${bucket}/${key.split('/').map(encodeURIComponent).join('/')}`;
 }
 
-async function call(method, key, { headers = {}, body } = {}) {
+async function call(method, key, { headers = {}, body, duplex } = {}) {
 	const bucket = fallbackBucket();
 	if (!bucket) throw new Error('storage fallback bucket is not configured');
 	const token = await getGcpAccessToken();
@@ -50,6 +51,8 @@ async function call(method, key, { headers = {}, body } = {}) {
 		method,
 		headers: { authorization: `Bearer ${token}`, ...headers },
 		body,
+		// A streamed request body must declare half duplex in Node's fetch.
+		...(duplex ? { duplex } : {}),
 		signal: AbortSignal.timeout(TIMEOUT_MS),
 	});
 }
@@ -191,6 +194,111 @@ export function noteFallback(op, key, err) {
 	if (warned.size > 5000) warned.clear();
 	warned.add(tag);
 	console.warn(`[storage-fallback] ${op} ${key} served by GCS fallback (R2: ${err?.name || 'error'}: ${String(err?.message || err).slice(0, 120)})`);
+}
+
+// ── Copy-on-read from the R2 public domain ──────────────────────────────────
+// Objects written BEFORE R2 started refusing our credential live in R2 only, so
+// while the outage lasts the read helpers can serve them solely by streaming
+// the bucket's rate-limited r2.dev domain. Measured 2026-11-25 that was 5000+
+// reads a day, about 20 of which timed out after 20s and answered 502, and every
+// object paid that hop again on each edge-cache miss. mirrorWhileServing() tees
+// such a read: the caller serves one branch while the other is written into the
+// fallback bucket under the same key, so the next read is the in-region GCS rung.
+// The backfill skips a key R2 already holds at the same size, so a mirrored copy
+// never travels back, and --delete-after clears it once R2 verifies.
+
+export const MIRROR_MAX_BYTES = 64 * 1024 * 1024;
+// How long a response may hold its final end for the copy to commit. Cloud Run
+// throttles CPU once a response completes, so a copy left running after it can
+// stall until the 30s upload timeout drops it (an uncommitted PUT leaves no
+// object behind, so the worst case is a copy that did not happen).
+export const MIRROR_HOLD_MS = 5_000;
+const mirroring = new Set();
+
+/**
+ * Serve a public-domain read and copy it into the fallback bucket on the way.
+ * Only a complete (200), uncompressed body under the size cap is copied: a
+ * range is a fragment, and a decoded body no longer matches its length header.
+ * One copy per key per process at a time.
+ *
+ * @param {string} key  the bucket key the bytes belong to
+ * @param {Response} upstream  the public-domain response, body unread
+ * @param {{ maxBytes?: number }} [opts]
+ * @returns {{ body: ReadableStream | null, settled: Promise<boolean> }} the stream
+ *   to serve, and a promise that resolves true once the copy committed or false
+ *   when it was skipped or failed. It never rejects.
+ */
+export function mirrorWhileServing(key, upstream, { maxBytes = MIRROR_MAX_BYTES } = {}) {
+	const skip = { body: upstream.body, settled: Promise.resolve(false) };
+	if (!fallbackBucket() || !upstream.body || upstream.status !== 200) return skip;
+	if (upstream.headers.get('content-encoding')) return skip;
+	const length = Number(upstream.headers.get('content-length'));
+	if (!Number.isFinite(length) || length <= 0 || length > maxBytes) return skip;
+	if (mirroring.has(key)) return skip;
+	mirroring.add(key);
+	const [body, copy] = upstream.body.tee();
+	const settled = (async () => {
+		try {
+			const res = await call('PUT', key, {
+				headers: {
+					'content-type': upstream.headers.get('content-type') || 'application/octet-stream',
+					'content-length': String(length),
+					'x-goog-meta-mirrored-from': 'r2-public-domain',
+				},
+				body: copy,
+				duplex: 'half',
+			});
+			if (!res.ok) throw await failure(res, 'mirror', key);
+			await res.body?.cancel?.();
+			return true;
+		} catch (err) {
+			// Release the copy branch so the tee stops buffering for it; the
+			// client branch is unaffected.
+			await copy.cancel().catch(() => {});
+			console.warn(`[storage-fallback] mirror of ${key} into the fallback bucket failed: ${String(err?.message || err).slice(0, 200)}`);
+			return false;
+		} finally {
+			mirroring.delete(key);
+		}
+	})();
+	return { body, settled };
+}
+
+/**
+ * Wait for a mirror to settle, at most `maxMs`. For a caller that buffers the
+ * bytes and writes the response in one go.
+ * @param {Promise<unknown>} settled
+ * @param {number} [maxMs]
+ * @returns {Promise<void>}
+ */
+export function mirrorSettledWithin(settled, maxMs = MIRROR_HOLD_MS) {
+	let timer;
+	const bound = new Promise((resolve) => {
+		timer = setTimeout(resolve, maxMs);
+		timer.unref?.();
+	});
+	return Promise.race([settled, bound]).then(
+		() => clearTimeout(timer),
+		() => clearTimeout(timer),
+	);
+}
+
+/**
+ * A pass-through stream that holds its end until `settled` resolves, at most
+ * `maxMs`. Placed before the response in a pipeline, it keeps the response open
+ * (and the instance's CPU allocated) while a mirror commits.
+ * @param {Promise<unknown>} settled
+ * @param {number} [maxMs]
+ */
+export function holdEndUntil(settled, maxMs = MIRROR_HOLD_MS) {
+	return new Transform({
+		transform(chunk, _enc, cb) {
+			cb(null, chunk);
+		},
+		flush(cb) {
+			mirrorSettledWithin(settled, maxMs).then(() => cb());
+		},
+	});
 }
 
 // ── Presigned browser uploads ───────────────────────────────────────────────

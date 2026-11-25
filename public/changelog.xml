@@ -71,6 +71,14 @@
 			<description>When many readers or a crawler opened the same story at once, every request ran its own article analysis, and those duplicate runs used up the free AI providers for everyone else on the platform. Requests for a story that is already being analyzed now share that one run. The AI fallback chain also stopped skipping a fast model just because a slower model on the same provider timed out, so NVIDIA's quick Nemotron model now gets its turn instead of the request failing.</description>
 		</item>
 		<item>
+			<title>Older avatars and models load faster and stop timing out during the storage outage</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Older avatars and models load faster and stop timing out during the storage outage</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Models saved before our main storage provider started refusing us were only reachable through a slow, rate-limited public link, so some avatars and GLBs took over 10 seconds or failed outright. The first time one of them is opened now, a copy is kept in our own Google Cloud bucket, and every later load comes from there.</description>
+		</item>
+		<item>
 			<title>Photo, scene and model uploads work again during the storage outage</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Photo, scene and model uploads work again during the storage outage</guid>

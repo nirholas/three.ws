@@ -22,6 +22,23 @@ vi.mock('../api/_lib/storage-fallback.js', async (importOriginal) => {
 	return { ...actual, fallbackFetch: (...args) => fallbackFetch(...args) };
 });
 
+// Public-domain reads copy the object into the fallback bucket on the way
+// (storage-fallback.js mirrorWhileServing). Stub the token minter and accept the
+// GCS PUT so the copy never leaves the test.
+vi.mock('../api/_lib/gcp-auth.js', async (importOriginal) => {
+	const actual = await importOriginal();
+	return { ...actual, getGcpAccessToken: async () => 'test-token' };
+});
+const gcsPuts = [];
+const realFetch = global.fetch;
+global.fetch = async (url, init = {}) => {
+	if (String(url).startsWith('https://storage.googleapis.com/') && init.method === 'PUT') {
+		gcsPuts.push({ url: String(url), body: Buffer.from(await new Response(init.body).arrayBuffer()) });
+		return new Response('', { status: 200 });
+	}
+	return realFetch(url, init);
+};
+
 const fetchUpstream = vi.fn();
 vi.mock('../api/_lib/upstream-fetch.js', async (importOriginal) => {
 	const actual = await importOriginal();
