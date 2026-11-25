@@ -498,6 +498,22 @@ describe('DefiLlama chart fallback', () => {
 		expect(urls[1]).toContain('span=365');
 	});
 
+	// Measured 2026-11-25 in production: /api/coin/ohlc 502'd for coins
+	// DefiLlama prices only every few hours (tokenized stocks, thin tokens). A
+	// fixed 600s search width meant a 2h or 1d slot found no price unless one
+	// landed within ten minutes of it: the 7d chart came back empty and the 365d
+	// one less than a third full, while a half-period width filled every slot.
+	it('searches half a sample period around each slot, never less than ten minutes', async () => {
+		const urls = [];
+		vi.stubGlobal('fetch', vi.fn(async (url) => {
+			urls.push(String(url));
+			return jsonResponse({ coins: {} });
+		}));
+		for (const days of [1, 7, 30, 90, 365]) await fetchLlamaChart('solana', days);
+		const width = (u) => Number(new URL(u).searchParams.get('searchWidth'));
+		expect(urls.map(width)).toEqual([600, 3600, 43200, 43200, 43200]);
+	});
+
 	it('resolves null (not a throw) on an unsupported window or a dead upstream', async () => {
 		vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('down'); }));
 		expect(await fetchLlamaChart('solana', 42)).toBeNull();

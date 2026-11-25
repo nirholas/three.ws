@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T20:02:16.412Z",
+	"generated_at": "2026-11-25T20:05:51.476Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4722,
+	"total": 4723,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -124,6 +124,16 @@
 			"type": "update",
 			"title": "Photo, scene and model uploads work again during the storage outage",
 			"summary": "While our primary object store refuses its credential, uploading a reference photo to Forge, a scene, a print file or an avatar model answered \"storage unavailable\" or failed in the browser. Uploads now go straight to the Google Cloud backup bucket under the same name, and the file is readable everywhere the moment it lands.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Price charts load for thinly traded coins during a data outage",
+			"summary": "When the primary market data source is rate limited, a coin's price chart falls back to a second price oracle. That fallback now looks for the nearest price around each point on the chart instead of only within ten minutes of it, so coins priced every few hours (tokenized stocks, thin tokens) show a full 7 day and 365 day chart instead of an error.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1552,17 +1562,6 @@
 			"link": "/open-source",
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-14",
-			"type": "update",
-			"title": "The TRELLIS NGC container ships its full license bundle",
-			"summary": "The three.ws TRELLIS image-to-3D container now carries a complete third-party license bundle at /licenses inside the image, generated at build time from what is really installed: every Python package, every component built from source with its pinned commit, the one baked DINOv2 checkpoint, every Ubuntu package and the CUDA base license. The NVIDIA NGC Container EULA now names the two bundled CUDA extensions that are licensed for non-commercial research and evaluation only (nvdiffrast and diff-gaussian-rasterization), and an unused research-only renderer was removed from the image. The build fails if any license text goes missing.",
-			"link": "/legal/nvidia-ngc-eula",
-			"tags": [
-				"infra",
-				"docs"
 			]
 		}
 	]

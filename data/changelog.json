@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Price charts load for thinly traded coins during a data outage",
+			"summary": "When the primary market data source is rate limited, a coin's price chart falls back to a second price oracle. That fallback now looks for the nearest price around each point on the chart instead of only within ten minutes of it, so coins priced every few hours (tokenized stocks, thin tokens) show a full 7 day and 365 day chart instead of an error.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Exchange links in a coin's Markets table open the right venue",
 			"summary": "When a coin page's Markets table is served by a backup data source, each venue now links to its CoinGecko exchange profile, matched by id or name against CoinGecko's own exchange list. A venue with no clear match shows as plain text instead of a link to a page that could not load, and an exchange id that does not exist now answers not found instead of an upstream error.",
 			"tags": ["fix"]

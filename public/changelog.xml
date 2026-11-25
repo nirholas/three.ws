@@ -103,6 +103,14 @@
 			<description>While our primary object store refuses its credential, uploading a reference photo to Forge, a scene, a print file or an avatar model answered &quot;storage unavailable&quot; or failed in the browser. Uploads now go straight to the Google Cloud backup bucket under the same name, and the file is readable everywhere the moment it lands.</description>
 		</item>
 		<item>
+			<title>Price charts load for thinly traded coins during a data outage</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Price charts load for thinly traded coins during a data outage</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the primary market data source is rate limited, a coin's price chart falls back to a second price oracle. That fallback now looks for the nearest price around each point on the chart instead of only within ten minutes of it, so coins priced every few hours (tokenized stocks, thin tokens) show a full 7 day and 365 day chart instead of an error.</description>
+		</item>
+		<item>
 			<title>Pump.fun bonding curves show the SOL they have really raised</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Pump.fun bonding curves show the SOL they have really raised</guid>

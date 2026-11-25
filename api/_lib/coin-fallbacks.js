@@ -838,12 +838,17 @@ export async function fetchDexTickers(addresses, { page = 1, perPage = 100 } = {
 // market-fallbacks.js `fetchExchangeChart` can map to an exchange pair.
 // Granularity per window mirrors what CoinGecko returns for the same window,
 // so the rendered line has comparable density either way.
+//
+// `width` is how far (seconds) DefiLlama may look either side of a slot for a
+// price: half the period, so each slot takes its nearest sample, and never
+// under ten minutes. A fixed 600s emptied the 7d chart and thinned the 365d one
+// for any coin DefiLlama prices only every few hours.
 const LLAMA_WINDOW = {
-	1: { period: '15m', span: 96 },
-	7: { period: '2h', span: 84 },
-	30: { period: '1d', span: 30 },
-	90: { period: '1d', span: 90 },
-	365: { period: '1d', span: 365 },
+	1: { period: '15m', span: 96, width: 600 },
+	7: { period: '2h', span: 84, width: 3600 },
+	30: { period: '1d', span: 30, width: 43200 },
+	90: { period: '1d', span: 90, width: 43200 },
+	365: { period: '1d', span: 365, width: 43200 },
 };
 
 /**
@@ -883,7 +888,7 @@ export async function fetchLlamaChart(cgId, days, now = Date.now()) {
 					name: 'llama-chart',
 					url:
 						`${LLAMA_COINS_BASE}/chart/coingecko:${encodeURIComponent(cgId)}` +
-						`?start=${start}&span=${win.span}&period=${win.period}&searchWidth=600`,
+						`?start=${start}&span=${win.span}&period=${win.period}&searchWidth=${win.width}`,
 					parse: async (r) => normalizeLlamaChart(await r.json(), cgId),
 				},
 			],
