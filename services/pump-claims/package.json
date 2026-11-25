@@ -17,7 +17,7 @@
 	"dependencies": {
 		"@neondatabase/serverless": "^1.2.1",
 		"@nirholas/pump-sdk": "^3.1.0",
-		"@solana/web3.js": "^1.99.0",
+		"@solana/web3.js": "^3.2.1",
 		"bs58": "^6.0.0",
 		"ws": "^8.21.0"
 	}
