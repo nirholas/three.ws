@@ -31,7 +31,7 @@
  *   node scripts/check-merge-conflicts.mjs          # exits 1 on any marker
  */
 
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { basename } from 'node:path';
 
 // Deliberately built at runtime: a literal in this file would make the script
@@ -40,8 +40,18 @@ import { basename } from 'node:path';
 const OPEN = '<'.repeat(7);
 const CLOSE = '>'.repeat(7);
 
+// Docker build contexts exclude .git. Git can scan those source archives
+// without an index, while still honoring ignore files and skipping binaries.
+const repository = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], {
+	encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+});
+if (repository.error) throw repository.error;
+const sourceOnly = repository.status !== 0;
+const grepOptions = sourceOnly ? ['--no-index', '--exclude-standard', '-I'] : [];
+
 function git(args) {
 	try {
+		if (args[0] === 'grep') args = ['grep', ...grepOptions, ...args.slice(1)];
 		return execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 	} catch (err) {
 		// `git grep` exits 1 with no output when nothing matches — not an error.
@@ -50,7 +60,7 @@ function git(args) {
 	}
 }
 
-/** Tracked files carrying `marker` at the start of a line, as a Set of paths. */
+/** Source files carrying `marker` at the start of a line, as a Set of paths. */
 function filesWithMarker(marker) {
 	// ANCHORED to column 0. git writes conflict markers only at the start of a
 	// line, so anchoring loses no real conflict — but an unanchored -F search
@@ -77,7 +87,7 @@ const closed = filesWithMarker(CLOSE);
 const conflicted = [...opened].filter((f) => basename(f) !== self).sort();
 
 if (!conflicted.length) {
-	console.log('check:conflicts: no unresolved merge-conflict markers in tracked files');
+	console.log(`check:conflicts: no unresolved merge-conflict markers in ${sourceOnly ? 'source' : 'tracked'} files`);
 	process.exit(0);
 }
 
@@ -100,3 +110,4 @@ correct side (or merge both), and delete all three marker lines. Verify with:
   node scripts/check-merge-conflicts.mjs   # re-run this check
 `);
 process.exit(1);
+

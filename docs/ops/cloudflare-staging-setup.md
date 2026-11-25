@@ -33,6 +33,16 @@ build:production/build:vercel orchestrator here: its post-build stage includes
 external delivery/configuration actions. SKIP_DEPENDENCY_INSTALL avoids a second
 monorepo install by the outer Cloudflare build runner.
 
+The image includes Git for the merge-conflict guard in build:gcp. Because the
+Docker context deliberately excludes .git, that guard scans source files with
+Git's no-index mode, honors ignore files, and skips binary assets. It still
+rejects unresolved conflict markers instead of bypassing the build check.
+
+If Cloudflare reports a disconnected Git account, reconnect the repository in
+the Worker's Builds settings. If its build API token was deleted or revoked,
+use Create new token in the same section. Keep the Worker name
+three-ws-staging aligned with wrangler.jsonc, then retry the latest main build.
+
 Workers Paid must be enabled for Containers. Startup-program enrollment alone
 does not activate a credit award or confirm that Container charges are covered.
 
@@ -143,6 +153,7 @@ Run the importer's focused checks without installing project dependencies:
 
 ```sh
 node --test tests/cloudflare-runtime-env.node.mjs
+node --test tests/cloudflare-source-build.node.mjs
 python3 -m unittest discover -s tests -p 'test_cloudflare_env_migration.py'
 ```
 
