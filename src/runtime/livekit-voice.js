@@ -10,7 +10,7 @@ import { loadModule } from '../shared/load-module.js';
 // agent-3d.js for a feature most embeds never start. That build defines
 // import.meta.env.AGENT3D_LIB, which folds this to the pinned CDN load; the app
 // build keeps livekit-client as its own lazily fetched chunk.
-const LIVEKIT_CDN_URL = 'https://esm.sh/livekit-client@2.23.0';
+const LIVEKIT_CDN_URL = 'https://esm.sh/livekit-client@2.25.0';
 
 function loadLivekitClient() {
 	return import.meta.env?.AGENT3D_LIB ? loadModule(LIVEKIT_CDN_URL) : import('livekit-client');
