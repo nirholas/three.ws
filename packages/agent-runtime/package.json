@@ -55,7 +55,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "tokenx": "^2.2.0"
+    "tokenx": "^2.2.1"
   },
   "publishConfig": {
     "access": "public"
