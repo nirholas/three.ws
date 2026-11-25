@@ -719,7 +719,7 @@
 		"@ai-sdk/openai": "^4.0.118",
 		"@avaturn/sdk": "^1.1.4",
 		"@aws-sdk/client-marketplace-entitlement-service": "^3.1165.0",
-		"@aws-sdk/client-marketplace-metering": "^3.1169.0",
+		"@aws-sdk/client-marketplace-metering": "^3.1175.0",
 		"@aws-sdk/client-s3": "^3.1170.0",
 		"@aws-sdk/s3-request-presigner": "^3.1170.0",
 		"@azure/msal-browser": "^5.27.0",
