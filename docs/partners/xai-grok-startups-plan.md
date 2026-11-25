@@ -132,7 +132,11 @@ in [prompts/finish/_context/grok-OWNER-ACTIONS.md](../../prompts/finish/_context
 - **Marks are nominative.** Grok, xAI, SpaceXSI, Cursor, X, Starship and Raptor are named only to
   describe compatibility or a real subject. No xAI, SpaceX or X logo is used unless a published
   brand kit allows it. The rocket cutaway describes the engine cycle generically and cites public
-  sources; it is not presented as an official SpaceX asset.
+  sources; it is not presented as an official SpaceX asset. The Grok logo the owner approved for
+  announcements is `public/marks/grok-full-logomark-light.svg`, the unaltered file from the kit
+  linked at [x.ai/legal/brand-guidelines](https://x.ai/legal/brand-guidelines). Those guidelines
+  require it exactly as provided, with nothing beside it that reads as a combined mark; the
+  announcement card (`node scripts/grok-startups-announce-card.mjs`) follows that.
 - **X automation rules.** Reply only when addressed, carry the automated-account label, never
   bulk-tag accounts. A share intent is a user action, never an automated post.
 - **Solana first, GCP preferred.** Grok runs where it is the best or the only source; GCP lanes

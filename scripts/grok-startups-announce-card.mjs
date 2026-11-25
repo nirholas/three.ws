@@ -1,55 +1,48 @@
 #!/usr/bin/env node
-// Head image for the Grok for Startups announcement thread: the three.ws logo
-// beside the membership line, 2400x1350.
+// Head image for the Grok for Startups announcement: the three.ws logo and the
+// Grok logo side by side, 2400x1350.
 //
-// The program is named in plain type. xAI, Grok and SpaceX logos are used only
-// when permission or a published brand kit covers it
-// (docs/partners/xai-grok-startups-plan.md, "Marks are nominative"). With an
-// approved logo file in hand, pass it to replace the typed name:
+// The Grok logo is public/marks/grok-full-logomark-light.svg, byte for byte the
+// Grok_Full_Logomark_Light.svg file from the official kit linked at
+// https://x.ai/legal/brand-guidelines (data.x.ai/logos). Those guidelines
+// require the logo exactly as provided, so it is drawn unaltered, at its own
+// aspect ratio, with nothing placed close enough to read as a combined mark.
 //
-//   node scripts/grok-startups-announce-card.mjs [--partner-logo path/to/approved.svg]
+//   node scripts/grok-startups-announce-card.mjs
 
 import { mkdirSync, readFileSync } from 'node:fs';
-import { extname, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { chromium } from 'playwright';
 
-const arg = (name) => {
-	const i = process.argv.indexOf(`--${name}`);
-	return i > -1 ? process.argv[i + 1] : undefined;
-};
-const dataUri = (path) => {
-	const type = { '.svg': 'image/svg+xml', '.png': 'image/png' }[extname(path).toLowerCase()];
-	if (!type) throw new Error(`logo must be an .svg or .png file: ${path}`);
-	return `data:${type};base64,${readFileSync(path).toString('base64')}`;
-};
-
-const partnerLogo = arg('partner-logo');
-const partner = partnerLogo
-	? `<img class="partner" src="${dataUri(resolve(partnerLogo))}" alt="Grok for Startups">`
-	: '<div class="program">Grok for<br>Startups</div>';
+const file = (path, type) => `data:${type};base64,${readFileSync(resolve(path)).toString('base64')}`;
 const outDir = resolve('public/x-media/grok-startups-announce');
 
 const html = `<!doctype html>
 <meta charset="utf-8">
 <style>
-	body { margin: 0; width: 1200px; height: 675px; background: #07080b; color: #f4f6fa; font-family: 'Inter', system-ui, sans-serif;
-		display: grid; grid-template-columns: 1fr 1px 1fr; align-items: center; }
-	.side { display: flex; align-items: center; justify-content: center; gap: 22px; }
-	.mark { width: 128px; height: 128px; }
-	.name, .program { font-size: 60px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
-	.rule { height: 220px; background: rgba(143,163,199,0.32); }
-	.partner { max-width: 400px; max-height: 160px; }
+	@font-face { font-family: 'Space Grotesk'; font-weight: 300 700; src: url('${file('public/fonts/space-grotesk-latin.woff2', 'font/woff2')}') format('woff2'); }
+	body { margin: 0; width: 1200px; height: 675px; background: #07080b; color: #f4f6fa;
+		display: flex; align-items: center; justify-content: center; gap: 88px; }
+	.ours { display: flex; align-items: center; gap: 20px; }
+	.ours img { width: 120px; height: 120px; }
+	.ours span { font: 700 64px/1 'Space Grotesk', sans-serif; letter-spacing: -0.035em; }
+	.rule { width: 1px; height: 150px; background: rgba(143, 163, 199, 0.3); }
+	.grok { height: 120px; width: auto; }
 </style>
-<div class="side"><img class="mark" src="${dataUri(resolve('public/favicon.svg'))}" alt=""><div class="name">three.ws</div></div>
+<div class="ours"><img src="${file('public/favicon.svg', 'image/svg+xml')}" alt=""><span>three.ws</span></div>
 <div class="rule"></div>
-<div class="side">${partner}</div>`;
+<img class="grok" src="${file('public/marks/grok-full-logomark-light.svg', 'image/svg+xml')}" alt="Grok">`;
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 675 }, deviceScaleFactor: 2 });
 await page.setContent(html, { waitUntil: 'load' });
-await page.evaluate(() => Promise.all([...document.images].map((img) => img.decode())));
+await page.evaluate(async () => {
+	await document.fonts.ready;
+	await Promise.all([...document.images].map((img) => img.decode()));
+	if (!document.fonts.check("700 64px 'Space Grotesk'")) throw new Error('Space Grotesk did not load');
+});
 mkdirSync(outDir, { recursive: true });
-const file = resolve(outDir, 'head.png');
-await page.screenshot({ path: file });
+const out = resolve(outDir, 'head.png');
+await page.screenshot({ path: out });
 await browser.close();
-console.log(`card: ${file}`);
+console.log(`card: ${out}`);
