@@ -63,6 +63,14 @@
 			<description>OpenRouter quietly retired eight free model routes, including the Nemotron 3 Super option in the agent, avatar, editor and chat model pickers. Picking it now runs Nemotron 3.5 Super, agents that saved a retired model keep answering on its closest live successor, and the fallback chain and image understanding no longer spend a request on a dead route before reaching one that answers. The nightly free-model audit now watches every route the chain actually calls, so the next retirement is caught the day it happens.</description>
 		</item>
 		<item>
+			<title>Coin cards no longer give up on a live bonding curve when Solana RPC is busy</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Coin cards no longer give up on a live bonding curve when Solana RPC is busy</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When every Solana RPC provider was rate limited, the bonding curve read reported live coins as having no curve at all, and the coin cards on /launches stopped refreshing. A busy or unreachable RPC is now treated as a temporary outage: the read tries the next provider, serves the last good figures when it has them, and only a curve that truly does not exist is reported as missing.</description>
+		</item>
+		<item>
 			<title>Concept images keep a second Hugging Face route, and image health tells the truth</title>
 			<link>https://three.ws/docs/api-reference</link>
 			<guid isPermaLink="false">2026-11-25:Concept images keep a second Hugging Face route, and image health tells the truth</guid>

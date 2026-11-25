@@ -32,7 +32,7 @@ function toPubkey(mint) {
 // turned a single curve-less mint into thousands of warning lines. Treat it as
 // benign and stay quiet; genuine RPC/parse failures still warn below.
 function isMissingAccount(err) {
-	return /account does not exist|has no data|could not find/i.test(String(err));
+	return /account does not exist|account not found|has no data|could not find/i.test(String(err));
 }
 
 // Transient RPC *infrastructure* failures — provider rate-limit/quota (429,
@@ -163,9 +163,15 @@ export async function getBondingCurveState(connection, mint) {
 			isMayhemMode: Boolean(bc.isMayhemMode),
 		};
 	} catch (err) {
-		if (!isMissingAccount(err) && !isTransientRpc(err)) {
+		// Only a missing account means "this mint has no curve". A rate-limited or
+		// unreachable lane, or a decode fault, is "we could not ask": returning
+		// null for it made getCurveView answer a final 404 `no_curve` for live
+		// curves whenever the RPC lanes were exhausted. Throwing lets the RPC
+		// fallback rotate lanes and the view serve its last good copy or a 502.
+		if (isMissingAccount(err)) return null;
+		if (!isTransientRpc(err)) {
 			console.warn('[sdk-bridge] getBondingCurveState failed: %s', String(err).slice(0, 120));
 		}
-		return null;
+		throw err;
 	}
 }

@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Coin cards no longer give up on a live bonding curve when Solana RPC is busy",
+			"summary": "When every Solana RPC provider was rate limited, the bonding curve read reported live coins as having no curve at all, and the coin cards on /launches stopped refreshing. A busy or unreachable RPC is now treated as a temporary outage: the read tries the next provider, serves the last good figures when it has them, and only a curve that truly does not exist is reported as missing.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Agent profiles stop requesting a private body they cannot show",
 			"summary": "When a public agent wears a private avatar, its profile asked for that avatar anyway and was always refused, for every visitor. Both agent profile layouts now skip that request unless you own the agent, so the page loads with one fewer failed call and the owner still sees the body.",
 			"tags": ["fix"]
