@@ -113,6 +113,15 @@ describe('check-fetch-timeouts under api/', () => {
 			`}`,
 		].join('\n');
 		expect(scanApi(src)).toEqual([]);
+		// The same pass-through inside a block still finds the function's signature.
+		const nested = [
+			`export async function tracedFetch(name, url, init = {}) {`,
+			`	if (!ready) {`,
+			`		return fetch(url, init);`,
+			`	}`,
+			`}`,
+		].join('\n');
+		expect(scanApi(nested)).toEqual([]);
 	});
 
 	it('still flags a local init object with no deadline', () => {
