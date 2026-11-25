@@ -77,7 +77,9 @@ function readEnv(name) {
 // Throws BillingUnavailableError (not a raw error) when a required piece is
 // missing so every caller can branch to a "not wired yet" state.
 export function resolveBillingConfig(env = process.env) {
-	const project = env.GOOGLE_CLOUD_PROJECT || env.GCP_BILLING_PROJECT || null;
+	// The export dataset can live in a different project from the one the
+	// service runs in, so an explicit GCP_BILLING_PROJECT wins.
+	const project = env.GCP_BILLING_PROJECT || env.GOOGLE_CLOUD_PROJECT || null;
 	const dataset = env.GCP_BILLING_DATASET || null;
 	// Standard export table name is derived from the billing account id with
 	// dashes replaced by underscores. `resource` export prefixes with

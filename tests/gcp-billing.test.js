@@ -134,6 +134,21 @@ describe('resolveBillingConfig', () => {
 		expect(cfg.fqTable).toBe('`proj-1.billing.gcp_billing_export_v1_01ABCD_234567_89EFGH`');
 	});
 
+	// The service can run in one project while the billing export dataset lives
+	// in another (three-ws-api moved to project three-ws; billing_export stayed
+	// in aerial-vehicle-466722-p5). The explicit billing project must win over
+	// the runtime project, or every query targets a dataset that is not there.
+	it('prefers GCP_BILLING_PROJECT over the runtime GOOGLE_CLOUD_PROJECT', () => {
+		const cfg = resolveBillingConfig({
+			GOOGLE_CLOUD_PROJECT: 'runtime-proj',
+			GCP_BILLING_PROJECT: 'billing-proj',
+			GCP_BILLING_DATASET: 'billing_export',
+			GCP_BILLING_TABLE: 't',
+		});
+		expect(cfg.project).toBe('billing-proj');
+		expect(cfg.fqTable).toBe('`billing-proj.billing_export.t`');
+	});
+
 	it('uses the resource export prefix when kind=resource', () => {
 		const cfg = resolveBillingConfig({
 			GOOGLE_CLOUD_PROJECT: 'p',
