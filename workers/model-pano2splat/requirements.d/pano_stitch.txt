@@ -4,4 +4,4 @@
 # venv resolves; tests pass on these exact versions on Python 3.12.
 numpy==1.26.4
 opencv-python-headless==4.11.0.86
-Pillow==11.3.0
+Pillow==13.0.0
