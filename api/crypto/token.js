@@ -43,12 +43,12 @@ export default wrap(async (req, res) => {
 	if (!globalRl.success) return rateLimited(res, globalRl);
 
 	const url = new URL(req.url, 'http://localhost');
-	const address = (url.searchParams.get('address') || '').trim();
+	const address = (url.searchParams.get('address') || url.searchParams.get('mint') || '').trim();
 	const rawChain = (url.searchParams.get('chain') || '').trim().toLowerCase();
 	const chain = rawChain ? (CHAIN_ALIASES[rawChain] || rawChain) : null;
 
 	if (!address) {
-		return error(res, 400, 'missing_address', 'query param `address` is required. Pass a token contract address (Solana mint or EVM 0x)', {
+		return error(res, 400, 'missing_address', 'query param `address` (or `mint`) is required. Pass a token contract address (Solana mint or EVM 0x)', {
 			example: EXAMPLE,
 		});
 	}

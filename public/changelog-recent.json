@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T20:46:54.059Z",
+	"generated_at": "2026-11-25T20:52:56.661Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4729,
+	"total": 4730,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -95,6 +95,16 @@
 			"title": "Concept images keep a second Hugging Face route, and image health tells the truth",
 			"summary": "Hugging Face stopped routing FLUX.1-schnell through nscale, so the second Hugging Face rung of the text-to-image ladder failed on every call. It now runs on WaveSpeed, which Hugging Face still maps to the model. /api/v1/ai/image?health=1 now asks each Hugging Face route whether it would actually serve, so an empty credit balance or a retired route shows as down with the reason instead of passing on a valid token. Images made on Hugging Face or the Livepeer network are now credited to that lane instead of to NVIDIA.",
 			"link": "/docs/api-reference",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Crypto Data API token endpoints accept ?mint= as well as ?address=",
+			"summary": "/api/crypto/holders, /security, /due-diligence and /token now read a token passed as ?mint=, the name /bonding and /whales already use, instead of answering 400 missing_address for a mint the caller plainly sent.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
@@ -1551,16 +1561,6 @@
 			"link": "/docs/ai-sdk",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-11-14",
-			"type": "update",
-			"title": "A launch mention with a missing ticker now explains how to launch",
-			"summary": "Tag @trythreews with launch, a coin name and a $TICKER and the bot replies with a prefilled launch link you review and sign yourself. If the post leaves out the ticker, uses one that is too short or too long, or tries to reuse $THREE, the reply now shows the exact launch format to post instead of the general make-a-3D-model help, so you can get it right on the next try. The bot is still in dry run: it records these replies and posts nothing until it goes live.",
-			"link": "/launch",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

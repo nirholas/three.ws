@@ -52,11 +52,11 @@ export default wrap(async (req, res) => {
 	if (!globalRl.success) return rateLimited(res, globalRl);
 
 	const url = new URL(req.url, 'http://localhost');
-	const address = (url.searchParams.get('address') || '').trim();
+	const address = (url.searchParams.get('address') || url.searchParams.get('mint') || '').trim();
 	const rawChain = (url.searchParams.get('chain') || '').trim().toLowerCase();
 
 	if (!address) {
-		return error(res, 400, 'missing_address', 'query param `address` is required. Pass a Solana token mint', {
+		return error(res, 400, 'missing_address', 'query param `address` (or `mint`) is required. Pass a Solana token mint', {
 			example: EXAMPLE,
 		});
 	}

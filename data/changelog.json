@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Crypto Data API token endpoints accept ?mint= as well as ?address=",
+			"summary": "/api/crypto/holders, /security, /due-diligence and /token now read a token passed as ?mint=, the name /bonding and /whales already use, instead of answering 400 missing_address for a mint the caller plainly sent.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Coin cards no longer give up on a live bonding curve when Solana RPC is busy",
 			"summary": "When every Solana RPC provider was rate limited, the bonding curve read reported live coins as having no curve at all, and the coin cards on /launches stopped refreshing. A busy or unreachable RPC is now treated as a temporary outage: the read tries the next provider, serves the last good figures when it has them, and only a curve that truly does not exist is reported as missing.",
 			"tags": ["fix"]

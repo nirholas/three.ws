@@ -13,7 +13,7 @@
 // token accounts with owners resolved, marked as such in `sources`/`note`.
 //
 // Query:
-//   address = <Solana mint>   (required)
+//   address = <Solana mint>   (required; `mint` is accepted as an alias)
 //   chain   = solana          (optional; only 'solana'/'sol' accepted)
 //   limit   = 1..50           (default 10), how many top holders to return
 //
@@ -56,13 +56,13 @@ export default wrap(async (req, res) => {
 	if (!globalRl.success) return rateLimited(res, globalRl);
 
 	const url = new URL(req.url, 'http://localhost');
-	const address = (url.searchParams.get('address') || '').trim();
+	const address = (url.searchParams.get('address') || url.searchParams.get('mint') || '').trim();
 	const rawChain = (url.searchParams.get('chain') || '').trim().toLowerCase();
 	const rawLimit = Number(url.searchParams.get('limit'));
 	const limit = Math.min(MAX_LIMIT, Math.max(1, Number.isFinite(rawLimit) ? Math.floor(rawLimit) : DEFAULT_LIMIT));
 
 	if (!address) {
-		return error(res, 400, 'missing_address', 'query param `address` is required. Pass a Solana token mint', {
+		return error(res, 400, 'missing_address', 'query param `address` (or `mint`) is required. Pass a Solana token mint', {
 			example: EXAMPLE,
 		});
 	}

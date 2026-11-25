@@ -614,7 +614,7 @@ current market state, with honest `null`s for anything no live source can resolv
 
 | Param     | Type   | Default  | Notes |
 |-----------|--------|----------|-------|
-| `address` | string | required | Token contract address — Solana base58 mint or EVM `0x` contract. |
+| `address` | string | required | Token contract address: Solana base58 mint or EVM `0x` contract. `mint` is accepted as an alias. |
 | `chain`   | string | inferred | Optional chain pin (`solana`, `ethereum`, `base`, `bsc`, …). Inferred from the address shape when omitted; for an EVM contract deployed on several chains it selects that chain instead of the deepest pool overall. Aliases `sol`/`eth` accepted. |
 
 ### Response
@@ -692,7 +692,7 @@ address gets an honest `400` instead of a half-built passthrough.
 
 | Param     | Type   | Default  | Notes |
 |-----------|--------|----------|-------|
-| `address` | string | required | Solana token mint (base58). |
+| `address` | string | required | Solana token mint (base58). `mint` is accepted as an alias. |
 | `chain`   | enum   | `solana` | Only `solana` (alias `sol`) is accepted. |
 
 ### Response
@@ -779,7 +779,7 @@ real on-chain data.
 
 | Param     | Type    | Default  | Notes |
 |-----------|---------|----------|-------|
-| `address` | string  | required | Solana token mint (base58). |
+| `address` | string  | required | Solana token mint (base58). `mint` is accepted as an alias. |
 | `chain`   | enum    | `solana` | Only `solana` (alias `sol`) is accepted. |
 | `limit`   | integer | `10`     | Top holders to return, `1`–`50` (capped, not an error). |
 
