@@ -9,6 +9,7 @@ const sqlMock = vi.fn(async () => []);
 vi.mock('../../api/_lib/db.js', () => ({ sql: (...args) => sqlMock(...args), isDbUnavailableError: () => false, isDbCapacityError: () => false }));
 
 const putObjectMock = vi.fn(async () => undefined);
+const getObjectBufferMock = vi.fn(async () => Buffer.from(new Uint8Array([0x67, 0x6c, 0x54, 0x46])));
 // Mirrors the real publicUrl(): an absolute key is passed straight through, so a
 // mesh served from the provider's own bucket resolves to itself.
 const publicUrlMock = vi.fn((key) => (/^https?:\/\//i.test(key) ? key : `https://cdn.test/${key}`));
@@ -16,6 +17,7 @@ vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: (...a) => putObjectMock(...a),
 	publicUrl: (...a) => publicUrlMock(...a),
 	// The real classifier, narrowed to the shapes these tests raise.
+	getObjectBuffer: (...a) => getObjectBufferMock(...a),
 	isStorageInfrastructureError: (err) =>
 		/signaturedoesnotmatch|unauthorized|nosuchbucket|access denied|econnrefused/i.test(
 			[err?.name, err?.Code, err?.message].filter(Boolean).join(' '),
@@ -234,6 +236,22 @@ describe('pollRiggingStage', () => {
 		const out = await pollRiggingStage({ userId: 'u1', jobId: 'j1', job: rigJob });
 		expect(out.status).toBe('done');
 		expect(createAvatarMock.mock.calls[0][0].input.tags).toContain('unrigged');
+	});
+
+	it('reads the bare mesh by storage key when its r2.dev URL 404s (mesh parked in the GCS fallback)', async () => {
+		inspectGlbMock.mockReturnValue(UNRIGGED);
+		providerMock.instance = { supportsMode: (m) => m === 'rerig', status: vi.fn(async () => ({ status: 'failed', error: 'rig oom' })) };
+		fetchProviderGlbBufferMock.mockRejectedValueOnce(new Error('fetch glb: 404'));
+		const out = await pollRiggingStage({ userId: 'u1', jobId: 'j1', job: rigJob });
+		expect(getObjectBufferMock).toHaveBeenCalledWith('u/u1/selfie-x/m.glb');
+		expect(out.status).toBe('done');
+	});
+
+	it('rethrows the 404 when the mesh is in no bucket either', async () => {
+		providerMock.instance = { supportsMode: (m) => m === 'rerig', status: vi.fn(async () => ({ status: 'failed', error: 'rig oom' })) };
+		fetchProviderGlbBufferMock.mockRejectedValueOnce(new Error('fetch glb: 404'));
+		getObjectBufferMock.mockRejectedValueOnce(new Error('NoSuchKey'));
+		await expect(pollRiggingStage({ userId: 'u1', jobId: 'j1', job: rigJob })).rejects.toThrow('fetch glb: 404');
 	});
 
 	it('stays in rigging while the rig job is still running', async () => {

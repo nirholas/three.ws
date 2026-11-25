@@ -58,6 +58,21 @@ const MISMATCH_MAX_AGE = '24 hours';
 // first so the backlog drains FIFO and nothing is perpetually overtaken.
 const BATCH = 50;
 
+// Shown to the user (via the status poll, error_kind 'input') when the model
+// file the job produced can no longer be fetched from anywhere.
+export const MESH_GONE_JOB_ERROR =
+	'The generated model file could not be recovered. Please generate it again.';
+
+// A provider/bucket 404 or 410 that has outlived this window is not a worker
+// still writing its output: the file is gone. Younger jobs keep retrying.
+const MESH_GONE_MIN_AGE_MS = 60 * 60 * 1000;
+
+function isMeshGone(err, job) {
+	if (!/^fetch glb: (404|410)$/.test(String(err?.message || ''))) return false;
+	const created = Date.parse(job?.created_at);
+	return Number.isFinite(created) && Date.now() - created > MESH_GONE_MIN_AGE_MS;
+}
+
 function hostOf(raw) {
 	try { return new URL(raw).hostname; } catch { return 'unparseable'; }
 }
@@ -225,6 +240,14 @@ export default wrapCron(async (req, res) => {
 			// Close it with the copy the status poll relays, as that path does.
 			if (isPlanLimitError(err)) {
 				await failJob(job.job_id, job.user_id, PLAN_LIMIT_JOB_ERROR, 'input');
+				summary.failed++;
+				continue;
+			}
+			// The output 404s and has for over an hour: no later tick can collect
+			// it, so close the job with an honest reason instead of re-erroring
+			// every 5 minutes until the rescue window ends.
+			if (isMeshGone(err, job)) {
+				await failJob(job.job_id, job.user_id, MESH_GONE_JOB_ERROR, 'input');
 				summary.failed++;
 				continue;
 			}

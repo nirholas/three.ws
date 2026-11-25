@@ -16,7 +16,7 @@
 // deployments keep their exact current behavior until rigging is wired.
 
 import { sql } from './db.js';
-import { putObject, publicUrl, isStorageInfrastructureError } from './r2.js';
+import { putObject, publicUrl, isStorageInfrastructureError, getObjectBuffer } from './r2.js';
 import { storageKeyFor, createAvatar } from './avatars.js';
 import { inspectGlb, isValidGlbHeader } from './glb-inspect.js';
 import { dispatchWebhooks } from './webhook-dispatch.js';
@@ -324,6 +324,24 @@ export async function finalizeReconstructStage({ userId, jobId, job, glbUrl }) {
 	return { status: 'rigging' };
 }
 
+// Read back the bare mesh stored before rigging. While R2 refuses writes, that
+// mesh lives in the GCS fallback bucket and the r2.dev URL recorded in
+// params.rig.unriggedUrl 404s, so a URL-only fetch can never succeed (the sweep
+// re-errored on it every tick). On a 404, read it by storage key, which
+// consults R2 and then the fallback bucket.
+async function fetchStoredMesh(url, storageKey) {
+	try {
+		return await fetchProviderGlbBuffer(url);
+	} catch (err) {
+		if (!/^fetch glb: (404|410)$/.test(String(err?.message || '')) || !storageKey) throw err;
+		try {
+			return await getObjectBuffer(storageKey);
+		} catch {
+			throw err;
+		}
+	}
+}
+
 // Stage 2: the parent job is in 'rigging' - poll the child rig job. On success
 // swap in the rigged GLB; on failure fall back to the stored bare mesh. Returns
 // { status, resultAvatarId? }; status stays 'rigging' while the rig job runs.
@@ -343,7 +361,7 @@ export async function pollRiggingStage({ userId, jobId, job }) {
 	// the job can't hang forever in 'rigging'.
 	if (!provider?.instance || !rig.extJobId) {
 		if (!rig.unriggedUrl) return { status: 'rigging' };
-		const glbBuf = await fetchProviderGlbBuffer(rig.unriggedUrl);
+		const glbBuf = await fetchStoredMesh(rig.unriggedUrl, storageKey);
 		const info = isValidGlbHeader(glbBuf) ? inspectGlb(glbBuf) : null;
 		const avatar = await materializeReconstructAvatar({
 			userId, jobId, job, glbBuf, glbInfo: info, storageKey, slug,
@@ -369,7 +387,7 @@ export async function pollRiggingStage({ userId, jobId, job }) {
 
 	if (update.status === 'failed') {
 		// Rigging failed - deliver the bare mesh we stored before rigging.
-		const glbBuf = await fetchProviderGlbBuffer(rig.unriggedUrl);
+		const glbBuf = await fetchStoredMesh(rig.unriggedUrl, storageKey);
 		const info = isValidGlbHeader(glbBuf) ? inspectGlb(glbBuf) : null;
 		const avatar = await materializeReconstructAvatar({
 			userId, jobId, job, glbBuf, glbInfo: info, storageKey, slug,
