@@ -2,7 +2,9 @@
 // --------------------------------------------------------------------------
 // OHLCV proxy with automatic fallback chain:
 //   1. Birdeye (paid, quota-limited)  — best data quality
-//   2. GeckoTerminal (free, no key)   — pool lookup then candles
+//   2. GeckoTerminal (free, no key), pool lookup then candles, through the
+//      shared OHLCV ladder (Birdeye pair candles behind it, 24h last-good copy
+//      in the shared cache), on an aggregate GeckoTerminal accepts
 //   3. pump.fun's own candle API (free, no key). GeckoTerminal indexes a new
 //      pump.fun coin only once it trades enough, so a young three.ws launch had
 //      a live, trading market and still rendered "no price history". pump.fun
@@ -26,7 +28,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { fetchBirdeyeOhlcv, birdeyeConfigured } from '../_lib/birdeye.js';
-import { topPoolForToken } from '../_lib/market/ohlcv.js';
+import { topPoolForToken, fetchOhlcv } from '../_lib/market/ohlcv.js';
 
 const VALID_INTERVALS = new Set([
 	'1m',
@@ -104,33 +106,36 @@ export function snapWindow({ interval, from, to }) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// GeckoTerminal fallback — completely free, no API key required.
+// GeckoTerminal rung, through the shared OHLCV ladder in _lib/market/ohlcv.js.
 // Step 1: resolve the top liquidity pool for the token.
-// Step 2: fetch OHLCV for that pool.
+// Step 2: fetch that pool's candles (GeckoTerminal, then Birdeye's pair OHLCV,
+//         with a 24h last-good copy in the shared cache behind both).
 // ──────────────────────────────────────────────────────────────────────────────
-const GECKO_API = 'https://api.geckoterminal.com/api/v2';
-const GECKO_HEADERS = { accept: 'application/json', 'x-api-version': '20230302' };
 
-// Map our normalized Birdeye intervals to GeckoTerminal (timeframe, aggregate).
-function geckoParams(interval) {
-	const map = {
-		'1m': ['minute', 1],
-		'3m': ['minute', 3],
-		'5m': ['minute', 5],
-		'15m': ['minute', 15],
-		'30m': ['minute', 30],
-		'1H': ['hour', 1],
-		'2H': ['hour', 2],
-		'4H': ['hour', 4],
-		'6H': ['hour', 6],
-		'8H': ['hour', 8],
-		'12H': ['hour', 12],
-		'1D': ['day', 1],
-		'3D': ['day', 3],
-		'1W': ['day', 7],
-		'1M': ['day', 30],
-	};
-	return map[interval] || ['minute', 15];
+// GeckoTerminal only accepts aggregate 1/5/15 for minutes, 1/4/12 for hours and
+// 1 for days; anything else is a 400 on every call. Each interval therefore
+// maps to [timeframe, aggregate GeckoTerminal accepts, base candles per bucket],
+// and the base candles are folded up to the requested width.
+const GECKO_INTERVALS = {
+	'1m': ['minute', 1, 1],
+	'3m': ['minute', 1, 3],
+	'5m': ['minute', 5, 1],
+	'15m': ['minute', 15, 1],
+	'30m': ['minute', 15, 2],
+	'1H': ['hour', 1, 1],
+	'2H': ['hour', 1, 2],
+	'4H': ['hour', 4, 1],
+	'6H': ['hour', 1, 6],
+	'8H': ['hour', 4, 2],
+	'12H': ['hour', 12, 1],
+	'1D': ['day', 1, 1],
+	'3D': ['day', 1, 3],
+	'1W': ['day', 1, 7],
+	'1M': ['day', 1, 30],
+};
+
+export function geckoParams(interval) {
+	return GECKO_INTERVALS[interval] || GECKO_INTERVALS['15m'];
 }
 
 // A token's top pool does not change between polls, so resolving it once per
@@ -164,34 +169,6 @@ function withGeckoSlot(fn) {
 		if (_geckoActive < GECKO_MAX_CONCURRENT) run();
 		else _geckoQueue.push(run);
 	});
-}
-
-// GeckoTerminal answers 429 when the free tier's per-minute budget is spent,
-// and — under the same load — occasionally a transient 5xx or a dropped
-// connection. All three are worth riding out with a retry; only a real
-// non-transient response (200, 404, a real 4xx) is treated as final. Two
-// retries (three attempts total) with increasing backoff, on top of the
-// concurrency gate above, is deliberately more resilient than the single
-// 429-only retry this replaced — that version still 502'd under a genuine
-// poll-storm burst (observed live on /terminal and /trades 2026-07-16).
-const GECKO_RETRY_BACKOFFS_MS = [400, 900];
-
-async function geckoFetch(url, { timeoutMs }) {
-	let lastErr;
-	for (let attempt = 0; attempt <= GECKO_RETRY_BACKOFFS_MS.length; attempt++) {
-		try {
-			const resp = await withGeckoSlot(() =>
-				fetch(url, { headers: GECKO_HEADERS, signal: AbortSignal.timeout(timeoutMs) }),
-			);
-			const transient = resp.status === 429 || (resp.status >= 500 && resp.status < 600);
-			if (!transient || attempt === GECKO_RETRY_BACKOFFS_MS.length) return resp;
-		} catch (err) {
-			lastErr = err;
-			if (attempt === GECKO_RETRY_BACKOFFS_MS.length) throw err;
-		}
-		await new Promise((r) => setTimeout(r, GECKO_RETRY_BACKOFFS_MS[attempt]));
-	}
-	throw lastErr || new Error('unreachable');
 }
 
 // Thrown when the token genuinely has no market to chart — an honest empty
@@ -229,31 +206,27 @@ async function fetchGeckoPoolAddress(mint) {
 	return address || null;
 }
 
-async function fetchGeckoOhlcv({ mint, interval, from, to }) {
+// The ladder's source names, in this endpoint's response vocabulary.
+const LADDER_SOURCE = { geckoterminal: 'gecko', birdeye: 'birdeye' };
+
+// `live` (the window ends now) asks for the newest candles, a request every
+// chart and consumer of that pool shares one cache entry for, and so one
+// last-good copy that survives a GeckoTerminal throttle on any instance. A
+// historical window pages back with before_timestamp instead.
+async function fetchGeckoOhlcv({ mint, interval, from, to, live }) {
 	const poolAddress = await fetchGeckoPoolAddress(mint);
 	if (!poolAddress) throw new NoPoolError('No pool found on GeckoTerminal for this mint');
 
-	const [timeframe, aggregate] = geckoParams(interval);
-	// GeckoTerminal returns candles *before* before_timestamp (exclusive, descending).
-	// We ask for the maximum (1000) and filter to our window.
-	const url =
-		`${GECKO_API}/networks/solana/pools/${poolAddress}/ohlcv/${timeframe}` +
-		`?aggregate=${aggregate}&before_timestamp=${to + 1}&limit=1000&currency=usd&token=base`;
-
-	const resp = await geckoFetch(url, { timeoutMs: 10_000 });
-	if (!resp.ok) {
-		throw new Error(`GeckoTerminal ${resp.status}`);
-	}
-	const body = await resp.json().catch(() => null);
-	const list = body?.data?.attributes?.ohlcv_list;
-	if (!Array.isArray(list)) throw new Error('GeckoTerminal returned unexpected payload');
-
-	// Format: [timestamp_sec, open, high, low, close, volume] — GeckoTerminal returns
-	// descending so we reverse and filter to the requested window.
-	return list
-		.map(([t, o, h, l, c, v]) => ({ t: Number(t), o: Number(o), h: Number(h), l: Number(l), c: Number(c), v: Number(v) }))
-		.filter((d) => Number.isFinite(d.t) && Number.isFinite(d.c) && d.t >= from && d.t <= to)
-		.sort((a, b) => a.t - b.t);
+	const [timeframe, aggregate, factor] = geckoParams(interval);
+	const out = await withGeckoSlot(() =>
+		fetchOhlcv({ pool: poolAddress, network: 'solana', timeframe, aggregate, limit: 1000, beforeTimestamp: live ? null : to + 1 }),
+	);
+	const base = (out?.candles || []).filter((d) => Number.isFinite(d.t) && Number.isFinite(d.c));
+	const candles = factor > 1 ? aggregateCandles(base, intervalSeconds(interval)) : base;
+	return {
+		data: candles.filter((d) => d.t >= from && d.t <= to),
+		source: LADDER_SOURCE[out?.source] || 'gecko',
+	};
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -363,15 +336,15 @@ function recallGood(mint, interval) {
 // issue several near-simultaneous requests for the IDENTICAL mint+interval+
 // window before the first one has resolved — each of those used to run its
 // own independent Birdeye→Gecko→stale chain. Now every caller for the same
-// key shares one resolution, which — combined with the concurrency gate and
-// wider retry above — is what actually closes the poll-storm 502 rather than
-// just shrinking its blast radius.
+// key shares one resolution, which, combined with the concurrency gate and the
+// shared ladder's retries and last-good copy, is what actually closes the
+// poll-storm 502 rather than just shrinking its blast radius.
 const _inflight = new Map(); // key → Promise<result descriptor>
 
 // Runs the Birdeye → GeckoTerminal → pump.fun → stale-cache chain once and returns a
 // plain descriptor the caller turns into an HTTP response. Never throws —
 // every failure mode is represented in the descriptor.
-async function resolveCandles({ mint, interval, from, to, key, now }) {
+async function resolveCandles({ mint, interval, from, to, live, key, now }) {
 	if (birdeyeConfigured()) {
 		try {
 			const data = await fetchBirdeyeOhlcv({ mint, interval, from, to });
@@ -386,11 +359,11 @@ async function resolveCandles({ mint, interval, from, to, key, now }) {
 
 	let geckoNoPool = false;
 	try {
-		const data = await fetchGeckoOhlcv({ mint, interval, from, to });
-		_cache.set(key, { value: data, source: 'gecko', expiresAt: now + TTL_MS });
+		const { data, source } = await fetchGeckoOhlcv({ mint, interval, from, to, live });
+		_cache.set(key, { value: data, source, expiresAt: now + TTL_MS });
 		if (_cache.size > 256) _cache.delete(_cache.keys().next().value);
-		rememberGood(mint, interval, data, 'gecko');
-		return { kind: 'ok', data, source: 'gecko' };
+		rememberGood(mint, interval, data, source);
+		return { kind: 'ok', data, source };
 	} catch (err) {
 		geckoNoPool = err instanceof NoPoolError;
 	}
@@ -439,6 +412,8 @@ export default wrap(async (req, res) => {
 
 	// Snap to the candle boundary so consecutive polls share one cache entry.
 	const { from, to } = snapWindow({ interval, from: rawFrom, to: rawTo });
+	// The window ends at the present (a polling chart), not at a past moment.
+	const live = nowSec - to <= 2 * POLL_BUCKET_SECONDS;
 
 	const key = `${mint}:${interval}:${from}:${to}`;
 	const now = Date.now();
@@ -455,7 +430,7 @@ export default wrap(async (req, res) => {
 	// Share one resolution across every concurrent caller for this exact key.
 	let pending = _inflight.get(key);
 	if (!pending) {
-		pending = resolveCandles({ mint, interval, from, to, key, now }).finally(() => _inflight.delete(key));
+		pending = resolveCandles({ mint, interval, from, to, live, key, now }).finally(() => _inflight.delete(key));
 		_inflight.set(key, pending);
 	}
 	const result = await pending;

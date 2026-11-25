@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Coin charts load on every timeframe and ride out data-provider throttling",
+			"summary": "The 3m, 30m, 2H, 6H, 8H, 3D, 1W and 1M chart timeframes asked our candle provider for groupings it does not offer, so they often showed \"Price history is unavailable\". They are now built from the nearest supported candles. Charts also fall back to the last good candles from the past day when the provider rate-limits us, instead of failing.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Agent ideas no longer fail when one model answers in the wrong shape",
 			"summary": "The Create-Agent \"describe it\" generator used to take the first answer any model gave, so a model that replied in prose or ran out of room mid-answer ended the request with \"unreadable result\" even though other models were ready. It now moves on to the next model until one returns a complete agent spec.",
 			"tags": [

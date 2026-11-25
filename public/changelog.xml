@@ -87,6 +87,14 @@
 			<description>When every Solana RPC provider was rate limited, the bonding curve read reported live coins as having no curve at all, and the coin cards on /launches stopped refreshing. A busy or unreachable RPC is now treated as a temporary outage: the read tries the next provider, serves the last good figures when it has them, and only a curve that truly does not exist is reported as missing.</description>
 		</item>
 		<item>
+			<title>Coin charts load on every timeframe and ride out data-provider throttling</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Coin charts load on every timeframe and ride out data-provider throttling</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The 3m, 30m, 2H, 6H, 8H, 3D, 1W and 1M chart timeframes asked our candle provider for groupings it does not offer, so they often showed &quot;Price history is unavailable&quot;. They are now built from the nearest supported candles. Charts also fall back to the last good candles from the past day when the provider rate-limits us, instead of failing.</description>
+		</item>
+		<item>
 			<title>Concept images keep a second Hugging Face route, and image health tells the truth</title>
 			<link>https://three.ws/docs/api-reference</link>
 			<guid isPermaLink="false">2026-11-25:Concept images keep a second Hugging Face route, and image health tells the truth</guid>
