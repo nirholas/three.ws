@@ -7,6 +7,7 @@
 
 import { PublicKey } from '@solana/web3.js';
 import { isTransientRpcError } from './connection.js';
+import { curveQuoteReserve } from '../pump-curve-fields.js';
 
 let _sdkPromise = null;
 async function loadSdk() {
@@ -151,9 +152,11 @@ export async function getBondingCurveState(connection, mint) {
 		const bc = await sdk.fetchBondingCurve(pk);
 		return {
 			virtualTokenReserves: bc.virtualTokenReserves.toString(),
-			virtualSolReserves: bc.virtualSolReserves.toString(),
+			// Output keeps the `*Sol*` names every caller reads; the SDK decodes
+			// the renamed `*Quote*` fields (see pump-curve-fields.js).
+			virtualSolReserves: curveQuoteReserve(bc, 'virtual'),
 			realTokenReserves: bc.realTokenReserves.toString(),
-			realSolReserves: bc.realSolReserves.toString(),
+			realSolReserves: curveQuoteReserve(bc, 'real'),
 			tokenTotalSupply: bc.tokenTotalSupply.toString(),
 			complete: Boolean(bc.complete),
 			creator: bc.creator.toBase58(),

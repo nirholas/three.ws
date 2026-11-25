@@ -120,9 +120,13 @@ async function handleGetBondingCurve({ mint, network = 'mainnet' }, env) {
 	}
 	if (!curve) throw rpcError(-32004, 'no bonding curve found for this mint');
 
-	const realSol = BigInt(curve.realSolReserves?.toString?.() ?? '0');
+	// Pump renamed `*_sol_reserves` to `*_quote_reserves` (same u64s); the SDK
+	// decodes only the new names. Mirrors api/_lib/pump-curve-fields.js.
+	const quoteReserve = (kind) =>
+		curve[`${kind}QuoteReserves`]?.toString?.() ?? curve[`${kind}SolReserves`]?.toString?.() ?? '0';
+	const realSol = BigInt(quoteReserve('real'));
 	const realToken = BigInt(curve.realTokenReserves?.toString?.() ?? '0');
-	const virtSol = BigInt(curve.virtualSolReserves?.toString?.() ?? '0');
+	const virtSol = BigInt(quoteReserve('virtual'));
 	const virtToken = BigInt(curve.virtualTokenReserves?.toString?.() ?? '0');
 	const complete = !!curve.complete;
 	const graduationPercent = complete

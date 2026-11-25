@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T17:42:09.565Z",
+	"generated_at": "2026-11-25T17:52:27.989Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4712,
+	"total": 4713,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -64,6 +64,16 @@
 			"type": "update",
 			"title": "News analysis and AI answers fail less often when traffic spikes",
 			"summary": "When many readers or a crawler opened the same story at once, every request ran its own article analysis, and those duplicate runs used up the free AI providers for everyone else on the platform. Requests for a story that is already being analyzed now share that one run. The AI fallback chain also stopped skipping a fast model just because a slower model on the same provider timed out, so NVIDIA's quick Nemotron model now gets its turn instead of the request failing.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Pump.fun bonding curves show the SOL they have really raised",
+			"summary": "Pump.fun renamed the curve fields that hold a coin's SOL, and some of our readers still asked for the old names. The on-chain curve read behind coin pages and agent alpha failed on every live coin, the pump.fun MCP worker and the stats snapshot reported every live curve as 0 SOL raised, and Strategy Battle paper sells returned almost nothing because the SOL held in the curve was read as lamports. All of them now read the current fields, so curve progress, liquidity and paper-trade results match the chain again.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1559,16 +1569,6 @@
 			"tags": [
 				"improvement",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "HQ answer summaries keep working after the larger AI models run out for the day",
-			"summary": "HQ's agent tools can add a short written summary to a DeFi answer. The AI provider caps each model's daily usage separately, and once both models HQ used were capped the summaries stopped, even though a third model on the same account still had room. HQ now falls back to that third model, so summaries keep coming for longer each day. The data answers themselves never depended on it.",
-			"link": null,
-			"tags": [
-				"fix"
 			]
 		}
 	]

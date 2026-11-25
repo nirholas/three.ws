@@ -40,6 +40,7 @@ import {
 import { reservePaymentProof } from './_lib/x402/payment-identifier-server.js';
 import { getPumpSdk, getConnection, solanaPubkey, getAmmPoolState } from './_lib/pump.js';
 import { solPriceUsd } from './_lib/sol-price.js';
+import { curveQuoteReserve } from './_lib/pump-curve-fields.js';
 import { cacheGet, cacheSet } from './_lib/cache.js';
 import { runWithRpcCaller } from './_lib/request-context.js';
 import { currentRpcCaller } from './_lib/solana/rpc-spend.js';
@@ -67,21 +68,6 @@ import { readXPost, summarizeXPost } from './_lib/x-syndication.js';
 
 const TOTAL_PUMP_TOKEN_SUPPLY = 1_000_000_000; // 1B pump.fun standard
 const GRADUATION_REAL_SOL_LAMPORTS = 85_000_000_000n; // ~85 SOL — heuristic
-
-// Read a bonding curve's quote-side reserve as a string, or null if absent.
-//
-// Pump renamed these when USDC became a possible quote asset:
-// `real_sol_reserves` → `real_quote_reserves`, `virtual_sol_reserves` →
-// `virtual_quote_reserves` (same u64s at the same offsets, new names). Current
-// SDKs expose only the `*Quote*` names. Reading just the legacy name yields
-// `undefined`, which silently coerces to 0 and reports a healthy curve as empty
-// rather than failing — so read the current name first and keep the legacy one
-// as a fallback for an older decoder.
-function curveQuoteReserve(curve, kind /* 'real' | 'virtual' */) {
-	const quoteKey = kind === 'real' ? 'realQuoteReserves' : 'virtualQuoteReserves';
-	const legacyKey = kind === 'real' ? 'realSolReserves' : 'virtualSolReserves';
-	return curve?.[quoteKey]?.toString?.() ?? curve?.[legacyKey]?.toString?.() ?? null;
-}
 
 async function handleGetBondingCurve({ mint, network = 'mainnet' }) {
 	const pk = solanaPubkey(mint);

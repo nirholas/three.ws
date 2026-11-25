@@ -155,7 +155,16 @@ function curveReserves(curve) {
 	const vSol = n(curve?.virtualSolReserves);
 	const vTok = n(curve?.virtualTokenReserves);
 	if (!(vSol > 0) || !(vTok > 0)) return null;
-	return { vSol, vTok, realSol: n(curve?.solReserves), realTok: n(curve?.tokenReserves) };
+	// `solReserves` arrives in whole SOL ("12.0000", see api/pump-fun-mcp.js);
+	// every other reserve here is in base units, so convert before it caps the
+	// lamport math in simulateSell.
+	const solHeld = n(curve?.solReserves);
+	return {
+		vSol,
+		vTok,
+		realSol: solHeld != null ? solHeld * LAMPORTS_PER_SOL : undefined,
+		realTok: n(curve?.tokenReserves),
+	};
 }
 
 /**

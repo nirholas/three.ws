@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Pump.fun bonding curves show the SOL they have really raised",
+			"summary": "Pump.fun renamed the curve fields that hold a coin's SOL, and some of our readers still asked for the old names. The on-chain curve read behind coin pages and agent alpha failed on every live coin, the pump.fun MCP worker and the stats snapshot reported every live curve as 0 SOL raised, and Strategy Battle paper sells returned almost nothing because the SOL held in the curve was read as lamports. All of them now read the current fields, so curve progress, liquidity and paper-trade results match the chain again.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Stuck avatar jobs now close with a clear reason instead of retrying forever",
 			"summary": "About 17 avatar generations stayed in the rigging step for days: their un-rigged model had been saved to the backup bucket while the main bucket was rejecting writes, and the recovery read only looked at the main bucket's URL, so it failed with a 404 every five minutes. Recovery now also reads the backup copy, and a model that is genuinely gone is closed as failed with a message to generate again.",
 			"tags": ["fix"]

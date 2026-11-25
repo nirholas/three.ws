@@ -77,6 +77,7 @@ import { RESERVED_WITHDRAWAL_STATUSES } from '../_lib/withdrawal-status.js';
 import { payoutsPaused } from '../_lib/payout-kill-switch.js';
 import { acquireLock } from '../_lib/cache.js';
 import { prefetchBuybackState, quoteFromCurveInfo } from '../_lib/pump-buyback-prefetch.js';
+import { curveQuoteReserve } from '../_lib/pump-curve-fields.js';
 import { resolveURI } from '../../src/ipfs.js';
 import {
 	OUTCOME,
@@ -1819,7 +1820,7 @@ async function pumpStatsSnapshotMint({ network, mint }) {
 	}
 
 	if (curve && !curve.complete) {
-		const realSol = BigInt(curve.realSolReserves?.toString?.() ?? '0');
+		const realSol = BigInt(curveQuoteReserve(curve, 'real') ?? '0');
 		const pct =
 			GRADUATION_REAL_SOL > 0n
 				? Number((realSol * 10000n) / GRADUATION_REAL_SOL) / 100
@@ -1827,7 +1828,7 @@ async function pumpStatsSnapshotMint({ network, mint }) {
 		out.bonding_curve = {
 			real_sol: realSol.toString(),
 			real_token: curve.realTokenReserves?.toString?.() ?? null,
-			virtual_sol: curve.virtualSolReserves?.toString?.() ?? null,
+			virtual_sol: curveQuoteReserve(curve, 'virtual'),
 			virtual_token: curve.virtualTokenReserves?.toString?.() ?? null,
 			complete: curve.complete ?? false,
 			progress_pct: pct != null ? Math.min(100, Math.max(0, pct)) : null,
