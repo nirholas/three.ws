@@ -1,0 +1,40 @@
+{
+  "name": "three-ws-staging",
+  "main": "deploy/cloudflare/worker.mjs",
+  "compatibility_date": "2026-11-24",
+  "workers_dev": true,
+  "send_metrics": false,
+  "containers": [
+    {
+      "class_name": "ThreeWsContainer",
+      "scheduling_policy": "durable_object",
+      "images": {
+        "base": {
+          "dockerfile": "./deploy/cloudflare/Dockerfile",
+          "build_context": "."
+        }
+      }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "THREE_WS",
+        "class_name": "ThreeWsContainer"
+      }
+    ]
+  },
+  "exports": {
+    "ThreeWsContainer": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  },
+  "vars": {
+    "THREE_WS_INSTANCE": "standard-3",
+    "THREE_WS_SLEEP_MS": "120000"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
