@@ -590,7 +590,7 @@
 		"ensure:avatar-studio": "test -f character-studio/build/index.html || npm run build:avatar-studio",
 		"deploy:gcp": "npm run check:dist && npm run check:pages && npm run deploy:gcp:submit && npm run deploy:gcp:sync-crons && npm run deploy:gcp:purge-cdn && npm run smoke:prod",
 		"deploy:gcp:full": "npm run build:gcp && npm run deploy:gcp",
-		"deploy:gcp:submit": "npm run db:check && npm run check:gcloudignore && npm run audit:deploy && npm run check:api-imports && gcloud builds submit --config server/cloudbuild.yaml --region us-central1 --project ${GCP_PROJECT:-aerial-vehicle-466722-p5}",
+		"deploy:gcp:submit": "npm run db:check && npm run check:gcloudignore && npm run audit:deploy && npm run check:api-imports && gcloud builds submit --config server/cloudbuild.yaml --region us-central1 --project ${GCP_PROJECT:-aerial-vehicle-466722-p5} ${GCP_BUILD_MACHINE_TYPE:+--machine-type=$GCP_BUILD_MACHINE_TYPE}",
 		"deploy:gcp:sync-crons": "node scripts/create-gcp-scheduler.mjs --missing-only",
 		"deploy:gcp:purge-cdn": "gcloud compute url-maps invalidate-cdn-cache three-ws-lb --path '/*' --project ${GCP_PROJECT:-aerial-vehicle-466722-p5}",
 		"postversion": "git push threews HEAD && git push threews --tags",

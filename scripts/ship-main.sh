@@ -27,7 +27,8 @@ cd "$WT"
 echo "== build:gcp =="
 npm run build:gcp
 echo "== submit + deploy =="
-gcloud builds submit --config server/cloudbuild.yaml --region "$REGION" --project "$PROJECT"
+# GCP_BUILD_MACHINE_TYPE overrides the config's E2_HIGHCPU_32 (free-trial projects only allow e2-medium).
+gcloud builds submit --config server/cloudbuild.yaml --region "$REGION" --project "$PROJECT" ${GCP_BUILD_MACHINE_TYPE:+--machine-type="$GCP_BUILD_MACHINE_TYPE"}
 echo "== purge CDN =="
 npm run deploy:gcp:purge-cdn
 echo "== verify live commit =="

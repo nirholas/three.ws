@@ -11,6 +11,8 @@ Related: [server/README.md](../../server/README.md) (the server code itself),
 [STRUCTURE.md](../../STRUCTURE.md) (surface map),
 [docs/ops/gcp-model-workers.md](gcp-model-workers.md) (the 3D model workers,
 which were already on Cloud Run before this migration).
+[docs/ops/gcp-project-migration.md](gcp-project-migration.md) (the 2026-11-25
+move of `three-ws-api` to project `three-ws`, and its cutover checklist).
 
 ---
 

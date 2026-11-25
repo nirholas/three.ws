@@ -366,7 +366,7 @@ function run() {
 	console.log(`\n[prep:worktree] ready at ${TARGET}`);
 	console.log('Next:');
 	console.log(`  cd ${TARGET} && npm run build:gcp`);
-	console.log(`  gcloud builds submit --config server/cloudbuild.yaml --region us-central1 --project ${process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5'}`);
+	console.log(`  gcloud builds submit --config server/cloudbuild.yaml --region us-central1 --project ${process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5'}${process.env.GCP_BUILD_MACHINE_TYPE ? ` --machine-type=${process.env.GCP_BUILD_MACHINE_TYPE}` : ''}`);
 	console.log(`\nWhen the deploy lands: git worktree remove --force ${TARGET}`);
 	console.log('(or leave it for `npm run clean:worktrees -- --apply` once it is idle past the age floor)');
 }
