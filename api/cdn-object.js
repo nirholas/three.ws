@@ -21,7 +21,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { GetObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { cors, error, wrap } from './_lib/http.js';
-import { r2, isStorageInfrastructureError, publicUrlOrNull } from './_lib/r2.js';
+import { r2, isStorageInfrastructureError, bucketDomainUrlOrNull } from './_lib/r2.js';
 import { fallbackBucket, fallbackFetch, fallbackHead, noteFallback } from './_lib/storage-fallback.js';
 import { fetchUpstream } from './_lib/upstream-fetch.js';
 import { env } from './_lib/env.js';
@@ -186,7 +186,7 @@ async function degradedSource(source) {
 		});
 		if (fromGcs) return { response: fromGcs };
 	}
-	const url = publicUrlOrNull(source);
+	const url = bucketDomainUrlOrNull(source);
 	if (!url) return null;
 	const response = await fetchUpstream(
 		url,
@@ -440,7 +440,7 @@ export default wrap(async (req, res) => {
 		// thumbnails costs r2.dev one fetch instead of one per viewer, and traffic
 		// still returns to the signed path within a minute of the credential being
 		// healthy again.
-		const fallback = isInfraFault ? publicUrlOrNull(key) : null;
+		const fallback = isInfraFault ? bucketDomainUrlOrNull(key) : null;
 		if (fallback) {
 			console.error('[cdn-object] signed read failed, streaming public bucket domain:', key, err?.message);
 			try {

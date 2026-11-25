@@ -8,6 +8,7 @@ import {
 	ipfsPinningConfigured,
 	pinToIPFS,
 } from '../_lib/ipfs-pin.js';
+import { keyFromPublicUrl, headObject, getObjectBuffer } from '../_lib/r2.js';
 
 const MAX_R2_BYTES = 50 * 1024 * 1024;
 
@@ -61,56 +62,20 @@ const MAX_DATA_URL_BYTES = 5 * 1024 * 1024;
 // each status call, turning one request into a much larger one for free.
 const CID_RE = /^[a-zA-Z0-9]{16,128}$/;
 
-function isOwnedR2Url(url) {
-	const domain = process.env.S3_PUBLIC_DOMAIN;
-	if (!domain) return false;
-	const trimmed = domain.replace(/\/$/, '');
-	return url.startsWith(trimmed + '/');
+// The bucket key behind a URL that points at our own storage, in either form
+// it is handed out: the /cdn/<key> proxy publicUrl() returns, or the bucket's
+// raw domain older stored URLs carry. Null for every other URL.
+function ownedStorageKey(url) {
+	try {
+		return keyFromPublicUrl(url);
+	} catch {
+		return null;
+	}
 }
 
 /** Every gateway worth handing a caller, from the one tested read list. */
 function gatewayUrlsFor(cid) {
 	return IPFS_READ_GATEWAYS.map((gateway) => `${gateway}${cid}`);
-}
-
-function tooLarge(message) {
-	return Object.assign(new Error(message), { status: 413, code: 'payload_too_large' });
-}
-
-/**
- * Buffer a response body, refusing to hold more than `maxBytes` at any point.
- *
- * A content-length pre-check alone is not a limit: the header is optional and
- * a source that omits or understates it gets an unbounded read, because the
- * whole body lands in memory before any post-hoc size check can run. Reading
- * incrementally and cancelling the moment the running total crosses the cap
- * keeps peak memory bounded whatever the source sends.
- */
-async function readCappedBody(resp, maxBytes) {
-	if (Number(resp.headers.get('content-length') || 0) > maxBytes) {
-		throw tooLarge(`source exceeds ${Math.round(maxBytes / (1024 * 1024))} MB limit`);
-	}
-	const reader = resp.body?.getReader();
-	if (!reader) {
-		const buf = Buffer.from(await resp.arrayBuffer());
-		if (buf.byteLength > maxBytes) {
-			throw tooLarge(`source exceeds ${Math.round(maxBytes / (1024 * 1024))} MB limit`);
-		}
-		return buf;
-	}
-	const chunks = [];
-	let total = 0;
-	for (;;) {
-		const { done, value } = await reader.read();
-		if (done) break;
-		total += value.byteLength;
-		if (total > maxBytes) {
-			await reader.cancel().catch(() => {});
-			throw tooLarge(`source exceeds ${Math.round(maxBytes / (1024 * 1024))} MB limit`);
-		}
-		chunks.push(value);
-	}
-	return Buffer.concat(chunks);
 }
 
 /**
@@ -295,7 +260,8 @@ export default wrap(async (req, res) => {
 				);
 			}
 		} else {
-			if (!isOwnedR2Url(sourceUrl)) {
+			const key = ownedStorageKey(sourceUrl);
+			if (!key) {
 				return error(
 					res,
 					400,
@@ -303,27 +269,19 @@ export default wrap(async (req, res) => {
 					'sourceUrl must be an owned R2 URL or a data: URL',
 				);
 			}
-			const head = await fetch(sourceUrl, {
-				method: 'HEAD',
-				redirect: 'manual',
-				signal: AbortSignal.timeout(8000),
-			});
-			if (!head.ok) return error(res, 400, 'validation_error', 'source URL is not accessible');
-			if (Number(head.headers.get('content-length') || 0) > MAX_R2_BYTES) {
+			// Read by key rather than fetching the URL: the storage helpers find an
+			// object in R2 or in the GCS fallback bucket (where everything written
+			// during an R2 credential outage lives, and which the raw bucket domain
+			// cannot serve), and no request ever leaves for a host we name.
+			const head = await headObject(key);
+			if (!head) return error(res, 400, 'validation_error', 'source URL is not accessible');
+			if (Number(head.ContentLength || 0) > MAX_R2_BYTES) {
 				return error(res, 413, 'payload_too_large', 'source exceeds 50 MB limit');
 			}
-			// The source is prefix-locked to our own R2 domain and R2 public buckets
-			// do not 302, so refusing to follow any redirect keeps a future CDN or
-			// front-end change from silently widening the fetch target.
-			const fetched = await fetch(sourceUrl, {
-				redirect: 'manual',
-				signal: AbortSignal.timeout(20000),
-			});
-			if (fetched.status >= 300 && fetched.status < 400) {
-				return error(res, 502, 'fetch_failed', 'source URL returned an unexpected redirect');
+			buf = await getObjectBuffer(key);
+			if (buf.byteLength > MAX_R2_BYTES) {
+				return error(res, 413, 'payload_too_large', 'source exceeds 50 MB limit');
 			}
-			if (!fetched.ok) return error(res, 502, 'fetch_failed', 'failed to fetch source URL');
-			buf = await readCappedBody(fetched, MAX_R2_BYTES);
 			// The object's own key names the file when the caller did not.
 			if (!requestedName) {
 				filename = safeFilename(new URL(sourceUrl).pathname.split('/').pop(), defaultName);

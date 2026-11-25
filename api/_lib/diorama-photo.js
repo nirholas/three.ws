@@ -12,6 +12,7 @@
 // No mocks: a vision outage surfaces as a typed error the route maps to a
 // designed 503, never as an invented room.
 
+import { env } from './env.js';
 import { describeImageJson, visionConfigured, VISION_TASK_LEAD } from './vision.js';
 import { planFromPhotoAnalysis } from '../../src/diorama/photo-layout.js';
 import { normalizeDiorama, MAX_OBJECTS, MOODS, GROUNDS } from '../../src/diorama/schema.js';
@@ -112,11 +113,21 @@ export async function composePlanFromPhoto({ imageUrl = null, imageBase64 = null
  * its `sourceImage`; any other public URL is read once and never republished.
  */
 export function isOwnStorageUrl(url, publicDomain = process.env.S3_PUBLIC_DOMAIN) {
-	if (typeof url !== 'string' || !publicDomain) return false;
+	if (typeof url !== 'string') return false;
+	let u;
 	try {
-		const u = new URL(url);
+		u = new URL(url);
+	} catch {
+		return false;
+	}
+	if (u.protocol !== 'https:') return false;
+	// The /cdn/<key> proxy on our own origin, which is what publicUrl() hands out.
+	if (u.pathname.startsWith('/cdn/') && u.host === new URL(env.APP_ORIGIN).host) return true;
+	// The bucket's raw domain, which URLs stored before 2026-11-25 still carry.
+	if (!publicDomain) return false;
+	try {
 		const own = new URL(/^https?:\/\//i.test(publicDomain) ? publicDomain : `https://${publicDomain}`);
-		return u.protocol === 'https:' && u.host === own.host;
+		return u.host === own.host;
 	} catch {
 		return false;
 	}

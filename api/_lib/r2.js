@@ -519,9 +519,38 @@ export async function getObjectRange(key, length) {
 // fully-qualified, so they pass through untouched. Every bucket-backed key
 // (the `u/{ownerId}/…` form) resolves against the CDN domain exactly as before,
 // so existing avatars are unaffected.
+//
+// The URL handed out is the first-party /cdn/<key> proxy, not the bucket's raw
+// *.r2.dev domain. That domain only serves objects that live in R2, and every
+// object written while R2 refuses our credential lives in the GCS fallback
+// bucket instead (storage-fallback.js), which only /cdn/ can read. Until
+// 2026-11-25 this returned the raw domain, and /api/explore handed out 38
+// avatar GLB links that all answered 404 while /cdn/ served the same keys.
+// The bucket domain is still read first so a deployment without object storage
+// fails loud here, exactly as before: an upload path must not hand out a URL
+// for bytes it has nowhere to put.
 export function publicUrl(key) {
 	if (isAbsoluteUrl(key)) return key;
+	void env.S3_PUBLIC_DOMAIN;
+	return cdnUrl(key);
+}
+
+// The bucket's raw public-domain URL for a key. Only the /cdn/ proxy and the
+// avatar GLB proxy use it, as their last-resort read when R2's signed read
+// fails: they must reach the bucket directly, never their own /cdn/ route.
+// Nothing else should hand this URL out (see publicUrl above).
+export function bucketDomainUrl(key) {
+	if (isAbsoluteUrl(key)) return key;
 	return `${env.S3_PUBLIC_DOMAIN}/${encodeR2Key(key)}`;
+}
+
+export function bucketDomainUrlOrNull(key) {
+	if (!key) return null;
+	try {
+		return bucketDomainUrl(key);
+	} catch {
+		return null;
+	}
 }
 
 function isAbsoluteUrl(key) {

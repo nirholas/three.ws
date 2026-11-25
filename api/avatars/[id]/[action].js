@@ -21,7 +21,7 @@ import { getAvatar, resolveAvatarUrl } from '../../_lib/avatars.js';
 import {
 	r2,
 	publicUrl,
-	publicUrlOrNull,
+	bucketDomainUrlOrNull,
 	thumbnailUrl,
 	isStorageInfrastructureError,
 	getObjectBuffer,
@@ -807,7 +807,7 @@ async function handleGlb(req, res) {
 		//
 		// The permission gate above has already run, so this changes who may
 		// read nothing: it only changes which origin the bytes come from.
-		const fallbackUrl = isStorageInfrastructureError(err) ? publicUrlOrNull(key) : null;
+		const fallbackUrl = isStorageInfrastructureError(err) ? bucketDomainUrlOrNull(key) : null;
 		if (fallbackUrl) {
 			console.error('[avatars/glb] signed read failed, streaming public bucket domain:', key, err?.message);
 			try {

@@ -31,6 +31,7 @@ import { clientIp, limits } from '../_lib/rate-limit.js';
 import { isUuid } from '../_lib/validate.js';
 import { getPublicCreation } from '../_lib/forge-store.js';
 import { fetchModel, FetchModelError } from '../_lib/fetch-model.js';
+import { headObject, getObjectBuffer } from '../_lib/r2.js';
 import { makeOfficeSafeGlb, OfficeGlbError } from '../_lib/office-glb.js';
 import { buildPptx, PPTX_MIME } from '../_lib/pptx-writer.js';
 
@@ -245,19 +246,28 @@ export function storageKeyFromSrc(src, publicDomain = process.env.S3_PUBLIC_DOMA
 	return key;
 }
 
-/** The production reader for `src` exports: the object's bytes, or null when the bucket has no such key. */
+/**
+ * The production reader for `src` exports: the object's bytes, or null when no
+ * store has the key. Reads through the storage helpers rather than fetching the
+ * bucket's public domain, because that domain only serves objects in R2, and a
+ * model made while R2 refused our credential lives in the GCS fallback bucket.
+ */
 export async function loadStoredGlb(key) {
-	const pub = (process.env.S3_PUBLIC_DOMAIN || '').replace(/\/+$/, '');
-	if (!pub) throw new FetchModelError('public storage domain is not configured', 'upstream_error');
+	let head;
 	try {
-		const { bytes } = await fetchModel(`${pub}/${key.split('/').map(encodeURIComponent).join('/')}`, {
-			maxBytes: MAX_GLB_BYTES,
-			timeoutMs: 60_000,
-		});
-		return bytes;
+		head = await headObject(key);
 	} catch (err) {
-		if (err instanceof FetchModelError && /returned (404|403)\b/.test(err.message)) return null;
-		throw err;
+		throw new FetchModelError(`storage read failed: ${err?.message || err}`, 'upstream_error');
+	}
+	if (!head) return null;
+	const size = Number(head.ContentLength || 0);
+	if (size > MAX_GLB_BYTES) {
+		throw new FetchModelError(`file too large (${size} > ${MAX_GLB_BYTES} bytes)`, 'file_too_large');
+	}
+	try {
+		return await getObjectBuffer(key);
+	} catch (err) {
+		throw new FetchModelError(`storage read failed: ${err?.message || err}`, 'upstream_error');
 	}
 }
 

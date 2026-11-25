@@ -96,6 +96,18 @@ function isOwnGcsResultUrl(u) {
 	return false;
 }
 
+// Our own /cdn/<key> proxy, which is what publicUrl() hands out (it serves R2
+// and the GCS fallback bucket alike). Only the /cdn/ path on our app origin is
+// accepted: the rest of the origin is the API, never a provider result.
+function isOwnCdnUrl(u) {
+	if (!u.pathname.startsWith('/cdn/')) return false;
+	try {
+		return u.host === new URL(env.APP_ORIGIN).host;
+	} catch {
+		return false;
+	}
+}
+
 // Narrow positive gate — exactly the webhook's original semantics: parse, require
 // https, lowercase the host, and accept an exact or `.`-suffix match against the
 // allowed hosts (the provider delivery hosts ∪ our own CDN host). Never throws;
@@ -110,6 +122,7 @@ export function isAllowedProviderResultUrl(raw) {
 	}
 	if (u.protocol !== 'https:') return false;
 	if (isOwnGcsResultUrl(u)) return true;
+	if (isOwnCdnUrl(u)) return true;
 	const host = u.hostname.toLowerCase();
 	const own = ownPublicHost();
 	const allowed = own ? [...PROVIDER_RESULT_HOSTS, own] : PROVIDER_RESULT_HOSTS;

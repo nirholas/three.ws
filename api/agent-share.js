@@ -17,6 +17,7 @@ import { sql } from './_lib/db.js';
 import { cors, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
 import { isUuid } from './_lib/validate.js';
+import { thumbnailUrl } from './_lib/r2.js';
 
 // Chain IDs → human-readable labels for EVM chains
 const EVM_CHAIN = { 8453: 'Base', 1: 'Ethereum', 10: 'Optimism', 137: 'Polygon', 42161: 'Arbitrum' };
@@ -63,17 +64,12 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	// Build public thumbnail URL for OG image.
-	// Read the bucket domain off process.env rather than env.S3_PUBLIC_DOMAIN: that
-	// getter THROWS when the var is unset, so the `|| ${origin}/cdn` fallback below
-	// could never run and an unconfigured deployment answered every crawler with a
-	// 503 not_configured instead of a share card. Same rule api/og/agent.js follows:
-	// a missing bucket domain degrades the image, it never 503s a crawler.
-	const CDN_BASE = (process.env.S3_PUBLIC_DOMAIN || '').trim().replace(/\/$/, '') || `${origin}/cdn`;
-	const thumbKey  = row.thumbnail_key;
-	const thumbVis  = row.visibility;
-	const thumbPublic = thumbVis === 'public' || thumbVis === 'unlisted';
-	const thumbUrl  = thumbKey && thumbPublic ? `${CDN_BASE}/${thumbKey}` : null;
+	// Public thumbnail URL for the OG image, through the /cdn/<key> proxy: it
+	// reads R2 and the GCS fallback bucket alike, where the bucket's raw domain
+	// serves only R2, and it needs no bucket configuration, so an unconfigured
+	// deployment still answers a crawler with a card instead of an error.
+	const thumbPublic = row.visibility === 'public' || row.visibility === 'unlisted';
+	const thumbUrl  = thumbPublic ? thumbnailUrl(row.thumbnail_key) : null;
 
 	// "Share my wallet" variant (?wallet=1) — the OG image becomes the SVG card
 	// (which renders the vanity address + lifetime tips), the deep link lands on

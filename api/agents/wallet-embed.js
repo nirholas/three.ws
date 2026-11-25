@@ -28,6 +28,7 @@ import { sql } from '../_lib/db.js';
 import { cors, wrap, json, method, error, rateLimited } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { isUuid } from '../_lib/validate.js';
+import { thumbnailUrl } from '../_lib/r2.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getBalances, walletUsdTotal } from '../_lib/balances.js';
 
@@ -37,11 +38,11 @@ const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 // CDN-readable for embed crawlers; short browser cache, longer at the edge.
 const CACHE = 'public, max-age=30, s-maxage=120, stale-while-revalidate=60';
 
-function thumbnailUrl(thumbKey, visibility) {
-	if (!thumbKey) return null;
+// Through the /cdn/<key> proxy, which reads R2 and the GCS fallback bucket
+// alike; the bucket's raw domain serves only objects that live in R2.
+function avatarThumbnailUrl(thumbKey, visibility) {
 	if (visibility !== 'public' && visibility !== 'unlisted') return null;
-	const base = env.S3_PUBLIC_DOMAIN || 'https://three.ws/cdn';
-	return `${base}/${thumbKey}`;
+	return thumbnailUrl(thumbKey);
 }
 
 export default wrap(async (req, res) => {
@@ -83,7 +84,7 @@ export default wrap(async (req, res) => {
 			data: {
 				agentId: id,
 				name: row.name || null,
-				avatar: thumbnailUrl(row.thumbnail_key, row.visibility),
+				avatar: avatarThumbnailUrl(row.thumbnail_key, row.visibility),
 				address: null,
 				network,
 				openUrl: `${origin}/agent/${id}`,
@@ -131,7 +132,7 @@ export default wrap(async (req, res) => {
 		data: {
 			agentId: id,
 			name: row.name || null,
-			avatar: thumbnailUrl(row.thumbnail_key, row.visibility),
+			avatar: avatarThumbnailUrl(row.thumbnail_key, row.visibility),
 			address: String(address),
 			vanity: prefix || suffix ? { prefix, suffix } : null,
 			network,

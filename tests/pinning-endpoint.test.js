@@ -40,6 +40,21 @@ vi.mock('../api/_lib/env.js', () => ({
 	env: { APP_ORIGIN: 'http://localhost:3000', ISSUER: 'http://t', MCP_RESOURCE: 'http://t' },
 }));
 
+// Storage reads are the only r2 surface the pin path touches; everything else
+// in the module stays real so keyFromPublicUrl judges ownership for real.
+const stored = new Map();
+vi.mock('../api/_lib/r2.js', async (importOriginal) => {
+	const real = await importOriginal();
+	return {
+		...real,
+		headObject: async (key) => (stored.has(key) ? { ContentLength: stored.get(key).length } : null),
+		getObjectBuffer: async (key) => {
+			if (!stored.has(key)) throw Object.assign(new Error('NoSuchKey'), { name: 'NoSuchKey' });
+			return stored.get(key);
+		},
+	};
+});
+
 const { default: handler } = await import('../api/pinning/[action].js');
 
 function mkReq({ body = null, method = 'POST', action = 'pin', url } = {}) {
@@ -175,6 +190,31 @@ describe('POST /api/pinning/pin', () => {
 
 		expect(res.statusCode).toBe(400);
 		expect(parse(res).error).toBe('validation_error');
+		expect(pinataCalls).toHaveLength(0);
+	});
+
+	// publicUrl() hands out the /cdn/<key> proxy, and an object written while R2
+	// refused our credential exists only in the GCS fallback, which the raw
+	// bucket domain cannot serve. The pin reads the bytes from storage by key,
+	// so both URL forms work and the fallback copy is found.
+	it('pins an owned /cdn/ URL by reading the object from storage', async () => {
+		stored.set('u/user-1/knight.glb', Buffer.concat([Buffer.from('glTF'), Buffer.alloc(60, 0x41)]));
+		const res = mkRes();
+		await handler(mkReq({ body: { sourceUrl: 'http://localhost:3000/cdn/u/user-1/knight.glb', kind: 'glb' } }), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(pinataCalls).toHaveLength(1);
+		const form = pinataCalls[0].init.body;
+		const file = form.get('file');
+		expect(file.name).toBe('knight.glb');
+		expect(file.size).toBe(64);
+	});
+
+	it('answers 400 for an owned URL whose object does not exist', async () => {
+		const res = mkRes();
+		await handler(mkReq({ body: { sourceUrl: 'http://localhost:3000/cdn/u/user-1/missing.glb', kind: 'glb' } }), res);
+
+		expect(res.statusCode).toBe(400);
 		expect(pinataCalls).toHaveLength(0);
 	});
 
