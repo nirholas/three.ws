@@ -386,7 +386,7 @@ export async function copyObject({ fromKey, toKey }) {
 			// the public bucket domain (it is readable there without the
 			// credential) and land the copy in the fallback bucket.
 			if (!isStorageInfrastructureError(err)) throw err;
-			const url = publicUrlOrNull(fromKey);
+			const url = bucketDomainUrlOrNull(fromKey);
 			const res = url ? await fetch(url, { signal: AbortSignal.timeout(30_000) }).catch(() => null) : null;
 			if (!res?.ok) throw err;
 			await fallbackPut({
@@ -450,7 +450,7 @@ export async function getPublicObjectBuffer(key) {
 	} catch (err) {
 		signedErr = err;
 	}
-	const url = publicUrlOrNull(key);
+	const url = bucketDomainUrlOrNull(key);
 	if (!url) throw signedErr;
 	let res;
 	try {
