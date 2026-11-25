@@ -23118,7 +23118,7 @@
 		"d_trending": "What’s hot on three.ws right now. Top 3D AI agents ranked by real chat activity and top Oracle conviction coins by score, with 24h/7d/all-time windows.",
 		"d_trust": "How three.ws hosts, encrypts, retains and deletes data, which AI providers see prompts, and an honest compliance status, each answer linked to the code that proves it.",
 		"d_trust_subprocessors": "Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.",
-		"d_tty": "curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.",
+		"d_tty": "curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.",
 		"d_tutor": "Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.",
 		"d_tutorials": "Step-by-step build guides.",
 		"d_tutorials_add_a_3d_assistant": "Step-by-step: add a floating 3D avatar assistant to any website with one script tag, configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed via MCP.",

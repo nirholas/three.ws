@@ -98,12 +98,12 @@ function frameToHtml(text) {
 	return open ? html : '';
 }
 
-const state = { spin: true, color: true, scene: '', style: 'half', avatar: '', controller: null, running: false };
+const state = { spin: true, color: true, scene: '', style: 'half', avatar: '', text: 'gm', controller: null, running: false };
 
 function commandText() {
 	const style = state.style !== 'half' ? `style=${state.style}` : '';
 	if (state.scene === 'say') {
-		const q = ['text=gm', style].filter(Boolean).join('&');
+		const q = [`text=${encodeURIComponent(state.text || 'gm')}`, style].filter(Boolean).join('&');
 		return `curl -L 'three.ws/tty/say?${q}'`;
 	}
 	if (state.scene && style) return `curl -L 'three.ws/tty/${state.scene}?${style}'`;
@@ -178,6 +178,7 @@ async function run() {
 	// profile walk and disagree with `curl three.ws/tty/walk`.
 	if (state.scene) params.set('scene', state.scene);
 	else params.set('spin', state.spin ? '0.9' : '0');
+	if (state.scene === 'say') params.set('text', state.text || 'gm');
 	if (state.style !== 'half') params.set('style', state.style);
 	if (!state.scene && state.avatar) params.set('avatar', state.avatar);
 
@@ -263,6 +264,8 @@ else if (SCENES.has(askedAvatar.toLowerCase())) state.scene = askedAvatar.toLowe
 else if (askedAvatar) state.avatar = askedAvatar;
 const askedStyle = (initial.get('style') || '').toLowerCase();
 if (STYLES.has(askedStyle)) state.style = askedStyle;
+const askedText = (initial.get('text') || '').replace(/[\r\n\t]+/g, ' ').trim().slice(0, 42);
+if (askedText) state.text = askedText;
 pressGroup('[data-scene]', 'data-scene', state.scene);
 pressGroup('[data-style]', 'data-style', state.style);
 showCommand();

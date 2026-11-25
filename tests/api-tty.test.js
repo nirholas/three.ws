@@ -8,7 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
-import { colorModeFor, defaultModelPath, resolveSource, sceneFromQuery } from '../api/tty.js';
+import handler, { colorModeFor, defaultModelPath, resolveSource, sceneFromQuery } from '../api/tty.js';
 
 describe('colour negotiation', () => {
 	it('defaults to 256 colour, because curl forwards no terminal hints', () => {
@@ -75,5 +75,59 @@ describe('source resolution', () => {
 		// A non-UUID short-circuits in getAvatar without touching Postgres, so
 		// this stays a pure unit test.
 		expect(await resolveSource({ avatar: 'not-a-uuid' })).toBeNull();
+	});
+
+	it('rejects an explicit scene name it does not know', async () => {
+		// scene=nope must not silently draw the default agent. A reserved name
+		// is a scene. Anything else named as a scene is a mistake.
+		const res = {
+			statusCode: 200,
+			headers: {},
+			body: '',
+			setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+			getHeader(k) { return this.headers[k.toLowerCase()]; },
+			write(c) { this.body += c; return true; },
+			end(c) { if (c) this.body += c; },
+			on() {},
+		};
+		await handler({ url: '/api/tty?scene=nope&frames=1&raw=1', headers: {}, method: 'GET', on() {} }, res);
+		expect(res.statusCode).toBe(400);
+		expect(res.body).toMatch(/unknown_scene/);
+		expect(res.body).not.toMatch(/three\.ws/);
+	});
+
+	it('sends a browser that names an unknown scene to the page', async () => {
+		const res = {
+			statusCode: 200,
+			headers: {},
+			body: '',
+			setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+			end() {},
+			on() {},
+		};
+		await handler({ url: '/api/tty?scene=nope', headers: { accept: 'text/html' }, method: 'GET', on() {} }, res);
+		expect(res.statusCode).toBe(302);
+		expect(res.headers.location).toBe('/tty');
+	});
+
+	it('lets an explicit model URL win over a bad scene name', async () => {
+		const res = {
+			statusCode: 200,
+			headers: {},
+			body: '',
+			setHeader(k, v) { this.headers[k.toLowerCase()] = v; },
+			write() { return true; },
+			end(c) { if (c) this.body += c; },
+			on() {},
+		};
+		await handler({
+			url: '/api/tty?scene=nope&src=http://127.0.0.1/a.glb&frames=1&raw=1',
+			headers: {},
+			method: 'GET',
+			on() {},
+		}, res);
+		expect(res.statusCode).toBe(400);
+		expect(res.body).toMatch(/blocked_url/);
+		expect(res.body).not.toMatch(/unknown_scene/);
 	});
 });

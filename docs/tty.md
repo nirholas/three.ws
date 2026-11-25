@@ -52,7 +52,8 @@ loading. Every parameter is optional.
 
 `walk`, `orbit`, `parade`, `meet`, `birds`, `donut`, `shader`, `draw`, `splats`,
 and `say` are reserved names. Avatar ids are UUIDs, so a real avatar is never
-one of these.
+one of these. An explicit `scene` that is not one of those names is a 400.
+A browser asking for it is sent to `/tty` instead of a wall of escape codes.
 
 ```bash
 # a person, walking, in profile

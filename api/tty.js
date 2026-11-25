@@ -163,6 +163,14 @@ export default wrap(async function handler(req, res) {
 
 	const sceneName = sceneFromQuery(query);
 
+	// An explicit scene= that is not one of the named pictures must not fall
+	// through to the default agent. The caller asked for a scene and missed.
+	// A browser still lands on the page, which ignores a name it does not know.
+	if (!query.src && query.scene != null && String(query.scene) !== '' && !sceneName) {
+		if (wantsHtmlNavigation(req) && !query.raw) return redirect(res, '/tty', 302);
+		return error(res, 400, 'unknown_scene', 'unknown scene');
+	}
+
 	// A browser that lands here would see escape codes as literal mojibake, so
 	// send it somewhere that explains the trick instead. A scene keeps its name
 	// so the page can open the same picture.
