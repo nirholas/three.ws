@@ -199,6 +199,14 @@
 			<description>Models saved before our main storage provider started refusing us were only reachable through a slow, rate-limited public link, so some avatars and GLBs took over 10 seconds or failed outright. The first time one of them is opened now, a copy is kept in our own Google Cloud bucket, and every later load comes from there.</description>
 		</item>
 		<item>
+			<title>Pages left open across an update reload themselves instead of breaking</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Pages left open across an update reload themselves instead of breaking</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A tab opened before a site update could fail the next time it loaded a feature, because the files it asked for had been replaced. Every page now notices when a file it needs is gone, reloads once to pick up the new version, and never reloads in a loop.</description>
+		</item>
+		<item>
 			<title>Photo, scene and model uploads work again during the storage outage</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Photo, scene and model uploads work again during the storage outage</guid>

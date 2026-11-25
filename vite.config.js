@@ -20,6 +20,7 @@ import { watchIgnored } from './scripts/vite/watch-ignored.mjs';
 import { cspEvalProbes } from './scripts/vite/csp-eval-probes.mjs';
 import { rewriteCopiedSrc } from './scripts/vite/src-public-imports.mjs';
 import { vendorChunkFor } from './scripts/vite/vendor-chunks.mjs';
+import { staleChunkReloadSnippet } from './scripts/vite/stale-chunk-reload.mjs';
 import { isLensEntry } from './scripts/lib/lens-surfaces.mjs';
 import { isPrivateDoc } from './scripts/lib/private-docs.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
@@ -3266,7 +3267,11 @@ const appConfig = {
 				order: 'pre',
 				handler() {
 					const BOOTSTRAP =
-						"window.__threeErrQ=window.__threeErrQ||[];window.__threeErrCap=1;addEventListener('error',function(e){window.__threeErrQ.push(e)},!0);addEventListener('unhandledrejection',function(e){window.__threeErrQ.push(e)});";
+						"window.__threeErrQ=window.__threeErrQ||[];window.__threeErrCap=1;addEventListener('error',function(e){window.__threeErrQ.push(e)},!0);addEventListener('unhandledrejection',function(e){window.__threeErrQ.push(e)});" +
+						// A tab that outlives a deploy asks for chunks the new build no
+						// longer has; reload once when one is confirmed gone
+						// (scripts/vite/stale-chunk-reload.mjs).
+						staleChunkReloadSnippet();
 					return [
 						{ tag: 'script', children: BOOTSTRAP, injectTo: 'head' },
 						{
