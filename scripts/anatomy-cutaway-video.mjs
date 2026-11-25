@@ -93,6 +93,7 @@ const STAGE_CSS = `
 	.anx-tour { left: auto !important; right: 28px !important; bottom: 28px !important; width: 380px !important; animation: none !important; }
 	.anx-tour-foot, .anx-tour-tools { display: none !important; }
 	#vidOverlay { position: fixed; inset: 0; z-index: 20; pointer-events: none; color: #f4f6fa; font-family: 'Geist', 'Inter', system-ui, sans-serif; }
+	#vidOverlay::before { content: ''; position: absolute; left: 0; top: 0; width: 760px; height: 150px; background: radial-gradient(ellipse 760px 150px at 0 0, rgba(7,8,11,0.92) 40%, rgba(7,8,11,0) 100%); }
 	#vidOverlay .brand { position: absolute; left: 36px; top: 30px; font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
 	#vidOverlay .brand span { margin-left: 12px; font: 600 15px/1 ui-monospace, 'Geist Mono', monospace; letter-spacing: 0.2em; color: #8fa3c7; }
 	#vidOverlay .title { position: absolute; left: 36px; top: 68px; font-size: 17px; color: #b9c4d8; max-width: 560px; }
@@ -116,7 +117,7 @@ await page.waitForSelector('.anx canvas');
 await page.waitForFunction(() => !document.querySelector('#anpSkeleton') || document.querySelector('#anpSkeleton').hidden);
 await page.waitForTimeout(3000);
 const meta = await page.evaluate(() => ({
-	title: document.querySelector('.anx-title')?.textContent?.trim() || document.title,
+	title: (document.querySelector('.anx-title')?.textContent?.trim() || document.title).replace(/\s*·\s*Anatomy\s*·\s*three\.ws\s*$/i, ''),
 	steps: document.querySelectorAll('.anx-steps li, .anx-tour-step, [data-step]').length,
 	axes: [...(document.querySelector('.anx select[aria-label="Section cut axis"]')?.options || [])].map((o) => o.value),
 	sectionOn: document.querySelector('.anx select[aria-label="Section cut axis"]')?.value || '',
@@ -169,9 +170,10 @@ const cy = box.y + box.height * 0.5;
 
 let frame = 0;
 const stepMs = 1000 / fps;
-async function capture(n, { dragPx = 0 } = {}) {
+async function capture(n, { dragPx = 0, wheel = 0, wheelFrames = 0 } = {}) {
 	for (let i = 0; i < n; i++) {
 		if (dragPx) await page.mouse.move(dragX += dragPx, cy, { steps: 1 });
+		if (wheel && i < wheelFrames) await page.mouse.wheel(0, wheel);
 		await page.evaluate((ms) => window.__vclock.step(ms), stepMs);
 		if (!preview) await page.screenshot({ path: join(framesDir, `${String(frame).padStart(5, '0')}.png`) });
 		frame++;
@@ -193,16 +195,17 @@ const scene = async (s, opts) => capture(preview ? Math.min(sec(s), 20) : sec(s)
 // 1. Spin it
 await setCaption('Spin it');
 await startDrag();
-await scene(3.2, { dragPx: 2.2 });
+await scene(3.2, { dragPx: 3 });
 await still('1-spin');
 
 // 2. Explode it (keep turning slowly)
 await setCaption('Explode it');
 await key('e');
-await scene(3.4, { dragPx: 1.2 });
+// Pull back while the parts fly apart so the exploded engine stays in frame.
+await scene(3.4, { dragPx: 1.2, wheel: 20, wheelFrames: 20 });
 await still('2-explode');
 await key('e');
-await scene(0.9, { dragPx: 1.2 });
+await scene(0.9, { dragPx: 1.2, wheel: -20, wheelFrames: 20 });
 await endDrag();
 
 // 3. Slice it
