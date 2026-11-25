@@ -159,6 +159,14 @@
 			<description>About 17 avatar generations stayed in the rigging step for days: their un-rigged model had been saved to the backup bucket while the main bucket was rejecting writes, and the recovery read only looked at the main bucket's URL, so it failed with a 404 every five minutes. Recovery now also reads the backup copy, and a model that is genuinely gone is closed as failed with a message to generate again.</description>
 		</item>
 		<item>
+			<title>The Hunyuan3D 2.1 GPU worker answers its health check during a cold start</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:The Hunyuan3D 2.1 GPU worker answers its health check during a cold start</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>While the worker was still loading its model, its health check crashed on a half-loaded library and answered with a server error, so probes could read a starting backend as a broken one. It now reports the GPU as unknown until loading finishes.</description>
+		</item>
+		<item>
 			<title>The Oracle social feed skips suspended X accounts instead of failing on them every run</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:The Oracle social feed skips suspended X accounts instead of failing on them every run</guid>

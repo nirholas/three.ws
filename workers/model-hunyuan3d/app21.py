@@ -107,6 +107,10 @@ _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
 _ready: Optional[asyncio.Event] = None
 _load_error: Optional[str] = None
+# torch, once its import in the loader thread has RETURNED. sys.modules is not
+# a substitute: Python inserts the module there the moment the import starts,
+# so for most of a cold start it holds a half-built torch with no `cuda` yet.
+_torch = None
 # In-memory cache only — Cloud Run has no session affinity, so a POST /infer and
 # a later GET /tasks/:id can land on different instances. The durable source of
 # truth is the tasks/{id}.json GCS blob; this dict just avoids a GCS round-trip
@@ -208,7 +212,9 @@ def _load_pipeline():
     # most of Cloud Run's hard 240s startup-probe ceiling. Keeping module
     # import light means uvicorn binds the port in seconds, deterministically;
     # this loader already runs off the request path in a worker thread.
-    import torch  # noqa: F401 (heavyweight import deferred to the load thread)
+    global _torch
+    import torch  # heavyweight import deferred to the load thread
+    _torch = torch
 
     # The 2.1 repo is cloned to REPO_ROOT in the image and expects its two
     # package dirs on sys.path plus cwd==REPO_ROOT (the paint config references
@@ -546,15 +552,24 @@ async def root() -> dict:
 
 @app.get("/health")
 async def health() -> dict:
-    # torch imports lazily in the loader thread; before it lands, report the
-    # GPU as unknown rather than blocking the health endpoint on the import.
-    torch = sys.modules.get("torch")
-    gpu = bool(torch and torch.cuda.is_available())
+    # torch imports lazily in the loader thread; until that import has
+    # finished, report the GPU as unknown rather than blocking on it or reading
+    # attributes off the half-initialized module in sys.modules. A CUDA driver
+    # fault while probing is reported the same way: this route must answer.
+    torch = _torch
+    gpu = None
+    gpu_name = None
+    if torch is not None:
+        try:
+            gpu = bool(torch.cuda.is_available())
+            gpu_name = torch.cuda.get_device_name(0) if gpu else None
+        except Exception:  # noqa: BLE001, a health probe reports, it does not raise
+            gpu, gpu_name = None, None
     return {
         "ok": True,
         "model": MODEL_LABEL,
-        "gpu_available": gpu if torch else None,
-        "gpu_name": torch.cuda.get_device_name(0) if gpu else None,
+        "gpu_available": gpu,
+        "gpu_name": gpu_name,
         "pipeline_loaded": _pipeline is not None,
         "ready": bool(_ready and _ready.is_set() and not _load_error),
         "load_error": _load_error,

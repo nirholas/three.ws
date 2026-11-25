@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T20:19:12.417Z",
+	"generated_at": "2026-11-25T20:34:28.782Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4725,
+	"total": 4726,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -194,6 +194,16 @@
 			"type": "update",
 			"title": "Stuck avatar jobs now close with a clear reason instead of retrying forever",
 			"summary": "About 17 avatar generations stayed in the rigging step for days: their un-rigged model had been saved to the backup bucket while the main bucket was rejecting writes, and the recovery read only looked at the main bucket's URL, so it failed with a 404 every five minutes. Recovery now also reads the backup copy, and a model that is genuinely gone is closed as failed with a message to generate again.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "The Hunyuan3D 2.1 GPU worker answers its health check during a cold start",
+			"summary": "While the worker was still loading its model, its health check crashed on a half-loaded library and answered with a server error, so probes could read a starting backend as a broken one. It now reports the GPU as unknown until loading finishes.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1552,16 +1562,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-14",
-			"type": "update",
-			"title": "Memory seeding writes your seed instead of failing when some AI providers hang",
-			"summary": "The memory-seeding demo could fail with a server error every time you pressed synthesize. A few free AI providers were hanging until they timed out, and together they used up the whole time budget before a provider that was answering got a turn. Now a provider that hangs sits out for two minutes, and synthesis gets enough time to reach a working one, so your memory seed comes back instead of an error.",
-			"link": "/demos/memory-seed.html",
-			"tags": [
-				"fix"
 			]
 		}
 	]

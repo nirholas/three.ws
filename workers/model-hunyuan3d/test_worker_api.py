@@ -131,6 +131,46 @@ def test_health_surfaces_a_failed_model_load():
         app21._load_error = None
 
 
+def test_health_answers_while_torch_is_still_importing():
+    # The loader thread runs `import torch` for most of a cold start, and
+    # Python puts the module into sys.modules the moment that import STARTS.
+    # Reading torch.cuda off that half-built module raised "partially
+    # initialized module 'torch' has no attribute 'cuda'", so every probe in
+    # the load window answered 500 (21 tracebacks in six hours on 2026-11-25).
+    # Until the import has finished, the GPU is reported as unknown.
+    import types
+
+    partial = types.ModuleType("torch")
+    saved = sys.modules.get("torch")
+    sys.modules["torch"] = partial
+    try:
+        res = client.get("/health")
+        assert res.status_code == 200, res.status_code
+        body = res.json()
+        assert body["gpu_available"] is None
+        assert body["gpu_name"] is None
+    finally:
+        if saved is None:
+            sys.modules.pop("torch", None)
+        else:
+            sys.modules["torch"] = saved
+
+
+def test_health_reports_the_gpu_once_torch_has_loaded():
+    import types
+
+    fake = types.SimpleNamespace(
+        cuda=types.SimpleNamespace(is_available=lambda: True, get_device_name=lambda i: "NVIDIA RTX PRO 6000"),
+    )
+    app21._torch = fake
+    try:
+        body = client.get("/health").json()
+        assert body["gpu_available"] is True
+        assert body["gpu_name"] == "NVIDIA RTX PRO 6000"
+    finally:
+        app21._torch = None
+
+
 def test_inference_routes_require_the_bearer_token():
     body = {"images": [_png_data_uri()]}
     # Missing header entirely: FastAPI rejects the required Header at 422.
