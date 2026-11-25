@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T22:33:38.765Z",
+	"generated_at": "2026-11-25T22:39:32.330Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4742,
+	"total": 4743,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -284,6 +284,16 @@
 			"type": "update",
 			"title": "Saved animations play again while object storage refuses its key",
 			"summary": "Opening or playing a saved animation clip no longer fails with a storage error when the signed storage read is refused: the clip is read from the bucket's public copy, the same fallback avatar models already use. Who may see a private or paid clip is unchanged.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Scene Studio loads saved scenes reliably and explains when 3D cannot start",
+			"summary": "Opening /scene could stop partway through loading when a saved scene asked for its lighting environment before the 3D renderer had finished starting, so models passed in the link and handoff animations never arrived. The environment now waits for the renderer. If WebGPU cannot start, the studio switches to WebGL on its own, and if this browser cannot run 3D at all, the viewport says so and explains how to turn it on instead of staying blank.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1546,16 +1556,6 @@
 			"tags": [
 				"feature",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "three.ws 3D Studio agent for Microsoft 365 Copilot",
-			"summary": "The three.ws Microsoft 365 app now includes a declarative agent, three.ws 3D Studio, which shows up by name in the Microsoft 365 Copilot and Copilot in Teams agent list. Pick it and ask for a product model for a deck, a rigged mascot, a free ready-made asset or paste-ready embed code for a website. It does the work through the free three.ws studio tools, so nobody needs an account. A generation answers right away with a 3D viewer link that opens the model as soon as it is ready, and the finished model comes with a GLB download that drops into PowerPoint. The agent uses a fixed list of 13 reviewed tools rather than finding new ones at run time, and every app package build checks it against Microsoft's published schemas and limits. It ships in app version 1.1.0 inside the existing Microsoft 365 app offer.",
-			"link": "/docs/microsoft-copilot-agent",
-			"tags": [
-				"feature"
 			]
 		}
 	]

@@ -25,6 +25,17 @@ in the root `package.json`; re-vendor from the matching tag when upgrading three
 - `Sidebar.Project.App.js` — publish template paths → `/scene-studio/app/…`;
   three builds for the publish zip fetch from jsDelivr pinned to
   `THREE.REVISION`; the published EDIT button links to three.ws/scene.
+- `Viewport.js` / `Viewport.Environment.js` - the environment switch moved
+  into `applySceneEnvironment()`, which defers PMREM-backed environments until
+  the renderer exists (a stored project could request one while the async
+  WebGPU renderer was still starting and threw on a null PMREM generator). The
+  `rendererCreated` re-dispatch carries the equirectangular texture so it
+  survives the deferral.
+- `Sidebar.Project.Renderer.js` - a failed WebGPU start falls back to WebGL;
+  when no renderer starts, `editor.rendererError` is set and a
+  `tws-scene-renderer-failed` window event fires (`../empty-state.js` shows the
+  recovery notice). The shadow, tone-mapping and `editorCleared` handlers no
+  longer assume a renderer exists.
 - `index.html` upstream boot lives in `../main.js` (container mount under the
   site nav instead of `document.body`; no service worker).
 - three.ws chrome overrides live in `../studio.css` — vendor `css/main.css` is

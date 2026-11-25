@@ -231,6 +231,14 @@
 			<description>Opening or playing a saved animation clip no longer fails with a storage error when the signed storage read is refused: the clip is read from the bucket's public copy, the same fallback avatar models already use. Who may see a private or paid clip is unchanged.</description>
 		</item>
 		<item>
+			<title>Scene Studio loads saved scenes reliably and explains when 3D cannot start</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Scene Studio loads saved scenes reliably and explains when 3D cannot start</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Opening /scene could stop partway through loading when a saved scene asked for its lighting environment before the 3D renderer had finished starting, so models passed in the link and handoff animations never arrived. The environment now waits for the renderer. If WebGPU cannot start, the studio switches to WebGL on its own, and if this browser cannot run 3D at all, the viewport says so and explains how to turn it on instead of staying blank.</description>
+		</item>
+		<item>
 			<title>Solana API endpoints answer a clear 400 for a mistyped address</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Solana API endpoints answer a clear 400 for a mistyped address</guid>
