@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T20:07:13.135Z",
+	"generated_at": "2026-11-25T20:19:12.417Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4724,
+	"total": 4725,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -224,6 +224,16 @@
 			"type": "update",
 			"title": "Token holder and due-diligence panels load while busy Solana nodes refuse",
 			"summary": "The top-holders list and the due-diligence report for a Solana token (including $THREE) answered \"holder data sources are temporarily unreachable\" whenever the first few public Solana nodes in our failover chain turned the request away, even though healthy nodes further down the chain could answer in a fraction of a second. A node that explicitly refuses a request now steps aside without using up the request's retry budget, so the healthy nodes get asked and the panels fill in.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Token sentiment pulse reads Bluesky when pump.fun refuses",
+			"summary": "The sentiment pulse (and the paid sentiment_pulse tool) failed for every coin for five days because pump.fun stopped serving its community callouts to outside callers. It now also reads Bluesky posts that name the coin's mint or its exact $TICKER cashtag, reports each source's status separately, and only answers with an error when every source is down.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1550,16 +1560,6 @@
 			"title": "Memory seeding writes your seed instead of failing when some AI providers hang",
 			"summary": "The memory-seeding demo could fail with a server error every time you pressed synthesize. A few free AI providers were hanging until they timed out, and together they used up the whole time budget before a provider that was answering got a turn. Now a provider that hangs sits out for two minutes, and synthesis gets enough time to reach a working one, so your memory seed comes back instead of an error.",
 			"link": "/demos/memory-seed.html",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-14",
-			"type": "update",
-			"title": "Minting on Solana can no longer charge you twice for one item",
-			"summary": "When you put a 3D Drop or a single 3D asset on Solana, a mint that had already landed could be reported as failed if the live connection used to watch for confirmation dropped. Pressing the button again then minted a second copy and spent rent twice. Confirmation now checks the transaction status directly, so a landed mint always reads as minted. If a mint is still undecided after the wait, the item stays locked for a few minutes and you get the transaction link to check, instead of a retry that could mint it again.",
-			"link": "/drops",
 			"tags": [
 				"fix"
 			]

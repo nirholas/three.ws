@@ -183,6 +183,14 @@
 			<description>The top-holders list and the due-diligence report for a Solana token (including $THREE) answered &quot;holder data sources are temporarily unreachable&quot; whenever the first few public Solana nodes in our failover chain turned the request away, even though healthy nodes further down the chain could answer in a fraction of a second. A node that explicitly refuses a request now steps aside without using up the request's retry budget, so the healthy nodes get asked and the panels fill in.</description>
 		</item>
 		<item>
+			<title>Token sentiment pulse reads Bluesky when pump.fun refuses</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Token sentiment pulse reads Bluesky when pump.fun refuses</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The sentiment pulse (and the paid sentiment_pulse tool) failed for every coin for five days because pump.fun stopped serving its community callouts to outside callers. It now also reads Bluesky posts that name the coin's mint or its exact $TICKER cashtag, reports each source's status separately, and only answers with an error when every source is down.</description>
+		</item>
+		<item>
 			<title>360 video and photos now solve into camera positions on our own GPUs</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-22:360 video and photos now solve into camera positions on our own GPUs</guid>

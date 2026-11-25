@@ -118,6 +118,12 @@ beforeEach(() => {
 	vi.restoreAllMocks();
 });
 
+// The pulse reads several sources in parallel, so the pump.fun call is found by
+// its route rather than by call order.
+function calloutUrl(fetchMock) {
+	return fetchMock.mock.calls.map((c) => String(c[0]?.url || c[0])).find((u) => u.includes('/callout/coin/'));
+}
+
 describe('POST /api/social/sentiment', () => {
 	it('scores a batch of posts', async () => {
 		const res = await call(sentimentHandler, '/api/social/sentiment', {
@@ -203,7 +209,7 @@ describe('POST /api/social/sentiment-pulse', () => {
 		expect(out.sources.pumpfunCount).toBe(2);
 		expect(out.breakdown.pumpfun.count).toBe(2);
 
-		const url = fetchMock.mock.calls[0][0];
+		const url = calloutUrl(fetchMock);
 		expect(url).toContain(`/callout/coin/${MINT}`);
 		expect(url).not.toContain('/callout/top/');
 		expect(url).toContain('limit=50');
@@ -215,18 +221,18 @@ describe('POST /api/social/sentiment-pulse', () => {
 			.mockResolvedValue(upstream(200, { callouts: [callout({ thesis: 'solid team' })] }));
 		const res = await call(pulseHandler, '/api/social/sentiment-pulse', { token: MINT, limit: 200 });
 		expect(res.statusCode).toBe(200);
-		const url = new URL(fetchMock.mock.calls[0][0]);
+		const url = new URL(calloutUrl(fetchMock));
 		expect(url.searchParams.get('limit')).toBe('100');
 	});
 
-	it('answers 502 when pump.fun fails and the caller supplied nothing to score', async () => {
+	it('answers 502 when every source fails and the caller supplied nothing to score', async () => {
 		vi.spyOn(globalThis, 'fetch').mockResolvedValue(upstream(404, null));
 		const res = await call(pulseHandler, '/api/social/sentiment-pulse', { token: MINT });
-		expect(res.statusCode).toBe(502);
+		expect(res.statusCode, res._b).toBe(502);
 		const out = res.json();
 		expect(out.error).toBe('upstream_unavailable');
-		expect(out.error_description).toContain('404');
-		expect(out.source).toBe('pump.fun');
+		expect(out.error_description).toContain('pump.fun returned 404');
+		expect(out.sources).toEqual(['pump.fun', 'bluesky']);
 	});
 
 	it('still scores caller-supplied texts when pump.fun is down', async () => {
@@ -307,6 +313,93 @@ describe('POST /api/social/sentiment-pulse', () => {
 		expect(out.overall.count).toBe(2);
 		expect(out.sources.pumpfunStatus).toBe('stale');
 		expect(out.sources.pumpfunCount).toBe(2);
+	});
+});
+
+// Measured 2026-11-25: pump.fun's `/callout/coin/:mint` answers 403 "Client
+// not allowed" to every server-side caller (production and the devbox alike),
+// and has since 2026-11-21, so every pulse without caller-supplied texts was a
+// 502 and the paid sentiment_pulse tool returned nothing. Bluesky's public
+// AppView search is a second keyless source of community commentary; the pulse
+// now reads both and only reports an outage when every source is down.
+describe('POST /api/social/sentiment-pulse with Bluesky as a second source', () => {
+	const BSKY_HOST = 'api.bsky.app';
+	function bskyPost(uri, text, createdAt = '2026-11-25T12:00:00.000Z', handle = 'fixture.bsky.social') {
+		return { uri, author: { handle }, record: { text, createdAt }, indexedAt: createdAt };
+	}
+	function route({ pump, bsky = () => upstream(200, { posts: [] }), dex } = {}) {
+		return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+			const url = String(input?.url || input);
+			if (url.includes('/callout/coin/')) return pump ? pump(url) : upstream(403, { message: 'Client not allowed' });
+			if (url.includes(BSKY_HOST)) return bsky(new URL(url));
+			if (url.includes('dexscreener.com')) return dex ? dex(url) : upstream(200, { pairs: [] });
+			throw new Error(`unexpected fetch ${url}`);
+		});
+	}
+
+	it('scores Bluesky posts when pump.fun refuses the read', async () => {
+		const fetchMock = route({
+			bsky: (u) => {
+				const q = u.searchParams.get('q');
+				if (q === MINT) return upstream(200, { posts: [bskyPost('at://a/1', `${MINT} looks bullish, strong team`)] });
+				return upstream(200, { posts: [] });
+			},
+		});
+		const res = await call(pulseHandler, '/api/social/sentiment-pulse', { token: MINT, symbol: 'THREE' });
+		expect(res.statusCode).toBe(200);
+		const out = res.json();
+		expect(out.sources.pumpfunStatus).toBe('unavailable');
+		expect(out.sources.blueskyStatus).toBe('ok');
+		expect(out.sources.blueskyCount).toBe(1);
+		expect(out.breakdown.bluesky.count).toBe(1);
+		expect(out.overall.count).toBe(1);
+		expect(out.overall.score).toBeGreaterThan(0);
+		const bskyCalls = fetchMock.mock.calls.map((c) => String(c[0])).filter((u) => u.includes(BSKY_HOST));
+		expect(bskyCalls.some((u) => new URL(u).searchParams.get('q') === MINT)).toBe(true);
+	});
+
+	it('keeps a cashtag post only when it names the exact $SYMBOL', async () => {
+		route({
+			bsky: (u) => {
+				if (u.searchParams.get('q') !== 'THREEX') return upstream(200, { posts: [] });
+				return upstream(200, {
+					posts: [
+						bskyPost('at://a/1', 'loading up on $THREEX, bullish', '2026-11-25T12:00:00.000Z'),
+						bskyPost('at://a/2', 'threex is a word in this unrelated post', '2026-11-25T11:00:00.000Z'),
+						bskyPost('at://a/3', 'my $THREEXL bag is a different coin', '2026-11-25T10:00:00.000Z'),
+					],
+				});
+			},
+		});
+		const res = await call(pulseHandler, '/api/social/sentiment-pulse', { token: MINT, symbol: 'THREEX' });
+		expect(res.statusCode).toBe(200);
+		const out = res.json();
+		expect(out.breakdown.bluesky.count).toBe(1);
+		expect(out.overall.examples.positive?.[0]?.text ?? JSON.stringify(out.overall)).toContain('$THREEX');
+	});
+
+	it('resolves the symbol from DexScreener when the caller does not supply one', async () => {
+		const seen = [];
+		route({
+			dex: () => upstream(200, { pairs: [{ chainId: 'solana', baseToken: { address: MINT, symbol: 'THREEDX', name: 'Fixture' }, quoteToken: { address: 'So11111111111111111111111111111111111111112', symbol: 'SOL' }, liquidity: { usd: 1000 } }] }),
+			bsky: (u) => {
+				seen.push(u.searchParams.get('q'));
+				return upstream(200, { posts: [] });
+			},
+		});
+		const res = await call(pulseHandler, '/api/social/sentiment-pulse', { token: MINT });
+		expect(res.statusCode).toBe(200);
+		expect(seen).toContain('THREEDX');
+		expect(res.json().sources.blueskyQueries).toEqual([MINT, '$THREEDX']);
+	});
+
+	it('answers 502 only when pump.fun and Bluesky are both down', async () => {
+		route({ bsky: () => upstream(503, null) });
+		const res = await call(pulseHandler, '/api/social/sentiment-pulse', { token: 'THREEsyntheticSentimentBothSourcesDown1pump', symbol: 'ZZQ' });
+		expect(res.statusCode).toBe(502);
+		const out = res.json();
+		expect(out.error).toBe('upstream_unavailable');
+		expect(out.sources).toEqual(['pump.fun', 'bluesky']);
 	});
 });
 

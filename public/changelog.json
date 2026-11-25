@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T20:07:13.025Z",
+	"generated_at": "2026-11-25T20:19:12.368Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -221,6 +221,16 @@
 			"type": "update",
 			"title": "Token holder and due-diligence panels load while busy Solana nodes refuse",
 			"summary": "The top-holders list and the due-diligence report for a Solana token (including $THREE) answered \"holder data sources are temporarily unreachable\" whenever the first few public Solana nodes in our failover chain turned the request away, even though healthy nodes further down the chain could answer in a fraction of a second. A node that explicitly refuses a request now steps aside without using up the request's retry budget, so the healthy nodes get asked and the panels fill in.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Token sentiment pulse reads Bluesky when pump.fun refuses",
+			"summary": "The sentiment pulse (and the paid sentiment_pulse tool) failed for every coin for five days because pump.fun stopped serving its community callouts to outside callers. It now also reads Bluesky posts that name the coin's mint or its exact $TICKER cashtag, reports each source's status separately, and only answers with an error when every source is down.",
 			"link": null,
 			"tags": [
 				"fix"

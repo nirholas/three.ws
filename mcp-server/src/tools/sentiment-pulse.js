@@ -1,16 +1,17 @@
 // `sentiment_pulse` — paid MCP tool that returns a real-time sentiment
-// pulse for a Solana token by pulling the coin's recent pump.fun callouts
-// (the community commentary the coin page renders) and scoring them with
-// the three.ws lexicon scorer. Callers may attach additional texts (e.g. X
-// posts they have collected) to fold into the overall score.
+// pulse for a Solana token by pulling the coin's recent community commentary
+// (pump.fun callouts and Bluesky posts naming the mint or its exact cashtag)
+// and scoring it with the three.ws lexicon scorer. Callers may attach
+// additional texts (e.g. X posts they have collected) to fold into the
+// overall score.
 //
 // Pricing: $0.003 USDC, settled `exact` in USDC on Solana mainnet.
 //
 // Implementation: calls POST /api/social/sentiment-pulse on the three.ws
-// API surface. No keys are required: the endpoint reads the public
-// pump.fun frontend-api-v3 callout route. When that source is down and the
-// caller supplied no texts, the endpoint answers 502 and this tool reports
-// the outage instead of a fabricated neutral reading.
+// API surface. No keys are required: the endpoint reads the public pump.fun
+// callout route and Bluesky's public post search. When every source is down
+// and the caller supplied no texts, the endpoint answers 502 and this tool
+// reports the outage (unbilled) instead of a fabricated neutral reading.
 
 import { z } from 'zod';
 
@@ -20,7 +21,7 @@ import { resilientFetch } from '../lib/resilient-fetch.js';
 
 const TOOL_NAME = 'sentiment_pulse';
 const TOOL_DESCRIPTION =
-	'Sentiment pulse for a Solana token: fetches the coin\'s most recent pump.fun callouts (the community commentary the coin page renders) via frontend-api-v3, optionally folds in caller-supplied snippets (e.g. recent X cashtag posts), and scores the combined stream with the three.ws deterministic lexicon. Returns overall + per-source breakdown with examples. Use this to weigh community mood against the price and holder data from pump_snapshot. Paid: $0.003 USDC.';
+	'Sentiment pulse for a Solana token: fetches the coin\'s recent community commentary (pump.fun callouts, plus Bluesky posts that name the mint or its exact $TICKER cashtag), optionally folds in caller-supplied snippets (e.g. recent X cashtag posts), and scores the combined stream with the three.ws deterministic lexicon. Returns overall + per-source breakdown with examples. Use this to weigh community mood against the price and holder data from pump_snapshot. Paid: $0.003 USDC.';
 
 function env(k, def) {
 	const v = process.env[k];
@@ -42,7 +43,12 @@ const inputZodShape = {
 		.max(44)
 		.refine((v) => SOLANA_MINT_RE.test(v), 'token must be a base58 Solana mint pubkey')
 		.describe('Solana SPL or pump.fun mint pubkey (base58).'),
-	limit: z.number().int().min(1).max(200).describe('Max pump.fun callouts to score.').optional(),
+	symbol: z
+		.string()
+		.max(20)
+		.describe('The coin\'s ticker, used for the Bluesky cashtag search. Looked up from the mint when omitted.')
+		.optional(),
+	limit: z.number().int().min(1).max(200).describe('Max posts to score from each source.').optional(),
 	extraTexts: z
 		.array(z.string().max(2000))
 		.max(200)
@@ -65,10 +71,10 @@ export async function buildSentimentPulseTool() {
 				ok: true,
 				token: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
 				overall: { score: 0.42, posPct: 58, negPct: 16, neuPct: 26, count: 100 },
-				breakdown: { pumpfun: { score: 0.4, count: 90 }, extra: { score: 0.5, count: 10 } },
+				breakdown: { pumpfun: { score: 0.4, count: 60 }, bluesky: { score: 0.45, count: 30 }, extra: { score: 0.5, count: 10 } },
 			},
 		},
-		async ({ token, limit, extraTexts }) => {
+		async ({ token, symbol, limit, extraTexts }) => {
 			const endpoint = env(
 				'MCP_SENTIMENT_PULSE_ENDPOINT',
 				'https://three.ws/api/social/sentiment-pulse',
@@ -81,7 +87,7 @@ export async function buildSentimentPulseTool() {
 					{
 						method: 'POST',
 						headers: { 'content-type': 'application/json' },
-						body: JSON.stringify({ token, limit, extraTexts }),
+						body: JSON.stringify({ token, symbol, limit, extraTexts }),
 					},
 					{
 						timeoutMs: 15_000,

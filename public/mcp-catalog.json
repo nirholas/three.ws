@@ -35567,7 +35567,7 @@
 		{
 			"name": "sentiment_pulse",
 			"title": "Sentiment pulse ($0.003)",
-			"description": "Sentiment pulse for a Solana token: fetches the coin's most recent pump.fun callouts (the community commentary the coin page renders) via frontend-api-v3, optionally folds in caller-supplied snippets (e.g. recent X cashtag posts), and scores the combined stream with the three.ws deterministic lexicon. Returns overall + per-source breakdown with examples. Use this to weigh community mood against the price and holder data from pump_snapshot. Paid: $0.003 USDC.",
+			"description": "Sentiment pulse for a Solana token: fetches the coin's recent community commentary (pump.fun callouts, plus Bluesky posts that name the mint or its exact $TICKER cashtag), optionally folds in caller-supplied snippets (e.g. recent X cashtag posts), and scores the combined stream with the three.ws deterministic lexicon. Returns overall + per-source breakdown with examples. Use this to weigh community mood against the price and holder data from pump_snapshot. Paid: $0.003 USDC.",
 			"whenToUse": "Use this to weigh community mood against the price and holder data from pump_snapshot.",
 			"server": {
 				"id": "three-ws-mcp-server",
@@ -35598,11 +35598,16 @@
 						"maxLength": 44,
 						"description": "Solana SPL or pump.fun mint pubkey (base58)."
 					},
+					"symbol": {
+						"type": "string",
+						"maxLength": 20,
+						"description": "The coin's ticker, used for the Bluesky cashtag search. Looked up from the mint when omitted."
+					},
 					"limit": {
 						"type": "integer",
 						"minimum": 1,
 						"maximum": 200,
-						"description": "Max pump.fun callouts to score."
+						"description": "Max posts to score from each source."
 					},
 					"extraTexts": {
 						"maxItems": 200,

@@ -38,7 +38,7 @@ The pattern for "animation from data" is: **your data source picks a discrete ou
 
 ## Step 2: The free lane: sentiment → animation, no AI required
 
-The platform runs a public, unauthenticated sentiment scorer over live pump.fun token commentary: [`POST /api/social/sentiment-pulse`](../../api/social/sentiment-pulse.js). It pulls a coin's recent pump.fun callouts (the commentary feed the coin page renders) and scores them with an in-repo lexicon (no LLM call, no key), good enough to prove the wiring before you reach for a model. If pump.fun is unreachable and you passed no `extraTexts` of your own, it serves the last good read for that mint (`sources.pumpfunStatus: 'stale'`) and only answers `502 upstream_unavailable` when no cached copy exists yet, never a neutral-looking score, so the `if (!res.ok) return null` guard below is what keeps a dead feed from animating your agent.
+The platform runs a public, unauthenticated sentiment scorer over live token commentary: [`POST /api/social/sentiment-pulse`](../../api/social/sentiment-pulse.js). It pulls a coin's recent community commentary from two keyless sources, pump.fun callouts and Bluesky posts that name the mint or its exact `$TICKER` cashtag, and scores it with an in-repo lexicon (no LLM call, no key), good enough to prove the wiring before you reach for a model. Each source reports `ok`, `stale` (a last good read) or `unavailable` under `sources`; with every source down and no `extraTexts` of your own it answers `502 upstream_unavailable`, never a neutral-looking score, so the `if (!res.ok) return null` guard below is what keeps a dead feed from animating your agent.
 
 ```html
 <!DOCTYPE html>
