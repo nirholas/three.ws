@@ -74,6 +74,23 @@ const PROP_ACCESS_TYPEERROR =
 // focused on genuine first-party faults. Clients running a freshly-cached
 // error-reporter.js already filter these locally; this is the server-side
 // backstop for the long tail of clients holding an older cached reporter.
+// Crawlers and headless renderers that announce themselves. Real crawler UAs
+// carry a "(compatible; Name/x.y; +url)" token or a headless marker; matching
+// those instead of a bare "bot" keeps phones like "CUBOT KINGKONG" reporting.
+const CRAWLER_UA =
+	/\(compatible;[^)]*(?:bot|spider|crawler|slurp)\b|\bHeadlessChrome\/|\b(?:Baiduspider|Bytespider|bingbot|Googlebot|YandexBot|Applebot|PetalBot|DuckDuckBot|GPTBot|ClaudeBot|AhrefsBot|SemrushBot)\b|\bChrome-Lighthouse\b/i;
+
+// A resource-load failure reported from a crawler is the crawler's own
+// resource policy (renderers routinely refuse images, fonts and preloads to
+// save bandwidth), not a missing asset: on 2026-11-25 nearly every "failed to
+// load" line came from bots while every asset they named served 200. JS errors
+// still report, since a renderer that runs our code can hit a real bug, and so
+// does a failure the client already confirmed is a real HTTP error (`status`).
+export function isCrawlerResourceNoise(event, ua) {
+	if (event.type !== 'resource' || Number.isFinite(event.status)) return false;
+	return typeof ua === 'string' && CRAWLER_UA.test(ua);
+}
+
 export function isNonActionableNoise(event) {
 	if (event.type !== 'error' && event.type !== 'unhandledrejection') return false;
 	const msg = event.message || '';
@@ -167,6 +184,10 @@ function sanitizeEvent(raw) {
 		stack: str(raw.stack, LIMITS.stack),
 		tag: str(raw.tag, LIMITS.tag),
 		ts: int(raw.ts),
+		// HTTP status the client got when it re-checked a failed same-origin
+		// resource (public/error-reporter.js verifyResource). Only a real error
+		// status is ever sent, so anything outside 400-599 is discarded.
+		status: int(raw.status) >= 400 && int(raw.status) <= 599 ? int(raw.status) : undefined,
 	};
 }
 
@@ -225,7 +246,7 @@ export default wrap(async (req, res) => {
 	for (const event of events) {
 		// Third-party / injected / cancellation noise never reaches the logs,
 		// Sentry, or the ops channel — see isNonActionableNoise.
-		if (isNonActionableNoise(event)) {
+		if (isNonActionableNoise(event) || isCrawlerResourceNoise(event, context.ua)) {
 			dropped++;
 			continue;
 		}

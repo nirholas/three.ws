@@ -528,6 +528,7 @@
 			col: Number.isFinite(report.col) ? report.col : undefined,
 			stack: truncate(report.stack, LIMITS.stack),
 			tag: report.tag,
+			status: report.status,
 			ts: Date.now(),
 		});
 		if (queue.length >= MAX_BATCH) {
@@ -570,10 +571,43 @@
 		}
 	}
 
+	// Same-origin resource failures are re-checked before they are reported. A
+	// browser fires the same load error for a missing file as for one it never
+	// fetched: a renderer that blocks images, a privacy tool, a navigation that
+	// aborted the request. On 2026-11-25 an image-blocking crawler alone sent
+	// about 1,700 "failed to load img /three.svg" reports in 6 hours while the
+	// file served 200. One HEAD per URL per page answers the only question that
+	// matters: does our server still serve it? If it does, the failure was the
+	// client's and is dropped. If it answers an error, the report goes out with
+	// that status. If the re-check cannot reach the server either, the client is
+	// offline or blocking us, and nothing can be confirmed or sent anyway.
+	const resourceChecks = new Map(); // url → Promise<number | null>
+
+	function verifyResource(url) {
+		let check = resourceChecks.get(url);
+		if (!check) {
+			check = fetch(url, { method: 'HEAD', cache: 'no-store', credentials: 'same-origin' }).then(
+				(res) => (res.ok ? null : res.status),
+				() => null,
+			);
+			resourceChecks.set(url, check);
+		}
+		return check;
+	}
+
 	function handleRaw(raw) {
 		try {
 			const report = normalize(raw);
-			if (report) enqueue(report);
+			if (!report) return;
+			if (report.type === 'resource' && !shouldIgnore(report)) {
+				verifyResource(report.source).then((status) => {
+					if (status === null) return;
+					report.status = status;
+					enqueue(report);
+				});
+				return;
+			}
+			enqueue(report);
 		} catch {
 			/* never let the reporter become the error */
 		}
