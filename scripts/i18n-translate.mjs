@@ -648,8 +648,12 @@ async function callVertex(prompt, modelOverride = null) {
 	if (res.status === 401 || res.status === 403) {
 		res = await send(await vertexToken({ fresh: true }));
 		if (res.status === 401 || res.status === 403) {
+			// Vertex answers 403 for more than bad credentials (an unpaid billing
+			// account, a disabled API, a missing IAM role), and only the body says
+			// which, so the operator sees Google's own reason first.
+			const detail = (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 300);
 			throw configError(
-				`vertex ${res.status}: credentials are not valid even after re-minting. ` +
+				`vertex ${res.status}${detail ? ` (${detail})` : ''}: credentials are not valid even after re-minting. ` +
 					'Run `gcloud auth login` (this environment revokes tokens on a reauth policy), ' +
 					'or pass --provider=gemini with GOOGLE_API_KEY set.',
 			);
