@@ -436,7 +436,16 @@ cut and attribute quota spend before a lane is ever picked:
   error. Before the cap, a read arriving while every lane cooled walked the whole chain in
   the cooldown-forgiving pass, so each routine read cost up to 11 provider calls and
   re-armed the bench on lanes that were already exhausted. Money callers still walk every
-  lane. Pinned by [tests/solana-rpc-attempt-cap.test.js](../../tests/solana-rpc-attempt-cap.test.js).
+  lane. One exemption: in the first pass (lanes the fleet believes healthy), a lane that
+  answers with an explicit refusal (HTTP 401/403/429, a JSON-RPC capacity error, or a
+  method refusal such as -32603 that demotes the shape) does not spend the budget,
+  because it benches itself on the spot and asking it was new information, not a retry.
+  Slow failures, 5xx and transport errors still count, and nothing is free in the
+  cooldown-forgiving passes. Without this, on 2026-11-25 PublicNode (403), api.mainnet-beta
+  (429) and LeoRPC (-32603) used the whole budget for `getTokenLargestAccounts`, so
+  `/api/crypto/holders` and `/api/crypto/due-diligence` answered 503 while both Tatum lanes
+  behind them answered in about 120ms. Pinned by
+  [tests/solana-rpc-attempt-cap.test.js](../../tests/solana-rpc-attempt-cap.test.js).
 - **Health detail.** `/api/healthz` and `/api/ops/health` carry the same ledger in the
   `rpc_lanes` subsystem: the detail line ends with `N calls/24h, top <caller> (<n>)`, and
   the metrics hold `calls_24h`, `saved_24h`, `top_caller`, `top_caller_calls_24h`, plus

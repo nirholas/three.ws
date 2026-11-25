@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T18:55:06.862Z",
+	"generated_at": "2026-11-25T19:06:28.726Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4716,
+	"total": 4717,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -147,6 +147,16 @@
 			"link": "/tty",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Token holder and due-diligence panels load while busy Solana nodes refuse",
+			"summary": "The top-holders list and the due-diligence report for a Solana token (including $THREE) answered \"holder data sources are temporarily unreachable\" whenever the first few public Solana nodes in our failover chain turned the request away, even though healthy nodes further down the chain could answer in a fraction of a second. A node that explicitly refuses a request now steps aside without using up the request's retry budget, so the healthy nodes get asked and the panels fill in.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1556,17 +1566,6 @@
 			"tags": [
 				"improvement",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "Choose who signs your agent's transactions, export its key encrypted, and see its balance over time",
-			"summary": "The new Custody tab in the agent wallet hub lets an owner pick who signs fund-moving transactions. Platform keeps today's behavior, where the server signs inside your spend policy. My wallet means the platform never signs: build routes called with signer \"external\" return an unsigned, simulated Solana transaction and a tx_id, your own wallet signs it, and POST /api/tx/submit checks the bytes match what was prepared before broadcasting and recording it in the custody ledger. Session key grants a delegate an on-chain USDC cap and an expiry, so the agent can act alone and a transfer over the cap is refused. Export key re-confirms your identity, seals the key so only your browser can open it, encrypts it to a passphrase that never leaves the page, shows it once, logs the export, and offers to rotate to a fresh key and sweep the funds. A balance history chart (24h, 7d, 30d) is filled by a new hourly snapshot job, and GET /api/me/wallet plus the get_private_wallet_balance, get_wallet_summaries and get_balance_history tools put your own linked wallet next to your agents'.",
-			"link": "/agent-wallet",
-			"tags": [
-				"feature",
-				"security"
 			]
 		}
 	]

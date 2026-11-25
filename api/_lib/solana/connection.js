@@ -1595,6 +1595,12 @@ const NEVER_SHARE_METHODS = new Set(['sendTransaction', 'simulateTransaction', '
 // reads, and each 429 re-armed the bench on lanes that were already exhausted.
 // Money callers (fresh connections, sends, simulations) are never capped.
 const DEFAULT_READ_MAX_ATTEMPTS = 3;
+// HTTP statuses that are a lane's explicit verdict on this request (bad key,
+// policy refusal, rate limit), answered fast and followed by a bench. A refusal
+// like this from a lane the fleet believed healthy does not spend the cap: on
+// 2026-11-25 three such refusals used the whole budget for /api/crypto/holders
+// while two healthy lanes further down the chain were never asked.
+const EXPLICIT_REFUSAL_STATUSES = new Set([401, 403, 429]);
 
 /** Lane attempts a non-money request may make (RPC_READ_MAX_ATTEMPTS, default 3). */
 export function readAttemptCap() {
@@ -1924,7 +1930,10 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 							: '';
 					penalise(url, resp.status, bodyText, isMethodRefusal(bodyText), String(resp.status));
 					noteRpc(url, 'fail', Date.now() - attemptStartedAt, 'live', resp.status);
-					return { error: new Error(`solana rpc ${resp.status} @ ${maskUrl(url)}`) };
+					return {
+						error: new Error(`solana rpc ${resp.status} @ ${maskUrl(url)}`),
+						refused: EXPLICIT_REFUSAL_STATUSES.has(resp.status),
+					};
 				}
 				const okBody = await resp.text();
 				// Same cap, stated politely: some nodes answer a too-wide batch with a
@@ -1939,7 +1948,10 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 				const bad = classifyRpcBody(okBody, methods);
 				if (bad) {
 					if (!bad.noPenalty) penalise(url, bad.status, bad.bodyText || '', bad.methodBlock === true, bad.log);
-					return { error: new Error(`solana rpc ${bad.reason} @ ${maskUrl(url)}`) };
+					return {
+						error: new Error(`solana rpc ${bad.reason} @ ${maskUrl(url)}`),
+						refused: !bad.noPenalty && (bad.methodBlock === true || EXPLICIT_REFUSAL_STATUSES.has(bad.status)),
+					};
 				}
 				// Body already consumed above; hand the caller a fresh Response carrying
 				// the same payload. Only content-type is preserved; copying
@@ -2055,6 +2067,8 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 			{ ignoreCooldown: true, ignoreCapability: true },
 		];
 		let attempts = 0;
+		// Lanes actually asked, refusals included; `attempts` is only the budget.
+		let asked = 0;
 		// A pass that forgives cooldowns starts with the lane whose cooldown ends
 		// soonest (stable, so ties keep config order). In config order the paid
 		// lanes lead, and a quota-dead one sits on a 6h park while a keyless lane on
@@ -2072,9 +2086,16 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 				if (!pass.ignoreCooldown && isEndpointCooling(url)) continue;
 				if (!pass.ignoreCapability && isAnyMethodDemoted(url, methods)) continue;
 				attempted = true;
-				attempts += 1;
+				asked += 1;
 				const out = await tryEndpoint(url);
 				if (out.response) return succeed(out);
+				// A lane the fleet believed healthy (pass 1 only) that answered with an
+				// explicit refusal has just benched itself, so asking it was new
+				// information rather than a retry: it does not spend the read's budget.
+				// Each lane is visited once per pass, so this adds at most one call per
+				// lane, and only until the bench lands. Every other failure, and every
+				// failure in a cooldown-forgiving pass, counts.
+				if (!(out.refused && pass === PASSES[0])) attempts += 1;
 				lastErr = out.error;
 				if (!out.transport) transportOnly = false;
 				if (!RATE_LIMITED_ERROR_RE.test(out.error?.message || '')) rateLimitedOnly = false;
@@ -2116,7 +2137,7 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 		// gets a thrown error (→ a clean 502 from the proxy), never garbage. THIS is
 		// worth a warning: the whole failover chain is down, not just one lane.
 		const failure = lastErr?.message || 'unknown error';
-		if (!money && attempts > 0 && rateLimitedOnly) {
+		if (!money && asked > 0 && rateLimitedOnly) {
 			const prior = _chainExhausted.get(chainKey);
 			_chainExhausted.set(chainKey, {
 				until: Date.now() + CHAIN_EXHAUSTED_WINDOW_MS,

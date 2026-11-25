@@ -89,6 +89,49 @@ describe('rotating fetch: lane attempts per non-money read are capped', () => {
 		expect(spy).toHaveBeenCalledTimes(3);
 	});
 
+	// Reproduced 2026-11-25 against production's chain: /api/crypto/holders for
+	// $THREE answered 503 while two Tatum lanes answered getTokenLargestAccounts in
+	// ~120ms. PublicNode (403), api.mainnet-beta (429) and LeoRPC (-32603) refused
+	// in turn, used the whole budget of 3, and the healthy lanes behind them were
+	// never asked. A lane the fleet believed healthy that answers with an explicit
+	// refusal benches itself on the spot, so it is new information, not a retry,
+	// and must not spend the read's budget.
+	it('does not let explicit refusals from believed-healthy lanes spend the budget', async () => {
+		const eps = lanes(6);
+		const spy = vi.fn(async (url) => {
+			if (url === eps[0]) return resp('blocked parameter', 403);
+			if (url === eps[1]) return resp('Too many requests', 429);
+			if (url === eps[2]) return resp({ jsonrpc: '2.0', id: 1, error: { code: -32603, message: 'Internal error' } });
+			return resp({ jsonrpc: '2.0', id: 1, result: { value: [{ address: 'THREEsyntheticHolder', amount: '9' }] } });
+		});
+		global.fetch = spy;
+		const out = await makeRotatingFetch(eps)(null, { method: 'POST', body: readBody('getTokenLargestAccounts') });
+		expect((await out.json()).result.value[0].amount).toBe('9');
+		expect(spy).toHaveBeenCalledTimes(4);
+	});
+
+	it('still counts slow or opaque failures after free refusals, so the read stays bounded', async () => {
+		const eps = lanes(8);
+		const spy = vi.fn(async (url) => (url === eps[0] || url === eps[1] ? resp('Too many requests', 429) : resp('bad gateway', 502)));
+		global.fetch = spy;
+		await expect(makeRotatingFetch(eps)(null, { method: 'POST', body: readBody() })).rejects.toThrow();
+		// 2 free refusals, then the budget of 3 on lanes that failed opaquely.
+		expect(spy).toHaveBeenCalledTimes(5);
+	});
+
+	it('still arms the exhausted-chain breaker when every lane refused for free', async () => {
+		const eps = lanes(4);
+		const spy = vi.fn(async () => resp('Too many requests', 429));
+		global.fetch = spy;
+		const rf = makeRotatingFetch(eps);
+		await expect(rf(null, { method: 'POST', body: readBody() })).rejects.toThrow(/429/);
+		expect(spy).toHaveBeenCalledTimes(4);
+		spy.mockClear();
+		// Inside the breaker window the next read short-circuits without a call.
+		await expect(rf(null, { method: 'POST', body: readBody() })).rejects.toThrow(/429/);
+		expect(spy).toHaveBeenCalledTimes(0);
+	});
+
 	it('never caps a money caller: a fresh connection walks every lane', async () => {
 		const eps = lanes(8);
 		const spy = vi.fn(async () => resp('bad gateway', 502));
