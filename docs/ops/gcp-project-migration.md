@@ -89,14 +89,57 @@ curl -H "Authorization: Bearer $(gcloud auth print-identity-token --account nich
   https://three-ws-api-360846920264.us-central1.run.app/api/healthz
 ```
 
+## Load balancer (built 2026-11-25)
+
+Mirrors the old `three-ws-lb`, with two differences forced by the project split.
+
+| Piece | Name |
+| --- | --- |
+| Static IP | `three-ws-ip` = **136.82.11.20** |
+| Site backend | `three-ws-backend` (serverless NEG `three-ws-api-neg`, Cloud CDN with origin cache headers, negative caching, serve-while-stale 86400) |
+| Releases backend | `three-ws-releases-backend`: global internet NEG `three-ws-gcs-neg` to `storage.googleapis.com:443`, CDN on |
+| URL maps | `three-ws-lb` (hosts `three.ws`, `www.three.ws`), `three-ws-http-redirect` (80 to 443) |
+| Certificate | Certificate Manager `three-ws-cert` in map `three-ws-cert-map`, DNS-authorized |
+| Proxies and rules | `three-ws-https-proxy`, `three-ws-http-proxy`, forwarding rules `three-ws-https` (443) and `three-ws-http` (80) |
+
+- **Releases go through an internet NEG, not a backend bucket.** A backend
+  bucket must be owned by the same project, and the desktop release pipeline
+  writes to `three-ws-desktop-releases` in the old project. The route for
+  `/releases/` rewrites the host to `storage.googleapis.com` and the path prefix
+  to `/three-ws-desktop-releases/releases/`, so the public bucket stays the only
+  copy.
+- **The certificate uses DNS authorization**, so it turns ACTIVE before DNS
+  moves and the cutover has no TLS gap. It needs two CNAMEs at Namecheap:
+
+| Host (Namecheap "Host" field) | Type | Value |
+| --- | --- | --- |
+| `_acme-challenge` | CNAME | `f7f2a1c4-effc-42ac-afba-8f85888878f4.4.authorize.certificatemanager.goog.` |
+| `_acme-challenge.www` | CNAME | `1dfdc7cc-6f02-4711-8bca-925261ae3fa8.19.authorize.certificatemanager.goog.` |
+
+Check the certificate:
+
+```bash
+gcloud certificate-manager certificates describe three-ws-cert \
+  --project three-ws --account nich@three.ws --format='value(managed.state,managed.authorizationAttemptInfo)'
+```
+
+`npm run deploy:gcp:purge-cdn` works unchanged with `GCP_PROJECT=three-ws`,
+because the new URL map has the old name.
+
 ## Cutover checklist
 
 1. Lift the org policy (above) and confirm the run.app URL serves publicly.
-2. Create the global external load balancer, static IP and Google-managed
-   certificate for `three.ws` in `three-ws` (serverless NEG to `three-ws-api`).
-3. Move the DNS A record at Namecheap from the old LB IP 136.68.246.178 to the
-   new IP. Wait for the certificate to become ACTIVE.
-4. Create the crons in the new project, then pause or delete the old ones in the
+2. Add the two `_acme-challenge` CNAMEs at Namecheap and wait for
+   `three-ws-cert` to report `ACTIVE`. Neither step touches the live site.
+3. Check the new LB before switching:
+   `curl --resolve three.ws:443:136.82.11.20 https://three.ws/api/healthz`
+   and `curl --resolve three.ws:443:136.82.11.20 -I https://three.ws/releases/desktop/latest.yml`.
+4. Move the `@` and `www` A records at Namecheap from 136.68.246.178 to
+   136.82.11.20.
+5. Create the crons in the new project, then pause or delete the old ones in the
    same session:
    `GCP_PROJECT=three-ws GCP_SERVICE_URL=https://three-ws-api-360846920264.us-central1.run.app node scripts/create-gcp-scheduler.mjs`
-5. Scale the old `three-ws-api` to min 0 once traffic has drained.
+6. Deploy current `main` to the new project (`GCP_BILLING_PROJECT` only takes
+   effect with code from 2026-11-25 on; the running image predates it).
+7. Scale the old `three-ws-api` to min 0 once traffic has drained. Keep the old
+   LB until DNS TTLs have long expired, then ask the owner before deleting it.
