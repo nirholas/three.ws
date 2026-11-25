@@ -1,16 +1,21 @@
-FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu22.04
+# Ubuntu 24.04 for Python 3.12: Pillow 13.0.0, the only release with no open
+# advisory, requires Python >= 3.11, which 22.04 does not ship.
+FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu24.04
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     DEBIAN_FRONTEND=noninteractive \
-    OPENCV_IO_ENABLE_OPENEXR=1
+    OPENCV_IO_ENABLE_OPENEXR=1 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH=/opt/venv/bin:$PATH
 
+# 24.04's system Python is externally managed (PEP 668), so everything installs
+# into a venv that sits first on PATH for both root and the app user.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.10 python3-pip git ca-certificates libglib2.0-0 \
+        python3.12 python3.12-venv git ca-certificates libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python \
+    && python3.12 -m venv /opt/venv \
     && pip install --upgrade pip setuptools wheel
 
 RUN pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu128
