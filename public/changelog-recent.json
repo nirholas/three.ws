@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T23:32:06.264Z",
+	"generated_at": "2026-11-25T23:51:31.243Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4747,
+	"total": 4748,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -324,6 +324,16 @@
 			"type": "update",
 			"title": "Solana API endpoints answer a clear 400 for a mistyped address",
 			"summary": "The Solana endpoints on /api/v1/x (largest holders, token supply, balance, account, token holdings, transaction) now check that an address or signature is valid base58 before asking an RPC node. A typo used to wait about seven seconds and come back as a 502 internal error. Now it answers immediately with a 400 that names the bad parameter.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Solana name lookups work again",
+			"summary": "Looking up a .sol name had stopped working everywhere on the platform after a name-service library upgrade. Paying a .sol name, the /api/sns resolver, agent name tools, showing a wallet's primary .sol name, claiming a <label>.threews.sol subdomain, and checking or registering an agent's .sol domain all work again. When the Solana name service cannot be reached, you now get a clear retry message instead of a false \"name not found\" or \"domain available\".",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1541,17 +1551,6 @@
 			"summary": "IT admins get a ready deployment kit: the exact Edge policy values to install the web app and extensions through Intune or Group Policy, a Teams setup policy script that installs and pins three.ws for a group, a tenant-wide admin consent page that explains each permission in plain language, and a guide with verification, rollback and FAQ. Every script has a dry run.",
 			"link": "/docs/microsoft-admin-deployment",
 			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Set up every Microsoft resource three.ws needs with one command",
-			"summary": "npm run microsoft:provision creates or reconciles the Entra apps for Marketplace fulfillment, Microsoft sign-in and the Microsoft 365 connector, and the Teams bot. It also sets up their redirect URIs, Graph permissions and 365-day client secrets, the Azure Bot with its Teams and Microsoft 365 channels, and the Key Vaults, all from the operator's own Azure login. It shows a plan before it changes anything, never removes what an admin added by hand, and changes nothing on a rerun. Secrets go only to Key Vault and a private local file, never to the terminal, and it prints the exact production env update. A test now fails whenever code asks Microsoft for a permission or redirect the provisioner does not set up.",
-			"link": null,
-			"tags": [
-				"infra",
 				"feature"
 			]
 		}

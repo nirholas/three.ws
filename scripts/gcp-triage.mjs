@@ -225,10 +225,16 @@ const KNOWN_SIGNATURES = [
 		action: `A model worker fetched weights from huggingface.co at startup and HF rate-limited the Cloud Run egress IP, so the container never listened and Cloud Run killed the revision (crash loop). Anonymous HF pulls are per-IP capped and Cloud Run IPs are shared — never depend on a live HF fetch at boot. Fix (config-only, pre-approved): stage the needed files into the HF cache layout under gs://three-ws-model-weights/hf-cache/hub/models--<org>--<repo>/{refs/main,snapshots/<sha>/...} (the weights bucket is already gcsfuse-mounted at /weights), then gcloud run services update <service> --region us-central1 --update-env-vars HF_HOME=/weights/hf-cache,HF_HUB_OFFLINE=1,HUGGING_FACE_HUB_TOKEN=<HF_TOKEN from .env>. Note the token env var: the pinned huggingface_hub reads the LEGACY name HUGGING_FACE_HUB_TOKEN, so setting HF_TOKEN alone changes nothing. 2026-07-28 case: model-triposr, facebook/dino-vitb16 config.json. ${RUNBOOK} §hf-hub-rate-limited.`,
 	},
 	{
+		id: 'sns-unsupported-tld',
+		match: /Domain has an unsupported TLD suffix|UnsupportedTld/i,
+		class: 'investigate',
+		action: `Our code handed a ".sol" or bare name to a high-level @bonfida/spl-name-service v4 API (resolve, createSubdomain, transferSubdomain, createRecord, registerDomain). Past the SDK's SOL_TLD_CUTOFF_SLOT, which mainnet is, those reject ".sol" outright, so EVERY .sol lookup on that path fails. This is a code bug, never noise: 2026-11-25 it broke pay-by-name, /api/sns, reverse lookups, subdomain claims and the ens_sns_resolve MCP tool. Route the name through snsRegistryName()/resolveSnsOwner() in src/solana/sns.js ("<x>.sol" -> "<x>.sns", the classic registry) and cover it with a test on tests/helpers/fake-sns-rpc.js. ${RUNBOOK} §sns-unsupported-tld.`,
+	},
+	{
 		id: 'sns-name-not-found',
 		match: /Invalid name account provided/i,
 		class: 'self-healing',
-		action: `x402 pay-by-name resolve() hit a .sol name with no on-chain account. resolveName() catches it and returns a clean 404 to the caller; the ERROR line is @bonfida/spl-name-service leaking a sibling promise rejection from its multi-strategy lookup (the awaited path is caught, the orphan is not). No user impact. ${RUNBOOK} §sns-name-not-found.`,
+		action: `x402 pay-by-name hit a .sol name with no on-chain account. resolveName() folds a not-registered SNSError into a clean 404 (an RPC failure answers 503 sns_unavailable instead); the ERROR line is @bonfida/spl-name-service leaking a sibling promise rejection from its multi-strategy lookup (the awaited path is caught, the orphan is not). No user impact. ${RUNBOOK} §sns-name-not-found.`,
 	},
 	{
 		id: 'pump-launch-sim-rejected',

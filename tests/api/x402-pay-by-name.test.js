@@ -115,13 +115,13 @@ describe('GET /api/x402/pay-by-name?name=… (resolve)', () => {
 
 	it('resolves a top-level .sol domain via SNS', async () => {
 		snsResolveMock.mockResolvedValue({ toBase58: () => ADDR });
-		const { res, body } = await call('/api/x402/pay-by-name?name=bonfida.sol');
+		const { res, body } = await call('/api/x402/pay-by-name?name=threews.sol');
 		expect(res.statusCode).toBe(200);
 		expect(body.data.address).toBe(ADDR);
 		expect(body.data.source).toBe('sns');
-		expect(body.data.resolved).toBe('bonfida.sol');
+		expect(body.data.resolved).toBe('threews.sol');
 		expect(body.data.claim).toBeUndefined();
-		expect(snsResolveMock).toHaveBeenCalledWith(expect.anything(), 'bonfida');
+		expect(snsResolveMock).toHaveBeenCalledWith(expect.anything(), 'threews.sns');
 	});
 
 	it('resolves a <label>.threews.sol and joins the DB claim', async () => {
@@ -144,11 +144,11 @@ describe('GET /api/x402/pay-by-name?name=… (resolve)', () => {
 			username: 'nich',
 			display_name: 'Nicholas',
 		});
-		expect(snsResolveMock).toHaveBeenCalledWith(expect.anything(), 'nich.threews');
+		expect(snsResolveMock).toHaveBeenCalledWith(expect.anything(), 'nich.threews.sns');
 	});
 
 	it('returns 404 when SNS resolution fails', async () => {
-		snsResolveMock.mockRejectedValue(new Error('DomainDoesNotExist'));
+		snsResolveMock.mockRejectedValue(Object.assign(new Error('The domain does not exist'), { name: 'SNSError', type: 'DomainDoesNotExist' }));
 		sqlMock.mockResolvedValueOnce([]); // claim DB lookup tries first for threews
 		const { res, body } = await call('/api/x402/pay-by-name?name=missing.threews.sol');
 		expect(res.statusCode).toBe(404);
@@ -253,7 +253,7 @@ describe('POST /api/x402/pay-by-name (mode=prep)', () => {
 	});
 
 	it('returns 404 if the name does not resolve', async () => {
-		snsResolveMock.mockRejectedValue(new Error('DomainDoesNotExist'));
+		snsResolveMock.mockRejectedValue(Object.assign(new Error('The domain does not exist'), { name: 'SNSError', type: 'DomainDoesNotExist' }));
 		const { res, body } = await call('/api/x402/pay-by-name', 'POST', {
 			mode: 'prep',
 			name: 'ghost.sol',

@@ -22,6 +22,7 @@ import { createHash } from 'node:crypto';
 import { Keypair, PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { solanaConnection } from '../../api/_lib/solana/connection.js';
+import { snsRegistryName } from './sns.js';
 
 // Server-side: SOLANA_RPC_URL (typically Helius), which solanaConnection() below
 // rotates across the failover lanes. Browser-side: the same-origin proxy, like
@@ -192,8 +193,12 @@ export async function createNamedSubdomain({
 		throw e;
 	}
 
+	// SDK v4 write APIs only accept the registry's ".sns" form of the name; it
+	// derives the same account as `<label>.threews.sol` (see snsRegistryName).
 	const sns = await import('@bonfida/spl-name-service');
-	const createIxs = await sns.createSubdomain(connection, fullName, parentKp.publicKey, space);
+	const registryName = snsRegistryName(fullName);
+	const createRes = await sns.createSubdomain(connection, registryName, parentKp.publicKey, space);
+	const createIxs = Array.isArray(createRes) ? createRes : [createRes];
 
 	// Write the URL record while the platform still owns the subdomain.
 	// This makes `<label>.threews.sol` resolve in Brave (and any other SNS-
@@ -201,8 +206,8 @@ export async function createNamedSubdomain({
 	// storefront by default, or a caller-supplied override (e.g. an agent
 	// page when the subdomain is being attached to an agent).
 	const url = urlOverride || storefrontUrlForLabel(cleanLabel);
-	const urlRecordIx = sns.createRecordV2Instruction(
-		fullName,
+	const urlRecordIx = sns.createRecord(
+		registryName,
 		sns.Record.Url,
 		url,
 		parentKp.publicKey,
@@ -212,11 +217,11 @@ export async function createNamedSubdomain({
 	// Pass the current owner explicitly: the subdomain account doesn't exist
 	// on-chain yet (its create ix is in this same tx), so letting the SDK look
 	// the owner up would throw. Right after createSubdomain the owner IS the
-	// parent owner. v3 returns a single TransactionInstruction (v0.1.x-era
+	// parent owner. It returns a single TransactionInstruction (v0.1.x-era
 	// callers expected an array), so normalize before the spread below.
 	const transferRes = await sns.transferSubdomain(
 		connection,
-		fullName,
+		registryName,
 		newOwnerKey,
 		true,
 		parentKp.publicKey,

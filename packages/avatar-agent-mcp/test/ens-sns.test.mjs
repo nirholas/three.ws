@@ -69,3 +69,34 @@ test('an SNS label longer than 63 characters is declined locally', async () => {
 	assert.ok(typeof out.fetchedAt === 'string' && !Number.isNaN(Date.parse(out.fetchedAt)));
 	assert.ok(Date.now() - started < 1000, 'an invalid label must not reach the chain');
 });
+
+// The SNS lane against the REAL @bonfida/spl-name-service over an in-memory
+// RPC that serves registry accounts (tests/helpers/fake-sns-rpc.js). SDK v4
+// rejects ".sol" and bare names in resolve() once mainnet passed its TLD cutoff
+// slot and renamed getFavoriteDomain / getAllDomains, so in production every
+// ens_sns_resolve call for a .sol name failed as an upstream error.
+import { Keypair } from '@solana/web3.js';
+import { snsResolve, snsFavoriteDomain, snsOwnedDomains } from '../src/lib/ens-sns.js';
+import { createFakeSnsRpc } from '../../../tests/helpers/fake-sns-rpc.js';
+
+test('the SNS lane resolves a registered .sol label to its owner', async () => {
+	const rpc = createFakeSnsRpc();
+	const owner = Keypair.generate().publicKey;
+	rpc.register('threews', owner);
+	const out = await snsResolve(rpc.connection, 'threews');
+	assert.equal(out?.toBase58(), owner.toBase58());
+});
+
+test('the SNS lane reports the owner primary domain with a .sol suffix', async () => {
+	const rpc = createFakeSnsRpc();
+	const owner = Keypair.generate().publicKey;
+	rpc.register('threews', owner);
+	rpc.setPrimary(owner, 'threews');
+	assert.equal(await snsFavoriteDomain(rpc.connection, owner), 'threews.sol');
+});
+
+test('the SNS lane lists owned domains without calling a removed SDK export', async () => {
+	const rpc = createFakeSnsRpc();
+	const owner = Keypair.generate().publicKey;
+	assert.deepEqual(await snsOwnedDomains(rpc.connection, owner), []);
+});

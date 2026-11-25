@@ -118,13 +118,13 @@ describe('GET /api/x402/pay-by-name (.sol namespace)', () => {
 	it('resolves a top-level .sol via Bonfida', async () => {
 		// Top-level .sol — no DB lookup (it's not under our threews. parent)
 		snsResolve.mockResolvedValueOnce({ toBase58: () => RECIPIENT });
-		const { res, body } = await call('/api/x402/pay-by-name?name=bonfida.sol');
+		const { res, body } = await call('/api/x402/pay-by-name?name=threews.sol');
 		expect(res.statusCode).toBe(200);
 		expect(body.data.address).toBe(RECIPIENT);
 		expect(body.data.source).toBe('sns');
-		expect(body.data.resolved).toBe('bonfida.sol');
+		expect(body.data.resolved).toBe('threews.sol');
 		// `resolve()` got the bare label (without .sol).
-		expect(snsResolve).toHaveBeenCalledWith(expect.anything(), 'bonfida');
+		expect(snsResolve).toHaveBeenCalledWith(expect.anything(), 'threews.sns');
 	});
 
 	it('attaches the DB claim when resolving a *.threews.sol subdomain', async () => {
@@ -146,7 +146,7 @@ describe('GET /api/x402/pay-by-name (.sol namespace)', () => {
 			username: 'nich',
 			display_name: 'Nicholas',
 		});
-		expect(snsResolve).toHaveBeenCalledWith(expect.anything(), 'nich.threews');
+		expect(snsResolve).toHaveBeenCalledWith(expect.anything(), 'nich.threews.sns');
 	});
 
 	it('does NOT attach a claim when the *.threews subdomain has no DB row', async () => {
@@ -158,7 +158,7 @@ describe('GET /api/x402/pay-by-name (.sol namespace)', () => {
 	});
 
 	it('404s when Bonfida cannot resolve the domain', async () => {
-		snsResolve.mockRejectedValueOnce(new Error('no SOL record'));
+		snsResolve.mockRejectedValueOnce(Object.assign(new Error('The domain does not exist'), { name: 'SNSError', type: 'DomainDoesNotExist' }));
 		const { res, body } = await call('/api/x402/pay-by-name?name=does-not-exist.sol');
 		expect(res.statusCode).toBe(404);
 		expect(body.error).toBe('not_found');

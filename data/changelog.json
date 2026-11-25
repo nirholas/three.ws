@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Solana name lookups work again",
+			"summary": "Looking up a .sol name had stopped working everywhere on the platform after a name-service library upgrade. Paying a .sol name, the /api/sns resolver, agent name tools, showing a wallet's primary .sol name, claiming a <label>.threews.sol subdomain, and checking or registering an agent's .sol domain all work again. When the Solana name service cannot be reached, you now get a clear retry message instead of a false \"name not found\" or \"domain available\".",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Unlisted agent profiles stop offering a co-pilot link that cannot open",
 			"summary": "An agent that is not listed on the marketplace no longer shows visitors an Alpha Co-pilot panel whose link could only fail, and its profile no longer asks for marketplace data that is reserved for the owner. Owners still see both on their own unlisted agents.",
 			"tags": [

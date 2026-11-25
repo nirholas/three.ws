@@ -46,6 +46,7 @@ import { solanaConnection, loadAgentForSigning } from '../_lib/agent-pumpfun.js'
 import { blockhashKey, getRecentBlockhashInfo } from '../_lib/solana/read-guards.js';
 import { getSpendLimits } from '../_lib/agent-trade-guards.js';
 import { PARENT_LABEL } from '../_lib/threews-sns.js';
+import { resolveSnsOwner, isSnsNameNotFound } from '../../src/solana/sns.js';
 import {
 	NETWORK_SOLANA_MAINNET,
 	encodePaymentResponseHeader,
@@ -140,10 +141,8 @@ async function handlePaidNameResolve(req, res, body) {
 	// different endpoint. Settling first would have charged $0.001 for an
 	// { address: null } answer, which is exactly what the pipeline stages take
 	// care never to do.
-	const resolved = await resolveName(name);
-	if (!resolved?.address) {
-		return error(res, 404, 'not_found', `could not resolve "${name}" (payment was not taken)`);
-	}
+	const resolved = await resolveOrRespond(res, name, ' (payment was not taken)');
+	if (!resolved) return;
 
 	let settleResult;
 	try {
@@ -180,6 +179,31 @@ async function resolveAuth(req) {
 	const bearer = assertBearerMaySpend(await authenticateBearer(extractBearer(req)), req);
 	if (bearer) return { userId: bearer.userId };
 	return null;
+}
+
+class SnsUnavailableError extends Error {
+	constructor(cause) {
+		super(`name service lookup failed: ${cause?.message || cause}`);
+		this.name = 'SnsUnavailableError';
+		this.cause = cause;
+	}
+}
+
+/**
+ * resolveName for a handler: returns the recipient, or null after answering
+ * 404 (unregistered) or 503 (the name service could not be reached).
+ */
+async function resolveOrRespond(res, name, notFoundSuffix = '') {
+	try {
+		const resolved = await resolveName(name);
+		if (resolved?.address) return resolved;
+		error(res, 404, 'not_found', `could not resolve "${name}"${notFoundSuffix}`);
+		return null;
+	} catch (err) {
+		if (!(err instanceof SnsUnavailableError)) throw err;
+		error(res, 503, 'sns_unavailable', `the Solana name service could not be reached to resolve "${name}"; retry shortly${notFoundSuffix}`);
+		return null;
+	}
 }
 
 /**
@@ -219,19 +243,23 @@ async function resolveName(rawName) {
 				};
 			}
 		}
+		let pk;
 		try {
-			const sns = await import('@bonfida/spl-name-service');
 			const conn = solanaConnection({ network: 'mainnet', fresh: true });
-			const pk = await sns.resolve(conn, bare);
-			return {
-				address: pk.toBase58(),
-				source: 'sns',
-				resolved: name.toLowerCase(),
-				...(claim ? { claim } : {}),
-			};
-		} catch {
-			return null;
+			pk = await resolveSnsOwner(conn, name);
+		} catch (err) {
+			// An unregistered name is a clean "no". Anything else (RPC down,
+			// rate-limited, timed out) means the lookup never ran, and saying
+			// "could not resolve" would tell the caller the name does not exist.
+			if (isSnsNameNotFound(err)) return null;
+			throw new SnsUnavailableError(err);
 		}
+		return {
+			address: pk.toBase58(),
+			source: 'sns',
+			resolved: name.toLowerCase(),
+			...(claim ? { claim } : {}),
+		};
 	}
 
 	// 3. @username or bare username.
@@ -310,8 +338,8 @@ async function handleResolve(req, res) {
 	const url = new URL(req.url, 'http://x');
 	const name = url.searchParams.get('name');
 	if (!name) return error(res, 400, 'validation_error', 'name required');
-	const resolved = await resolveName(name);
-	if (!resolved) return error(res, 404, 'not_found', `could not resolve "${name}"`);
+	const resolved = await resolveOrRespond(res, name);
+	if (!resolved) return;
 	return json(res, 200, { data: resolved }, { 'cache-control': 'public, max-age=60' });
 }
 
@@ -320,8 +348,8 @@ async function handlePrep(req, res, body) {
 	if (!ADDR_RE.test(payerWallet)) {
 		return error(res, 400, 'validation_error', 'payer_wallet must be a base58 Solana public key');
 	}
-	const resolved = await resolveName(body?.name);
-	if (!resolved) return error(res, 404, 'not_found', `could not resolve "${body?.name}"`);
+	const resolved = await resolveOrRespond(res, body?.name);
+	if (!resolved) return;
 	const amountAtoms = parseAmountUsdc(body?.amount_usdc);
 	if (!amountAtoms) return error(res, 400, 'validation_error', 'amount_usdc must be > 0 and ≤ 10000');
 
@@ -356,8 +384,8 @@ async function handleSend(req, res, auth, body) {
 	const agentId = String(body?.agent_id || '').trim();
 	if (!agentId) return error(res, 400, 'validation_error', 'agent_id required when mode=send');
 
-	const resolved = await resolveName(body?.name);
-	if (!resolved) return error(res, 404, 'not_found', `could not resolve "${body?.name}"`);
+	const resolved = await resolveOrRespond(res, body?.name);
+	if (!resolved) return;
 	const amountAtoms = parseAmountUsdc(body?.amount_usdc);
 	if (!amountAtoms) return error(res, 400, 'validation_error', 'amount_usdc must be > 0 and ≤ 10000');
 

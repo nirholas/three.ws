@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const resolveMock = vi.fn();
-const getFavoriteDomainMock = vi.fn();
+const getPrimaryDomainMock = vi.fn();
 
 vi.mock('@bonfida/spl-name-service', () => ({
 	resolve: (...a) => resolveMock(...a),
-	getFavoriteDomain: (...a) => getFavoriteDomainMock(...a),
+	getPrimaryDomain: (...a) => getPrimaryDomainMock(...a),
 }));
 
 vi.mock('@solana/web3.js', () => {
@@ -33,21 +33,21 @@ describe('resolveSnsName', () => {
 	it('returns base58 address for a known domain', async () => {
 		const fakeKey = { toBase58: () => 'HKKp49zUBeaABFMpBWKCJPoNDLiR4AEEr8FJKuZPn6Nk' };
 		resolveMock.mockResolvedValue(fakeKey);
-		const result = await resolveSnsName('bonfida.sol');
+		const result = await resolveSnsName('threews.sol');
 		expect(result).toBe('HKKp49zUBeaABFMpBWKCJPoNDLiR4AEEr8FJKuZPn6Nk');
-		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'bonfida');
+		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'threews.sns');
 	});
 
-	it('strips the .sol suffix before calling resolve', async () => {
+	it('queries the classic registry as .sns, which SDK v4 requires for .sol names', async () => {
 		resolveMock.mockResolvedValue({ toBase58: () => 'AAA' });
 		await resolveSnsName('test.sol');
-		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'test');
+		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'test.sns');
 	});
 
 	it('accepts a name without .sol suffix', async () => {
 		resolveMock.mockResolvedValue({ toBase58: () => 'BBB' });
 		await resolveSnsName('test');
-		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'test');
+		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'test.sns');
 	});
 
 	it('returns null for a non-existent domain', async () => {
@@ -64,33 +64,33 @@ describe('resolveSnsName', () => {
 
 describe('reverseLookupAddress', () => {
 	beforeEach(() => {
-		getFavoriteDomainMock.mockReset();
+		getPrimaryDomainMock.mockReset();
 	});
 
 	it('returns .sol domain for a known address', async () => {
-		getFavoriteDomainMock.mockResolvedValue({ reverse: 'bonfida', stale: false });
+		getPrimaryDomainMock.mockResolvedValue({ reverse: 'threews', stale: false });
 		const result = await reverseLookupAddress('HKKp49zUBeaABFMpBWKCJPoNDLiR4AEEr8FJKuZPn6Nk');
-		expect(result).toBe('bonfida.sol');
+		expect(result).toBe('threews.sol');
 	});
 
 	it('appends .sol when the reverse result omits it', async () => {
-		getFavoriteDomainMock.mockResolvedValue({ reverse: 'myname', stale: false });
+		getPrimaryDomainMock.mockResolvedValue({ reverse: 'myname', stale: false });
 		expect(await reverseLookupAddress('someaddr')).toBe('myname.sol');
 	});
 
 	it('does not double-append .sol when reverse already includes it', async () => {
-		getFavoriteDomainMock.mockResolvedValue({ reverse: 'already.sol', stale: false });
+		getPrimaryDomainMock.mockResolvedValue({ reverse: 'already.sol', stale: false });
 		expect(await reverseLookupAddress('someaddr')).toBe('already.sol');
 	});
 
 	it('returns null when no favourite domain is found', async () => {
-		getFavoriteDomainMock.mockRejectedValue(new Error('FavouriteDomainNotFoundError'));
+		getPrimaryDomainMock.mockRejectedValue(new Error('FavouriteDomainNotFoundError'));
 		const result = await reverseLookupAddress('HKKp49zUBeaABFMpBWKCJPoNDLiR4AEEr8FJKuZPn6Nk');
 		expect(result).toBeNull();
 	});
 
 	it('returns null on any reverse-lookup error', async () => {
-		getFavoriteDomainMock.mockRejectedValue(new Error('network error'));
+		getPrimaryDomainMock.mockRejectedValue(new Error('network error'));
 		expect(await reverseLookupAddress('someaddr')).toBeNull();
 	});
 });
@@ -110,16 +110,16 @@ describe('resolveSolanaRecipient', () => {
 
 	it('resolves a .sol name and reports what it resolved from', async () => {
 		resolveMock.mockResolvedValue({ toBase58: () => VALID_ADDR });
-		const out = await resolveSolanaRecipient('bonfida.sol');
-		expect(out).toEqual({ address: VALID_ADDR, resolved_from: 'bonfida.sol' });
-		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'bonfida');
+		const out = await resolveSolanaRecipient('threews.sol');
+		expect(out).toEqual({ address: VALID_ADDR, resolved_from: 'threews.sol' });
+		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'threews.sns');
 	});
 
 	it('resolves a bare label without the .sol suffix', async () => {
 		resolveMock.mockResolvedValue({ toBase58: () => VALID_ADDR });
-		const out = await resolveSolanaRecipient('bonfida');
+		const out = await resolveSolanaRecipient('threews');
 		expect(out.address).toBe(VALID_ADDR);
-		expect(out.resolved_from).toBe('bonfida.sol');
+		expect(out.resolved_from).toBe('threews.sol');
 	});
 
 	it('returns null address when the name does not resolve', async () => {
@@ -145,7 +145,7 @@ describe('resolveSolanaRecipient', () => {
 		const out = await resolveSolanaRecipient('nich.threews.sol');
 		expect(out.address).toBe(VALID_ADDR);
 		expect(out.resolved_from).toBe('nich.threews.sol');
-		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'nich.threews');
+		expect(resolveMock).toHaveBeenCalledWith(expect.anything(), 'nich.threews.sns');
 	});
 });
 

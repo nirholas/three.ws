@@ -1203,13 +1203,35 @@ timeout
 
 ---
 
+## 🔴 `SNSError: Domain has an unsupported TLD suffix` (type `UnsupportedTld`): `sns-unsupported-tld`
+
+- **Source:** any caller of a high-level `@bonfida/spl-name-service` v4 API
+  (`resolve`, `createSubdomain`, `transferSubdomain`, `createRecord`,
+  `registerDomain`) that passes `"<x>.sol"` or a bare `"<x>"`.
+- **What it means:** SDK v4 (adopted 2026-10-23) refuses `.sol` in those APIs
+  once mainnet is past its `SOL_TLD_CUTOFF_SLOT`, which it is. Every `.sol`
+  lookup on that code path fails, so this is a code bug with full user impact,
+  never noise. On 2026-11-25 it had broken pay-by-name (the health pipeline
+  404'd `threews.sol` every ten minutes), `/api/sns`, reverse lookups, subdomain
+  claim minting, the agent `.sol` check and registration, and the
+  `ens_sns_resolve` MCP tool.
+- **Resolve:** route the name through `snsRegistryName()` / `resolveSnsOwner()`
+  in [src/solana/sns.js](../../src/solana/sns.js): `"<x>.sol"` becomes
+  `"<x>.sns"`, the classic registry that holds every `.sol` name (the same
+  accounts pre-cutoff `.sol` resolution read). Cover the fix with a test that
+  runs the real library over [tests/helpers/fake-sns-rpc.js](../../tests/helpers/fake-sns-rpc.js),
+  which reports a slot past the cutoff.
+
+---
+
 ## 🟢 `Error: Invalid name account provided` (at `@bonfida/spl-name-service` → `resolveName` in pay-by-name.js) — `sns-name-not-found`
 
 - **Source:** [api/x402/pay-by-name.js](../../api/x402/pay-by-name.js) `resolveName()`,
-  the `.sol` resolution branch calling `sns.resolve(conn, bare)`.
+  the `.sol` resolution branch calling `resolveSnsOwner(conn, name)`.
 - **What it means:** the x402 pay-by-name resolver was asked for a `.sol` name
   that has no on-chain name account (a name that does not exist). The `await
-  sns.resolve(...)` call is wrapped in `try/catch` and correctly returns `null`,
+  resolveSnsOwner(...)` call is wrapped in `try/catch` and returns `null` for a
+  not-registered name (an RPC failure answers `503 sns_unavailable` instead),
   so the caller gets a clean `404 not_found` — there is **no user impact**. The
   `ERROR` line appears anyway because `@bonfida/spl-name-service` runs several
   lookup strategies in parallel: the awaited promise rejects and is caught, but a

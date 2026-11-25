@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T23:32:06.182Z",
+	"generated_at": "2026-11-25T23:51:31.191Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -321,6 +321,16 @@
 			"type": "update",
 			"title": "Solana API endpoints answer a clear 400 for a mistyped address",
 			"summary": "The Solana endpoints on /api/v1/x (largest holders, token supply, balance, account, token holdings, transaction) now check that an address or signature is valid base58 before asking an RPC node. A typo used to wait about seven seconds and come back as a 502 internal error. Now it answers immediately with a 400 that names the bad parameter.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Solana name lookups work again",
+			"summary": "Looking up a .sol name had stopped working everywhere on the platform after a name-service library upgrade. Paying a .sol name, the /api/sns resolver, agent name tools, showing a wallet's primary .sol name, claiming a <label>.threews.sol subdomain, and checking or registering an agent's .sol domain all work again. When the Solana name service cannot be reached, you now get a clear retry message instead of a false \"name not found\" or \"domain available\".",
 			"link": null,
 			"tags": [
 				"fix"

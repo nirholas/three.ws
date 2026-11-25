@@ -38,8 +38,48 @@ async function makeConnection() {
 	return new Connection(DEFAULT_RPC_URL, 'confirmed');
 }
 
-function stripSol(name) {
-	return name.endsWith('.sol') ? name.slice(0, -4) : name;
+// Every .sol name, including the `<label>.threews.sol` subdomains we mint, lives
+// in the classic SNS registry (root 58PwtjSDuFHuUkYjH9BYnnQKHfwo9reZhC2zMJv9JPkx).
+// SDK v4 addresses that registry with the ".sns" suffix and, once mainnet passed
+// its SOL_TLD_CUTOFF_SLOT, rejects ".sol" and bare names in resolve,
+// createSubdomain, transferSubdomain and createRecord with "Domain has an
+// unsupported TLD suffix" (it reserves ".sol" for a future registry it cannot
+// read yet). Before the cutoff the SDK resolved "x.sol" by looking up "x" in
+// this same registry, so translating to "x.sns" keeps exactly that lookup.
+// Pass every name through here before handing it to an SDK high-level API.
+export function snsRegistryName(name) {
+	const bare = String(name ?? '').trim().toLowerCase().replace(/\.(sol|sns)$/, '');
+	return bare ? `${bare}.sns` : null;
+}
+
+/**
+ * Resolve a .sol name (or bare label / dotted subdomain) to the PublicKey a
+ * payment to it should reach, on the given connection. Honours SOL records and
+ * tokenized ownership like the SDK's resolver. Throws the SDK's error when the
+ * name is not registered or the RPC fails, so callers can tell the two apart.
+ */
+export async function resolveSnsOwner(connection, name, config) {
+	const query = snsRegistryName(name);
+	if (!query) throw new Error('empty SNS name');
+	const { resolve } = await import('@bonfida/spl-name-service');
+	return config ? resolve(connection, query, config) : resolve(connection, query);
+}
+
+// The SDK error types that mean "this name is not registered (or cannot be)",
+// as opposed to an RPC failure.
+const SNS_NOT_REGISTERED = new Set([
+	'DomainDoesNotExist',
+	'AccountDoesNotExist',
+	'InvalidDomain',
+	'InvalidSubdomain',
+	'InvalidParent',
+	'NoAccountData',
+]);
+
+/** True when an SDK error says the name is not registered rather than that the lookup failed. */
+export function isSnsNameNotFound(err) {
+	if (SNS_NOT_REGISTERED.has(err?.type)) return true;
+	return err?.name === 'SNSError' && /does not exist/i.test(String(err?.message || ''));
 }
 
 /**
@@ -49,8 +89,7 @@ function stripSol(name) {
  */
 export async function resolveSnsName(name) {
 	try {
-		const { resolve } = await import('@bonfida/spl-name-service');
-		const pk = await resolve(await makeConnection(), stripSol(name));
+		const pk = await resolveSnsOwner(await makeConnection(), name);
 		return pk.toBase58();
 	} catch {
 		return null;
@@ -64,9 +103,9 @@ export async function resolveSnsName(name) {
  */
 export async function reverseLookupAddress(addr) {
 	try {
-		const { getFavoriteDomain } = await import('@bonfida/spl-name-service');
+		const { getPrimaryDomain } = await import('@bonfida/spl-name-service');
 		const owner = new PublicKey(addr);
-		const { reverse, stale } = await getFavoriteDomain(await makeConnection(), owner);
+		const { reverse, stale } = await getPrimaryDomain(await makeConnection(), owner);
 		// A stale favorite is a domain the wallet no longer owns; showing it
 		// would attribute someone else's name to this address.
 		if (stale) return null;

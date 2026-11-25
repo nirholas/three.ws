@@ -169,7 +169,7 @@ describe('POST /api/x402/pay-by-name (paid resolution)', () => {
 	});
 
 	it('does NOT settle when the name resolves to nothing', async () => {
-		snsResolveMock.mockRejectedValue(new Error('domain not found'));
+		snsResolveMock.mockRejectedValue(Object.assign(new Error('The domain does not exist'), { name: 'SNSError', type: 'DomainDoesNotExist' }));
 		const { res, body } = await post({ name: 'definitely-not-registered.sol' }, { 'x-payment': 'proof' });
 		expect(res.statusCode).toBe(404);
 		expect(body.error).toBe('not_found');

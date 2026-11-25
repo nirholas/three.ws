@@ -75,25 +75,45 @@ async function resolveEns(name) {
 // Deliberately NOT NameRegistryState.retrieve: that helper also runs the
 // tokenized-owner lookup, which costs a getProgramAccounts scan and takes tens
 // of seconds on a throttled public RPC for a field this lane never reads.
-async function snsResolve(connection, bare) {
+//
+// SDK v4 throws UnsupportedTld for "<x>.sol" and for a bare "<x>" once mainnet
+// is past its SOL_TLD_CUTOFF_SLOT (it is). The classic registry that holds
+// every .sol name is the one v4 addresses as ".sns", so the label is queried
+// as "<bare>.sns": the same accounts pre-cutoff ".sol" resolution read.
+export async function snsResolve(connection, bare) {
 	const { resolve } = await import('@bonfida/spl-name-service');
-	const owner = await resolve(connection, bare);
+	const owner = await resolve(connection, `${bare}.sns`);
 	return owner instanceof PublicKey ? owner : null;
 }
 
-async function snsFavoriteDomain(connection, owner) {
-	const { getFavoriteDomain } = await import('@bonfida/spl-name-service');
-	const fav = await getFavoriteDomain(connection, owner);
-	return fav?.reverse ? `${fav.reverse}.sol` : null;
+// v4 renamed getFavoriteDomain to getPrimaryDomain; `reverse` is still the
+// label without its TLD.
+export async function snsFavoriteDomain(connection, owner) {
+	const { getPrimaryDomain } = await import('@bonfida/spl-name-service');
+	const primary = await getPrimaryDomain(connection, owner);
+	return primary?.reverse ? `${primary.reverse}.sol` : null;
 }
 
-async function snsOwnedDomains(connection, owner) {
-	const { getAllDomains, reverseLookupBatch } = await import('@bonfida/spl-name-service');
-	const keys = await getAllDomains(connection, owner);
+// v4 renamed getAllDomains to getSnsDomainKeysForOwner.
+export async function snsOwnedDomains(connection, owner) {
+	const { getSnsDomainKeysForOwner, reverseLookupBatch } = await import('@bonfida/spl-name-service');
+	const keys = await getSnsDomainKeysForOwner(connection, owner);
 	if (!keys.length) return [];
 	const names = await reverseLookupBatch(connection, keys.slice(0, DOMAIN_LIST_LIMIT));
 	return names.filter(Boolean).map((n) => `${n}.sol`);
 }
+
+// SNSError `type`s that mean "nobody registered this name". UnsupportedTld is
+// deliberately absent: it means our query was malformed, which is our bug and
+// must surface instead of reading as "not found".
+const SNS_NOT_REGISTERED = new Set([
+	'DomainDoesNotExist',
+	'AccountDoesNotExist',
+	'InvalidDomain',
+	'InvalidSubdomain',
+	'InvalidParent',
+	'NoAccountData',
+]);
 
 async function resolveSns(name) {
 	const bare = name.toLowerCase().replace(/\.sol$/, '');
@@ -104,6 +124,7 @@ async function resolveSns(name) {
 		// An unregistered domain is a clean "no", not an upstream failure. Only a
 		// real transport error should surface as one, so the not-registered
 		// signatures the resolver raises are folded into a null here.
+		if (SNS_NOT_REGISTERED.has(e?.type)) return null;
 		if (/domain.*(does not exist|not found)|account.*not.*(found|exist)|Invalid name account/i.test(e?.message || '')) {
 			return null;
 		}

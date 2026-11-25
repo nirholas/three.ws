@@ -35,6 +35,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
 import { fetchUpstreamJson } from '../_lib/upstream-fetch.js';
 import { loadAgentForSigning, solanaConnection } from '../_lib/agent-pumpfun.js';
+import { snsRegistryName, isSnsNameNotFound } from '../../src/solana/sns.js';
 
 const SNS_API = 'https://sns-api.bonfida.com';
 // Accept a label or dotted subdomain, optionally suffixed `.sol`.
@@ -75,20 +76,26 @@ async function fetchFavoriteDomain(address) {
 	}
 }
 
+// `domain` is the normalized bare label (no TLD). getSnsDomainKeySync takes it
+// without a suffix and derives the classic-registry account every .sol name
+// lives in.
 async function getRegistryOwner(connection, domain) {
 	const sns = await import('@bonfida/spl-name-service');
-	const { pubkey } = sns.getDomainKeySync(domain);
+	const { pubkey } = sns.getSnsDomainKeySync(domain);
 	const { registry } = await sns.NameRegistryState.retrieve(connection, pubkey);
 	return registry.owner.toBase58();
 }
 
-async function buildRegisterIxs({ connection, domain, buyer, space }) {
+// SDK v4 registers into the same registry but only accepts the ".sns" form of
+// the name (snsRegistryName) and no longer takes a connection.
+async function buildRegisterIxs({ domain, buyer, space }) {
 	const { PublicKey } = await import('@solana/web3.js');
 	const { getAssociatedTokenAddressSync } = await import('@solana/spl-token');
 	const sns = await import('@bonfida/spl-name-service');
 	const usdcMint = new PublicKey(USDC_MINT);
 	const buyerAta = getAssociatedTokenAddressSync(usdcMint, buyer, true);
-	return sns.registerDomainNameV2(connection, domain, space || 1000, buyer, buyerAta, usdcMint);
+	const ixs = await sns.registerDomain(snsRegistryName(domain), space || 1000, buyer, buyerAta, usdcMint);
+	return Array.isArray(ixs) ? ixs : [ixs];
 }
 
 async function resolveAuth(req) {
@@ -118,7 +125,14 @@ async function handleCheck(req, res) {
 	let owner = null;
 	try {
 		owner = await getRegistryOwner(conn, domain);
-	} catch {}
+	} catch (err) {
+		// Only "no such account" means the name is free. A failed read is not an
+		// answer, and reporting it as available sends the user into a purchase
+		// that fails on-chain.
+		if (!isSnsNameNotFound(err)) {
+			return error(res, 503, 'sns_unavailable', 'could not reach the Solana name service to check this domain; retry shortly');
+		}
+	}
 	return json(res, 200, {
 		data: {
 			domain,
@@ -153,7 +167,7 @@ async function handleRegisterAgent(req, res, id, auth) {
 		if (await getRegistryOwner(conn, domain).catch(() => null)) {
 			return error(res, 409, 'conflict', `${domain}.sol is already registered`);
 		}
-		const ixs = await buildRegisterIxs({ connection: conn, domain, buyer: keypair.publicKey, space });
+		const ixs = await buildRegisterIxs({ domain, buyer: keypair.publicKey, space });
 		// Protected send: priority fee + CU estimate, rebroadcast with blockhash
 		// refresh, hard throw on an on-chain revert.
 		const { signature: sig } = await submitProtected({ network: 'mainnet', connection: conn, payer: keypair, instructions: ixs });
@@ -208,7 +222,7 @@ async function handleRegisterPrep(req, res, id, auth) {
 		}
 
 		const buyer = new PublicKey(walletAddress);
-		const ixs = await buildRegisterIxs({ connection: conn, domain, buyer, space });
+		const ixs = await buildRegisterIxs({ domain, buyer, space });
 		const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
 		const msg = new TransactionMessage({ payerKey: buyer, recentBlockhash: blockhash, instructions: ixs }).compileToV0Message();
 		const tx = new VersionedTransaction(msg);

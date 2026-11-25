@@ -5,13 +5,16 @@
 // /api/agents/([^/]+) catch-all, so these tests invoke the handler the same way
 // the dispatcher does, with (req, res, id, action).
 //
-// Bonfida is a real upstream HTTP API and the registry read is a real on-chain
-// lookup, so both are stubbed at their module / fetch boundary. Everything else
+// The SNS indexer is a real upstream HTTP API, stubbed at fetch; the on-chain
+// registry is served by tests/helpers/fake-sns-rpc.js. Everything else
 // (domain normalization, ownership resolution, meta writes) runs for real.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Readable } from 'node:stream';
-import { Keypair } from '@solana/web3.js';
+import { Keypair, VersionedTransaction } from '@solana/web3.js';
+import { getAssociatedTokenAddressSync } from '@solana/spl-token';
+import { PublicKey } from '@solana/web3.js';
+import { createFakeSnsRpc } from '../helpers/fake-sns-rpc.js';
 
 const AGENT_ADDR = Keypair.generate().publicKey.toBase58();
 const LINKED_ADDR = Keypair.generate().publicKey.toBase58();
@@ -50,22 +53,17 @@ vi.mock('../../api/_lib/execution-engine.js', () => ({
 	submitProtected: vi.fn(async () => ({ signature: 'SIG'.padEnd(88, 'x') })),
 }));
 
+// The registry read and the registration instructions run through the REAL
+// @bonfida/spl-name-service over an in-memory RPC: a mocked library kept
+// answering to v3 export names after the v4 upgrade and hid that the check
+// reported every domain as available and registration could not build.
+let rpc;
 vi.mock('../../api/_lib/agent-pumpfun.js', () => ({
 	loadAgentForSigning: vi.fn(async () => ({ error: { status: 409, code: 'conflict', msg: 'no keypair' } })),
-	solanaConnection: vi.fn(() => ({})),
+	solanaConnection: vi.fn(() => rpc.connection),
 }));
 
-const registryState = { owner: null };
-vi.mock('@bonfida/spl-name-service', () => ({
-	getDomainKeySync: vi.fn(() => ({ pubkey: 'PK' })),
-	NameRegistryState: {
-		retrieve: vi.fn(async () => {
-			if (!registryState.owner) throw new Error('account not found');
-			return { registry: { owner: { toBase58: () => registryState.owner } } };
-		}),
-	},
-	registerDomainNameV2: vi.fn(async () => []),
-}));
+
 
 const { default: handler } = await import('../../api/agents/sns.js');
 
@@ -77,7 +75,7 @@ beforeEach(() => {
 	sqlState.agent = { id: AGENT_ID, user_id: 'owner-1', meta: { solana_address: AGENT_ADDR } };
 	sqlState.linked = [];
 	sqlState.writes = [];
-	registryState.owner = null;
+	rpc = createFakeSnsRpc();
 	fetchState.byAddress = {};
 	fetchState.favByAddress = {};
 	fetchState.fail = false;
@@ -222,11 +220,18 @@ describe('GET /api/agents/:id/sns/check', () => {
 	});
 
 	it('reports a registered domain as taken', async () => {
-		registryState.owner = LINKED_ADDR;
+		rpc.register('nova', LINKED_ADDR);
 		const { status, body } = await invoke('GET', { action: 'check', url: '/api/agents/x/sns/check?domain=nova' });
 		expect(status).toBe(200);
 		expect(body.data.available).toBe(false);
 		expect(body.data.owner).toBe(LINKED_ADDR);
+	});
+
+	it('does not call a domain available when the registry cannot be read', async () => {
+		rpc.fail(new Error('fetch failed'));
+		const { status, body } = await invoke('GET', { action: 'check', url: '/api/agents/x/sns/check?domain=nova' });
+		expect(status).toBe(503);
+		expect(body.error).toBe('sns_unavailable');
 	});
 
 	it('rejects a check with no domain', async () => {
@@ -255,5 +260,32 @@ describe('POST /api/agents/:id/sns/register-prep', () => {
 		});
 		expect(status).toBe(400);
 		expect(body.error_description).toMatch(/wallet_address/);
+	});
+
+	it('builds an unsigned registration for a linked wallet, paid from its USDC account', async () => {
+		sqlState.linked = [{ id: 'w1', address: LINKED_ADDR }];
+		const { status, body } = await invoke('POST', {
+			action: 'register-prep',
+			url: '/api/agents/x/sns/register-prep',
+			body: { domain: 'nova', wallet_address: LINKED_ADDR },
+		});
+		expect(status).toBe(200);
+		const tx = VersionedTransaction.deserialize(Buffer.from(body.data.tx_base64, 'base64'));
+		const keys = tx.message.staticAccountKeys.map((k) => k.toBase58());
+		expect(keys[0]).toBe(LINKED_ADDR);
+		expect(keys).toContain(rpc.domainKey('nova').toBase58());
+		const usdc = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+		expect(keys).toContain(getAssociatedTokenAddressSync(usdc, new PublicKey(LINKED_ADDR), true).toBase58());
+	});
+
+	it('refuses to build a registration for a domain that is already taken', async () => {
+		sqlState.linked = [{ id: 'w1', address: LINKED_ADDR }];
+		rpc.register('nova', AGENT_ADDR);
+		const { status } = await invoke('POST', {
+			action: 'register-prep',
+			url: '/api/agents/x/sns/register-prep',
+			body: { domain: 'nova', wallet_address: LINKED_ADDR },
+		});
+		expect(status).toBe(409);
 	});
 });
