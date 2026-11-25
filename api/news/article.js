@@ -41,6 +41,7 @@ import { truncateChars } from '../_lib/safe-text.js';
 const CACHE_TTL_MS = 30 * 60_000;
 
 const _cache = new Map(); // url → { value, expiresAt }
+const _inflight = new Map(); // url → Promise<value> of the build in progress
 
 // ── Analysis ─────────────────────────────────────────────────────────────────
 
@@ -205,6 +206,22 @@ export default wrap(async (req, res) => {
 	const hit = _cache.get(target);
 	if (hit && hit.expiresAt > Date.now()) return json(res, 200, publicView(hit.value), cacheHeaders);
 
+	// Requests for a story already being built join that build instead of
+	// starting their own. The cache above is only written once a build ends,
+	// 10-20s after it starts, and on 2026-11-25 a crawler fetched every ?lang=
+	// variant of one story inside that window: seventeen parallel extractions
+	// and LLM analyses of the same article drained the free LLM rungs' rate
+	// limits for every other caller. The first request's title/source hints
+	// shape the shared result, exactly as they already shape the cached one.
+	let build = _inflight.get(target);
+	if (!build) {
+		build = buildArticle(target, params).finally(() => _inflight.delete(target));
+		_inflight.set(target, build);
+	}
+	return json(res, 200, publicView(await build), cacheHeaders);
+});
+
+async function buildArticle(target, params) {
 	const id = articleId(target);
 
 	// Durable cache: a prior instance may have already done the expensive full
@@ -213,7 +230,7 @@ export default wrap(async (req, res) => {
 	const stored = await getExtraction(id).catch(() => null);
 	if (stored && ['page', 'reader', 'wayback'].includes(stored.extraction) && stored.content_chars > 400) {
 		_cache.set(target, { value: stored, expiresAt: Date.now() + CACHE_TTL_MS });
-		return json(res, 200, publicView(stored), cacheHeaders);
+		return stored;
 	}
 
 	// The publisher's own feed copy — trusted metadata, and (for feeds that
@@ -318,5 +335,5 @@ export default wrap(async (req, res) => {
 	// with an attacker-chosen headline behind a single GET.
 	if (value.content_chars > 0) recordExtraction(value).catch(() => {});
 
-	return json(res, 200, publicView(value), cacheHeaders);
-});
+	return value;
+}

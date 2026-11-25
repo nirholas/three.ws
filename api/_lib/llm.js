@@ -1099,8 +1099,13 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 	// budget_exhausted). Skip the siblings instead — cheap, and the next distinct
 	// host still gets its full shot. HTTP failures (402/429) are key-scoped and
 	// deliberately do NOT mark the host: another key on the same host may be fine.
+	// Keyed by host AND model: a rung running a different model on that host is
+	// still asked. Keyed by host alone, NVIDIA's 550B Ultra rung being cut off by
+	// its fair-share slice marked the whole NIM host, so the 30B Lightning rung
+	// behind it (about 0.35s) was skipped as host_stalled on every exhausted
+	// chain on 2026-11-25, and Kilo's Super rung went the same way behind Ultra.
 	const stalledHosts = new Set();
-	const hostOf = (url) => { try { return new URL(url).host; } catch { return url; } };
+	const hostOf = (p) => { try { return `${new URL(p.url).host}|${p.model}`; } catch { return `${p.url}|${p.model}`; } };
 	const isStall = (e) => e?.name === 'TimeoutError' || e?.name === 'AbortError' || /abort|timed? ?out/i.test(e?.message || '');
 	// Honor cooldowns only while something else can still answer: when every
 	// rung is sitting out, try them all anyway rather than fail without asking.
@@ -1116,7 +1121,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			attempts.push({ provider: p.name, skipped: 'budget_exhausted' });
 			continue;
 		}
-		if (stalledHosts.has(hostOf(p.url))) {
+		if (stalledHosts.has(hostOf(p))) {
 			attempts.push({ provider: p.name, skipped: 'host_stalled' });
 			continue;
 		}
@@ -1153,7 +1158,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		} catch (e) {
 			lastErr = Object.assign(new Error(`${p.name} unreachable: ${e.message}`), { status: 502, code: 'upstream_unreachable' });
 			if (isStall(e)) {
-				stalledHosts.add(hostOf(p.url));
+				stalledHosts.add(hostOf(p));
 				noteRungStall(p);
 			}
 			if (p.name === 'phi') notePhiStall(p, 'stall');
@@ -1179,7 +1184,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		} catch (e) {
 			lastErr = Object.assign(new Error(`${p.name} returned an unparseable 200 body: ${e.message}`), { status: 502, code: 'upstream_bad_body' });
 			if (isStall(e)) {
-				stalledHosts.add(hostOf(p.url));
+				stalledHosts.add(hostOf(p));
 				noteRungStall(p);
 			}
 			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: `unparseable 200 body: ${e.message}` });
@@ -1225,7 +1230,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		return lastEmpty;
 	}
 	if (attempts.length) {
-		console.warn('[llm] chain exhausted: ' + attempts.map((a) => a.skipped ? `${a.provider}=${a.skipped}` : `${a.provider}=${a.error} (${a.ms}ms)`).join(' | '));
+		console.warn(`[llm] chain exhausted (${track?.tool || task || 'untagged'}): ` + attempts.map((a) => a.skipped ? `${a.provider}=${a.skipped}` : `${a.provider}=${a.error} (${a.ms}ms)`).join(' | '));
 	}
 	throw Object.assign(lastErr || new LlmUnavailableError(), { attempts });
 }

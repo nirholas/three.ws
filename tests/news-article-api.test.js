@@ -222,3 +222,47 @@ describe('trading read', () => {
 		expect(out.body.trading).toBeNull();
 	});
 });
+
+// On 2026-11-25 a crawler fetched every ?lang= variant of one story page within
+// twenty seconds. Each render called this endpoint, and each request started
+// its own extraction and LLM analysis because the result is only cached after
+// the first one finishes (10-20s later). Seventeen parallel analyses of the same
+// article drained the free LLM rungs' rate limits, so the chain exhausted for
+// every other caller on the platform at the same time.
+describe('concurrent requests for one story', () => {
+	it('share a single extraction and a single LLM analysis', async () => {
+		llmConfigured.mockReturnValue(true);
+		let release;
+		const gate = new Promise((r) => { release = r; });
+		extractArticle.mockImplementation(async () => {
+			await gate;
+			return { paragraphs: [...PARAS, ...PARAS, ...PARAS], extraction: 'feed', blocked_reason: null, html: null, lane_sources: [] };
+		});
+		llmComplete.mockResolvedValue({
+			text: JSON.stringify({ summary: 'Venues took share.', key_points: ['a'], sentiment: 'neutral', entities: [], topics: [], assets: [], priced_in: 'unclear', horizon: 'weeks', counter: 'Inflows may reverse.' }),
+			provider: 'cloudflare',
+		});
+		const url = '/api/news/article?url=' + encodeURIComponent('https://example.com/coalesce-' + Date.now());
+		const pending = Array.from({ length: 6 }, () => call(url));
+		await new Promise((r) => setTimeout(r, 0));
+		release();
+		const outs = await Promise.all(pending);
+		expect(extractArticle).toHaveBeenCalledTimes(1);
+		expect(llmComplete).toHaveBeenCalledTimes(1);
+		for (const o of outs) {
+			expect(o.status).toBe(200);
+			expect(o.body.summary).toBe('Venues took share.');
+		}
+		llmConfigured.mockReturnValue(false);
+	});
+
+	it('lets a later request retry after the shared run failed', async () => {
+		const url = '/api/news/article?url=' + encodeURIComponent('https://example.com/coalesce-fail-' + Date.now());
+		extractArticle.mockRejectedValueOnce(new Error('ladder crashed'));
+		await expect(call(url)).rejects.toThrow('ladder crashed');
+		extractArticle.mockResolvedValueOnce({ paragraphs: PARAS, extraction: 'page', blocked_reason: null, html: null, lane_sources: [] });
+		const out = await call(url);
+		expect(out.status).toBe(200);
+		expect(extractArticle).toHaveBeenCalledTimes(2);
+	});
+});

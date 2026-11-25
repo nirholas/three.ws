@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "News analysis and AI answers fail less often when traffic spikes",
+			"summary": "When many readers or a crawler opened the same story at once, every request ran its own article analysis, and those duplicate runs used up the free AI providers for everyone else on the platform. Requests for a story that is already being analyzed now share that one run. The AI fallback chain also stopped skipping a fast model just because a slower model on the same provider timed out, so NVIDIA's quick Nemotron model now gets its turn instead of the request failing.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Solana reads back off when every RPC lane is rate limited",
 			"summary": "With Helius at its monthly cap and the free lanes answering 429, each page read re-asked the same exhausted lanes and logged a failure on every request. After one read exhausts the chain on rate limits, other reads now wait a few seconds and are served from the last good answer, so pages keep their data and the providers get room to recover.",
 			"tags": ["fix"]

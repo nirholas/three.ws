@@ -39,6 +39,14 @@
 			<description>Hugging Face stopped routing FLUX.1-schnell through nscale, so the second Hugging Face rung of the text-to-image ladder failed on every call. It now runs on WaveSpeed, which Hugging Face still maps to the model. /api/v1/ai/image?health=1 now asks each Hugging Face route whether it would actually serve, so an empty credit balance or a retired route shows as down with the reason instead of passing on a valid token. Images made on Hugging Face or the Livepeer network are now credited to that lane instead of to NVIDIA.</description>
 		</item>
 		<item>
+			<title>News analysis and AI answers fail less often when traffic spikes</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:News analysis and AI answers fail less often when traffic spikes</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When many readers or a crawler opened the same story at once, every request ran its own article analysis, and those duplicate runs used up the free AI providers for everyone else on the platform. Requests for a story that is already being analyzed now share that one run. The AI fallback chain also stopped skipping a fast model just because a slower model on the same provider timed out, so NVIDIA's quick Nemotron model now gets its turn instead of the request failing.</description>
+		</item>
+		<item>
 			<title>Solana reads back off when every RPC lane is rate limited</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Solana reads back off when every RPC lane is rate limited</guid>
