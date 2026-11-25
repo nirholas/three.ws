@@ -1,0 +1,8 @@
+[
+	{
+		"method": ["PUT"],
+		"origin": ["https://three.ws", "https://www.three.ws", "http://localhost:3000", "http://localhost:5173"],
+		"responseHeader": ["Content-Type", "ETag"],
+		"maxAgeSeconds": 3600
+	}
+]

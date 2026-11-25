@@ -201,10 +201,15 @@ read helper plus `/cdn/<key>` looks there when R2 cannot answer or lacks the key
 from ~300-550 successes a day to 1 of 44, because every finished GLB died in
 `materializeCreation`.
 
-- **What still fails:** browser uploads (`/api/forge-upload` still answers `503
-  storage_unavailable`, because a presigned R2 URL cannot be pointed at GCS), and the
-  routes that call `r2.send` directly (avatar CRUD, agent token/register/onchain,
-  erc8004) rather than the helpers.
+- **Browser uploads divert too (since 2026-11-25).** `presignUpload()` signs a GCS V4
+  PUT for the same key while R2 rejects the credential, and `objectStorageUsable()`
+  reports `{ ok: true, diverted: true }`, so `/api/forge-upload`, `/api/scene-upload`,
+  `/api/print/upload` and every other presign endpoint keep working. The bucket's PUT
+  CORS rule is in [`deploy/storage-fallback/`](../../deploy/storage-fallback/README.md);
+  a browser upload that dies as a network error with no status means that rule is missing.
+- **What still fails:** the routes that call `r2.send` directly (agent
+  token/register/onchain, erc8004 metadata writes, capture multipart uploads) rather
+  than the helpers.
 - **What the monitor shows:** `object_storage: degraded` with `writes and reads are
   diverted to the GCS fallback bucket` instead of `down`, and `[storage-fallback] <op>
   <key> served by GCS fallback` warnings (one per key per instance). `down` with `the

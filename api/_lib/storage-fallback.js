@@ -26,7 +26,8 @@
 // token minter (metadata server on Cloud Run, ADC on a developer box), so there
 // is no SDK dependency and no key on disk.
 
-import { getGcpAccessToken } from './gcp-auth.js';
+import { createHash, createSign } from 'node:crypto';
+import { getGcpAccessToken, parseServiceAccount } from './gcp-auth.js';
 
 const GCS_XML = 'https://storage.googleapis.com';
 const TIMEOUT_MS = 30_000;
@@ -190,4 +191,125 @@ export function noteFallback(op, key, err) {
 	if (warned.size > 5000) warned.clear();
 	warned.add(tag);
 	console.warn(`[storage-fallback] ${op} ${key} served by GCS fallback (R2: ${err?.name || 'error'}: ${String(err?.message || err).slice(0, 120)})`);
+}
+
+// ── Presigned browser uploads ───────────────────────────────────────────────
+// A browser upload never passes through us: the endpoint hands the page a
+// signed PUT URL. While R2 refuses our credential an R2-signed URL answers 401,
+// so presignUpload() (r2.js) signs a GCS V4 URL for the same key instead and
+// the object lands where every read helper and /cdn/ already look.
+//
+// Two signers, in order: the service-account key in GCP_SERVICE_ACCOUNT_JSON
+// (signs locally, no network), then the runtime identity through the IAM
+// Credentials signBlob API (Cloud Run's service account holds Token Creator on
+// itself). Either identity needs object write on the fallback bucket.
+
+const METADATA_EMAIL_URL = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email';
+let _runtimeEmail = null;
+
+// RFC 3986 unreserved characters only: GCS rebuilds the canonical request with
+// this exact encoding, and encodeURIComponent leaves !'()* bare.
+function strictEncode(value) {
+	return encodeURIComponent(value).replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+}
+
+function configuredServiceAccount() {
+	const raw = String(process.env.GCP_SERVICE_ACCOUNT_JSON ?? '').trim();
+	if (!raw) return null;
+	return parseServiceAccount(raw);
+}
+
+async function runtimeServiceAccountEmail() {
+	if (_runtimeEmail) return _runtimeEmail;
+	const res = await fetch(METADATA_EMAIL_URL, {
+		headers: { 'metadata-flavor': 'Google' },
+		signal: AbortSignal.timeout(2_000),
+	});
+	if (!res.ok) throw new Error(`metadata server answered ${res.status} for the service account email`);
+	_runtimeEmail = (await res.text()).trim();
+	return _runtimeEmail;
+}
+
+async function resolveSigner() {
+	const sa = configuredServiceAccount();
+	if (sa) {
+		return {
+			email: sa.client_email,
+			sign: async (text) => createSign('RSA-SHA256').update(text).sign(sa.private_key, 'hex'),
+		};
+	}
+	const email = await runtimeServiceAccountEmail();
+	return {
+		email,
+		sign: async (text) => {
+			const token = await getGcpAccessToken();
+			const res = await fetch(`https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${encodeURIComponent(email)}:signBlob`, {
+				method: 'POST',
+				headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+				body: JSON.stringify({ payload: Buffer.from(text).toString('base64') }),
+				signal: AbortSignal.timeout(10_000),
+			});
+			if (!res.ok) {
+				const body = await res.text().catch(() => '');
+				throw new Error(`signBlob ${res.status} for ${email}: ${body.slice(0, 160)}`);
+			}
+			const { signedBlob } = await res.json();
+			return Buffer.from(signedBlob, 'base64').toString('hex');
+		},
+	};
+}
+
+/**
+ * Whether this runtime can sign a fallback upload URL at all (a usable key, or
+ * a metadata server to name the runtime identity). Cached once it succeeds.
+ * @returns {Promise<boolean>}
+ */
+export async function fallbackCanPresign() {
+	if (!fallbackBucket()) return false;
+	try {
+		await resolveSigner();
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * A GCS V4 signed URL the browser can PUT one object to, signed over
+ * content-type and host so the upload must declare the type it was minted for.
+ * @param {{ key: string, contentType: string, expiresIn?: number, now?: Date }} opts
+ * @returns {Promise<string>}
+ */
+export async function fallbackPresignPut({ key, contentType, expiresIn = 300, now = new Date() }) {
+	const bucket = fallbackBucket();
+	if (!bucket) throw new Error('storage fallback bucket is not configured');
+	const signer = await resolveSigner();
+	const host = 'storage.googleapis.com';
+	const stamp = now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+	const scope = `${stamp.slice(0, 8)}/auto/storage/goog4_request`;
+	const path = `/${bucket}/${key.split('/').map(strictEncode).join('/')}`;
+	const query = {
+		'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
+		'X-Goog-Credential': `${signer.email}/${scope}`,
+		'X-Goog-Date': stamp,
+		'X-Goog-Expires': String(expiresIn),
+		'X-Goog-SignedHeaders': 'content-type;host',
+	};
+	const canonicalQuery = Object.keys(query)
+		.sort()
+		.map((k) => `${strictEncode(k)}=${strictEncode(query[k])}`)
+		.join('&');
+	const canonicalRequest = [
+		'PUT',
+		path,
+		canonicalQuery,
+		`content-type:${String(contentType).trim()}`,
+		`host:${host}`,
+		'',
+		'content-type;host',
+		'UNSIGNED-PAYLOAD',
+	].join('\n');
+	const stringToSign = ['GOOG4-RSA-SHA256', stamp, scope, createHash('sha256').update(canonicalRequest).digest('hex')].join('\n');
+	const signature = await signer.sign(stringToSign);
+	return `https://${host}${path}?${canonicalQuery}&X-Goog-Signature=${signature}`;
 }

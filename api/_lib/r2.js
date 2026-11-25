@@ -18,6 +18,8 @@ import {
 	fallbackGet,
 	fallbackHead,
 	fallbackDelete,
+	fallbackCanPresign,
+	fallbackPresignPut,
 	noteFallback,
 } from './storage-fallback.js';
 
@@ -211,9 +213,21 @@ async function runCredProbe() {
 }
 
 /**
- * @returns {Promise<{ ok: boolean, reason: 'unconfigured'|'rejected'|null, message: string|null }>}
+ * Whether a browser upload can land somewhere right now. A rejected R2
+ * credential still counts as usable when the GCS fallback bucket can take the
+ * upload instead (`diverted: true`): presignUpload() then signs for that bucket,
+ * and every read helper and /cdn/ already look there.
+ * @returns {Promise<{ ok: boolean, reason: 'unconfigured'|'rejected'|null, message: string|null, diverted?: boolean }>}
  */
 export async function objectStorageUsable() {
+	const verdict = await r2CredentialVerdict();
+	if (verdict.reason === 'rejected' && (await fallbackCanPresign())) {
+		return { ok: true, reason: null, message: verdict.message, diverted: true };
+	}
+	return verdict;
+}
+
+async function r2CredentialVerdict() {
 	if (!objectStorageConfigured()) {
 		return { ok: false, reason: /** @type {const} */ ('unconfigured'), message: null };
 	}
@@ -239,8 +253,18 @@ export function resetObjectStorageUsableCache() {
 	_credProbeInFlight = null;
 }
 
-// Short-lived signed URL for direct browser upload (PUT).
+// Short-lived signed URL for direct browser upload (PUT). While R2 refuses our
+// credential (and a fallback bucket exists), the URL is signed for the GCS
+// fallback bucket under the same key instead, because an R2 URL would answer
+// 401 to the browser. The optional checksum is R2-only; the endpoints verify
+// size after upload through headObject(), which reads the fallback too.
 export async function presignUpload({ key, contentType, checksumSha256 }) {
+	if (fallbackBucket()) {
+		const rejected = r2CredentialCooldownActive() || (await r2CredentialVerdict()).reason === 'rejected';
+		if (rejected && (await fallbackCanPresign())) {
+			return fallbackPresignPut({ key, contentType, expiresIn: 300 });
+		}
+	}
 	// Do NOT include ContentLength in the command — that adds content-length to
 	// X-Amz-SignedHeaders, which browsers omit from CORS preflights (it is a
 	// "forbidden" request header). R2 would then reject the preflight, causing

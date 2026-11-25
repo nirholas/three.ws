@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Photo, scene and model uploads work again during the storage outage",
+			"summary": "While our primary object store refuses its credential, uploading a reference photo to Forge, a scene, a print file or an avatar model answered \"storage unavailable\" or failed in the browser. Uploads now go straight to the Google Cloud backup bucket under the same name, and the file is readable everywhere the moment it lands.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Models and thumbnails made during the storage outage load everywhere",
 			"summary": "Every link we hand out for a stored file (Explore cards, fresh upload links, share and wallet-embed previews, pinning, PowerPoint export) now goes through our own /cdn/ address, which serves both the primary store and the Google Cloud backup bucket. Before this, links pointed at the primary store's public domain, so anything saved while that store was refusing our credential answered 404 there.",
 			"tags": [

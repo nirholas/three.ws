@@ -71,6 +71,14 @@
 			<description>When many readers or a crawler opened the same story at once, every request ran its own article analysis, and those duplicate runs used up the free AI providers for everyone else on the platform. Requests for a story that is already being analyzed now share that one run. The AI fallback chain also stopped skipping a fast model just because a slower model on the same provider timed out, so NVIDIA's quick Nemotron model now gets its turn instead of the request failing.</description>
 		</item>
 		<item>
+			<title>Photo, scene and model uploads work again during the storage outage</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Photo, scene and model uploads work again during the storage outage</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>While our primary object store refuses its credential, uploading a reference photo to Forge, a scene, a print file or an avatar model answered &quot;storage unavailable&quot; or failed in the browser. Uploads now go straight to the Google Cloud backup bucket under the same name, and the file is readable everywhere the moment it lands.</description>
+		</item>
+		<item>
 			<title>Pump.fun bonding curves show the SOL they have really raised</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Pump.fun bonding curves show the SOL they have really raised</guid>
