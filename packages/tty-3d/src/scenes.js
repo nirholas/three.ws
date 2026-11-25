@@ -251,8 +251,10 @@ async function meetScene(opts) {
 	const fox = await loadAvatar('fox.glb', opts.cwd);
 	const cesiumClip = clipNamed(cesium, 'clip');
 	const foxClip = clipNamed(fox, 'walk');
+	// The fox file is tens of times taller than cesium-man. Scale it to the
+	// walker's height or the union framing hides the person inside the fox.
 	const shot = measurePair(cesium, fox, cesiumClip, foxClip);
-	const cam = makeCam({ yaw: SIDE, pitch: 0.02, zoom: 1, spin: 0 }, opts);
+	const cam = makeCam({ yaw: SIDE, pitch: 0.04, zoom: 1, spin: 0 }, opts);
 	const { fb, cols, rows } = makeBuffer(opts.width, opts.height, opts.style);
 	const tint = tintOf(opts);
 	return publish({
@@ -274,31 +276,79 @@ async function meetScene(opts) {
 				points: opts.style === 'points',
 				pointRadius: opts.pointRadius ?? 0,
 			};
-			renderToFramebuffer(fb, cesium, { ...shared, translate: place(cesium, -shot.gap), clear: true });
-			renderToFramebuffer(fb, fox, { ...shared, translate: place(fox, shot.gap), clear: false });
+			const left = placement(cesium, 1, 0, -shot.gap);
+			const right = placement(fox, shot.foxScale, Math.PI, shot.gap);
+			renderToFramebuffer(fb, cesium, { ...shared, ...left, clear: true });
+			renderToFramebuffer(fb, fox, { ...shared, ...right, clear: false });
 		},
 	});
 }
 
-function place(model, x) {
+function modelHeight(model) {
+	const b = poseBounds(model);
+	return Math.max(1e-4, b.max[1] - b.min[1]);
+}
+
+function halfDepth(model, scale) {
+	const b = poseBounds(model);
+	return Math.max(b.max[0] - b.min[0], b.max[2] - b.min[2]) / 2 * scale;
+}
+
+function placement(model, scale, rotate, zTarget) {
+	const b = poseBounds(model);
 	const c = poseCenter(model);
-	return [x - c[0], 0, -c[2]];
+	const [cx, , cz] = yawScale(c[0], c[1], c[2], scale, rotate);
+	const feet = b.min[1] * scale;
+	return {
+		scale,
+		rotate,
+		translate: [-cx, -feet, zTarget - cz],
+	};
+}
+
+function yawScale(x, y, z, scale, rotate) {
+	const sx = x * scale;
+	const sy = y * scale;
+	const sz = z * scale;
+	const c = Math.cos(rotate);
+	const s = Math.sin(rotate);
+	return [sx * c + sz * s, sy, -sx * s + sz * c];
 }
 
 function measurePair(a, b, clipA, clipB) {
-	const min = [Infinity, Infinity, Infinity];
-	const max = [-Infinity, -Infinity, -Infinity];
 	const span = Math.max(clipA?.duration || 1, clipB?.duration || 1);
-	const gap = 1.15;
-	for (let i = 0; i < 8; i += 1) {
-		const t = (span * i) / 8;
+	let heightA = 0;
+	let heightB = 0;
+	for (let i = 0; i < 6; i += 1) {
+		const t = (span * i) / 6;
 		poseModel(a, clipA, t);
 		poseModel(b, clipB, t);
-		absorb(poseBounds(a), place(a, -gap), min, max);
-		absorb(poseBounds(b), place(b, gap), min, max);
+		heightA = Math.max(heightA, modelHeight(a));
+		heightB = Math.max(heightB, modelHeight(b));
+	}
+	const foxScale = heightA / heightB;
+	let reachA = 0;
+	let reachB = 0;
+	for (let i = 0; i < 6; i += 1) {
+		const t = (span * i) / 6;
+		poseModel(a, clipA, t);
+		poseModel(b, clipB, t);
+		reachA = Math.max(reachA, halfDepth(a, 1));
+		reachB = Math.max(reachB, halfDepth(b, foxScale));
+	}
+	const gap = reachA + reachB + heightA * 0.15;
+	const min = [Infinity, Infinity, Infinity];
+	const max = [-Infinity, -Infinity, -Infinity];
+	for (let i = 0; i < 6; i += 1) {
+		const t = (span * i) / 6;
+		poseModel(a, clipA, t);
+		poseModel(b, clipB, t);
+		absorbPlacement(a, placement(a, 1, 0, -gap), min, max);
+		absorbPlacement(b, placement(b, foxScale, Math.PI, gap), min, max);
 	}
 	const center = min.map((v, k) => (v + max[k]) / 2);
 	return {
+		foxScale,
 		gap,
 		center,
 		framing: {
@@ -308,12 +358,22 @@ function measurePair(a, b, clipA, clipB) {
 	};
 }
 
-function absorb(bounds, translate, min, max) {
-	for (let k = 0; k < 3; k += 1) {
-		const lo = bounds.min[k] + translate[k];
-		const hi = bounds.max[k] + translate[k];
-		if (lo < min[k]) min[k] = lo;
-		if (hi > max[k]) max[k] = hi;
+function absorbPlacement(model, place, min, max) {
+	const b = poseBounds(model);
+	const xs = [b.min[0], b.max[0]];
+	const ys = [b.min[1], b.max[1]];
+	const zs = [b.min[2], b.max[2]];
+	for (const x of xs) {
+		for (const y of ys) {
+			for (const z of zs) {
+				const [px, py, pz] = yawScale(x, y, z, place.scale, place.rotate);
+				const point = [px + place.translate[0], py + place.translate[1], pz + place.translate[2]];
+				for (let k = 0; k < 3; k += 1) {
+					if (point[k] < min[k]) min[k] = point[k];
+					if (point[k] > max[k]) max[k] = point[k];
+				}
+			}
+		}
 	}
 }
 
@@ -460,10 +520,10 @@ function writeBirds(model, birds, time) {
 		const s = Math.sin(heading);
 		const flap = Math.sin(time * 11 + bird.phase) * 0.08;
 		const local = [
-			[-0.16, flap, -0.04],
-			[0.16, -flap, -0.04],
-			[0, 0.02, 0.14],
-			[0, -0.015, -0.1],
+			[-0.28, flap, -0.06],
+			[0.28, -flap, -0.06],
+			[0, 0.03, 0.24],
+			[0, -0.02, -0.16],
 		];
 		for (let v = 0; v < 4; v += 1) {
 			const [lx, ly, lz] = local[v];

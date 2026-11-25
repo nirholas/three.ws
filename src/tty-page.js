@@ -15,6 +15,11 @@ const statusEl = document.getElementById('stream-status');
 const playBtn = document.getElementById('btn-play');
 const spinBtn = document.getElementById('btn-spin');
 const colorBtn = document.getElementById('btn-color');
+const curlCmd = document.getElementById('curl-cmd');
+const screenTitle = document.getElementById('screen-title');
+
+const SCENES = new Set(['walk', 'orbit', 'parade', 'meet', 'birds', 'donut', 'shader', 'draw', 'splats', 'say']);
+const STYLES = new Set(['half', 'braille', 'density', 'ascii', 'matrix', 'points']);
 
 /** xterm-256 to rgb: 16 base colours, a 6x6x6 cube, then a 24-step grey ramp. */
 const BASE_16 = [
@@ -93,7 +98,35 @@ function frameToHtml(text) {
 	return open ? html : '';
 }
 
-const state = { spin: true, color: true, controller: null, running: false };
+const state = { spin: true, color: true, scene: '', style: 'half', avatar: '', controller: null, running: false };
+
+function commandText() {
+	const style = state.style !== 'half' ? `style=${state.style}` : '';
+	if (state.scene === 'say') {
+		const q = ['text=gm', style].filter(Boolean).join('&');
+		return `curl -L 'three.ws/tty/say?${q}'`;
+	}
+	if (state.scene && style) return `curl -L 'three.ws/tty/${state.scene}?${style}'`;
+	if (state.scene) return `curl -L three.ws/tty/${state.scene}`;
+	if (style) return `curl -L 'three.ws/tty?${style}'`;
+	return 'curl -L three.ws/tty';
+}
+
+function showCommand() {
+	const text = commandText();
+	if (curlCmd) curlCmd.textContent = text;
+	if (screenTitle) screenTitle.textContent = text;
+	if (spinBtn) {
+		spinBtn.disabled = Boolean(state.scene);
+		spinBtn.title = state.scene ? 'This scene sets its own camera' : '';
+	}
+}
+
+function pressGroup(selector, attr, value) {
+	for (const button of document.querySelectorAll(selector)) {
+		button.setAttribute('aria-pressed', String((button.getAttribute(attr) || '') === value));
+	}
+}
 
 function setStatus(text) {
 	if (statusEl) statusEl.textContent = text;
@@ -137,15 +170,16 @@ async function run() {
 	const params = new URLSearchParams({
 		w: String(colsForViewport()),
 		h: String(rowsForViewport()),
-		fps: '16',
+		fps: state.scene === 'shader' ? '8' : state.scene === 'splats' ? '12' : '16',
 		frames: '400',
-		spin: state.spin ? '0.9' : '0',
 		color: state.color ? 'ansi256' : 'mono',
 	});
-	// Landing here from /tty/<id> in a browser carries the avatar through, so the
-	// panel shows the model the visitor actually asked for rather than the default.
-	const asked = new URLSearchParams(location.search).get('avatar');
-	if (asked) params.set('avatar', asked);
+	// A scene owns its camera. Sending the turntable speed would spin the
+	// profile walk and disagree with `curl three.ws/tty/walk`.
+	if (state.scene) params.set('scene', state.scene);
+	else params.set('spin', state.spin ? '0.9' : '0');
+	if (state.style !== 'half') params.set('style', state.style);
+	if (!state.scene && state.avatar) params.set('avatar', state.avatar);
 
 	try {
 		const res = await fetch(`/api/tty?${params}`, { signal: controller.signal });
@@ -176,7 +210,7 @@ async function run() {
 	} catch (err) {
 		if (err.name === 'AbortError') return;
 		setStatus('unavailable');
-		screen.textContent = `Could not reach the render stream: ${err.message}\n\nThe command still works from a terminal:\n\n  $ curl -L three.ws/tty`;
+		screen.textContent = `Could not reach the render stream: ${err.message}\n\nThe command still works from a terminal:\n\n  $ ${commandText()}`;
 	} finally {
 		if (state.controller === controller) {
 			state.controller = null;
@@ -203,6 +237,35 @@ if (colorBtn) {
 		if (state.running) run();
 	});
 }
+
+for (const button of document.querySelectorAll('[data-scene]')) {
+	button.addEventListener('click', () => {
+		state.scene = button.getAttribute('data-scene') || '';
+		pressGroup('[data-scene]', 'data-scene', state.scene);
+		showCommand();
+		if (state.running) run();
+	});
+}
+for (const button of document.querySelectorAll('[data-style]')) {
+	button.addEventListener('click', () => {
+		state.style = button.getAttribute('data-style') || 'half';
+		pressGroup('[data-style]', 'data-style', state.style);
+		showCommand();
+		if (state.running) run();
+	});
+}
+
+const initial = new URLSearchParams(location.search);
+const askedScene = (initial.get('scene') || '').toLowerCase();
+const askedAvatar = initial.get('avatar') || '';
+if (SCENES.has(askedScene)) state.scene = askedScene;
+else if (SCENES.has(askedAvatar.toLowerCase())) state.scene = askedAvatar.toLowerCase();
+else if (askedAvatar) state.avatar = askedAvatar;
+const askedStyle = (initial.get('style') || '').toLowerCase();
+if (STYLES.has(askedStyle)) state.style = askedStyle;
+pressGroup('[data-scene]', 'data-scene', state.scene);
+pressGroup('[data-style]', 'data-style', state.style);
+showCommand();
 
 for (const button of document.querySelectorAll('[data-copy-target]')) {
 	button.addEventListener('click', async () => {
@@ -245,5 +308,5 @@ if (wantsMotion && window.innerWidth >= 720) {
 	run();
 } else {
 	setStatus('press run');
-	screen.textContent = '  $ curl -L three.ws/tty';
+	screen.textContent = `  $ ${commandText()}`;
 }

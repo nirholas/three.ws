@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-22T08:13:05.183Z",
+	"generated_at": "2026-11-25T00:43:03.891Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "The terminal can walk, flock, shade, and splat",
+			"summary": "curl three.ws/tty/walk plays a person walking in profile. The same stream now has a flock of birds, a lit torus, a raymarched shader, a lathed solid, and a point garden whose banner states the real point count. A parade plays two walks in turn, meet draws both characters in one frame, and say puts your words above the walker. Glyph styles are half-block, braille, density, ASCII, a green matrix tint, and points.",
+			"link": "/tty",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-11-22",
 			"type": "update",
@@ -14641,7 +14651,7 @@
 			"date": "2026-08-28",
 			"type": "launch",
 			"title": "Terminal renderer",
-			"summary": "curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.",
+			"summary": "curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.",
 			"link": "/tty",
 			"tags": [
 				"launch"

@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-25
+
+- **The terminal can walk, flock, shade, and splat**: curl three.ws/tty/walk plays a person walking in profile. The same stream now has a flock of birds, a lit torus, a raymarched shader, a lathed solid, and a point garden whose banner states the real point count. A parade plays two walks in turn, meet draws both characters in one frame, and say puts your words above the walker. Glyph styles are half-block, braille, density, ASCII, a green matrix tint, and points. (`/tty`) `[feature]`
+
 ## 2026-11-22
 
 - **360 video and photos now solve into camera positions on our own GPUs**: The new pano_sfm stage splits each stitched 360 frame into a rig of flat views and solves where the camera was with COLMAP 4.2.1, so the splat trainer can start from a real 360 walk. Measured on an L4 GPU: a 30 second indoor clip registered every view in 3 minutes, an Insta360 X6 outdoor walk registered all 816 views (0.52 px error), and an Insta360 X5 walking tour registered 85 percent. Footage the solver cannot place now fails with a plain walk-slower message instead of a bad scene. `[feature, infra]`
@@ -1587,7 +1591,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 - **Publishing to the Solana dApp Store** (`/docs/seeker-publishing`): The release runbook for the three.ws Seeker app: Publisher Portal setup, the release keystore, building and verifying a signed APK, and submitting it for review.
 - **Ship log** (`/ship`): Every release note joined to the commits that produced it, with a confidence score and the reasoning behind every link.
 - **Submission day: three.ws on the Seeker dApp Store** (`/docs/seeker-submission-day`): The owner's step-by-step for submission day: funding the publisher wallet, every Publisher Portal field with the listing copy to paste, the five screenshots to capture on a Seeker, and the submit command.
-- **Terminal renderer** (`/tty`): curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.
+- **Terminal renderer** (`/tty`): curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.
 - **three.ws on iOS** (`/docs/ios-app`): What the App Store app adds on top of the website: the native share sheet, universal links, wallet deep links back to the page you left, real permission prompts, and an offline screen that recovers on its own.
 - **x402 Preflight: can this seller actually settle?** (`/preflight`): Check whether any x402 seller can complete a payment before you sign one. Fetches the seller's signed payability attestation and verifies the ed25519 signature, the expiry and the subject entirely in your browser. Free, open format, works against any origin.
 - **Agent history catches up on fast chains in days instead of weeks**: The cross-chain index read one window of blocks per chain every 15 minutes. That is enough to keep pace with a slow chain but not to close a gap on a fast one: Arbitrum was 18.4 million blocks behind and would have taken about six weeks to catch up, while most runs finished early with most of their time budget unused. Runs now spend that spare time on whichever chain is furthest behind, and do nothing extra when every chain is current. `[improvement]`

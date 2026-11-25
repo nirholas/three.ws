@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>The terminal can walk, flock, shade, and splat</title>
+			<link>https://three.ws/tty</link>
+			<guid isPermaLink="false">2026-11-25:The terminal can walk, flock, shade, and splat</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>curl three.ws/tty/walk plays a person walking in profile. The same stream now has a flock of birds, a lit torus, a raymarched shader, a lathed solid, and a point garden whose banner states the real point count. A parade plays two walks in turn, meet draws both characters in one frame, and say puts your words above the walker. Glyph styles are half-block, braille, density, ASCII, a green matrix tint, and points.</description>
+		</item>
+		<item>
 			<title>360 video and photos now solve into camera positions on our own GPUs</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-22:360 video and photos now solve into camera positions on our own GPUs</guid>
@@ -11268,7 +11276,7 @@
 			<guid isPermaLink="false">2026-08-28:Terminal renderer</guid>
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.</description>
+			<description>curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.</description>
 		</item>
 		<item>
 			<title>three.ws on iOS</title>

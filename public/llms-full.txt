@@ -1181,7 +1181,7 @@ Sell several of an agent's skills as one purchase, priced from your own sales in
 
 URL: https://three.ws/tty
 
-curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.
+curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.
 
 ### Progressive Avatars
 

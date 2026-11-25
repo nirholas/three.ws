@@ -1,6 +1,7 @@
 # Terminal renderer
 
-`curl three.ws/tty` and a rigged 3D agent walks in your terminal.
+`curl three.ws/tty` streams a 3D model into your terminal. `curl three.ws/tty/walk`
+is a person, walking, in profile.
 
 No GPU is involved, on either side. There is no WebGL, no browser, and nothing to
 install. A software rasterizer decodes the model, evaluates its animation, blends
@@ -44,8 +45,33 @@ loading. Every parameter is optional.
 | `color` | `truecolor`, `ansi256`, or `mono`. | `ansi256` |
 | `zoom` | 1 fits the model, higher moves closer. | 1 |
 | `pitch` | Camera elevation in radians. | 0.08 |
+| `yaw` | Camera azimuth in radians. Added to `spin` each frame. | 0, or the scene's own |
+| `scene` | A named picture. The path `/tty/<scene>` sets this. `src` wins when both are set. | the model |
+| `style` | `half`, `braille`, `density`, `ascii`, `matrix`, or `points`. | `half` |
+| `text` | Words drawn above the walker for `say`. A POST body is read the same way. | `gm` |
+
+`walk`, `orbit`, `parade`, `meet`, `birds`, `donut`, `shader`, `draw`, `splats`,
+and `say` are reserved names. Avatar ids are UUIDs, so a real avatar is never
+one of these.
 
 ```bash
+# a person, walking, in profile
+curl -L three.ws/tty/walk
+
+# a flock, a lit torus, a raymarched solid, a counted point garden
+curl -L three.ws/tty/birds
+curl -L three.ws/tty/donut
+curl -L three.ws/tty/shader
+curl -L three.ws/tty/splats
+
+# two walks, then two characters in one frame
+curl -L three.ws/tty/parade
+curl -L three.ws/tty/meet
+
+# words above the walker. echo works if you POST the body.
+curl -L 'three.ws/tty/say?text=gm'
+echo gm | curl -L --data-binary @- three.ws/tty/say
+
 # a specific avatar, wider, held still instead of spinning
 curl 'three.ws/tty/8f2c1a90-1c4e-4b2b-9d77-3f0a1b2c3d4e?w=110&spin=0'
 
@@ -116,6 +142,18 @@ the [package README](https://github.com/nirholas/three.ws/tree/main/packages/tty
 background colour, so one character carries two independently coloured pixels.
 That doubles vertical resolution and makes pixels square, because terminal cells
 are roughly 1:2. It is why a sphere comes out round rather than squashed.
+`style=braille` uses a 2x4 dot cell, `density` uses block glyphs, `ascii` uses a
+luminance ramp, `matrix` tints the frame green, and `points` plots vertices.
+
+**Scenes are the same rasterizer.** `walk` plays the cesium-man clip from the
+side, because that mesh reads as a blob from the front. `orbit` turns the same
+clip. `parade` plays that walk, then the fox. `meet` draws both into one frame,
+with the fox scaled to the walker's height. `birds` is a flock of a few dozen
+chevrons. `donut` is a lit torus. `shader` raymarches a torus blended with a
+sphere, and the stream runs slower on purpose (8 fps unless you ask otherwise).
+`draw` revolves a 2D profile into a solid. `splats` is a generated garden, and
+the banner states the real point count. `say` draws the words you pass above
+the walker.
 
 **Real skinning.** Joint matrices are evaluated per frame from the glTF animation
 samplers and blended per vertex, so a rigged avatar moves its limbs. It is not a

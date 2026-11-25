@@ -2,6 +2,13 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-25",
+			"title": "The terminal can walk, flock, shade, and splat",
+			"summary": "curl three.ws/tty/walk plays a person walking in profile. The same stream now has a flock of birds, a lit torus, a raymarched shader, a lathed solid, and a point garden whose banner states the real point count. A parade plays two walks in turn, meet draws both characters in one frame, and say puts your words above the walker. Glyph styles are half-block, braille, density, ASCII, a green matrix tint, and points.",
+			"tags": ["feature"],
+			"link": "/tty"
+		},
+		{
 			"date": "2026-11-22",
 			"title": "The Android widget token stays on the phone it was linked on",
 			"summary": "The three.ws Android app no longer copies the home screen widget's sign-in token into Google Drive backups or onto a phone restored from one. A new phone gets its own token when you link the widget from three.ws/glance. Found by a Google Play compliance scan of the 1.1.0 build, which now passes with no critical findings.",

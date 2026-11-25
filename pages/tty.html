@@ -5,7 +5,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 	<title data-i18n="tty.page_title">Your agent, in your terminal · three.ws</title>
-	<meta name="description" content="curl three.ws/tty and a rigged 3D agent walks in your terminal. A real software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, no install. Plus @three-ws/tty-3d, the CLI and SDK that render any GLB in a terminal." data-i18n-attr="content:tty.meta_desc" />
+	<meta name="description" content="curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a torus, a raymarched shader, and a point garden. No GPU, no WebGL, no install." data-i18n-attr="content:tty.meta_desc" />
 	<link rel="canonical" href="https://three.ws/tty" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -16,14 +16,14 @@
 	<link rel="stylesheet" href="/mobile.css" />
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Your agent, in your terminal · three.ws" data-i18n-attr="content:tty.share_title" />
-	<meta property="og:description" content="curl three.ws/tty and a rigged 3D agent walks in your terminal. No GPU, no WebGL, no install." data-i18n-attr="content:tty.share_desc" />
+	<meta property="og:description" content="curl three.ws/tty/walk and a person walks in your terminal. Birds, a torus, a shader, and a point garden are on the same stream." data-i18n-attr="content:tty.share_desc" />
 	<meta property="og:url" content="https://three.ws/tty" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Terminal+renderer&amp;d=curl+three.ws%2Ftty+and+a+rigged+3D+agent+walks+in+your+terminal.+A+software+rasterizer+streams+ANSI+frames+over+HTTP%3A+no+GPU%2C+no+WebGL%2C+nothing+to+install.+Also&amp;p=%2Ftty" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content="Your agent, in your terminal · three.ws" data-i18n-attr="content:tty.share_title" />
-	<meta name="twitter:description" content="curl three.ws/tty and a rigged 3D agent walks in your terminal. No GPU, no WebGL, no install." data-i18n-attr="content:tty.share_desc" />
+	<meta name="twitter:description" content="curl three.ws/tty/walk and a person walks in your terminal. Birds, a torus, a shader, and a point garden are on the same stream." data-i18n-attr="content:tty.share_desc" />
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Terminal+renderer&amp;d=curl+three.ws%2Ftty+and+a+rigged+3D+agent+walks+in+your+terminal.+A+software+rasterizer+streams+ANSI+frames+over+HTTP%3A+no+GPU%2C+no+WebGL%2C+nothing+to+install.+Also&amp;p=%2Ftty" />
 	<style>
 		:root {
@@ -95,7 +95,10 @@
 			color: var(--tty-muted);
 		}
 		@media (max-width: 720px) { #screen { font-size: 7px; min-height: 240px; } }
-		.screen-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 40px; }
+		.screen-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+		.scene-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; align-items: center; }
+		.scene-row:last-of-type { margin-bottom: 36px; }
+		.scene-row .label { font-size: 12px; color: var(--tty-faint); margin-right: 2px; }
 		.btn {
 			background: rgba(255, 255, 255, 0.05); color: var(--tty-text);
 			border: 1px solid var(--tty-border); border-radius: 8px;
@@ -106,6 +109,7 @@
 		.btn:active { transform: translateY(1px); }
 		.btn:focus-visible { outline: 2px solid var(--tty-accent); outline-offset: 2px; }
 		.btn[aria-pressed="true"] { border-color: var(--tty-accent); color: var(--tty-accent); }
+		.btn:disabled { opacity: 0.4; cursor: default; }
 
 		h2 { font-size: clamp(20px, 3vw, 27px); margin: 52px 0 14px; letter-spacing: -0.01em; }
 		h3 { font-size: 15px; margin: 26px 0 8px; color: var(--tty-text); }
@@ -144,7 +148,7 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Terminal renderer - three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Terminal renderer","description":"curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.","url":"https://three.ws/tty","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=Terminal+renderer&d=curl+three.ws%2Ftty+and+a+rigged+3D+agent+walks+in+your+terminal.+A+software+rasterizer+streams+ANSI+frames+over+HTTP%3A+no+GPU%2C+no+WebGL%2C+nothing+to+install.+Also&p=%2Ftty"}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Terminal renderer","description":"curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.","url":"https://three.ws/tty","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=Terminal+renderer&d=curl+three.ws%2Ftty+and+a+rigged+3D+agent+walks+in+your+terminal.+A+software+rasterizer+streams+ANSI+frames+over+HTTP%3A+no+GPU%2C+no+WebGL%2C+nothing+to+install.+Also&p=%2Ftty"}]}</script>
 </head>
 <body>
 	<header class="site-header"><div id="nav-container"></div></header>
@@ -155,10 +159,9 @@
 			<span class="eyebrow" data-i18n="tty.eyebrow">no gpu · no webgl · no install</span>
 			<h1 data-i18n="tty.hero_title">Your agent, in your terminal.</h1>
 			<p class="lede" data-i18n="tty.hero_lede">
-				One command. A rigged 3D character loads, plays its animation, and turns on a
-				turntable, drawn entirely out of coloured text. There is nothing to install and
-				nothing to run: the frames are rasterized on our servers and streamed to your
-				shell as they are drawn.
+				One command. A rigged 3D character walks, turns, or plays a whole scene, drawn
+				entirely out of coloured text. There is nothing to install: the frames are
+				rasterized on our servers and streamed to your shell as they are drawn.
 			</p>
 
 			<div class="cmd">
@@ -183,7 +186,7 @@
 					<span class="dot" aria-hidden="true"></span>
 					<span class="dot" aria-hidden="true"></span>
 					<span class="dot" aria-hidden="true"></span>
-					<span class="title">curl -L three.ws/tty</span>
+					<span class="title" id="screen-title">curl -L three.ws/tty</span>
 					<span class="status" id="stream-status" role="status" aria-live="polite" data-i18n="tty.status_idle">idle</span>
 				</div>
 				<pre id="screen" tabindex="0" aria-label="Live terminal render of a 3D agent" data-i18n-attr="aria-label:tty.screen_aria"></pre>
@@ -192,6 +195,29 @@
 				<button class="btn" type="button" id="btn-play" data-i18n="tty.btn_play">Run it</button>
 				<button class="btn" type="button" id="btn-spin" aria-pressed="true" data-i18n="tty.btn_spin">Turntable</button>
 				<button class="btn" type="button" id="btn-color" aria-pressed="true" data-i18n="tty.btn_color">Colour</button>
+			</div>
+			<div class="scene-row" role="group" aria-label="Scenes">
+				<span class="label">Scene</span>
+				<button class="btn" type="button" data-scene="" aria-pressed="true">Agent</button>
+				<button class="btn" type="button" data-scene="walk">Walk</button>
+				<button class="btn" type="button" data-scene="orbit">Orbit</button>
+				<button class="btn" type="button" data-scene="parade">Parade</button>
+				<button class="btn" type="button" data-scene="meet">Meet</button>
+				<button class="btn" type="button" data-scene="birds">Birds</button>
+				<button class="btn" type="button" data-scene="donut">Donut</button>
+				<button class="btn" type="button" data-scene="shader">Shader</button>
+				<button class="btn" type="button" data-scene="draw">Draw</button>
+				<button class="btn" type="button" data-scene="splats">Splats</button>
+				<button class="btn" type="button" data-scene="say">Say</button>
+			</div>
+			<div class="scene-row" role="group" aria-label="Glyph style">
+				<span class="label">Style</span>
+				<button class="btn" type="button" data-style="half" aria-pressed="true">Blocks</button>
+				<button class="btn" type="button" data-style="braille">Braille</button>
+				<button class="btn" type="button" data-style="density">Density</button>
+				<button class="btn" type="button" data-style="ascii">ASCII</button>
+				<button class="btn" type="button" data-style="matrix">Matrix</button>
+				<button class="btn" type="button" data-style="points">Points</button>
 			</div>
 		</section>
 
@@ -248,13 +274,26 @@ process.stdout.write(renderer.frame(1.25));</code></pre>
 					<tr><td><code>clip</code></td><td data-i18n="tty.row_clip_meaning">Animation name to play.</td><td data-i18n="tty.row_clip_default">the first clip</td></tr>
 					<tr><td><code>color</code></td><td data-i18n-html="tty.row_color_meaning"><code>truecolor</code>, <code>ansi256</code>, or <code>mono</code>.</td><td>ansi256</td></tr>
 					<tr><td><code>zoom</code>, <code>pitch</code></td><td data-i18n="tty.row_zoom_meaning">Camera distance and elevation.</td><td>1, 0.08</td></tr>
+					<tr><td><code>scene</code></td><td data-i18n-html="tty.row_scene_meaning">A named picture: <code>walk</code>, <code>orbit</code>, <code>parade</code>, <code>meet</code>, <code>birds</code>, <code>donut</code>, <code>shader</code>, <code>draw</code>, <code>splats</code>, <code>say</code>. The path <code>/tty/walk</code> is the same thing. An explicit <code>src</code> wins.</td><td data-i18n="tty.row_scene_default">the model</td></tr>
+					<tr><td><code>yaw</code></td><td data-i18n="tty.row_yaw_meaning">Camera azimuth in radians. Walk starts in profile.</td><td data-i18n="tty.row_yaw_default">the scene's own</td></tr>
+					<tr><td><code>style</code></td><td data-i18n-html="tty.row_style_meaning"><code>half</code>, <code>braille</code>, <code>density</code>, <code>ascii</code>, <code>matrix</code>, or <code>points</code>.</td><td>half</td></tr>
+					<tr><td><code>text</code></td><td data-i18n-html="tty.row_text_meaning">Words for <code>say</code>. A POST body is read the same way, up to 42 characters.</td><td>gm</td></tr>
 				</tbody>
 			</table>
-			<pre class="block"><code># your own avatar, wider, held still
-curl -L 'three.ws/tty/&lt;avatar-id&gt;?w=110&amp;spin=0'
+			<pre class="block"><code># a person, walking, in profile
+curl -L three.ws/tty/walk
 
-# a single frame in plain ASCII, for a README or a commit hook
-curl -L 'three.ws/tty?frames=1&amp;color=mono&amp;w=60'</code></pre>
+# a flock, a lit torus, a raymarched solid, a point garden
+curl -L three.ws/tty/birds
+curl -L three.ws/tty/donut
+curl -L three.ws/tty/shader
+curl -L three.ws/tty/splats
+
+# words above the walker
+curl -L 'three.ws/tty/say?text=gm'
+
+# your own avatar, wider, held still
+curl -L 'three.ws/tty/&lt;avatar-id&gt;?w=110&amp;spin=0'</code></pre>
 			<p class="note" data-i18n-html="tty.note">
 				A browser asking for this URL is redirected here instead, because a browser would
 				show the escape codes as literal garbage. Pass

@@ -106,7 +106,9 @@ const FILL_LIGHT = normalize([0.7, 0.1, 0.35]);
  * @param {number[]} opts.center world-space point to look at
  * @param {number[]} opts.tint   optional rgb multiplier in 0..1
  * @param {boolean} [opts.clear] when false, composite onto the framebuffer
- * @param {number[]} [opts.translate] world-space offset applied to every vertex
+ * @param {number[]} [opts.translate] world-space offset applied after scale and rotate
+ * @param {number} [opts.scale] uniform scale about the origin, before rotate
+ * @param {number} [opts.rotate] yaw in radians about Y, before translate
  * @param {boolean} [opts.points] plot vertices instead of triangles
  * @param {number} [opts.pointRadius] splat radius in pixels; 0 is a single pixel
  */
@@ -148,12 +150,16 @@ export function renderToFramebuffer(fb, model, opts) {
 	const nx = new Float64Array(3), ny = new Float64Array(3), nz = new Float64Array(3);
 	const translate = opts.translate ?? [0, 0, 0];
 	const tx = translate[0], ty = translate[1], tz = translate[2];
+	const scale = Number.isFinite(opts.scale) ? opts.scale : 1;
+	const rotate = opts.rotate || 0;
+	const rc = Math.cos(rotate);
+	const rs = Math.sin(rotate);
 
 	for (const prim of model.primitives) {
 		const { outPositions: P, outNormals: N, indices, color } = transformPrimitive(model, prim);
 
 		if (opts.points) {
-			plotPoints(fb, P, viewProj, tx, ty, tz, color, tint, opts.pointRadius ?? 0);
+			plotPoints(fb, P, viewProj, tx, ty, tz, scale, rc, rs, color, tint, opts.pointRadius ?? 0);
 			continue;
 		}
 
@@ -161,7 +167,12 @@ export function renderToFramebuffer(fb, model, opts) {
 			let behind = false;
 			for (let v = 0; v < 3; v += 1) {
 				const o = indices[t + v] * 3;
-				const x = P[o] + tx, y = P[o + 1] + ty, z = P[o + 2] + tz;
+				const sx0 = P[o] * scale;
+				const sy0 = P[o + 1] * scale;
+				const sz0 = P[o + 2] * scale;
+				const x = sx0 * rc + sz0 * rs + tx;
+				const y = sy0 + ty;
+				const z = -sx0 * rs + sz0 * rc + tz;
 				clip[0] = viewProj[0] * x + viewProj[4] * y + viewProj[8] * z + viewProj[12];
 				clip[1] = viewProj[1] * x + viewProj[5] * y + viewProj[9] * z + viewProj[13];
 				clip[2] = viewProj[2] * x + viewProj[6] * y + viewProj[10] * z + viewProj[14];
@@ -235,15 +246,18 @@ export function renderToFramebuffer(fb, model, opts) {
 }
 
 /** Project each vertex and stamp a small disc. Used by the point-cloud scene. */
-function plotPoints(fb, positions, viewProj, tx, ty, tz, color, tint, radius) {
+function plotPoints(fb, positions, viewProj, tx, ty, tz, scale, rc, rs, color, tint, radius) {
 	const clip = new Float64Array(4);
 	const rad = Math.max(0, radius);
 	const rad2 = rad * rad;
 	const span = Math.ceil(rad);
 	for (let i = 0; i < positions.length; i += 3) {
-		const x = positions[i] + tx;
-		const y = positions[i + 1] + ty;
-		const z = positions[i + 2] + tz;
+		const sx0 = positions[i] * scale;
+		const sy0 = positions[i + 1] * scale;
+		const sz0 = positions[i + 2] * scale;
+		const x = sx0 * rc + sz0 * rs + tx;
+		const y = sy0 + ty;
+		const z = -sx0 * rs + sz0 * rc + tz;
 		clip[0] = viewProj[0] * x + viewProj[4] * y + viewProj[8] * z + viewProj[12];
 		clip[1] = viewProj[1] * x + viewProj[5] * y + viewProj[9] * z + viewProj[13];
 		clip[2] = viewProj[2] * x + viewProj[6] * y + viewProj[10] * z + viewProj[14];

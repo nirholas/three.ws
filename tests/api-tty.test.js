@@ -8,7 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
-import { colorModeFor, defaultModelPath, resolveSource } from '../api/tty.js';
+import { colorModeFor, defaultModelPath, resolveSource, sceneFromQuery } from '../api/tty.js';
 
 describe('colour negotiation', () => {
 	it('defaults to 256 colour, because curl forwards no terminal hints', () => {
@@ -61,6 +61,14 @@ describe('source resolution', () => {
 		await expect(resolveSource({ src: 'http://169.254.169.254/latest/meta-data/' })).rejects.toThrow();
 		await expect(resolveSource({ src: 'http://127.0.0.1:8080/model.glb' })).rejects.toThrow();
 		await expect(resolveSource({ src: 'file:///etc/passwd' })).rejects.toThrow();
+	});
+
+	it('reserves scene names without treating an avatar id as a scene', () => {
+		expect(sceneFromQuery({ avatar: 'walk' })).toBe('walk');
+		expect(sceneFromQuery({ scene: 'Birds' })).toBe('birds');
+		expect(sceneFromQuery({ avatar: 'not-a-uuid' })).toBeNull();
+		expect(sceneFromQuery({ avatar: '8f2c1a90-1c4e-4b2b-9d77-3f0a1b2c3d4e' })).toBeNull();
+		expect(sceneFromQuery({ src: 'https://example.com/a.glb', avatar: 'walk' })).toBeNull();
 	});
 
 	it('returns nothing for an avatar id that does not resolve', async () => {

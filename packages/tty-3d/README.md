@@ -41,6 +41,7 @@ Requires Node 18 or newer.
 
 ```bash
 three-tty <model.glb | https://...> [options]
+three-tty --scene walk [options]
 ```
 
 | Option | Meaning | Default |
@@ -48,7 +49,11 @@ three-tty <model.glb | https://...> [options]
 | `--width <n>` | Columns | terminal width |
 | `--height <n>` | Rows. One row is two vertical pixels | terminal height minus 2 |
 | `--fps <n>` | Frames per second | 24 |
-| `--spin <n>` | Turntable speed, radians per second. `0` holds still | 0.9 |
+| `--scene <name>` | `walk`, `orbit`, `parade`, `meet`, `birds`, `donut`, `shader`, `draw`, `splats`, `say`. No GLB required | |
+| `--spin <n>` | Turntable speed, radians per second. `0` holds still | 0.9, or the scene's own |
+| `--yaw <r>` | Camera azimuth, radians | 0, or the scene's own |
+| `--style <name>` | `half`, `braille`, `density`, `ascii`, `matrix`, `points` | `half` |
+| `--text <words>` | Words for `--scene say` | `gm` |
 | `--clip <name\|n>` | Which animation to play | the first one |
 | `--no-anim` | Hold the rest pose | |
 | `--once` | Draw one frame and exit | implied when piped |
@@ -105,7 +110,9 @@ vertex data.
 | `background` | `[r, g, b]` in 0..1 | near black |
 | `transparent` | leave uncovered cells as spaces | `false` |
 | `spin` | turntable radians per second | 1 |
+| `yaw` | starting azimuth, radians. `frame` adds `time * spin` | 0 |
 | `pitch`, `zoom` | camera elevation and distance | 0.08, 1 |
+| `style` | `half`, `braille`, `density`, `ascii`, `points`, `matrix` | `half` |
 | `tint` | `[r, g, b]` multiplier | white |
 
 Returns `{ frame(time), setOrbit({yaw, pitch, zoom}), orbit, width, height, framing }`.
@@ -115,10 +122,15 @@ string.
 ### Other exports
 
 `renderOnce(source, options)`, `describeModel(model)`, `selectAnimation(model, wanted)`,
-`detectColorMode(env, stream)`, `toAnsi256(r, g, b)`, `framebufferToText(fb, opts)`,
-`ColorMode`, and `ansi` (cursor control strings). The lower layers are reachable
-at `@three-ws/tty-3d/model`, `/raster` and `/term` if you want the framebuffer
-rather than the text.
+`createScene(name, options)`, `isScene(name)`, `detectColorMode(env, stream)`,
+`toAnsi256(r, g, b)`, `framebufferToText(fb, opts)`, `ColorMode`, and `ansi`
+(cursor control strings). The lower layers are reachable at `@three-ws/tty-3d/model`,
+`/raster`, `/term`, `/scenes` and `/solid` if you want the framebuffer rather than
+the text.
+
+```bash
+three-tty --scene walk --once --width 80
+```
 
 ## How it looks like graphics and not ASCII art
 

@@ -1658,7 +1658,7 @@
 				{
 					"path": "/tty",
 					"title": "Terminal renderer",
-					"description": "curl three.ws/tty and a rigged 3D agent walks in your terminal. A software rasterizer streams ANSI frames over HTTP: no GPU, no WebGL, nothing to install. Also the @three-ws/tty CLI and library for rendering any GLB in a terminal.",
+					"description": "curl three.ws/tty/walk and a person walks in your terminal. The same stream draws birds, a lit torus, a raymarched shader, a lathed solid, and a counted point garden. No GPU, no WebGL, nothing to install.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-28"
