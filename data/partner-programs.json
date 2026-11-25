@@ -4117,12 +4117,12 @@
 			"status": "member",
 			"url": "https://x.ai/startups",
 			"apply": "Application at x.ai/startups",
-			"value": "credits sized to stage and usage, no fixed tier (per i10x / vandatateam coverage)",
+			"value": "credits sized to stage, funding, revenue and current AI spend, aiming at six to twelve months of real usage (program page and Program Terms, checked 2026-11-25)",
 			"benefits": [
-				"Credits sized to 6-12 months of usage across Grok, Grok Build and the Grok API",
-				"20% on approval, 80% after onboarding"
+				"One credit balance across Grok, Grok Build, Grok Bot and the Grok API", "Credits sized to six to twelve months of real usage", "Hands-on onboarding and a direct line to the startups team",
+				"20% on approval, 80% released automatically after the initial onboarding steps"
 			],
-			"eligibility": "Checks for venture backing (disputed by one aggregator), live product, company email matching website; credits expire 6 months",
+			"eligibility": "Program page checks venture backing, a live product, and a work email on the company website domain (three.ws was admitted bootstrapped). Credits expire six months after they are applied unless the approval email says otherwise; own business use only, no resale (Program Terms, last updated 2026-10-27)",
 			"cost": "free",
 			"cadence": "rolling; launched late Oct 2026",
 			"fit": 2,
@@ -4160,7 +4160,7 @@
 				{
 					"benefit": "Grok API, Grok and Grok Build credits",
 					"state": "received",
-					"note": "First tranche visible in the Grok dashboard billing page on the three.ws team; amount stays in XAI_CREDIT_GRANT_USD on Cloud Run. Dashboard labels this balance as never expiring, while program terms say six months; the ledger assumes six months until xAI confirms",
+					"note": "First tranche visible in the Grok dashboard billing page on the three.ws team; amount stays in XAI_CREDIT_GRANT_USD on Cloud Run. Dashboard labels this balance as never expiring, but the Program Terms set six months from application unless the approval email says otherwise, so the ledger uses six months",
 					"received": "2026-11-21"
 				}
 			]

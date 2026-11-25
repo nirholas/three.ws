@@ -13,16 +13,33 @@ what xAI or X gets out of resharing it, who owns the last step, and how we measu
 
 ## What membership actually gives us
 
-Verified against the program page, third-party writeups of the program terms, and our acceptance
-email (2026-11-20):
+Verified against the primary sources on 2026-11-25: the program page (x.ai/startups, including its
+FAQ), the Grok for Startups Program Terms (last updated 2026-10-27, issued by SpaceX Super
+Intelligence LLC), and our acceptance email (2026-11-20).
 
 | Benefit | Detail | What we do with it |
 |---|---|---|
-| One credit balance | Shared across the Grok API, Grok, Grok Build and Grok Bot | Fund the Grok lanes we already built and the new ones below |
-| Staged release | 20% on approval, 80% after onboarding | Owner completes onboarding (owner action 1 below) |
-| Expiry | Credits expire 6 months after issue | Order 878 tracks burn against expiry so none is wasted |
-| Direct line to the startups team | Hands-on onboarding and a contact as we grow | Order 882 uses it for the co-marketing ask |
-| Co-marketing | **Not a listed benefit.** No source names a showcase, spotlight or marketing perk | We earn it: give xAI's accounts things they want to reshare |
+| One credit balance | Shared across the Eligible Services: Grok, Grok Build, Grok Bot and the Grok API, on our Team Account only. The program page also lists Cursor, but the terms do not name it as an Eligible Service | Fund the Grok lanes we already built and the new ones below |
+| Sizing | "We aim to offer six to twelve months of real usage" (program page); the FAQ says about six months, based on funding, revenue and current AI spend | The ledger (order 878) measures runway against that |
+| Staged release | 20% on approval; the other 80% is released automatically once the initial onboarding steps are done and the team is up and running | Owner completes onboarding (owner action 1 below) |
+| Expiry | Six months after the credits are applied to the Team Account, unless the Approval Communication says otherwise. Unused credit is forfeited, never extended | Order 878 tracks burn against expiry. The acceptance email is the authority if it states a different date |
+| Direct line to the startups team | Hands-on onboarding and a contact as we grow (startups@x.ai) | Order 882 uses it for the co-marketing ask |
+| Publicity | The terms allow us to "state publicly that you participate in the Program", and SpaceXSI "may identify you as a participant in the Program in our marketing" | The announcement thread; ask the startups team to name us in their own marketing |
+
+**Limits the terms set (read before building on the credits):**
+
+- **Own business use only.** Credits may not be used "for the benefit of unaffiliated companies", and
+  usage paid for with credits may not be resold. Grok inside our own product is the intended use. A raw
+  Grok passthrough sold to third parties, or another company's workload run on our key, is not.
+- **Not spendable on:** taxes, X Premium or other X Corp. services, marketplace items, third-party
+  products, professional services, or fees under a separate committed-spend arrangement.
+- **Non-transferable:** not to an affiliate, not combinable with other xAI promotions, no cash value.
+- **Confidentiality:** non-public information from the Approval Communication (the credit amount, the
+  tranche structure, the Tranche 2 criteria) stays confidential. Membership itself is public.
+- **No partnership:** "Nothing in these Program Terms creates a partnership, joint venture, agency, or
+  employment relationship." This is why the only approved claim is membership.
+- **Keep the application true:** we must promptly tell xAI about material changes (funding, a change of
+  control) before the credits expire. Only one grant per company group, ever.
 
 Never publish the credit amount or the team ID (program confidentiality and our own rule).
 

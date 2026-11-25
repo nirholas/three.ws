@@ -1,6 +1,6 @@
 # xAI credit ledger
 
-three.ws holds xAI credits through the Grok for Startups program. The grant is one balance (released in two tranches) and it expires six months after issue, so unspent credit is lost. This ledger shows where the credit goes and warns before it runs out or expires unused.
+three.ws holds xAI credits through the Grok for Startups program. The grant is one balance (released in two tranches) and it expires six months after it is applied to the team, so unspent credit is lost. That is the default in the Program Terms (last updated 2026-10-27); only the acceptance email can set a different date, and the Grok dashboard's "never expires" label does not override either. The credits are for our own product use: the terms forbid reselling credit-funded usage or running another company's workload on them ([plan](../partners/xai-grok-startups-plan.md#what-membership-actually-gives-us)). This ledger shows where the credit goes and warns before it runs out or expires unused.
 
 ## What is recorded
 

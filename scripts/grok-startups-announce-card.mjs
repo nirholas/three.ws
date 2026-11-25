@@ -23,8 +23,14 @@
 //     https://x.ai/legal/brand-guidelines, which require logos exactly as
 //     provided.
 //
-//   node scripts/grok-startups-announce-card.mjs   -> all four PNGs
+//   node scripts/grok-startups-announce-card.mjs            -> all four PNGs
+//   node scripts/grok-startups-announce-card.mjs --motion   -> head.mp4 and
+//     head-square.mp4: the program cards with the torus rings drifting around
+//     the ring. The drift covers exactly two ring spacings per loop, so the
+//     last frame flows into the first and X's autoloop shows no seam. H.264,
+//     yuv420p, faststart, needs ffmpeg on PATH.
 
+import { spawn } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { chromium } from 'playwright';
@@ -36,7 +42,8 @@ const inter = file('public/fonts/inter-latin.woff2', 'font/woff2');
 // Wireframe torus: one closed meridian ring per step around the tube, tilted
 // toward the viewer and projected orthographically. Rings nearer the viewer
 // are drawn brighter, so the figure has depth with no fill or shading.
-function torus({ width, height, rings = 40, tilt = 1.02, turn = 0.16 }) {
+// `phase` slides every ring around the ring by that many ring spacings.
+function torus({ width, height, rings = 40, tilt = 1.02, turn = 0.16, phase = 0 }) {
 	const R = 1;
 	const r = 0.4;
 	const scale = Math.min(width / (2 * (R + r)), height / (2 * (R + r))) * 0.98;
@@ -49,7 +56,7 @@ function torus({ width, height, rings = 40, tilt = 1.02, turn = 0.16 }) {
 	};
 	const paths = [];
 	for (let i = 0; i < rings; i++) {
-		const u = (i / rings) * Math.PI * 2;
+		const u = ((i + phase) / rings) * Math.PI * 2;
 		let d = '';
 		let depth = 0;
 		const steps = 96;
@@ -97,6 +104,7 @@ const cards = {
 		</style>
 		<div class="figure">${torus({ width: 700, height: 640 })}</div>
 		<div class="left">${ours('dark')}${badge}</div>`,
+		motion: { out: 'head.mp4', scale: 1.6, figure: { width: 700, height: 640 } },
 	},
 	'head-square.png': {
 		size: [1080, 1080],
@@ -111,6 +119,7 @@ const cards = {
 		${ours('dark')}
 		<div class="figure">${torus({ width: 1000, height: 700 })}</div>
 		${badge}`,
+		motion: { out: 'head-square.mp4', scale: 1, figure: { width: 1000, height: 700 } },
 	},
 	'pair.png': pair({ bg: '#f4f4f6', rule: '#c4c4ca', ours: 'light', grok: 'dark' }),
 	'pair-dark.png': pair({ bg: '#0b0b0d', rule: '#3a3a40', ours: 'dark', grok: 'light' }),
@@ -135,16 +144,54 @@ function pair(theme) {
 	};
 }
 
+// Runs in the page; Playwright ships only the source, so the flag is an argument.
+const ready = async (needsInter) => {
+	await document.fonts.ready;
+	await Promise.all([...document.images].map((img) => img.decode()));
+	if (needsInter && !document.fonts.check("400 25px 'Inter'")) throw new Error('Inter did not load');
+};
+
+// One loop: 6 s at 30 fps, the rings advancing two spacings. Frames are
+// screenshotted straight into ffmpeg's stdin, so nothing lands on disk but
+// the finished MP4.
+const FPS = 30;
+const FRAMES = FPS * 6;
+const DRIFT = 2;
+
+async function renderMotion(browser, { size, html, motion }) {
+	const page = await browser.newPage({ viewport: { width: size[0], height: size[1] }, deviceScaleFactor: motion.scale });
+	await page.setContent(`<!doctype html><meta charset="utf-8">${html}`, { waitUntil: 'load' });
+	await page.evaluate(ready, true);
+	const out = resolve(outDir, motion.out);
+	const ffmpeg = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-i', '-',
+		'-c:v', 'libx264', '-preset', 'slow', '-crf', '16', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out], { stdio: ['pipe', 'inherit', 'inherit'] });
+	const done = new Promise((ok, fail) => {
+		ffmpeg.on('error', (err) => fail(new Error(`ffmpeg could not start (${err.message}); install it with: sudo apt-get install ffmpeg`)));
+		ffmpeg.on('close', (code) => (code === 0 ? ok() : fail(new Error(`ffmpeg exited with code ${code}`))));
+	});
+	for (let k = 0; k < FRAMES; k++) {
+		const svg = torus({ ...motion.figure, phase: (DRIFT * k) / FRAMES });
+		await page.evaluate((markup) => { document.querySelector('.figure').innerHTML = markup; }, svg);
+		const frame = await page.screenshot({ type: 'png' });
+		if (!ffmpeg.stdin.write(frame)) await new Promise((ok) => ffmpeg.stdin.once('drain', ok));
+	}
+	ffmpeg.stdin.end();
+	await done;
+	await page.close();
+	console.log(`motion: ${out}`);
+}
+
 mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch();
+if (process.argv.includes('--motion')) {
+	for (const card of Object.values(cards)) if (card.motion) await renderMotion(browser, card);
+	await browser.close();
+	process.exit(0);
+}
 for (const [name, { size, html }] of Object.entries(cards)) {
 	const page = await browser.newPage({ viewport: { width: size[0], height: size[1] }, deviceScaleFactor: 2 });
 	await page.setContent(`<!doctype html><meta charset="utf-8">${html}`, { waitUntil: 'load' });
-	await page.evaluate(async (needsInter) => {
-		await document.fonts.ready;
-		await Promise.all([...document.images].map((img) => img.decode()));
-		if (needsInter && !document.fonts.check("400 25px 'Inter'")) throw new Error('Inter did not load');
-	}, html.includes('class="badge"'));
+	await page.evaluate(ready, html.includes('class="badge"'));
 	const out = resolve(outDir, name);
 	await page.screenshot({ path: out });
 	await page.close();
