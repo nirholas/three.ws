@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "The live pump.fun trade stream recovers from socket drops in a fraction of a second",
+			"summary": "The public Solana lane that feeds coin intel and the sniper's trade stream drops its socket every 10 to 30 seconds. The stream now resubscribes on the same lane within a few hundred milliseconds instead of a full second, so far fewer trades are missed, and a closed stream no longer keeps reconnecting to a lane in the background.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Agent net worth holds the last known balance while Solana RPC is slow",
 			"summary": "An agent's net-worth look, and its social card, now fall back to the wallet's last known balance when the Solana RPC lanes are slow to answer, instead of showing an error or an empty card. Only a wallet that has never been read still reports that it is temporarily unavailable.",
 			"tags": [

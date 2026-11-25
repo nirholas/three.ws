@@ -255,6 +255,14 @@
 			<description>While the worker was still loading its model, its health check crashed on a half-loaded library and answered with a server error, so probes could read a starting backend as a broken one. It now reports the GPU as unknown until loading finishes.</description>
 		</item>
 		<item>
+			<title>The live pump.fun trade stream recovers from socket drops in a fraction of a second</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:The live pump.fun trade stream recovers from socket drops in a fraction of a second</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The public Solana lane that feeds coin intel and the sniper's trade stream drops its socket every 10 to 30 seconds. The stream now resubscribes on the same lane within a few hundred milliseconds instead of a full second, so far fewer trades are missed, and a closed stream no longer keeps reconnecting to a lane in the background.</description>
+		</item>
+		<item>
 			<title>The Oracle social feed skips suspended X accounts instead of failing on them every run</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:The Oracle social feed skips suspended X accounts instead of failing on them every run</guid>
