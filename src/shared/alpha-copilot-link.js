@@ -8,8 +8,12 @@
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-export async function mountAlphaPanel({ agentId, agentName = 'this agent', isOwner = false, container, position = 'append' } = {}) {
+export async function mountAlphaPanel({ agentId, agentName = 'this agent', isOwner = false, listed = true, container, position = 'append' } = {}) {
 	if (!agentId || !container) return null;
+	// Alpha reads of an agent that is not listed on the marketplace are
+	// owner-only: for a visitor the candidates call and the co-pilot deep link
+	// would both 404, so there is nothing to offer.
+	if (listed === false && !isOwner) return null;
 	const el = document.createElement('div');
 	el.className = 'alpha-link-panel';
 	if (position === 'prepend') container.prepend(el);

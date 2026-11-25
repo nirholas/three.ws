@@ -790,7 +790,7 @@ function requireScopeForMutation(auth, res, requiredScope) {
 // — the canonical strict parse lives in ensureAgentWallet().
 const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
-function decorate(row, isOwner = true) {
+export function decorate(row, isOwner = true) {
 	// Strip encrypted secrets from meta — never expose to the client.
 	const meta = { ...(row.meta || {}) };
 	// `walletReady` is computed from the secret BEFORE it is stripped: an agent
@@ -914,6 +914,11 @@ function decorate(row, isOwner = true) {
 	// visibility is already implied by whether the agent appears in listings.
 	base.stud_fee_three = Math.max(0, Number(meta.genome_breeding?.stud_fee_three) || 0);
 	base.is_public = row.is_public !== false;
+	// Whether the agent is listed on the marketplace. Public-safe: the
+	// marketplace and alpha reads already answer 404 for an unlisted agent, and
+	// carrying it here lets the profile skip those reads instead of failing them.
+	// Omitted when the row did not select the column, so it is never misread.
+	if (typeof row.is_published === 'boolean') base.is_listed = row.is_published;
 
 	if (isOwner) {
 		base.wallet_address = row.wallet_address;

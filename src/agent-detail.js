@@ -288,7 +288,7 @@ function mountAgentDetailAura(agent) {
 						.catch(() => { /* never block the profile */ });
 					// Alpha Co-pilot cross-link: hear this agent read a real live launch in
 					// character and (for the owner) act within its spend limits. Enhancement.
-					mountAlphaPanel({ agentId: agent.id, agentName: agent.name || 'this agent', isOwner: !!agent.isOwner, container: bannerHost, position: bannerPos })
+					mountAlphaPanel({ agentId: agent.id, agentName: agent.name || 'this agent', isOwner: !!agent.isOwner, listed: agent.listed, container: bannerHost, position: bannerPos })
 						.catch(() => { /* never block the profile */ });
 					// Live watch panel — agent's screen + avatar webcam. Always shown;
 					// renders real activity canvas when no Playwright frames are flowing.
@@ -3213,6 +3213,9 @@ export function normalize(rec, avatar) {
 		id: rec.id,
 		avatar_id: rec.avatar_id || avatar?.id || null,
 		body_readable: agentBodyReadable(rec),
+		// Listed on the marketplace. Unlisted agents answer 404 to visitors on the
+		// marketplace and alpha reads, so the profile skips those for them.
+		listed: (rec.is_listed ?? rec.is_published) !== false,
 		name: rec.name || 'Unnamed agent',
 		assetKind: rec.is_registered ? 'Core Asset' : 'Off-chain',
 		// "Active" is a liveness signal, NOT an on-chain one. An agent is live as

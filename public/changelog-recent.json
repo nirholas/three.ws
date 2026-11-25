@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T23:22:11.275Z",
+	"generated_at": "2026-11-25T23:32:06.264Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4746,
+	"total": 4747,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -444,6 +444,16 @@
 			"type": "update",
 			"title": "Token sentiment pulse reads Bluesky when pump.fun refuses",
 			"summary": "The sentiment pulse (and the paid sentiment_pulse tool) failed for every coin for five days because pump.fun stopped serving its community callouts to outside callers. It now also reads Bluesky posts that name the coin's mint or its exact $TICKER cashtag, reports each source's status separately, and only answers with an error when every source is down.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Unlisted agent profiles stop offering a co-pilot link that cannot open",
+			"summary": "An agent that is not listed on the marketplace no longer shows visitors an Alpha Co-pilot panel whose link could only fail, and its profile no longer asks for marketplace data that is reserved for the owner. Owners still see both on their own unlisted agents.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1543,17 +1553,6 @@
 			"tags": [
 				"infra",
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Share any creation or agent to Teams and LinkedIn",
-			"summary": "The share menu now has Share to Teams and Share on LinkedIn, on creations, agents and avatars. The link cards behind them were fixed so they show a proper image: agent cards are now PNG instead of SVG, avatar cards are 1200x630, and over a hundred pages now declare their card size.",
-			"link": "/forge",
-			"tags": [
-				"feature",
-				"improvement"
 			]
 		}
 	]

@@ -90,6 +90,9 @@ const purchasedSkills = new Set();
 export async function enrichAgentDetail(baseAgent) {
 	if (!baseAgent?.id) return;
 	isOwner = !!baseAgent.isOwner;
+	// An unlisted agent's marketplace record is owner-only (404 for everyone
+	// else), so a visitor's page stands alone without asking.
+	if (baseAgent.listed === false && !isOwner) return;
 
 	let market;
 	try {

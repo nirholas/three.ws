@@ -359,6 +359,14 @@
 			<description>The sentiment pulse (and the paid sentiment_pulse tool) failed for every coin for five days because pump.fun stopped serving its community callouts to outside callers. It now also reads Bluesky posts that name the coin's mint or its exact $TICKER cashtag, reports each source's status separately, and only answers with an error when every source is down.</description>
 		</item>
 		<item>
+			<title>Unlisted agent profiles stop offering a co-pilot link that cannot open</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Unlisted agent profiles stop offering a co-pilot link that cannot open</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An agent that is not listed on the marketplace no longer shows visitors an Alpha Co-pilot panel whose link could only fail, and its profile no longer asks for marketplace data that is reserved for the owner. Owners still see both on their own unlisted agents.</description>
+		</item>
+		<item>
 			<title>360 video and photos now solve into camera positions on our own GPUs</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-22:360 video and photos now solve into camera positions on our own GPUs</guid>
