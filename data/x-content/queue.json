@@ -18284,7 +18284,8 @@
 								"videoCodec": "h264",
 								"pixFmt": "yuv420p"
 							},
-							"reel": true
+							"reel": true,
+							"alt": "A screen recording scrolling through three.ws/openai: the hero headline \"3D, natively, inside ChatGPT.\" with the connector's 16 tools, then the \"Connect the server.\" setup section, ending on \"The generation tools.\""
 						}
 					]
 				}
@@ -25322,6 +25323,114 @@
 				"@grok": "the button ends the compose text with a question to @grok; the post names the exact action users take"
 			},
 			"note": "order 884: needs the Ask @grok share action deployed and the 884 browser evidence from scripts/verify-share-to-x-browser.mjs. Head media: a capture of the compose text the button opens. Kit: docs/partners/xai-comarketing-kit.md."
+		},
+		{
+			"id": "nvidia-inception-runback",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "proof",
+			"notBefore": "2026-11-25T18:00:00Z",
+			"source": {
+				"path": "docs/announcements/nvidia-inception-runback.md"
+			},
+			"covers": [
+				"/nvidia",
+				"/blog/three-ws-nvidia-inception-gtc-2027"
+			],
+			"posts": [
+				{
+					"text": "Four months in NVIDIA Inception. Here is what runs on NVIDIA for us today:\n\n13 GPU deployments in production, 12 L4 and one RTX PRO 6000 Blackwell\n19,270 3D meshes generated on our own GPUs in 31 days\n3.8 seconds median from a sentence to a talking, lip-synced 3D face, in a browser tab\n98.1% of user rigs driven by a single Audio2Face-3D track\n\nWe wrote it all up, including our GTC 2027 poster. @NVIDIAAIDev\n\nthree.ws/blog/three-ws-nvidia-inception-gtc-2027",
+					"media": [
+						{
+							"path": "public/x-media/gtc-poster/poster.png",
+							"alt": "The GTC 2027 poster sheet, white with seven numbered sections in four columns: the problem, the Riva, Nemotron, Magpie and Audio2Face-3D pipeline, the direct and derived blendshape mapping with three avatar faces at the same frame, the coverage chart by avatar source, the latency chart, and the overshoot ablation"
+						}
+					]
+				}
+			],
+			"claims": [
+				{
+					"says": "13 GPU deployments in production, 12 L4 and one RTX PRO 6000 Blackwell",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "blog/three-ws-nvidia-inception-gtc-2027.html",
+							"contains": "12 L4, 1 RTX PRO 6000 Blackwell"
+						}
+					]
+				},
+				{
+					"says": "19,270 3D meshes generated on our own GPUs in 31 days",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "blog/three-ws-nvidia-inception-gtc-2027.html",
+							"contains": "19,270"
+						},
+						{
+							"type": "file",
+							"path": "blog/three-ws-nvidia-inception-gtc-2027.html",
+							"contains": "3D meshes generated on our own GPUs in 31 days"
+						}
+					]
+				},
+				{
+					"says": "3.8 seconds median from a sentence to a talking, lip-synced 3D face",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "blog/three-ws-nvidia-inception-gtc-2027.html",
+							"contains": "3.8 s"
+						},
+						{
+							"type": "file",
+							"path": "blog/three-ws-nvidia-inception-gtc-2027.html",
+							"contains": "median from text to a speaking, animated face"
+						}
+					]
+				},
+				{
+					"says": "98.1% of user rigs driven by a single Audio2Face-3D track",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "blog/three-ws-nvidia-inception-gtc-2027.html",
+							"contains": "98.1%"
+						},
+						{
+							"type": "file",
+							"path": "blog/three-ws-nvidia-inception-gtc-2027.html",
+							"contains": "morphed user rigs driven by one Audio2Face-3D track"
+						}
+					]
+				},
+				{
+					"says": "including our GTC 2027 poster",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "blog/three-ws-nvidia-inception-gtc-2027.html",
+							"contains": "GTC 2027"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the blog post the run-back links is served",
+					"url": "https://three.ws/blog/three-ws-nvidia-inception-gtc-2027",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"mentions": {
+				"@NVIDIAAIDev": "NVIDIA's developer account reshares Inception member milestones; docs/nvidia-visibility-map.md names it as the handle to tag"
+			},
+			"note": "Owner approves and posts (external-channel gate). Say \"submitted\" about the GTC poster only if the owner submitted it by the 2026-11-10 deadline. The pack prefers a 10 to 15 second /demos/audio2face capture as the head media with the poster second; the poster ships here because it is committed and captioned."
 		}
 	]
 }

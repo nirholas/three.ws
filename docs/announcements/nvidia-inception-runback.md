@@ -23,9 +23,13 @@ poster. Every figure comes from the published post
 
 - Say "NVIDIA Inception member" or "in NVIDIA Inception". Never "NVIDIA partner", "backed by" or
   "endorsed by". Inception is a startup program, not a partnership or an investment.
-- Tag `@NVIDIAAIDev` and add `#NVIDIAInception`. Per [nvidia-visibility-map.md](../nvidia-visibility-map.md#social-surfaces-ours-to-drive),
-  posts with the official badge, the right handle and the hashtag are the ones NVIDIA's social team
-  can reshare. A plain `@NVIDIA` mention in prose is not.
+- Tag `@NVIDIAAIDev`. Per [nvidia-visibility-map.md](../nvidia-visibility-map.md#social-surfaces-ours-to-drive),
+  posts with the official badge, the right handle and `#NVIDIAInception` are the ones NVIDIA's social
+  team can reshare. A plain `@NVIDIA` mention in prose is not. The committed post carries no hashtag
+  because both announcement gates (`check:announce`, `x:content:check`) hold the house voice at zero
+  hashtags; adding `#NVIDIAInception` at posting time is the owner's call.
+- Alt text for the poster attachment is carried on the queue item (`data/x-content/queue.json`,
+  id `nvidia-inception-runback`), the same caption the GTC poster post uses.
 - Use the restored official co-brand kit (Portal > Benefits > Co-Branded Marketing Assets) for the
   card, the same way the Jul 20 video carried the official Inception lockup.
 - Media: a 10 to 15 second capture of [/demos/audio2face](https://three.ws/demos/audio2face) (a face
@@ -39,14 +43,14 @@ poster. Every figure comes from the published post
 
 Bytes in [nvidia-inception-runback.post.txt](./nvidia-inception-runback.post.txt):
 
-> Four months in NVIDIA Inception. Here is what runs on NVIDIA at three.ws today:
+> Four months in NVIDIA Inception. Here is what runs on NVIDIA for us today:
 >
 > 13 GPU deployments in production, 12 L4 and one RTX PRO 6000 Blackwell
 > 19,270 3D meshes generated on our own GPUs in 31 days
 > 3.8 seconds median from a sentence to a talking, lip-synced 3D face, in a browser tab
 > 98.1% of user rigs driven by a single Audio2Face-3D track
 >
-> We wrote it all up, including our GTC 2027 poster. @NVIDIAAIDev #NVIDIAInception
+> We wrote it all up, including our GTC 2027 poster. @NVIDIAAIDev
 >
 > three.ws/blog/three-ws-nvidia-inception-gtc-2027
 
