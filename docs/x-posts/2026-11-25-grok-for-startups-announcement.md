@@ -1,6 +1,6 @@
 # Grok for Startups announcement thread (2026-11-25)
 
-The thread that announces three.ws joining xAI's Grok for Startups program, posted from @trythreews. Eleven posts. The head image is the program card; every post after it shows proof instead of telling.
+The thread that announces three.ws joining xAI's Grok for Startups program, posted from @trythreews. Ten posts. The head image is the program card; every post after it shows proof instead of telling.
 
 House voice: one link per post, no hashtags, no emoji, no dashes. Every post fits 280 characters (X counts each link as 23).
 
@@ -12,11 +12,11 @@ House voice: one link per post, no hashtags, no emoji, no dashes. Every post fit
 >
 > Grateful to be working directly with the xAI, @SpaceXSI and @cursor_ai teams.
 >
-> Grok already works in 3D through three.ws. Here is what it can do:
+> Ask Grok for anything in 3D. It already works:
 
 **2/**
 
-> Ask Grok for a 3D model and you get a real textured GLB back, with a link to spin it in your browser.
+> Ask for a model and you get a real textured GLB back, with a link to spin it in your browser.
 >
 > Ask for a character and it comes back rigged, ready to animate. Ask for a change like "make it chrome" and it edits that model instead of starting over.
 
@@ -60,25 +60,21 @@ House voice: one link per post, no hashtags, no emoji, no dashes. Every post fit
 
 **10/**
 
-> Building a company on Grok? Apply for Grok for Startups. The form takes about five minutes, and approved teams get their first credits the same day. https://x.ai/startups
-
-**11/**
-
-> Reply with something you want to see in 3D. We will run the best ones through Grok and post the results in this thread.
+> Try it yourself: ask Grok for anything in 3D.
 >
-> @grok, you go first: what should we build?
+> @grok, what should we build next?
 
 ## Why it is built this way
 
 - **Lead with the first.** "First crypto project accepted" is the line nobody else in the program can post, and it is the hook for both audiences: crypto readers see a project from their world clear a vetted AI program, AI readers see a category they did not expect. Owner decision 2026-11-25: this thread states three.ws is a crypto project and names pump.fun, which overrides the plan's token-free rule for this thread only. It still never names $THREE, a contract address, a price or trading, so @SpaceXSI can repost it without endorsing a coin.
 - **"First" is the owner's claim, not a published fact.** xAI publishes no member list, and no public announcement of another crypto project's acceptance turned up in a search on 2026-11-25. If anyone replies with an earlier one, the fallback head line is "three.ws is a crypto project, and xAI just accepted us into Grok for Startups."
-- **Post 1 sells their program, post 10 sends founders to it.** A thread that explains what Grok for Startups gives a company and links the application is marketing for xAI, which is the strongest reason for @SpaceXSI to repost it. Post 1 leads with access, not credits, because readers care who we can now reach, not how a credit balance is split. The thanks says "working with", never "alongside" or "partnered with": the program gives us a working relationship with the startups team, and the Program Terms say it creates no partnership. The no-VC story is saved for post 8 so the head stays about the program. "A direct line to our startups team" is from the program page; the xAI, SpaceXSI and Cursor contact is the owner's firsthand account, and Cursor's maker Anysphere is a party to the Program Terms (its terms govern Grok Bot use under the program). No staff member is named, per the wording rules. Post 10's "about five minutes" and "first credits the same day" are from the application page. Cursor is left out because the Program Terms do not list it as an Eligible Service, even though the program page mentions it.
+- **Post 1 leads with the program and the teams behind it.** A thread that shows what membership means is marketing for xAI, which is the strongest reason for @SpaceXSI to repost it. The apply post was cut on 2026-11-25 to keep the thread about three.ws. Post 1 leads with access, not credits, because readers care who we can now reach, not how a credit balance is split. The thanks says "working with", never "alongside" or "partnered with": the program gives us a working relationship with the startups team, and the Program Terms say it creates no partnership. The no-VC story is saved for post 8 so the head stays about the program. "A direct line to our startups team" is from the program page; the xAI, SpaceXSI and Cursor contact is the owner's firsthand account, and Cursor's maker Anysphere is a party to the Program Terms (its terms govern Grok Bot use under the program). No staff member is named, per the wording rules.
 - **Usage is the proof, after the demos.** Posts 2 to 6 show what Grok does with us; post 7 then shows it was already happening at scale before acceptance. Every startup posts "we got in"; almost none can say the program's own product was calling them every day.
 - **Post 8 is the founder story, and the second reply target.** Third-party guides to the program say it expects venture backing. We have none: the application listed our pump.fun creator rewards as funding, and it was accepted. The pump.fun core team already heard this directly and liked it, so tagging @pumpdotfun there gives them a reason to reply or quote. It says only what we put on our own application, nothing from the confidential approval email.
 - **Post 9 says what membership is for, without making promises for xAI.** The co-marketing work and the three marketplace listings are real and tracked in the [plan](../partners/xai-grok-startups-plan.md) (rows A1 to A3 and D1): the submissions are prepared, and the startups-team email asks for reshares, a showcase slot and marketplace featuring. The post deliberately does not say "amplified posts" or name what xAI will do for us: their help is theirs to announce, and saying it in advance reads as a claim of endorsement the Program Terms rule out. Once a listing goes live or xAI reshares, that is its own post.
-- **Each tag sits where that account has a reason to engage** ([who reshares what](../partners/xai-comarketing-kit.md#who-reshares-what)). @SpaceXSI (the former @xai) quote-posts third-party builds on the Grok API, so it goes in the head, with @cursor_ai beside it because the program connects us to the Cursor team and post 5 shows the connector working in Cursor. @ericzakariasson works on Grok Bot and posts calls for connectors, so post 5. @XDevelopers features apps built on the X API, and post 6 has the X search example. @pumpdotfun gets the funding story in post 8. @grok answers public tags in the thread, so post 11 gets a visible Grok reply under it. Add more if you like; this is a hand post, not the automated queue.
+- **Each tag sits where that account has a reason to engage** ([who reshares what](../partners/xai-comarketing-kit.md#who-reshares-what)). @SpaceXSI (the former @xai) quote-posts third-party builds on the Grok API, so it goes in the head, with @cursor_ai beside it because the program connects us to the Cursor team and post 5 shows the connector working in Cursor. @ericzakariasson works on Grok Bot and posts calls for connectors, so post 5. @XDevelopers features apps built on the X API, and post 6 has the X search example. @pumpdotfun gets the funding story in post 8. @grok answers public tags in the thread, so post 10 gets a visible Grok reply under it. Add more if you like; this is a hand post, not the automated queue.
 - **Never tag @bot.** That is functional, not etiquette: tagging it starts a task for each reader's own Grok Bot.
-- **Post 11 is the reach engine.** Grok's reply seeds the thread, replies with prompts keep it alive for days, and every result posted back under it is fresh proof.
+- **Post 10 asks, it does not promise.** Grok's public reply puts a second voice under the thread and invites replies, and the post commits us to nothing we would have to deliver later. Reply to any good suggestions by hand if there is time.
 - **Voice avatar and hero clips are held back.** Each gets its own post later from the kit's queue, so this thread only shows surfaces that run on production today.
 
 ## The image
