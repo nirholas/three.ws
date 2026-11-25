@@ -211,7 +211,12 @@ Cooldown windows are asymmetric and worth knowing: quota 6h, rate limit 10m, aut
 the first sighting parks the lane for a 30s probe only, and the 6h quota window applies
 when the lane fails with the same body again before it has served a request
 (`markEndpointCooldown`, `clearEndpointStreak`). A burst no longer takes the whole
-Solana tier offline for six hours. Verdicts are published to
+Solana tier offline for six hours. A refused TCP connection (`ECONNREFUSED`) escalates
+the same way: the first refused window parks the lane for 30s, and each further window
+it refuses doubles the park (1m, 2m, 4m...) up to 30m, until the lane serves a request
+again. Solana Vibe Station refused every connection from 2026-11-23 and was re-dialed
+twice a minute per instance for days under the old flat 30s window; it stays in the
+chain so it rejoins on its own when the host comes back. Verdicts are published to
 the shared cache (`rpccool:v1`) so a cold Cloud Run instance inherits them instead of
 re-burning a request against a provider already over its cap.
 

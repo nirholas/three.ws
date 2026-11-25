@@ -212,6 +212,7 @@ const AUTH_COOLDOWN_MS = 30 * 60_000; // 30m: bad/expired key on this provider o
 const SERVER_COOLDOWN_MS = 2 * 60_000; // 2m: provider 5xx
 const NETWORK_COOLDOWN_MS = 30_000; // 30s: fetch threw (DNS/connection blip)
 const TLS_FAULT_COOLDOWN_MS = AUTH_COOLDOWN_MS; // 30m: the lane's own TLS terminator refused us
+const REFUSAL_MAX_COOLDOWN_MS = AUTH_COOLDOWN_MS; // 30m: ceiling for a lane that keeps refusing TCP connections
 
 // ---------------------------------------------------------------------------
 // Whole-chain transport failure: re-sweep, then serve last-good
@@ -683,9 +684,29 @@ function cooldownMsFor(status, bodyText) {
 // not served a request since, mapped to how many times in a row it has happened.
 const _ambiguousQuotaStreak = new Map();
 
-/** Forget an ambiguous-quota streak: the lane just served a request, so it is not out of credits. */
+// Lanes that refused our TCP connection (ECONNREFUSED) and have not served a
+// request since: { count, lastAt }. One refusal is a blip and parks for the
+// network window. A host that refuses window after window is down, not busy:
+// public.rpc.solanavibestation.com refused every connection from 2026-11-23 and
+// was re-dialed twice a minute per instance for days (13,500+ refusals) because
+// each refusal parked it for 30 seconds only. Each refused window now doubles the
+// park, up to the long window, and the first success forgets the streak. Refusals
+// inside one window (a re-sweep, concurrent requests) count once, so a burst of
+// simultaneous calls cannot escalate a lane that blipped for a moment.
+const _refusalStreak = new Map();
+
+/** The park for a lane that just refused a connection, escalating per refused window. */
+function refusalCooldownMs(url, now) {
+	const prev = _refusalStreak.get(url);
+	const count = !prev ? 1 : now - prev.lastAt < NETWORK_COOLDOWN_MS ? prev.count : prev.count + 1;
+	_refusalStreak.set(url, { count, lastAt: now });
+	return Math.min(NETWORK_COOLDOWN_MS * 2 ** (count - 1), REFUSAL_MAX_COOLDOWN_MS);
+}
+
+/** Forget an ambiguous-quota or refusal streak: the lane just served a request, so it is neither out of credits nor down. */
 export function clearEndpointStreak(url) {
 	_ambiguousQuotaStreak.delete(url);
+	_refusalStreak.delete(url);
 }
 
 /** True when `url` is currently parked in cooldown and should be skipped. */
@@ -1957,6 +1978,17 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 						console.log(
 							`[solana-rpc] ${maskUrl(url)} refused the TLS handshake (${cause}), cooling ${formatCooldown(TLS_FAULT_COOLDOWN_MS)}, failing over`,
 						);
+					}
+				} else if (disposition === 'cool-lane' && cause === 'ECONNREFUSED') {
+					const now = Date.now();
+					const ms = refusalCooldownMs(url, now);
+					const wasLong = (_endpointCooldown.get(url) || 0) - now >= RATE_LIMIT_COOLDOWN_MS;
+					_endpointCooldown.set(url, Math.max(_endpointCooldown.get(url) || 0, now + ms));
+					if (ms >= RATE_LIMIT_COOLDOWN_MS) {
+						publishCooldowns(now);
+						if (!wasLong) {
+							console.log(`[solana-rpc] ${maskUrl(url)} keeps refusing connections (ECONNREFUSED), cooling ${formatCooldown(ms)}, failing over`);
+						}
 					}
 				} else if (disposition === 'cool-lane') {
 					_endpointCooldown.set(url, Date.now() + NETWORK_COOLDOWN_MS);

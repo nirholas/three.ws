@@ -207,3 +207,68 @@ describe('TLS refusals are a verdict about the lane, not egress weather', () => 
 		expect(calls).toBe(1);
 	});
 });
+
+describe('a lane that keeps refusing connections backs off', () => {
+	// Measured 2026-11-23 to 2026-11-25: public.rpc.solanavibestation.com refused
+	// every TCP connection (ECONNREFUSED) from Cloud Run and from a devbox alike,
+	// 13,500+ times in three days. A refusal parked the lane for the 30-second
+	// network-blip window only, so every instance re-dialed a dead host twice a
+	// minute for days. One refusal is still a blip; a streak of them is a verdict.
+	const refusingCall = async (eps) => {
+		await expect(makeRotatingFetch(eps)(eps[0], { method: 'POST', body: body('getSlot') })).rejects.toThrow();
+	};
+
+	it('parks a single refusal for the short window only', async () => {
+		const eps = ['https://refuse-once.test/'];
+		global.fetch = vi.fn(async () => {
+			throw netFail('ECONNREFUSED');
+		});
+		vi.spyOn(console, 'log').mockImplementation(() => {});
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		await refusingCall(eps);
+		const realNow = Date.now();
+		vi.spyOn(Date, 'now').mockReturnValue(realNow + 61_000);
+		expect(isEndpointCooling(eps[0])).toBe(false);
+	});
+
+	it('lengthens the park with each consecutive refusal, up to the long window', async () => {
+		const eps = ['https://refuse-always.test/'];
+		global.fetch = vi.fn(async () => {
+			throw netFail('ECONNREFUSED');
+		});
+		vi.spyOn(console, 'log').mockImplementation(() => {});
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		let now = Date.now();
+		const clock = vi.spyOn(Date, 'now').mockImplementation(() => now);
+		for (let i = 0; i < 8; i++) {
+			await refusingCall(eps);
+			now += 31 * 60_000; // past any park, so the next call dials the lane again
+		}
+		now -= 31 * 60_000;
+		clock.mockImplementation(() => now + 20 * 60_000);
+		expect(isEndpointCooling(eps[0])).toBe(true);
+	});
+
+	it('forgets the streak as soon as the lane serves again', async () => {
+		const eps = ['https://refuse-then-serve.test/'];
+		let serve = false;
+		global.fetch = vi.fn(async () => {
+			if (serve) return ok({ value: 1 });
+			throw netFail('ECONNREFUSED');
+		});
+		vi.spyOn(console, 'log').mockImplementation(() => {});
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		let now = Date.now();
+		const clock = vi.spyOn(Date, 'now').mockImplementation(() => now);
+		for (let i = 0; i < 6; i++) {
+			await refusingCall(eps);
+			now += 31 * 60_000;
+		}
+		serve = true;
+		await makeRotatingFetch(eps)(eps[0], { method: 'POST', body: body('getBalance', ['refuse-then-serve']) });
+		serve = false;
+		await refusingCall(eps);
+		clock.mockImplementation(() => now + 61_000);
+		expect(isEndpointCooling(eps[0])).toBe(false);
+	});
+});
