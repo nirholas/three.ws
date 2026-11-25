@@ -31106,7 +31106,7 @@
 		{
 			"name": "pano_capture_start",
 			"title": "Turn 360 footage into a Gaussian splat",
-			"description": "Start a job that turns 360 footage into a Gaussian splat scene you can walk through. Input is one public https URL (source_url) or several (source_urls) and the kind: equirect_video (a stitched 2:1 equirectangular video from any 360 camera), equirect_images (a set of stitched 360 photos), insv (raw Insta360 video; pass both files of a split pair in source_urls) or insp (a raw 360 photo). MCP clients cannot stream multi-gigabyte files, so the file must already be at a public https URL; for a file on disk use the CLI, which uploads it in parts: `npx three-ws capture 360 <file>`. Optional trim ({start_s, end_s}) limits a long video and quality is preview, standard (default) or high. Returns a job_id at once; the job runs on a GPU and takes minutes to over an hour (conservatively 10 to 25 minutes for preview, 25 to 60 for standard, 60 to 120 for high, plus a few minutes of GPU start-up when idle). Collect it with pano_capture_status. The result is owned files: a PLY and an SPZ splat, a flythrough preview video, a poster image and a viewer link. Use this when the user has 360 camera footage and wants a 3D scene from it. Needs a free three.ws account.",
+			"description": "Start a job that turns 360 footage into a Gaussian splat scene you can walk through. Input is one public https URL (source_url) or several (source_urls) and the kind: equirect_video (a stitched 2:1 equirectangular video from any 360 camera), equirect_images (a set of stitched 360 photos) or insv (raw Insta360 video; pass both files of a split pair in source_urls). A single 360 photo, raw .insp included, has no camera movement to build a splat from: use pano_scene_create for it. MCP clients cannot stream multi-gigabyte files, so the file must already be at a public https URL; for a file on disk use the CLI, which uploads it in parts: `npx three-ws capture 360 <file>`. Optional trim ({start_s, end_s}) limits a long video and quality is preview, standard (default) or high. Returns a job_id at once; the job runs on a GPU and takes minutes to over an hour (conservatively 10 to 25 minutes for preview, 25 to 60 for standard, 60 to 120 for high, plus a few minutes of GPU start-up when idle). Collect it with pano_capture_status. The result is owned files: a PLY and an SPZ splat, a flythrough preview video, a poster image and a viewer link. Use this when the user has 360 camera footage and wants a 3D scene from it. Needs a free three.ws account.",
 			"whenToUse": "Use this when the user has 360 camera footage and wants a 3D scene from it.",
 			"server": {
 				"id": "mcp-studio",
@@ -31136,7 +31136,7 @@
 						"format": "uri",
 						"pattern": "^https://",
 						"maxLength": 4096,
-						"description": "Public https URL of one file: a stitched 360 video, one raw .insv or .insp, or one 360 photo."
+						"description": "Public https URL of one file: a stitched 360 video or one raw .insv."
 					},
 					"source_urls": {
 						"type": "array",
@@ -31155,10 +31155,9 @@
 						"enum": [
 							"equirect_video",
 							"equirect_images",
-							"insv",
-							"insp"
+							"insv"
 						],
-						"description": "What the URL points at: equirect_video, equirect_images, insv or insp."
+						"description": "What the URL points at: equirect_video, equirect_images or insv."
 					},
 					"trim": {
 						"type": "object",
@@ -32792,7 +32791,7 @@
 		{
 			"name": "pano_capture_start",
 			"title": "Turn 360 footage into a Gaussian splat",
-			"description": "Start a job that turns 360 footage into a Gaussian splat scene you can walk through. Input is one public https URL (source_url) or several (source_urls) and the kind: equirect_video (a stitched 2:1 equirectangular video from any 360 camera), equirect_images (a set of stitched 360 photos), insv (raw Insta360 video; pass both files of a split pair in source_urls) or insp (a raw 360 photo). MCP clients cannot stream multi-gigabyte files, so the file must already be at a public https URL; for a file on disk use the CLI, which uploads it in parts: `npx three-ws capture 360 <file>`. Optional trim ({start_s, end_s}) limits a long video and quality is preview, standard (default) or high. Returns a job_id at once; the job runs on a GPU and takes minutes to over an hour (conservatively 10 to 25 minutes for preview, 25 to 60 for standard, 60 to 120 for high, plus a few minutes of GPU start-up when idle). Collect it with pano_capture_status. The result is owned files: a PLY and an SPZ splat, a flythrough preview video, a poster image and a viewer link. Use this when the user has 360 camera footage and wants a 3D scene from it. Needs a free three.ws account.",
+			"description": "Start a job that turns 360 footage into a Gaussian splat scene you can walk through. Input is one public https URL (source_url) or several (source_urls) and the kind: equirect_video (a stitched 2:1 equirectangular video from any 360 camera), equirect_images (a set of stitched 360 photos) or insv (raw Insta360 video; pass both files of a split pair in source_urls). A single 360 photo, raw .insp included, has no camera movement to build a splat from: use pano_scene_create for it. MCP clients cannot stream multi-gigabyte files, so the file must already be at a public https URL; for a file on disk use the CLI, which uploads it in parts: `npx three-ws capture 360 <file>`. Optional trim ({start_s, end_s}) limits a long video and quality is preview, standard (default) or high. Returns a job_id at once; the job runs on a GPU and takes minutes to over an hour (conservatively 10 to 25 minutes for preview, 25 to 60 for standard, 60 to 120 for high, plus a few minutes of GPU start-up when idle). Collect it with pano_capture_status. The result is owned files: a PLY and an SPZ splat, a flythrough preview video, a poster image and a viewer link. Use this when the user has 360 camera footage and wants a 3D scene from it. Needs a free three.ws account.",
 			"whenToUse": "Use this when the user has 360 camera footage and wants a 3D scene from it.",
 			"server": {
 				"id": "mcp-grok",
@@ -32822,7 +32821,7 @@
 						"format": "uri",
 						"pattern": "^https://",
 						"maxLength": 4096,
-						"description": "Public https URL of one file: a stitched 360 video, one raw .insv or .insp, or one 360 photo."
+						"description": "Public https URL of one file: a stitched 360 video or one raw .insv."
 					},
 					"source_urls": {
 						"type": "array",
@@ -32841,10 +32840,9 @@
 						"enum": [
 							"equirect_video",
 							"equirect_images",
-							"insv",
-							"insp"
+							"insv"
 						],
-						"description": "What the URL points at: equirect_video, equirect_images, insv or insp."
+						"description": "What the URL points at: equirect_video, equirect_images or insv."
 					},
 					"trim": {
 						"type": "object",

@@ -34,7 +34,7 @@ generation quota:
 
 | URL | Serves | Use it for |
 |---|---|---|
-| `https://three.ws/api/mcp-studio` | all twenty-one tools (the 3D tools, the asset catalog, docs search, the persona tools, the 360 capture tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
+| `https://three.ws/api/mcp-studio` | all twenty-one tools (the 3D tools, the asset catalog, docs search, the persona tools, the 360-degree capture tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
 | `https://three.ws/api/mcp-chatgpt` | the eight 3D tools and the model viewer | adding three.ws to your own ChatGPT (step-by-step at [three.ws/chatgpt](https://three.ws/chatgpt)), and the ChatGPT plugin directory listing |
 | `https://three.ws/api/mcp-grok` | all twenty-one tools, every call answered within 40 s, quota per MCP session; signed in, also the account's agent tools | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
 

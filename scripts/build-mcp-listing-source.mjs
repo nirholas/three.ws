@@ -264,6 +264,46 @@ const OVERLAY = {
 			"Show my open sniper positions.",
 		],
 	},
+	"io.github.nirholas/threews-oracle": {
+		tagline: "Free Solana launch Oracle: scored calls, verified wins, backtests and a caller leaderboard. No account.",
+		category: "market-data",
+		tags: ["solana", "oracle", "launches", "backtest", "leaderboard", "read-only"],
+		examplePrompts: [
+			"What are the Oracle's highest-conviction calls right now?",
+			"Backtest the Oracle's calls from the last seven days.",
+			"Who is on top of the Oracle leaderboard this week?",
+		],
+	},
+	"io.github.nirholas/threews-oracle-mcp": {
+		tagline: "The three.ws Oracle over stdio: conviction feed, coin verdicts, wins, backtests and calibration. No key.",
+		category: "market-data",
+		tags: ["solana", "oracle", "launches", "calibration", "stdio", "read-only"],
+		examplePrompts: [
+			"Give me the Oracle's verdict on this mint.",
+			"How well calibrated have the Oracle's scores been?",
+			"Show the biggest movers among recent Oracle calls.",
+		],
+	},
+	"io.github.nirholas/threews-agent-trader": {
+		tagline: "Arm your three.ws agents on Oracle calls with hard caps and a kill switch. Simulates by default.",
+		category: "trading",
+		tags: ["solana", "agents", "guardrails", "kill-switch", "simulate"],
+		examplePrompts: [
+			"Arm my agent on Oracle calls in simulate mode.",
+			"Show my agent's positions and performance today.",
+			"Disarm every agent now.",
+		],
+	},
+	"io.github.nirholas/trading-mcp": {
+		tagline: "Quote and fill guarded Solana swaps from a three.ws agent wallet. Every guard runs server side.",
+		category: "trading",
+		tags: ["solana", "swaps", "agent-wallet", "guardrails", "positions"],
+		examplePrompts: [
+			"Quote a 0.1 SOL buy of $THREE from my agent wallet.",
+			"List my agent's positions with cost basis and P&L.",
+			"Show me the guard verdict before you fill this trade.",
+		],
+	},
 	"io.github.nirholas/agentcore-payments-mcp": {
 		tagline: "Governed x402 payment sessions: pay any endpoint with a budget, allowlist, and per-tx caps, with no key handling.",
 		category: "payments",

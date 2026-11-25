@@ -653,7 +653,7 @@
 			"name": "search_docs",
 			"title": "Search the three.ws documentation",
 			"descHead": "FREE, no account or payment. Search the three.ws documentation for the s",
-			"descHash": "689c22f8d25d",
+			"descHash": "81f50ac225d8",
 			"annotations": {
 				"readOnlyHint": true,
 				"destructiveHint": false,
@@ -1249,6 +1249,40 @@
 				"openWorldHint": false
 			},
 			"schemaHash": "046b33e27fe6"
+		}
+	],
+	"api/_mcp/tools/robinhood-crypto.js": [
+		{
+			"name": "robinhood_holdings",
+			"title": "Robinhood Crypto holdings",
+			"descHead": "The owner's Robinhood Crypto account holdings: each asset's total and tr",
+			"descHash": "38dba0ad61f6",
+			"annotations": "ref:READ",
+			"schemaHash": "b3761fba59a0"
+		},
+		{
+			"name": "robinhood_place_order",
+			"title": "Place a Robinhood Crypto order",
+			"descHead": "Place the Robinhood Crypto order a preview describes, in the owner's own",
+			"descHash": "c5d410df36a7",
+			"annotations": "ref:MONEY",
+			"schemaHash": "d29beef90f50"
+		},
+		{
+			"name": "robinhood_preview_order",
+			"title": "Preview a Robinhood Crypto order",
+			"descHead": "Price and size one Robinhood Crypto order and check it against the owner",
+			"descHash": "8dbad928857d",
+			"annotations": "ref:WRITE",
+			"schemaHash": "08285746eb02"
+		},
+		{
+			"name": "robinhood_quote",
+			"title": "Robinhood Crypto quote",
+			"descHead": "Live best bid, ask and mid price from Robinhood Crypto for up to 50 pair",
+			"descHash": "9233d78e48ba",
+			"annotations": "ref:READ",
+			"schemaHash": "b9efb0513a19"
 		}
 	],
 	"api/_mcp/tools/robinhood.js": [
@@ -2732,7 +2766,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "6d98ad17b42c"
+			"schemaHash": "9ef351ca595f"
 		}
 	],
 	"packages/autopilot-mcp/src/tools/generate-proposals.js": [
@@ -3287,7 +3321,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "a51f9d90b54d"
+			"schemaHash": "da38eb41f4b6"
 		}
 	],
 	"packages/blender-mcp/src/tools/info.js": [
@@ -4547,7 +4581,7 @@
 			"name": "build_world",
 			"title": "Build a complete 3D world from one sentence (no browser needed)",
 			"descHead": "One sentence → a fully forged, exported 3D world, entirely server-side: ",
-			"descHash": "e088076a4f1b",
+			"descHash": "4a27b0b8508e",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -4562,7 +4596,7 @@
 			"name": "compose_scene",
 			"title": "Compose a 3D diorama plan from one sentence",
 			"descHead": "Compose a tiny 3D diorama from one short sentence. Returns a PLAN: an ev",
-			"descHash": "8d1a7603bb2e",
+			"descHash": "53686050b67d",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -4577,7 +4611,7 @@
 			"name": "export_scene",
 			"title": "Export a forged diorama as one GLB scene",
 			"descHead": "Merge an already-forged diorama (objects with real glbUrl values, e.g. f",
-			"descHash": "d52c6020872e",
+			"descHash": "16615fb2cccb",
 			"annotations": {
 				"readOnlyHint": false,
 				"destructiveHint": false,
@@ -4810,6 +4844,51 @@
 				"openWorldHint": true
 			},
 			"schemaHash": "73d2da698b68"
+		}
+	],
+	"packages/trading-mcp/src/tools/execute-trade.js": [
+		{
+			"name": "execute_trade",
+			"title": "Execute a trade (moves real funds)",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": true,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "b625555851fd"
+		}
+	],
+	"packages/trading-mcp/src/tools/list-positions.js": [
+		{
+			"name": "list_positions",
+			"title": "List agent wallet positions",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "8e276388581d"
+		}
+	],
+	"packages/trading-mcp/src/tools/quote-trade.js": [
+		{
+			"name": "quote_trade",
+			"title": "Quote a trade from an agent wallet",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": true,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": true
+			},
+			"schemaHash": "ref:inputSchema"
 		}
 	],
 	"packages/tutor-mcp/src/tools/close-session.js": [
