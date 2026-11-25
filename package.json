@@ -922,7 +922,7 @@
 		"@x402/fetch": "^2.31.0",
 		"adaptive-expressions": "^4.23.3",
 		"adaptivecards-templating": "^2.3.1",
-		"cspell-lib": "^10.5.1",
+		"cspell-lib": "^10.5.2",
 		"dotenv": "^18.0.10",
 		"es-module-lexer": "^3.0.2",
 		"fbx2gltf": "^0.9.7-p1",
