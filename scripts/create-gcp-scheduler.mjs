@@ -77,9 +77,9 @@ import { fileURLToPath } from 'node:url';
 const execFileP = promisify(execFile);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const PROJECT = 'aerial-vehicle-466722-p5';
+const PROJECT = process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5';
 const LOCATION = 'us-central1';
-const SERVICE_URL = 'https://three-ws-api-lp642k3kpa-uc.a.run.app';
+const SERVICE_URL = process.env.GCP_SERVICE_URL || 'https://three-ws-api-lp642k3kpa-uc.a.run.app';
 const CONCURRENCY = 8;
 // Scheduler's own request deadline; the longest handler maxDuration is 300s.
 const ATTEMPT_DEADLINE = '320s';
@@ -88,7 +88,7 @@ const ATTEMPT_DEADLINE = '320s';
 // the Cloud Run runtime SA (server/cloudbuild.yaml pins the same one), and the
 // audience is the service URL. Both are echoed by the edge gate's env vars; a
 // mismatch on either is a 401 at the edge, not a silent pass.
-const OIDC_SERVICE_ACCOUNT = 'three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com';
+const OIDC_SERVICE_ACCOUNT = `three-ws@${PROJECT}.iam.gserviceaccount.com`;
 const OIDC_AUDIENCE = SERVICE_URL;
 
 /**

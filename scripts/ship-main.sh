@@ -5,7 +5,7 @@
 set -euo pipefail
 ROOT=/workspaces/three.ws
 WT=/workspaces/.deploy-wt
-PROJECT=aerial-vehicle-466722-p5
+PROJECT=${GCP_PROJECT:-aerial-vehicle-466722-p5}
 REGION=us-central1
 
 cd "$ROOT"

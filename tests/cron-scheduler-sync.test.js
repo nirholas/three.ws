@@ -276,11 +276,15 @@ describe('credentialFlags', () => {
 	it('names the same runtime service account Cloud Run is deployed with', () => {
 		// The edge gate matches CRON_OIDC_SERVICE_ACCOUNT against this exact email;
 		// a drift between the two is a 401 on every cron.
-		const deployed = readFileSync('server/cloudbuild.yaml', 'utf8');
+		// cloudbuild.yaml names the account through $PROJECT_ID so one file deploys
+		// to either project; resolve it to the project the scheduler targets.
+		const project = process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5';
+		const deployed = readFileSync('server/cloudbuild.yaml', 'utf8').replaceAll('$PROJECT_ID', project);
 		const email = credentialFlags(SECRET, { oidc: true })
 			.find((f) => f.startsWith('--oidc-service-account-email='))
 			.split('=')[1];
-		expect(deployed).toContain(email);
+		expect(email).toBe(`three-ws@${project}.iam.gserviceaccount.com`);
+		expect(deployed).toContain(`'--service-account',\n              '${email}'`);
 	});
 });
 

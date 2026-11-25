@@ -18,7 +18,7 @@ import './gcloud-path.mjs';
 
 export const DEFAULT_SERVICE = 'three-ws-api';
 export const DEFAULT_REGION = 'us-central1';
-export const DEFAULT_PROJECT = 'aerial-vehicle-466722-p5';
+export const DEFAULT_PROJECT = process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5';
 
 export function describeService({
 	service = DEFAULT_SERVICE,

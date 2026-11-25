@@ -12,7 +12,12 @@
 #   npm run deploy:gcp
 #   # or directly:
 #   gcloud builds submit --config server/cloudbuild.yaml \
-#     --region us-central1 --project aerial-vehicle-466722-p5
+#     --region us-central1 --project "${GCP_PROJECT:-aerial-vehicle-466722-p5}"
+#
+# Every project-specific value below (image path, runtime and build service
+# accounts) derives from $PROJECT_ID, so the same file deploys to whichever
+# project `--project` names. That project needs the three-ws@ and
+# three-ws-build@ service accounts and the cloud-run-source-deploy registry.
 
 steps:
     # Validate the UPLOADED context before spending a build on it.
@@ -101,7 +106,7 @@ steps:
               '--timeout',
               '900',
               '--service-account',
-              'three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com',
+              'three-ws@$PROJECT_ID.iam.gserviceaccount.com',
               # Reach Memorystore Redis (private IP) via the internal LB
               # 10.128.15.228 → serverless NEG → three-ws-redis-proxy (SRH) →
               # Memorystore three-ws-redis. private-ranges-only egress keeps every
@@ -116,13 +121,15 @@ steps:
           ]
 
 substitutions:
-    _IMAGE: us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/cloud-run-source-deploy/three-ws-api:latest
+    _IMAGE: us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/three-ws-api:latest
 
 options:
+    # Lets _IMAGE above reference ${PROJECT_ID}.
+    dynamicSubstitutions: true
     machineType: E2_HIGHCPU_32
     logging: CLOUD_LOGGING_ONLY
 
-serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+serviceAccount: projects/$PROJECT_ID/serviceAccounts/three-ws-build@$PROJECT_ID.iam.gserviceaccount.com
 
 timeout: 2400s
 
