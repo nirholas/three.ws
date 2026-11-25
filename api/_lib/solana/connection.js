@@ -1746,6 +1746,19 @@ export function orderEndpointsForCaller(endpoints, { money = false, now = Date.n
 	return behind.length ? [...ahead, ...behind] : endpoints;
 }
 
+// Exhausted-chain breaker. Measured 2026-11-25 on three-ws-api: Helius at its
+// monthly cap and every free lane answering 429, yet each routine read still
+// spent its whole attempt cap on lanes that had refused the previous request a
+// few milliseconds earlier (four "all N endpoints failed" within 40ms on one
+// instance). Once a non-money read has exhausted a chain on rate-limit answers,
+// other non-money reads on that chain wait out a short window and are answered
+// from last-good or a clean error without touching a lane. Money callers never
+// consult it. Process-local on purpose: the lane cooldowns already carry the
+// fleet-wide verdict, this only stops one instance from re-asking in a burst.
+const CHAIN_EXHAUSTED_WINDOW_MS = 3_000;
+const _chainExhausted = new Map(); // chainKey -> { until, message, suppressed }
+const RATE_LIMITED_ERROR_RE = /solana rpc (?:429\b|provider error -(?:32005|32003|32429|32097))/i;
+
 export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 	// Reads are shared only between connections on the SAME endpoint chain, so a
 	// devnet connection can never be handed a mainnet answer.
@@ -1972,6 +1985,14 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 		if (_cooldownHydratedAt === 0) await hydrateEndpointCooldowns();
 		else hydrateEndpointCooldowns();
 
+		const breaker = money ? null : _chainExhausted.get(chainKey);
+		if (breaker && breaker.until > Date.now()) {
+			breaker.suppressed += 1;
+			const stale = await serveLastGood(lastGoodKey(typeof init?.body === 'string' ? init.body : ''), init?.body);
+			if (stale) return stale;
+			throw new Error(breaker.message);
+		}
+
 		let lastErr = null;
 		// Each phase (the passes, then the egress re-sweep) may spend at most `cap`
 		// lane attempts on a non-money request; see readAttemptCap().
@@ -1981,6 +2002,7 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 		// error. Both feed the two whole-chain fallbacks after the passes.
 		const staleKey = lastGoodKey(typeof init?.body === 'string' ? init.body : '');
 		let transportOnly = true;
+		let rateLimitedOnly = true;
 		const succeed = (out) => {
 			if (out.okBody !== undefined) publishLastGood(staleKey, out.okBody);
 			return out.response;
@@ -2013,6 +2035,7 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 				if (out.response) return succeed(out);
 				lastErr = out.error;
 				if (!out.transport) transportOnly = false;
+				if (!RATE_LIMITED_ERROR_RE.test(out.error?.message || '')) rateLimitedOnly = false;
 			}
 			// This pass actually exercised at least one candidate and they all failed
 			// this request: the chain is genuinely down for it right now, so don't
@@ -2050,9 +2073,19 @@ export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
 		// Reached the end with every provider failing in this one request, the caller
 		// gets a thrown error (→ a clean 502 from the proxy), never garbage. THIS is
 		// worth a warning: the whole failover chain is down, not just one lane.
-		console.warn(
-			`[solana-rpc] all ${endpoints.length} endpoints failed this request, ${lastErr?.message || 'unknown error'}`,
-		);
+		const failure = lastErr?.message || 'unknown error';
+		if (!money && attempts > 0 && rateLimitedOnly) {
+			const prior = _chainExhausted.get(chainKey);
+			_chainExhausted.set(chainKey, {
+				until: Date.now() + CHAIN_EXHAUSTED_WINDOW_MS,
+				message: failure,
+				suppressed: 0,
+			});
+			const extra = prior?.suppressed ? ` (${prior.suppressed} reads short-circuited in the previous window)` : '';
+			console.warn(`[solana-rpc] all ${endpoints.length} endpoints failed this request, ${failure}${extra}`);
+		} else {
+			console.warn(`[solana-rpc] all ${endpoints.length} endpoints failed this request, ${failure}`);
+		}
 		throw lastErr || new Error('all solana rpc endpoints failed');
 	};
 
