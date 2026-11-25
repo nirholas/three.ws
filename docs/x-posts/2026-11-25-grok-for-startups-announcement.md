@@ -34,23 +34,26 @@ House voice: one link per post, no hashtags, no emoji, no dashes. Every post fit
 
 **5/**
 
-> It works where you already use Grok: a custom connector on grok.com, Grok Bot, Grok Build, Cursor and the xAI API.
+> It works where you already use Grok: a custom connector on grok.com, Grok Bot, Grok Build, Cursor and the xAI API. @ericzakariasson
 >
 > One URL, a free account, and no tool that can spend money. https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=announce
 
 **6/**
 
-> Building on the Grok API? Six runnable examples: curl, Node on the Responses API, Python over MCP, a remote MCP tool call, an agent with a 3D avatar, and an X search turned into a 3D model. https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=announce-examples#build-examples
+> Building on the Grok API? Six runnable examples: curl, Node on the Responses API, Python over MCP, a remote MCP tool call, an agent with a 3D avatar, and an X search turned into a 3D model. @XDevelopers https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=announce-examples#build-examples
 
 **7/**
 
 > Reply with something you want to see in 3D. We will run the best ones through Grok and post the results in this thread.
+>
+> @grok, you go first: what should we build?
 
 ## Why it is built this way
 
 - **Lead with usage, not the badge.** Every startup posts "we got in". Almost none can say the program's own product was already calling them every day. The 5,547 calls are the reason @SpaceXSI has to quote this rather than scroll past it.
-- **One tag, in the head.** @SpaceXSI (the former @xai) quote-posts third-party builds on the Grok API ([co-marketing kit](../partners/xai-comarketing-kit.md#who-reshares-what)). The kit allows at most one account per thread, so @grok and @bot stay out. Never tag @bot: it starts a task for the reader's own Grok Bot.
-- **Post 7 is the reach engine.** Replies with prompts keep the thread alive for days, and every result posted back under it is fresh proof. Answer them by hand; the kit forbids automated replies in a thread like this.
+- **Each tag sits where that account has a reason to engage** ([who reshares what](../partners/xai-comarketing-kit.md#who-reshares-what)). @SpaceXSI (the former @xai) quote-posts third-party builds on the Grok API, so it goes in the head. @ericzakariasson works on Grok Bot and posts calls for connectors, so post 5. @XDevelopers features apps built on the X API, and post 6 has the X search example. @grok answers public tags in the thread, so post 7 gets a visible Grok reply under it. Add more if you like; this is a hand post, not the automated queue.
+- **Never tag @bot.** That is functional, not etiquette: tagging it starts a task for each reader's own Grok Bot.
+- **Post 7 is the reach engine.** Grok's reply seeds the thread, replies with prompts keep it alive for days, and every result posted back under it is fresh proof.
 - **Token-free on purpose.** xAI-facing copy never mentions $THREE, a coin or trading ([plan rules](../partners/xai-grok-startups-plan.md#rules-that-bind-every-route)). Keep $THREE posts on a separate day from this thread.
 - **Voice avatar and hero clips are held back.** Each gets its own post later from the kit's queue, so this thread only shows surfaces that run on production today.
 

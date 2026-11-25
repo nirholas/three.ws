@@ -161,8 +161,8 @@ figure is listed below the case study, so anyone with database access can rerun 
 One head post and a reply thread per build, in the house voice the queue enforces: one link per
 post, no hashtags, no emoji, no dashes, every number and absolute backed by a claim with evidence.
 The text below is the queue copy, character for character. Tags follow the rules in
-[Timing and rules](#timing-and-rules): at most one account per thread, and only when the build
-genuinely runs on that account's product.
+[Timing and rules](#timing-and-rules): as automated queue posts, at most one account per thread,
+and only when the build genuinely runs on that account's product.
 
 Order 930 already owns the Grok Bot connector walkthrough and its long-form Article (queue items
 `grok-bot-mention-bot` and `grok-bot-mention-bot-article`). The 873 draft covers only the listing
@@ -301,8 +301,10 @@ characters or more), then run `npm run x:content -- check`.
 
 **X automation rules.**
 
-- No bulk tagging: at most one account per thread, and only an account whose product the build
-  runs on. The validator rejects any mention without a recorded reason.
+- Queue posts (published automatically from `data/x-content/queue.json`) tag at most one account
+  per thread, an account whose product the build runs on, and the validator rejects any mention
+  without a recorded reason. X restricts unsolicited mentions from automated accounts. Posts the
+  owner makes by hand are not bound by this and can tag whoever fits.
 - No automated replies to staff or to @grok. When @grok or an xAI employee replies, the owner
   answers by hand or not at all. The mention bot (order 930) only answers people who ask it for a
   model, once each.
