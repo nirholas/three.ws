@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "A private agent's profile no longer shows an earnings error",
+			"summary": "The Earned card on a private agent's profile used to ask for earnings that only the owner may see, then show \"Couldn't load earnings\" with a Try again button that could never succeed. Visitors now simply do not see the card, the owner still sees their figures, and the retry is kept for real outages.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "The Hunyuan3D 2.1 GPU worker answers its health check during a cold start",
 			"summary": "While the worker was still loading its model, its health check crashed on a half-loaded library and answered with a server error, so probes could read a starting backend as a broken one. It now reports the GPU as unknown until loading finishes.",
 			"tags": ["fix"]

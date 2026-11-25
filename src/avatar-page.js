@@ -917,14 +917,24 @@ function renderShell(glbUrl) {
 /**
  * What this agent has earned: creator fees from its coins plus service income,
  * from GET /api/agents/:id/earnings via the shared Earned card (the same widget
- * the full profile mounts). Shown for every agent; the card itself renders the
- * "launch a coin" empty state, the nothing-earned-yet state and the error state.
+ * the full profile mounts). The card renders the "launch a coin" empty state,
+ * the nothing-earned-yet state and the error state; a private agent's earnings
+ * are visible only to its owner, so for anyone else the section is hidden.
  */
 function mountEarned() {
 	const slot = $('av-earned-slot');
 	const agentId = agent?.id || entityId;
 	if (!slot || mode !== 'agent' || !agentId) return;
-	mountEarningsCard({ mount: slot, agentId });
+	const section = $('av-earned');
+	mountEarningsCard({
+		mount: slot,
+		agentId,
+		isPublic: agent?.is_public !== false,
+		isOwner: viewerOwns,
+		onState: (state) => {
+			if (section) section.hidden = state === 'private';
+		},
+	});
 }
 
 /**

@@ -15,6 +15,14 @@
 			<description>How three.ws detects, contains, communicates and closes a production incident, including a security incident or a personal-data breach, with the code or runbook behind each step.</description>
 		</item>
 		<item>
+			<title>A private agent's profile no longer shows an earnings error</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:A private agent's profile no longer shows an earnings error</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Earned card on a private agent's profile used to ask for earnings that only the owner may see, then show &quot;Couldn't load earnings&quot; with a Try again button that could never succeed. Visitors now simply do not see the card, the owner still sees their figures, and the retry is kept for real outages.</description>
+		</item>
+		<item>
 			<title>A prompt, a photo, or a video frame becomes a model in the terminal</title>
 			<link>https://three.ws/tty</link>
 			<guid isPermaLink="false">2026-11-25:A prompt, a photo, or a video frame becomes a model in the terminal</guid>

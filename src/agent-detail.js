@@ -1541,12 +1541,23 @@ function render(agent) {
 	// Earned: creator fees from the agent's coins plus service income, from
 	// GET /api/agents/:id/earnings, through the shared card the agent page mounts
 	// too. It renders its own loading, empty ("launch a coin"), nothing-earned-yet
-	// and error states. The classic layout has no #ad-earned-body.
+	// and error states. A private agent's earnings are visible only to its owner,
+	// so for anyone else the card is hidden. The classic layout has no
+	// #ad-earned-body.
 	{
 		const earnedBody = $('ad-earned-body');
+		const earnedCard = $('ad-earned-card');
 		if (_earnedHandle) { try { _earnedHandle.destroy(); } catch { /* idempotent */ } _earnedHandle = null; }
 		if (earnedBody && agent.id) {
-			_earnedHandle = mountEarningsCard({ mount: earnedBody, agentId: agent.id });
+			_earnedHandle = mountEarningsCard({
+				mount: earnedBody,
+				agentId: agent.id,
+				isPublic: agent.rawMetadata?.is_public !== false,
+				isOwner: !!agent.isOwner,
+				onState: (state) => {
+					if (earnedCard) earnedCard.hidden = state === 'private';
+				},
+			});
 		}
 	}
 

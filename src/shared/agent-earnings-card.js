@@ -10,8 +10,11 @@
 // element and an agent id, never copy it per page. It returns a handle whose
 // refresh() re-reads the endpoint and whose destroy() tears the card down.
 //
-// `onState(state)` reports 'loading' | 'empty' | 'zero' | 'earned' | 'error' so a
-// host page can decide whether to show the surrounding card at all.
+// `onState(state)` reports 'loading' | 'empty' | 'zero' | 'earned' | 'private' |
+// 'error' so a host page can decide whether to show the surrounding card at all.
+// 'private' means the viewer may not see this agent's earnings: the endpoint
+// answers 404 to everyone but the owner of a private agent. Pass `isPublic` and
+// `isOwner` when the host already knows them and the card skips that request.
 
 import { shortAddress as shortAddr } from './address.js';
 
@@ -267,14 +270,22 @@ function render(d) {
 
 /**
  * Mount the Earned card for one agent.
- * @param {{ mount: HTMLElement, agentId: string, onState?: (state: string, data?: object) => void }} opts
+ * @param {{ mount: HTMLElement, agentId: string, isPublic?: boolean, isOwner?: boolean, onState?: (state: string, data?: object) => void }} opts
  */
-export function mountEarningsCard({ mount, agentId, onState = () => {} }) {
+export function mountEarningsCard({ mount, agentId, isPublic = true, isOwner = false, onState = () => {} }) {
 	ensureStyles();
 	let ctrl = null;
 	let destroyed = false;
 
+	// Private, or gone since the page loaded: a designed state with nothing to
+	// retry, so the host can hide its card instead of showing a failure.
+	function showPrivate() {
+		mount.innerHTML = `<div class="ern ern-fade"><div class="ern-empty"><p>This agent's earnings are private.</p></div></div>`;
+		onState('private');
+	}
+
 	async function load() {
+		if (isPublic === false && !isOwner) return showPrivate();
 		ctrl?.abort();
 		ctrl = new AbortController();
 		mount.innerHTML = skeleton();
@@ -284,7 +295,9 @@ export function mountEarningsCard({ mount, agentId, onState = () => {} }) {
 				credentials: 'include',
 				signal: ctrl.signal,
 			});
-			if (!r.ok) throw new Error(r.status === 404 ? 'not_found' : `HTTP ${r.status}`);
+			if (destroyed) return;
+			if (r.status === 404) return showPrivate();
+			if (!r.ok) throw new Error(`HTTP ${r.status}`);
 			const data = await r.json();
 			if (destroyed) return;
 			const { state, html } = render(data);
@@ -293,7 +306,7 @@ export function mountEarningsCard({ mount, agentId, onState = () => {} }) {
 		} catch (err) {
 			if (destroyed || err?.name === 'AbortError') return;
 			mount.innerHTML = `<div class="ern ern-fade"><div class="ern-empty">
-				<p class="ern-err">Couldn't load earnings${err?.message === 'not_found' ? ': this agent is private or no longer exists.' : '. The earnings service did not answer.'}</p>
+				<p class="ern-err">Couldn't load earnings. The earnings service did not answer.</p>
 				<button type="button" class="ern-btn" data-ern-retry>Try again</button>
 			</div></div>`;
 			mount.querySelector('[data-ern-retry]')?.addEventListener('click', load);
