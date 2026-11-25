@@ -31,6 +31,10 @@ var or add quota · 🟢 self-healing, no action needed.
 > version, TLS expiry, fleet revision readiness, every advertised page on the
 > live site, cron drift and liveness, pending DB migrations, service-wallet
 > floors, and custodial-key health, all read-only and concurrent.
+> If gcloud cannot read logs (no credentials, an unwritable config directory),
+> the sweep no longer exits: it reports an `investigate` finding with signature
+> `log-sweep-unavailable` naming the fix, and the healthz roll-up and deep
+> probes still report. A run with that finding has NOT seen the fleet's logs.
 
 > **You no longer need a log export to see most of this.** The platform now
 > self-reports internal-dependency health: **[/status](https://three.ws/status)**

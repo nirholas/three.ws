@@ -724,26 +724,37 @@ function formatSpan(ms) {
 	return `${Math.round(ms / 1000)}s`;
 }
 
-async function readLogs(opts) {
+export async function readLogs(opts, run = runCommand) {
 	const query = 'resource.type="cloud_run_revision" severity>=WARNING';
 	// Keep this asynchronous. The deep sweep deliberately runs its HTTP/TLS
 	// probes alongside the log read; spawnSync blocked Node's event loop for
 	// 40+ seconds and made healthy 10-15 second probes time out in a batch.
-	const res = await runCommand(['gcloud',
+	const res = await run(['gcloud',
 		'logging', 'read', query,
 		`--project=${opts.project}`,
 		`--freshness=${opts.since}`,
 		`--limit=${opts.limit}`,
 		'--format=json',
 	], { timeoutMs: 180000 });
-	if (res.code !== 0) {
-		const why = (res.stderr || '').trim() || (res.timedOut ? 'timed out' : 'unknown error');
-		console.error(`gcloud logging read failed: ${why}`);
-		if (/ENOENT/.test(why)) console.error('gcloud is not installed at any known path; see scripts/lib/gcloud-path.mjs.');
-		if (/reauth|invalid_grant|credential/i.test(why)) console.error('gcloud auth has lapsed; only the owner can re-run `gcloud auth login` here.');
-		process.exit(1);
-	}
-	return JSON.parse(res.stdout || '[]');
+	if (res.code === 0) return { entries: JSON.parse(res.stdout || '[]'), finding: null };
+	// A failed read is a blind spot, not a reason to abandon the sweep: the
+	// healthz roll-up and the deep probes still report, and this finding makes
+	// the missing log coverage impossible to mistake for "quiet".
+	const why = (res.stderr || '').trim() || (res.timedOut ? 'timed out' : 'unknown error');
+	let action = `gcloud logging read failed, so this run saw NO Cloud Run logs. Re-run once gcloud works: gcloud auth list && gcloud logging read 'severity>=WARNING' --project=${opts.project} --freshness=1h --limit=1.`;
+	if (/ENOENT/.test(why)) action = 'gcloud is not installed at any known path (see scripts/lib/gcloud-path.mjs). Install the Cloud SDK, then re-run the sweep.';
+	else if (/Could not create directory|configuration directory may not be writable|Permission denied/i.test(why)) action = 'gcloud cannot write its config directory, so it has no credentials here. Point it at a writable one (export CLOUDSDK_CONFIG=$HOME/.gcloud-config) and authenticate (gcloud auth login, or rely on the VM service account), then re-run the sweep.';
+	else if (/reauth|invalid_grant|credential/i.test(why)) action = 'gcloud auth has lapsed; only the owner can re-run `gcloud auth login` here. Re-run the sweep afterwards.';
+	return {
+		entries: [],
+		finding: {
+			kind: 'deep', class: 'investigate', signature: 'log-sweep-unavailable',
+			title: 'Log sweep could not read Cloud Run logs',
+			severity: 'ERROR', count: 1, services: [],
+			firstSeen: new Date().toISOString(), lastSeen: new Date().toISOString(),
+			sample: tail(why, 6), action,
+		},
+	};
 }
 
 function entryMessage(entry) {
@@ -1287,15 +1298,17 @@ async function runDeepSweep(opts) {
 
 async function main() {
 	const opts = parseArgs(process.argv.slice(2));
-	// Kick the deep probes off first: they are child processes and keep running
-	// while the synchronous gcloud log read blocks the parent.
+	// Kick the deep probes off first: they are child processes and run
+	// concurrently with the asynchronous gcloud log read.
 	const deepPromise = opts.deep ? runDeepSweep(opts) : Promise.resolve(null);
-	const [healthz, entries] = await Promise.all([
+	const [healthz, logRead] = await Promise.all([
 		fetchHealthz(),
 		readLogs(opts),
 	]);
+	const { entries } = logRead;
 	const coverage = logCoverage(entries, opts);
 	const findings = buildFindings(entries);
+	if (logRead.finding) findings.push(logRead.finding);
 	findings.push(...gpuCapacityFindings(findings));
 	const deep = await deepPromise;
 	if (deep) {

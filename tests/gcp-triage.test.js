@@ -2,7 +2,7 @@
 // added to KNOWN_SIGNATURES should get a case here: the monitor learning a
 // benign pattern must never silently swallow a genuine fault that shares text.
 import { describe, expect, it } from 'vitest';
-import { buildFindings, classify, logCoverage, summarizePageCheckFailure } from '../scripts/gcp-triage.mjs';
+import { buildFindings, classify, logCoverage, readLogs, summarizePageCheckFailure } from '../scripts/gcp-triage.mjs';
 
 describe('gcp-triage classify', () => {
 	it('classifies the Colyseus stale-seat refusal as self-healing', () => {
@@ -374,5 +374,26 @@ describe('logCoverage', () => {
 	it('never claims more than the requested window', () => {
 		const cov = logCoverage([at('2026-10-09T00:00:00Z')], { since: '1h', limit: 1, now });
 		expect(cov.coveredMs).toBe(3_600_000);
+	});
+});
+
+describe('gcp-triage readLogs', () => {
+	// A failed log read (unauthenticated gcloud, missing config dir) used to
+	// process.exit(1) before the deep probes reported, so one blind spot hid
+	// every other check. It must surface as a finding and leave the sweep running.
+	it('turns a gcloud failure into an investigate finding instead of exiting', async () => {
+		const run = async () => ({ code: 1, stdout: '', stderr: 'ERROR: (gcloud.logging.read) Could not create directory [/home/x/.config/gcloud]: Permission denied.', timedOut: false });
+		const res = await readLogs({ project: 'p', since: '1h', limit: 10 }, run);
+		expect(res.entries).toEqual([]);
+		expect(res.finding?.class).toBe('investigate');
+		expect(res.finding?.signature).toBe('log-sweep-unavailable');
+		expect(res.finding?.action).toMatch(/CLOUDSDK_CONFIG|gcloud auth/);
+	});
+
+	it('returns parsed entries on success', async () => {
+		const run = async () => ({ code: 0, stdout: '[{"timestamp":"t"}]', stderr: '', timedOut: false });
+		const res = await readLogs({ project: 'p', since: '1h', limit: 10 }, run);
+		expect(res.entries).toEqual([{ timestamp: 't' }]);
+		expect(res.finding).toBeNull();
 	});
 });
