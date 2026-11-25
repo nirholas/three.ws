@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T21:20:09.110Z",
+	"generated_at": "2026-11-25T21:23:36.080Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -131,6 +131,16 @@
 			"type": "update",
 			"title": "Exchange links in a coin's Markets table open the right venue",
 			"summary": "When a coin page's Markets table is served by a backup data source, each venue now links to its CoinGecko exchange profile, matched by id or name against CoinGecko's own exchange list. A venue with no clear match shows as plain text instead of a link to a page that could not load, and an exchange id that does not exist now answers not found instead of an upstream error.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Image understanding says when an image link is the problem",
+			"summary": "POST /api/vision with an imageUrl that points at a missing file, a host that does not exist, or a web page instead of an image used to run every model in the chain and answer 502 as if the models were down. It now answers 400 invalid_image_url straight away with the reason, and an image served under a generic content type is recognised from its bytes.",
 			"link": null,
 			"tags": [
 				"fix"

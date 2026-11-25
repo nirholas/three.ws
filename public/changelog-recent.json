@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T21:20:09.199Z",
+	"generated_at": "2026-11-25T21:23:36.132Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4733,
+	"total": 4734,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -134,6 +134,16 @@
 			"type": "update",
 			"title": "Exchange links in a coin's Markets table open the right venue",
 			"summary": "When a coin page's Markets table is served by a backup data source, each venue now links to its CoinGecko exchange profile, matched by id or name against CoinGecko's own exchange list. A venue with no clear match shows as plain text instead of a link to a page that could not load, and an exchange id that does not exist now answers not found instead of an upstream error.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Image understanding says when an image link is the problem",
+			"summary": "POST /api/vision with an imageUrl that points at a missing file, a host that does not exist, or a web page instead of an image used to run every model in the chain and answer 502 as if the models were down. It now answers 400 invalid_image_url straight away with the reason, and an image served under a generic content type is recognised from its bytes.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1550,16 +1560,6 @@
 			"link": "/discover",
 			"tags": [
 				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-15",
-			"type": "update",
-			"title": "Parts you hide in the GLB editor stay hidden in the /viewer page",
-			"summary": "A part you hid in the GLB editor came back when the exported model was opened from a /viewer link, because that page's 3D engine ignores the standard hidden-node marker the editor writes. /viewer now reads the marker and keeps those parts hidden, with their size untouched, so the shared link shows exactly what you exported. Emissive glow already carried over and still does.",
-			"link": "/viewer",
-			"tags": [
 				"fix"
 			]
 		}

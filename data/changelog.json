@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Image understanding says when an image link is the problem",
+			"summary": "POST /api/vision with an imageUrl that points at a missing file, a host that does not exist, or a web page instead of an image used to run every model in the chain and answer 502 as if the models were down. It now answers 400 invalid_image_url straight away with the reason, and an image served under a generic content type is recognised from its bytes.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Delegation revocations stay indexed on busy chain days",
 			"summary": "The ERC-7710 delegation indexer skipped every event from delegations three.ws never issued only after paying an RPC call for each one, so a busy block range on the shared DelegationManager outlasted the five-minute cron and replayed forever. It now discards foreign events from the log itself, so revocations and redemptions of your agent's delegations are recorded every tick.",
 			"tags": [

@@ -523,16 +523,35 @@ const MAX_INLINE_IMAGE_BYTES = 12 * 1024 * 1024;
 // makes the free NIM lanes independent of whether the provider can reach the
 // host. Throws on non-2xx, oversize, or transport error so the caller can decide
 // whether to fall back to URL pass-through.
+//
+// Some answers settle the question for every provider too, and are thrown as a
+// 400 invalid_image_url (see badImageUrl) so the caller is told what is wrong
+// with the URL instead of ten lanes each failing to download it: the host says
+// the file does not exist (404/410), the host does not resolve or resolves to a
+// private range, or the body is not an image (an HTML page, a JSON error).
 async function inlineImageFromUrl(imageUrl, { timeoutMs = 8_000 } = {}) {
-	const res = await fetchSafePublicUrl(imageUrl, {
-		signal: AbortSignal.timeout(timeoutMs),
-		// A browser-like UA + image Accept gets past CDNs that reject empty/bot
-		// user-agents — the same gate that blocks the providers' own fetchers.
-		headers: {
-			'user-agent': 'Mozilla/5.0 (compatible; three.ws-vision/1.0; +https://three.ws)',
-			accept: 'image/avif,image/webp,image/png,image/*;q=0.8,*/*;q=0.5',
-		},
-	});
+	let res;
+	try {
+		res = await fetchSafePublicUrl(imageUrl, {
+			signal: AbortSignal.timeout(timeoutMs),
+			// A browser-like UA + image Accept gets past CDNs that reject empty/bot
+			// user-agents, the same gate that blocks the providers' own fetchers.
+			headers: {
+				'user-agent': 'Mozilla/5.0 (compatible; three.ws-vision/1.0; +https://three.ws)',
+				accept: 'image/avif,image/webp,image/png,image/*;q=0.8,*/*;q=0.5',
+			},
+		});
+	} catch (e) {
+		// ENOTFOUND is a name that does not exist; EAI_AGAIN and friends are a
+		// resolver hiccup the providers may not share, so those stay ambiguous.
+		if (e?.code === 'ssrf_blocked' && /ENOTFOUND|resolves to a blocked range|no addresses/.test(e.message || '')) {
+			throw badImageUrl(`image URL host cannot be reached: ${e.message}`);
+		}
+		throw e;
+	}
+	if (res.status === 404 || res.status === 410) {
+		throw badImageUrl(`image URL answered ${res.status}: there is no file at that address`);
+	}
 	if (!res.ok) throw Object.assign(new Error(`image fetch ${res.status}`), { status: res.status });
 	const advertised = Number(res.headers.get('content-length') || 0);
 	if (advertised > MAX_INLINE_IMAGE_BYTES) {
@@ -543,7 +562,33 @@ async function inlineImageFromUrl(imageUrl, { timeoutMs = 8_000 } = {}) {
 		throw Object.assign(new Error('image exceeds inline size cap'), { status: 413 });
 	}
 	const ct = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
-	return { imageBase64: buf.toString('base64'), mimeType: ct.startsWith('image/') ? ct : 'image/jpeg' };
+	const sniffed = sniffImageType(buf);
+	if (!sniffed && !ct.startsWith('image/')) {
+		throw badImageUrl(`image URL returned ${ct || 'an unlabelled body'}, not an image`);
+	}
+	return { imageBase64: buf.toString('base64'), mimeType: sniffed || ct };
+}
+
+function badImageUrl(message) {
+	return Object.assign(new Error(message), { status: 400, code: 'invalid_image_url' });
+}
+
+// The image formats the vision lanes accept, identified by their leading bytes
+// so a correctly-encoded image served under a generic or wrong Content-Type is
+// labelled for what it is.
+function sniffImageType(buf) {
+	if (buf.length < 12) return null;
+	if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'image/png';
+	if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
+	if (buf.subarray(0, 4).toString('latin1') === 'GIF8') return 'image/gif';
+	if (buf.subarray(0, 4).toString('latin1') === 'RIFF' && buf.subarray(8, 12).toString('latin1') === 'WEBP') return 'image/webp';
+	if (buf.subarray(4, 8).toString('latin1') === 'ftyp') {
+		const brand = buf.subarray(8, 12).toString('latin1');
+		if (brand === 'avif' || brand === 'avis') return 'image/avif';
+		if (/^(heic|heix|hevc|mif1|msf1)$/.test(brand)) return 'image/heic';
+	}
+	if (buf[0] === 0x42 && buf[1] === 0x4d) return 'image/bmp';
+	return null;
 }
 
 // Normalize a caller's image spec into one OpenAI `image_url` content part.
@@ -652,8 +697,11 @@ export async function describeImage({
 			imageBase64 = inlined.imageBase64;
 			mimeType = inlined.mimeType;
 			imageUrl = null;
-		} catch {
-			// keep imageUrl set — the providers will try their own server-side fetch
+		} catch (e) {
+			// A definitive answer (no such file, no such host, not an image) is the
+			// same for every provider, so it fails the request as bad input now.
+			// Anything else keeps imageUrl set and the providers try their own fetch.
+			if (e?.code === 'invalid_image_url') throw e;
 		}
 	}
 

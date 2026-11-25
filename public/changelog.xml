@@ -111,6 +111,14 @@
 			<description>When a coin page's Markets table is served by a backup data source, each venue now links to its CoinGecko exchange profile, matched by id or name against CoinGecko's own exchange list. A venue with no clear match shows as plain text instead of a link to a page that could not load, and an exchange id that does not exist now answers not found instead of an upstream error.</description>
 		</item>
 		<item>
+			<title>Image understanding says when an image link is the problem</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Image understanding says when an image link is the problem</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>POST /api/vision with an imageUrl that points at a missing file, a host that does not exist, or a web page instead of an image used to run every model in the chain and answer 502 as if the models were down. It now answers 400 invalid_image_url straight away with the reason, and an image served under a generic content type is recognised from its bytes.</description>
+		</item>
+		<item>
 			<title>Long-tail coin pages load during CoinGecko throttling, and Fear &amp; Greed has a working backup</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Long-tail coin pages load during CoinGecko throttling, and Fear &amp; Greed has a working backup</guid>
