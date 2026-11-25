@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Agent ideas no longer fail when one model answers in the wrong shape",
+			"summary": "The Create-Agent \"describe it\" generator used to take the first answer any model gave, so a model that replied in prose or ran out of room mid-answer ended the request with \"unreadable result\" even though other models were ready. It now moves on to the next model until one returns a complete agent spec.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Image understanding says when an image link is the problem",
 			"summary": "POST /api/vision with an imageUrl that points at a missing file, a host that does not exist, or a web page instead of an image used to run every model in the chain and answer 502 as if the models were down. It now answers 400 invalid_image_url straight away with the reason, and an image served under a generic content type is recognised from its bytes.",
 			"tags": [

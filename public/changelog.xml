@@ -31,6 +31,14 @@
 			<description>On /tty, describe an object, drop a photo, or pick a video and the page builds a real model, then draws it in the terminal panel. The same thing works from the shell: three-tty --prompt, three-tty photo.jpg, or three-tty --find, which uses the newest image in the folder. A video contributes one frame, reconstructed as an object. A full walkthrough cloud stays on /capture. Making a model needs a free three.ws account.</description>
 		</item>
 		<item>
+			<title>Agent ideas no longer fail when one model answers in the wrong shape</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Agent ideas no longer fail when one model answers in the wrong shape</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Create-Agent &quot;describe it&quot; generator used to take the first answer any model gave, so a model that replied in prose or ran out of room mid-answer ended the request with &quot;unreadable result&quot; even though other models were ready. It now moves on to the next model until one returns a complete agent spec.</description>
+		</item>
+		<item>
 			<title>Agent profiles stop requesting a private body they cannot show</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Agent profiles stop requesting a private body they cannot show</guid>

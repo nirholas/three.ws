@@ -1029,6 +1029,11 @@ export function llmConfigured(opts = {}) {
 // such empty-but-valid result is returned rather than throwing.
 // Throws LlmUnavailableError when no provider is configured, or the last
 // upstream error (with .status = 502) when every provider failed outright.
+//
+// `accept(text)` is optional: a caller that needs structured output passes a
+// predicate, and a completion it rejects is failed over like an empty one
+// (spend still recorded). When no lane yields accepted text the thrown error
+// carries .code = 'unusable_completion' if that was the last failure.
 // Throws an error with .status = 429 and .code = 'daily_spend_cap_exceeded'
 // when the caller's userId has consumed their daily LLM budget on paid keys.
 //
@@ -1039,7 +1044,7 @@ export function llmConfigured(opts = {}) {
 // { userId, agentId, avatarId, clientId, apiKeyId, tool } — are all optional;
 // pass whatever the call site knows. Recording is fire-and-forget (see
 // recordEvent), so it never delays or fails the completion.
-export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, timeoutMs = 30_000, track = null, chain: chainOverride = null }) {
+export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, timeoutMs = 30_000, track = null, chain: chainOverride = null, accept = null }) {
 	const chain = chainOverride?.length ? chainOverride : providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel, task, preferPhi });
 	if (!chain.length) throw new LlmUnavailableError();
 
@@ -1211,6 +1216,16 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: 'account notice as completion' });
 			continue;
 		}
+		if (accept && !accept(text)) {
+			// The lane answered, but not in a shape this caller can use (prose where
+			// JSON was asked for, an object cut off at max_tokens). It was a real,
+			// metered call, so its spend is recorded; then the chain fails over as
+			// for an empty completion instead of handing the caller unusable text.
+			recordLlmSpend(p, usage, Date.now() - startedAt, track, data);
+			lastErr = Object.assign(new Error(`${p.name} returned a completion the caller could not use`), { status: 502, code: 'unusable_completion' });
+			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: 'unusable completion' });
+			continue;
+		}
 		COOLDOWNS.delete(rungKey(p));
 		const phiMiss = p.name !== 'phi' && attempts.find((a) => a.provider === 'phi');
 		if (phiMiss) console.warn(`[llm] phi lane fell back to ${p.name}: ${phiMiss.error || phiMiss.skipped}`);
@@ -1225,7 +1240,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 	}
 	// Nothing produced usable text. Prefer an empty-but-valid 200 over throwing;
 	// only throw when no provider even returned a parseable success.
-	if (lastEmpty) {
+	if (lastEmpty && (!accept || accept(lastEmpty.text))) {
 		recordLlmSpend({ name: lastEmpty.provider, model: lastEmpty.model, key: lastEmpty.key }, lastEmpty.usage, 0, track, lastEmpty.raw);
 		return lastEmpty;
 	}

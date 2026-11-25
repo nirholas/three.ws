@@ -167,10 +167,15 @@ export default wrap(async (req, res) => {
 		completion = await llmComplete({
 			system: buildSystem(),
 			user: userMsg,
-			maxTokens: 700,
+			// Headroom past the ~450-token spec: a reasoning lane spends part of
+			// max_tokens thinking, and at 700 it could stop mid-object.
+			maxTokens: 1200,
 			timeoutMs: 30_000,
 			task: 'agent_spec',
 			track: { userId, tool: 'agent_suggest_spec' },
+			// Fail over past a lane whose text is not a spec (prose, a truncated
+			// object) instead of returning the first non-empty answer.
+			accept: (text) => parseSpec(text) !== null,
 		});
 	} catch (err) {
 		if (err instanceof LlmUnavailableError) {
@@ -178,6 +183,9 @@ export default wrap(async (req, res) => {
 		}
 		if (err?.code === 'daily_spend_cap_exceeded') {
 			return error(res, 429, 'daily_spend_cap_exceeded', err.message);
+		}
+		if (err?.code === 'unusable_completion') {
+			return error(res, 502, 'generation_failed', 'The generator returned an unreadable result. Try again or tweak your description.');
 		}
 		return error(res, 502, 'generation_failed', 'The model could not be reached. Try again in a moment.');
 	}

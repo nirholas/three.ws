@@ -188,3 +188,29 @@ describe('POST /api/agents/suggest-spec — try-first generation', () => {
 		expect(llmCompleteMock).not.toHaveBeenCalled();
 	});
 });
+
+// A lane that answers prose or JSON cut off at max_tokens used to win the chain
+// (first non-empty text), and the handler could only 502 "unreadable result"
+// while healthy lanes sat untried behind it. The handler now asks the chain to
+// fail over until a completion parses as a spec.
+describe('POST /api/agents/suggest-spec: unusable completions fail over', () => {
+	it('asks the chain to accept only a completion that parses as a spec', async () => {
+		const res = mkRes();
+		await handler(mkReq({ body: { prompt: 'a markets analyst' } }), res);
+
+		const { accept } = llmCompleteMock.mock.calls[0][0];
+		expect(typeof accept).toBe('function');
+		expect(accept(GOOD_SPEC)).toBe(true);
+		expect(accept('{"name": "Nova", "description": "A calm guide who')).toBe(false);
+		expect(accept('Sure! Your agent is Nova.')).toBe(false);
+	});
+
+	it('answers 502 unreadable when no lane produced a usable spec', async () => {
+		llmCompleteMock.mockRejectedValue(Object.assign(new Error('no usable completion'), { code: 'unusable_completion' }));
+		const res = mkRes();
+		await handler(mkReq({ body: { prompt: 'x' } }), res);
+
+		expect(res.statusCode).toBe(502);
+		expect(parse(res).error_description).toMatch(/unreadable result/);
+	});
+});
