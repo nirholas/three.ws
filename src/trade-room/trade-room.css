@@ -570,7 +570,7 @@
 		box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
 		transform: translateY(105%);
 		visibility: hidden;
-		transition: transform var(--duration-base, 0.24s) var(--ease-out), visibility 0s linear 0.24s;
+		transition: transform var(--duration-base) var(--ease-out), visibility var(--duration-base);
 	}
 	.tr-side > .trc.is-open { transform: translateY(0); visibility: visible; transition-delay: 0s; }
 	.trc-list { height: min(46vh, 340px); }

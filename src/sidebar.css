@@ -84,7 +84,7 @@
 	text-decoration: none;
 	font-size: var(--text-sm, 12px);
 	border-radius: 4px;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .sb-link:hover { color: var(--text, #f6f6f6); text-decoration: underline; }
 
@@ -168,7 +168,7 @@
 	background: var(--bg, #050505);
 	color: var(--text, #f6f6f6);
 	font: inherit;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .sb-chat textarea:hover,
 .sb-forge textarea:hover { border-color: var(--text-3, #6a6a6a); }
@@ -195,7 +195,7 @@
 	font-weight: 500;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.15s ease, transform 0.08s ease, opacity 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .sb-btn:hover { background: var(--accent-soft, rgba(255, 255, 255, 0.1)); }
 .sb-btn:active { transform: scale(0.97); }
@@ -254,7 +254,7 @@
 	border-radius: 8px;
 	color: inherit;
 	text-decoration: none;
-	transition: background 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .sb-recent-item:hover { background: var(--surface-2, rgba(255, 255, 255, 0.05)); }
 .sb-recent-item:active { background: var(--accent-soft, rgba(255, 255, 255, 0.1)); }

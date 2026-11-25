@@ -3,7 +3,7 @@
 .c3-tabs { display: inline-flex; gap: 4px; margin-top: 28px; padding: 4px; background: var(--surface-1, #141414); border: 1px solid var(--hairline, #1f1f1f); border-radius: 12px; }
 .c3-tab {
 	appearance: none; border: 0; background: transparent; color: var(--text-2, #b4b4b4); font: inherit; font-size: 13px; font-weight: 600;
-	padding: 9px 16px; border-radius: 9px; cursor: pointer; transition: background 0.15s, color 0.15s;
+	padding: 9px 16px; border-radius: 9px; cursor: pointer; transition: background var(--duration-fast), color var(--duration-fast);
 }
 .c3-tab:hover { color: var(--text, #f6f6f6); background: var(--surface-2, #1a1a1a); }
 .c3-tab:active { transform: translateY(1px); }
@@ -38,7 +38,7 @@
 	display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; width: 100%;
 	padding: 56px 24px; border: 1.5px dashed var(--hairline-strong, #2a2a2a); border-radius: 16px;
 	background: radial-gradient(circle at 50% 30%, #141414 0%, #070707 72%); color: inherit; font: inherit; cursor: pointer;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .c3-drop:hover, .c3-drop.is-dragover { border-color: var(--text, #f6f6f6); background: #0e0e0e; }
 .c3-drop:active { transform: scale(0.998); }
@@ -107,7 +107,7 @@
 .c3-pair .pc-btn { margin-top: 8px; }
 .c3-quality { margin: 0; min-width: 0; }
 .c3-legend { font-family: var(--font-display, 'Space Grotesk', sans-serif); font-size: 13px; font-weight: 700; padding: 0 4px; }
-.c3-q { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; border: 1px solid transparent; border-radius: 9px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.c3-q { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; border: 1px solid transparent; border-radius: 9px; cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast); }
 .c3-q:hover { background: var(--surface-2, #1a1a1a); }
 .c3-q:has(input:checked) { border-color: var(--text, #f6f6f6); }
 .c3-q:has(input:focus-visible) { outline: 2px solid var(--text, #fff); outline-offset: 2px; }
@@ -130,7 +130,7 @@
 .c3-step.is-done .c3-step-dot { background: var(--text, #f6f6f6); border-color: var(--text, #f6f6f6); color: #000; }
 .c3-step-pct { font-variant-numeric: tabular-nums; font-size: 12px; }
 .c3-bar { height: 6px; border-radius: 6px; background: var(--surface-0, #0b0b0b); border: 1px solid var(--hairline, #1f1f1f); overflow: hidden; }
-.c3-bar span { display: block; height: 100%; width: 0; background: var(--text, #f6f6f6); transition: width 0.25s ease-out; }
+.c3-bar span { display: block; height: 100%; width: 0; background: var(--text, #f6f6f6); transition: width var(--duration-base) var(--ease-out); }
 .c3-meter-text { margin: 8px 0 0; font-size: 12.5px; color: var(--text-2, #b4b4b4); font-variant-numeric: tabular-nums; }
 .c3-work-actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -142,7 +142,7 @@
 /* captures */
 .c3-empty { color: var(--text-3, #8a8a8a); font-size: 13.5px; line-height: 1.6; margin: 0; padding: 18px; border: 1px dashed var(--hairline-strong, #2a2a2a); border-radius: 12px; }
 .c3-cap-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.c3-cap { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px; border: 1px solid var(--hairline, #1f1f1f); border-radius: 12px; background: var(--surface-1, #111); transition: border-color 0.15s; }
+.c3-cap { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px; border: 1px solid var(--hairline, #1f1f1f); border-radius: 12px; background: var(--surface-1, #111); transition: border-color var(--duration-fast); }
 .c3-cap:hover { border-color: var(--hairline-strong, #2a2a2a); }
 .c3-cap-poster { width: 96px; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 8px; background: #0b0b0b; display: block; }
 .c3-cap-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 14px; }

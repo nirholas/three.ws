@@ -1878,7 +1878,7 @@ model-slot > img.model-slot-poster {
 	border-radius: 12px;
 	background: rgba(255, 255, 255, 0.04);
 	border: 1px solid rgba(255, 255, 255, 0.1);
-	transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .bundle-card:hover {
@@ -1979,7 +1979,7 @@ model-slot > img.model-slot-poster {
 	cursor: pointer;
 	color: #04121a;
 	background: var(--accent, #00d9ff);
-	transition: filter 0.15s ease, transform 0.1s ease;
+	transition: filter var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 
 .bundle-buy-btn {

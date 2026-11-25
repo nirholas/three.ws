@@ -113,7 +113,7 @@ code {
 	text-decoration: none;
 	white-space: nowrap;
 	cursor: pointer;
-	transition: background 120ms ease, border-color 120ms ease, transform 80ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 
 .msa-btn:hover {
@@ -541,7 +541,7 @@ code {
 	color: var(--color-text-bright);
 	font: inherit;
 	font-size: var(--text-xs, 12px);
-	transition: border-color 120ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .msa-select:hover,

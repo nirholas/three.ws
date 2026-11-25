@@ -9,7 +9,7 @@
 	color: var(--text, #f6f6f6);
 	font-size: 13.5px;
 	line-height: 1.45;
-	transition: opacity 160ms ease, transform 160ms ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .ms-trial-banner.is-leaving { opacity: 0; transform: translateY(-4px); }
 
@@ -46,7 +46,7 @@
 	font-weight: 600;
 	text-decoration: none;
 	color: var(--text, #f6f6f6);
-	transition: background-color 120ms ease, border-color 120ms ease;
+	transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .ms-trial-banner__link { border: 1px solid var(--hairline-strong, rgba(255, 255, 255, 0.09)); }
 .ms-trial-banner__details { color: var(--text-2, #a8a8a8); }
@@ -67,7 +67,7 @@
 	background: transparent;
 	color: var(--text-2, #a8a8a8);
 	cursor: pointer;
-	transition: background-color 120ms ease, color 120ms ease;
+	transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .ms-trial-banner__close:hover { background: var(--surface-2, rgba(255, 255, 255, 0.05)); color: var(--text, #f6f6f6); }
 

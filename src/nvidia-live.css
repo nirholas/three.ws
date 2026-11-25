@@ -45,7 +45,7 @@
 	border: 1px solid var(--border);
 	border-radius: 12px;
 	background: var(--panel);
-	transition: border-color 0.15s ease, transform 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	animation: nvl-in 0.25s ease both;
 }
 .nvl-card:hover { border-color: color-mix(in srgb, var(--nv) 45%, var(--border)); }
@@ -287,7 +287,7 @@
 	border-radius: 0 4px 4px 0;
 	cursor: pointer;
 	flex-shrink: 0;
-	transition: filter 0.15s ease, transform 0.15s ease;
+	transition: filter var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .nvl-bar:hover { filter: brightness(1.12); }
 .nvl-bar:active { transform: scaleY(0.9); }

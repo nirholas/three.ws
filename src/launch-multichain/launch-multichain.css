@@ -51,7 +51,7 @@
 	color: var(--cv-text);
 	font: inherit;
 	cursor: pointer;
-	transition: border-color var(--duration-fast, 120ms) var(--ease-standard, ease), background-color var(--duration-fast, 120ms) var(--ease-standard, ease);
+	transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
 }
 .ml-option small {
 	color: var(--cv-text-2);

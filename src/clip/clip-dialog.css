@@ -10,7 +10,7 @@
 	--c-text-3: var(--text-3, #8e8e96);
 	--c-accent: var(--accent, #8b5cf6);
 	--c-warn: var(--warn, #f59e0b);
-	--c-danger: #f87171;
+	--c-danger: var(--danger);
 	--c-radius: var(--radius, 12px);
 	width: min(640px, calc(100vw - 24px));
 	max-height: calc(100vh - 24px);
@@ -34,7 +34,7 @@
 .clip-dlg-head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; padding: 18px 20px 12px; border-bottom: 1px solid var(--c-border); }
 .clip-dlg-head h2 { margin: 0 0 4px; font-size: 17px; font-weight: 650; }
 .clip-dlg-sub { margin: 0; color: var(--c-text-2); font-size: 13px; }
-.clip-x { flex: none; width: 32px; height: 32px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--c-text-2); font-size: 22px; line-height: 1; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.clip-x { flex: none; width: 32px; height: 32px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--c-text-2); font-size: 22px; line-height: 1; cursor: pointer; transition: background var(--duration-fast), color var(--duration-fast); }
 .clip-x:hover { background: var(--c-panel-2); color: var(--c-text); }
 .clip-x:active { transform: scale(0.95); }
 .clip-dlg-body { padding: 16px 20px 20px; overflow-y: auto; }
@@ -48,12 +48,12 @@
 @media (max-width: 560px) { .clip-grid { grid-template-columns: 1fr; } }
 
 .clip-seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; border: 1px solid var(--c-border-2); border-radius: 10px; background: var(--c-panel-2); }
-.clip-seg-btn { flex: 1 1 auto; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--c-text-2); font: inherit; font-size: 13px; cursor: pointer; transition: background 0.15s, color 0.15s; }
+.clip-seg-btn { flex: 1 1 auto; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--c-text-2); font: inherit; font-size: 13px; cursor: pointer; transition: background var(--duration-fast), color var(--duration-fast); }
 .clip-seg-btn:hover { color: var(--c-text); background: rgba(255, 255, 255, 0.05); }
 .clip-seg-btn:active { transform: scale(0.98); }
-.clip-seg-btn[aria-checked='true'] { background: var(--c-text); color: #0a0a0a; font-weight: 600; }
+.clip-seg-btn[aria-checked='true'] { background: var(--c-text); color: var(--bg-0); font-weight: 600; }
 
-.clip-text { width: 100%; box-sizing: border-box; resize: vertical; min-height: 76px; padding: 10px 12px; border: 1px solid var(--c-border-2); border-radius: 10px; background: #0b0b0b; color: var(--c-text); font: inherit; transition: border-color 0.15s; }
+.clip-text { width: 100%; box-sizing: border-box; resize: vertical; min-height: 76px; padding: 10px 12px; border: 1px solid var(--c-border-2); border-radius: 10px; background: #0b0b0b; color: var(--c-text); font: inherit; transition: border-color var(--duration-fast); }
 .clip-text:hover { border-color: #3a3a3a; }
 .clip-text:focus { border-color: var(--c-accent); outline: none; }
 .clip-row-between { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-top: 8px; }
@@ -61,10 +61,11 @@
 .clip-inline select { max-width: 340px; padding: 6px 8px; border: 1px solid var(--c-border-2); border-radius: 8px; background: var(--c-panel-2); color: var(--c-text); font: inherit; font-size: 13px; cursor: pointer; }
 .clip-inline select:hover { border-color: #3a3a3a; }
 .clip-inline input[type='color'] { width: 34px; height: 28px; padding: 0; border: 1px solid var(--c-border-2); border-radius: 6px; background: none; cursor: pointer; }
+.clip-inline input[type='color']:hover { border-color: var(--stroke-strong); }
 .clip-count { color: var(--c-text-3); font-size: 12px; font-variant-numeric: tabular-nums; }
 .clip-count-warn { color: var(--c-warn); }
 
-.clip-drop { position: relative; display: flex; align-items: center; justify-content: center; min-height: 64px; padding: 12px; border: 1px dashed var(--c-border-2); border-radius: 10px; background: #0b0b0b; color: var(--c-text-2); text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.clip-drop { position: relative; display: flex; align-items: center; justify-content: center; min-height: 64px; padding: 12px; border: 1px dashed var(--c-border-2); border-radius: 10px; background: #0b0b0b; color: var(--c-text-2); text-align: center; cursor: pointer; transition: border-color var(--duration-fast), background var(--duration-fast); }
 .clip-drop-sm { min-height: 44px; }
 .clip-drop:hover { border-color: var(--c-accent); background: var(--c-panel-2); color: var(--c-text); }
 .clip-drop:focus-within { border-color: var(--c-accent); outline: 2px solid var(--c-accent); outline-offset: 2px; }
@@ -72,7 +73,7 @@
 .clip-hint { margin: 8px 0 0; color: var(--c-text-3); font-size: 12px; }
 
 .clip-bg-opts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
-.clip-swatch { width: 30px; height: 30px; border: 2px solid var(--c-border-2); border-radius: 50%; background: var(--sw); cursor: pointer; transition: transform 0.12s, border-color 0.12s; }
+.clip-swatch { width: 30px; height: 30px; border: 2px solid var(--c-border-2); border-radius: 50%; background: var(--sw); cursor: pointer; transition: transform var(--duration-fast), border-color var(--duration-fast); }
 .clip-swatch:hover { transform: scale(1.08); border-color: var(--c-text-2); }
 .clip-swatch:active { transform: scale(0.95); }
 .clip-swatch[aria-pressed='true'] { border-color: var(--c-text); box-shadow: 0 0 0 2px var(--c-accent); }
@@ -81,6 +82,7 @@
 .clip-toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--c-text-2); cursor: pointer; }
 .clip-toggle:hover { color: var(--c-text); }
 .clip-toggle input { width: 16px; height: 16px; accent-color: var(--c-accent); cursor: pointer; }
+.clip-toggle input:hover:not(:disabled) { filter: brightness(1.15); }
 .clip-toggle input:disabled { cursor: not-allowed; }
 .clip-toggle:has(input:disabled) { opacity: 0.5; cursor: not-allowed; }
 
@@ -88,11 +90,11 @@
 .clip-quota { margin: 0; color: var(--c-text-3); font-size: 12px; }
 .clip-quota a, .clip-msg a:not(.clip-btn) { color: var(--c-text); }
 
-.clip-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 16px; border: 1px solid var(--c-border-2); border-radius: 9px; background: var(--c-panel-2); color: var(--c-text); font: inherit; font-weight: 550; text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.08s, opacity 0.15s; }
+.clip-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 16px; border: 1px solid var(--c-border-2); border-radius: 9px; background: var(--c-panel-2); color: var(--c-text); font: inherit; font-weight: 550; text-decoration: none; cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant), opacity var(--duration-fast); }
 .clip-btn:hover { background: #1f1f1f; border-color: #3a3a3a; }
 .clip-btn:active { transform: scale(0.98); }
 .clip-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-.clip-btn-primary { background: var(--c-text); border-color: var(--c-text); color: #0a0a0a; }
+.clip-btn-primary { background: var(--c-text); border-color: var(--c-text); color: var(--bg-0); }
 .clip-btn-primary:hover { background: #e4e4e7; border-color: #e4e4e7; }
 .clip-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -107,7 +109,7 @@
 .clip-progress { display: flex; flex-direction: column; gap: 10px; padding: 18px 0 6px; }
 .clip-stage { font-weight: 600; }
 .clip-track { position: relative; height: 8px; border-radius: 99px; background: var(--c-panel-2); overflow: hidden; }
-.clip-fill { position: absolute; inset: 0; transform-origin: left; transform: scaleX(0); background: linear-gradient(90deg, var(--c-accent), #c4b5fd); transition: transform 0.12s linear; will-change: transform; }
+.clip-fill { position: absolute; inset: 0; transform-origin: left; transform: scaleX(0); background: linear-gradient(90deg, var(--c-accent), #c4b5fd); transition: transform var(--duration-fast) var(--ease-out); will-change: transform; }
 .clip-indeterminate .clip-fill { width: 35%; transform: none; animation: clip-indet 1.2s ease-in-out infinite; }
 @keyframes clip-indet { 0% { left: -35%; } 100% { left: 100%; } }
 @media (prefers-reduced-motion: reduce) { .clip-indeterminate .clip-fill { animation: none; width: 100%; opacity: 0.5; } }

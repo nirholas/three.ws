@@ -79,7 +79,7 @@
 			.ps-overlay[hidden] { display: none; }
 			.ps-overlay--drop {
 				cursor: pointer; width: 100%; border: 0; background: transparent; font: inherit; color: inherit;
-				transition: background var(--duration-fast, 120ms);
+				transition: background var(--duration-fast);
 			}
 			.ps-overlay--drop:hover, .ps-stage.is-dragover .ps-overlay--drop { background: rgba(255,255,255,0.04); }
 			.ps-overlay--drop:active { background: rgba(255,255,255,0.07); }
@@ -105,7 +105,7 @@
 			.ps-step[data-state="done"] { color: var(--text-2, #cfcfcf); border-color: var(--hairline-strong, #2a2a2a); }
 			.ps-step[data-state="done"]::before { content: '\2713\00a0'; }
 			.ps-bar { height: 4px; border-radius: 4px; background: var(--hairline, #1f1f1f); overflow: hidden; }
-			.ps-bar > span { display: block; height: 100%; width: 0; background: var(--text, #f6f6f6); transition: width 600ms ease; }
+			.ps-bar > span { display: block; height: 100%; width: 0; background: var(--text, #f6f6f6); transition: width var(--duration-slow) var(--ease-standard); }
 			.ps-skeleton { display: grid; gap: 8px; width: min(440px, 100%); }
 			.ps-skeleton i {
 				display: block; height: 10px; border-radius: 6px;
@@ -136,7 +136,7 @@
 				display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px;
 				background: rgba(0,0,0,0.6); border: 1px solid var(--hairline, #1f1f1f); border-radius: 8px;
 				color: var(--text-2, #cfcfcf); cursor: pointer; font: inherit; font-size: 12px; text-decoration: none;
-				backdrop-filter: blur(6px); transition: color var(--duration-fast, 120ms), border-color var(--duration-fast, 120ms), background var(--duration-fast, 120ms);
+				backdrop-filter: blur(6px); transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 			}
 			.ps-chipbtn:hover { color: #fff; border-color: var(--hairline-strong, #2a2a2a); }
 			.ps-chipbtn:active { background: rgba(255,255,255,0.12); }
@@ -153,7 +153,7 @@
 				padding: 10px 14px; border-radius: 9px; font-size: 13px; font-weight: 600;
 				border: 1px solid var(--hairline-strong, #2a2a2a); background: transparent;
 				color: var(--text, #f6f6f6); cursor: pointer; font-family: inherit; text-decoration: none; box-sizing: border-box;
-				transition: background var(--duration-fast, 120ms), border-color var(--duration-fast, 120ms), opacity var(--duration-fast, 120ms);
+				transition: background var(--duration-fast), border-color var(--duration-fast), opacity var(--duration-fast);
 			}
 			.ps-btn:hover { background: var(--surface-2, #1a1a1a); }
 			.ps-btn:active { background: var(--surface-3, #232323); }
@@ -170,7 +170,7 @@
 			.ps-field {
 				flex: 1; min-width: 0; padding: 10px 12px; border-radius: 9px; font: inherit; font-size: 13px;
 				border: 1px solid var(--hairline-strong, #2a2a2a); background: var(--surface-0, #0a0a0a); color: var(--text, #f6f6f6);
-				transition: border-color var(--duration-fast, 120ms), box-shadow var(--duration-fast, 120ms);
+				transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 			}
 			.ps-field::placeholder { color: var(--text-3, #8a8a8a); }
 			.ps-field:hover { border-color: var(--text-3, #8a8a8a); }

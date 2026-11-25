@@ -386,7 +386,7 @@ html, body {
 	padding: 10px 12px; border-radius: 10px;
 	background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06);
 	font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, 0.82);
-	transition: background 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .agora-pp-mind-item:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.12); }
 .agora-pp-mind-when { display: block; margin-top: 4px; font-size: 11px; color: rgba(255, 255, 255, 0.4); }

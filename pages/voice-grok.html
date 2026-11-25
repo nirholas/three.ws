@@ -45,7 +45,7 @@
 			color: var(--ink-dim); border: 1px solid var(--stroke); border-radius: var(--radius-pill);
 			padding: 5px 11px; margin-bottom: 14px; background: var(--surface-1);
 		}
-		.vg-kicker::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--vg-engine-dot, var(--ink-faint)); transition: background 0.2s ease; }
+		.vg-kicker::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--vg-engine-dot, var(--ink-faint)); transition: background var(--duration-base) var(--ease-standard); }
 		.vg-kicker[data-engine="grok"] { --vg-engine-dot: var(--success); }
 		.vg-kicker[data-engine="chain"] { --vg-engine-dot: var(--warn); }
 		.vg-hero h1 { font-size: clamp(1.8rem, 4.6vw, 2.7rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.025em; color: var(--ink-bright); }
@@ -86,7 +86,7 @@
 			letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-bright);
 			background: color-mix(in srgb, var(--bg-0) 72%, transparent); border: 1px solid var(--stroke); backdrop-filter: blur(6px);
 		}
-		.vg-state::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--vg-state-dot, var(--ink-faint)); transition: background 0.2s ease, box-shadow 0.2s ease; }
+		.vg-state::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--vg-state-dot, var(--ink-faint)); transition: background var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard); }
 		.vg-state[data-state="listening"] { --vg-state-dot: var(--success); }
 		.vg-state[data-state="listening"]::before { box-shadow: 0 0 0 calc(var(--vg-level, 0) * 10px) color-mix(in srgb, var(--success) 35%, transparent); }
 		.vg-state[data-state="thinking"], .vg-state[data-state="transcribing"], .vg-state[data-state="connecting"], .vg-state[data-state="reconnecting"] { --vg-state-dot: var(--accent); }
@@ -100,7 +100,7 @@
 		.vg-seg { display: inline-flex; border: 1px solid var(--stroke); border-radius: var(--radius-pill); padding: 3px; background: var(--bg-0); }
 		.vg-seg button {
 			appearance: none; border: 0; background: transparent; color: var(--ink-dim); font: 500 var(--text-sm)/1 var(--font-body, inherit);
-			padding: 8px 14px; border-radius: var(--radius-pill); cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+			padding: 8px 14px; border-radius: var(--radius-pill); cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 		}
 		.vg-seg button:hover:not(:disabled) { color: var(--ink-bright); background: var(--surface-1); }
 		.vg-seg button:active:not(:disabled) { transform: translateY(1px); }
@@ -116,7 +116,7 @@
 			appearance: none; display: inline-flex; align-items: center; gap: 8px; justify-content: center;
 			border: 1px solid var(--stroke); background: var(--surface-1); color: var(--ink-bright);
 			font: 500 var(--text-sm)/1 var(--font-body, inherit); padding: 10px 16px; border-radius: var(--radius-pill);
-			cursor: pointer; text-decoration: none; transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+			cursor: pointer; text-decoration: none; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 		}
 		.vg-btn:hover:not(:disabled) { border-color: var(--stroke-strong, var(--ink-faint)); background: color-mix(in srgb, var(--ink) 6%, var(--surface-1)); }
 		.vg-btn:active:not(:disabled) { transform: translateY(1px); }
@@ -128,7 +128,7 @@
 			appearance: none; position: relative; width: 100%; min-height: 64px; border-radius: var(--radius-lg);
 			border: 1px solid var(--stroke); background: var(--bg-0); color: var(--ink-bright);
 			font: 600 var(--text-md, 1rem)/1.2 var(--font-display); cursor: pointer; touch-action: none; user-select: none;
-			transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+			transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 			box-shadow: 0 0 0 calc(var(--vg-level, 0) * 8px) color-mix(in srgb, var(--success) 25%, transparent);
 		}
 		.vg-talk:hover:not(:disabled) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--bg-0)); }
@@ -140,13 +140,13 @@
 		.vg-pick {
 			appearance: none; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--bg-0);
 			padding: 0; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; color: var(--ink-dim);
-			transition: border-color 0.15s ease, transform 0.1s ease;
+			transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 		}
 		.vg-pick:hover { border-color: var(--stroke-strong, var(--ink-faint)); color: var(--ink-bright); }
 		.vg-pick:active { transform: scale(0.98); }
 		.vg-pick[aria-pressed="true"] { border-color: var(--accent); color: var(--ink-bright); box-shadow: 0 0 0 1px var(--accent); }
 		.vg-pick img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--surface-1); }
-		.vg-pick-mono { width: 100%; aspect-ratio: 1; display: grid; place-items: center; font: 600 1.5rem/1 var(--font-mono); font-style: normal; color: var(--ink-dim); background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent) 22%, var(--surface-1)), var(--surface-1) 70%); transition: color 0.15s ease; }
+		.vg-pick-mono { width: 100%; aspect-ratio: 1; display: grid; place-items: center; font: 600 1.5rem/1 var(--font-mono); font-style: normal; color: var(--ink-dim); background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent) 22%, var(--surface-1)), var(--surface-1) 70%); transition: color var(--duration-fast) var(--ease-standard); }
 		.vg-pick:hover .vg-pick-mono, .vg-pick[aria-pressed="true"] .vg-pick-mono { color: var(--ink-bright); }
 		.vg-pick span { font-size: var(--text-2xs); padding: 5px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 		.vg-pick-skel { aspect-ratio: 1 / 1.25; border-radius: var(--radius-md, 10px); background: linear-gradient(100deg, var(--surface-1) 30%, color-mix(in srgb, var(--ink) 9%, var(--surface-1)) 50%, var(--surface-1) 70%); background-size: 220% 100%; animation: vg-shimmer 1.3s linear infinite; }
@@ -172,7 +172,7 @@
 		.vg-empty { color: var(--ink-faint); font-size: var(--text-ui); line-height: 1.55; margin: 0; }
 
 		.vg-links { margin-top: var(--space-2xl); display: flex; gap: var(--space-md); flex-wrap: wrap; }
-		.vg-links a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--stroke-strong, var(--stroke)); padding-bottom: 2px; transition: color 0.15s ease, border-color 0.15s ease; }
+		.vg-links a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--stroke-strong, var(--stroke)); padding-bottom: 2px; transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
 		.vg-links a:hover { color: var(--ink-bright); border-color: var(--accent); }
 		.vg-links a:active { color: var(--accent); }
 		.vg-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }

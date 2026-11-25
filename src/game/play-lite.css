@@ -61,7 +61,7 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 	min-height: 100vh; min-height: 100dvh;
 	padding: calc(var(--pl-gap) + env(safe-area-inset-top, 0px)) calc(var(--pl-gap) + env(safe-area-inset-right, 0px)) calc(var(--pl-gap) + env(safe-area-inset-bottom, 0px)) calc(var(--pl-gap) + env(safe-area-inset-left, 0px));
 	max-width: 1440px; margin: 0 auto;
-	transition: padding-top var(--duration-base, 200ms) var(--ease-standard, ease);
+	transition: padding-top var(--duration-base) var(--ease-standard);
 }
 
 /* ── Header ─────────────────────────────────────────────────────────────── */
@@ -102,7 +102,7 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	background: rgba(255, 255, 255, 0.04); color: var(--cc-text);
 	font: inherit; font-weight: 600; text-decoration: none; cursor: pointer;
-	transition: background var(--duration-fast, 120ms) var(--ease-standard, ease), border-color var(--duration-fast, 120ms) var(--ease-standard, ease), transform var(--duration-instant, 80ms) var(--ease-standard, ease);
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 	-webkit-tap-highlight-color: transparent;
 }
 .pl-btn:hover { background: rgba(255, 255, 255, 0.09); border-color: var(--cc-edge-hi); }
@@ -121,7 +121,7 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 	width: var(--pl-touch); height: var(--pl-touch); display: grid; place-items: center;
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius); background: var(--cc-panel);
 	color: var(--cc-text); font: 700 20px/1 Inter, system-ui, sans-serif; cursor: pointer;
-	transition: background var(--duration-fast, 120ms) var(--ease-standard, ease), border-color var(--duration-fast, 120ms) var(--ease-standard, ease);
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .pl-icon-btn:hover { background: #1a1a1e; border-color: var(--cc-edge-hi); }
 .pl-icon-btn:active { background: #222227; }
@@ -139,7 +139,7 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 	width: 100%; min-height: var(--pl-touch); padding: 10px 12px;
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	background: #0f0f12; color: var(--cc-text); font: inherit; font-size: 16px; /* 16px stops iOS zooming in */
-	transition: border-color var(--duration-fast, 120ms) var(--ease-standard, ease);
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .pl-input:hover { border-color: rgba(255, 255, 255, 0.24); }
 .pl-input:focus { border-color: var(--cc-edge-hi); outline: none; }
@@ -207,7 +207,7 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 	min-height: var(--pl-touch); padding: 0 14px;
 	border: 1px solid var(--cc-edge); border-radius: 999px; background: var(--cc-panel);
 	color: var(--cc-text); font: inherit; font-weight: 600; cursor: pointer;
-	transition: background var(--duration-fast, 120ms) var(--ease-standard, ease), border-color var(--duration-fast, 120ms) var(--ease-standard, ease), transform var(--duration-instant, 80ms) var(--ease-standard, ease);
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 	-webkit-tap-highlight-color: transparent;
 }
 .pl-chip:hover { background: #1a1a1e; border-color: var(--cc-edge-hi); }
@@ -251,7 +251,7 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 	flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 	min-height: var(--pl-touch); padding: 0 14px; border: 0; border-bottom: 2px solid transparent;
 	background: none; color: var(--cc-dim); font: inherit; font-weight: 600; cursor: pointer;
-	transition: color var(--duration-fast, 120ms) var(--ease-standard, ease), border-color var(--duration-fast, 120ms) var(--ease-standard, ease), background var(--duration-fast, 120ms) var(--ease-standard, ease);
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .pl-tab:hover { color: var(--cc-text); background: rgba(255, 255, 255, 0.03); }
 .pl-tab:active { background: rgba(255, 255, 255, 0.06); }
@@ -297,7 +297,7 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 	min-height: var(--pl-touch); padding: 8px 12px;
 	border: 1px solid var(--cc-edge-soft); border-radius: var(--cc-radius); background: rgba(255, 255, 255, 0.02);
 	color: var(--cc-text); font: inherit; cursor: pointer;
-	transition: background var(--duration-fast, 120ms) var(--ease-standard, ease), border-color var(--duration-fast, 120ms) var(--ease-standard, ease);
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .pl-place { flex-direction: column; align-items: flex-start; gap: 0; }
 .pl-place:hover, .pl-roster-row:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--cc-edge-hi); }
@@ -353,7 +353,7 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 	padding: 10px 14px; border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	background: var(--cc-panel-solid); box-shadow: var(--cc-shadow); color: var(--cc-text);
 	opacity: 0; transform: translateY(8px);
-	transition: opacity var(--duration-base, 200ms) var(--ease-standard, ease), transform var(--duration-base, 200ms) var(--ease-standard, ease);
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 	overflow-wrap: anywhere;
 }
 .pl-toast.is-in { opacity: 1; transform: none; }

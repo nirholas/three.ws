@@ -24,7 +24,7 @@
 	text-decoration: underline;
 	text-underline-offset: 2px;
 	border-radius: 2px;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .upload-sign-in a:hover {
 	color: var(--ink, #fff);

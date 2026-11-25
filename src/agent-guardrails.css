@@ -10,7 +10,7 @@
 .gr-row {
 	display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 0.85rem;
 	border-radius: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07);
-	cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
+	cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .gr-row:hover { border-color: rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.045); }
 .gr-row:has(.gr-switch:checked) { border-color: rgba(122, 162, 255, 0.4); }
@@ -20,11 +20,11 @@
 
 .gr-switch {
 	appearance: none; flex-shrink: 0; width: 2.4rem; height: 1.35rem; border-radius: 999px; position: relative; cursor: pointer;
-	background: rgba(255, 255, 255, 0.14); transition: background 0.18s ease; margin: 0;
+	background: rgba(255, 255, 255, 0.14); transition: background var(--duration-fast) var(--ease-standard); margin: 0;
 }
 .gr-switch::after {
 	content: ''; position: absolute; top: 0.15rem; left: 0.15rem; width: 1.05rem; height: 1.05rem; border-radius: 50%;
-	background: #fff; transition: transform 0.18s ease; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+	background: #fff; transition: transform var(--duration-fast) var(--ease-standard); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 .gr-switch:checked { background: #3b82f6; }
 .gr-switch:checked::after { transform: translateX(1.05rem); }

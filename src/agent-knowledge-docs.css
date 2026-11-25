@@ -11,7 +11,7 @@
 	display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem;
 	padding: 1.5rem 1rem; border: 1.5px dashed rgba(255, 255, 255, 0.16); border-radius: 12px;
 	background: rgba(255, 255, 255, 0.02); color: rgba(255, 255, 255, 0.7); text-align: center; cursor: pointer;
-	transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .kd-drop:hover { border-color: rgba(122, 162, 255, 0.5); background: rgba(122, 162, 255, 0.05); }
 .kd-drop:focus-visible { outline: 2px solid #7aa2ff; outline-offset: 2px; }
@@ -34,7 +34,7 @@
 .kd-up-x:hover { color: #fff; }
 .kd-up-x:focus-visible { outline: 2px solid #7aa2ff; }
 .kd-bar { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; position: relative; }
-.kd-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #3b82f6, #7aa2ff); border-radius: inherit; transition: width 0.2s ease; }
+.kd-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #3b82f6, #7aa2ff); border-radius: inherit; transition: width var(--duration-base) var(--ease-standard); }
 .kd-up[data-status='done'] .kd-bar > span { background: #22c55e; }
 .kd-up[data-status='error'] .kd-bar > span { background: rgba(252, 165, 165, 0.55); }
 .kd-bar.indeterminate > span { width: 35% !important; position: absolute; animation: kd-slide 1.2s ease-in-out infinite; }
@@ -43,7 +43,7 @@
 .kd-doc {
 	display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 8px;
 	background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07);
-	transition: border-color 0.15s ease, background 0.15s ease; animation: kd-in 0.2s ease-out;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); animation: kd-in 0.2s ease-out;
 }
 .kd-doc:hover { border-color: rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.045); }
 .kd-doc-body { flex: 1; min-width: 0; }
@@ -126,7 +126,7 @@
 .kd-up-note { font-size: 0.7rem; color: rgba(255, 255, 255, 0.55); margin-top: 0.4rem; }
 .kd-up-tables {
 	margin-top: 0.5rem; background: none; border: 1px solid rgba(122, 162, 255, 0.3); border-radius: 999px; color: #9ad0ff;
-	font-size: 0.7rem; padding: 0.2rem 0.65rem; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+	font-size: 0.7rem; padding: 0.2rem 0.65rem; cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .kd-up-tables:hover { background: rgba(122, 162, 255, 0.1); border-color: rgba(122, 162, 255, 0.55); }
 .kd-up-preview { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.6rem; max-height: 24rem; overflow-y: auto; animation: kd-in 0.2s ease-out; }

@@ -63,7 +63,7 @@ a.op-brand:hover { color: var(--accent); }
 
 .op-progress { margin-top: 10px; }
 .op-progress-track { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
-.op-progress-bar { height: 100%; width: 4%; border-radius: inherit; background: var(--accent); transition: width var(--duration-base, .3s) ease-out; }
+.op-progress-bar { height: 100%; width: 4%; border-radius: inherit; background: var(--accent); transition: width var(--duration-base) var(--ease-out); }
 .op-progress-bar.is-indeterminate { width: 35%; animation: op-slide 1.3s ease-in-out infinite; }
 .op-progress-text { display: block; margin-top: 6px; font-size: var(--text-xs); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 .op-error { margin: 8px 0 0; font-size: var(--text-xs); line-height: 1.5; color: var(--danger); }

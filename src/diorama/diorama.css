@@ -699,7 +699,7 @@
 	font: inherit;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background 0.15s, border-color 0.15s, transform 0.1s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
 }
 .dio-play__cta {
 	background: var(--dio-glow);

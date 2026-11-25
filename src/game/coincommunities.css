@@ -4126,7 +4126,7 @@ select.npc-svc-input:hover {
 .cc-report-reason {
 	display: flex; align-items: center; gap: 10px; padding: 9px 10px; font-size: 13px; cursor: pointer;
 	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.18)); border-radius: 8px;
-	transition: background var(--duration-fast, 120ms) ease, border-color var(--duration-fast, 120ms) ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .cc-report-reason:hover { background: rgba(255, 255, 255, 0.07); }
 .cc-report-reason:has(input:checked) { border-color: var(--cc-edge-hi, #fff); background: rgba(255, 255, 255, 0.1); }
@@ -4138,7 +4138,7 @@ select.npc-svc-input:hover {
 .cc-report-btn {
 	padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; color: inherit;
 	background: transparent; border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.25)); border-radius: 8px;
-	transition: background var(--duration-fast, 120ms) ease, transform 80ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .cc-report-btn:hover { background: rgba(255, 255, 255, 0.1); }
 .cc-report-btn:active { transform: translateY(1px); }
