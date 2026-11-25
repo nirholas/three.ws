@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T19:39:42.259Z",
+	"generated_at": "2026-11-25T19:52:19.829Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4720,
+	"total": 4721,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -55,6 +55,16 @@
 			"title": "Concept images keep a second Hugging Face route, and image health tells the truth",
 			"summary": "Hugging Face stopped routing FLUX.1-schnell through nscale, so the second Hugging Face rung of the text-to-image ladder failed on every call. It now runs on WaveSpeed, which Hugging Face still maps to the model. /api/v1/ai/image?health=1 now asks each Hugging Face route whether it would actually serve, so an empty credit balance or a retired route shows as down with the reason instead of passing on a valid token. Images made on Hugging Face or the Livepeer network are now credited to that lane instead of to NVIDIA.",
 			"link": "/docs/api-reference",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Long-tail coin pages load during CoinGecko throttling, and Fear & Greed has a working backup",
+			"summary": "When CoinGecko and CoinPaprika both refuse, a /coin page now falls back to CoinMarketCap instead of showing an error. CoinMarketCap's coin is checked against an independent price reading before it is shown, and only its verified market cap is displayed. The Fear & Greed index backup now reads the CoinMarketCap key production actually holds, so it answers when alternative.me is down.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
@@ -1553,16 +1563,6 @@
 			"link": "/docs/forge-photo-prep",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-11-13",
-			"type": "update",
-			"title": "Agent profiles open faster on phones",
-			"summary": "An agent's profile page shows its avatar in a lightweight viewer, but it was also downloading the full 3D engine used by Talk, Pose and the GLB/OBJ/USDZ export, even for visitors who never opened them. That engine was the single largest download on the page. It now loads only when you press Talk, open the Pose tab or export a file, and Talk starts fetching it the moment you hover or touch the button, so the button rarely makes you wait. On a slow phone connection the profile finishes rendering sooner and uses noticeably less data.",
-			"link": "/agents",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

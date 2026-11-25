@@ -47,6 +47,14 @@
 			<description>Hugging Face stopped routing FLUX.1-schnell through nscale, so the second Hugging Face rung of the text-to-image ladder failed on every call. It now runs on WaveSpeed, which Hugging Face still maps to the model. /api/v1/ai/image?health=1 now asks each Hugging Face route whether it would actually serve, so an empty credit balance or a retired route shows as down with the reason instead of passing on a valid token. Images made on Hugging Face or the Livepeer network are now credited to that lane instead of to NVIDIA.</description>
 		</item>
 		<item>
+			<title>Long-tail coin pages load during CoinGecko throttling, and Fear &amp; Greed has a working backup</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Long-tail coin pages load during CoinGecko throttling, and Fear &amp; Greed has a working backup</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When CoinGecko and CoinPaprika both refuse, a /coin page now falls back to CoinMarketCap instead of showing an error. CoinMarketCap's coin is checked against an independent price reading before it is shown, and only its verified market cap is displayed. The Fear &amp; Greed index backup now reads the CoinMarketCap key production actually holds, so it answers when alternative.me is down.</description>
+		</item>
+		<item>
 			<title>Model and image requests stop paying for a rejected storage credential</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Model and image requests stop paying for a rejected storage credential</guid>

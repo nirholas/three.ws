@@ -16,7 +16,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch, isPlausibleCoinId, htmlToText } from '../_lib/coingecko.js';
-import { fetchFallbackCoinDetail } from '../_lib/coin-fallbacks.js';
+import { fetchCmcCoinDetail, fetchFallbackCoinDetail } from '../_lib/coin-fallbacks.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
@@ -144,7 +144,8 @@ function shape(c) {
 // Callers must validate id/contract first; upstream errors carry err.status.
 //
 // `source` names which upstream answered so the page can label degraded data;
-// it is always 'coingecko' on the happy path.
+// it is always 'coingecko' on the happy path, then 'coinpaprika' or
+// 'coinmarketcap' when a fallback rung answered.
 export async function buildCoinDetail({ id, contract }) {
 	try {
 		const raw = contract
@@ -160,10 +161,19 @@ export async function buildCoinDetail({ id, contract }) {
 		// coin id, not by Solana mint, and the platform's own mint intel
 		// (api/_lib/market/token-market.js) already fronts that path elsewhere.
 		if (err?.status === 404 || contract) throw err;
+		const why = err?.status || err?.name;
 		const coin = await fetchFallbackCoinDetail(id);
-		if (!coin) throw err;
-		console.warn(`[coin/detail] ${id}: coingecko failed (${err?.status || err?.name}); served from coinpaprika`);
-		return { coin, source: 'coinpaprika' };
+		if (coin) {
+			console.warn(`[coin/detail] ${id}: coingecko failed (${why}); served from coinpaprika`);
+			return { coin, source: 'coinpaprika' };
+		}
+		// CoinPaprika's keyless budget is sixty an hour and it lists far fewer
+		// long-tail coins; CoinMarketCap is the last rung (identity-checked and
+		// budgeted inside fetchCmcCoinDetail).
+		const cmc = await fetchCmcCoinDetail(id);
+		if (!cmc) throw err;
+		console.warn(`[coin/detail] ${id}: coingecko failed (${why}); served from coinmarketcap`);
+		return { coin: cmc, source: 'coinmarketcap' };
 	}
 }
 

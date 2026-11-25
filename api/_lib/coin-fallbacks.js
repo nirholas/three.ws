@@ -14,6 +14,10 @@
 // Sources (all keyless and free, verified live 2026-07-29):
 //   CoinPaprika  api.coinpaprika.com  — coin profile + exchange markets
 //   DefiLlama    coins.llama.fi       — price series, keyed by CoinGecko id
+//   CoinMarketCap pro-api.coinmarketcap.com, keyed (CMC_API_KEY, Basic plan):
+//                the last rung for the coin profile, added 2026-11-25 because
+//                CoinPaprika's hourly budget and catalog left long-tail coin
+//                pages answering 502. See the CoinMarketCap section below.
 //
 // DefiLlama is the reason the chart fallback is universal rather than
 // majors-only: its coins oracle is addressed as `coingecko:<id>`, so no id
@@ -49,6 +53,7 @@ import { cacheGet, cacheSet } from './cache.js';
 // callers (global stats, the paid market-heatmap endpoint) — see that module's
 // header for why the sixty-per-hour ceiling has to be tracked in one place.
 import { PAPRIKA_BASE, paprikaGet } from './coinpaprika.js';
+import { cmcApiKey, cmcGet, reserveCmcCredits } from './cmc.js';
 
 const LLAMA_COINS_BASE = 'https://coins.llama.fi';
 
@@ -258,7 +263,7 @@ export function resetPaprikaIdMemo() {
 const PAYLOAD_TTL_S = 120;
 const _inflight = new Map();
 
-async function cachedPayload(key, compute) {
+async function cachedPayload(key, compute, ttlS = PAYLOAD_TTL_S) {
 	const cached = await cacheGet(key).catch(() => null);
 	if (cached != null) return cached;
 	const pending = _inflight.get(key);
@@ -268,7 +273,7 @@ async function cachedPayload(key, compute) {
 			const value = await compute();
 			// A null is "couldn't answer", which must stay retryable: caching it
 			// would extend a transient miss across the whole window.
-			if (value != null) cacheSet(key, value, PAYLOAD_TTL_S).catch(() => {});
+			if (value != null) cacheSet(key, value, ttlS).catch(() => {});
 			return value;
 		} finally {
 			_inflight.delete(key);
@@ -425,6 +430,230 @@ export async function fetchFallbackCoinDetail(cgId) {
 		]);
 		return normalizePaprikaDetail(coin, ticker, cgId);
 	});
+}
+
+// ── CoinMarketCap rung (coin profile) ────────────────────────────────────────
+// CoinPaprika's sixty-an-hour budget is spent for most of any CoinGecko
+// throttle, and it does not list the long tail at all. Measured 2026-11-25:
+// /api/coin/detail answered 502 for ava-ai, ton-raffles, elon-coin,
+// first-grok-ai and dozens more every hour, because CoinGecko throttled Cloud
+// Run's shared egress and CoinPaprika had nothing. The platform holds a
+// CoinMarketCap Basic key (CMC_API_KEY), which lists far more of the long tail.
+//
+// CMC ids are numeric and its slugs often differ from CoinGecko's, so the match
+// is proven the same way the CoinPaprika price match is: DefiLlama gives the
+// symbol and price for the CoinGecko id, CMC's map gives every active coin with
+// that symbol, and one quotes call prices them all. A candidate is accepted
+// only when its price agrees within 2%, or when its slug IS the CoinGecko id
+// and the price is within 10% (DefiLlama's long-tail prices can lag a few
+// minutes). Nothing unproven is served.
+//
+// Credits: resolution costs 2 (map + quotes), the profile 1 more (info), and a
+// cached id costs 2 per refresh. Payloads are cached fleet-wide for 15 minutes
+// and every call draws on the shared daily budget in api/_lib/cmc.js.
+const CMC_PAYLOAD_TTL_S = 15 * 60;
+const CMC_MAX_CANDIDATES = 5;
+const CMC_SLUG_PRICE_TOLERANCE = 0.1;
+const _cmcIdMemo = new Map();
+const cmcIdKey = (cgId) => `cmc:id:${cgId}`;
+
+/**
+ * Pick the CMC coin that is the requested CoinGecko coin, from a quotes payload
+ * covering every same-symbol candidate. Exported so the rule is testable alone.
+ * @param {object} quotes  /v2/cryptocurrency/quotes/latest `data` (keyed by id)
+ * @param {string[]} order candidate ids, best-ranked first
+ * @param {{symbol: string, price: number}} identity  DefiLlama's reading
+ * @param {string} cgId
+ * @returns {object|null} the matching quote row
+ */
+export function pickCmcMatch(quotes, order, identity, cgId) {
+	const rows = order.map((id) => quotes?.[id]).filter((r) => r && typeof r === 'object');
+	const priceOf = (r) => num(r?.quote?.USD?.price);
+	const sameSymbol = (r) => str(r.symbol)?.toUpperCase() === identity.symbol;
+	return (
+		rows.find((r) => sameSymbol(r) && pricesAgree(priceOf(r), identity.price)) ||
+		rows.find((r) => sameSymbol(r) && str(r.slug) === cgId && pricesAgree(priceOf(r), identity.price, CMC_SLUG_PRICE_TOLERANCE)) ||
+		null
+	);
+}
+
+/** Active CMC ids for a symbol, best-ranked first. */
+export function cmcCandidates(map) {
+	const rank = (c) => (num(c?.rank) && num(c.rank) > 0 ? num(c.rank) : Number.MAX_SAFE_INTEGER);
+	return (Array.isArray(map?.data) ? map.data : [])
+		.filter((c) => c && c.is_active && num(c.id))
+		.sort((a, b) => rank(a) - rank(b))
+		.slice(0, CMC_MAX_CANDIDATES)
+		.map((c) => String(c.id));
+}
+
+/**
+ * Resolve a CoinGecko id to { id, quote } on CMC, or null. `quote` is the live
+ * quote row when resolution just priced it (so the caller need not pay again).
+ */
+async function resolveCmc(cgId) {
+	if (_cmcIdMemo.has(cgId)) return _cmcIdMemo.get(cgId) ? { id: _cmcIdMemo.get(cgId), quote: null } : null;
+	const cached = await cacheGet(cmcIdKey(cgId)).catch(() => null);
+	if (typeof cached === 'string') {
+		_cmcIdMemo.set(cgId, cached || null);
+		return cached ? { id: cached, quote: null } : null;
+	}
+	const identity = await llamaIdentity(cgId);
+	// No DefiLlama reading means nothing to prove a match against. That can be a
+	// blip, so it is not cached as a miss.
+	if (!identity) return null;
+	if (!(await reserveCmcCredits(2))) return null;
+	const map = await cmcGet(`/v1/cryptocurrency/map?symbol=${encodeURIComponent(identity.symbol)}`, { name: 'cmc-map' });
+	const order = cmcCandidates(map);
+	let match = null;
+	if (order.length) {
+		const quotes = await cmcGet(`/v2/cryptocurrency/quotes/latest?id=${order.join(',')}`, { name: 'cmc-quotes' });
+		match = pickCmcMatch(quotes?.data, order, identity, cgId);
+	}
+	const id = match ? String(match.id) : '';
+	_cmcIdMemo.set(cgId, id || null);
+	if (_cmcIdMemo.size > 2000) _cmcIdMemo.clear();
+	cacheSet(cmcIdKey(cgId), id, id ? ID_TTL_S : ID_MISS_TTL_S).catch(() => {});
+	return match ? { id, quote: match } : null;
+}
+
+/** Test-only hook: drop the in-memory CMC id memo. */
+export function resetCmcIdMemo() {
+	_cmcIdMemo.clear();
+}
+
+// CMC platform names → the CoinGecko platform ids the page keys contracts by.
+// Unlisted chains are dropped rather than guessed.
+const CMC_PLATFORM_TO_GECKO = {
+	solana: 'solana',
+	ethereum: 'ethereum',
+	base: 'base',
+	'bnb smart chain (bep20)': 'binance-smart-chain',
+	arbitrum: 'arbitrum-one',
+	polygon: 'polygon-pos',
+	'avalanche c-chain': 'avalanche',
+	optimism: 'optimistic-ethereum',
+	ton: 'the-open-network',
+	tron20: 'tron',
+	sui: 'sui',
+};
+
+const firstHttp = (arr) => (Array.isArray(arr) ? (arr.map(str).find((u) => u && /^https?:\/\//i.test(u)) ?? null) : null);
+
+/**
+ * CMC /v2/cryptocurrency/info row + /v2/cryptocurrency/quotes/latest row → the
+ * /api/coin/detail shape.
+ */
+export function normalizeCmcDetail(info, quote, cgId) {
+	if (!info || typeof info !== 'object' || !quote || typeof quote !== 'object') return null;
+	const q = quote.quote?.USD;
+	const price = num(q?.price);
+	if (price == null) return null;
+	const urls = info.urls || {};
+	// Only CMC-verified supply: a project's self-reported figure is a different
+	// trust level than the CoinGecko number this stands in for, so a coin CMC
+	// has not verified shows no market cap rather than the project's own claim.
+	const mcap = pos(q.market_cap);
+	const circulating = pos(quote.circulating_supply);
+	const platforms = {};
+	for (const c of info.contract_address || []) {
+		const chain = CMC_PLATFORM_TO_GECKO[str(c?.platform?.name)?.toLowerCase()];
+		const addr = str(c?.contract_address);
+		if (chain && addr && !platforms[chain] && Object.keys(platforms).length < 8) platforms[chain] = addr;
+	}
+	const repos = (urls.source_code || []).filter((u) => str(u)).slice(0, 3);
+	const explorers = (urls.explorer || []).filter((u) => str(u)).slice(0, 3);
+	return {
+		id: cgId,
+		symbol: str(info.symbol)?.toUpperCase() ?? null,
+		name: str(info.name) ?? cgId,
+		image: str(info.logo),
+		rank: pos(quote.cmc_rank),
+		categories: (info['tag-names'] || []).map(str).filter(Boolean).slice(0, 6),
+		description: str(info.description)?.slice(0, 3000) ?? '',
+		links: {
+			homepage: firstHttp(urls.website),
+			twitter: str(info.twitter_username) || handleFromUrl(firstHttp(urls.twitter)),
+			reddit: firstHttp(urls.reddit),
+			telegram: handleFromUrl((urls.chat || []).find((u) => /t\.me\//i.test(String(u)))),
+			github: str(repos[0]),
+			whitepaper: firstHttp(urls.technical_doc),
+			forum: firstHttp(urls.message_board),
+			chat: firstHttp(urls.chat),
+			announcement: firstHttp(urls.announcement),
+			repos,
+			explorers,
+		},
+		platforms,
+		market: {
+			price,
+			market_cap: mcap,
+			fdv: pos(q.fully_diluted_market_cap),
+			volume_24h: num(q.volume_24h),
+			// No intraday range or absolute change in the Basic quote.
+			high_24h: null,
+			low_24h: null,
+			change_24h_abs: null,
+			change_pct: {
+				h1: num(q.percent_change_1h),
+				h24: num(q.percent_change_24h),
+				d7: num(q.percent_change_7d),
+				d14: null,
+				d30: num(q.percent_change_30d),
+				d60: num(q.percent_change_60d),
+				d200: null,
+				y1: null,
+			},
+			mcap_change_24h_pct: null,
+			circulating,
+			total: pos(quote.total_supply),
+			// infinite_supply coins report max_supply null; 0 is "no cap" too.
+			max: pos(quote.max_supply),
+			ath: null,
+			ath_date: null,
+			ath_change_pct: null,
+			atl: null,
+			atl_date: null,
+		},
+		sentiment: { up_pct: null, down_pct: null, watchlist_users: null },
+		meta: {
+			genesis_date: str(info.date_launched)?.slice(0, 10) ?? null,
+			hashing_algorithm: null,
+			block_time_minutes: null,
+			country_origin: null,
+		},
+		developer: null,
+		community: null,
+		last_updated: str(q.last_updated) || str(quote.last_updated),
+	};
+}
+
+/**
+ * Coin profile from CoinMarketCap, in the /api/coin/detail shape, or null when
+ * no key is set, the coin cannot be proven to be the same asset, the day's
+ * budget is spent, or CMC fails. Never throws.
+ * @param {string} cgId  CoinGecko coin id
+ */
+export async function fetchCmcCoinDetail(cgId) {
+	const id = String(cgId || '').trim().toLowerCase();
+	if (!id || !cmcApiKey()) return null;
+	try {
+		return await cachedPayload(`cmc-fallback:detail:${id}`, async () => {
+			const resolved = await resolveCmc(id);
+			if (!resolved) return null;
+			let quote = resolved.quote;
+			if (!(await reserveCmcCredits(quote ? 1 : 2))) return null;
+			if (!quote) {
+				const quotes = await cmcGet(`/v2/cryptocurrency/quotes/latest?id=${resolved.id}`, { name: 'cmc-quotes' });
+				quote = quotes?.data?.[resolved.id] ?? null;
+			}
+			const info = await cmcGet(`/v2/cryptocurrency/info?id=${resolved.id}`, { name: 'cmc-info' });
+			return normalizeCmcDetail(info?.data?.[resolved.id], quote, id);
+		}, CMC_PAYLOAD_TTL_S);
+	} catch (err) {
+		console.warn(`[coin-fallbacks] coinmarketcap detail for ${id} failed: ${err?.message || err}`);
+		return null;
+	}
 }
 
 // ── Exchange listings ────────────────────────────────────────────────────────

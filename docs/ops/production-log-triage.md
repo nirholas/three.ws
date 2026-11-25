@@ -591,6 +591,15 @@ body: {"error":"upstream_error","error_description":"coin data is unavailable ri
 
   Then tell the owner the key needs a paid tier (or to wait for the monthly
   reset). Re-add with `--update-env-vars COINGECKO_API_KEY=<key>` once renewed.
+- **Coin pages keep rendering while CoinGecko is throttled.** `/api/coin/detail`
+  falls back to CoinPaprika, then to CoinMarketCap
+  ([api/\_lib/coin-fallbacks.js](../../api/_lib/coin-fallbacks.js)
+  `fetchCmcCoinDetail`). The log line names the rung that answered:
+  `served from coinpaprika` or `served from coinmarketcap`. A 502 that persists
+  through both means the coin is unknown to DefiLlama (no price to prove the CMC
+  match), CMC does not list it, the day's 400-credit CMC budget is spent, or CMC
+  is benched after a 429 (`[cmc] 429 limit rejection; benched until ...`).
+  Credit use: `curl -s -H "X-CMC_PRO_API_KEY: $KEY" https://pro-api.coinmarketcap.com/v1/key/info`.
 - **Monitor signature:** `coingecko-quota-exhausted-502` in
   [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs), classified `env-action`.
 

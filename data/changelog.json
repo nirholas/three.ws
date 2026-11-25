@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Long-tail coin pages load during CoinGecko throttling, and Fear & Greed has a working backup",
+			"summary": "When CoinGecko and CoinPaprika both refuse, a /coin page now falls back to CoinMarketCap instead of showing an error. CoinMarketCap's coin is checked against an independent price reading before it is shown, and only its verified market cap is displayed. The Fear & Greed index backup now reads the CoinMarketCap key production actually holds, so it answers when alternative.me is down.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Solana API endpoints answer a clear 400 for a mistyped address",
 			"summary": "The Solana endpoints on /api/v1/x (largest holders, token supply, balance, account, token holdings, transaction) now check that an address or signature is valid base58 before asking an RPC node. A typo used to wait about seven seconds and come back as a 502 internal error. Now it answers immediately with a 400 that names the bad parameter.",
 			"tags": [

@@ -385,6 +385,42 @@ describe('/api/coin/fear-greed', () => {
 		expect(res.statusCode).toBe(502);
 		expect(body.error).toBe('upstream_error');
 	});
+
+	// Measured 2026-11-25: production holds the CoinMarketCap key as CMC_API_KEY
+	// (Secret Manager `cmc-api-key`), but the rung only read COINMARKETCAP_API_KEY,
+	// so it never ran. CMC's v3 index also sends `timestamp` as an epoch-seconds
+	// string ("1795478400"), which Date.parse turns into NaN, so even with the
+	// right key every row was dropped and the page still 502ed.
+	it('falls back to the CoinMarketCap index under the CMC_API_KEY name production uses', async () => {
+		const saved = { cmc: process.env.CMC_API_KEY, long: process.env.COINMARKETCAP_API_KEY };
+		process.env.CMC_API_KEY = 'test-cmc-key';
+		delete process.env.COINMARKETCAP_API_KEY;
+		const seen = [];
+		globalThis.fetch = vi.fn(async (url, init = {}) => {
+			seen.push({ url: String(url), key: init.headers?.['X-CMC_PRO_API_KEY'] });
+			if (String(url).includes('alternative.me')) return { ok: false, status: 503 };
+			return {
+				ok: true,
+				json: async () => ({
+					data: [
+						{ timestamp: '1795478400', value: 9, value_classification: 'Extreme fear' },
+						{ timestamp: '1795392000', value: 30, value_classification: 'Fear' },
+					],
+				}),
+			};
+		});
+		try {
+			const { res, body } = await call(await load('../../api/coin/fear-greed.js'), '/api/coin/fear-greed?limit=2');
+			expect(res.statusCode).toBe(200);
+			expect(seen.some((s) => s.url.includes('pro-api.coinmarketcap.com') && s.key === 'test-cmc-key')).toBe(true);
+			expect(body.current).toEqual({ value: 9, label: 'Extreme Fear', ts: 1795478400 * 1000 });
+			expect(body.history.map((h) => h.ts)).toEqual([1795392000 * 1000, 1795478400 * 1000]);
+		} finally {
+			if (saved.cmc === undefined) delete process.env.CMC_API_KEY;
+			else process.env.CMC_API_KEY = saved.cmc;
+			if (saved.long !== undefined) process.env.COINMARKETCAP_API_KEY = saved.long;
+		}
+	});
 });
 
 describe('/api/coin/gas', () => {

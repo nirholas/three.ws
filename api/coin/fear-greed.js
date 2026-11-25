@@ -10,6 +10,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 
 import { fetchUpstreamJson, lastGood } from '../_lib/upstream-fetch.js';
+import { cmcApiKey, cmcGet } from '../_lib/cmc.js';
 const FNG_BASE = 'https://api.alternative.me/fng/';
 // The index updates once a day, so a day-old reading is still the current one.
 const STALE_MAX_AGE_MS = 24 * 60 * 60_000;
@@ -41,8 +42,8 @@ async function fetchFng(limit) {
 
 // alternative.me is the canonical index. CoinMarketCap publishes its own
 // (same 0-100 scale, same classification bands) behind a free key, so it is
-// the second rung whenever COINMARKETCAP_API_KEY is set. Both normalise to the
-// same {value, timestamp, value_classification} row shape.
+// the second rung whenever that key is set (CMC_API_KEY, see api/_lib/cmc.js).
+// Both normalise to the same {value, timestamp, value_classification} rows.
 async function fetchFngRows(limit) {
 	const sources = [
 		{
@@ -54,18 +55,22 @@ async function fetchFngRows(limit) {
 				return Array.isArray(raw?.data) ? raw.data : [];
 			},
 		},
-		process.env.COINMARKETCAP_API_KEY && {
+		cmcApiKey() && {
 			name: 'coinmarketcap',
 			load: async () => {
-				const raw = await fetchUpstreamJson(`https://pro-api.coinmarketcap.com/v3/fear-and-greed/historical?limit=${limit}`, {
-					headers: { 'X-CMC_PRO_API_KEY': process.env.COINMARKETCAP_API_KEY },
-				}, { name: 'cmc-fng', timeoutMs: 8_000, attempts: 2 });
+				const raw = await cmcGet(`/v3/fear-and-greed/historical?limit=${limit}`, { name: 'cmc-fng' });
 				const rows = Array.isArray(raw?.data) ? raw.data : [];
-				return rows.map((d) => ({
-					value: d.value,
-					timestamp: Math.floor(Date.parse(d.timestamp) / 1000),
-					value_classification: d.value_classification,
-				}));
+				return rows.map((d) => {
+					// v3 sends epoch seconds as a numeric string; older shapes sent ISO.
+					const n = Number(d.timestamp);
+					const value = Number(d.value);
+					return {
+						value,
+						timestamp: Number.isFinite(n) ? n : Math.floor(Date.parse(d.timestamp) / 1000),
+						// CMC labels "Extreme fear"; the bands match, so use ours for one casing.
+						value_classification: Number.isFinite(value) ? classify(value) : undefined,
+					};
+				});
 			},
 		},
 	].filter(Boolean);
