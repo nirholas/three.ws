@@ -701,6 +701,7 @@ export async function sweepAgentEvents({
 	limit = SOLANA_SWEEP_BATCH,
 	concurrency = SOLANA_SWEEP_CONCURRENCY,
 	now = Date.now,
+	random = Math.random,
 } = {}) {
 	const startedAt = now();
 	const summary = {
@@ -724,9 +725,23 @@ export async function sweepAgentEvents({
 	}
 	summary.batch = batch.length;
 
+	// Dispatch in random order, not oldest-first. A transient failure leaves the
+	// cursor untouched, so an account whose reads always time out (a huge
+	// history, a lane that hangs on its method) stays the oldest cursor and
+	// would be dispatched first on every tick. A run of them at the head trips
+	// the breaker before one healthy agent is read, and the whole directory
+	// then ages behind them. The batch is already the oldest-due slice, so
+	// order inside it carries no priority: a truncated tick just leaves some of
+	// it at the head for the next one.
+	const order = batch.slice();
+	for (let i = order.length - 1; i > 0; i--) {
+		const j = Math.floor(random() * (i + 1));
+		[order[i], order[j]] = [order[j], order[i]];
+	}
+
 	const breaker = rpcBreaker();
 	const run = await drainWithBudget(
-		batch,
+		order,
 		async (row) => {
 			try {
 				const r = await crawlAgentEvents({ agentRef: row.agent_ref, network: row.network });

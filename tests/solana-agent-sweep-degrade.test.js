@@ -83,3 +83,36 @@ describe('sweepAgentEvents: a provider outage is not the agent failing', () => {
 		expect(writes[0].values.join(' ')).toContain('not a Solana account key');
 	});
 });
+
+describe('sweepAgentEvents: unreadable agents at the queue head must not block the rest', () => {
+	beforeEach(() => {
+		sqlMock.mockReset();
+		signaturesMock.mockReset();
+	});
+
+	it('still crawls healthy agents when the oldest agents fail with transient errors every tick', async () => {
+		// Transient failures leave the cursor untouched on purpose, so an account
+		// whose reads always time out stays the OLDEST cursor and is dispatched
+		// first on every tick. A run of them at the head trips the RPC breaker
+		// before a single healthy agent is read, the tick ends, and the next tick
+		// repeats it: the whole directory ages while the fabric is alive.
+		const { Keypair } = await import('@solana/web3.js');
+		const { SOLANA_SWEEP_RPC_BREAKER, sweepAgentEvents } = await import('../api/_lib/solana-agent-events.js');
+		const key = () => Keypair.generate().publicKey.toBase58();
+		const bad = new Set(Array.from({ length: SOLANA_SWEEP_RPC_BREAKER + 1 }, key));
+		const good = Array.from({ length: 80 }, key);
+		const rows = [...bad, ...good].map((agent_ref) => ({ agent_ref, network: 'mainnet', source: 'x' }));
+		sqlMock.mockImplementation((strings) => {
+			if (text(strings).includes('WITH candidates')) return Promise.resolve(rows);
+			return Promise.resolve([]);
+		});
+		signaturesMock.mockImplementation(async (_conn, address) => {
+			if (bad.has(address.toBase58())) throw new Error('request timed out');
+			return { sigs: [], cursorReset: false };
+		});
+
+		const r = await sweepAgentEvents({ concurrency: 1 });
+		expect(r.stoppedOnRpc).toBe(false);
+		expect(r.agents).toBe(good.length);
+	});
+});
