@@ -1,6 +1,9 @@
 // Coverage for api/trenches.js, the read-only proxy in front of services/pulse.
 // Hard requirement: never fabricate market data. Unconfigured or failing
-// upstream is always 503 pulse_offline; only allowlisted views and params pass.
+// upstream with no earlier real answer is 503 pulse_offline; only allowlisted
+// views and params pass. A real answer Pulse gave earlier may be served while it
+// is stalled or failing, always marked stale with its age and never CDN-cached
+// (2026-11-25: Pulse stalled for ~50s and the whole Trenches page went offline).
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
@@ -78,6 +81,57 @@ describe('api/trenches', () => {
 		const r = await call('/api/trenches?view=launches');
 		expect(r.status).toBe(503);
 		expect(r.headers['cache-control']).toBe('no-store');
+	});
+
+	it('serves the last real answer, marked stale, when Pulse fails after answering', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		try {
+			vi.setSystemTime(new Date('2026-11-25T14:00:00Z'));
+			global.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ rows: [{ token: 'THREEsynthetic1111' }] }) });
+			const first = await call('/api/trenches?view=launches&limit=7');
+			expect(first.status).toBe(200);
+			expect(first.headers['x-trenches-stale']).toBeUndefined();
+
+			// Past the fresh window, Pulse fails.
+			vi.setSystemTime(new Date('2026-11-25T14:05:00Z'));
+			global.fetch.mockRejectedValueOnce(new Error('ECONNRESET'));
+			const r = await call('/api/trenches?view=launches&limit=7');
+			expect(r.status).toBe(200);
+			expect(r.body).toEqual({ rows: [{ token: 'THREEsynthetic1111' }] });
+			expect(r.headers['x-trenches-stale']).toBe('1');
+			expect(r.headers['x-trenches-as-of']).toBe('2026-11-25T14:00:00.000Z');
+			expect(r.headers['cache-control']).toBe('no-store');
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('serves the last real answer instead of holding the page while Pulse is stalled', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		try {
+			vi.setSystemTime(new Date('2026-11-25T15:00:00Z'));
+			global.fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ stream: { launches1h: 4 } }) });
+			await call('/api/trenches?view=overview');
+			vi.setSystemTime(new Date('2026-11-25T15:05:00Z'));
+			// A stalled Pulse: the request never settles within the budget.
+			global.fetch.mockImplementationOnce(() => new Promise(() => {}));
+			const started = performance.now();
+			const r = await call('/api/trenches?view=overview');
+			expect(r.status).toBe(200);
+			expect(r.body).toEqual({ stream: { launches1h: 4 } });
+			expect(r.headers['x-trenches-stale']).toBe('1');
+			// Answered on the refresh budget, well before the fetch's own timeout.
+			expect(performance.now() - started).toBeLessThan(6000);
+		} finally {
+			vi.useRealTimers();
+		}
+	}, 15_000);
+
+	it('still 503s when Pulse fails and there is no earlier real answer', async () => {
+		global.fetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
+		const r = await call('/api/trenches?view=tokens&q=never-answered');
+		expect(r.status).toBe(503);
+		expect(r.body.error).toBe('pulse_offline');
 	});
 
 	it('honours the rate limit', async () => {

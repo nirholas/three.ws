@@ -10,6 +10,9 @@ const $ = (id) => document.getElementById(id);
 const shell = $('tr-shell');
 let timer = null;
 let failures = 0;
+// Oldest as-of time among the views of the current cycle that /api/trenches
+// served from its last-known-good copy while Pulse was slow or failing.
+let staleAsOf = null;
 
 const fmt = (n, d = 0) => (n == null || !Number.isFinite(+n) ? '-' : (+n).toLocaleString('en-US', { maximumFractionDigits: d }));
 const short = (a) => shortAddress(a, 4, 4, { empty: '-', sep: '...' });
@@ -43,6 +46,8 @@ async function get(view, params = {}) {
 	const r = await fetch(`/api/trenches?${qs}`, { headers: { accept: 'application/json' } });
 	const body = await r.json().catch(() => ({}));
 	if (!r.ok) throw Object.assign(new Error(body.error_description || `HTTP ${r.status}`), { offline: true });
+	const asOf = r.headers.get('x-trenches-stale') === '1' ? r.headers.get('x-trenches-as-of') : null;
+	if (asOf && (!staleAsOf || asOf < staleAsOf)) staleAsOf = asOf;
 	return body;
 }
 
@@ -119,6 +124,7 @@ function wallets(rows) {
 }
 
 async function refresh() {
+	staleAsOf = null;
 	try {
 		// Probe health alone first: while Pulse is down a cycle costs one
 		// request instead of five.
@@ -133,7 +139,10 @@ async function refresh() {
 		failures = 0;
 		$('tr-offline').hidden = true;
 		shell.dataset.state = 'ready';
-		$('tr-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+		$('tr-updated').textContent = staleAsOf
+			? `Pulse is slow to answer. Showing data from ${new Date(staleAsOf).toLocaleTimeString()}, refreshing automatically.`
+			: `Updated ${new Date().toLocaleTimeString()}`;
+		$('tr-updated').classList.toggle('is-stale', Boolean(staleAsOf));
 	} catch (e) {
 		failures += 1;
 		shell.dataset.state = e.offline ? 'offline' : 'error';

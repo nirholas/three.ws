@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "The Trenches page keeps showing recent data when the market service is slow",
+			"summary": "When the live market service stalls, Trenches now shows the last real data it received, labelled with the time it was taken, and keeps refreshing in the background instead of going offline. It only shows the offline panel when no recent data exists at all.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Pages left open across an update reload themselves instead of breaking",
 			"summary": "A tab opened before a site update could fail the next time it loaded a feature, because the files it asked for had been replaced. Every page now notices when a file it needs is gone, reloads once to pick up the new version, and never reloads in a loop.",
 			"tags": [

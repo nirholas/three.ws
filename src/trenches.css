@@ -18,6 +18,7 @@ body {
 .tr-sub a:hover, .tr-link:hover { text-decoration-color: currentColor; }
 .tr-sub a:focus-visible, .tr-link:focus-visible, .tr-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 4px; }
 .tr-updated { min-height: 1.2em; margin: 0 0 24px; font-size: 12px; color: var(--ink-dim); }
+.tr-updated.is-stale { color: #e8c37a; }
 .tr-counters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0 0 24px; }
 .tr-counter { padding: 14px 16px; background: var(--surface); border: 1px solid var(--stroke); border-radius: 12px; }
 .tr-counter dt { font-size: 12px; color: var(--ink-dim); }

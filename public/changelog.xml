@@ -327,6 +327,14 @@
 			<description>The /forge page heading and its browser, search and share titles now read three.ws Forge, the same name the desktop build already uses, instead of a bare Forge. It is the same free text and photo to 3D studio, now under one name everywhere it appears.</description>
 		</item>
 		<item>
+			<title>The Trenches page keeps showing recent data when the market service is slow</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:The Trenches page keeps showing recent data when the market service is slow</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the live market service stalls, Trenches now shows the last real data it received, labelled with the time it was taken, and keeps refreshing in the background instead of going offline. It only shows the offline panel when no recent data exists at all.</description>
+		</item>
+		<item>
 			<title>Token holder and due-diligence panels load while busy Solana nodes refuse</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Token holder and due-diligence panels load while busy Solana nodes refuse</guid>

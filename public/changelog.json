@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T22:44:08.170Z",
+	"generated_at": "2026-11-25T22:50:26.569Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -404,6 +404,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "The Trenches page keeps showing recent data when the market service is slow",
+			"summary": "When the live market service stalls, Trenches now shows the last real data it received, labelled with the time it was taken, and keeps refreshing in the background instead of going offline. It only shows the offline panel when no recent data exists at all.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
