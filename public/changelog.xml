@@ -31,6 +31,14 @@
 			<description>While our primary object store refuses its credential, new avatar models are saved to a Google Cloud backup bucket. The avatar model endpoint that the widget, /walk and every embed read never looked there, so those avatars failed to load and showed the robot placeholder instead. It now reads the backup bucket, and pinning such an avatar to IPFS works too.</description>
 		</item>
 		<item>
+			<title>Busy coin charts stay up when the main price source is rate limited</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-25:Busy coin charts stay up when the main price source is rate limited</guid>
+			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When many visitors open the same coin's chart at once during a market data slowdown, the backup price oracle is now asked once and the answer is shared, instead of every visitor asking separately and some of them getting an error.</description>
+		</item>
+		<item>
 			<title>Chat stops wasting turns on free models that no longer exist</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:Chat stops wasting turns on free models that no longer exist</guid>

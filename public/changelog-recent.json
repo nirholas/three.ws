@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-25T20:05:51.476Z",
+	"generated_at": "2026-11-25T20:07:13.135Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4723,
+	"total": 4724,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -34,6 +34,16 @@
 			"type": "update",
 			"title": "Avatars created during the storage outage load again",
 			"summary": "While our primary object store refuses its credential, new avatar models are saved to a Google Cloud backup bucket. The avatar model endpoint that the widget, /walk and every embed read never looked there, so those avatars failed to load and showed the robot placeholder instead. It now reads the backup bucket, and pinning such an avatar to IPFS works too.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Busy coin charts stay up when the main price source is rate limited",
+			"summary": "When many visitors open the same coin's chart at once during a market data slowdown, the backup price oracle is now asked once and the answer is shared, instead of every visitor asking separately and some of them getting an error.",
 			"link": null,
 			"tags": [
 				"fix"
@@ -1552,16 +1562,6 @@
 			"link": "/drops",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-14",
-			"type": "update",
-			"title": "The open source page links three.js and Mesh2Motion sponsor pages and can show who we sponsor",
-			"summary": "The /open-source credits page now carries a Sponsor link on the three.js and Mesh2Motion cards, read from the funding routes both projects publish in their own repositories. It is also ready to show the open-source projects three.ws pays a recurring sponsorship to: once a sponsorship is live, the project appears in a \"Projects three.ws sponsors\" section at the top of the page and its credit cards are marked \"Sponsored by three.ws\" with the month it started. Nothing shows until a sponsorship has actually begun.",
-			"link": "/open-source",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

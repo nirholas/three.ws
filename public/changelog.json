@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-25T20:05:51.338Z",
+	"generated_at": "2026-11-25T20:07:13.025Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -31,6 +31,16 @@
 			"type": "update",
 			"title": "Avatars created during the storage outage load again",
 			"summary": "While our primary object store refuses its credential, new avatar models are saved to a Google Cloud backup bucket. The avatar model endpoint that the widget, /walk and every embed read never looked there, so those avatars failed to load and showed the robot placeholder instead. It now reads the backup bucket, and pinning such an avatar to IPFS works too.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
+			"type": "update",
+			"title": "Busy coin charts stay up when the main price source is rate limited",
+			"summary": "When many visitors open the same coin's chart at once during a market data slowdown, the backup price oracle is now asked once and the answer is shared, instead of every visitor asking separately and some of them getting an error.",
 			"link": null,
 			"tags": [
 				"fix"

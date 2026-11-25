@@ -30,6 +30,7 @@ import {
 	normalizePaprikaMarket,
 	normalizeLlamaChart,
 	fetchLlamaChart,
+	resetLlamaChartMemo,
 	fetchFallbackTickers,
 	fetchFallbackCoinDetail,
 	fetchDexTickers,
@@ -450,6 +451,7 @@ describe('fetchFallbackTickers', () => {
 // ── price series ────────────────────────────────────────────────────────────
 
 describe('DefiLlama chart fallback', () => {
+	beforeEach(() => resetLlamaChartMemo());
 	afterEach(() => vi.unstubAllGlobals());
 
 	it('normalizes to [[timestamp_ms, price], …] oldest-first', () => {
@@ -512,6 +514,27 @@ describe('DefiLlama chart fallback', () => {
 		for (const days of [1, 7, 30, 90, 365]) await fetchLlamaChart('solana', days);
 		const width = (u) => Number(new URL(u).searchParams.get('searchWidth'));
 		expect(urls.map(width)).toEqual([600, 3600, 43200, 43200, 43200]);
+	});
+
+	// Measured 2026-11-25 in production: 25 requests for one coin's chart in 15s
+	// all answered 502 while CoinGecko was throttled. Every one of them asked
+	// DefiLlama separately from the shared egress IP. One answer now serves the
+	// burst, and a recent answer serves the requests after it.
+	it('asks DefiLlama once for a burst of the same chart, and reuses a recent answer', async () => {
+		const fetchMock = vi.fn(async () =>
+			jsonResponse({
+				coins: { 'coingecko:synthetic-burst': { prices: [{ timestamp: 100, price: 1 }, { timestamp: 200, price: 2 }] } },
+			}),
+		);
+		vi.stubGlobal('fetch', fetchMock);
+		const now = 1_785_000_000_000;
+		const burst = await Promise.all(Array.from({ length: 5 }, () => fetchLlamaChart('synthetic-burst', 30, now)));
+		expect(burst.every((r) => r?.length === 2)).toBe(true);
+		expect(await fetchLlamaChart('synthetic-burst', 30, now + 60_000)).toHaveLength(2);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		// A different window is a different series.
+		await fetchLlamaChart('synthetic-burst', 7, now);
+		expect(fetchMock).toHaveBeenCalledTimes(2);
 	});
 
 	it('resolves null (not a throw) on an unsupported window or a dead upstream', async () => {

@@ -843,6 +843,14 @@ export async function fetchDexTickers(addresses, { page = 1, perPage = 100 } = {
 // price: half the period, so each slot takes its nearest sample, and never
 // under ten minutes. A fixed 600s emptied the 7d chart and thinned the 365d one
 // for any coin DefiLlama prices only every few hours.
+// A burst of requests for one chart (a page reloading, a crawler) shares one
+// upstream read, and a successful series is reused for two minutes, the same
+// freshness the CoinGecko rung keeps. Misses are not remembered.
+const LLAMA_CHART_MEMO_MS = 120_000;
+const LLAMA_CHART_MEMO_MAX = 500;
+const _llamaChartMemo = new Map(); // `${cgId}:${days}` -> { at, value }
+const _llamaChartInflight = new Map();
+
 const LLAMA_WINDOW = {
 	1: { period: '15m', span: 96, width: 600 },
 	7: { period: '2h', span: 84, width: 3600 },
@@ -880,6 +888,24 @@ export function normalizeLlamaChart(raw, cgId) {
 export async function fetchLlamaChart(cgId, days, now = Date.now()) {
 	const win = LLAMA_WINDOW[days];
 	if (!win || !cgId) return null;
+	const key = `${cgId}:${days}`;
+	const hit = _llamaChartMemo.get(key);
+	if (hit && Date.now() - hit.at < LLAMA_CHART_MEMO_MS) return hit.value;
+	if (_llamaChartInflight.has(key)) return _llamaChartInflight.get(key);
+	const pending = readLlamaChart(cgId, days, win, now)
+		.then((value) => {
+			if (value) {
+				if (_llamaChartMemo.size >= LLAMA_CHART_MEMO_MAX) _llamaChartMemo.delete(_llamaChartMemo.keys().next().value);
+				_llamaChartMemo.set(key, { at: Date.now(), value });
+			}
+			return value;
+		})
+		.finally(() => _llamaChartInflight.delete(key));
+	_llamaChartInflight.set(key, pending);
+	return pending;
+}
+
+async function readLlamaChart(cgId, days, win, now) {
 	const start = Math.floor(now / 1000) - days * 86_400;
 	try {
 		const { value } = await fetchFirst(
@@ -898,4 +924,10 @@ export async function fetchLlamaChart(cgId, days, now = Date.now()) {
 	} catch {
 		return null;
 	}
+}
+
+/** Test-only hook. */
+export function resetLlamaChartMemo() {
+	_llamaChartMemo.clear();
+	_llamaChartInflight.clear();
 }

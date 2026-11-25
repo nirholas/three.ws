@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "Busy coin charts stay up when the main price source is rate limited",
+			"summary": "When many visitors open the same coin's chart at once during a market data slowdown, the backup price oracle is now asked once and the answer is shared, instead of every visitor asking separately and some of them getting an error.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Price charts load for thinly traded coins during a data outage",
 			"summary": "When the primary market data source is rate limited, a coin's price chart falls back to a second price oracle. That fallback now looks for the nearest price around each point on the chart instead of only within ten minutes of it, so coins priced every few hours (tokenized stocks, thin tokens) show a full 7 day and 365 day chart instead of an error.",
 			"tags": ["fix"]
