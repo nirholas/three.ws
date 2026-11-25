@@ -60,7 +60,7 @@
 		"serve:site": "node --run build:site && npx -y serve docs"
 	},
 	"devDependencies": {
-		"@solana/web3.js": "^1.98.4",
+		"@solana/web3.js": "^3.2.1",
 		"esbuild": "^0.28.2"
 	},
 	"dependencies": {
