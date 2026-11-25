@@ -40,6 +40,7 @@ const backButton = () =>
 	h('button', { class: 'arena-back', type: 'button', onclick: () => (location.hash = '#/') }, '← All tournaments');
 
 import { mountMarketStrip } from '../event-markets/entry-strip.js';
+import { fetchJSON } from './fetch-json.js';
 
 // ── tiny DOM + format helpers ─────────────────────────────────────────────
 const h = (tag, attrs = {}, ...kids) => {
@@ -86,23 +87,6 @@ const initialsOf = (name) =>
 		.map((w) => w[0] || '')
 		.join('')
 		.toUpperCase() || '··';
-
-async function fetchJSON(url, opts) {
-	const res = await fetch(url, { credentials: 'include', ...opts });
-	let body = null;
-	try {
-		body = await res.json();
-	} catch {
-		/* non-JSON */
-	}
-	if (!res.ok) {
-		const err = new Error(body?.error_description || body?.error || `HTTP ${res.status}`);
-		err.status = res.status;
-		err.code = body?.error;
-		throw err;
-	}
-	return body;
-}
 
 /**
  * Speak a short update through the page's dedicated live region (#arena-live in

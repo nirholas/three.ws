@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-25",
+			"title": "The Arena no longer breaks when a network returns a page instead of data",
+			"summary": "If a proxy or captive portal answered the Arena's data request with a web page, the tournament spotlight threw an error. It now treats that like any other failed load and keeps the rest of the page working.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-25",
 			"title": "Large 3D models no longer stop downloading at 20 seconds when storage is slow",
 			"summary": "While the main storage credential is being replaced, some files are served from the public storage domain, which throttles. A model file larger than a few megabytes that downloaded slowly was cut off exactly 20 seconds in, leaving viewers with a broken model. The download now continues for as long as data keeps arriving and is stopped only if it stalls completely.",
 			"tags": [
