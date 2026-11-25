@@ -172,8 +172,33 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "tg",
+			"name": "Тоҷикӣ",
+			"dir": "ltr"
+		},
+		{
+			"code": "sl",
+			"name": "Slovenščina",
+			"dir": "ltr"
+		},
+		{
+			"code": "sq",
+			"name": "Shqip",
+			"dir": "ltr"
+		},
+		{
+			"code": "yo",
+			"name": "Yorùbá",
+			"dir": "ltr"
+		},
+		{
 			"code": "af",
 			"name": "Afrikaans",
+			"dir": "ltr"
+		},
+		{
+			"code": "rw",
+			"name": "Kinyarwanda",
 			"dir": "ltr"
 		}
 	]
