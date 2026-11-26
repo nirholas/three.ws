@@ -15,6 +15,7 @@
 
 import { getGcpAccessToken, gcpAuthConfigured } from './gcp-auth.js';
 import { providersInCooldown } from './provider-health.js';
+import { describeImageLadder } from './image-rung-breaker.js';
 import { imageModelChain, isModelNotFound, resolveImageModel } from './image-model.js';
 import { HF_IMAGE_PROVIDERS } from '../_mcp3d/text-to-image.js';
 
@@ -338,12 +339,16 @@ async function probePollinations() {
 }
 
 export async function imageLaneHealth() {
-	const [nim, vertex, replicate, hf, pollinations] = await Promise.all([
+	const [nim, vertex, replicate, hf, pollinations, ladder] = await Promise.all([
 		probeNim(),
 		probeVertex(),
 		probeReplicate(),
 		probeHf(),
 		probePollinations(),
+		// What the text-to-image ladder will actually do next: each rung in walk
+		// order, its breaker state, the last failure class and when it is tried
+		// again. Read from the shared cache only, never a provider call.
+		describeImageLadder().catch(() => null),
 	]);
 	const lanes = { nim, vertex, replicate, hf, pollinations };
 	const anyConfigured = Object.values(lanes).some((l) => l.configured);
@@ -353,6 +358,7 @@ export async function imageLaneHealth() {
 		configured: anyConfigured,
 		healthy: anyReachable,
 		lanes,
+		ladder,
 		// The keyless rung means `configured` is always true, so this names the
 		// KEYED lanes an operator has not brought up, not "nothing at all".
 		missing_env: [

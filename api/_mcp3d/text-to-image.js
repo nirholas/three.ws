@@ -21,7 +21,15 @@
 // free on the NVIDIA NIM catalog as base64 JPEG (no poll; returns inline).
 // Replicate backstop: black-forest-labs/flux-schnell — same family, $0.003/run.
 
-import { markProviderCooldown, providersInCooldown, AUTH_COOLDOWN_SECONDS } from '../_lib/provider-health.js';
+import {
+	IMAGE_RUNG_KEYS,
+	readRungStates,
+	admitRung,
+	recordRungFailure,
+	recordRungSuccess,
+	classifyRungFailure,
+	statedRetryAfterSeconds,
+} from '../_lib/image-rung-breaker.js';
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
 import { reserveProviderRateSlot, SCALE_LIMITS } from '../_lib/forge-scale.js';
 import { persistImageBase64, persistImageBytes, looksLikeImageBytes } from '../_lib/image-persist.js';
@@ -71,41 +79,16 @@ async function pollReplicatePrediction(getUrl, token, { timeoutMs = REPLICATE_PO
 	return last;
 }
 
-// Circuit-breaker key + window for the free NIM FLUX synthesis lane. When NVCF
-// times out / errors, one slow window otherwise makes every text→image caller
-// (forge text→3D, avatar generation, studio) re-pay the full NIM timeout before
-// failing over. A short cooldown — recorded on a health failure, checked before
-// the lane runs — lets callers skip a degraded NIM lane and go straight to the
-// next configured provider; it expires on its own so a recovered lane is retried
-// promptly. Best-effort via the shared cache: a miss just means "not cooling".
-const NIM_FLUX_COOLDOWN_KEY = 'forge-nim-flux';
-const NIM_FLUX_COOLDOWN_SECONDS = 60;
-
-// Same breaker, but for the Vertex image lane and the two HF-routed providers,
-// keyed on an auth/billing fault (401/402/403) rather than a transient one: a
-// dunning hold or an exhausted credit balance will not clear itself in 60s, so
-// marking it 'health'-length just burns the full request timeout again on the
-// very next call. AUTH_COOLDOWN_SECONDS (5 min) matches the same breaker
-// already used for Vertex in forge-quality-gate.js and for every LLM lane in
-// chat.js/concierge.js. VERTEX_IMAGE_COOLDOWN_KEY is exported so
-// forge-reference-image.js's own, separate Vertex-reference attempt shares the
-// same breaker: one 403 should silence Vertex for both call sites, not just
-// this one.
-export const VERTEX_IMAGE_COOLDOWN_KEY = 'forge-vertex-image';
-const HF_IMAGE_COOLDOWN_PREFIX = 'forge-hf-image-';
-function isAuthFault(err) {
-	const status = err?.providerStatus;
-	return status === 401 || status === 402 || status === 403;
-}
-
-// Whether a thrown nimFluxImage error means the lane itself is degraded (timeout,
-// unreachable, throttle, or 5xx) — worth a cooldown — as opposed to a 4xx client
-// fault (bad input / key), which a cooldown would wrongly punish a healthy lane for.
-function isNimLaneDegraded(err) {
-	if (err?.code === 'provider_unreachable' || err?.code === 'rate_limited') return true;
-	const status = err?.providerStatus;
-	return typeof status === 'number' && status >= 500;
-}
+// Every keyed rung sits behind one classified breaker
+// (api/_lib/image-rung-breaker.js): a billing, credits or auth refusal parks a
+// rung for 5 minutes, a stated Retry-After is honored to the second, a timeout,
+// 5xx or unusable body parks it for 60 s, and a refusal about the prompt parks
+// nothing. When the window ends one probe goes through; its success closes the
+// breaker, so no rung stays disabled until a restart. The breaker keys are the
+// legacy cooldown keys, so forge-reference-image.js and the Vertex lane's own
+// breaker in vertex-image-breaker.js, which marks its errors breakerRecorded,
+// read and write the same state.
+export const VERTEX_IMAGE_COOLDOWN_KEY = IMAGE_RUNG_KEYS.vertex;
 
 // NVIDIA NIM FLUX.1-schnell — synchronous genai invoke (no 202/poll), returns
 // { artifacts: [{ base64, finishReason }] }. flux-schnell is the fast 4-step
@@ -162,12 +145,23 @@ export function ladderBudgetMs(override) {
 	return Math.max(5_000, chosen);
 }
 // Pure: how long the current lane may run. `budgetMs` is the ladder total,
-// `remainingMs` what is left of it, `laneRemains` whether a fallback follows.
-export function laneTimeoutMs(ownCeilingMs, { budgetMs, remainingMs, laneRemains }) {
-	if (remainingMs <= 0) return 0;
-	let cap = remainingMs;
-	if (laneRemains) cap = Math.min(remainingMs, Math.max(budgetMs * 0.25, remainingMs * 0.6));
+// `remainingMs` what is left of it, `laneRemains` whether a fallback follows,
+// `reserveMs` the slice held back for the rung that must still get to run (the
+// keyless one). The lanes ahead of it split only what is left after the reserve.
+export function laneTimeoutMs(ownCeilingMs, { budgetMs, remainingMs, laneRemains, reserveMs = 0 }) {
+	const pool = remainingMs - reserveMs;
+	if (pool <= 0) return 0;
+	let cap = pool;
+	if (laneRemains) cap = Math.min(pool, Math.max((budgetMs - reserveMs) * 0.25, pool * 0.6));
 	return Math.max(0, Math.min(ownCeilingMs, Math.floor(cap)));
+}
+// The slice of the budget the keyless rung is guaranteed. Without it, on
+// 2026-11-26 a hanging NIM rung and the HF rungs could spend the budget down to
+// the 10% skip line, and the one rung that was serving was skipped. Pollinations
+// answers in 2 to 3 s and up to ~8 s under load: half a small budget up to 8 s,
+// 30% of a large one, never more than 15 s.
+export function keylessReserveMs(budgetMs) {
+	return Math.floor(Math.min(15_000, Math.max(budgetMs * 0.3, Math.min(8_000, budgetMs * 0.5))));
 }
 function budgetExhausted(budgetMs) {
 	return Object.assign(
@@ -359,6 +353,7 @@ async function hfRoutedImage(provider, prompt, aspectRatio, seed, { timeoutMs = 
 		const aborted = err?.name === 'AbortError' || err?.name === 'TimeoutError';
 		return Object.assign(new Error(aborted ? `hf ${provider.id} timed out` : `hf ${provider.id} unreachable: ${err?.message}`), {
 			code: aborted ? 'rate_limited' : 'provider_unreachable',
+			...(aborted ? { timedOut: true } : {}),
 		});
 	};
 	let res;
@@ -377,6 +372,8 @@ async function hfRoutedImage(provider, prompt, aspectRatio, seed, { timeoutMs = 
 		const err = new Error(`hf ${provider.id} returned ${res.status}: ${detail.slice(0, 160)}`);
 		err.providerStatus = res.status;
 		if (res.status === 429 || res.status === 402) err.code = 'rate_limited';
+		const wait = res.status === 429 ? statedRetryAfterSeconds(res.headers) : undefined;
+		if (wait) err.retryAfter = wait;
 		throw err;
 	}
 	let bytes;
@@ -442,6 +439,7 @@ async function pollinationsImage(prompt, aspectRatio, seed, { timeoutMs = POLLIN
 		const aborted = err?.name === 'AbortError' || err?.name === 'TimeoutError';
 		throw Object.assign(new Error(aborted ? 'pollinations timed out' : `pollinations unreachable: ${err?.message}`), {
 			code: aborted ? 'rate_limited' : 'provider_unreachable',
+			...(aborted ? { timedOut: true } : {}),
 		});
 	}
 	if (!res.ok) {
@@ -521,7 +519,7 @@ async function nimFluxImage(prompt, aspectRatio, { timeoutMs = NIM_TIMEOUT_MS } 
 			const aborted = err?.name === 'AbortError' || err?.name === 'TimeoutError';
 			lastErr = Object.assign(
 				new Error(aborted ? 'nim flux timed out' : `nim flux unreachable: ${err?.message}`),
-				{ code: aborted ? 'rate_limited' : 'provider_unreachable' },
+				{ code: aborted ? 'rate_limited' : 'provider_unreachable', ...(aborted ? { timedOut: true } : {}) },
 			);
 			// A timeout already burned the full window — don't retry it (a second
 			// attempt just doubles the wait before failover). A non-timeout network
@@ -546,10 +544,12 @@ async function nimFluxImage(prompt, aspectRatio, { timeoutMs = NIM_TIMEOUT_MS } 
 				continue;
 			}
 			// 429 (credit-metered free tier) is retryable upstream; surface it so a
-			// caller can route, but here it just means "fall through to the paid lanes".
+			// caller can route, with the wait NVIDIA stated so the breaker honors it.
+			const wait = res.status === 429 ? statedRetryAfterSeconds(res.headers) : undefined;
 			throw Object.assign(new Error(message), {
 				providerStatus: res.status,
 				...(res.status === 429 ? { code: 'rate_limited' } : {}),
+				...(wait ? { retryAfter: wait } : {}),
 			});
 		}
 
@@ -664,182 +664,215 @@ export function enhanceFluxPrompt(raw) {
 
 // Generate a single image from a text prompt.
 //
-// Tries the free lanes first (NIM FLUX, then Vertex Imagen) and degrades to the
-// paid Replicate backstop on any failure — a broken or throttled preferred
-// provider must hand off, never take down the whole text→3D pipeline. The last
-// configured lane's error is surfaced only when nothing is left to try.
-export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false, seed, budgetMs } = {}) {
+// Walks the rungs in order (Vertex, NIM, HF fal-ai, HF WaveSpeed, Livepeer,
+// the keyless Pollinations rung, then the paid Replicate backstop) and returns
+// the first image served. A rung that fails hands off to the next one; a rung
+// its breaker has parked costs nothing; the keyless rung always gets a reserved
+// slice of the budget. When nothing serves, the thrown error carries the whole
+// walk (`err.ladder`), the most useful cause (`err.ladderCause`) and, when any
+// rung stated a wait, the shortest one as a retryable rate_limited error.
+export async function textToImage(prompt, opts = {}) {
+	const attempts = [];
+	const at = { rung: null };
+	try {
+		return await walkLadder(prompt, opts, attempts, at);
+	} catch (err) {
+		throw finalizeLadderError(err, attempts, at.rung);
+	}
+}
+
+// The useful cause of a failed walk: the rung that stated the shortest wait,
+// else the last rung that really failed. When a wait was stated anywhere, the
+// error becomes a retryable rate_limited one carrying it, so the caller's
+// countdown is the true earliest moment a retry can be served.
+function finalizeLadderError(err, attempts, rung) {
+	if (!err || typeof err !== 'object') return err;
+	if (rung && !attempts.some((a) => a.error === err)) {
+		const failure = classifyRungFailure(err);
+		attempts.push({ rung, outcome: 'failed', failureClass: failure.failureClass, status: failure.status, retryAfter: failure.retryAfter, detail: failure.detail, error: err });
+	}
+	const ladder = attempts.map(({ error, ...rest }) => rest);
+	const waits = ladder.filter((a) => a.failureClass === 'rate_limited' && a.retryAfter > 0);
+	const shortest = waits.reduce((best, a) => (!best || a.retryAfter < best.retryAfter ? a : best), null);
+	const lastFailed = [...ladder].reverse().find((a) => a.outcome === 'failed') || null;
+	Object.defineProperty(err, 'ladder', { value: ladder, enumerable: false, configurable: true, writable: true });
+	err.ladderCause = shortest || lastFailed;
+	if (shortest && err.code !== 'safety_blocked' && err.code !== 'unconfigured') {
+		err.code = 'rate_limited';
+		err.retryAfter = shortest.retryAfter;
+		err.queued = true;
+	}
+	return err;
+}
+
+async function walkLadder(prompt, { aspectRatio = '1:1', skipNim = false, seed, budgetMs } = {}, attempts, at) {
 	prompt = enhanceFluxPrompt(prompt);
 	const budget = ladderBudgetMs(budgetMs);
 	const deadline = Date.now() + budget;
 	const remaining = () => deadline - Date.now();
-	// A lane with under a tenth of the budget left cannot finish; skip it.
-	const canTry = () => remaining() >= budget * 0.1;
-	const laneMs = (ownCeilingMs, laneRemains) =>
-		laneTimeoutMs(ownCeilingMs, { budgetMs: budget, remainingMs: remaining(), laneRemains });
 	// Optional deterministic seed. Honored on the lanes that expose one (HF
-	// routed, Pollinations, Livepeer, Replicate flux); NIM flux.1-dev and the
+	// routed, Pollinations, Livepeer, Replicate flux); NIM FLUX.2 klein and the
 	// Vertex/Gemini image API have no seed input, so it is not sent there.
 	const hasSeed = Number.isInteger(seed) && seed >= 0;
 	const token = readEnv('REPLICATE_API_TOKEN');
 	const hasVertex = !!readEnv('GOOGLE_CLOUD_PROJECT') && vertexImagenEnabled();
-	// The federated lane is resolved UP FRONT, not at its position in the ladder,
-	// because every upstream lane's "is anything left to try" test has to count
-	// it. Reading it late made an enabled Livepeer lane invisible to that test, so
-	// a deployment where it was the only lane downstream threw the upstream error
-	// instead of handing off, and the configured lane never ran.
 	const { livepeerFederationEnabled, livepeerTextToImage } = await import('../_providers/livepeer.js');
 	const hasLivepeer = livepeerFederationEnabled();
 	// Quality-first ordering: the Vertex Gemini image model outdraws 4-step
 	// distilled FLUX for photoreal reference images, and it burns the GCP credit
-	// pool the platform is funded to spend — so when the lane is configured it
-	// leads by default. The reference image is the sole source of the 3D model's
-	// texture and proportions; this is the cheapest quality lever in the chain.
-	// VERTEX_IMAGEN_FIRST=0 restores the legacy NIM-first order without touching
-	// the lane's on/off gate (VERTEX_IMAGEN_ENABLED).
+	// pool the platform is funded to spend, so when the lane is configured it
+	// leads by default. VERTEX_IMAGEN_FIRST=0 restores the legacy NIM-first order
+	// without touching the lane's on/off gate (VERTEX_IMAGEN_ENABLED).
 	const vertexFirst = hasVertex && readEnv('VERTEX_IMAGEN_FIRST') !== '0';
-	// What remains DOWNSTREAM of the NIM lane. When Vertex leads it has already
-	// been consumed by the time NIM runs, so it no longer counts as a fallback —
-	// otherwise a NIM failure after a Vertex failure would "fall through" to a
-	// lane that was already tried and surface the wrong terminal error. Livepeer
-	// and Replicate both sit after NIM either way, so both always count.
 	const hasHf = !!readEnv('HF_TOKEN');
-	// Pollinations needs no key, so a fallback always exists past NIM and the
-	// keyed rungs: no single provider's failure is ever the terminal error.
-	const hasFallback = (!vertexFirst && hasVertex) || hasHf || hasLivepeer || !!token || true;
 
-	// One attempt at the Vertex lane, shared by both ladder positions. Returns
-	// null to mean "hand off to the next lane" (unconfigured, or a failure with a
-	// lane left to try); throws only when nothing remains downstream.
-	const tryVertex = async (laneRemains) => {
-		try {
-			const { generateImage, isConfigured } = await import('./vertex-imagen.js');
-			if (!isConfigured()) return null;
-			// A lane parked on a billing/auth fault beats nothing only when it is the
-			// only lane left; with a fallback behind it, skip the known-dead call
-			// instead of re-paying its full timeout on every request.
-			if (laneRemains && (await providersInCooldown([VERTEX_IMAGE_COOLDOWN_KEY])).has(VERTEX_IMAGE_COOLDOWN_KEY)) {
-				return null;
-			}
-			if (!canTry()) {
-				if (!laneRemains) throw budgetExhausted(budget);
-				return null;
-			}
-			return logImageProvider(
-				await persistDataUriImage(
-					await generateImage(prompt, { aspectRatio, timeoutMs: laneMs(VERTEX_LANE_CEILING_MS, laneRemains) }),
-				),
-			);
-		} catch (err) {
-			if (isAuthFault(err)) {
-				markProviderCooldown(VERTEX_IMAGE_COOLDOWN_KEY, AUTH_COOLDOWN_SECONDS, 'auth').catch(() => {});
-			}
-			if (!laneRemains) throw err;
-			console.warn(`vertex imagen failed, falling back: ${err?.message}`);
+	// Every breaker is read once, up front: one cache round trip, and a rung the
+	// breaker has parked is skipped without a network call.
+	const states = await readRungStates(Object.values(IMAGE_RUNG_KEYS));
+	const keylessOpen = states.get(IMAGE_RUNG_KEYS.pollinations)?.state === 'open';
+	// Hold back the keyless rung's slice while it can serve, or the paid
+	// backstop's slice while it is the one that follows. With the keyless rung
+	// parked and no token, nothing follows, so the keyed rungs get it all.
+	const reserve = !keylessOpen || token ? keylessReserveMs(budget) : 0;
+	const laneMs = (ownCeilingMs, laneRemains, reserveMs = 0) =>
+		laneTimeoutMs(ownCeilingMs, { budgetMs: budget, remainingMs: remaining(), laneRemains, reserveMs });
+	// A rung ahead of the keyless one may start only with a real slice of the
+	// pool left above the reserve.
+	const canTryAhead = () => remaining() - reserve >= Math.max(1_000, budget * 0.1);
+	const canTry = () => remaining() >= budget * 0.1;
+
+	const skipped = (rung, entry) => {
+		const record = entry?.record;
+		const wait =
+			record?.failureClass === 'rate_limited' && record.retryAfter > 0 && entry.retryInMs > 0
+				? Math.ceil(entry.retryInMs / 1000)
+				: undefined;
+		attempts.push({ rung, outcome: 'skipped', failureClass: record?.failureClass ?? null, ...(wait ? { retryAfter: wait } : {}) });
+		return wait;
+	};
+	// Run one rung behind its breaker. Returns the image, or null to hand off.
+	const attemptRung = async (rung, key, call, { probe = {}, record = {}, sharedBreaker = false } = {}) => {
+		const entry = key ? states.get(key) : null;
+		if (key && !(await admitRung(key, entry, probe))) {
+			skipped(rung, entry);
 			return null;
+		}
+		at.rung = rung;
+		try {
+			const served = logImageProvider(await call());
+			if (key) await recordRungSuccess(key, entry);
+			return served;
+		} catch (err) {
+			let failure;
+			// The Vertex lane's own breaker already classified and recorded this
+			// failure with its own window; never overwrite it.
+			if (!key || (sharedBreaker && err?.breakerRecorded)) failure = classifyRungFailure(err, record);
+			else failure = await recordRungFailure(key, err, record);
+			if (failure.failureClass === 'cooling') {
+				attempts.push({ rung, outcome: 'skipped', failureClass: 'cooling' });
+				return null;
+			}
+			attempts.push({ rung, outcome: 'failed', failureClass: failure.failureClass, status: failure.status, retryAfter: failure.retryAfter, detail: failure.detail, error: err });
+			console.warn(`[text-to-image] ${rung} failed (${failure.failureClass}), falling back: ${err?.message}`);
+			return null;
+		} finally {
+			at.rung = null;
 		}
 	};
 
+	// The keyless rung always remains behind Vertex, so Vertex is never forced
+	// past its own breaker.
+	const tryVertex = async () => {
+		const { generateImage, isConfigured } = await import('./vertex-imagen.js');
+		if (!isConfigured() || !canTryAhead()) return null;
+		return attemptRung(
+			'vertex',
+			IMAGE_RUNG_KEYS.vertex,
+			async () =>
+				persistDataUriImage(
+					await generateImage(prompt, { aspectRatio, timeoutMs: laneMs(VERTEX_LANE_CEILING_MS, true, reserve) }),
+				),
+			{ sharedBreaker: true },
+		);
+	};
+
 	if (vertexFirst) {
-		const served = await tryVertex(!!readEnv('NVIDIA_API_KEY') || hasLivepeer || !!token);
+		const served = await tryVertex();
 		if (served) return served;
 	}
 
-	// ── NVIDIA NIM FLUX (free, first) ─────────────────────────────────────────
-	// Skip the NIM lane when a fallback exists AND either the caller just watched a
-	// sibling NVCF lane time out this same request (`skipNim` — the gateway is
-	// degraded now, so a second NIM window would just stack timeouts) or a recent
-	// NIM FLUX failure left it in cooldown. With no fallback, NIM stays the only
-	// lane and is always tried — a degraded lane beats no image at all.
-	const nimCooling =
-		hasFallback &&
-		(skipNim || (await providersInCooldown([NIM_FLUX_COOLDOWN_KEY])).has(NIM_FLUX_COOLDOWN_KEY));
-	const nimWanted = readEnv('NVIDIA_API_KEY') && !nimCooling;
-	if (nimWanted && !canTry() && !hasFallback) throw budgetExhausted(budget);
-	if (nimWanted && canTry()) {
-		try {
-			return logImageProvider(
-				await nimFluxImage(prompt, aspectRatio, {
-					timeoutMs: laneMs(NIM_TIMEOUT_MS, hasFallback),
-				}),
-			);
-		} catch (err) {
-			// A degraded lane (timeout / unreachable / throttle / 5xx) cools down so the
-			// next caller skips it; a clean 4xx (bad input) is not a lane-health fault.
-			if (isNimLaneDegraded(err)) {
-				markProviderCooldown(NIM_FLUX_COOLDOWN_KEY, NIM_FLUX_COOLDOWN_SECONDS).catch(() => {});
-			}
-			// Nothing downstream to fall through to → surface the NIM error.
-			if (!hasFallback) throw err;
-			// A handled degradation (Vertex/HF will serve the image), not a fault —
-			// warn so it doesn't read as an error in the logs like the rest of the
-			// free-first cascade.
-			console.warn(`nim flux failed, falling back: ${err?.message}`);
-		}
+	// ── NVIDIA NIM FLUX (free) ────────────────────────────────────────────────
+	// `skipNim`: the caller just watched a sibling NVCF lane time out this same
+	// request, so a second NIM window would only stack timeouts.
+	if (readEnv('NVIDIA_API_KEY') && !skipNim && canTryAhead()) {
+		const served = await attemptRung('nim', IMAGE_RUNG_KEYS.nim, () =>
+			nimFluxImage(prompt, aspectRatio, { timeoutMs: laneMs(NIM_TIMEOUT_MS, true, reserve) }),
+		);
+		if (served) return served;
 	}
 
-	// ── Vertex AI Imagen path (legacy position — only when not already led) ──
+	// ── Vertex AI Imagen path (legacy position, only when not already led) ──
 	if (hasVertex && !vertexFirst) {
-		const served = await tryVertex(!!token);
+		const served = await tryVertex();
 		if (served) return served;
 	}
 
 	// ── Hugging Face routed providers (fal-ai, then WaveSpeed) ───────────────
+	// Two independent providers, two breakers: an out-of-credit fal-ai parks
+	// only itself.
 	if (hasHf) {
-		const hfCooling = await providersInCooldown(
-			HF_IMAGE_PROVIDERS.map((provider) => `${HF_IMAGE_COOLDOWN_PREFIX}${provider.id}`),
-		);
 		for (const provider of HF_IMAGE_PROVIDERS) {
-			if (!canTry()) break;
-			// An out-of-credit or revoked-key provider parked in cooldown: the other
-			// HF rung (and everything downstream) is independent, so skip only this
-			// one rung instead of re-paying its timeout every request.
-			if (hfCooling.has(`${HF_IMAGE_COOLDOWN_PREFIX}${provider.id}`)) continue;
-			try {
-				return logImageProvider(
-					await hfRoutedImage(provider, prompt, aspectRatio, hasSeed ? seed : undefined, {
-						timeoutMs: laneMs(HF_IMAGE_TIMEOUT_MS, true),
-					}),
-				);
-			} catch (err) {
-				if (isAuthFault(err)) {
-					markProviderCooldown(`${HF_IMAGE_COOLDOWN_PREFIX}${provider.id}`, AUTH_COOLDOWN_SECONDS, 'auth').catch(() => {});
-				}
-				console.warn(`hf ${provider.id} failed, falling back: ${err?.message}`);
-			}
+			if (!canTryAhead()) break;
+			const served = await attemptRung(`hf:${provider.id}`, IMAGE_RUNG_KEYS[`hf:${provider.id}`], () =>
+				hfRoutedImage(provider, prompt, aspectRatio, hasSeed ? seed : undefined, {
+					timeoutMs: laneMs(HF_IMAGE_TIMEOUT_MS, true, reserve),
+				}),
+			);
+			if (served) return served;
 		}
 	}
 
 	// ── Livepeer federation lane (Phase 4, behind LIVEPEER_FEDERATION_ENABLED) ──
 	// One class of GPU job routed to the decentralized compute network. Sits
 	// after the first-party free lanes (they cost nothing) and before the paid
-	// Replicate backstop (it costs real money per image): a successful federated
-	// call is strictly cheaper than every remaining option. Off by default; the
-	// measured case for flipping it is in docs/ops/livepeer-federation.md.
-	if (hasLivepeer && !canTry() && !token) throw budgetExhausted(budget);
-	if (hasLivepeer && canTry()) {
-		try {
-			return logImageProvider(
-				await livepeerTextToImage(prompt, { aspectRatio, seed, timeoutMs: laneMs(REPLICATE_POLL_TIMEOUT_MS, !!token) }),
-			);
-		} catch (err) {
-			// Nothing downstream to fall through to → surface the Livepeer error.
-			if (!token) throw err;
-			console.warn(`livepeer federation failed, falling back: ${err?.message}`);
-		}
+	// Replicate backstop (it costs real money per image). Off by default; the
+	// measured case for flipping it is in docs/ops/livepeer-federation.md. It has
+	// no breaker of its own; a failure always falls through to the keyless rung.
+	if (hasLivepeer && canTryAhead()) {
+		const served = await attemptRung('livepeer', null, () =>
+			livepeerTextToImage(prompt, { aspectRatio, seed, timeoutMs: laneMs(REPLICATE_POLL_TIMEOUT_MS, true, reserve) }),
+		);
+		if (served) return served;
 	}
 
 	// ── Pollinations, keyless ─────────────────────────────────────────────────
-	if (canTry()) {
-		try {
-			return logImageProvider(
-				await pollinationsImage(prompt, aspectRatio, hasSeed ? seed : undefined, {
+	// Parked only on a wait it stated itself (its free tier: one image per 45 s
+	// per IP). Every request in the window may try it, since it is the last free
+	// rung; a 402 here is that throttle, not a billing state.
+	const keyless = states.get(IMAGE_RUNG_KEYS.pollinations);
+	if (keylessOpen) {
+		const wait = skipped('pollinations', keyless);
+		if (!token) {
+			throw Object.assign(new Error('Image generation is briefly busy upstream, please retry in a few seconds.'), {
+				code: 'rate_limited',
+				queued: true,
+				retryAfter: wait || 15,
+			});
+		}
+	} else if (canTry()) {
+		const served = await attemptRung(
+			'pollinations',
+			IMAGE_RUNG_KEYS.pollinations,
+			() =>
+				pollinationsImage(prompt, aspectRatio, hasSeed ? seed : undefined, {
 					timeoutMs: laneMs(POLLINATIONS_TIMEOUT_MS, !!token),
 				}),
-			);
-		} catch (err) {
-			if (!token) throw err;
-			console.warn(`pollinations failed, falling back: ${err?.message}`);
+			{ probe: { singleProbe: false }, record: { paymentIsThrottle: true, statedWaitOnly: true } },
+		);
+		if (served) return served;
+		if (!token) {
+			const last = attempts[attempts.length - 1];
+			throw last.error;
 		}
 	} else if (!token) {
 		throw budgetExhausted(budget);
@@ -856,6 +889,7 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	}
 
 	if (!canTry()) throw budgetExhausted(budget);
+	at.rung = 'replicate';
 
 	const modelRef = readEnv('REPLICATE_TXT2IMG_MODEL') || DEFAULT_TXT2IMG_MODEL;
 	const isVersionHash = /^[a-f0-9]{40,64}$/i.test(modelRef);

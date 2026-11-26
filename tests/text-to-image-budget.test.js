@@ -9,6 +9,7 @@
  * submits (no paint step) answered in 3.7s.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resetImageRungBreakers } from '../api/_lib/image-rung-breaker.js';
 
 process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 process.env.NVIDIA_API_KEY = 'nim-test-key';
@@ -61,7 +62,10 @@ globalThis.fetch = vi.fn(
 		}),
 );
 
-beforeEach(() => {
+beforeEach(async () => {
+	// Every rung starts with a closed breaker: the breaker keeps its state in
+	// the shared cache, which outlives a single test.
+	await resetImageRungBreakers();
 	vertex.calls.length = 0;
 	nimMode = 'fail-fast';
 });

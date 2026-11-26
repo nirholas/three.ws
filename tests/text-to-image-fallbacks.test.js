@@ -6,6 +6,7 @@
  * later rung is reached, in order, and that the keyless one is always there.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resetImageRungBreakers } from '../api/_lib/image-rung-breaker.js';
 
 process.env.NVIDIA_API_KEY = 'nim-key';
 process.env.HF_TOKEN = 'hf-token';
@@ -45,7 +46,10 @@ globalThis.fetch = vi.fn(async (url, init) => {
 	throw new Error(`unexpected fetch ${u}`);
 });
 
-beforeEach(() => {
+beforeEach(async () => {
+	// Every rung starts with a closed breaker: the breaker keeps its state in
+	// the shared cache, which outlives a single test.
+	await resetImageRungBreakers();
 	hits.length = 0;
 	persisted.calls = 0;
 	lane.nim = () => json(502, { error: 'gateway' });

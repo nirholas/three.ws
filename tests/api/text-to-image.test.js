@@ -12,6 +12,7 @@
 //     Imagen PNG's size, so forwarding the data URI breaks reconstruction).
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { resetImageRungBreakers } from '../../api/_lib/image-rung-breaker.js';
 import { cacheDel } from '../../api/_lib/cache.js';
 
 const vertexState = { configured: false, generate: null };
@@ -95,6 +96,9 @@ function stubFluxSuccess() {
 }
 
 beforeEach(async () => {
+	// Every rung starts with a closed breaker: the breaker keeps its state in
+	// the shared cache, which outlives a single test.
+	await resetImageRungBreakers();
 	vertexState.configured = false;
 	vertexState.generate = null;
 	r2State.puts.length = 0;

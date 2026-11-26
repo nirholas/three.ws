@@ -47,9 +47,27 @@
 //
 // Output: a base64 image returned inline as a data: URI. The caller
 // (text-to-image.js) uploads it to R2/S3 before handing it to the 3D backend.
+// Every returned image is decoded and checked first (image-validate.js): a 200
+// carrying a thumbnail, a flat frame or non-image bytes fails like any error.
+//
+// Breaker: generateImage and editImage run through the shared Vertex image
+// breaker (api/_lib/vertex-image-breaker.js). Each failure is classified
+// (billing, permission, quota, model not found, safety, outage, timeout, token)
+// and cools the lane per class; while it is cooled both calls throw
+// code 'provider_cooling' at once with no token mint and no network call, and
+// after the window exactly one request probes. A safety block never cools.
 
 import { getGcpAccessToken } from '../_lib/gcp-auth.js';
 import { imageModelChain, isModelNotFound } from '../_lib/image-model.js';
+import { validateGeneratedImage } from '../_lib/image-validate.js';
+import {
+  vertexBreakerGate,
+  recordVertexSuccess,
+  recordVertexFailure,
+  classifyVertexFailure,
+  statedRetrySeconds,
+  parseRetryAfter,
+} from '../_lib/vertex-image-breaker.js';
 
 const DEFAULT_LOCATION = 'us-central1';
 
@@ -103,13 +121,83 @@ function aiplatformHost(location) {
 // Map a fetch/HTTP failure onto the same designed error codes the caller's
 // fallback ladder already branches on (rate_limited / provider_unreachable /
 // providerStatus), so a broken Vertex call degrades to FLUX cleanly.
+// The parsed body and Retry-After header ride along so the breaker can tell a
+// billing hold from a permission fault and honour a stated quota reset.
 function throwVertexHttpError(res, data, label) {
   const message =
     data?.error?.message || data?.message || `Vertex AI ${label} returned ${res.status}`;
+  const err = Object.assign(new Error(message), {
+    providerBody: data,
+    retryAfterSeconds: parseRetryAfter(res.headers.get('retry-after')),
+  });
   if (res.status === 429) {
-    throw Object.assign(new Error(message), { code: 'rate_limited', retryAfter: 10 });
+    throw Object.assign(err, { code: 'rate_limited', retryAfter: statedRetrySeconds(err) || 10 });
   }
-  throw Object.assign(new Error(message), { providerStatus: res.status });
+  throw Object.assign(err, { providerStatus: res.status });
+}
+
+// Mint (or reuse the cached) OAuth token, tagging a failure as the token stage
+// so the breaker classifies it as such rather than as a Vertex refusal.
+async function mintToken() {
+  try {
+    return await getGcpAccessToken();
+  } catch (err) {
+    throw Object.assign(err instanceof Error ? err : new Error(String(err)), { vertexStage: 'token' });
+  }
+}
+
+// Run one generate/edit call through the shared breaker. `ignoreBreaker` is for
+// a caller with no lane left behind Vertex: a long shot beats a certain failure.
+async function throughBreaker(ignoreBreaker, call) {
+  const gate = await vertexBreakerGate({ force: ignoreBreaker });
+  if (!gate.allow) {
+    const until = gate.state?.until ? new Date(gate.state.until).toISOString() : null;
+    const kind = gate.state?.kind || 'unknown';
+    throw Object.assign(
+      new Error(
+        gate.probing
+          ? `Vertex AI image lane parked (class=${kind}); another request is probing it`
+          : `Vertex AI image lane parked (class=${kind}) until ${until || 'the cooldown ends'}`,
+      ),
+      { code: 'provider_cooling', vertexFailureKind: kind, retryAt: until, breakerRecorded: true },
+    );
+  }
+  try {
+    const out = await call();
+    await recordVertexSuccess(gate);
+    return out;
+  } catch (err) {
+    await recordVertexFailure(gate, err);
+    throw err;
+  }
+}
+
+// Decode-check an image the model returned before anyone uses it.
+async function checkedImage(b64, mime, model) {
+  try {
+    await validateGeneratedImage(b64);
+  } catch (err) {
+    throw Object.assign(err, { vertexAnswered: true });
+  }
+  return { imageUrl: `data:${mime};base64,${b64}`, model: `vertex-ai/${model}` };
+}
+
+// A 200 with no image part: a safety block (finishReason / promptFeedback) or an
+// empty candidate. Either way Vertex served, so it is about this prompt.
+function noImageError(label, data) {
+  const reason = data?.candidates?.[0]?.finishReason;
+  const blockReason = data?.promptFeedback?.blockReason;
+  const why = [reason && `finishReason: ${reason}`, blockReason && `blockReason: ${blockReason}`].filter(Boolean).join(', ');
+  return Object.assign(new Error(`${label} returned no image data${why ? ` (${why})` : ''}`), {
+    providerBody: data,
+    vertexAnswered: true,
+  });
+}
+
+// The imageSize knob is retried away on a 400, but not when the 400 is a
+// content refusal: that would only spend a second call on the same verdict.
+function isKnobRejection(err) {
+  return err?.providerStatus === 400 && classifyVertexFailure(err) !== 'safety';
 }
 
 // Return true if the Vertex image lane is configured (GCP project present).
@@ -136,7 +224,10 @@ function imageLaneLocation() {
 
 // `timeoutMs` lets the paint ladder (text-to-image.js) cap this lane to its
 // remaining budget; the module default is the ceiling, never the floor.
-export async function generateImage(prompt, { aspectRatio = '1:1', timeoutMs = VERTEX_TIMEOUT_MS } = {}) {
+export async function generateImage(
+  prompt,
+  { aspectRatio = '1:1', timeoutMs = VERTEX_TIMEOUT_MS, ignoreBreaker = false } = {},
+) {
   const laneTimeoutMs = Math.max(1_000, Math.min(VERTEX_TIMEOUT_MS, Number(timeoutMs) || VERTEX_TIMEOUT_MS));
   const project = readEnv('GOOGLE_CLOUD_PROJECT');
   if (!project) {
@@ -147,13 +238,15 @@ export async function generateImage(prompt, { aspectRatio = '1:1', timeoutMs = V
   }
 
   const location = imageLaneLocation();
-  const token = await getGcpAccessToken();
 
-  return withModelFallback(imageModelChain('VERTEX_IMAGEN_MODEL'), (model) =>
-    isImagenPredictModel(model)
-      ? generateViaImagenPredict({ prompt, aspectRatio, project, location, model, token, timeoutMs: laneTimeoutMs })
-      : generateViaGemini({ prompt, aspectRatio, project, location, model, token, timeoutMs: laneTimeoutMs }),
-  );
+  return throughBreaker(ignoreBreaker, async () => {
+    const token = await mintToken();
+    return withModelFallback(imageModelChain('VERTEX_IMAGEN_MODEL'), (model) =>
+      isImagenPredictModel(model)
+        ? generateViaImagenPredict({ prompt, aspectRatio, project, location, model, token, timeoutMs: laneTimeoutMs })
+        : generateViaGemini({ prompt, aspectRatio, project, location, model, token, timeoutMs: laneTimeoutMs }),
+    );
+  });
 }
 
 // Run `call` on each model id in turn, moving on ONLY when Vertex says the id
@@ -198,22 +291,16 @@ async function generateViaGemini({ prompt, aspectRatio, project, location, model
   } catch (err) {
     // Older Gemini image models reject imageSize with INVALID_ARGUMENT. Retry
     // once without it rather than failing the lane over an optional knob.
-    if (err?.providerStatus !== 400) throw err;
+    if (!isKnobRejection(err)) throw err;
     delete body.generationConfig.imageConfig.imageSize;
     data = await postJson(endpoint, body, token, 'image generation', timeoutMs);
   }
   const parts = data?.candidates?.[0]?.content?.parts || [];
   const imgPart = parts.find((p) => p?.inlineData?.data);
   const b64 = imgPart?.inlineData?.data;
-  if (!b64) {
-    // A safety block returns candidates with no image part and a finishReason.
-    const reason = data?.candidates?.[0]?.finishReason;
-    throw new Error(
-      `Vertex Gemini returned no image data${reason ? ` (finishReason: ${reason})` : ''}`,
-    );
-  }
-  const mime = imgPart.inlineData.mimeType || 'image/png';
-  return { imageUrl: `data:${mime};base64,${b64}`, model: `vertex-ai/${model}` };
+  // A safety block returns candidates with no image part and a finishReason.
+  if (!b64) throw noImageError('Vertex Gemini', data);
+  return checkedImage(b64, imgPart.inlineData.mimeType || 'image/png', model);
 }
 
 // ── Imagen (predict) — legacy path for an explicit imagen-* override ─────────
@@ -236,8 +323,8 @@ async function generateViaImagenPredict({ prompt, aspectRatio, project, location
 
   const data = await postJson(endpoint, body, token, 'image generation', timeoutMs);
   const b64 = data?.predictions?.[0]?.bytesBase64Encoded;
-  if (!b64) throw new Error('Vertex AI returned no image data');
-  return { imageUrl: `data:image/png;base64,${b64}`, model: `vertex-ai/${model}` };
+  if (!b64) throw noImageError('Vertex AI', data);
+  return checkedImage(b64, 'image/png', model);
 }
 
 // POST a JSON body to Vertex and return the parsed response. Throws a designed
@@ -275,7 +362,7 @@ async function postJson(endpoint, body, token, label, timeoutMs = VERTEX_TIMEOUT
 // model takes the legacy `:predict` inpainting/product shape.
 //
 // Returns { imageUrl, model }.
-export async function editImage(imageUrl, prompt, { maskUrl = null } = {}) {
+export async function editImage(imageUrl, prompt, { maskUrl = null, ignoreBreaker = false } = {}) {
   const project = readEnv('GOOGLE_CLOUD_PROJECT');
   if (!project) {
     throw Object.assign(
@@ -285,15 +372,18 @@ export async function editImage(imageUrl, prompt, { maskUrl = null } = {}) {
   }
 
   const location = imageLaneLocation();
-  const token = await getGcpAccessToken();
-
+  // The caller's source image is decoded before the breaker: a bad source is the
+  // caller's fault and must neither spend nor release the probe.
   const source = await imageToInlineData(imageUrl);
 
-  return withModelFallback(imageModelChain('VERTEX_IMAGEN_EDIT_MODEL'), (model) =>
-    isImagenPredictModel(model)
-      ? editViaImagenPredict({ source, prompt, maskUrl, project, location, model, token })
-      : editViaGemini({ source, prompt, project, location, model, token }),
-  );
+  return throughBreaker(ignoreBreaker, async () => {
+    const token = await mintToken();
+    return withModelFallback(imageModelChain('VERTEX_IMAGEN_EDIT_MODEL'), (model) =>
+      isImagenPredictModel(model)
+        ? editViaImagenPredict({ source, prompt, maskUrl, project, location, model, token })
+        : editViaGemini({ source, prompt, project, location, model, token }),
+    );
+  });
 }
 
 // Vertex rejects an inlineData part whose mimeType disagrees with the bytes, and
@@ -376,16 +466,15 @@ async function editViaGemini({ source, prompt, project, location, model, token }
   try {
     data = await postJson(endpoint, body, token, 'edit');
   } catch (err) {
-    if (err?.providerStatus !== 400) throw err;
+    if (!isKnobRejection(err)) throw err;
     delete body.generationConfig.imageConfig;
     data = await postJson(endpoint, body, token, 'edit');
   }
   const parts = data?.candidates?.[0]?.content?.parts || [];
   const imgPart = parts.find((p) => p?.inlineData?.data);
   const b64 = imgPart?.inlineData?.data;
-  if (!b64) throw new Error('Vertex Gemini edit returned no image data');
-  const mime = imgPart.inlineData.mimeType || 'image/png';
-  return { imageUrl: `data:${mime};base64,${b64}`, model: `vertex-ai/${model}` };
+  if (!b64) throw noImageError('Vertex Gemini edit', data);
+  return checkedImage(b64, imgPart.inlineData.mimeType || 'image/png', model);
 }
 
 async function editViaImagenPredict({ source, prompt, maskUrl, project, location, model, token }) {
@@ -412,6 +501,6 @@ async function editViaImagenPredict({ source, prompt, maskUrl, project, location
   };
   const data = await postJson(endpoint, body, token, 'edit');
   const b64 = data?.predictions?.[0]?.bytesBase64Encoded;
-  if (!b64) throw new Error('Vertex AI edit returned no image data');
-  return { imageUrl: `data:image/png;base64,${b64}`, model: `vertex-ai/${model}` };
+  if (!b64) throw noImageError('Vertex AI edit', data);
+  return checkedImage(b64, 'image/png', model);
 }
