@@ -24,7 +24,7 @@ import { env } from './env.js';
 import { isWorldRetired, WORLD_RETIRED_DETAIL } from './world-retirement.js';
 import { getRedisBurn } from './redis-usage.js';
 import { probeLlmHealth } from './llm-health.js';
-import { readGenerationMetrics } from './forge-events.js';
+import { readGenerationMetrics, readSubmitOutcomes } from './forge-events.js';
 import { providersInCooldown } from './provider-health.js';
 import { hfLaneCooling, laneCooldownKey } from './forge-lane-health.js';
 
@@ -423,12 +423,30 @@ async function probeWorld() {
 let cache = null; // { at: epoch-ms, payload }
 
 // Probe every backend in the registry, in parallel, with per-instance caching.
+// Whether real generation outcomes say the forge is broken, independent of what
+// the upstream probes report. Two signals, each over a meaningful sample (20 or
+// more), below which a rate is too noisy to act on:
+//   lane        the job success rate (jobs that reached a 3D lane) under 75%
+//   end_to_end  the share of accepted requests that became a model under 75%.
+//               Requests that died before a job existed pull this down while
+//               the lane rate stays green; that gap is the outage it catches.
+export function generationVerdict(metrics, preJob) {
+	const lane = Boolean(
+		metrics && metrics.total >= 20 && metrics.success_rate != null && metrics.success_rate < 0.75,
+	);
+	const day = preJob?.last_24h;
+	const endToEnd = Boolean(
+		day && day.accepted >= 20 && day.end_to_end_success_rate != null && day.end_to_end_success_rate < 0.75,
+	);
+	return { unhealthy: lane || endToEnd, lane, end_to_end: endToEnd };
+}
+
 export async function probeForgeHealth({ force = false } = {}) {
 	if (!force && cache && Date.now() - cache.at < CACHE_TTL_MS) {
 		return { ...cache.payload, cached: true };
 	}
 
-	const [entries, editing, limiter, llm, world, redis, metrics] = await Promise.all([
+	const [entries, editing, limiter, llm, world, redis, metrics, preJob] = await Promise.all([
 		Promise.all(
 			Object.values(BACKENDS).map(async (b) => {
 				if (b.byok) return byokResult(b.id);
@@ -464,6 +482,11 @@ export async function probeForgeHealth({ force = false } = {}) {
 		// are quietly failing. Null when Redis is absent — the block is then omitted
 		// rather than shown as a misleading all-zero outage.
 		readGenerationMetrics().catch(() => null),
+		// Every generation POST by how it ended, including the ones that ended
+		// before a job existed (a limiter, the reference image, a lane refusing the
+		// submit). The metrics block above cannot see those: it counts jobs. Null
+		// when Redis is absent, and then omitted like metrics.
+		readSubmitOutcomes().catch(() => null),
 	]);
 
 	// Whether the router will use each lane right now, read from the same shared
@@ -487,11 +510,7 @@ export async function probeForgeHealth({ force = false } = {}) {
 	// functions when the world is offline), which the cap below already enforces.
 	// A critical Redis burn rate degrades overall too: it predicts the limiters
 	// failing closed before they actually do, so it warns rather than waits.
-	// A real success rate below 75% over a meaningful sample (≥20 terminal outcomes)
-	// is a live outage the upstream auth probes can't see — surface it in the overall
-	// verdict. Below the volume floor the rate is too noisy to act on, so it's ignored.
-	const generationUnhealthy =
-		metrics && metrics.total >= 20 && metrics.success_rate != null && metrics.success_rate < 0.75;
+	const generationUnhealthy = generationVerdict(metrics, preJob).unhealthy;
 
 	const statuses = entries
 		.map((e) => e.status)
@@ -516,6 +535,10 @@ export async function probeForgeHealth({ force = false } = {}) {
 		redis,
 		// Live generation outcomes (omitted when Redis is absent).
 		...(metrics ? { metrics } : {}),
+		// Generation requests by how they ended, last hour and last 24h, with the
+		// pre-job endings broken down by stage, cause and provider (omitted when
+		// Redis is absent). See docs/ops/forge-error-triage.md.
+		...(preJob ? { pre_job: preJob } : {}),
 	};
 	cache = { at: Date.now(), payload };
 	return { ...payload, cached: false };

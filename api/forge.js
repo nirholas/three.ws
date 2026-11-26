@@ -120,6 +120,8 @@ import {
 } from './_lib/forge-store.js';
 import { isStorageInfrastructureError } from './_lib/r2.js';
 import { normalizeTraceId, recordForgeProgress, readForgeProgress } from './_lib/forge-progress.js';
+import { markSubmitStage, noteSubmitError } from './_lib/forge-events.js';
+import { observeForgeSubmit } from './_lib/forge-prejob.js';
 import { requireCreator, resolveCreator } from './_lib/creator-account.js';
 import { resolveForgeCreditPayer } from './_lib/forge-credit-payer.js';
 import { constantTimeEquals } from './_lib/crypto.js';
@@ -1698,6 +1700,7 @@ async function startJobWithBody(req, res, body) {
 		});
 	}
 
+	markSubmitStage('submit');
 	try {
 		// Pay-per-use: claim the settled $THREE payment now, immediately before any
 		// provider work, so every cheap failure above (rate limit, moderation, bad
@@ -2192,6 +2195,7 @@ async function startJobWithBody(req, res, body) {
 			// the free-first LLM chain, so it costs no GCP/vendor spend. This is the
 			// single biggest lever on "does this look like a real photograph"
 			// available before the reference image is even generated.
+			markSubmitStage('direction');
 			// Known marks resolve deterministically; otherwise the director gets one
 			// short budget (FORGE_DIRECTOR_BUDGET_MS) and skips cooled providers
 			// without a network call, so a dead chat chain costs milliseconds.
@@ -2224,6 +2228,7 @@ async function startJobWithBody(req, res, body) {
 			// most photoreal single view we can synthesize. Fail-open: an absent module
 			// or a Vertex outage transparently falls back to the standing text→image
 			// provider (FLUX/Imagen/NIM), so this path runs identically either way.
+			markSubmitStage('reference');
 			const synthesized = await seedReferenceImage({
 				prompt: promptForReference,
 				aspect,
@@ -2283,6 +2288,7 @@ async function startJobWithBody(req, res, body) {
 			views.length === 1 &&
 			!isInlineImageRef(referenceImageUrl)
 		) {
+			markSubmitStage('views');
 			const turnaround = await synthesizeTurnaroundViews(referenceImageUrl).catch(() => []);
 			if (turnaround.length) views = [...views, ...turnaround];
 		}
@@ -2296,6 +2302,7 @@ async function startJobWithBody(req, res, body) {
 		// request is handing the job to a GPU lane. Everything after this point is
 		// the engine's own queued/running reporting, which the page already polls.
 		recordForgeProgress(progressId, 'submitting', {}).catch(() => {});
+		markSubmitStage('submit');
 
 		// Explicitly chosen free HuggingFace lane. Unlike the trellis free-first
 		// path below: which degrades to the paid Replicate lane when the free
@@ -2913,6 +2920,7 @@ async function startJobWithBody(req, res, body) {
 			estimated_credits: estimateCredits({ backendId, path, tier }),
 		});
 	} catch (err) {
+		noteSubmitError(err);
 		if (err?.code === 'unconfigured') return unconfigured(res);
 		if (err?.code === 'invalid_key') {
 			return json(res, 401, {
@@ -3702,6 +3710,10 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'POST') {
 		const isRig = (url.searchParams.get('action') || '').trim() === 'rig';
+		// Every generation POST is counted by how it ended, the ones that never
+		// made a job included (_lib/forge-prejob.js). Installed before the sign-in
+		// check so its refusals are seen too.
+		const submit = isRig ? null : observeForgeSubmit(res, { internal: isShowcaseSeedRequest(req) });
 		// Making a model needs an account or a platform job (see
 		// _lib/creator-account.js). Checked before idempotency, rate limits and
 		// any provider spend, so an anonymous caller learns the one thing they
@@ -3716,7 +3728,7 @@ export default wrap(async (req, res) => {
 		if (isRig) {
 			return withForgeIdempotency(req, res, { scope: 'rig', caller, run: () => startRigJob(req, res) });
 		}
-		await withForgeIdempotency(req, res, { scope: 'generate', caller, run: () => startJob(req, res) });
+		await submit.run(() => withForgeIdempotency(req, res, { scope: 'generate', caller, run: () => startJob(req, res) }));
 		if (res.statusCode === 200 && !res.getHeader?.('idempotent-replayed')) recordConversion(req, 'forge_generation');
 		return;
 	}

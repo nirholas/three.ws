@@ -32,6 +32,7 @@ import { classifyPublishSafety, publishSafetyConfig } from './publish-safety.js'
 import { synthesizeNvidiaTts, NVIDIA_TTS_MODEL } from './tts-nvidia.js';
 import { animateNvidiaA2F } from './a2f-nvidia.js';
 import { probeForgeLane } from './forge-health.js';
+import { readSubmitOutcomes } from './forge-events.js';
 import { BACKENDS } from './forge-tiers.js';
 import { backendWorkerHost, regionFromHost } from './gpu-worker-host.js';
 
@@ -493,17 +494,39 @@ export const METHODOLOGY = Object.freeze({
 	jobs: 'Job latency is end-to-end wall-clock time of real generations (created to completed), nearest-rank p50 and p95 over completed jobs. GPU time is the worker-measured gpu_ms, shown only where the worker reported it.',
 	gpu_split: 'A completed job is attributed to a GPU only when its serving worker host was recorded and that host reported its GPU on /health. Jobs from before attribution started are counted in the lane totals but never assigned a GPU.',
 	empty: 'A lane with no data in a window says so. Nothing is estimated or backfilled.',
+	end_to_end: 'Job success counts only generations that became a job on a lane. The end-to-end rate beside it covers every Forge generation request accepted past sign-in over the last 24 hours, on every lane, including requests that ended before a job existed (a limiter, the reference image, a lane refusing the submit): jobs are credited at the window\'s job success rate and every pre-job ending counts as a failure.',
 });
 
-export async function buildNvidiaStats({ sql = defaultSql } = {}) {
+// The platform-wide end-to-end Forge rate, shown beside the per-lane job rates
+// so a reader never takes a lane's success for the user's. Counts only, no
+// prompts or identifiers.
+export function endToEndBlock(preJob) {
+	const day = preJob?.last_24h;
+	if (!day) return { window: '24h', note: 'end-to-end counters are not available on this deployment' };
+	const pct = (x) => (x == null ? null : Math.round(x * 1000) / 10);
+	return {
+		window: '24h',
+		scope: 'every Forge generation request accepted past sign-in, all lanes',
+		accepted: day.accepted,
+		jobs_created: day.jobs_created,
+		failed_before_job: day.failed_before_job,
+		end_to_end_success_pct: pct(day.end_to_end_success_rate),
+		job_success_pct: pct(day.lane_success_rate),
+	};
+}
+
+export async function buildNvidiaStats({ sql = defaultSql, readSubmits = readSubmitOutcomes } = {}) {
 	const backends = NVIDIA_LANES.map((l) => l.jobBackend).filter(Boolean);
-	const [latest, p7, p30, j7, j30, fleet] = await Promise.all([
+	const [latest, p7, p30, j7, j30, fleet, preJob] = await Promise.all([
 		latestProbes(sql),
 		probeAggregates(sql, 7),
 		probeAggregates(sql, 30),
 		jobAggregates(sql, 7, backends),
 		jobAggregates(sql, 30, backends),
 		fleetAggregates(sql, 30, backends),
+		Promise.resolve()
+			.then(() => readSubmits())
+			.catch(() => null),
 	]);
 	const by = (rows, key) => new Map(rows.map((r) => [r[key], r]));
 	const [latestBy, p7By, p30By, j7By, j30By] = [by(latest, 'lane'), by(p7, 'lane'), by(p30, 'lane'), by(j7, 'backend'), by(j30, 'backend')];
@@ -552,6 +575,7 @@ export async function buildNvidiaStats({ sql = defaultSql } = {}) {
 		windows: Object.keys(STATS_WINDOWS),
 		lanes,
 		fleet: fleetRows.length ? fleetRows : { empty: true, note: 'no completed jobs attributed to a GPU in the last 30 days' },
+		end_to_end: endToEndBlock(preJob),
 		methodology: METHODOLOGY,
 	};
 }

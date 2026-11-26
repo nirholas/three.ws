@@ -17,6 +17,11 @@
  * Reads DATABASE_URL from .env.local, then .env, then the shell (same order as
  * scripts/apply-migrations.mjs). Read-only: it runs SELECTs and nothing else.
  * Needs migration 20260921120000_forge_destination.sql applied.
+ *
+ * The funnel starts at a created row. Requests that ended before a job existed
+ * (a limiter, the reference image, a lane refusing the submit) have none, so the
+ * report also prints them by stage and cause, with the end-to-end success rate
+ * beside the generation success rate (scripts/lib/forge-prejob-report.mjs).
  */
 
 import { readFileSync } from 'node:fs';
@@ -57,6 +62,7 @@ if (!process.env.DATABASE_URL) {
 // Imported after the env files load: the db module resolves DATABASE_URL lazily,
 // but env.js snapshots other vars at import time.
 const { gatherForgeFunnel, clampFunnelDays } = await import('../api/_lib/forge-funnel.js');
+const { loadPreJobBreakdown, printPreJobSection } = await import('./lib/forge-prejob-report.mjs');
 
 const pct = (m) => (m?.value == null ? 'n/a' : `${(m.value * 100).toFixed(1)}%`);
 const base = (m) => `${m?.n ?? 0}/${m?.of ?? 0}${m?.low_sample ? '  (low sample)' : ''}`;
@@ -70,10 +76,14 @@ function table(headers, rows) {
 	for (const r of rows) console.log(`  ${fmt(r)}`);
 }
 
-const report = await gatherForgeFunnel({ days: clampFunnelDays(flag('days', undefined)) });
+const [report, preJob] = await Promise.all([
+	gatherForgeFunnel({ days: clampFunnelDays(flag('days', undefined)) }),
+	loadPreJobBreakdown(),
+]);
+const endToEnd = preJob.pre_job?.last_24h?.end_to_end_success_rate ?? null;
 
 if (JSON_OUT) {
-	console.log(JSON.stringify(report, null, 2));
+	console.log(JSON.stringify({ ...report, pre_job: preJob, end_to_end_success_rate_24h: endToEnd }, null, 2));
 	process.exit(report.ok ? 0 : 1);
 }
 
@@ -84,9 +94,12 @@ console.log(`\nForge funnel, last ${report.window_days} days  (rates under ${rep
 console.log('Output');
 console.log(`  requests ${o.requests}   done ${o.done}   failed ${o.failed}   in flight ${o.in_flight}   keyless (left out of per-maker metrics) ${o.unattributed_requests}`);
 line('Generation success', o.generation_success_rate);
+console.log(`  ${'End-to-end success (last 24h)'.padEnd(30)} ${(endToEnd == null ? 'n/a' : `${(endToEnd * 100).toFixed(1)}%`).padStart(7)}   accepted requests, incl. ones that never became a job`);
 line('Useful output (kept or downloaded)', o.useful_output_rate);
 line('Feedback coverage', o.feedback_coverage);
 console.log(`  accepted ${o.accepted}   rejected ${o.rejected}   downloaded ${o.downloaded}   rated ${o.rated}   avg rating ${o.avg_rating ?? 'n/a'}`);
+
+printPreJobSection(preJob);
 
 console.log(`\nNew makers (first-ever creation inside the window): ${a.new_actors}`);
 line('First asset success', a.first_asset_success_rate);

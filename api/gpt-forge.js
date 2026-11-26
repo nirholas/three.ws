@@ -184,6 +184,8 @@ import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
 import { decideStalledPoll } from './_lib/forge-job-deadline.js';
 import { directPrompt } from './_mcp-studio/gpt-forge-client.js';
 import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
+import { markSubmitStage, noteSubmitError } from './_lib/forge-events.js';
+import { observeForgeSubmit } from './_lib/forge-prejob.js';
 
 // Circuit-breaker key + window for the free NVIDIA NIM TRELLIS text→3D lane. The
 // hosted NVCF gateway can degrade so a submit neither completes nor hands back a
@@ -1584,6 +1586,7 @@ async function startJob(req, res) {
 		});
 	}
 
+	markSubmitStage('submit');
 	try {
 		// Pay-per-use: claim the settled $THREE payment now, immediately before any
 		// provider work, so every cheap failure above (rate limit, moderation, bad
@@ -2032,6 +2035,7 @@ async function startJob(req, res) {
 			// single biggest lever on "does this look like a real photograph"
 			// available before the reference image is even generated.
 			let directedPrompt = prompt;
+			markSubmitStage('direction');
 			if (body?.director !== false) {
 				// Known brand marks resolve deterministically before the LLM gets a
 				// say: no model reliably knows a niche mark's geometry, and the
@@ -2051,6 +2055,7 @@ async function startJob(req, res) {
 			// most photoreal single view we can synthesize. Fail-open: an absent module
 			// or a Vertex outage transparently falls back to the standing text→image
 			// provider (FLUX/Imagen/NIM), so this path runs identically either way.
+			markSubmitStage('reference');
 			const synthesized = await seedReferenceImage({
 				prompt: directedPrompt,
 				aspect,
@@ -2074,9 +2079,11 @@ async function startJob(req, res) {
 		// those. Best-effort: a failed view just means fewer views, never a
 		// failed generation.
 		if (backendId === 'trellis_selfhost' && tier.id !== 'draft' && views.length === 1) {
+			markSubmitStage('views');
 			const turnaround = await synthesizeTurnaroundViews(referenceImageUrl).catch(() => []);
 			if (turnaround.length) views = [...views, ...turnaround];
 		}
+		markSubmitStage('submit');
 
 		// Explicitly chosen free HuggingFace lane. Unlike the trellis free-first
 		// path below: which degrades to the paid Replicate lane when the free
@@ -2617,6 +2624,7 @@ async function startJob(req, res) {
 			estimated_credits: estimateCredits({ backendId, path, tier }),
 		});
 	} catch (err) {
+		noteSubmitError(err);
 		if (err?.code === 'unconfigured') return unconfigured(res);
 		if (err?.code === 'invalid_key') {
 			return json(res, 401, {
@@ -3381,6 +3389,10 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'POST') {
 		const isRig = (url.searchParams.get('action') || '').trim() === 'rig';
+		// Count how every generation POST ends, including the ones that end
+		// before a job exists (see _lib/forge-prejob.js). Installed before the
+		// sign-in check so its refusal is counted too.
+		const submit = isRig ? null : observeForgeSubmit(res);
 		// Making a model needs an account or a platform job (see
 		// _lib/creator-account.js). Checked before the submit ticket, rate limits
 		// and any provider spend, so an anonymous caller learns the one thing they
@@ -3401,7 +3413,7 @@ export default wrap(async (req, res) => {
 		if (isRig) {
 			return startRigJob(req, res);
 		}
-		return startJob(req, res);
+		return submit.run(() => startJob(req, res));
 	}
 
 	// ?catalog: the tier + backend + cost/time matrix the composer renders.

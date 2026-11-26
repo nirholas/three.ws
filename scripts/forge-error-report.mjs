@@ -18,6 +18,11 @@
  *   node scripts/forge-error-report.mjs --class lost_task   # every message in one class
  *   node scripts/forge-error-report.mjs --include-recovered # count failed-over attempts too
  *
+ * Every run also prints the requests that ended BEFORE a job existed (a limiter,
+ * the reference image, a lane refusing the submit), by stage and cause, and the
+ * end-to-end success rate beside the lane rate. Those never create a row, so the
+ * SQL above cannot see them; see scripts/lib/forge-prejob-report.mjs.
+ *
  * Reads DATABASE_URL from .env.local, then .env, then the shell (same order as
  * scripts/apply-migrations.mjs). Read-only: it runs SELECTs and nothing else.
  */
@@ -27,6 +32,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { neon } from '@neondatabase/serverless';
 import { classifyForgeError } from '../api/_lib/ops/forge-error-class.js';
+import { loadPreJobBreakdown, printPreJobSection } from './lib/forge-prejob-report.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, '..');
@@ -84,6 +90,8 @@ const pct = (n, d) => (d > 0 ? `${((n / d) * 100).toFixed(1)}%` : 'n/a');
 
 async function main() {
 	const since = `${DAYS} days`;
+	// Started first, read last: the counter read runs while the SQL does.
+	const preJobLoad = loadPreJobBreakdown();
 
 	const [totals] = await sql`
 		SELECT count(*) FILTER (WHERE status = 'done')::int    AS done,
@@ -163,6 +171,10 @@ async function main() {
 		successRate: judged > 0 ? done / judged : null,
 		classes: ranked,
 	};
+	const preJob = await preJobLoad;
+	report.preJob = preJob;
+	const endToEnd = preJob.pre_job?.last_24h?.end_to_end_success_rate ?? null;
+	report.endToEndSuccessRate24h = endToEnd;
 
 	if (JSON_OUT) {
 		console.log(JSON.stringify(report, null, 2));
@@ -172,7 +184,10 @@ async function main() {
 	console.log(`Forge generation errors, last ${DAYS} day(s), on ${report.database}\n`);
 	console.log(`  generations ${report.generations}   done ${done}   failed ${failedRows}   still running ${report.stillOpen}`);
 	console.log(`  of those failures, ${recovered} were re-dispatched to another lane and finished there; ${lost} were lost`);
-	console.log(`  success rate ${report.successRate == null ? 'n/a (no finished generations)' : pct(done, judged)} (recovered attempts are not counted against it)\n`);
+	console.log(`  success rate ${report.successRate == null ? 'n/a (no finished generations)' : pct(done, judged)} (jobs that reached a 3D lane; recovered attempts are not counted against it)`);
+	console.log(`  end-to-end success, last 24h ${endToEnd == null ? 'n/a' : `${(endToEnd * 100).toFixed(1)}%`} (every request accepted past sign-in, including the ones that never became a job)`);
+	printPreJobSection(preJob);
+	console.log('');
 
 	if (!ranked.length) {
 		console.log(
