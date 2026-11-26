@@ -187,6 +187,25 @@ export async function refundLimit(name, opts, id) {
 	return getLimiter(name, opts).refund(id);
 }
 
+/**
+ * Fairness: a request that Forge itself failed must not cost the caller their
+ * allowance. Registers `refund` to run once when the response finishes with a
+ * 5xx (our fault: a lane down, storage unavailable, an unhandled error). 4xx
+ * answers (bad input, no credits, rate limited) stay charged, and a refund that
+ * itself fails is dropped: it must never turn a response into an error.
+ */
+export function refundOnServerFailure(res, refund) {
+	if (typeof res?.once !== 'function') return;
+	let done = false;
+	res.once('finish', () => {
+		if (done || res.statusCode < 500) return;
+		done = true;
+		Promise.resolve()
+			.then(refund)
+			.catch((err) => console.warn('[rate-limit] refund after server failure failed:', err?.message || err));
+	});
+}
+
 // One warn per limiter name per cooldown — a Redis outage hits every request,
 // so unthrottled logging would itself become a denial-of-service on the logs.
 const _degradeWarnedAt = new Map();
@@ -382,7 +401,11 @@ function resilientLimiter(rl, name, opts) {
 		async refund(id) {
 			try {
 				if (!circuitAllows()) throw new RlCircuitOpenError();
-				await rl.resetUsedTokens(id);
+				if (opts.limit === 1) await rl.resetUsedTokens(id);
+				// A multi-use window cannot be reset without wiping every other hit,
+				// so hand back exactly one token: consuming a negative rate lowers the
+				// current window's count by one.
+				else await rl.limit(id, { rate: -1 });
 				circuitRecordSuccess();
 				return true;
 			} catch (err) {
@@ -1106,6 +1129,17 @@ export const limits = {
 			window: '1 h',
 			critical: true,
 		}).limit('global'),
+	// Give one hit back to the generation buckets above. For a request that
+	// Forge itself failed (a 5xx) before the person got anything: see
+	// refundOnServerFailure. `free` and `multiplier` must match the charge so the
+	// refund lands in the same bucket.
+	mcp3dGenerateRefund: (key) =>
+		getLimiter('mcp3d:generate', { limit: 30, window: '1 h', critical: true }).refund(key),
+	mcp3dGenerateFreeRefund: (key, multiplier = 1) =>
+		getLimiter('mcp3d:generate:free', {
+			limit: Math.max(FREE_HOURLY_BASE, Math.round(FREE_HOURLY_BASE * (Number(multiplier) || 1))),
+			window: '1 h',
+		}).refund(key),
 	// Forge-in-world (api/_lib/forge-world-limits.js). Per-player cooldown: one
 	// generation per FORGE_WORLD_PLAYER_COOLDOWN_S, keyed by the signed-in user or
 	// the forge client id. A single-use window on purpose, so a refusal further

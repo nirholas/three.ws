@@ -60,9 +60,9 @@
 
 import { recordConversion } from './_lib/campaign-ledger.js';
 import { randomUUID } from 'node:crypto';
-import { cors, json as sendJson, method, readJson, wrap, rateLimited } from './_lib/http.js';
+import { cors, json as sendJson, method, readJson, wrap, rateLimited, setRateLimitHeaders } from './_lib/http.js';
 import { withManageToken } from './_lib/forge-manage-token.js';
-import { limits, clientIp } from './_lib/rate-limit.js';
+import { limits, clientIp, refundOnServerFailure } from './_lib/rate-limit.js';
 import { admitWorldForge, parseWorldId } from './_lib/forge-world-limits.js';
 import { withForgeIdempotency } from './_lib/forge-idempotency.js';
 import { textToImage, synthesizeTurnaroundViews } from './_mcp3d/text-to-image.js';
@@ -130,6 +130,7 @@ import {
 	acquireBlockingSlot,
 	providerSubmitAllowed,
 	dailyPaidAllowed,
+	dailyPaidRefund,
 	SCALE_LIMITS,
 } from './_lib/forge-scale.js';
 import { env as _env } from './_lib/env.js';
@@ -325,6 +326,20 @@ const JOB_ID_RE = /^[a-z0-9]{16,64}$/;
 // poll opts out for the shared anon bucket (see pollJob).
 function json(res, status, body, headers) {
 	return sendJson(res, status, withManageToken(body), headers);
+}
+
+// The 429 for the per-identity daily paid cap. Names the limit, says when it
+// resets (UTC midnight) and carries the standard rate-limit headers.
+function dailyLimitReached(res, daily, message) {
+	const retryAfter = Math.max(1, setRateLimitHeaders(res, { limit: daily.limit, remaining: 0, reset: daily.resetAt }));
+	res.setHeader('retry-after', String(retryAfter));
+	return json(res, 429, {
+		error: 'daily_limit_reached',
+		limit: 'generation_daily',
+		message,
+		retry_after: retryAfter,
+		reset_at: new Date(daily.resetAt).toISOString(),
+	});
 }
 
 function clientKeyFrom(req) {
@@ -1473,8 +1488,13 @@ async function startJobWithBody(req, res, body) {
 			? await limits.mcp3dGenerateFreeTiered(rlKey, await freeLaneMultiplier(req, body))
 			: await limits.mcp3dGenerate(rlKey);
 		if (!rl.success) {
-			return rateLimited(res, rl, 'Generation limit reached. Try again shortly.');
+			return rateLimited(res, rl, 'Generation limit reached. Try again shortly.', { limit: 'generation_hourly' });
 		}
+		// Charged up front; handed back if Forge itself fails (a 5xx).
+		const freeMultiplier = isFreeLane ? await freeLaneMultiplier(req, body) : 1;
+		refundOnServerFailure(res, () =>
+			isFreeLane ? limits.mcp3dGenerateFreeRefund(rlKey, freeMultiplier) : limits.mcp3dGenerateRefund(rlKey),
+		);
 		// Forge-in-world: a submit tied to a /play world is also held to the
 		// per-player cooldown and the per-world concurrency cap (see the lib).
 		const worldId = parseWorldId(body);
@@ -1518,16 +1538,20 @@ async function startJobWithBody(req, res, body) {
 			// hourly cap and the global hourly cap leave open (one actor under every
 			// per-request limit can still drain paid spend over a day). Keyed by the
 			// forge client id. Free and BYOK lanes are never counted.
-			const daily = await dailyPaidAllowed(clientKeyFrom(req), {
+			// Keyed by account when there is one: the client id is a header the
+			// caller picks, so a made-up value must not mint a fresh allowance.
+			const dailyKey = accountId ? `user:${accountId}` : clientKeyFrom(req);
+			const daily = await dailyPaidAllowed(dailyKey, {
 				limit: SCALE_LIMITS.paidDailyPerClient,
 			});
 			if (!daily.ok) {
-				return json(res, 429, {
-					error: 'daily_limit_reached',
-					message:
-						'You’ve reached today’s limit for paid generations. Free engines (NVIDIA, Hugging Face) stay open, or try again tomorrow.',
-				});
+				return dailyLimitReached(
+					res,
+					daily,
+					'You’ve reached today’s limit for paid generations. Free engines (NVIDIA, Hugging Face) stay open, or try again tomorrow.',
+				);
 			}
+			refundOnServerFailure(res, () => dailyPaidRefund(dailyKey));
 		}
 	}
 
@@ -3024,8 +3048,10 @@ async function startRigJob(req, res) {
 	const accountId = await sessionUserIdFromReq(req);
 	const rl = await limits.mcp3dGenerate(accountId ? `user:${accountId}` : ip);
 	if (!rl.success) {
-		return rateLimited(res, rl, 'Rigging limit reached. Try again shortly.');
+		return rateLimited(res, rl, 'Rigging limit reached. Try again shortly.', { limit: 'generation_hourly' });
 	}
+	const rigKey = accountId ? `user:${accountId}` : ip;
+	refundOnServerFailure(res, () => limits.mcp3dGenerateRefund(rigKey));
 
 	const body = await readJson(req, 8_000).catch(() => null);
 	const glbUrl = typeof body?.glb_url === 'string' ? body.glb_url.trim() : '';
@@ -3095,15 +3121,14 @@ async function startRigJob(req, res) {
 	if (!globalRl.success) {
 		return rateLimited(res, globalRl, 'Rigging is at capacity right now. Try again shortly.');
 	}
-	const daily = await dailyPaidAllowed(clientKeyFrom(req), {
+	const rigDailyKey = accountId ? `user:${accountId}` : clientKeyFrom(req);
+	const daily = await dailyPaidAllowed(rigDailyKey, {
 		limit: SCALE_LIMITS.paidDailyPerClient,
 	});
 	if (!daily.ok) {
-		return json(res, 429, {
-			error: 'daily_limit_reached',
-			message: 'You’ve reached today’s limit for paid generations. Try again tomorrow.',
-		});
+		return dailyLimitReached(res, daily, 'You’ve reached today’s limit for paid generations. Try again tomorrow.');
 	}
+	refundOnServerFailure(res, () => dailyPaidRefund(rigDailyKey));
 
 	try {
 		const job = await provider.submit({ mode: 'rerig', sourceUrl: glbUrl, params: {} });

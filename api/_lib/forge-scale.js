@@ -356,16 +356,35 @@ export const SCALE_LIMITS = Object.freeze({
 
 const DAILY_PREFIX = 'fc:daily:';
 
+// UTC midnight after `now`: when the daily paid allowance resets.
+export function nextDailyReset(now = Date.now()) {
+	return (Math.floor(now / 86_400_000) + 1) * 86_400_000;
+}
+
 export async function dailyPaidAllowed(identity, { limit }) {
-	if (!redis || !identity) return { ok: true, used: 0, limit };
+	const resetAt = nextDailyReset();
+	if (!redis || !identity) return { ok: true, used: 0, limit, resetAt };
 	const day = Math.floor(Date.now() / 86_400_000); // UTC day index
 	const key = `${DAILY_PREFIX}${identity}:${day}`;
 	try {
 		const used = await redis.incr(key);
 		if (used === 1) await redis.expire(key, 86_400 + 3600);
-		return { ok: used <= limit, used, limit };
+		return { ok: used <= limit, used, limit, resetAt };
 	} catch {
-		return { ok: true, used: 0, limit };
+		return { ok: true, used: 0, limit, resetAt };
+	}
+}
+
+// Hand one daily hit back (a paid request Forge failed before delivering).
+export async function dailyPaidRefund(identity) {
+	if (!redis || !identity) return false;
+	const key = `${DAILY_PREFIX}${identity}:${Math.floor(Date.now() / 86_400_000)}`;
+	try {
+		const left = await redis.decr(key);
+		if (left < 0) await redis.set(key, 0, { keepTtl: true });
+		return true;
+	} catch {
+		return false;
 	}
 }
 

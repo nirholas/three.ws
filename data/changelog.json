@@ -3,17 +3,8 @@
 	"entries": [
 		{
 			"date": "2026-11-26",
-			"title": "Forge text prompts get a working NVIDIA image rung again",
-			"summary": "The NVIDIA image step behind text-to-3D now uses FLUX.2 klein, which answers in about 6 seconds, instead of FLUX.1 models that hung on NVIDIA's gateway. It also gives up after 30 seconds so the next image provider keeps the rest of the request's time.",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-26",
-			"title": "Forge keeps going when a backup lane refuses the job",
-			"summary": "When a 3D generation fails mid-job and the next backup engine refuses the handover, Forge now tries the following engine instead of ending the job, and the health report shows for each engine whether it is in rotation, cooling or disabled.",
+			"title": "A generation Forge fails no longer costs you an allowance",
+			"summary": "When Forge itself fails a request (a lane down, storage unavailable), the hourly generation allowance and the daily paid allowance are handed back. The daily cap now follows your account instead of a browser id, and its 429 says when it resets (UTC midnight) with Retry-After and rate-limit headers. Tool limits (remesh, stylize, segment and the rest) name themselves in the 429 so the page can say which limit you hit.",
 			"tags": [
 				"fix",
 				"improvement"
