@@ -13,6 +13,7 @@ import {
 	MAX_FALLBACK_ATTEMPTS,
 	TOTAL_BUDGET_MS,
 } from '../api/_lib/chat-models.js';
+import { NVIDIA_PINNED_MODELS } from '../api/_lib/llm.js';
 
 const GRANITE = 'ibm-granite/granite-4.1-8b';
 // A catalogued model that is deliberately never auto-selected.
@@ -171,6 +172,18 @@ describe('retired NVIDIA NIM functions', () => {
 	// working provider once Groq throttled. The direct NIM default must be a live model.
 	it('the nvidia default is not the retired super-120b function', () => {
 		expect(PROVIDER_MODEL_DEFAULTS.nvidia).not.toBe('nvidia/nemotron-3-super-120b-a12b');
+	});
+
+	// 2026-11-26: anonymous chat answered 503 on every request. Groq and
+	// OpenRouter were rejecting, and the NVIDIA rung, the one free lane still
+	// healthy, never answered: /api/chat sent it Lightning, which sat for the
+	// whole 15 s per-call cutoff, while Ultra on the same key answered in 1.3 s.
+	// The public lane board said NVIDIA chat was fine the entire time, because
+	// /api/cron/nvidia-lane-probes probes NVIDIA_PINNED_MODELS[0] and chat ran a
+	// different model. Chat's NVIDIA rung has to be the model the probe watches,
+	// so a stalled rung shows up as a down lane instead of a silent 503.
+	it('the nvidia default is the lead model the lane probe watches', () => {
+		expect(PROVIDER_MODEL_DEFAULTS.nvidia).toBe(NVIDIA_PINNED_MODELS[0]);
 	});
 });
 
