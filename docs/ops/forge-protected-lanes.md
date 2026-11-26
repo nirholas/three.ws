@@ -54,16 +54,29 @@ The 93% covers only jobs that reached a lane. A text prompt that fails while its
 ## Re-measure
 
 ```bash
-curl -s https://three.ws/api/nvidia/stats | node -e '
-let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
-  for (const l of JSON.parse(s).lanes) {
-    const w = l.jobs && l.jobs["7d"]; if (!w) continue;
-    const n = (w.done||0) + (w.failed||0);
-    const prot = l.id === "trellis_selfhost" || (n >= 20 && w.success_pct >= 85);
-    console.log((prot ? "PROTECTED " : "open      ") + l.id.padEnd(18) + " 7d done=" + w.done + " failed=" + w.failed + " success=" + (w.success_pct ?? "n/a"));
-  }
-});'
+npm run forge:lanes              # every Forge lane, last 7 days, PROTECTED or open, from live production stats
+npm run forge:lanes -- --check   # also compares with the "Measured state" list above; exits 1 when they disagree
+npm run forge:lanes -- --json    # the same rows, machine-readable
 curl -s 'https://three.ws/api/forge?health=1' | head -c 2000
 ```
 
+The script ([scripts/forge-protected-lanes.mjs](../../scripts/forge-protected-lanes.mjs)) reads the public, read-only `GET https://three.ws/api/nvidia/stats` and applies the rule above. Point it at another server with `FORGE_STATS_ORIGIN`, for example `FORGE_STATS_ORIGIN=http://localhost:3000 npm run forge:lanes`. Exit code 2 means the stats could not be read or this page's "Measured state" section could not be parsed, so keep the `## Measured state, <date>` heading and the `Protected:` list in their current form.
+
 When the measurement changes which lanes are protected, update the "Measured state" section and its date in the same change.
+
+## The tests that hold it in place
+
+[tests/api/forge-protected-lanes.test.js](../../tests/api/forge-protected-lanes.test.js) pins everything listed under "What protected forbids" for `trellis_selfhost`, and the keyless rung's position:
+
+- the backend entry, its slot in `FREE_FALLBACK_FOR_PATH`, `SELF_HOST_IMAGE_LANES`, `DEFAULT_BACKEND_FOR_PATH` and the self-host lane chain;
+- production routing (photo and text, every tier, with and without `FORGE_SELFHOST_PRIMARY`, health-aware routing);
+- every value in `SELFHOST_TRELLIS_QUALITY` and the ETA it produces;
+- the exact request the API sends the worker for a fixed photo (default options, draft with a seed, turnaround views, high tier), with only the outbound fetch stubbed;
+- the poll and status contract (`/tasks/:id`, status mapping, the missing-task grace window);
+- the text-to-image ladder order, with the keyless rung after every keyed rung and ahead of Replicate.
+
+Every failure message points back to this page and says the owner's yes is required. If one goes red, you moved a protected lane: undo the change, or bring the owner a failing test that shows the real bug.
+
+```bash
+npx vitest run tests/api/forge-protected-lanes.test.js
+```

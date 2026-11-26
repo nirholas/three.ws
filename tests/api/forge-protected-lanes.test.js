@@ -768,3 +768,45 @@ describe('protected rung: keyless Pollinations keeps its place in the text-to-im
 		expect(rungOrder(), RULE).toEqual(['pollinations']);
 	});
 });
+
+// ── 10. The re-measure script (npm run forge:lanes) ──────────────────────────
+
+describe('npm run forge:lanes: classifies live stats by the protected-lane rule and checks the doc', async () => {
+	const { classifyLanes, parseDocProtected, compareWithDoc } = await import('../../scripts/forge-protected-lanes.mjs');
+	const { readFile } = await import('node:fs/promises');
+	const lane = (id, done, failed, success_pct) => ({ id, jobs: { '7d': { done, failed, success_pct } } });
+
+	it('protects 20+ finished jobs at 85%+ success, and trellis_selfhost by name', () => {
+		const rows = classifyLanes({
+			lanes: [
+				lane('trellis_selfhost', 1, 9, 10),
+				lane('steady', 18, 2, 90),
+				lane('too_few', 19, 0, 100),
+				lane('flaky', 30, 10, 75),
+				{ id: 'nim_embeddings', jobs: null },
+			],
+		});
+		expect(rows.map((r) => [r.id, r.protected, r.reason])).toEqual([
+			['trellis_selfhost', true, 'by name'],
+			['steady', true, 'measured'],
+			['too_few', false, null],
+			['flaky', false, null],
+		]);
+	});
+
+	it('reads the dated protected list from docs/ops/forge-protected-lanes.md', async () => {
+		const doc = parseDocProtected(await readFile('docs/ops/forge-protected-lanes.md', 'utf8'));
+		expect(doc, 'the doc must keep a "## Measured state, <date>" section with a "Protected:" list').not.toBeNull();
+		expect(doc.ids).toContain('trellis_selfhost');
+		expect(doc.measuredAt).toMatch(/^\d{4}-\d{2}-\d{2}/);
+	});
+
+	it('flags a lane the measurement protects that the doc omits, and one the doc keeps that lost protection', () => {
+		const rows = classifyLanes({ lanes: [lane('trellis_selfhost', 900, 50, 94.7), lane('steady', 40, 2, 95.2), lane('triposg', 20, 30, 40)] });
+		const out = compareWithDoc(rows, { measuredAt: '2026-11-26', ids: ['trellis_selfhost', 'triposg'] });
+		expect(out.agrees).toBe(false);
+		expect(out.missingFromDoc).toEqual(['steady']);
+		expect(out.staleInDoc).toEqual(['triposg']);
+		expect(compareWithDoc(rows, { measuredAt: '2026-11-26', ids: ['trellis_selfhost', 'steady'] }).agrees).toBe(true);
+	});
+});

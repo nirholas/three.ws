@@ -605,6 +605,7 @@
 		"db:check": "node scripts/apply-migrations.mjs --check",
 		"db:restamp": "node scripts/apply-migrations.mjs --restamp",
 		"forge:errors": "node scripts/forge-error-report.mjs",
+		"forge:lanes": "node scripts/forge-protected-lanes.mjs",
 		"forge:funnel": "node scripts/forge-funnel-report.mjs",
 		"forge:tripo": "node scripts/tripo-lane-report.mjs",
 		"trellis2:benchmark": "node scripts/trellis2-benchmark.mjs",
