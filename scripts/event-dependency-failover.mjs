@@ -160,13 +160,16 @@ async function checkPumpFun() {
 	// on-chain read is not.
 	const rungs = [];
 	const frontend = await timed(async () => {
-		const res = await fetch(`https://frontend-api-v3.pump.fun/coins/${THREE_MINT}`, {
+		// pump.fun retired GET /coins/<mint> on 2026-11-25; the platform reads the
+		// coin from the search route keyed by the mint, exact match only.
+		const res = await fetch(`https://frontend-api-v3.pump.fun/coins/search-unrestricted?searchTerm=${THREE_MINT}&offset=0&limit=10&includeNsfw=true`, {
 			headers: { accept: 'application/json' },
 			signal: AbortSignal.timeout(15_000),
 		});
 		if (!res.ok) throw new Error(`http ${res.status}`);
-		const json = await res.json();
-		if (!json?.mint) throw new Error('no mint in response');
+		const rows = await res.json();
+		const json = Array.isArray(rows) ? rows.find((c) => c?.mint === THREE_MINT) : null;
+		if (!json) throw new Error('mint not in search response');
 		return json.symbol || json.name || json.mint;
 	});
 	rungs.push({ rung: 'frontend-api-v3.pump.fun', ok: frontend.ok, ms: frontend.ms, error: frontend.error || null });
