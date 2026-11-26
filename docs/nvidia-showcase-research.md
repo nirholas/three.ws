@@ -141,6 +141,8 @@ Ranked by how much each one improves the product for users first, and how reshar
 | 8 | An avatar that says one line in every supported language | NVIDIA's Content Localization blueprint fixes lip sync on translated video after the fact. A 3D face animated from the audio gets it right by construction. | Magpie multilingual speech, Audio2Face-3D | [878](../prompts/finish/878-nvidia-28-multilingual-talking-avatar.md) |
 | 9 | An open pack of simulation-ready props made by Forge | NVIDIA publishes its own SimReady library as an open dataset; robotics teams never have enough varied objects. | OpenUSD, TRELLIS on our GPUs | [879](../prompts/finish/879-nvidia-29-open-simready-prop-dataset.md) |
 
+The plan for these nine (what to run first, what collides, what waits on the owner, what each lets us say) and a design doc per build are in [nvidia/builds/](nvidia/builds/README.md).
+
 Considered and not filed:
 
 - **A G-Assist plug-in from our MCP server.** NVIDIA's builder converts MCP servers, so the work is small, but it can only be tested on a Windows RTX PC, which we do not have. Worth doing by whoever has that machine.
