@@ -117,3 +117,32 @@ describe('the Sketchfab showcase honours visibility and the safety screen', () =
 		expect(ids).toContain(platformSeed);
 	});
 });
+
+describe('the social preview image honours visibility', () => {
+	// /api/forge/:id/og answered for any id: a blocked or private model's preview
+	// was one redirect away, and its prompt was drawn into the fallback card. The
+	// share page already applies the visibility rule; the card did not.
+	const og = async (id) => {
+		const { default: handler } = await import('../../api/forge-og.js');
+		return callHandler(handler, { url: `/api/forge-og?id=${id}` });
+	};
+
+	it('redirects to the preview of a public or unlisted model', async () => {
+		for (const visibility of ['public', 'unlisted']) {
+			const out = await og(await seed({ visibility, safety_status: 'clear' }));
+			expect(out.status).toBe(302);
+			expect(out.headers.location).toBe('https://x.test/p.png');
+		}
+	});
+
+	it('answers the generic card, without the prompt or the preview, for a private or blocked model', async () => {
+		const priv = await seed({ visibility: 'private', prompt: 'secret private thing' });
+		const blocked = await seed({ visibility: 'private', safety_status: 'blocked', prompt: 'withheld flagged thing' });
+		for (const [id, word] of [[priv, 'secret'], [blocked, 'withheld']]) {
+			const out = await og(id);
+			expect(out.status).toBe(404);
+			expect(out.headers.location).toBeUndefined();
+			expect(out.text).not.toContain(word);
+		}
+	});
+});
