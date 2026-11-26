@@ -123,6 +123,17 @@ describe('devHtmlPageFile', () => {
 		expect(page('/no-such-page-anywhere')).toBeNull();
 	});
 
+	// chat/ is its own Vite app (chat/vite.config.js, base /chat/). Its
+	// chat/index.html is that app's source shell, whose /src/main.js resolves
+	// against the root server and 404s, so serving it rendered /chat blank in
+	// dev (console sweep 2026-11-26). Production serves the built copy; in dev
+	// the /chat proxy owns the URL (the chat dev server on :5174, else the build
+	// in public/chat, else a notice saying how to build it).
+	it('leaves a nested Vite app to the dev proxy instead of serving its source shell', () => {
+		expect(page('/chat')).toBeNull();
+		expect(page('/chat/')).toBeNull();
+	});
+
 	it('finds a file on disk for every listed page whose production rewrite targets HTML', () => {
 		const pages = JSON.parse(readFileSync(path.join(root, 'data/pages.json'), 'utf8'));
 		const missing = [];
@@ -132,6 +143,8 @@ describe('devHtmlPageFile', () => {
 				if (/\.[a-z0-9]+$/i.test(p) || p.includes(':')) continue;
 				const r = resolvePhase1(table.phase1Routes, { headers: { 'user-agent': BROWSER } }, new URL(p, 'http://dev.local'));
 				if (r.terminal || !r.matched || !r.path.endsWith('.html')) continue;
+				// A nested Vite app's page is served by the dev proxy (see above).
+				if (existsSync(path.join(root, r.path.split('/').filter(Boolean)[0], 'vite.config.js'))) continue;
 				const f = devHtmlPageFile(table, root, { url: p, headers: { 'user-agent': BROWSER } });
 				if (!f || !existsSync(f)) missing.push(`${p} -> ${r.path}`);
 			}

@@ -114,6 +114,22 @@ export function devRedirect(table, req) {
 	return key ? { status: r.status, location: r.headers[key] } : null;
 }
 
+// A top-level directory with its own Vite config (chat/) is a separate app:
+// its index.html is a source shell whose module script only resolves on that
+// app's own dev server, and production serves its build instead. The dev proxy
+// owns those URLs, so the page fallback must not answer them with the shell.
+function nestedViteApp(root, rel) {
+	const top = rel.split('/')[0];
+	if (!top || top === rel) return false;
+	return ['vite.config.js', 'vite.config.mjs', 'vite.config.ts'].some((name) => {
+		try {
+			return statSync(path.resolve(root, top, name)).isFile();
+		} catch {
+			return false;
+		}
+	});
+}
+
 /**
  * The HTML file on disk that production serves for a page URL it rewrites to
  * an .html dest (vercel.json `/cli/authorize` -> `/cli-authorize.html`), else
@@ -134,6 +150,7 @@ export function devHtmlPageFile(table, root, req) {
 	const r = resolvePhase1(table.phase1Routes, req, url);
 	if (r.terminal || !r.matched || !r.path.endsWith('.html') || r.path.startsWith('/api/')) return null;
 	const rel = r.path.replace(/^\/+/, '');
+	if (nestedViteApp(root, rel)) return null;
 	for (const dir of ['pages', 'public', '.']) {
 		const file = path.resolve(root, dir, rel);
 		if (!file.startsWith(root + path.sep)) continue;
