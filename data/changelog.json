@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-26",
+			"title": "pump.fun skill scripts read coins again",
+			"summary": "The swap, coin-fees and create-coin skills' fetch-coin script asked pump.fun's retired /coins-v2 route and failed for every coin. It now reads pump.fun's coin search and keeps only the exact mint, so agents can tell a bonding-curve coin from a graduated one before they trade or claim fees.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-26",
 			"title": "Coin pages show what each coin actually paid its creator again",
 			"summary": "pump.fun retired the per-coin timeline the coin page and agent earnings read, and every coin started showing \"This coin paid 0 SOL\" with a false gap against the wallet total. The per-coin figure now comes from pump.fun's creator-fee index filtered to that one coin, a failed read is shown as unknown instead of zero, and the reconciliation compares the per-coin sum with the wallet total so fees from coins outside the registry show up as a gap.",
 			"tags": [

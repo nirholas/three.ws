@@ -31,6 +31,14 @@
 			<description>The text and image to 3D generator is now called Forge across three.ws, and Forge by three.ws inside the tools it plugs into: the Blender add-on, the ComfyUI nodes, the Omniverse extension, the Unity, Godot and Unreal bridges, the Modly extension, the Semantic Kernel, n8n, Raycast and Poe integrations, and the Blender MCP server. Shared Forge model pages now end their titles with &quot;Forge · three.ws&quot;, and Forge models carry &quot;Forge by three.ws&quot; as their generator credit in GLB and OpenUSD files. The desktop app keeps its installed name, three.ws Forge.</description>
 		</item>
 		<item>
+			<title>pump.fun skill scripts read coins again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:pump.fun skill scripts read coins again</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The swap, coin-fees and create-coin skills' fetch-coin script asked pump.fun's retired /coins-v2 route and failed for every coin. It now reads pump.fun's coin search and keeps only the exact mint, so agents can tell a bonding-curve coin from a graduated one before they trade or claim fees.</description>
+		</item>
+		<item>
 			<title>Docs · Incident response</title>
 			<link>https://three.ws/docs/incident-response</link>
 			<guid isPermaLink="false">2026-11-25:Docs · Incident response</guid>
