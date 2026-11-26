@@ -29,6 +29,15 @@ The campaign builds on three.ws's NVIDIA Inception membership (accepted July 202
 - Use NVIDIA product names nominatively (NVIDIA TensorRT, NVIDIA Omniverse, NVIDIA Cosmos and so on). Never put an NVIDIA mark inside a three.ws product name. Use the Inception badge only per the co-marketing kit's guidelines.
 - Never imply NVIDIA endorses $THREE, a coin or a trading surface. NVIDIA-facing copy stays technical: no token, price or monetization vocabulary.
 
+## Protected Forge lanes and the spend cut (binding, added 2026-11-26)
+
+These two owner decisions are newer than the orders in this campaign. Where an order's text disagrees with them, they win.
+
+- **A Forge lane that is measurably working is never switched, reordered, re-tuned, swapped or redeployed.** Full rule and the dated list: [docs/ops/forge-protected-lanes.md](../../../docs/ops/forge-protected-lanes.md). Measure before touching any generation worker: `curl -s https://three.ws/api/nvidia/stats`. A lane with 20 or more finished jobs and 85% or better success over 7 days is protected. The self-hosted TRELLIS lane (`trellis_selfhost`, `workers/model-trellis/`) is protected by name: on 2026-11-26 it finished 914 of 971 jobs in 7 days. The keyless text-to-image rung in `api/_mcp3d/text-to-image.js` is protected in position.
+- **What that means for this campaign.** TensorRT, Triton, the Run:ai Model Streamer and any other acceleration work goes on a lane that is NOT protected, or on a new service beside the protected one. Never change a protected lane's worker code, container, weights loader, Cloud Run settings, request body, or its place in `api/_lib/forge-tiers.js`. A new or faster engine enters behind the working one (taken only after the working one has failed) or in shadow (measured, not served). Moving it ahead is the owner's decision, made on your measured numbers; put it in the owner message and do not apply it.
+- **Spend cut of 2026-11-25.** The owner set 25 Cloud Run services to minimum instances 0 on purpose. Never raise a minimum-instance floor or add a keep-warm call to win a cold-start number. Any order text about "freeing L4 quota held by warm instances" is out of date: with floors at 0, the goal of cold-start work is a shorter first request for the user.
+- **If step 0 shows your order's target is itself protected:** pin it with tests, report the numbers, change no behavior, and pick the next unprotected target.
+
 ## Rules for running every order at once in one worktree
 
 1. **Dev server port.** Never take port 3000. Run `npm run dev -- --port <3200 + NN> --strictPort` where `NN` is your order's last two digits (order 857 uses 3257).
