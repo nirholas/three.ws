@@ -607,6 +607,7 @@
 		"forge:errors": "node scripts/forge-error-report.mjs",
 		"forge:lanes": "node scripts/forge-protected-lanes.mjs",
 		"forge:funnel": "node scripts/forge-funnel-report.mjs",
+		"forge:walkthrough": "node scripts/forge-live-walkthrough.mjs",
 		"forge:tripo": "node scripts/tripo-lane-report.mjs",
 		"trellis2:benchmark": "node scripts/trellis2-benchmark.mjs",
 		"partners:proof": "node scripts/partner-proof-brief.mjs",

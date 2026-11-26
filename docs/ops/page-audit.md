@@ -67,6 +67,10 @@ node scripts/page-audit.mjs --reverify-cap 0 # skip the solo re-check pass
 node scripts/page-audit.mjs --engine webkit   # audit in Safari's engine
 ```
 
+## Forge live walkthrough (does a real generation work?)
+
+This sweep only loads pages. To prove Forge works end to end as a signed-in visitor (a real text or photo generation, a valid GLB, a drawn viewer, the share page and the account's creations), run `npm run forge:walkthrough`. It reuses the same `.auth/audit-state.json` session. Use `-- --skip-generate` for a check that starts no generation. See [forge-walkthrough.md](forge-walkthrough.md).
+
 ## Operability audit (can an agent drive the page?)
 
 `npm run audit:agent-operability` completes the primary task on `/create`, `/forge`, `/connect`, an agent profile and `/launch` using only `getByRole` and `getByLabel` locators, read-only (it stops before any signature). It reports unnamed controls, visible text missing from the accessible name, volatile names, pointer-only clickables, hover-only reveals, canvases with no name, and waits with no visible status. Flags: `--label before|after`, `--wait-generate <seconds>`, `--strict`; `BASE_URL` picks the target (default `http://localhost:3000`, where locale slices come from the checkout instead of the production proxy). Evidence is recorded in `prompts/x-grok/_generated/operability.json`.
