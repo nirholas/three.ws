@@ -48,8 +48,15 @@ vi.mock('../api/_lib/pump-curve-view.js', () => ({
 const getMetadataForMints = vi.fn();
 vi.mock('../api/_lib/token-metadata.js', () => ({ getMetadataForMints }));
 
+// handleCoin reads one coin through fetchPumpCoin (pump.fun's search route keyed
+// by mint, unit-tested in tests/pump-coin-lookup.test.js). Here it delegates to
+// the pumpFetchJson mock so each test scripts the upstream answer directly.
 const pumpFetchJson = vi.fn();
-vi.mock('../api/_lib/pump-feed-fetch.js', () => ({ pumpFetchJson }));
+const fetchPumpCoin = vi.fn((mint, opts) => pumpFetchJson(`coin:${mint}`, opts));
+vi.mock('../api/_lib/pump-feed-fetch.js', async () => {
+	const search = await vi.importActual('../api/_lib/pump-coin-search.js');
+	return { pumpFetchJson, fetchPumpCoin, pumpSearchUrl: search.pumpSearchUrl, solanaSearchRows: search.solanaSearchRows };
+});
 
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: { mcpIp: vi.fn(async () => ({ success: true })) },
@@ -77,7 +84,7 @@ vi.mock('../api/payments/_config.js', () => ({
 	toUsdcAtomics: vi.fn((v) => BigInt(Math.round(v * 1e6))),
 }));
 
-const { handleCoin } = await import('../api/pump/[action].js');
+const { handleCoin, handleSearch } = await import('../api/pump/[action].js');
 const { getCurveView } = await import('../api/_lib/pump-curve-view.js');
 
 // $THREE's own mint: the platform's own coin, not a third-party placeholder.
@@ -151,6 +158,7 @@ beforeEach(() => {
 	cache.clear();
 	sql.mockReset().mockResolvedValue([]);
 	pumpFetchJson.mockReset();
+	fetchPumpCoin.mockClear();
 	getMetadataForMints.mockReset().mockImplementation(async (mints) =>
 		new Map(mints.map((m) => [m, { mint: m, symbol: null, name: null, logo: null, decimals: null }])));
 	getCurveView.mockReset().mockResolvedValue({
@@ -172,6 +180,7 @@ describe('handleCoin -- live fetch (regression guard)', () => {
 		expect(res.json.usd_market_cap).toBe(296832.56);
 		expect(res._headers['x-pump-stale']).toBeUndefined();
 		expect(res._headers['x-pump-degraded']).toBeUndefined();
+		expect(fetchPumpCoin).toHaveBeenCalledWith(THREE_MINT, expect.objectContaining({ timeoutMs: 8000 }));
 	});
 });
 
@@ -424,5 +433,36 @@ describe('handleCoin -- pump.fun answers 404 for a coin other sources know', () 
 
 		expect(res.statusCode).toBe(200);
 		expect(res._headers['x-pump-degraded']).toBe('onchain');
+	});
+});
+
+// GET /api/pump/search. On 2026-11-25 pump.fun stopped honouring `searchTerm` on
+// GET /coins: any query returned the market-cap board, so typing a coin name in
+// the search box listed the same top coins every time. The search route still
+// filters, across several chains, so only Solana rows are kept.
+describe('handleSearch -- reads pump.fun search, Solana rows only', () => {
+	function searchReq(q) {
+		return { method: 'GET', headers: { host: 'localhost' }, url: `/api/pump/search?q=${encodeURIComponent(q)}` };
+	}
+
+	it('asks the search route for the query and drops other chains and NSFW rows', async () => {
+		pumpFetchJson.mockResolvedValue({
+			ok: true,
+			status: 200,
+			body: [
+				{ mint: THREE_MINT, name: 'three.ws', symbol: 'three', chain_id: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp', image_uri: 'https://ipfs.io/ipfs/bafy-three' },
+				{ mint: '0xsynthetic0000000000000000000000000000000000', name: 'three', symbol: 'three', chain_id: 'othernet:1' },
+				{ mint: synthMint('N'), name: 'three nsfw', symbol: 'TN', chain_id: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp', nsfw: true },
+			],
+		});
+		const res = mockRes();
+
+		await handleSearch(searchReq('three'), res);
+
+		const u = new URL(pumpFetchJson.mock.calls[0][0]);
+		expect(u.pathname).toBe('/coins/search-unrestricted');
+		expect(u.searchParams.get('searchTerm')).toBe('three');
+		expect(res.statusCode).toBe(200);
+		expect(res.json.map((c) => c.mint)).toEqual([THREE_MINT]);
 	});
 });

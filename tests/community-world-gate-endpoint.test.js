@@ -61,7 +61,9 @@ const CREATOR = 'THREEcreator11111111111111111111111111wallet';
 const OTHER = 'THREEother111111111111111111111111111wallet';
 const EVM_MINT = '0x1234567890abcdef1234567890abcdef12345678';
 
-// The pump.fun creator lookup, the handler's one outbound HTTP call.
+// The pump.fun creator lookup, the handler's one outbound HTTP call. pump.fun
+// serves a coin by mint from its search route (GET /coins/<mint> was retired
+// on 2026-11-25), so the stub answers a search keyed by the mint.
 const pump = { creator: CREATOR, status: 200 };
 let fetchSpy;
 
@@ -101,11 +103,15 @@ beforeEach(async () => {
 	pump.creator = CREATOR;
 	pump.status = 200;
 	await writeWorldGate(MINT, { minTokens: 0 });
-	fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => ({
-		ok: pump.status === 200 && String(url).includes(`/coins/${MINT}`),
-		status: pump.status,
-		json: async () => ({ creator: pump.creator }),
-	}));
+	fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+		const u = new URL(String(url));
+		const term = u.pathname === '/coins/search-unrestricted' ? u.searchParams.get('searchTerm') : null;
+		return {
+			ok: pump.status === 200 && term === MINT,
+			status: pump.status,
+			json: async () => [{ mint: term, creator: pump.creator }],
+		};
+	});
 });
 afterEach(() => {
 	fetchSpy.mockRestore();

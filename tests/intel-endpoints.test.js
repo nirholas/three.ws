@@ -77,8 +77,11 @@ function stubUpstreams({ trending = [OTHER_MINT], pairs = null, meta = { symbol:
 			if (dexStatus !== 200) return new Response('upstream down', { status: dexStatus });
 			return new Response(JSON.stringify({ pairs: dexPairs }), { status: 200 });
 		}
-		if (url.includes('/coins/')) {
-			return new Response(JSON.stringify(meta ?? { error: 'not found' }), { status: 200 });
+		// pump.fun serves one coin from its search route since GET /coins/<mint>
+		// was retired on 2026-11-25; the old route answers 404.
+		if (url.includes('/coins/search-unrestricted')) {
+			const term = new URL(url).searchParams.get('searchTerm');
+			return new Response(JSON.stringify(meta ? [{ mint: term, ...meta }] : []), { status: 200 });
 		}
 		return new Response('not found', { status: 404 });
 	}));
@@ -120,6 +123,17 @@ describe('GET /api/intel/heatmap', () => {
 		const body = parse(res);
 		expect(body.tokens[0].id).toBe(THREE_MINT);
 		expect(body.tokens[0].flow).toBeUndefined();
+	});
+
+	it('names the $THREE tile from pump.fun when Dexscreener has no pair for it', async () => {
+		stubUpstreams({ pairs: [pair(OTHER_MINT)], meta: { symbol: 'three', name: 'three.ws', usd_market_cap: 423737 } });
+		const res = mkRes();
+		await heatmapHandler(mkReq({ url: '/api/intel/heatmap?limit=5' }), res);
+
+		expect(res.statusCode).toBe(200);
+		const anchor = parse(res).tokens[0];
+		expect(anchor.id).toBe(THREE_MINT);
+		expect(anchor).toMatchObject({ symbol: 'three', name: 'three.ws', marketCap: 423737 });
 	});
 
 	it('502s with a JSON error when every market upstream is down', async () => {

@@ -103,7 +103,7 @@ import { THREE_WS_VANITY, hasThreeWsMark } from '../../src/solana/vanity/brand.j
 import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/grinder-node.js';
 import { logger } from '../_lib/usage.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
-import { pumpFetchJson, fetchPumpCoin } from '../_lib/pump-feed-fetch.js';
+import { pumpFetchJson, fetchPumpCoin, pumpSearchUrl, solanaSearchRows } from '../_lib/pump-feed-fetch.js';
 import { getCurveView } from '../_lib/pump-curve-view.js';
 import { collectFeeAgentSchema } from '../_lib/pump-fee-schemas.js';
 import { isRpcOutageError, staleEnvelope } from '../_lib/rpc-degrade.js';
@@ -4505,7 +4505,7 @@ async function handleCoinTrades(req, res) {
 	return json(res, 200, { mint, trades });
 }
 
-async function handleSearch(req, res) {
+export async function handleSearch(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 	const rl = await limits.mcpIp(clientIp(req));
@@ -4513,18 +4513,14 @@ async function handleSearch(req, res) {
 	const url = new URL(req.url, `http://${req.headers.host}`);
 	const q = (url.searchParams.get('q') || '').trim();
 	if (!q) return json(res, 200, []);
-	const upstream = new URL('/coins', PUMP_FRONTEND_BASE);
-	upstream.searchParams.set('searchTerm', q);
-	upstream.searchParams.set('offset', '0');
-	upstream.searchParams.set('limit', '30');
-	upstream.searchParams.set('sort', 'market_cap');
-	upstream.searchParams.set('order', 'DESC');
-	upstream.searchParams.set('includeNsfw', 'false');
+	// pump.fun ignores `searchTerm` on GET /coins since 2026-11-25 (it returns the
+	// board for any query); its search route filters, across chains.
+	const upstream = pumpSearchUrl(q, 30);
 	const searchLkgKey = `pump:search:lkg:${q.toLowerCase()}`;
 	// Bounded retry on 429/5xx with Retry-After honoured; never throws. A 200
 	// with an empty/truncated body reports ok:false with a 2xx status, which is
 	// "no results", not an outage.
-	const r = await pumpFetchJson(upstream.toString(), { timeoutMs: 8000 });
+	const r = await pumpFetchJson(upstream, { timeoutMs: 8000 });
 	if (!r.ok) {
 		if (r.status >= 200 && r.status < 300) return json(res, 200, []);
 		// Outage or rate-limit window: the last result set this query produced
@@ -4538,10 +4534,7 @@ async function handleSearch(req, res) {
 		res.setHeader('Retry-After', '15');
 		return error(res, 502, 'upstream_failed', `pump.fun returned ${r.status}`, { retry_after: 15 });
 	}
-	const body = r.body;
-	const arr = repairCoinImages(
-		Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : [],
-	);
+	const arr = repairCoinImages(solanaSearchRows(r.body) || []);
 	if (arr.length) cacheSet(searchLkgKey, { rows: arr, at: Date.now() }, 3600).catch(() => {});
 	return json(res, 200, arr);
 }

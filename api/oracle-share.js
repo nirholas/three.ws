@@ -22,12 +22,11 @@ import { cors, method, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
 import { terminalLinks } from '../src/shared/trading-terminals.js';
 import { hitRateFor } from './_lib/oracle/conviction.js';
-import { pumpFetchJson } from './_lib/pump-feed-fetch.js';
+import { fetchPumpCoin } from './_lib/pump-feed-fetch.js';
 import { fetchUpstreamJson } from './_lib/upstream-fetch.js';
 import { xIntentUrl } from '../src/shared/share-targets.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-const PUMP_V3 = 'https://frontend-api-v3.pump.fun';
 const PUMP_CURVE_INITIAL_REAL_TOKENS = 793_100_000 * 1e6; // matches api/_lib/oracle/market.js
 
 export default wrap(async (req, res) => {
@@ -169,7 +168,7 @@ async function fetchDexScreenerIdentity(mint) {
 
 async function fetchPumpIdentityLive(mint) {
 	try {
-		const { ok, body: d } = await pumpFetchJson(`${PUMP_V3}/coins-v2/${mint}`, { timeoutMs: 3500, retries: 1 });
+		const { ok, body: d } = await fetchPumpCoin(mint, { timeoutMs: 3500, retries: 1 });
 		if (!ok || !d || !d.mint) return null;
 		const complete = Boolean(d.complete);
 		const realTok = Number(d.real_token_reserves);

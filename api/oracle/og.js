@@ -21,12 +21,11 @@ import { cors, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { fetchOgImage } from '../_lib/og-avatar.js';
 import { isQuoteMint } from '../_lib/quote-mints.js';
-import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { fetchPumpCoin } from '../_lib/pump-feed-fetch.js';
 import { fetchTokenMarketData } from '../_lib/market/token-market.js';
 import { resolveURI } from '../../src/ipfs.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-const PUMP_FRONTEND_V3 = 'https://frontend-api-v3.pump.fun';
 const CACHE = 'public, max-age=120, s-maxage=900, stale-while-revalidate=60';
 // A card built from a failed read is still a card (an OG scraper needs an image
 // back, not a 500), but it is not an answer worth keeping for 15 minutes. Serve
@@ -159,7 +158,7 @@ async function buildCardData(mint) {
 // the recorded outcome cap, or omits the block.
 async function fetchLiveMarketCap(mint) {
 	try {
-		const { ok, body: d } = await pumpFetchJson(`${PUMP_FRONTEND_V3}/coins-v2/${mint}`, { timeoutMs: 3000, retries: 1 });
+		const { ok, body: d } = await fetchPumpCoin(mint, { timeoutMs: 3000, retries: 1 });
 		const mcap = ok ? Number(d?.usd_market_cap ?? d?.market_cap_usd) : NaN;
 		if (Number.isFinite(mcap) && mcap > 0) return mcap;
 		const md = await fetchTokenMarketData(mint);

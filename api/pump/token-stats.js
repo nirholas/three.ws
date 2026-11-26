@@ -30,7 +30,7 @@ import { unpackMint } from '@solana/spl-token';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { cacheWrapLastGood } from '../_lib/cache.js';
-import { pumpFetchJson, PUMP_FRONTEND_BASE, PUMP_SWAP_BASE } from '../_lib/pump-feed-fetch.js';
+import { pumpFetchJson, fetchPumpCoin, PUMP_SWAP_BASE } from '../_lib/pump-feed-fetch.js';
 import { liveHolderSet } from '../_lib/coin/cohorts-live.js';
 import { getConnection } from '../_lib/pump.js';
 import { solPriceUsd } from '../_lib/sol-price.js';
@@ -275,7 +275,7 @@ async function readDexScreener(mint) {
 /** Exported so other composed read surfaces (the launch receipt) can reuse the same fact sheet without an internal HTTP round trip. */
 export async function buildStats(mint) {
 	const now = Math.floor(Date.now() / 1000);
-	const metaRes = await pumpFetchJson(`${PUMP_FRONTEND_BASE}/coins-v2/${mint}`, { timeoutMs: 5000 });
+	const metaRes = await fetchPumpCoin(mint, { timeoutMs: 5000 });
 	const coin = metaRes.ok ? metaRes.body : null;
 
 	const supply = coin?.total_supply != null ? BigInt(Math.round(Number(coin.total_supply))) : 1_000_000_000_000_000n;

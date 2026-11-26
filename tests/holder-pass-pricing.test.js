@@ -42,6 +42,15 @@ describe('solanaMintUsdPrice', () => {
 	});
 
 	const ok = (body) => ({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) });
+	// pump.fun as it answers since 2026-11-25: GET /coins/<mint> is gone (404) and
+	// the coin record comes from the search route keyed by the mint.
+	const pumpRoute = (u, coin) => {
+		const url = new URL(u);
+		if (url.pathname === '/coins/search-unrestricted') {
+			return ok(coin ? [{ mint: url.searchParams.get('searchTerm'), ...coin }] : []);
+		}
+		return { ok: false, status: 404, json: async () => ({ message: `Cannot GET ${url.pathname}` }), text: async () => '' };
+	};
 
 	it('returns the Jupiter price and never touches pump.fun when Jupiter prices it', async () => {
 		const fetchMock = vi.fn(async (url) => {
@@ -57,8 +66,8 @@ describe('solanaMintUsdPrice', () => {
 		const fetchMock = vi.fn(async (url) => {
 			const u = String(url);
 			if (u.includes('lite-api.jup.ag')) return ok({}); // Jupiter can't route it
-			if (u.includes('/coins/')) {
-				return ok({ usd_market_cap: 11185.5, total_supply_str: '1000000000000000', base_decimals: 6 });
+			if (u.includes('pump.fun/coins')) {
+				return pumpRoute(u, { usd_market_cap: 11185.5, total_supply_str: '1000000000000000', base_decimals: 6 });
 			}
 			throw new Error('unexpected url ' + u);
 		});
@@ -71,7 +80,7 @@ describe('solanaMintUsdPrice', () => {
 		const fetchMock = vi.fn(async (url) => {
 			const u = String(url);
 			if (u.includes('lite-api.jup.ag')) return ok({});
-			if (u.includes('/coins/')) return ok({}); // no market cap / supply
+			if (u.includes('pump.fun/coins')) return pumpRoute(u, {}); // no market cap / supply
 			throw new Error('unexpected url ' + u);
 		});
 		vi.stubGlobal('fetch', fetchMock);

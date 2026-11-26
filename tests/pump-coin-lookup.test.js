@@ -62,3 +62,45 @@ describe('pumpCoinSearchUrl / pickPumpCoin', () => {
 		expect(pickPumpCoin(null, THREE_MINT)).toBeNull();
 	});
 });
+
+// The same day pump.fun stopped honouring `searchTerm` on GET /coins: every
+// query returned the market-cap board, so the command palette's pump.fun
+// fallback and /api/pump/search answered "the top coins" for any text typed.
+// The search route still filters, but it spans several chains.
+const SOL = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
+const SEARCH_ROWS = [
+	{ mint: THREE_MINT, name: 'three.ws', symbol: 'three', chain_id: SOL, usd_market_cap: 423737.4, image_uri: 'https://ipfs.io/ipfs/bafy-three' },
+	{ mint: '0xsynthetic0000000000000000000000000000000000', name: 'three', symbol: 'three', chain_id: 'othernet:1', usd_market_cap: 8000 },
+	{ mint: OTHER, name: 'three nsfw', symbol: 'TNSFW', chain_id: SOL, nsfw: true, usd_market_cap: 900 },
+];
+
+describe('solanaSearchRows', () => {
+	it('keeps Solana, non-NSFW rows in pump.fun order', async () => {
+		const { solanaSearchRows } = await import('../api/_lib/pump-coin-search.js');
+		expect(solanaSearchRows(SEARCH_ROWS).map((c) => c.mint)).toEqual([THREE_MINT]);
+		expect(solanaSearchRows(SEARCH_ROWS, { includeNsfw: true }).map((c) => c.mint)).toEqual([THREE_MINT, OTHER]);
+		expect(solanaSearchRows([{ mint: THREE_MINT }]).map((c) => c.mint)).toEqual([THREE_MINT]);
+		expect(solanaSearchRows({ error: 'x' })).toBeNull();
+	});
+});
+
+describe('searchPumpFun (command palette fallback)', () => {
+	it('queries the search route and returns only Solana matches', async () => {
+		const seen = [];
+		vi.stubGlobal('fetch', vi.fn(async (url) => {
+			seen.push(String(url));
+			return respond(200, SEARCH_ROWS);
+		}));
+		const { searchPumpFun } = await import('../api/_lib/pump-search.js');
+
+		const out = await searchPumpFun('three', 10);
+
+		const u = new URL(seen[0]);
+		expect(u.pathname).toBe('/coins/search-unrestricted');
+		expect(u.searchParams.get('searchTerm')).toBe('three');
+		expect(u.searchParams.get('limit')).toBe('10');
+		expect(out).toEqual([
+			{ mint: THREE_MINT, symbol: 'three', name: 'three.ws', logo: expect.any(String), price_usd: null, usd_market_cap: 423737.4, rank: 1 },
+		]);
+	});
+});

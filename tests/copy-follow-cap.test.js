@@ -142,8 +142,7 @@ vi.mock('../api/_lib/csrf.js', () => ({ requireCsrf: async () => true }));
 vi.mock('../api/_lib/cron-auth.js', () => ({ requireCron: () => true }));
 vi.mock('../api/_lib/pump.js', () => ({ getConnection: () => ({}) }));
 vi.mock('../api/_lib/pump-feed-fetch.js', () => ({
-	pumpFetchJson: async () => ({ ok: true, body: { usd_market_cap: 50000, complete: false } }),
-	PUMP_FRONTEND_BASE: 'https://frontend.example',
+	fetchPumpCoin: async () => ({ ok: true, status: 200, body: { usd_market_cap: 50000, complete: false } }),
 }));
 vi.mock('../api/_lib/market/token-market.js', () => ({ fetchTokenMarketData: async () => null }));
 vi.mock('../api/_lib/copy-drip-runtime.js', () => ({

@@ -31,7 +31,7 @@ import { getBondingCurveState, getBuyQuote, getGraduationProgress } from '../_li
 import { connectPumpFunFeed, recentBuffered, recentGraduations } from '../_lib/pumpfun-ws-feed.js';
 import { llmComplete, LlmUnavailableError } from '../_lib/llm.js';
 import { buildReadPrompt, parseReadJson, validateRead } from '../_lib/alpha-read.js';
-import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { fetchPumpCoin as fetchPumpCoinRecord } from '../_lib/pump-feed-fetch.js';
 import { fetchUpstreamJson } from '../_lib/upstream-fetch.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
@@ -40,7 +40,6 @@ const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const LAMPORTS_PER_SOL = 1_000_000_000;
 // Per-coin lookups use the v2 route: pump.fun retired `/coins/:mint` on this host
 // around 2026-09-17 (404 "Cannot GET"); `/coins-v2/:mint` returns the same fields.
-const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins-v2';
 const REFERENCE_BUY_SOL = 0.1; // probe size for a real, non-binding price-impact read
 
 const num = (v) => (v == null || !Number.isFinite(Number(v)) ? null : Number(v));
@@ -74,7 +73,7 @@ async function loadAgent(id, userId) {
 // the pair creation time for the same mint, so the age still comes from a real
 // record rather than going missing on a pump.fun blip.
 async function fetchPumpCoin(mint) {
-	const { ok, body } = await pumpFetchJson(`${PUMPFUN_COIN_API}/${encodeURIComponent(mint)}`, { timeoutMs: 2500, retries: 1 });
+	const { ok, body } = await fetchPumpCoinRecord(mint, { timeoutMs: 2500, retries: 1 });
 	if (ok && body && typeof body === 'object') return body;
 	try {
 		const data = await fetchUpstreamJson(`https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`, {}, {

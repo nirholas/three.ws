@@ -35,6 +35,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
 import { fetchUpstreamJson, lastGood } from '../_lib/upstream-fetch.js';
+import { pumpCoinSearchUrl, pickPumpCoin } from '../_lib/pump-coin-search.js';
 
 // The one and only coin three.ws promotes. Always present, always featured.
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -132,12 +133,15 @@ async function fetchDexBatch(mints) {
 async function fetchPumpMeta(mint) {
 	// Token metadata barely changes, so a remembered copy is as good as a live
 	// one and keeps names and images on the tiles through a pump.fun throttle.
-	const data = await fetchJson(
-		`${PUMP_FRONTEND_BASE}/coins/${mint}`,
+	// pump.fun serves one coin from its search route keyed by the mint (its
+	// GET /coins/<mint> route was retired on 2026-11-25).
+	const rows = await fetchJson(
+		pumpCoinSearchUrl(mint),
 		{ headers: { accept: 'application/json' } },
-		`heatmap:meta:${mint}`,
+		`heatmap:meta:v2:${mint}`,
 	);
-	if (!data || data.error) return null;
+	const data = pickPumpCoin(rows, mint);
+	if (!data) return null;
 	return {
 		symbol: data.symbol || null,
 		name: data.name || null,

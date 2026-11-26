@@ -15,9 +15,9 @@
 // Response item shape: { mint, symbol, name, logo, price_usd, usd_market_cap, rank }
 
 import { normalizeGatewayURL } from '../../src/ipfs.js';
+import { pumpSearchUrl, solanaSearchRows } from './pump-coin-search.js';
 
 const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
-const PUMP_FRONTEND_BASE = 'https://frontend-api-v3.pump.fun';
 
 /** Birdeye token search. Returns null (not throws) on any failure. */
 export async function searchBirdeye(q, limit) {
@@ -56,27 +56,21 @@ export async function searchBirdeye(q, limit) {
 }
 
 /**
- * Fallback: pump.fun's public frontend search (no API key). Mapped into the
- * exact same shape. pump.fun doesn't expose a clean per-token USD price here,
- * so price_usd is left null rather than fabricated.
+ * Fallback: pump.fun's public frontend search (no API key), Solana rows only
+ * (see ./pump-coin-search.js). Mapped into the exact same shape. pump.fun
+ * doesn't expose a clean per-token USD price here, so price_usd is left null
+ * rather than fabricated.
  */
 export async function searchPumpFun(q, limit) {
-	const url = new URL('/coins', PUMP_FRONTEND_BASE);
-	url.searchParams.set('searchTerm', q);
-	url.searchParams.set('offset', '0');
-	url.searchParams.set('limit', String(limit));
-	url.searchParams.set('sort', 'market_cap');
-	url.searchParams.set('order', 'DESC');
-	url.searchParams.set('includeNsfw', 'false');
 	let upstream;
 	try {
-		upstream = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
+		upstream = await fetch(pumpSearchUrl(q, limit), { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
 	} catch {
 		return null;
 	}
 	if (!upstream.ok) return null;
 	const body = await upstream.json().catch(() => null);
-	const coins = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : null;
+	const coins = solanaSearchRows(body);
 	if (!Array.isArray(coins)) return null;
 	const data = coins
 		.map((c, i) => ({

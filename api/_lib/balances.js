@@ -15,6 +15,7 @@
 //     instances), in-memory otherwise.
 
 import { cacheGet, cacheSet, cacheDel } from './cache.js';
+import { pumpCoinSearchUrl, pickPumpCoin } from './pump-coin-search.js';
 import { getMetadataForMints } from './token-metadata.js';
 import { solPriceUsd } from './sol-price.js';
 import { fetchTokenPriceUsd } from './market/token-market.js';
@@ -28,7 +29,6 @@ const BALANCES_TTL_S = 60;
 // successful read.
 const BALANCES_LKG_TTL_S = 24 * 60 * 60;
 
-const PUMP_FRONTEND_BASE = process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
 function heliusRpc() {
 	const key = process.env.HELIUS_API_KEY;
 	return key ? `https://mainnet.helius-rpc.com/?api-key=${key}` : null;
@@ -220,9 +220,12 @@ export function pickTokenPrice(heliusPrice, jupiterPrice) {
  * coin, or no price yet).
  */
 async function pumpFunMintUsd(mint) {
-	const c = await fetchJson(new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE).toString(), {
+	// pump.fun serves one coin from its search route keyed by the mint (its
+	// GET /coins/<mint> route was retired on 2026-11-25).
+	const rows = await fetchJson(pumpCoinSearchUrl(mint), {
 		headers: { accept: 'application/json' },
 	});
+	const c = pickPumpCoin(rows, mint);
 	const mcap = Number(c?.usd_market_cap) || 0;
 	const decimals = Number(c?.base_decimals ?? 6);
 	const supply = Number(c?.total_supply_str || c?.total_supply) || 0;

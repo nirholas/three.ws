@@ -35,12 +35,11 @@
 import { cors, method, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { fetchOgImage } from '../_lib/og-avatar.js';
-import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { fetchPumpCoin } from '../_lib/pump-feed-fetch.js';
 import { resolveURI } from '../../src/ipfs.js';
 import { buildReceipt } from './launch-receipt.js';
 
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-const PUMP_FRONTEND_V3 = 'https://frontend-api-v3.pump.fun';
 const CACHE = 'public, max-age=120, s-maxage=900, stale-while-revalidate=60';
 
 // XML-escape all user-supplied text before embedding in SVG.
@@ -143,7 +142,7 @@ async function fetchLiveMarketCap(mint) {
 		// An OG card is rendered by a crawler that will not come back, so a 429
 		// here permanently ships a card with no market cap on it. One retry costs
 		// a few hundred milliseconds and saves the card.
-		const r = await pumpFetchJson(`${PUMP_FRONTEND_V3}/coins-v2/${mint}`, { timeoutMs: 3000 });
+		const r = await fetchPumpCoin(mint, { timeoutMs: 3000 });
 		if (!r.ok) return null;
 		const d = r.body;
 		const mcap = Number(d?.usd_market_cap ?? d?.market_cap_usd);
