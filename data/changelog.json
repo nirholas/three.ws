@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-26",
+			"title": "Forge goes by one name everywhere",
+			"summary": "The text and image to 3D generator is now called Forge across three.ws, and Forge by three.ws inside the tools it plugs into: the Blender add-on, the ComfyUI nodes, the Omniverse extension, the Unity, Godot and Unreal bridges, the Modly extension, the Semantic Kernel, n8n, Raycast and Poe integrations, and the Blender MCP server. Shared Forge model pages now end their titles with \"Forge · three.ws\", and Forge models carry \"Forge by three.ws\" as their generator credit in GLB and OpenUSD files. The desktop app keeps its installed name, three.ws Forge.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
 			"date": "2026-11-25",
 			"title": "Solana name lookups work again",
 			"summary": "Looking up a .sol name had stopped working everywhere on the platform after a name-service library upgrade. Paying a .sol name, the /api/sns resolver, agent name tools, showing a wallet's primary .sol name, claiming a <label>.threews.sol subdomain, and checking or registering an agent's .sol domain all work again. When the Solana name service cannot be reached, you now get a clear retry message instead of a false \"name not found\" or \"domain available\".",

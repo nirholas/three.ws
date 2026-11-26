@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-26T05:39:31.501Z",
+	"generated_at": "2026-11-26T05:57:08.323Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Forge goes by one name everywhere",
+			"summary": "The text and image to 3D generator is now called Forge across three.ws, and Forge by three.ws inside the tools it plugs into: the Blender add-on, the ComfyUI nodes, the Omniverse extension, the Unity, Godot and Unreal bridges, the Modly extension, the Semantic Kernel, n8n, Raycast and Poe integrations, and the Blender MCP server. Shared Forge model pages now end their titles with \"Forge · three.ws\", and Forge models carry \"Forge by three.ws\" as their generator credit in GLB and OpenUSD files. The desktop app keeps its installed name, three.ws Forge.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-25",
 			"type": "launch",

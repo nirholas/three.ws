@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-26T05:39:31.591Z",
+	"generated_at": "2026-11-26T05:57:08.494Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4748,
+	"total": 4749,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Forge goes by one name everywhere",
+			"summary": "The text and image to 3D generator is now called Forge across three.ws, and Forge by three.ws inside the tools it plugs into: the Blender add-on, the ComfyUI nodes, the Omniverse extension, the Unity, Godot and Unreal bridges, the Modly extension, the Semantic Kernel, n8n, Raycast and Poe integrations, and the Blender MCP server. Shared Forge model pages now end their titles with \"Forge · three.ws\", and Forge models carry \"Forge by three.ws\" as their generator credit in GLB and OpenUSD files. The desktop app keeps its installed name, three.ws Forge.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-25",
 			"type": "launch",
@@ -1542,16 +1552,6 @@
 			"link": "/forge",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Roll three.ws out to every seat from your Microsoft admin consoles",
-			"summary": "IT admins get a ready deployment kit: the exact Edge policy values to install the web app and extensions through Intune or Group Policy, a Teams setup policy script that installs and pins three.ws for a group, a tenant-wide admin consent page that explains each permission in plain language, and a guide with verification, rollback and FAQ. Every script has a dry run.",
-			"link": "/docs/microsoft-admin-deployment",
-			"tags": [
-				"feature"
 			]
 		}
 	]
