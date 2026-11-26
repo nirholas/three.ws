@@ -10,7 +10,6 @@
 import { mountShell } from '../shell.js';
 import { requireUser, get, post, del, esc, relTime } from '../api.js';
 import { errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
-import { gmgnAddressUrl } from '../../shared/trading-terminals.js';
 import { mountAlphaDripPanel, formatDelay } from '../../alpha-drip-panel.js';
 import { shortAddress as shortAddr } from '../../shared/address.js';
 import { splPaymentInstructions } from '../../shared/spl-token-program.js';
@@ -116,9 +115,8 @@ const STYLE = `
 .sm-tags { display: inline-flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
 .sm-tag { font-size: 10px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--nxt-stroke); color: var(--nxt-ink-dim); text-transform: capitalize; }
 .sm-tag.smart_money { color: #34d399; border-color: color-mix(in srgb, #34d399 38%, transparent); }
-.sm-tag.kol { color: #c084fc; border-color: color-mix(in srgb, #c084fc 38%, transparent); }
-.sm-tag.launchpad { color: #60a5fa; border-color: color-mix(in srgb, #60a5fa 38%, transparent); }
-.sm-tag.sniper { color: #fbbf24; border-color: color-mix(in srgb, #fbbf24 38%, transparent); }
+.sm-tag.strong { color: #60a5fa; border-color: color-mix(in srgb, #60a5fa 38%, transparent); }
+.sm-tag.fresh { color: #fbbf24; border-color: color-mix(in srgb, #fbbf24 38%, transparent); }
 .sm-tag.chain { color: var(--nxt-ink-dim); text-transform: uppercase; letter-spacing: .04em; }
 .sm-stats { display: flex; gap: 16px; align-items: baseline; justify-content: flex-end; }
 .sm-metric { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
@@ -604,85 +602,54 @@ async function payWithCopyFee(subscriptionId, onStatus = () => {}) {
 }
 
 // ── Smart Money directory ─────────────────────────────────────────────────────
-// Curated top wallets from gmgn.ai's smart-money taxonomy (SOL + BSC), served by
-// /api/copy/smart-wallets. These are external on-chain wallets — not three.ws
-// agents — so the action is to watch their live trades, not auto-subscribe. We
-// surface them so copiers can vet ecosystem-proven traders before mirroring.
+// Top wallets from the platform's own reputation graph (observed pump.fun buys
+// joined to real outcomes), served by /api/copy/smart-wallets. These are
+// external on-chain wallets, not three.ws agents, so the action is to inspect
+// their live trades on Solscan, not auto-subscribe. We surface them so copiers
+// can vet proven traders before mirroring.
 
 const SM_CATS = [
 	{ key: '', label: 'All' },
 	{ key: 'smart_money', label: 'Smart money' },
-	{ key: 'kol', label: 'KOL' },
-	{ key: 'launchpad', label: 'Launchpad' },
-	{ key: 'sniper', label: 'Sniper' },
-];
-const SM_CHAINS = [
-	{ key: '', label: 'All chains' },
-	{ key: 'sol', label: 'Solana' },
-	{ key: 'bsc', label: 'BSC' },
+	{ key: 'strong', label: 'Strong' },
+	{ key: 'fresh', label: 'Fresh' },
 ];
 const SM_SORTS = [
 	{ key: 'score', label: 'Top ranked' },
-	{ key: 'profit', label: 'Most profit (30d)' },
-	{ key: 'pnl', label: 'Best multiple' },
 	{ key: 'winrate', label: 'Win rate' },
-	{ key: 'followers', label: 'Most followed' },
+	{ key: 'multiple', label: 'Best multiple' },
+	{ key: 'trades', label: 'Most coins judged' },
 ];
 const SM_PAGE = 12;
 
-function fmtUsd(n) {
-	const v = Number(n) || 0;
-	const a = Math.abs(v);
-	if (a >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
-	if (a >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
-	if (a >= 1e3) return `$${(v / 1e3).toFixed(0)}K`;
-	return `$${v.toFixed(0)}`;
-}
-function fmtMult(n) { return n == null ? '—' : `${Number(n).toFixed(1)}×`; }
-function fmtWr(n) { return n == null ? '—' : `${Math.round(Number(n) * 100)}%`; }
-function explorerUrl(w) {
-	return w.chain === 'bsc'
-		? `https://bscscan.com/address/${w.address}`
-		: `https://solscan.io/account/${w.address}`;
-}
-function gmgnUrl(w) { return gmgnAddressUrl(w.address, w.chain); }
-function initial(w) {
-	const ch = (w.name || w.address || '').replace(/[^a-zA-Z0-9]/g, '')[0];
-	return (ch || '?').toUpperCase();
-}
+function fmtMult(n) { return n == null ? '-' : `${Number(n).toFixed(1)}x`; }
+function fmtWr(n) { return n == null ? '-' : `${Math.round(Number(n) * 100)}%`; }
+function explorerUrl(w) { return `https://solscan.io/account/${w.address}`; }
 
 function smartRow(w) {
-	const handle = w.twitter_username
-		? `<a class="sm-tw" href="https://x.com/${esc(w.twitter_username)}" target="_blank" rel="noopener">@${esc(w.twitter_username)}</a>`
-		: `<span class="sm-tw sm-mono">${esc(shortAddr(w.address))}</span>`;
-	// The directory carries no portrait: its upstream image host refuses every
-	// off-site load, so the tile below has always been the initial. Rendering the
-	// initial directly is what the row already showed, minus a request per wallet
-	// that the browser blocked before it left the page.
-	const avatar = esc(initial(w));
 	const tags = [
 		...w.categories.map((c) => `<span class="sm-tag ${esc(c)}">${esc(c.replace('_', ' '))}</span>`),
 		`<span class="sm-tag chain">${esc(w.chain)}</span>`,
 	].join('');
-	const title = w.name ? esc(w.name) : `<span class="sm-mono">${esc(shortAddr(w.address))}</span>`;
+	const mark = esc((w.address || '?')[0].toUpperCase());
 	return `
 	<div class="sm-item">
-		<div class="sm-av">${avatar}</div>
+		<div class="sm-av">${mark}</div>
 		<div class="sm-mid">
-			<div class="sm-name"><a href="${esc(gmgnUrl(w))}" target="_blank" rel="noopener">${title}</a> ${handle}</div>
+			<div class="sm-name"><a href="${esc(explorerUrl(w))}" target="_blank" rel="noopener"><span class="sm-mono">${esc(shortAddr(w.address))}</span></a></div>
 			<div class="sm-tags">${tags}</div>
 		</div>
 		<div class="sm-stats">
-			<div class="sm-metric"><span class="sm-metric-val pos">${fmtUsd(w.realized_profit_30d_usd)}</span><span class="sm-metric-lbl">PnL 30d</span></div>
-			<div class="sm-metric"><span class="sm-metric-val">${fmtMult(w.pnl_30d)}</span><span class="sm-metric-lbl">Multiple</span></div>
-			<div class="sm-metric"><span class="sm-metric-val">${fmtWr(w.win_rate_30d)}</span><span class="sm-metric-lbl">Win</span></div>
-			<a class="sm-track" href="${esc(gmgnUrl(w))}" target="_blank" rel="noopener" title="Watch this wallet's live trades">Track ↗</a>
+			<div class="sm-metric"><span class="sm-metric-val pos">${Math.round(w.score)}</span><span class="sm-metric-lbl">Score</span></div>
+			<div class="sm-metric"><span class="sm-metric-val">${fmtWr(w.win_rate)}</span><span class="sm-metric-lbl">Win</span></div>
+			<div class="sm-metric"><span class="sm-metric-val">${fmtMult(w.avg_ath_multiple)}</span><span class="sm-metric-lbl">Avg peak</span></div>
+			<a class="sm-track" href="${esc(explorerUrl(w))}" target="_blank" rel="noopener" title="Inspect this wallet's trades on Solscan">Inspect ↗</a>
 		</div>
 	</div>`;
 }
 
 async function mountSmartMoney(host) {
-	const state = { chain: '', category: '', sort: 'score', q: '', offset: 0, total: 0, rows: [] };
+	const state = { category: '', sort: 'score', q: '', offset: 0, total: 0, rows: [] };
 	let searchTimer;
 
 	host.innerHTML = `
@@ -691,12 +658,11 @@ async function mountSmartMoney(host) {
 				<h2>Smart money</h2>
 				<span class="cp-count" id="sm-count"></span>
 			</div>
-			<p class="cp-note">Ecosystem-proven wallets from gmgn.ai's smart-money taxonomy — ranked by 30-day realized profit across Solana and BSC. Vet a trader's live history before you mirror them.</p>
+			<p class="cp-note">Solana wallets ranked by the platform's own reputation graph: every score comes from buys three.ws observed and how those coins actually turned out. Vet a trader's history before you mirror them.</p>
 			<div class="sm-controls">
 				<div class="sm-chips" id="sm-cat" role="group" aria-label="Filter wallets by category">${SM_CATS.map((c) => `<button type="button" class="sm-chip ${c.key === '' ? 'is-active' : ''}" data-cat="${c.key}" aria-pressed="${c.key === '' ? 'true' : 'false'}">${c.label}</button>`).join('')}</div>
 				<span class="sm-spacer"></span>
-				<div class="sm-chips" id="sm-chain" role="group" aria-label="Filter wallets by chain">${SM_CHAINS.map((c) => `<button type="button" class="sm-chip ${c.key === '' ? 'is-active' : ''}" data-chain="${c.key}" aria-pressed="${c.key === '' ? 'true' : 'false'}">${c.label}</button>`).join('')}</div>
-				<input class="sm-search" id="sm-q" type="search" placeholder="Search name, @handle, address" aria-label="Search smart-money wallets by name, handle, or address" autocomplete="off" spellcheck="false" />
+				<input class="sm-search" id="sm-q" type="search" placeholder="Search address" aria-label="Search smart-money wallets by address" autocomplete="off" spellcheck="false" />
 				<select class="sm-sort" id="sm-sort" aria-label="Sort wallets">${SM_SORTS.map((s) => `<option value="${s.key}">${s.label}</option>`).join('')}</select>
 			</div>
 			<div id="sm-rows"><div class="cp-skeleton"></div><div class="cp-skeleton" style="margin-top:4px"></div><div class="cp-skeleton" style="margin-top:4px"></div></div>
@@ -714,20 +680,24 @@ async function mountSmartMoney(host) {
 			moreEl.innerHTML = '';
 		}
 		const qs = new URLSearchParams({ sort: state.sort, limit: String(SM_PAGE), offset: String(state.offset) });
-		if (state.chain) qs.set('chain', state.chain);
 		if (state.category) qs.set('category', state.category);
 		if (state.q) qs.set('q', state.q);
 		let data;
 		try {
 			data = await get(`/api/copy/smart-wallets?${qs.toString()}`);
 		} catch {
-			rowsEl.innerHTML = `<div class="cp-empty">Couldn't load smart-money wallets. <button class="cp-btn" id="sm-retry">Retry</button></div>`;
+			rowsEl.innerHTML = `<div class="cp-empty">Couldn't load smart-money wallets. Check your connection and retry. <button class="cp-btn" id="sm-retry">Retry</button></div>`;
 			rowsEl.querySelector('#sm-retry')?.addEventListener('click', () => load(false));
 			return;
 		}
 		state.total = data.total || 0;
 		const rows = data.wallets || [];
-		const html = rows.length ? rows.map(smartRow).join('') : (append ? '' : `<div class="cp-empty">No wallets match these filters.</div>`);
+		const emptyMsg = data.unavailable
+			? 'The wallet reputation graph is not reachable right now. Try again in a few minutes.'
+			: (state.category || state.q
+				? 'No wallets match these filters.'
+				: 'No wallets have a proven track record yet. The ranking fills in as the reputation graph scores more observed trades.');
+		const html = rows.length ? rows.map(smartRow).join('') : (append ? '' : `<div class="cp-empty">${emptyMsg}</div>`);
 		if (append) rowsEl.insertAdjacentHTML('beforeend', html);
 		else rowsEl.innerHTML = html;
 		state.offset += rows.length;
@@ -743,13 +713,6 @@ async function mountSmartMoney(host) {
 		if (!btn) return;
 		host.querySelectorAll('#sm-cat .sm-chip').forEach((b) => { const on = b === btn; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
 		state.category = btn.dataset.cat;
-		load(false);
-	});
-	host.querySelector('#sm-chain').addEventListener('click', (e) => {
-		const btn = e.target.closest('[data-chain]');
-		if (!btn) return;
-		host.querySelectorAll('#sm-chain .sm-chip').forEach((b) => { const on = b === btn; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-		state.chain = btn.dataset.chain;
 		load(false);
 	});
 	host.querySelector('#sm-sort').addEventListener('change', (e) => { state.sort = e.target.value; load(false); });
