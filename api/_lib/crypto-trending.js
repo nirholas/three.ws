@@ -6,7 +6,7 @@
 // live, keyless signals and reuse the platform's existing scoring primitives
 // rather than inventing new market math:
 //
-//   • pump.fun  — the live board (frontend-api-v3) + per-coin swap-API trade feed.
+//   • pump.fun: the live board (frontend-api-v3) + per-coin trades decoded from Solana.
 //                 Windowed USD volume comes from summarizeWindowUsd() and buy
 //                 pressure from scorePressure() — the exact helpers that power the
 //                 paid crypto-intel `pump_trending` / `pump_volume_anomaly` topics.
@@ -195,10 +195,7 @@ async function fetchPumpBoard(limit) {
 // Trade rows keep their own timestamps and summarizeWindowUsd filters on them,
 // so a last-known-good pull can only shrink a window's volume, never invent it.
 async function fetchCoinTrades(mint) {
-	const feed = await fetchPumpTrades(mint, {
-		limit: PUMP_TRADES_PER_COIN,
-		timeoutMs: FETCH_TIMEOUT_MS,
-	});
+	const feed = await fetchPumpTrades(mint, { limit: PUMP_TRADES_PER_COIN });
 	return feed?.rows || [];
 }
 

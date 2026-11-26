@@ -129,13 +129,6 @@ export async function pumpFetchJson(url, { timeoutMs = DEFAULT_TIMEOUT_MS, retri
 	}
 }
 
-/** Pull the trade array out of either accepted swap-api envelope. */
-function tradesFrom(body) {
-	if (Array.isArray(body)) return body;
-	if (Array.isArray(body?.trades)) return body.trades;
-	return [];
-}
-
 /**
  * Read-through cache with a last-known-good tier. A live hit answers first; a
  * miss fetches and refreshes both tiers; a failed fetch falls back to the
@@ -158,25 +151,34 @@ async function readThroughFeed({ key, ttlSeconds, lkgKey, lkgTtlSeconds, fetchRo
 	return null;
 }
 
+// Most signatures one trade read decodes. Each is a full transaction fetch on
+// the RPC, so the window is capped where a busy coin still gives every
+// windowed ranking (5m, 1h, 24h) enough rows to score.
+const MAX_CHAIN_TRADES = 50;
+
 /**
  * Recent trades for one mint, shared across callers and windows for TRADES_TTL_S.
  *
+ * pump.fun retired its HTTP trade feeds on 2026-11-25 (swap-api /v2 trades
+ * answers 410 "deprecated", frontend /trades/all rejects every chainId), so the
+ * rows are decoded from the coin's own Solana transactions by
+ * ./pump-chain-trades.js, in the swap-api row shape callers already read.
+ *
  * @param {string} mint
- * @param {{ limit?: number, timeoutMs?: number }} [opts]
+ * @param {{ limit?: number }} [opts]
  * @returns {Promise<{ rows: Array<object>, stale: boolean }|null>} null when the
- *   upstream failed and no last-known-good copy is left
+ *   read failed and no last-known-good copy is left
  */
-export async function fetchPumpTrades(mint, { limit = 100, timeoutMs } = {}) {
-	const rows = Math.max(1, Math.floor(limit));
+export async function fetchPumpTrades(mint, { limit = 100 } = {}) {
+	const rows = Math.min(MAX_CHAIN_TRADES, Math.max(1, Math.floor(limit)));
 	return readThroughFeed({
 		key: `pump:feed:trades:${mint}:${rows}`,
 		ttlSeconds: TRADES_TTL_S,
 		lkgKey: `pump:feed:trades:lkg:${mint}:${rows}`,
 		lkgTtlSeconds: TRADES_LKG_TTL_S,
 		fetchRows: async () => {
-			const url = `${PUMP_SWAP_BASE}/v2/coins/${encodeURIComponent(mint)}/trades?limit=${rows}`;
-			const { ok, body } = await pumpFetchJson(url, { timeoutMs });
-			return ok ? tradesFrom(body) : null;
+			const { fetchChainTradeRows } = await import('./pump-chain-trades.js');
+			return fetchChainTradeRows(mint, { limit: rows });
 		},
 	});
 }

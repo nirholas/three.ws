@@ -18,6 +18,12 @@ vi.mock('../../api/_lib/cache.js', () => ({
 	cacheSet: async (k, v) => { cache.set(k, v); },
 }));
 
+// pump.fun retired its HTTP trade feeds on 2026-11-25 (swap-api /v2 trades is
+// 410, frontend /trades/all rejects every request), so trades come from the
+// chain reader. It is stubbed here; its decoding is pinned by its own tests.
+const chain = vi.hoisted(() => ({ rows: vi.fn() }));
+vi.mock('../../api/_lib/pump-chain-trades.js', () => ({ fetchChainTradeRows: (...a) => chain.rows(...a) }));
+
 const { pumpFetchJson, fetchPumpTrades, fetchPumpBoard } = await import('../../api/_lib/pump-feed-fetch.js');
 
 const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -88,44 +94,44 @@ describe('pumpFetchJson: retry on a rate limit', () => {
 	});
 });
 
-describe('fetchPumpTrades: cache, envelopes, failure contract', () => {
-	it('accepts both the array and the {trades} envelope', async () => {
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes({ trades: [tradeRow] })));
-		const wrapped = await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
-		expect(wrapped).toEqual({ rows: [tradeRow], stale: false });
+describe('fetchPumpTrades: chain source, cache, failure contract', () => {
+	beforeEach(() => chain.rows.mockReset());
 
-		cache.clear();
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes([tradeRow])));
-		const bare = await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
-		expect(bare.rows).toEqual([tradeRow]);
-	});
-
-	it('serves a second pull for the same mint from cache without a second fetch', async () => {
-		const fetchMock = vi.fn().mockResolvedValue(jsonRes({ trades: [tradeRow] }));
+	it('reads trades from the chain, never pump.fun\'s retired HTTP trade routes', async () => {
+		const fetchMock = vi.fn();
 		vi.stubGlobal('fetch', fetchMock);
-		await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
-		await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
-		expect(fetchMock).toHaveBeenCalledTimes(1);
+		chain.rows.mockResolvedValue([tradeRow]);
+		const out = await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
+		expect(out).toEqual({ rows: [tradeRow], stale: false });
+		expect(chain.rows).toHaveBeenCalledWith(THREE, { limit: 50 });
+		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
-	it('an upstream that answers with no rows is data, not an outage', async () => {
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes({ trades: [] })));
+	it('serves a second pull for the same mint from cache without a second read', async () => {
+		chain.rows.mockResolvedValue([tradeRow]);
+		await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
+		await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
+		expect(chain.rows).toHaveBeenCalledTimes(1);
+	});
+
+	it('a coin with no trades is data, not an outage', async () => {
+		chain.rows.mockResolvedValue([]);
 		const out = await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
 		expect(out).toEqual({ rows: [], stale: false });
 	});
 
-	it('falls back to last-known-good rows when the feed goes down, flagged stale', async () => {
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes({ trades: [tradeRow] })));
+	it('falls back to last-known-good rows when the read fails, flagged stale', async () => {
+		chain.rows.mockResolvedValue([tradeRow]);
 		await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
 		// Live TTL lapses, last-known-good survives.
-		cache.delete(`pump:feed:trades:${THREE}:100`);
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes(null, 429, {})));
+		cache.delete(`pump:feed:trades:${THREE}:50`);
+		chain.rows.mockResolvedValue(null);
 		const out = await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
 		expect(out).toEqual({ rows: [tradeRow], stale: true });
 	});
 
-	it('returns null when the feed is down and nothing was ever cached', async () => {
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes(null, 503, {})));
+	it('returns null when the read fails and nothing was ever cached', async () => {
+		chain.rows.mockResolvedValue(null);
 		const out = await withTimers(fetchPumpTrades(THREE, { limit: 100 }));
 		expect(out).toBeNull();
 	});
