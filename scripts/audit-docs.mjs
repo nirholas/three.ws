@@ -42,7 +42,7 @@
  *   node scripts/audit-docs.mjs prompts/finish/_context/roadmap-00-README.md
  */
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
-import { unregisteredDocs } from './lib/docs-registry.mjs';
+import { declaredPrivateDocs, unregisteredDocs } from './lib/docs-registry.mjs';
 import { resolve, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dropGitIgnored } from './lib/git-ignored.mjs';
@@ -456,6 +456,21 @@ if (!explicitFiles.length) {
 	}
 }
 
+// ------------------------------------- declared docs must not be operator-only
+// The build withholds every doc isPrivateDoc() names, so declaring one in
+// data/pages.json advertises a page that 404s. /docs/incident-response shipped
+// that way on 2026-11-25 and smoke:prod caught it after the deploy.
+if (!explicitFiles.length) {
+	for (const declared of declaredPrivateDocs(declaredPages)) {
+		findings.push({
+			file: 'data/pages.json',
+			line: 0,
+			kind: 'declared-private-doc',
+			detail: `declares ${declared} but scripts/lib/private-docs.mjs marks that doc operator-only, so the build withholds it and the route 404s. Remove the entry, or take the doc off the private list if it is meant for readers.`,
+		});
+	}
+}
+
 // ------------------------------------------- declared docs must have an article
 // The mirror of the check above, and the one that actually shipped a 404. Every
 // /docs/<slug> route rewrites to one shell that fetches /docs/<slug>.md at
@@ -522,6 +537,7 @@ const LABEL = {
 	'packages-index': 'packages/README.md out of step with packages/',
 	'unregistered-doc': 'Public docs missing from data/pages.json (live but undiscoverable)',
 	'declared-doc-without-article': 'Docs pages declared in data/pages.json with no article to serve (404)',
+	'declared-private-doc': 'Docs pages declared in data/pages.json whose article is operator-only (404)',
 };
 
 if (!findings.length) {

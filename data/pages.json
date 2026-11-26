@@ -6860,14 +6860,6 @@
 					"added": "2026-11-11"
 				},
 				{
-					"path": "/docs/incident-response",
-					"title": "Docs · Incident response",
-					"description": "How three.ws detects, contains, communicates and closes a production incident, including a security incident or a personal-data breach, with the code or runbook behind each step.",
-					"priority": 0.4,
-					"changefreq": "monthly",
-					"added": "2026-11-25"
-				},
-				{
 					"path": "/docs/seed-quality",
 					"title": "Docs · The catalog quality gate",
 					"description": "Nobody asked for the assets the platform seeds into its own catalogue, so they have to earn their slot. The gate that decides whether a platform-generated model is published or discarded, and the metrics it scores.",

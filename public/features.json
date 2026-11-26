@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-26T06:46:06.530Z",
+	"generated_at": "2026-11-26T07:51:06.157Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -10467,18 +10467,6 @@
 					"title": "Docs · Trust center",
 					"description": "How the three.ws trust center, subprocessor list and security.txt are sourced from the code, and the rules for keeping every claim cited.",
 					"added": "2026-11-11",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false,
-					"priority": 0.4,
-					"job": null
-				},
-				{
-					"path": "/docs/incident-response",
-					"title": "Docs · Incident response",
-					"description": "How three.ws detects, contains, communicates and closes a production incident, including a security incident or a personal-data breach, with the code or runbook behind each step.",
-					"added": "2026-11-25",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -55,14 +55,6 @@
 			<description>The swap, coin-fees and create-coin skills' fetch-coin script asked pump.fun's retired /coins-v2 route and failed for every coin. It now reads pump.fun's coin search and keeps only the exact mint, so agents can tell a bonding-curve coin from a graduated one before they trade or claim fees.</description>
 		</item>
 		<item>
-			<title>Docs · Incident response</title>
-			<link>https://three.ws/docs/incident-response</link>
-			<guid isPermaLink="false">2026-11-25:Docs · Incident response</guid>
-			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>How three.ws detects, contains, communicates and closes a production incident, including a security incident or a personal-data breach, with the code or runbook behind each step.</description>
-		</item>
-		<item>
 			<title>A private agent's profile no longer shows an earnings error</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-25:A private agent's profile no longer shows an earnings error</guid>
