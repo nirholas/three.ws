@@ -83,6 +83,7 @@ Do not act on it.
 | New maker | A maker whose first-ever Forge creation falls inside the window. |
 | Internal | Rows the platform generated itself (catalog seeder, weekly quality benchmark). Excluded everywhere: by `forge_creations.internal` from this migration on, and by `forge_seed_jobs.creation_id` for older seeder rows. Older benchmark rows cannot be told apart and remain in pre-migration numbers. |
 | Failed over | An attempt re-dispatched to another engine (`superseded_by` set). Request-level panels skip it, because the successor row carries the request to its real outcome. The engine table keeps it, because a lost attempt is what that table measures. |
+| Before a job | A request that ended before any `forge_creations` row existed (sign-in, input, a gate, the rate limiter, the reference image, a lane refusing the submit). Not in any panel here, because every panel starts at a row. Counted by stage and cause in the health payload's `pre_job` block and printed by `npm run forge:funnel` under "Before a job existed". |
 
 ## The panels
 
@@ -153,6 +154,20 @@ curl -sS -X POST https://three.ws/api/forge \
 
 Rows from before the migration are null and land in `Not answered`. They are
 never folded into a real answer.
+
+## When the board looks fine and people say Forge is broken
+
+Every panel starts at a created row, so `generation_success_rate` can sit in the
+90s while requests die before a job exists. The CLI prints an
+**End-to-end success (last 24h)** line under Generation success: models
+delivered over every request accepted past sign-in, including the ones that
+never became a job. A wide gap between the two means the breakage is upstream of
+the engines. The **Before a job existed** section below it breaks those endings
+down by stage, cause and refusing provider for the last hour and the last 24
+hours. `--json` carries the same data as `pre_job` and
+`end_to_end_success_rate_24h`. The full on-call walk-through (where the counters
+live, the stages, the formula, the per-request log line) is in
+[forge-error-triage.md](forge-error-triage.md#the-stats-look-fine-but-users-say-it-is-broken).
 
 ## Related
 
