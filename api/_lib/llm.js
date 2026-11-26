@@ -313,6 +313,21 @@ export function resetLlmCooldowns() {
 	COOLDOWNS.clear();
 }
 
+/**
+ * Cooldown memory for a lane a caller invokes directly, outside llmComplete
+ * (api/forge-enhance.js calls Vertex Gemini itself). Keyed exactly like a chain
+ * rung, so a direct call to the same name and model shares one memory with the
+ * chain: a billing 403 seen by either side stops both from asking again.
+ */
+export function noteLaneRefusal(name, model, status, retryAfter = null) {
+	noteRungFailure({ name, model }, status, retryAfter);
+}
+
+/** Seconds until a directly-called lane may be asked again, or 0 when it is free. */
+export function laneCoolingSeconds(name, model, now = Date.now()) {
+	return rungCooling({ name, model }, now) ? Math.max(1, Math.ceil((COOLDOWNS.get(rungKey({ name, model })).until - now) / 1000)) : 0;
+}
+
 // Some hosts answer an exhausted key with HTTP 200 and put the account notice in
 // message.content, so the chain took it as the answer. Production forge rows
 // from 2026-09-12 on carry "The API key used for this request has reached its
