@@ -2,7 +2,7 @@
 
 Research note, 2026-11-26. It studies @poteto (Lauren, on the Grok @bot team at xAI, 340k followers), named by the owner as the account that posts the best demos. Source: her latest 100 original posts (2026-10-18 to 2026-11-25), pulled from the X API with [scripts/x-user-timeline.mjs](../scripts/x-user-timeline.mjs), plus the full text of her article "Automate Anything with Grok Bot". Companion to [x-timeline-ideas.md](x-timeline-ideas.md) and [grok-showcase-and-tools.md](grok-showcase-and-tools.md).
 
-Re-pull at any time: `GCP_PROJECT=three-ws node scripts/x-user-timeline.mjs poteto --max 3200` (about 355 paid reads at $0.005, under $2). Raw output lands in `data/x-research/`, which is gitignored.
+Everything pulled is stored in [data/x-research/poteto.json](../data/x-research/poteto.json) (452 posts, five X Article bodies, media URLs, metrics with history, and a ledger of every paid read), so reading it again costs nothing: `node scripts/x-user-timeline.mjs poteto --top 25` ranks it offline. A later `GCP_PROJECT=three-ws node scripts/x-user-timeline.mjs poteto` pays only for posts newer than the newest one stored. See [data/x-research/README.md](../data/x-research/README.md).
 
 ## What the numbers say
 
