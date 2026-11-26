@@ -9,8 +9,8 @@
  * without scoring, ranking, or labeling anyone's coin:
  *
  *   · windows     5m / 1h / 6h / 24h volume, buys, sells, buy and sell volume,
- *                 net buy, unique traders, price change (pump.fun swap API
- *                 trades, paged back up to 24h)
+ *                 net buy, unique traders, price change (trades decoded from
+ *                 the coin's Solana transactions, paged back up to 24h)
  *   · holders     holder count, top-10 share, top holder, dev share, bonding
  *                 curve share, early-buyer share, top-10 list (Helius DAS, or
  *                 the 20 largest accounts over plain RPC when Helius is down)
@@ -30,7 +30,8 @@ import { unpackMint } from '@solana/spl-token';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { cacheWrapLastGood } from '../_lib/cache.js';
-import { pumpFetchJson, fetchPumpCoin, PUMP_SWAP_BASE } from '../_lib/pump-feed-fetch.js';
+import { pumpFetchJson, fetchPumpCoin } from '../_lib/pump-feed-fetch.js';
+import { fetchChainTradePage } from '../_lib/pump-chain-trades.js';
 import { liveHolderSet } from '../_lib/coin/cohorts-live.js';
 import { getConnection } from '../_lib/pump.js';
 import { solPriceUsd } from '../_lib/sol-price.js';
@@ -39,8 +40,12 @@ import { holderGini, readSeeding, readLaunchVersion, persistOracleSignals } from
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const DEXSCREENER = 'https://api.dexscreener.com';
 
-const TRADE_PAGE = 100;
-const TRADE_MAX_PAGES = 15; // 1,500 trades: a full day for all but the busiest coins
+// Each page is up to 60 transaction reads on the RPC (decoded verdicts are
+// cached for a day, so repeat builds only read new signatures). 6 pages of 50
+// covers a day for most coins; a busier coin's longer windows are flagged
+// partial rather than undercounted.
+const TRADE_PAGE = 50;
+const TRADE_MAX_PAGES = 6;
 const DAY_SEC = 86_400;
 // pump.fun bonding curves start with 793.1M tokens available to buy; progress is
 // the share of that pool already bought out.
@@ -61,9 +66,15 @@ const num = (v) => {
 	return Number.isFinite(n) ? n : null;
 };
 
-/** Normalize one swap-API trade row. Rows without a timestamp or side are dropped. */
+/** Trade time in ms from an ISO string or a unix timestamp in seconds or ms. */
+function tradeMs(v) {
+	if (typeof v === 'number') return v < 1e12 ? v * 1000 : v;
+	return Date.parse(v);
+}
+
+/** Normalize one trade row. Rows without a timestamp or side are dropped. */
 export function normalizeTrade(t) {
-	const ts = Date.parse(t?.timestamp);
+	const ts = tradeMs(t?.timestamp);
 	const side = String(t?.type || '').toLowerCase();
 	if (!Number.isFinite(ts) || (side !== 'buy' && side !== 'sell')) return null;
 	return {
@@ -131,26 +142,25 @@ export function windowStats(trades, { now, coveredFrom = null }) {
 	);
 }
 
-/** Page the swap API back until a day of history, the coin's first trade, or the page cap. */
+/**
+ * Page the coin's Solana trades back until a day of history, the coin's first
+ * trade, or the page cap. pump.fun's paged trade route answers 410 since
+ * 2026-11-25, so the chain is the source.
+ */
 async function fetchDayOfTrades(mint, now) {
 	const out = [];
 	let cursor = null;
 	let complete = false;
 	for (let page = 0; page < TRADE_MAX_PAGES; page++) {
-		const qs = new URLSearchParams({ limit: String(TRADE_PAGE) });
-		if (cursor) qs.set('cursor', cursor);
-		const { ok, body } = await pumpFetchJson(
-			`${PUMP_SWAP_BASE}/v2/coins/${encodeURIComponent(mint)}/trades?${qs}`,
-			{ timeoutMs: 6000 },
-		);
-		if (!ok) {
+		const body = await fetchChainTradePage(mint, { limit: TRADE_PAGE, before: cursor });
+		if (!body) {
 			if (page === 0) return null;
 			break;
 		}
-		const rows = (Array.isArray(body?.trades) ? body.trades : []).map(normalizeTrade).filter(Boolean);
+		const rows = body.rows.map(normalizeTrade).filter(Boolean);
 		out.push(...rows);
-		cursor = body?.pagination?.nextCursor || null;
-		if (!body?.pagination?.hasMore || !cursor) {
+		cursor = body.cursor;
+		if (!body.hasMore || !cursor) {
 			complete = true;
 			break;
 		}

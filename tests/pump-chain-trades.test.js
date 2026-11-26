@@ -30,7 +30,7 @@ describe('chainTradeRow', () => {
 	it('maps a decoded trade to the swap-api row shape', () => {
 		expect(chainTradeRow(buy)).toEqual({
 			signature: 'sigBuy', tx: 'sigBuy', type: 'buy', txType: 'buy', is_buy: true,
-			amountSol: 12, amountUsd: 1800, tokenAmount: 1e6,
+			amountSol: 12, amountUsd: 1800, priceUsd: 1800, tokenAmount: 1e6,
 			userAddress: WALLET, user: WALLET, timestamp: nowS - 30,
 		});
 	});

@@ -103,7 +103,7 @@ import { THREE_WS_VANITY, hasThreeWsMark } from '../../src/solana/vanity/brand.j
 import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/grinder-node.js';
 import { logger } from '../_lib/usage.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
-import { pumpFetchJson, fetchPumpCoin, pumpSearchUrl, solanaSearchRows } from '../_lib/pump-feed-fetch.js';
+import { pumpFetchJson, fetchPumpCoin, fetchPumpTrades, pumpSearchUrl, solanaSearchRows } from '../_lib/pump-feed-fetch.js';
 import { getCurveView } from '../_lib/pump-curve-view.js';
 import { collectFeeAgentSchema } from '../_lib/pump-fee-schemas.js';
 import { isRpcOutageError, staleEnvelope } from '../_lib/rpc-degrade.js';
@@ -4423,14 +4423,24 @@ export async function handleCoin(req, res) {
 }
 
 // ── coin-trades ────────────────────────────────────────────────────────────
-// Recent buy/sell trades for a single mint, proxied from pump.fun's swap API
-// (CORS-protected from the browser). Powers the homepage live token card's
-// green/red flow. Covers both bonding-curve and migrated (AMM) trades.
+// Recent buy/sell trades for a single mint. Powers the homepage live token
+// card's green/red flow, the /launches/<mint> trade list and the chart tapes.
+// pump.fun retired its swap-API trade feed on 2026-11-25 (410 "deprecated"),
+// so trades come from fetchPumpTrades, decoded from the coin's own Solana
+// transactions (bonding curve or AMM pool) and shared across every caller.
 
-const PUMP_SWAP_BASE = 'https://swap-api.pump.fun';
 const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+// Every caller reads the same 50-row pull and slices it, so the homepage
+// (limit 30), launch detail (20, 10) and world tape (1) share one cached read.
+const COIN_TRADES_READ = 50;
 
-async function handleCoinTrades(req, res) {
+/** Feed rows carry unix seconds; the coin-trades contract is an ISO string. */
+function isoTradeTime(v) {
+	if (typeof v === 'number' && Number.isFinite(v)) return new Date(v < 1e12 ? v * 1000 : v).toISOString();
+	return typeof v === 'string' ? v : null;
+}
+
+export async function handleCoinTrades(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
 	const rl = await limits.mcpIp(clientIp(req));
@@ -4439,58 +4449,28 @@ async function handleCoinTrades(req, res) {
 	const mint = (url.searchParams.get('mint') || '').trim();
 	if (!MINT_RE.test(mint))
 		return error(res, 400, 'invalid_mint', 'mint must be a base58 address');
-	const limit = readLimit(url, 30, 100);
-	const upstream = `${PUMP_SWAP_BASE}/v2/coins/${mint}/trades?limit=${limit}`;
+	const limit = readLimit(url, 30, COIN_TRADES_READ);
 	// "Recent trades" is a soft, continuously-polled feed (the homepage live card
-	// re-fetches every ~4s). A transient pump.fun swap-API blip means "no new data
-	// right now", not a hard error: so degrade to an empty 200 with `no-store`
-	// rather than a 5xx the browser console logs on every poll. The next poll
-	// retries immediately and the card recovers the moment upstream is back.
-	const stale = (extra = {}) => {
+	// re-fetches every ~4s). A failed read means "no new data right now", not a
+	// hard error: degrade to an empty 200 with `no-store` rather than a 5xx the
+	// browser console logs on every poll. The next poll retries.
+	const feed = await fetchPumpTrades(mint, { limit: COIN_TRADES_READ });
+	if (!feed) {
 		res.setHeader('cache-control', 'no-store');
-		return json(res, 200, { mint, trades: [], stale: true, ...extra });
-	};
-	let resp;
-	try {
-		resp = await fetch(upstream, {
-			headers: { accept: 'application/json' },
-			signal: AbortSignal.timeout(8000),
-		});
-	} catch {
-		return stale({ reason: 'upstream_timeout' });
+		return json(res, 200, { mint, trades: [], stale: true, reason: 'trades_unavailable' });
 	}
-	if (!resp.ok) return stale({ reason: `upstream_${resp.status}` });
-	let body;
-	try {
-		body = await resp.json();
-	} catch {
-		return stale({ reason: 'upstream_unparseable' });
-	}
-	const raw = Array.isArray(body) ? body : Array.isArray(body?.trades) ? body.trades : [];
-	const trades = raw
+	const trades = feed.rows
 		.map((t) => {
 			const solAmount = Number(t.amountSol);
 			const usdAmount = t.amountUsd != null ? Number(t.amountUsd) : null;
-			// pump.fun v2 USDC-paired coins report the quote spend on amountQuote/
-			// amountUsdc rather than amountSol. Surface whichever quote the upstream
-			// used (with a stable symbol) so USDC trades are no longer silently
-			// dropped by a SOL-only filter or shown as a misleading 0 SOL.
-			const usdcRaw = t.amountQuote ?? t.amountUsdc ?? null;
-			const isUsdcQuote = usdcRaw != null && (!isFinite(solAmount) || solAmount === 0);
-			const quoteSymbol = isUsdcQuote ? 'USDC' : 'SOL';
-			const quoteAmount = isUsdcQuote
-				? Number(usdcRaw)
-				: isFinite(solAmount)
-					? solAmount
-					: null;
 			return {
-				tx: t.tx,
-				timestamp: t.timestamp,
+				tx: t.tx || t.signature,
+				timestamp: isoTradeTime(t.timestamp),
 				user: t.userAddress || t.user || null,
 				is_buy: String(t.type).toLowerCase() === 'buy',
-				sol_amount: isFinite(solAmount) ? solAmount : null,
-				quote_symbol: quoteSymbol,
-				quote_amount: quoteAmount,
+				sol_amount: Number.isFinite(solAmount) ? solAmount : null,
+				quote_symbol: 'SOL',
+				quote_amount: Number.isFinite(solAmount) ? solAmount : null,
 				usd_amount: usdAmount,
 				price_usd: t.priceUsd != null ? Number(t.priceUsd) : null,
 			};
@@ -4500,7 +4480,12 @@ async function handleCoinTrades(req, res) {
 				t.tx &&
 				((t.quote_amount != null && t.quote_amount > 0) ||
 					(t.usd_amount != null && t.usd_amount > 0)),
-		);
+		)
+		.slice(0, limit);
+	if (feed.stale) {
+		res.setHeader('cache-control', 'no-store');
+		return json(res, 200, { mint, trades, stale: true });
+	}
 	res.setHeader('cache-control', 'public, max-age=3');
 	return json(res, 200, { mint, trades });
 }

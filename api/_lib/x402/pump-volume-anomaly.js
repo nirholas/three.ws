@@ -11,18 +11,18 @@
 // spike a sniper or oracle wants to know about before price catches up.
 //
 // Every byte is live: the candidate set comes from pump.fun's currently-live
-// board (frontend-api-v3) and per-coin volume is summed from the real swap-API
-// trade feed (swap-api.pump.fun) — the same upstreams the rest of the codebase
-// already proxies (see api/_lib/pump-launch-feed.js, api/pump/[action].js). No
-// mocks, no synthetic coins.
+// board (frontend-api-v3) and per-coin volume is summed from the coin's trades
+// decoded from Solana (fetchPumpTrades; pump.fun retired its HTTP trade feeds
+// on 2026-11-25). No mocks, no synthetic coins.
 //
 // The pure scoring functions (summarizeWindowUsd, median, scoreVolumeAnomaly,
 // buildAnomalySignal) take plain data so they are unit-testable without network;
 // detectPumpVolumeAnomaly() wires them to the live feeds.
 
+import { fetchPumpTrades } from '../pump-feed-fetch.js';
+
 const PUMP_FRONTEND_BASE =
 	process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
-const PUMP_SWAP_BASE = process.env.PUMP_SWAP_BASE || 'https://swap-api.pump.fun';
 const UA = 'three.ws-x402-pump-volume/1';
 
 // Tunables (env-overridable so production can adjust sensitivity without a deploy).
@@ -279,15 +279,13 @@ export async function detectPumpVolumeAnomaly(opts = {}) {
 	}
 
 	const samples = await mapLimit(candidates, cfg.concurrency, async (c) => {
-		const body = await fetchJson(
-			`${PUMP_SWAP_BASE}/v2/coins/${c.mint}/trades?limit=${cfg.tradeLimit}`,
-		);
-		const trades = Array.isArray(body) ? body : Array.isArray(body?.trades) ? body.trades : [];
+		const feed = await fetchPumpTrades(c.mint, { limit: cfg.tradeLimit });
+		const trades = feed?.rows || [];
 		const { usd, count } = summarizeWindowUsd(trades, nowMs, cfg.windowSec);
 		return { ...c, window_usd: usd, trade_count: count };
 	});
 
-	// If every trade fetch failed (upstream swap-API down) we have no signal to
+	// If every trade read failed (Solana RPC down) we have no signal to
 	// sell — surface as 503 so the buyer is not charged for an empty verdict.
 	if (!samples.some((s) => s.trade_count > 0)) {
 		throw Object.assign(new Error('pump.fun trade feed is temporarily unavailable'), {

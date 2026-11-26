@@ -5,16 +5,17 @@
 //
 // Produces a structured market signal from the live pump.fun trending board:
 //   • Top N coins by market cap from the frontend-api-v3 board
-//   • Per-coin buy/sell pressure derived from real swap-API trade feeds
+//   • Per-coin buy/sell pressure from trades decoded from Solana (fetchPumpTrades)
 //   • Whale buy detection (trades ≥ WHALE_SOL_THRESHOLD SOL)
 //   • An aggregate bullish/bearish/neutral verdict with confidence score
 //
 // Pure scoring helpers (buildPumpTrendingSignal) take plain data so they are
 // unit-testable without network. detectPumpTrending() wires them to live feeds.
 
+import { fetchPumpTrades } from '../pump-feed-fetch.js';
+
 const PUMP_FRONTEND_BASE =
 	process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
-const PUMP_SWAP_BASE = process.env.PUMP_SWAP_BASE || 'https://swap-api.pump.fun';
 
 // Trades at or above this SOL amount count as "whale" activity.
 export const WHALE_SOL_THRESHOLD =
@@ -172,14 +173,11 @@ async function fetchTrendingCoins(limit) {
 		}));
 }
 
+// pump.fun retired its HTTP trade feeds on 2026-11-25; fetchPumpTrades decodes
+// the coin's trades from Solana and shares them across callers for a few seconds.
 async function fetchCoinTrades(mint, limit) {
-	const r = await fetch(`${PUMP_SWAP_BASE}/v2/coins/${mint}/trades?limit=${limit}`, {
-		headers: { accept: 'application/json' },
-		signal: AbortSignal.timeout(6000),
-	});
-	if (!r.ok) return [];
-	const body = await r.json().catch(() => null);
-	return Array.isArray(body) ? body : Array.isArray(body?.trades) ? body.trades : [];
+	const feed = await fetchPumpTrades(mint, { limit });
+	return feed?.rows || [];
 }
 
 /**

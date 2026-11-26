@@ -26,7 +26,7 @@ import { sql } from '../_lib/db.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { recentPumpLaunches } from '../_lib/pump-launch-feed.js';
 import { readBody } from '../_lib/http.js';
-import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { pumpFetchJson, fetchPumpTrades } from '../_lib/pump-feed-fetch.js';
 
 const ROUTE = '/api/x402/pump-agent-audit';
 
@@ -436,8 +436,6 @@ const getEndpoint = paidEndpoint({
 
 const PUMP_FRONTEND_BASE_AUDIT =
 	process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
-const PUMP_SWAP_BASE_AUDIT =
-	process.env.PUMP_SWAP_BASE || 'https://swap-api.pump.fun';
 
 // Minimum SOL in a single transaction to qualify as a whale buy.
 const WHALE_SOL_THRESHOLD = Number(process.env.PUMP_WHALE_SOL_THRESHOLD || 5);
@@ -457,13 +455,11 @@ async function fetchTopCoins(limit) {
 	return coins.filter((c) => c && typeof c.mint === 'string' && c.mint.length >= 32);
 }
 
+// pump.fun retired its HTTP trade feeds on 2026-11-25; fetchPumpTrades decodes
+// the coin's trades from Solana.
 async function fetchCoinTrades(mint) {
-	const { ok, body } = await pumpFetchJson(
-		`${PUMP_SWAP_BASE_AUDIT}/v2/coins/${mint}/trades?limit=50`,
-		{ timeoutMs: 6000, retries: 1 },
-	);
-	if (!ok) return [];
-	return Array.isArray(body) ? body : Array.isArray(body?.trades) ? body.trades : [];
+	const feed = await fetchPumpTrades(mint, { limit: 50 });
+	return feed?.rows || [];
 }
 
 function parseNum(v) {
@@ -471,7 +467,7 @@ function parseNum(v) {
 	return Number.isFinite(n) ? n : null;
 }
 
-async function detectWhaleActivity(limit) {
+export async function detectWhaleActivity(limit) {
 	const topCoins = await fetchTopCoins(20).catch(() => []);
 	if (!topCoins.length) {
 		throw Object.assign(

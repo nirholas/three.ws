@@ -30,7 +30,14 @@ import { getSolPriceUsd } from '../../src/shared/usd-price.js';
 const TRADE_VERDICT_TTL_S = 24 * 60 * 60;
 const tradeVerdictKey = (network, venue, mint, signature) => `pumptrade:v1:${network}:${venue}:${mint}:${signature}`;
 
-export async function readPumpTradesFromChain({ mint, limit, network = 'mainnet' }) {
+/**
+ * Decode up to `limit` (max 50) trades for a mint from its curve or pool
+ * signatures, newest first. `before` continues from a previous page's
+ * `cursor`; `hasMore` is false once the account's signature history ends.
+ *
+ * @param {{ mint: string, limit?: number, network?: string, before?: string|null }} args
+ */
+export async function readPumpTradesFromChain({ mint, limit, network = 'mainnet', before = null }) {
 	const pk = solanaPubkey(mint);
 	if (!pk) throw new TypeError('invalid mint');
 	const want = Math.min(50, Math.max(1, Number(limit) || 20));
@@ -73,8 +80,8 @@ export async function readPumpTradesFromChain({ mint, limit, network = 'mainnet'
 		parser = new EventParser(pumpSdk.PUMP_PROGRAM_ID, coder);
 	}
 
-	const sigInfos = await connection.getSignaturesForAddress(address, { limit: sigLimit });
-	if (!sigInfos.length) return { mint, network, graduated: isAmm, count: 0, trades: [] };
+	const sigInfos = await connection.getSignaturesForAddress(address, before ? { limit: sigLimit, before } : { limit: sigLimit });
+	if (!sigInfos.length) return { mint, network, graduated: isAmm, count: 0, trades: [], cursor: null, hasMore: false };
 
 	const signatures = sigInfos.map((s) => s.signature);
 	const mintStr = pk.toString();
@@ -136,6 +143,7 @@ export async function readPumpTradesFromChain({ mint, limit, network = 'mainnet'
 	// the full window. Chunking also keeps batch sizes friendly to public RPCs.
 	const CHUNK = 8;
 	const venue = isAmm ? 'amm' : 'curve';
+	let lastExamined = null;
 	for (let off = 0; off < signatures.length && trades.length < want; off += CHUNK) {
 		const slice = signatures.slice(off, off + CHUNK);
 		const verdicts = new Map();
@@ -159,12 +167,17 @@ export async function readPumpTradesFromChain({ mint, limit, network = 'mainnet'
 			cacheSet(tradeVerdictKey(network, venue, mintStr, signature), verdict, TRADE_VERDICT_TTL_S).catch(() => {});
 		});
 		for (const signature of slice) {
+			if (trades.length >= want) break;
+			lastExamined = signature;
 			const trade = verdicts.get(signature)?.trade;
-			if (trade && trades.length < want) trades.push({ ...trade, usdValue: solPrice > 0 ? trade.solAmount * solPrice : null });
+			if (trade) trades.push({ ...trade, usdValue: solPrice > 0 ? trade.solAmount * solPrice : null });
 		}
 	}
 
-	return { mint, network, graduated: isAmm, count: trades.length, trades };
+	// Older history remains when this page stopped before its last signature or
+	// the RPC filled the whole signature window.
+	const hasMore = lastExamined !== signatures[signatures.length - 1] || sigInfos.length === sigLimit;
+	return { mint, network, graduated: isAmm, count: trades.length, trades, cursor: lastExamined, hasMore };
 }
 
 /**
@@ -176,6 +189,8 @@ export async function readPumpTradesFromChain({ mint, limit, network = 'mainnet'
  */
 export function chainTradeRow(t) {
 	const side = t.isBuy ? 'buy' : 'sell';
+	const usd = Number.isFinite(t.usdValue) && t.usdValue > 0 ? t.usdValue : null;
+	const tokens = Number(t.tokenAmount);
 	return {
 		signature: t.signature,
 		tx: t.signature,
@@ -183,7 +198,9 @@ export function chainTradeRow(t) {
 		txType: side,
 		is_buy: t.isBuy,
 		amountSol: t.solAmount,
-		amountUsd: Number.isFinite(t.usdValue) && t.usdValue > 0 ? t.usdValue : null,
+		amountUsd: usd,
+		// pump.fun coins all carry 6 decimals.
+		priceUsd: usd != null && tokens > 0 ? usd / (tokens / 1e6) : null,
 		tokenAmount: t.tokenAmount,
 		userAddress: t.wallet,
 		user: t.wallet,
@@ -201,9 +218,24 @@ export function chainTradeRow(t) {
  * @returns {Promise<Array<object>|null>}
  */
 export async function fetchChainTradeRows(mint, { limit = 50, network = 'mainnet' } = {}) {
+	const page = await fetchChainTradePage(mint, { limit, network });
+	return page ? page.rows : null;
+}
+
+/**
+ * One page of trade rows, for callers that walk history back (token-stats
+ * pages a day). Pass the previous page's `cursor` as `before`. Never throws:
+ * a failed read is null, so a page error is never mistaken for the end of the
+ * coin's history.
+ *
+ * @param {string} mint
+ * @param {{ limit?: number, before?: string|null, network?: string }} [opts]
+ * @returns {Promise<{ rows: Array<object>, cursor: string|null, hasMore: boolean }|null>}
+ */
+export async function fetchChainTradePage(mint, { limit = 50, before = null, network = 'mainnet' } = {}) {
 	try {
-		const r = await readPumpTradesFromChain({ mint, limit, network });
-		return r.trades.map(chainTradeRow);
+		const r = await readPumpTradesFromChain({ mint, limit, network, before });
+		return { rows: r.trades.map(chainTradeRow), cursor: r.cursor, hasMore: r.hasMore };
 	} catch {
 		return null;
 	}
