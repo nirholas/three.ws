@@ -427,6 +427,21 @@ export class LlmUnavailableError extends Error {
 	}
 }
 
+// Thrown by llmComplete({ strictCooldowns: true }) when every rung in the chain
+// is sitting out a cooldown, before any network call is made. Optional callers
+// (the Forge art director, the Enhance button) would rather skip their nicety in
+// a millisecond than re-ask a chain that refused moments ago. `retryAfterS` is
+// how long until the soonest rung is willing again.
+export class LlmChainCoolingError extends Error {
+	constructor(retryAfterS) {
+		super('Every LLM provider is cooling down after recent refusals.');
+		this.name = 'LlmChainCoolingError';
+		this.code = 'chain_cooling';
+		this.status = 503;
+		this.retryAfterS = retryAfterS;
+	}
+}
+
 // The Claude 5 family (Opus 5, Sonnet 5, Fable 5) thinks by default, so the
 // first content block is often a `thinking` block whose text is empty — pick
 // the first `text` block instead of blindly reading content[0].
@@ -1030,6 +1045,10 @@ export function llmConfigured(opts = {}) {
 // Throws LlmUnavailableError when no provider is configured, or the last
 // upstream error (with .status = 502) when every provider failed outright.
 //
+// `strictCooldowns` is optional: when every rung is cooling down it throws
+// LlmChainCoolingError at once, with no network call, instead of the default
+// of asking every rung anyway. For callers whose completion is a nicety.
+//
 // `accept(text)` is optional: a caller that needs structured output passes a
 // predicate, and a completion it rejects is failed over like an empty one
 // (spend still recorded). When no lane yields accepted text the thrown error
@@ -1044,7 +1063,7 @@ export function llmConfigured(opts = {}) {
 // { userId, agentId, avatarId, clientId, apiKeyId, tool } — are all optional;
 // pass whatever the call site knows. Recording is fire-and-forget (see
 // recordEvent), so it never delays or fails the completion.
-export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, timeoutMs = 30_000, track = null, chain: chainOverride = null, accept = null }) {
+export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, timeoutMs = 30_000, track = null, chain: chainOverride = null, accept = null, strictCooldowns = false }) {
 	const chain = chainOverride?.length ? chainOverride : providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel, task, preferPhi });
 	if (!chain.length) throw new LlmUnavailableError();
 
@@ -1115,6 +1134,14 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 	// Honor cooldowns only while something else can still answer: when every
 	// rung is sitting out, try them all anyway rather than fail without asking.
 	const everyRungCooling = chain.every((p) => rungCooling(p));
+	// strictCooldowns: an optional caller asked never to spend a round trip on a
+	// rung that refused recently. With the whole chain cooling it gets an
+	// immediate, network-free answer instead of every dead rung asked again.
+	if (strictCooldowns && everyRungCooling) {
+		const now = Date.now();
+		const soonest = Math.min(...chain.map((p) => COOLDOWNS.get(rungKey(p))?.until ?? now));
+		throw new LlmChainCoolingError(Math.max(1, Math.ceil((soonest - now) / 1000)));
+	}
 	for (const p of chain) {
 		if (!everyRungCooling && rungCooling(p)) {
 			attempts.push({ provider: p.name, skipped: 'cooling' });
