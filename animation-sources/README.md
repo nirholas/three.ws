@@ -119,3 +119,12 @@ that, the baked clip is self-sufficient.
   after the mixer runs.
 - [public/animations/README.md](../public/animations/README.md): the served
   side of this pipeline (built clips, manifest, registry).
+
+## Licensing note
+
+Raw Mixamo FBX files must never be committed or served: Mixamo's terms permit
+using exported animations inside a product, not redistributing the raw files.
+An earlier revision of this repository tracked 61 of them despite the
+gitignore. They were untracked on 2026-11-26 (kept locally for rebuilds), so the
+ignore rules above are now effective. Past commits still contain them; purging
+git history is an owner decision.
