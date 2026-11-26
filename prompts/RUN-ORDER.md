@@ -11,6 +11,7 @@ so you can open one, run it, and open the next without consulting anything. Ever
 |---|---|---|
 | `023` to `039` | The `x-grok-` campaign. Runnable, no gate. | 1 |
 | `067` to `092` | The `best3d-` and `partners-` campaigns. Empty since 2026-11-04: every remaining order was built and waits only on an owner deploy or publish, so it moved to `941` to `949`. | 0 |
+| `101` to `187` | The `forge-hardening-` campaign: 87 independent one-task orders that test, fix and harden every part of Forge, safe to run all at once (one dev port each, hot shared files edited in small diffs). Runnable; the deploy, the push and the reply to NVIDIA stay with the owner. Run in waves because live generations share one GPU: [finish/_context/forge-hardening-00-INDEX.md](finish/_context/forge-hardening-00-INDEX.md). | 87 |
 | `249` to `286` | The `plan-` campaign's P0 and P1 orders (live defects, then unshipped fixes and half-built features), from the 2026-11-03 sweep of every markdown file in the repo. Runnable; any gated step is named per order. See [the plan- section](#plan--the-planning-corpus-as-work-orders). | 27 |
 | `331` to `347` | The `insta360-` campaign: 360 camera footage to owned 3D (splats, depth shells, motion, plugins). `331` to `346` are independent and safe to run all at once (one dev port each, hot shared files edited last); `347` runs last and holds the single owner message. Context: [finish/_context/insta360-00-CONTEXT.md](finish/_context/insta360-00-CONTEXT.md). | 17 |
 | `401` to `434` | Written by the evolve scout lane ([docs/ops/evolve.md](../docs/ops/evolve.md)), each from a dated measurement. Runnable, no gate. | 5 |
@@ -77,6 +78,7 @@ context file says otherwise.
 
 | Order | Why now |
 |---|---|
+| [101](finish/101-forge-hardening-01-reference-step-stated-wait.md) through [187](finish/187-forge-hardening-87-operator-reports.md) | The `forge-hardening-` campaign. Measured 2026-11-26: text prompts on Forge were failing before a job existed (the image ladder was down to one rung at one image per 45 seconds), while the main 3D lane ran at 93.3%. NVIDIA's catalog reviewer will open `/forge`. Start with 184, 101, 102, 103, 182, 177, 105 and 106; the rest in waves per [finish/_context/forge-hardening-00-INDEX.md](finish/_context/forge-hardening-00-INDEX.md). |
 | [436](finish/436-auto-forge-finalize-ttl-reap-decoupling.md) | Measured 2026-10-25: 96% of forge 3D generations in the last 24h never finished; 780 `forge_creations` rows stuck in `generating`, some over a day old against a documented 45-minute timeout. The core 3D-generation feature is effectively down for most users. |
 | [401](finish/401-auto-restore-green-vitest.md) | `npm run test:core` has 52 failing files and 108 failing tests on `evolve`. Every other order's "tests pass" line is unverifiable until this is green. |
 | [433](finish/433-auto-fix-account-link-codes-schema-collision.md) | A table-name collision in `account_link_codes` is breaking every phone/desktop/CLI/Telegram account-link call in production right now. |
