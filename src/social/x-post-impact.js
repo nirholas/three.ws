@@ -15,19 +15,12 @@ function solReservesFromQuote(data) {
 	return r != null ? Number(r) / 1e9 : null;
 }
 
-// X blocks cross-origin reads from a page, so in the browser the same shared
-// reader runs behind the same-origin /api/x-video/extract endpoint.
+// Reading a post needs the server-side X API credentials, so only the server
+// path can do it. In a browser the post stays null and the price analysis
+// continues without it.
 async function readPost(postUrl) {
-	if (typeof window === 'undefined') return summarizeXPost(await readXPost(postUrl));
-	const res = await fetch('/api/x-video/extract', {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ url: postUrl }),
-		signal: AbortSignal.timeout(15000),
-	});
-	const data = await res.json().catch(() => null);
-	if (!data?.post) throw new Error(data?.message || `post read failed (HTTP ${res.status})`);
-	return summarizeXPost(data.post);
+	if (typeof window !== 'undefined') throw new Error('X post reads run server-side only');
+	return summarizeXPost(await readXPost(postUrl));
 }
 
 /**

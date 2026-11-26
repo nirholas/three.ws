@@ -3477,14 +3477,6 @@
 			"dest": "/splat.html"
 		},
 		{
-			"src": "/x-video",
-			"dest": "/x-video.html"
-		},
-		{
-			"src": "/x-video/",
-			"dest": "/x-video.html"
-		},
-		{
 			"src": "/capture",
 			"dest": "/capture.html"
 		},

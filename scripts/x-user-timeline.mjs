@@ -2,8 +2,7 @@
 /**
  * Pull any public X account's posts into a committed store, paying only for what we do not have yet.
  *
- * The keyless syndication endpoint (api/_lib/x-syndication.js) returns an account's most
- * popular posts, not its latest. The X API returns the timeline newest first, with video
+ * The official X API returns the timeline newest first, with video
  * variants and X Article bodies, but every post read is billed. So every read lands in
  * data/x-research/<handle>.json, and every later run starts from that file: a timeline
  * pull asks only for posts newer than the newest one stored, an id fetch skips ids already

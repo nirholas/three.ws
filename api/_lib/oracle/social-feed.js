@@ -3,7 +3,7 @@
 // Pure helpers plus one orchestrator (collectSocialBatch) whose reader is
 // injected, so the cron and the tests share the same code path.
 
-import { fetchGuestTimeline } from '../x-guest/index.js';
+import { fetchXTimeline } from '../x-api.js';
 import { cacheGet, cacheSet } from '../cache.js';
 
 const DAY_MS = 86_400_000;
@@ -58,7 +58,7 @@ const UNAVAILABLE_TTL_SECONDS = 24 * 3600;
 
 /** True when the reader says the account itself is gone (not a transient fault). */
 export function isTerminalUnavailable(err) {
-	return err?.reason === 'not_found' && /suspended|deactivated|unavailable/i.test(String(err?.message || ''));
+	return err?.reason === 'not_found' && /suspended|deactivated|unavailable|could not find/i.test(String(err?.message || ''));
 }
 
 /** Cross-run quarantine of terminally unavailable handles, backed by the shared cache. */
@@ -76,7 +76,7 @@ export const cacheUnavailableStore = {
  * Stops reading once the reader reports a rate limit; the remaining handles are
  * reported as skipped so the next run picks them up.
  */
-export async function collectSocialBatch(handles, { reader = fetchGuestTimeline, now = Date.now, unavailable = cacheUnavailableStore } = {}) {
+export async function collectSocialBatch(handles, { reader = fetchXTimeline, now = Date.now, unavailable = cacheUnavailableStore } = {}) {
 	const tweets = [];
 	const failures = {};
 	const skipped = [];
@@ -100,7 +100,7 @@ export async function collectSocialBatch(handles, { reader = fetchGuestTimeline,
 				continue;
 			}
 			failures[handle] = `${err?.reason || 'error'}: ${String(err?.message || err).slice(0, 120)}`;
-			if (err?.reason === 'rate_limited') {
+			if (err?.reason === 'rate_limited' || err?.reason === 'not_configured') {
 				skipped.push(...handles.slice(i + 1));
 				break;
 			}
