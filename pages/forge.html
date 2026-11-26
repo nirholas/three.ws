@@ -62,8 +62,9 @@
 				/* Reset the global site-nav `header` rule from style.css —
 				   this is an in-page hero, not the top bar. */
 				display: flex;
+				flex-wrap: wrap;
 				align-items: baseline;
-				gap: var(--space-md);
+				gap: var(--space-sm) var(--space-md);
 				height: auto;
 				padding: 0 0 var(--space-md);
 				background: none;
@@ -127,6 +128,9 @@
 				font-weight: 400;
 			}
 			.forge-head p {
+				/* Wraps under the title on mid-width screens instead of being
+				   squeezed into a narrow three-line column beside it. */
+				flex: 1 1 22rem;
 				color: var(--ink-dim);
 				font-size: var(--text-sm);
 				margin: 0;
@@ -3503,6 +3507,11 @@
 				}
 				.forge-head h1 {
 					font-size: var(--text-lg);
+				}
+				/* In the stacked column the desktop flex-basis would become a
+				   352px height; let the tagline size to its text. */
+				.forge-head p {
+					flex: none;
 				}
 				.forge-head-link {
 					margin-left: 0;
