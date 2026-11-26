@@ -804,7 +804,7 @@
 		"@solana/web3.js": "^1.99.0",
 		"@sparkjsdev/spark": "^2.3.1",
 		"@sparticuz/chromium-min": "^153.0.0",
-		"@tetsuo-ai/protocol": "^0.5.2",
+		"@tetsuo-ai/protocol": "^0.6.0",
 		"@tetsuo-ai/sdk": "^1.4.0",
 		"@three-ws/companion": "*",
 		"@three-ws/mcp-policy": "*",
