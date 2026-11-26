@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-26",
+			"title": "Forge waits when the image engine asks it to",
+			"summary": "When the engine painting a text prompt's reference image says how long to wait, Forge now passes that wait to you instead of immediately asking again, which was refused and delayed your next try.",
+			"tags": ["fix"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-26",
 			"title": "Oracle coin pages say plainly when a coin has no score",
 			"summary": "Opening the Oracle page for a coin the data brain never observed no longer polls five times for a score that cannot arrive or promises one \"within moments\". The page and the /oracle drawer now say the coin was not observed, the hero dial stops reading \"reading conviction\", and the browser console no longer logs a 404 per check. A real scoring outage still retries.",
 			"tags": [

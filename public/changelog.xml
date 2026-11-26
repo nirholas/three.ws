@@ -31,6 +31,14 @@
 			<description>The text and image to 3D generator is now called Forge across three.ws, and Forge by three.ws inside the tools it plugs into: the Blender add-on, the ComfyUI nodes, the Omniverse extension, the Unity, Godot and Unreal bridges, the Modly extension, the Semantic Kernel, n8n, Raycast and Poe integrations, and the Blender MCP server. Shared Forge model pages now end their titles with &quot;Forge · three.ws&quot;, and Forge models carry &quot;Forge by three.ws&quot; as their generator credit in GLB and OpenUSD files. The desktop app keeps its installed name, three.ws Forge.</description>
 		</item>
 		<item>
+			<title>Forge waits when the image engine asks it to</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-26:Forge waits when the image engine asks it to</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the engine painting a text prompt's reference image says how long to wait, Forge now passes that wait to you instead of immediately asking again, which was refused and delayed your next try.</description>
+		</item>
+		<item>
 			<title>Oracle coin pages say plainly when a coin has no score</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-26:Oracle coin pages say plainly when a coin has no score</guid>
