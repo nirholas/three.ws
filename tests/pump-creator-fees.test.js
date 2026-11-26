@@ -1,12 +1,14 @@
 // api/_lib/pump-creator-fees.js: the pump.fun creator-fee reads behind the
 // earnings snapshot and the coin page. Payload shapes are the ones pump.fun
-// returns for frontend-api-v3 /fees/creator/<wallet> and the swap-api fallback
-// /v2/creators/<wallet>/fees/total, captured 2026-10-08 after pump.fun retired
-// the /v1/creators routes.
+// returns for frontend-api-v3 /fees/creator/<wallet>, captured 2026-10-08 after
+// pump.fun retired the /v1/creators routes. On 2026-11-25 pump.fun also retired
+// every swap-api route this module read besides it (/v2/creators/<w>/fees/total,
+// /v1/coins/<mint>/timeline, /v1/fee-sharing/account/<w>/shares: each now 404
+// "Cannot GET" for every input), so /fees/creator is the one source left.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const { fetchCreatorFeeTotal, fetchCreatorFeeBuckets, fetchCoinEarnings, fetchAllShares } = await import(
+const { fetchCreatorFeeTotal, fetchCreatorFeeBuckets, fetchCoinEarnings } = await import(
 	'../api/_lib/pump-creator-fees.js'
 );
 const { _resetBreakers } = await import('../api/_lib/resilience.js');
@@ -47,25 +49,12 @@ describe('fetchCreatorFeeTotal', () => {
 		expect(await fetchCreatorFeeTotal(WALLET)).toEqual({ ok: true, value: 0n });
 	});
 
-	it('falls back to the swap-api v2 totals when /fees/creator fails', async () => {
-		global.fetch = vi.fn(async (url) => {
-			if (String(url).includes('/fees/creator/')) return reply(503, { degraded_lanes: ['trade_api.get_fees'] });
-			expect(String(url)).toContain(`/v2/creators/${WALLET}/fees/total`);
-			return reply(200, {
-				totalFeesSOL: '0.004610377',
-				totalFeesByQuoteMint: [
-					{ quoteMintAddress: '11111111111111111111111111111111', totalFeesAtomic: '4610377', totalFeesQuote: '0.004610377' },
-				],
-			});
-		});
-		expect(await fetchCreatorFeeTotal(WALLET)).toEqual({ ok: true, value: 4610377n });
-	});
-
-	it('reports a failure on both rungs so the caller keeps its last good figure', async () => {
-		global.fetch = vi.fn(async () => reply(404, { statusCode: 404 }));
+	it('reports a failure (not a zero) so the caller keeps its last good figure, without calling a retired route', async () => {
+		global.fetch = vi.fn(async () => reply(503, { degraded_lanes: ['trade_api.get_fees'] }));
 		const r = await fetchCreatorFeeTotal(WALLET);
 		expect(r.ok).toBe(false);
-		expect(r.error).toMatch(/404.*fallback.*404/);
+		expect(r.error).toMatch(/503/);
+		expect(global.fetch.mock.calls.every(([url]) => String(url).includes('/fees/creator/'))).toBe(true);
 	});
 });
 
@@ -98,122 +87,54 @@ describe('fetchCreatorFeeBuckets', () => {
 	});
 });
 
+// The per-coin timeline the coin page and snapshot read answered 404 for every
+// mint after 2026-11-25, and fetchCoinEarnings took a 404 to mean "this coin
+// never paid the wallet": every coin showed "This coin paid 0 SOL" and a -100%
+// gap against the wallet figure. pump.fun's /fees/creator index still filters
+// to one coin with `mint=` (a mint that never paid the wallet answers an empty
+// `earned`), which is the per-coin figure now.
 describe('fetchCoinEarnings', () => {
-	it('sums distribution events addressed to the wallet across pages', async () => {
+	it("reads the wallet's earnings from this one coin off the creator-fee index", async () => {
 		global.fetch = vi.fn(async (url) => {
-			expect(String(url)).toContain(`/v1/coins/${MINT}/timeline`);
-			if (!String(url).includes('cursor=')) {
-				return reply(200, {
-					items: [
-						{
-							eventType: 'distribution',
-							timestamp: '2026-10-01T00:00:00.000Z',
-							recipients: [{ address: WALLET, amount: '1000000' }, { address: 'someoneElse', amount: '999' }],
-						},
-						{ eventType: 'trade', timestamp: '2026-10-01T00:05:00.000Z' },
-					],
-					pagination: { hasMore: true, nextCursor: 'page2' },
-				});
-			}
-			return reply(200, {
-				items: [
-					{
-						eventType: 'distribution',
-						timestamp: '2026-10-02T00:00:00.000Z',
-						recipients: [{ address: WALLET, amount: '500000' }],
-					},
-				],
-				pagination: { hasMore: false, nextCursor: null },
-			});
+			const u = new URL(String(url));
+			expect(u.pathname).toBe(`/fees/creator/${WALLET}`);
+			expect(u.searchParams.get('mint')).toBe(MINT);
+			return reply(200, earnings({ earned: [solLeg('1500000')] }));
 		});
-		const r = await fetchCoinEarnings(MINT, WALLET);
-		expect(r).toEqual({
+		expect(await fetchCoinEarnings(MINT, WALLET)).toEqual({
 			ok: true,
-			value: {
-				mint: MINT,
-				lamports: 1500000n,
-				distributions: 2,
-				first_at: '2026-10-01T00:00:00.000Z',
-				last_at: '2026-10-02T00:00:00.000Z',
-			},
+			value: { mint: MINT, lamports: 1500000n, distributions: null },
 		});
 	});
 
-	it('resolves to zero distributions, not a failure, for a mint with no timeline', async () => {
-		global.fetch = vi.fn(async () => reply(404, { statusCode: 404 }));
-		const r = await fetchCoinEarnings(MINT, WALLET);
-		expect(r).toEqual({
+	it('treats an empty `earned` as a coin that has paid this wallet nothing', async () => {
+		global.fetch = vi.fn(async () => reply(200, earnings({ earned: [] })));
+		expect(await fetchCoinEarnings(MINT, WALLET)).toEqual({
 			ok: true,
-			value: { mint: MINT, lamports: 0n, distributions: 0, first_at: null, last_at: null },
+			value: { mint: MINT, lamports: 0n, distributions: null },
 		});
 	});
 
-	it('fails (not zero) on a non-404 upstream error', async () => {
-		global.fetch = vi.fn(async () => reply(503, { statusCode: 503 }));
-		const r = await fetchCoinEarnings(MINT, WALLET);
-		expect(r.ok).toBe(false);
-	});
-});
-
-describe('fetchAllShares', () => {
-	it('pages through every coin a wallet shares fees with', async () => {
-		global.fetch = vi.fn(async (url) => {
-			expect(String(url)).toContain(`/v1/fee-sharing/account/${WALLET}/shares`);
-			if (!String(url).includes('cursor=')) {
-				return reply(200, {
-					items: [{ mint: MINT, bps: 10000, isAdmin: true }],
-					pagination: { hasMore: true, nextCursor: 'page2' },
-				});
-			}
-			return reply(200, {
-				items: [{ mint: 'THREEsynthetic2222222222222222222222222222' }],
-				pagination: { hasMore: false, nextCursor: null },
-			});
-		});
-		const r = await fetchAllShares(WALLET);
-		expect(r).toEqual({
-			ok: true,
-			value: {
-				truncated: false,
-				items: [
-					{ mint: MINT, bps: 10000, is_admin: true },
-					{ mint: 'THREEsynthetic2222222222222222222222222222', bps: null, is_admin: false },
-				],
-			},
-		});
-	});
-
-	it('marks the result truncated when a wallet has more pages than maxPages allows', async () => {
-		global.fetch = vi.fn(async () =>
-			reply(200, { items: [{ mint: MINT }], pagination: { hasMore: true, nextCursor: 'next' } }),
-		);
-		const r = await fetchAllShares(WALLET, { maxPages: 2 });
-		expect(r.ok).toBe(true);
-		expect(r.value.truncated).toBe(true);
-		expect(r.value.items).toHaveLength(2);
-	});
-
-	it('fails on a non-2xx response', async () => {
-		global.fetch = vi.fn(async () => reply(500, {}));
-		const r = await fetchAllShares(WALLET);
-		expect(r.ok).toBe(false);
+	it('fails (never a zero) on a 404 or any other upstream error', async () => {
+		for (const status of [404, 503]) {
+			_resetBreakers();
+			global.fetch = vi.fn(async () => reply(status, { statusCode: status }));
+			const r = await fetchCoinEarnings(MINT, WALLET);
+			expect(r.ok).toBe(false);
+		}
 	});
 });
 
 describe('per-coin reconciliation', () => {
-	it('a zero delta means the timeline sum and the wallet claimed figure agree', () => {
-		const distributed = 1500000n;
-		const claimed = 1500000n;
-		const delta = distributed - claimed;
-		expect(delta).toBe(0n);
-	});
-
-	it('a nonzero delta is surfaced as a percentage of the claimed figure, not hidden', () => {
-		const distributed = 1800000n;
-		const claimed = 1500000n;
-		const delta = distributed - claimed;
-		const deltaPct = (Number(delta) / Number(claimed)) * 100;
-		expect(delta).toBe(300000n);
-		expect(deltaPct).toBeCloseTo(20, 5);
+	it('is the per-coin sum minus the wallet total, only when every coin was read', async () => {
+		const { reconcileCoinTotals } = await import('../api/_lib/creator-earnings-snapshot.js');
+		const ok = (lamports) => ({ ok: true, value: { lamports } });
+		expect(reconcileCoinTotals([ok(1500000n), ok(0n)], 1500000n)).toEqual({ delta_lamports: 0n, delta_pct: 0 });
+		const gap = reconcileCoinTotals([ok(1200000n)], 1500000n);
+		expect(gap.delta_lamports).toBe(-300000n);
+		expect(gap.delta_pct).toBeCloseTo(-20, 5);
+		// One coin unread: a sum without it would invent a gap.
+		expect(reconcileCoinTotals([ok(1200000n), { ok: false, error: 'x' }], 1500000n)).toBeNull();
+		expect(reconcileCoinTotals([ok(1n)], null)).toBeNull();
 	});
 });

@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>@three-ws/pumpfun-skills coinFees works again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:@three-ws/pumpfun-skills coinFees works again</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>coinFees() read pump.fun's /coins-v2/&lt;mint&gt; route, which now answers 404 for every coin. It reads the coin record from pump.fun's search route (exact mint match) and reports an unknown mint as coin_not_found. A custom coinsV2Base still reads &lt;base&gt;/&lt;mint&gt; for devnet backends.</description>
+		</item>
+		<item>
+			<title>Coin pages show what each coin actually paid its creator again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:Coin pages show what each coin actually paid its creator again</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>pump.fun retired the per-coin timeline the coin page and agent earnings read, and every coin started showing &quot;This coin paid 0 SOL&quot; with a false gap against the wallet total. The per-coin figure now comes from pump.fun's creator-fee index filtered to that one coin, a failed read is shown as unknown instead of zero, and the reconciliation compares the per-coin sum with the wallet total so fees from coins outside the registry show up as a gap.</description>
+		</item>
+		<item>
 			<title>Forge goes by one name everywhere</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-26:Forge goes by one name everywhere</guid>

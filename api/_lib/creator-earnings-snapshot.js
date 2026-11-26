@@ -11,13 +11,14 @@
 // figures (refreshed_at stays at the last success) and the failure is recorded
 // in `error`; a coin that never had a good read is stored as 'unavailable'.
 //
-// Each coin also gets a second, independent figure: coin_earned_lamports,
-// summed straight off that coin's own distribution timeline
-// (pump-creator-fees.js's fetchCoinEarnings), instead of the wallet-level
-// earned_lamports above, which is one lifetime total smeared across every
-// coin the same wallet created. reconciliation_delta_lamports is the gap
-// between the sum of those per-coin figures and the wallet's claimed total;
-// a nonzero delta is stored and shown, never hidden.
+// Each coin also gets its own figure: coin_earned_lamports, pump.fun's
+// creator-fee index filtered to that one mint (pump-creator-fees.js's
+// fetchCoinEarnings), instead of the wallet-level earned_lamports above, which
+// is one lifetime total smeared across every coin the same wallet created.
+// reconciliation_delta_lamports is the gap between the sum of those per-coin
+// figures and the wallet's total. A negative gap is fee income from coins the
+// registry does not have on file (a coin launched outside three.ws, or one the
+// launcher missed), so it is stored and shown, never hidden.
 
 import { sql } from './db.js';
 import { getConnection } from './pump.js';
@@ -26,7 +27,6 @@ import {
 	readCreatorFeeReport,
 	fetchCreatorFeeBuckets,
 	fetchCoinEarnings,
-	fetchAllShares,
 } from './pump-creator-fees.js';
 
 const WSOL = 'So11111111111111111111111111111111111111112';
@@ -89,7 +89,7 @@ async function recordReport(coin, { creator, walletCoins, walletAgents, report, 
 			 ${big(report.earned_lamports)}, ${big(report.claimed_lamports)}, ${big(report.unclaimed_lamports)},
 			 ${walletCoins}, ${walletAgents}, 'pumpfun_creator_fees', null,
 			 ${coinEarnings ? big(coinEarnings.lamports) : null}, ${coinEarnings ? coinEarnings.distributions : null},
-			 ${coinEarnings ? 'timeline' : null},
+			 ${coinEarnings ? 'fees_index' : null},
 			 ${reconciliation ? big(reconciliation.delta_lamports) : null}, ${reconciliation ? reconciliation.delta_pct : null},
 			 now(), now())
 		on conflict (mint, network) do update set
@@ -103,7 +103,11 @@ async function recordReport(coin, { creator, walletCoins, walletAgents, report, 
 			source = excluded.source,
 			error = null,
 			coin_earned_lamports = coalesce(excluded.coin_earned_lamports, agent_coin_earnings.coin_earned_lamports),
-			coin_distributions = coalesce(excluded.coin_distributions, agent_coin_earnings.coin_distributions),
+			-- A fresh per-coin read replaces the payout count too: the fee index
+			-- does not count payouts, so a count left by the retired timeline
+			-- would describe a different figure.
+			coin_distributions = case when excluded.coin_earnings_source is not null
+				then excluded.coin_distributions else agent_coin_earnings.coin_distributions end,
 			coin_earnings_source = coalesce(excluded.coin_earnings_source, agent_coin_earnings.coin_earnings_source),
 			reconciliation_delta_lamports = coalesce(excluded.reconciliation_delta_lamports, agent_coin_earnings.reconciliation_delta_lamports),
 			reconciliation_pct = coalesce(excluded.reconciliation_pct, agent_coin_earnings.reconciliation_pct),
@@ -127,30 +131,35 @@ async function storeBuckets(creator, interval, buckets) {
 }
 
 /**
- * Each coin's own distribution-timeline earnings for `creator`, plus the
- * wallet-level reconciliation: the sum of those per-coin figures against the
- * wallet's claimed_lamports (a second, independent source for the same
- * number). `ok: false` entries (a sick or 404 timeline) are excluded from the
- * sum rather than treated as zero, so a transient failure cannot manufacture
- * a false mismatch.
+ * The wallet-level reconciliation: the sum of every coin's own earnings minus
+ * the wallet's lifetime total. Null unless every coin of the wallet was read,
+ * since a sum missing one coin would invent a gap.
+ * @param {Array<{ ok: boolean, value?: { lamports: bigint } }>} results
+ * @param {bigint | null} walletLamports
+ * @returns {{ delta_lamports: bigint, delta_pct: number } | null}
+ */
+export function reconcileCoinTotals(results, walletLamports) {
+	if (walletLamports == null || !results.length || !results.every((r) => r.ok && r.value)) return null;
+	const perCoin = results.reduce((sum, r) => sum + /** @type {{ lamports: bigint }} */ (r.value).lamports, 0n);
+	const delta = perCoin - walletLamports;
+	return {
+		delta_lamports: delta,
+		delta_pct: walletLamports > 0n ? (Number(delta) / Number(walletLamports)) * 100 : 0,
+	};
+}
+
+/**
+ * Each coin's own earnings for `creator`, plus the wallet-level
+ * reconciliation (reconcileCoinTotals). A failed read keeps that coin's
+ * last good per-coin figure rather than storing a zero.
  * @param {string} creator
  * @param {Array<{ mint: string }>} coins
- * @param {bigint | null} claimedLamports
+ * @param {bigint | null} walletLamports
  */
-async function reconcileCoinEarnings(creator, coins, claimedLamports) {
+async function reconcileCoinEarnings(creator, coins, walletLamports) {
 	const results = await mapLimit(coins, COIN_CONCURRENCY, (coin) => fetchCoinEarnings(coin.mint, creator));
 	const byMint = new Map(coins.map((coin, i) => [coin.mint, results[i]]));
-	const anyOk = results.some((r) => r.ok);
-	let reconciliation = null;
-	if (anyOk && claimedLamports != null) {
-		const distributed = results.reduce((sum, r) => (r.ok ? sum + r.value.lamports : sum), 0n);
-		const delta = distributed - claimedLamports;
-		reconciliation = {
-			delta_lamports: delta,
-			delta_pct: claimedLamports > 0n ? (Number(delta) / Number(claimedLamports)) * 100 : 0,
-		};
-	}
-	return { byMint, reconciliation };
+	return { byMint, reconciliation: reconcileCoinTotals(results, walletLamports) };
 }
 
 /**
@@ -171,39 +180,24 @@ async function refreshWallet(connection, creator, coins) {
 		}
 		return { creator, ok: false, error: report.error, coins: walletCoins };
 	}
-	// Per-coin reconciliation: a stronger source than the wallet-level total
-	// above, which this same figure gets smeared across every coin of the
-	// wallet. Best-effort: a failed timeline read keeps the wallet-level
-	// figure for that coin rather than failing the whole wallet.
-	const { byMint, reconciliation } = await reconcileCoinEarnings(creator, coins, report.claimed_lamports);
+	// Per-coin figures: a sharper source than the wallet-level total above,
+	// which gets smeared across every coin of the wallet. Best-effort: a failed
+	// per-coin read keeps that coin's last good figure rather than failing the
+	// whole wallet.
+	const { byMint, reconciliation } = await reconcileCoinEarnings(creator, coins, report.earned_lamports);
 	for (const coin of coins) {
-		const timeline = byMint.get(coin.mint);
+		const perCoin = byMint.get(coin.mint);
 		await recordReport(coin, {
 			creator,
 			walletCoins,
 			walletAgents,
 			report,
-			coinEarnings: timeline?.ok ? timeline.value : null,
+			coinEarnings: perCoin?.ok ? perCoin.value : null,
 			reconciliation,
 		});
 	}
 	if (days.ok) await storeBuckets(creator, '1d', days.value);
 	if (halfHours.ok) await storeBuckets(creator, '30m', halfHours.value);
-
-	// Cross-check: coins pump.fun's fee-sharing program says this wallet shares
-	// with that our own registry does not have on file. Visibility only (the
-	// registry is owned by the launcher, not this snapshot), so a coin launched
-	// outside three.ws, or one the registry missed, is surfaced instead of
-	// silently absent from this wallet's figures.
-	const shares = await fetchAllShares(creator);
-	let sharesGap = null;
-	if (shares.ok) {
-		const dbMints = new Set(coins.map((c) => c.mint));
-		const missing = shares.value.items.map((s) => s.mint).filter((mint) => !dbMints.has(mint));
-		if (missing.length || shares.value.truncated) {
-			sharesGap = { missing_mints: missing, truncated: shares.value.truncated };
-		}
-	}
 
 	return {
 		creator,
@@ -212,13 +206,12 @@ async function refreshWallet(connection, creator, coins) {
 		earned_lamports: report.earned_lamports.toString(),
 		buckets_ok: days.ok && halfHours.ok,
 		reconciliation_delta_lamports: reconciliation ? reconciliation.delta_lamports.toString() : null,
-		shares_gap: sharesGap,
 	};
 }
 
 /**
  * One full snapshot pass over every mainnet coin.
- * @returns {Promise<{ coins: number, wallets: number, refreshed: number, upstream_failed: number, skipped: Array<{ mint: string, reason: string }>, wallet_errors: Array<{ creator: string, error: string }>, reconciled: Array<{ creator: string, delta_lamports: string }>, shares_gaps: Array<{ creator: string, missing_mints: string[], truncated: boolean }> }>}
+ * @returns {Promise<{ coins: number, wallets: number, refreshed: number, upstream_failed: number, skipped: Array<{ mint: string, reason: string }>, wallet_errors: Array<{ creator: string, error: string }>, reconciled: Array<{ creator: string, delta_lamports: string }> }>}
  */
 export async function runCreatorEarningsSnapshot() {
 	const coins = await sql`
@@ -291,9 +284,6 @@ export async function runCreatorEarningsSnapshot() {
 		creator: r.creator,
 		delta_lamports: r.reconciliation_delta_lamports,
 	}));
-	const sharesGaps = results
-		.filter((r) => r.ok && r.shares_gap)
-		.map((r) => ({ creator: r.creator, ...r.shares_gap }));
 	return {
 		coins: coins.length,
 		wallets: byCreator.size,
@@ -302,6 +292,5 @@ export async function runCreatorEarningsSnapshot() {
 		skipped,
 		wallet_errors: walletErrors,
 		reconciled,
-		shares_gaps: sharesGaps,
 	};
 }

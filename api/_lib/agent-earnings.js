@@ -14,11 +14,11 @@
 //                   fees go to any other wallet (an owner's connected wallet, a
 //                   launch sponsor) is listed but not counted: that wallet's
 //                   total can include coins launched anywhere. Each coin also
-//                   carries a second, independent figure summed from that
-//                   coin's own pump.fun distribution timeline
-//                   (pump-creator-fees.js's fetchCoinEarnings), surfaced per
-//                   coin as `distributed` with a `reconciliation` delta
-//                   against the wallet-level figure.
+//                   carries its own figure, pump.fun's creator-fee index
+//                   filtered to that one mint (pump-creator-fees.js's
+//                   fetchCoinEarnings), surfaced per coin as `distributed`
+//                   with a `reconciliation` delta between the per-coin sum
+//                   and the wallet-level figure.
 //   service income  x402 skill sales (agent_revenue_events, USDC net of the
 //                   platform fee) and hires by other agents (agent_hires,
 //                   completed). USDC is valued 1:1 in USD.
@@ -92,9 +92,9 @@ export function earningsMethod(window) {
 		`unclaimed is the creator vault balance read on-chain, claimed is earned minus unclaimed. ` +
 		`pump.fun reports fees per creator wallet, so a wallet counts toward an agent only when it is ` +
 		`that agent's own custodial wallet; coins paying any other wallet are listed but not counted. ` +
-		`Each coin also carries a second, independent figure (distributed_sol) summed from that coin's own ` +
-		`pump.fun distribution timeline, which is the only source that can say which coin actually paid a ` +
-		`wallet; the gap between the two sources is shown as a reconciliation delta, never hidden. ` +
+		`Each coin also carries its own figure (distributed_sol): pump.fun's creator-fee index filtered to that ` +
+		`one coin, which is the only source that can say which coin actually paid a wallet; the gap between ` +
+		`the sum of those per-coin figures and the wallet total is shown as a reconciliation delta, never hidden. ` +
 		`Service income is x402 skill sales (net, USDC) plus completed hires by other agents, valued 1:1 in USD, ` +
 		`plus invoices paid on Solana mainnet, valued in USD when the payment was verified. ` +
 		`Figures cover ${range}. SOL and USD are converted at one live SOL/USD price. Devnet coins are excluded.`
@@ -412,7 +412,7 @@ function shapeCoin(c, agentWallet, price) {
 	const reported = c.source === 'pumpfun_creator_fees' && c.earned_lamports != null;
 	const counted = reported && c.creator === agentWallet && Number(c.wallet_agent_count) === 1;
 	const earnedSol = reported ? lamportsToSol(c.earned_lamports) : null;
-	const distributedSol = c.coin_earnings_source === 'timeline' && c.coin_earned_lamports != null
+	const distributedSol = c.coin_earnings_source === 'fees_index' && c.coin_earned_lamports != null
 		? lamportsToSol(c.coin_earned_lamports)
 		: null;
 	const deltaSol = c.reconciliation_delta_lamports != null ? lamportsToSol(c.reconciliation_delta_lamports) : null;

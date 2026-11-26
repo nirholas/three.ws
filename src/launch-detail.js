@@ -1334,7 +1334,7 @@ function creatorFeesNote(fees) {
 			: 'Creator fees from pump.fun.',
 	);
 	if (fees.distributed?.sol != null) {
-		parts.push("\"This coin paid\" is summed straight from this coin's own pump.fun distribution timeline, independent of the wallet-level figures above.");
+		parts.push("\"This coin paid\" is pump.fun's creator-fee figure for this coin alone, not the wallet-level total above.");
 	}
 	if (fees.reconciliation) {
 		const delta = Number(fees.reconciliation.delta_sol);

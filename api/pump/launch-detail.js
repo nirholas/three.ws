@@ -63,10 +63,10 @@ function safeR2Url(key) {
 //
 // pump.fun indexes these fees per creator wallet: `wallet_coin_count` > 1 means
 // the figure is shared by that many coins from the same wallet. `distributed`
-// is this coin's OWN share, summed from its own distribution timeline (the
-// only source that can say which coin actually paid the wallet); `reconciled`
-// is the gap between that per-coin sum and the wallet-level claimed figure,
-// surfaced rather than hidden.
+// is this coin's OWN share, pump.fun's creator-fee index filtered to this mint
+// (the only source that can say which coin actually paid the wallet);
+// `reconciliation` is the gap between the per-coin sum over the wallet's
+// coins and the wallet-level total, surfaced rather than hidden.
 async function creatorFeesFor(mint, network, price) {
 	if (network !== 'mainnet') return null;
 	const toUsd = (sol) => (price > 0 && sol != null ? Math.round(sol * price * 100) / 100 : null);
@@ -80,7 +80,7 @@ async function creatorFeesFor(mint, network, price) {
 	`;
 	if (snap?.source === 'pumpfun_creator_fees' && snap.earned_lamports != null) {
 		const earned = lamportsToSol(snap.earned_lamports);
-		const distributedSol = snap.coin_earnings_source === 'timeline' && snap.coin_earned_lamports != null
+		const distributedSol = snap.coin_earnings_source === 'fees_index' && snap.coin_earned_lamports != null
 			? lamportsToSol(snap.coin_earned_lamports)
 			: null;
 		const deltaSol = snap.reconciliation_delta_lamports != null ? lamportsToSol(snap.reconciliation_delta_lamports) : null;
@@ -108,13 +108,13 @@ async function creatorFeesFor(mint, network, price) {
 	const creators = await resolveCoinCreators(connection, [mint]).catch(() => null);
 	const creator = creators?.get(mint)?.creator;
 	if (!creator) return null;
-	const [report, timeline] = await Promise.all([
+	const [report, perCoin] = await Promise.all([
 		readCreatorFeeReport(connection, creator, { mints: [mint] }),
 		fetchCoinEarnings(mint, creator),
 	]);
 	if (!report.ok) return null;
 	const earned = Number(report.earned_lamports) / 1e9;
-	const distributedSol = timeline.ok ? Number(timeline.value.lamports) / 1e9 : null;
+	const distributedSol = perCoin.ok ? Number(perCoin.value.lamports) / 1e9 : null;
 	return {
 		creator,
 		earned_sol: earned,
@@ -127,7 +127,7 @@ async function creatorFeesFor(mint, network, price) {
 		distributed: {
 			sol: distributedSol,
 			usd: toUsd(distributedSol),
-			distributions: timeline.ok ? timeline.value.distributions : null,
+			distributions: perCoin.ok ? perCoin.value.distributions : null,
 		},
 		reconciliation: null,
 	};
