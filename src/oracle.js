@@ -1963,11 +1963,17 @@ async function openCoin(mint) {
 	const url = new URL(location.href);
 	url.searchParams.set('mint', mint);
 	history.replaceState(null, '', url.toString());
-	const { ok, data } = await api(`/api/oracle/coin?mint=${encodeURIComponent(mint)}&network=${NETWORK}`);
+	// `miss=empty` answers a coin the brain never observed with 204, not a 404.
+	const { ok, status, data } = await api(`/api/oracle/coin?mint=${encodeURIComponent(mint)}&network=${NETWORK}&miss=empty`);
 	if (!ok || !data || !data.conviction) {
-		$('#drTitle').textContent = 'Not observed yet';
-		$('#drBody').innerHTML = `<div class="state"><b>This launch hasn't been scored</b>Oracle scores coins as they surface on pump.fun. If it's brand new, it'll appear here within moments — the full coin page already streams its live market and trade tape.
-			<div style="margin-top:14px"><a class="dr-act" href="/oracle/coin/${encodeURIComponent(mint)}">Open full coin page ↗</a></div></div>`;
+		const unobserved = status === 204 || status === 404;
+		$('#drTitle').textContent = unobserved ? 'Not observed' : 'Score unavailable';
+		$('#drBody').innerHTML = unobserved
+			? `<div class="state"><b>Oracle has not observed this coin</b>Conviction scores come from watching a coin's first trades as it launches, and this mint was not in that stream. The full coin page still streams its live market and trade tape.
+			<div style="margin-top:14px"><a class="dr-act" href="/oracle/coin/${encodeURIComponent(mint)}">Open full coin page ↗</a></div></div>`
+			: `<div class="state"><b>The score could not be read just now</b>Oracle scoring did not answer. Try again in a moment; the full coin page streams its live market and trade tape meanwhile.
+			<div style="margin-top:14px"><button type="button" class="dr-act" id="drRetry">Try again</button> <a class="dr-act" href="/oracle/coin/${encodeURIComponent(mint)}">Open full coin page ↗</a></div></div>`;
+		$('#drRetry')?.addEventListener('click', () => openCoin(mint));
 		return;
 	}
 	renderDrawer(data);

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-26T06:48:54.376Z",
+	"generated_at": "2026-11-26T06:59:43.934Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4753,
+	"total": 4754,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -37,6 +37,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Oracle coin pages say plainly when a coin has no score",
+			"summary": "Opening the Oracle page for a coin the data brain never observed no longer polls five times for a score that cannot arrive or promises one \"within moments\". The page and the /oracle drawer now say the coin was not observed, the hero dial stops reading \"reading conviction\", and the browser console no longer logs a 404 per check. A real scoring outage still retries.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1540,16 +1550,6 @@
 			"link": "/microsoft/activate",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Microsoft Marketplace subscriptions keep their access through plan and seat changes",
-			"summary": "We ran the full Microsoft Marketplace subscription lifecycle against Microsoft's SaaS API emulator and fixed what it caught. When a Microsoft-billed subscription moves to a per-seat plan, the buyer who owns it now keeps their access instead of dropping to the free plan. Usage that Microsoft already counted is now recorded as settled when it is sent again, instead of staying pending, and webhook replies now follow Microsoft's documented contract, so a plan three.ws does not sell is refused cleanly. Developers can rerun the same check locally with one command.",
-			"link": "/microsoft/activate",
-			"tags": [
-				"fix"
 			]
 		}
 	]

@@ -503,9 +503,11 @@
 		const sec = $('#ocIntelSec');
 		const wrap = $('#ocIntel');
 		if (!sec || !wrap) return;
-		const { ok, data } = await api(`/api/pump/coin-intel?mint=${encodeURIComponent(mint)}&wallets=1&network=${NETWORK}`, { timeout: 12000 });
+		// `miss=empty` turns "the radar never observed this coin" into a quiet 204
+		// instead of a 404 the browser logs on every visit.
+		const { ok, data } = await api(`/api/pump/coin-intel?mint=${encodeURIComponent(mint)}&wallets=1&network=${NETWORK}&miss=empty`, { timeout: 12000 });
 		// Coins the radar never observed (pre-engine launches, non-pump mints) simply
-		// don't get this section — absence of data is not an error state here.
+		// don't get this section: absence of data is not an error state here.
 		if (!ok || !data || !data.mint) return;
 		wrap.innerHTML = renderIntel(data);
 		sec.hidden = false;
@@ -1164,25 +1166,48 @@
 		loadRelated(mint, c.category);
 	}
 
+	// Scoring is temporarily down (503) or the request never landed: transient, so
+	// the page keeps checking on a short backoff.
 	function renderObserving(mint, retry) {
 		const col = $('#ocConviction');
 		if (!col) return;
 		col.innerHTML = `<div class="state" style="padding:28px 20px;grid-column:1/-1">
-				<b>Oracle is reading this launch</b>
-				A conviction score fuses who's buying, how, what it is, and how it's moving — it appears here within moments of a coin surfacing on pump.fun. The live market and trade tape are already streaming.
+				<b>Oracle scoring is catching up</b>
+				The conviction score could not be read just now. The live market and trade tape below are unaffected.
 				<div style="margin-top:14px"><button type="button" class="dr-act" id="ocRetry">${retry >= 4 ? 'Check again' : 'Checking…'}</button></div>
 			</div>`;
 		$('#ocRetry')?.addEventListener('click', () => render(mint, { retry: 0 }));
+	}
+
+	// The data brain has never observed this coin. Only the always-on observer
+	// ingests coins (the oracle never scores one inline), so this is a stable
+	// answer for the visit: say so once instead of polling for a score that
+	// cannot arrive.
+	function renderUnobserved() {
+		// The SSR hero dial shows "reading conviction" until a verdict lands; with
+		// no verdict coming it must stop claiming to read one.
+		const dial = $('#ocDial');
+		if (dial) {
+			dial.className = 'dial t-watch';
+			dial.innerHTML = '<b>-</b><div class="tierpill tp-watch">not observed</div>';
+		}
+		const col = $('#ocConviction');
+		if (!col) return;
+		col.innerHTML = `<div class="state" style="padding:28px 20px;grid-column:1/-1">
+				<b>Oracle has not observed this coin</b>
+				Conviction scores come from watching a coin's first trades as it launches, and this mint was not in that stream. The live market and trade tape below still show everything happening on chain right now.
+				<div style="margin-top:14px"><a class="dr-act" href="/oracle">Browse scored coins</a></div>
+			</div>`;
 	}
 
 	async function render(mint, { retry = 0 } = {}) {
 		const deep = $('#ocDeep');
 		if (!deep) return;
 		if (deep.dataset.scaffold !== mint) { deep.dataset.scaffold = mint; buildScaffold(mint); }
-		const { ok, data } = await api(`/api/oracle/coin?mint=${encodeURIComponent(mint)}&network=${NETWORK}`, { timeout: 20000 });
+		// `miss=empty` answers an unobserved coin with 204 rather than a 404.
+		const { ok, status, data } = await api(`/api/oracle/coin?mint=${encodeURIComponent(mint)}&network=${NETWORK}&miss=empty`, { timeout: 20000 });
 		if (ok && data && data.conviction) { fillConviction(data, mint); return; }
-		// Not scored yet — /api/oracle/coin lazy-scores on the first hit, so a short
-		// backoff usually fills it. Keep the streaming market + tape untouched.
+		if (status === 204 || status === 404) { renderUnobserved(); return; }
 		renderObserving(mint, retry);
 		if (retry < 4 && deep.dataset.scaffold === mint) {
 			setTimeout(() => { if (deep.dataset.scaffold === mint) render(mint, { retry: retry + 1 }); }, 4000 + retry * 2000);

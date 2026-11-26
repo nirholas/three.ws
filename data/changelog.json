@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-26",
+			"title": "Oracle coin pages say plainly when a coin has no score",
+			"summary": "Opening the Oracle page for a coin the data brain never observed no longer polls five times for a score that cannot arrive or promises one \"within moments\". The page and the /oracle drawer now say the coin was not observed, the hero dial stops reading \"reading conviction\", and the browser console no longer logs a 404 per check. A real scoring outage still retries.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-26",
 			"title": "Pocket stops asking for private avatar bodies",
 			"summary": "A public agent can wear an avatar its owner keeps private. The /pocket console still loaded those bodies by avatar id, so 13 of the 24 roster agents logged a 404 and showed the boot error path. Visitors now get the agent's default body for a private avatar, while the owner still sees their own.",
 			"tags": [
