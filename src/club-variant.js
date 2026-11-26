@@ -4,7 +4,9 @@
 // the URL path, so every entrance is a plain shareable link:
 //
 //   /club        the neon alley (the original walk-in)
-//   /stripclub   a brick back alley, a third-party CC BY model (credited on screen)
+//
+// Any other path (for example the retired /stripclub link) resolves to the
+// default entrance, so old shared links still land in a working club.
 //
 // Pure data + helpers, no three.js or DOM, so the routing rule is unit-tested
 // without booting a renderer (tests/club-variant.test.js).
@@ -23,27 +25,37 @@
 //             or failed asset never strands the visitor outside the door
 //   credit    attribution a licence requires us to show while the venue is on screen
 
-const NEON_ALLEY = { name: 'Alley', url: '/club/venue/alleyway.glb', cover: true, door: true };
-const GALLERY = { name: 'Gallery', url: '/club/venue/tour.glb', cover: false, door: false };
-const CLUBHOUSE = { name: 'Clubhouse', url: '/club/venue/space-smugglers-clubhouse.glb', cover: false, door: false };
-
-const BACK_ALLEY = {
-	name: 'Back alley',
-	url: '/club/venue/back-alley.glb',
+const NEON_ALLEY = {
+	name: 'Alley',
+	url: '/club/venue/alleyway.glb',
 	cover: true,
 	door: true,
-	// Four-storey brick frontage with fire escapes, not a single room.
-	height: 13,
-	fallback: NEON_ALLEY,
 	credit: {
-		title: 'environment ally with bar/strip club',
-		author: 'anthonydpc',
-		authorUrl: 'https://sketchfab.com/tonydpc',
-		sourceUrl: 'https://sketchfab.com/3d-models/environment-ally-with-barstrip-club-a98c2e9748b24b7fb781d452814304ef',
+		title: 'Armentrout Textured Game Environment - Alleyway',
+		author: 'dcarmentrout',
+		authorUrl: 'https://sketchfab.com/dcarmentrout',
+		sourceUrl: 'https://sketchfab.com/3d-models/armentrout-textured-game-environment-alleyway-ad32afd3994643a1b68eb2f44d77c60c',
 		license: 'CC BY 4.0',
 		licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
 	},
 };
+const GALLERY = {
+	name: 'Gallery',
+	url: '/club/venue/tour.glb',
+	cover: false,
+	door: false,
+	credit: {
+		title: "Richard's Art Gallery - Audio Tour",
+		author: 'shinymagic',
+		authorUrl: 'https://sketchfab.com/shinymagic',
+		sourceUrl: 'https://sketchfab.com/3d-models/richards-art-gallery-audio-tour-0e3e19faa6474fd5974e6a7ed1b221d8',
+		license: 'CC BY 4.0',
+		licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+	},
+};
+// The procedural club room (scripts/build-club-venue.mjs, CC0), mounted as the
+// last step of the walk-in so the journey ends in a venue three.ws owns outright.
+const CLUB_FLOOR = { name: 'Club floor', url: '/club/venue/club-venue.glb', cover: false, door: false };
 
 export const DEFAULT_CLUB_VARIANT = 'club';
 
@@ -52,13 +64,7 @@ export const CLUB_VARIANTS = {
 		key: 'club',
 		path: '/club',
 		label: 'Neon alley',
-		sequence: [NEON_ALLEY, GALLERY, CLUBHOUSE],
-	},
-	stripclub: {
-		key: 'stripclub',
-		path: '/stripclub',
-		label: 'Back alley',
-		sequence: [BACK_ALLEY, GALLERY, CLUBHOUSE],
+		sequence: [NEON_ALLEY, GALLERY, CLUB_FLOOR],
 	},
 };
 
