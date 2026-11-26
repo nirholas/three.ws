@@ -24,6 +24,7 @@
 //   ?chrome=off     device only, transparent background (this is the embed mode)
 
 import { xIntentUrl } from './shared/share-targets.js';
+import { pocketFrameSrc, pocketSwapAvatarId } from './pocket-screen.js';
 
 const WALK_CHANNEL = 'three-walk';
 const ROSTER_URL = '/api/agents/public?limit=24';
@@ -84,25 +85,10 @@ let lastVector = { x: 0, y: 0, run: false };
 
 // ── screen plumbing ───────────────────────────────────────────────────────
 
-// The screen is framed tighter than a full-bleed walk embed (?zoom) and the
-// body is addressed by avatar id whenever we know it: that route streams the
-// GLB through the same-origin proxy, so the console renders identically on
-// three.ws and inside somebody else's page, where R2's own CORS would refuse
-// the raw model URL.
+// Avatar-id addressing and the private-body rule live in ./pocket-screen.js.
 function frameSrc(agentId) {
-	const q = new URLSearchParams({
-		controls: 'none',
-		orbit: 'false',
-		badge: 'false',
-		click: 'false',
-		gestures: 'false',
-		zoom: '0.74',
-		env: state.env,
-	});
-	const avatarId = agentId && state.detailFor === agentId ? state.detail?.avatar_id : null;
-	if (avatarId) q.set('avatar', avatarId);
-	else if (agentId) q.set('agent', agentId);
-	return `/walk-embed?${q.toString()}`;
+	const detail = agentId && state.detailFor === agentId ? state.detail : null;
+	return pocketFrameSrc({ agentId, detail, env: state.env });
 }
 
 function mountFrame(agentId) {
@@ -436,14 +422,15 @@ async function bootBody(agent) {
 	mountFrame(agent.id);
 }
 
-// Swap the body without reloading the screen when we know the avatar id; fall
-// back to a full remount (which resolves the agent server-side) when we do not.
+// Swap the body without reloading the screen when we know an avatar id the
+// viewer can read; fall back to a full remount (which resolves the agent
+// server-side) when we do not.
 async function swapBody(agent) {
 	showBoot(`Loading ${agent.name}`);
 	clearTimeout(state.swapTimer);
 	let avatarId = null;
 	try {
-		avatarId = (await detailFor(agent.id))?.avatar_id || null;
+		avatarId = pocketSwapAvatarId(await detailFor(agent.id));
 	} catch {
 		avatarId = null;
 	}
