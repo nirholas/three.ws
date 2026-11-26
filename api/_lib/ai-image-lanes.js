@@ -16,6 +16,7 @@
 import { getGcpAccessToken, gcpAuthConfigured } from './gcp-auth.js';
 import { providersInCooldown } from './provider-health.js';
 import { describeImageLadder } from './image-rung-breaker.js';
+import { vertexBreakerState } from './vertex-image-breaker.js';
 import { imageModelChain, isModelNotFound, resolveImageModel } from './image-model.js';
 import { HF_IMAGE_PROVIDERS } from '../_mcp3d/text-to-image.js';
 
@@ -341,7 +342,12 @@ async function probePollinations() {
 export async function imageLaneHealth() {
 	const [nim, vertex, replicate, hf, pollinations, ladder] = await Promise.all([
 		probeNim(),
-		probeVertex(),
+		// The Vertex lane's own classified breaker rides along: parked or not,
+		// the failure class that parked it and when the next probe goes out.
+		// Cache read only; it never calls Vertex.
+		probeVertex().then(async (v) =>
+			v.configured ? { ...v, breaker: await vertexBreakerState().catch(() => null) } : v,
+		),
 		probeReplicate(),
 		probeHf(),
 		probePollinations(),
