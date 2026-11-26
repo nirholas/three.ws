@@ -84,6 +84,15 @@ If a task cannot be 100% finished inside this session (an external review must l
 - **Never install or hunt for a key.** Do not run `npm run setup:xai-key`, and do not look for xAI keys in env files, Secret Manager or Cloud Run.
 - **Keep building key-ready.** Build Grok features completely and prove them without a key, using the no-key rules in `prompts/finish/_context/grok-startups-00-CONTEXT.md`. Record the one command that proves each feature live in its doc, not in your report.
 
+## Forge: keep the lanes that work (owner directive 2026-11-26)
+
+**A Forge lane that is measurably working is never switched, reordered, re-tuned, swapped or redeployed while fixing something else. Everything that is not working gets fixed.**
+
+- **Measure before touching Forge.** `docs/ops/forge-protected-lanes.md` holds the rule, the one command that re-measures every lane, and the dated list of which lanes are protected. A lane with 20 or more finished jobs and 85% or better success over the last 7 days is protected; the self-hosted TRELLIS lane (`trellis_selfhost`, `workers/model-trellis`) is protected by name.
+- **Protected means hands off:** its worker code, its Cloud Run config, its position and definition in `api/_lib/forge-tiers.js`, the defaults, its quality settings, and the request it is sent. Tests that pin it, metrics that read it, fallbacks behind it, and fixes in the steps before and after it are all fine.
+- **A real bug inside a protected lane** needs a failing test that reproduces it and the owner's yes before the fix is committed. Report it and keep working on everything else.
+- **Never promote an unproven lane ahead of a working one**, and never treat "the default is configured as X" as proof that X is what serves. The stats say what serves.
+
 ## Engineering excellence
 
 Load the `engineering-standards` skill (`.claude/skills/engineering-standards/SKILL.md`) before any non-trivial feature or UI. It holds the architecture, open-source-first, UI/UX and innovation standards, plus the founder mindset and the pre-completion self-review.
