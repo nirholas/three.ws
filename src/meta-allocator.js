@@ -1,8 +1,12 @@
-// Meta-Allocator page, the "ETF of degens" allocation planner UI.
+// Meta-Allocator page, the allocation planner UI.
 // Fetches /api/meta-allocator (real verified leaders + a diversified plan) and
 // renders the basket with every state designed: loading, empty, error, populated.
 // Non-custodial: it shows a plan and deep-links each leader to the existing
 // copy-subscribe flow. Nothing here signs or moves funds.
+
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const resultEl = document.getElementById('maResult');
 const budgetEl = document.getElementById('maBudget');

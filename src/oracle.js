@@ -15,6 +15,9 @@ import { shortAddress as shortAddr } from './shared/address.js';
 import { safeUrl } from './safe-url.js';
 import { loadTelegramChat, telegramLoginUrl, telegramActionError, TELEGRAM_LINK_URL } from './oracle-telegram.js';
 import { xIntentUrl } from './shared/share-targets.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const NETWORK = 'mainnet';
 const $ = (s, r = document) => r.querySelector(s);

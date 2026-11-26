@@ -7,6 +7,9 @@ import { apiFetch, noteSession } from './api.js';
 import { updateValue, flipReorder } from './ui-juice.js';
 import { shortAddress as shortMint, addressHtml } from './shared/address.js';
 import { trapFocus, focusablesIn } from './shared/focus-trap.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
