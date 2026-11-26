@@ -5,10 +5,11 @@
 //   2. GeckoTerminal (free, no key), pool lookup then candles, through the
 //      shared OHLCV ladder (Birdeye pair candles behind it, 24h last-good copy
 //      in the shared cache), on an aggregate GeckoTerminal accepts
-//   3. pump.fun's own candle API (free, no key). GeckoTerminal indexes a new
-//      pump.fun coin only once it trades enough, so a young three.ws launch had
-//      a live, trading market and still rendered "no price history". pump.fun
-//      charts its own bonding curves from the first trade.
+//   3. Candles built from the coin's own Solana trades (bonding curve, then the
+//      canonical pool). GeckoTerminal indexes a new pump.fun coin only once it
+//      trades enough, so a young three.ws launch had a live, trading market and
+//      still rendered "no price history". This rung used to be pump.fun's
+//      candle API, retired on 2026-11-25.
 //   4. The last good candles for this mint+interval, served as `stale: true`
 //
 // On any upstream failure the next source is tried transparently.
@@ -23,7 +24,9 @@
 // candles already land on those boundaries, so the response is identical while
 // every poll inside one candle shares a single cache entry.
 //
-// Response: { data: [ { t, o, h, l, c, v } ], source?: 'birdeye'|'gecko'|'pumpfun', stale?: true }
+// Response: { data: [ { t, o, h, l, c, v } ], source?: 'birdeye'|'gecko'|'onchain', stale?: true }
+
+import { PublicKey } from '@solana/web3.js';
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -230,32 +233,18 @@ async function fetchGeckoOhlcv({ mint, interval, from, to, live }) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// pump.fun candles: the rung that knows a coin from its first trade.
-// The API accepts a fixed interval set and always answers the most recent
-// `limit` (max 1000) candles in ascending order, so every interval it lacks is
-// built from its nearest base interval and the result is filtered to the window.
+// On-chain candles: the rung that knows a coin from its first trade.
+// pump.fun's candle API used to fill this role, but pump.fun retired every
+// candle route on 2026-11-25 (swap-api /v1 404, /v2 410). The coin's own Solana
+// trades (bonding curve before graduation, the canonical pool after) are the
+// authoritative record anyway, so candles are built from them: the newest
+// pages are walked back until they reach the window start or the history ends.
 // ──────────────────────────────────────────────────────────────────────────────
-const PUMP_CANDLES_API = 'https://swap-api.pump.fun/v1/coins';
-const PUMP_CANDLE_LIMIT = 1000;
-
-// Our normalized interval → [pump.fun base interval, candles per bucket].
-const PUMP_INTERVALS = {
-	'1m': ['1m', 1],
-	'3m': ['1m', 3],
-	'5m': ['5m', 1],
-	'15m': ['15m', 1],
-	'30m': ['30m', 1],
-	'1H': ['1h', 1],
-	'2H': ['1h', 2],
-	'4H': ['4h', 1],
-	'6H': ['6h', 1],
-	'8H': ['4h', 2],
-	'12H': ['12h', 1],
-	'1D': ['24h', 1],
-	'3D': ['24h', 3],
-	'1W': ['24h', 7],
-	'1M': ['24h', 30],
-};
+const CHAIN_CANDLE_PAGE = 50;
+// Each page is up to 60 transaction reads on the RPC, so the walk is bounded.
+// A young curve coin (what this rung exists for) fits well inside it; a longer
+// window on a busy coin charts its most recent trades.
+const CHAIN_CANDLE_MAX_PAGES = 4;
 
 /**
  * Folds consecutive candles into buckets of `width` seconds aligned to the Unix
@@ -278,33 +267,58 @@ export function aggregateCandles(candles, width) {
 	return out;
 }
 
-/** Maps pump.fun's string-typed, millisecond candle rows to our shape. Exported for the tests. */
-export function mapPumpCandles(rows) {
-	if (!Array.isArray(rows)) return [];
-	return rows
-		.map((r) => ({
-			t: Math.floor(Number(r?.timestamp) / 1000),
-			o: Number(r?.open),
-			h: Number(r?.high),
-			l: Number(r?.low),
-			c: Number(r?.close),
-			v: Number(r?.volume) || 0,
-		}))
-		.filter((d) => Number.isFinite(d.t) && d.t > 0 && Number.isFinite(d.c) && d.c > 0)
+/**
+ * Buckets trade rows (unix-second `timestamp`, `priceUsd`, `amountUsd`) into
+ * epoch-aligned OHLCV of `width` seconds, oldest first. A row with no USD price
+ * is skipped; one with no USD amount adds nothing to volume. Exported for the tests.
+ */
+export function candlesFromTrades(rows, width) {
+	const trades = (Array.isArray(rows) ? rows : [])
+		.map((r) => ({ t: Number(r?.timestamp), p: Number(r?.priceUsd), v: Number(r?.amountUsd) || 0 }))
+		.filter((r) => Number.isFinite(r.t) && r.t > 0 && Number.isFinite(r.p) && r.p > 0)
 		.sort((a, b) => a.t - b.t);
+	const out = [];
+	for (const { t: ts, p, v } of trades) {
+		const t = Math.floor(ts / width) * width;
+		const last = out[out.length - 1];
+		if (last && last.t === t) {
+			last.h = Math.max(last.h, p);
+			last.l = Math.min(last.l, p);
+			last.c = p;
+			last.v += v;
+		} else {
+			out.push({ t, o: p, h: p, l: p, c: p, v });
+		}
+	}
+	return out;
 }
 
-async function fetchPumpOhlcv({ mint, interval, from, to }) {
-	const [base, factor] = PUMP_INTERVALS[interval] || PUMP_INTERVALS['15m'];
-	const url = `${PUMP_CANDLES_API}/${mint}/candles?interval=${base}&limit=${PUMP_CANDLE_LIMIT}&currency=USD`;
-	const resp = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
-	// pump.fun answers 4xx for a mint it never launched: not a pump.fun market.
-	if (resp.status >= 400 && resp.status < 500) throw new NoPoolError(`pump.fun candles ${resp.status}`);
-	if (!resp.ok) throw new Error(`pump.fun candles ${resp.status}`);
-	const rows = mapPumpCandles(await resp.json().catch(() => null));
-	if (!rows.length) throw new NoPoolError('pump.fun has no trades for this mint');
-	const candles = factor > 1 ? aggregateCandles(rows, intervalSeconds(interval)) : rows;
-	return candles.filter((d) => d.t >= from && d.t <= to);
+function isSolanaKey(mint) {
+	try {
+		return new PublicKey(mint).toBytes().length === 32;
+	} catch {
+		return false;
+	}
+}
+
+async function fetchChainOhlcv({ mint, interval, from, to }) {
+	if (!isSolanaKey(mint)) throw new NoPoolError('not a Solana address');
+	const { fetchChainTradePage } = await import('../_lib/pump-chain-trades.js');
+	const rows = [];
+	let before = null;
+	for (let i = 0; i < CHAIN_CANDLE_MAX_PAGES; i += 1) {
+		const page = await fetchChainTradePage(mint, { limit: CHAIN_CANDLE_PAGE, before });
+		// A failed read is an outage, never "no market".
+		if (!page) throw new Error('on-chain trades unavailable');
+		rows.push(...page.rows);
+		const oldest = page.rows[page.rows.length - 1]?.timestamp;
+		if (!page.hasMore || !page.cursor || (Number.isFinite(oldest) && oldest < from)) break;
+		before = page.cursor;
+	}
+	if (!rows.length) throw new NoPoolError('no pump.fun curve or pool trades for this mint');
+	const candles = candlesFromTrades(rows, intervalSeconds(interval)).filter((d) => d.t >= from && d.t <= to);
+	if (!candles.length && !rows.some((r) => Number(r?.priceUsd) > 0)) throw new Error('no USD price for on-chain trades');
+	return candles;
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -341,7 +355,7 @@ function recallGood(mint, interval) {
 // poll-storm 502 rather than just shrinking its blast radius.
 const _inflight = new Map(); // key → Promise<result descriptor>
 
-// Runs the Birdeye → GeckoTerminal → pump.fun → stale-cache chain once and returns a
+// Runs the Birdeye → GeckoTerminal → on-chain trades → stale-cache chain once and returns a
 // plain descriptor the caller turns into an HTTP response. Never throws —
 // every failure mode is represented in the descriptor.
 async function resolveCandles({ mint, interval, from, to, live, key, now }) {
@@ -368,20 +382,20 @@ async function resolveCandles({ mint, interval, from, to, live, key, now }) {
 		geckoNoPool = err instanceof NoPoolError;
 	}
 
-	let pumpNoMarket = false;
+	let chainNoMarket = false;
 	try {
-		const data = await fetchPumpOhlcv({ mint, interval, from, to });
-		_cache.set(key, { value: data, source: 'pumpfun', expiresAt: now + TTL_MS });
+		const data = await fetchChainOhlcv({ mint, interval, from, to });
+		_cache.set(key, { value: data, source: 'onchain', expiresAt: now + TTL_MS });
 		if (_cache.size > 256) _cache.delete(_cache.keys().next().value);
-		rememberGood(mint, interval, data, 'pumpfun');
-		return { kind: 'ok', data, source: 'pumpfun' };
+		rememberGood(mint, interval, data, 'onchain');
+		return { kind: 'ok', data, source: 'onchain' };
 	} catch (err) {
-		pumpNoMarket = err instanceof NoPoolError;
+		chainNoMarket = err instanceof NoPoolError;
 	}
 
 	// A token no source has a market for has nothing to chart: say so plainly.
 	// This is a designed empty state, not an outage, so it is never served stale.
-	if (geckoNoPool && pumpNoMarket) return { kind: 'no_market' };
+	if (geckoNoPool && chainNoMarket) return { kind: 'no_market' };
 
 	const stale = recallGood(mint, interval);
 	if (stale) return { kind: 'ok', data: stale.value, source: stale.source, stale: true, as_of: Math.floor(stale.at / 1000) };

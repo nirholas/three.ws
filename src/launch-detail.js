@@ -875,7 +875,7 @@ const CHART_VIEWS = [
 	...CHART_EMBEDS.map((p) => ({ id: p.id, label: p.label, kind: 'embed', provider: p })),
 ];
 
-const OHLCV_SOURCE_LABEL = { birdeye: 'Birdeye OHLCV', gecko: 'GeckoTerminal OHLCV', pumpfun: 'pump.fun OHLCV' };
+const OHLCV_SOURCE_LABEL = { birdeye: 'Birdeye OHLCV', gecko: 'GeckoTerminal OHLCV', onchain: 'Solana trades OHLCV' };
 
 function setChartView(id) {
 	if (state.chartView === id) return;

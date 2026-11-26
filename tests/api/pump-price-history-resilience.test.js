@@ -19,13 +19,19 @@ vi.mock('../../api/_lib/birdeye.js', () => ({
 }));
 vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () => {} }));
 vi.mock('../../api/_lib/sentry.js', () => ({ captureException: () => {} }));
+// The last live rung builds candles from the coin's Solana trades. Each test
+// queues the pages it wants; an empty queue is a coin with no trades.
+const chainPages = [];
+vi.mock('../../api/_lib/pump-chain-trades.js', () => ({
+	fetchChainTradePage: vi.fn(async () => (chainPages.length ? chainPages.shift() : { rows: [], cursor: null, hasMore: false })),
+}));
 
 import handler, {
 	snapWindow,
 	POLL_BUCKET_SECONDS,
 	aggregateCandles,
-	mapPumpCandles,
 } from '../../api/pump/price-history.js';
+import { PublicKey } from '@solana/web3.js';
 
 const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const POOL = '58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo7';
@@ -84,6 +90,7 @@ function freshQuery(mint) {
 
 beforeEach(() => {
 	vi.restoreAllMocks();
+	chainPages.length = 0;
 });
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -139,11 +146,10 @@ describe('geckoFetch retry (via the handler)', () => {
 		expect(getJson(res).error).toBe('upstream_error');
 	});
 
-	it('serves the honest no_market 404 when neither GeckoTerminal nor pump.fun has a market, without retrying', async () => {
+	it('serves the honest no_market 404 when neither GeckoTerminal nor the chain has a market, without retrying', async () => {
 		let poolCalls = 0;
 		vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
 			if (String(url).includes('/pools?')) { poolCalls += 1; return jsonResponse(404, {}); }
-			if (String(url).includes('swap-api.pump.fun')) return jsonResponse(404, {});
 			throw new Error('should never reach the ohlcv endpoint');
 		});
 		const res = makeRes();
@@ -154,44 +160,24 @@ describe('geckoFetch retry (via the handler)', () => {
 	});
 });
 
-describe('pump.fun candle rung', () => {
+describe('on-chain candle rung', () => {
 	it('charts a young pump.fun coin GeckoTerminal has not indexed yet', async () => {
 		const now = Math.floor(Date.now() / 1000);
+		chainPages.push({ rows: [{ timestamp: now - 600, priceUsd: 0.0000028, amountUsd: 65.2 }], cursor: 'sig1', hasMore: false });
 		vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
 			if (String(url).includes('/pools?')) return jsonResponse(404, {});
-			if (String(url).includes('swap-api.pump.fun')) {
-				return {
-					ok: true,
-					status: 200,
-					json: async () => [
-						{ timestamp: (now - 600) * 1000, open: '0.0000027', high: '0.0000029', low: '0.0000026', close: '0.0000028', volume: '65.2' },
-					],
-				};
-			}
 			throw new Error(`unexpected upstream ${url}`);
 		});
 		const res = makeRes();
-		await handler(makeReq(`mint=${MINT.slice(0, 34)}${safeSuffix(90_001)}pump&interval=5m&from=${now - 3600}&to=${now}`), res);
+		await handler(makeReq(`mint=${PublicKey.unique().toBase58()}&interval=5m&from=${now - 3600}&to=${now}`), res);
 		expect(res.statusCode).toBe(200);
 		const body = getJson(res);
-		expect(body.source).toBe('pumpfun');
+		expect(body.source).toBe('onchain');
 		expect(body.data).toHaveLength(1);
 		expect(body.data[0].c).toBeCloseTo(0.0000028, 12);
 	});
 
-	it('maps string-typed millisecond rows and drops unusable ones', () => {
-		const rows = mapPumpCandles([
-			{ timestamp: 1_789_614_480_000, open: '2', high: '3', low: '1', close: '2.5', volume: '10' },
-			{ timestamp: 1_789_614_420_000, open: '1', high: '2', low: '1', close: '2', volume: 'x' },
-			{ timestamp: 'bad', open: '1', high: '1', low: '1', close: '1', volume: '1' },
-			{ timestamp: 1_789_614_540_000, open: '1', high: '1', low: '1', close: '0', volume: '1' },
-		]);
-		expect(rows.map((r) => r.t)).toEqual([1_789_614_420, 1_789_614_480]);
-		expect(rows[0].v).toBe(0);
-		expect(mapPumpCandles(null)).toEqual([]);
-	});
-
-	it('folds base candles into epoch-aligned buckets for intervals pump.fun lacks', () => {
+	it('folds base candles into epoch-aligned buckets for intervals an upstream lacks', () => {
 		const out = aggregateCandles(
 			[
 				{ t: 7200, o: 1, h: 2, l: 0.5, c: 1.5, v: 10 },
@@ -236,9 +222,12 @@ describe('in-flight de-duplication', () => {
 	it('collapses concurrent identical requests into one upstream resolution', async () => {
 		let poolCalls = 0;
 		let ohlcvCalls = 0;
+		// A pool no earlier test used: the shared OHLCV ladder caches candles per
+		// pool, so the common POOL would answer from cache with no fetch at all.
+		const pool = PublicKey.unique().toBase58();
 		vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
 			await new Promise((r) => setTimeout(r, 10));
-			if (String(url).includes('/pools?')) { poolCalls += 1; return poolResponse(); }
+			if (String(url).includes('/pools?')) { poolCalls += 1; return jsonResponse(200, { data: [{ attributes: { address: pool } }] }); }
 			ohlcvCalls += 1;
 			return ohlcvResponse();
 		});
@@ -276,7 +265,6 @@ describe('pool lookup shares the market resolver', () => {
 				return poolCalls === 1 ? jsonResponse(200, { data: [] }) : jsonResponse(429, {});
 			}
 			if (u.includes('api.dexscreener.com')) return jsonResponse(200, { pairs: [] });
-			if (u.includes('swap-api.pump.fun')) return jsonResponse(200, []);
 			throw new Error(`unexpected upstream ${u}`);
 		});
 

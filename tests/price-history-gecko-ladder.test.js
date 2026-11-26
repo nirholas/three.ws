@@ -25,6 +25,11 @@ vi.mock('../api/_lib/birdeye.js', () => ({
 	birdeyeConfigured: () => false,
 	fetchBirdeyeOhlcv: vi.fn(),
 }));
+// The on-chain candle rung sees no trades, as pump.fun's retired candle API
+// once answered 404: these tests are about the GeckoTerminal ladder.
+vi.mock('../api/_lib/pump-chain-trades.js', () => ({
+	fetchChainTradePage: vi.fn(async () => ({ rows: [], cursor: null, hasMore: false })),
+}));
 
 const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const POOL = 'THREEsynthetic1111111111111111111111111111';
@@ -70,8 +75,6 @@ function fakeFetch(url) {
 	if (u.host === 'api.dexscreener.com') {
 		return state.throttle ? jsonResponse(429, {}) : jsonResponse(200, { pairs: [] });
 	}
-	// pump.fun's candle API answers 404 for every interval (observed live).
-	if (u.host === 'swap-api.pump.fun') return jsonResponse(404, { message: 'Not Found' });
 	return jsonResponse(404, {});
 }
 
