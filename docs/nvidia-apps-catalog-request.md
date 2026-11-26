@@ -350,38 +350,47 @@ the record for the catalog. They asked two things:
    `https://three.ws/forge`, but that page calls the product "Forge" and never says
    "3D AI Studio". What exact name should they show, and which page on our site uses it?
 
-**Decision: the catalog name is "three.ws Forge: AI 3D Model Generator".** It is the brand
-plus the phrase people actually search for, the same pattern other Inception entries use
-(`Avaturn Realistic 3D Avatar Creator`, `Soul Machines Digital People`; see
-[nvidia-apps-catalog/README.md](./nvidia-apps-catalog/README.md)). Why not the other options:
+**Decision: the product name is "Forge: AI 3D Model Generator".** That is the product's
+brand, Forge, plus the phrase people search for. Why this and not the alternatives:
 
-- **"three.ws 3D AI Studio"** was a label used only in the portal, and "3D AI Studio" is
-  another company's brand (3daistudio.com, an AI 3D generator). Putting it on our page
-  would send our search traffic toward a competitor's name.
-- **"three.ws Forge"** alone is the name the product already uses across the site (the
-  desktop build at `/forge-desktop`, the sitemap, the partners page, the viewer), and it
-  stays the short brand. But "forge" says nothing to someone searching for what the product
-  does, so the catalog title and the page title carry the descriptor too.
+- **No "three.ws" in the title.** Every catalog card prints the company name on its own line
+  above the product title (`Aircards Ltd` / `3D Interactive Display Platform`, `QT Imaging
+  Inc` / `3D Ultrasound Tomography/Volography`). A title that repeats the company reads
+  "three.ws LLC / three.ws Forge...". In the 2026-11-26 pull, 601 of 932 Inception titles
+  leave the company out ([nvidia-apps-catalog/README.md](./nvidia-apps-catalog/README.md)).
+- **Not "three.ws 3D AI Studio".** It was a label used only in the portal, and "3D AI
+  Studio" is another company's brand (3daistudio.com, an AI 3D generator).
+- **Not "Forge" alone.** It is the name the page already used and NVIDIA noticed, but on its
+  own it says nothing to a buyer scanning the catalog or a searcher, and Autodesk used
+  "Forge" for years for its developer platform. The descriptor makes it unambiguous.
 
-To make the product page match, `/forge` now uses the full name. Its heading reads
-**three.ws Forge: AI 3D Model Generator** (the descriptor in a lighter weight), and its
-`og:title`, `twitter:title`, JSON-LD `name` and share-image text read the same. The
-`<title>` is `three.ws Forge: AI 3D Model Generator (Text & Image to 3D)`, and the meta
-description leads with "free AI 3D model generator" (`pages/forge.html` plus the `forge.*`
-keys in `public/locales/en.json`).
+`/forge` now uses the exact string. Its heading reads **Forge: AI 3D Model Generator** (the
+descriptor in a lighter weight), and `og:title`, `twitter:title`, the JSON-LD `name` and the
+share-image text match it. The browser title follows the site's `Name · three.ws` pattern:
+`Forge: AI 3D Model Generator · three.ws`. The meta description opens "Forge is a free AI 3D
+model generator from three.ws" (`pages/forge.html` plus the `forge.*` keys in
+`public/locales/en.json`). The desktop build keeps its own name, three.ws Forge for desktop.
 
 ### Send steps (in order)
 
 1. **Deploy** so the live `/forge` shows the new name (`npm run deploy:gcp:full`, owner
    approval). Before you send, check it:
    `curl -s https://three.ws/forge | grep -o "<title[^>]*>[^<]*"` should print
-   `three.ws Forge: AI 3D Model Generator (Text &amp; Image to 3D)`, and the page heading
-   should read **three.ws Forge: AI 3D Model Generator**. Reviewers read the rendered page
-   in English, and the runtime English catalog comes from `/api/locale`, so the new name
-   only shows once the deploy is live.
-2. **Rename the portal record:** Portal > Profile > Products > edit `three.ws 3D AI Studio`,
-   set Product/Service Name to **three.ws Forge: AI 3D Model Generator**, and keep the URL
-   as `https://three.ws/forge`. Save it.
+   `Forge: AI 3D Model Generator · three.ws`, and the page heading should read
+   **Forge: AI 3D Model Generator**. Reviewers read the rendered page in English, and the
+   runtime English catalog comes from `/api/locale`, so the new name only shows once the
+   deploy is live.
+2. **Edit the portal record** (Portal > Profile > Products > Edit on `three.ws 3D AI
+   Studio`):
+   - Product/Service Name: **Forge: AI 3D Model Generator**
+   - Product/Service Webpage: unchanged, `https://three.ws/forge`
+   - Description: paste the 489-character version in
+     [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md#product-description-489-characters),
+     which opens with the product name.
+   - Brand Color: confirm it reads `0B0D0C`. A fresh form defaults to NVIDIA green
+     (`76B900`), so do not let it reset.
+   - Every other field stays as saved on 2026-10-25 (Application, Shipping, GPU
+     Accelerated, the technology lists, the logo). Leave "Do not share" unchecked. Save.
 3. **Reply all** in the same thread, so the reply reaches AppPublishingRequests and the
    Inception program together:
 
@@ -391,13 +400,12 @@ keys in `public/locales/en.json`).
 >
 > 1. Yes. Please consider three.ws for listing in the NVIDIA Accelerated Apps Catalog.
 >
-> 2. The product name is **three.ws Forge: AI 3D Model Generator**. "three.ws 3D AI Studio"
-> was a descriptive label I used only in the portal. I have renamed the portal record so
-> the two match.
+> 2. The product name is **Forge: AI 3D Model Generator**. "three.ws 3D AI Studio" was a
+> descriptive label I used only in the portal. I have renamed the portal record so the two
+> match.
 >
-> The name is used on the product page in the record, https://three.ws/forge, as the page
-> heading and in the page title. The desktop build of the same product, three.ws Forge,
-> is at https://three.ws/forge-desktop.
+> The name is the heading of the product page in the record, https://three.ws/forge, and
+> it is also in that page's title.
 >
 > Please let me know if you need anything else for the listing.
 >

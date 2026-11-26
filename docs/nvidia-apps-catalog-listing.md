@@ -25,8 +25,11 @@ history below records the state before this save.
 
 **2026-11-25: NVIDIA App Publishing is reviewing the record.** They asked whether we want a
 catalog listing and noted that the record's name, "three.ws 3D AI Studio", does not appear
-on `/forge`, which says "Forge". The catalog name is now **three.ws Forge: AI 3D Model
-Generator** (brand plus search phrase), and `/forge` uses it in its heading and page title. Two steps remain before replying: deploy, then
+on `/forge`, which says "Forge". The catalog name is now **Forge: AI 3D Model Generator**
+(product brand plus search phrase). It leaves out "three.ws" because the catalog card already
+prints the company name on its own line above the title, and `/forge` uses the exact same
+string as its heading. Update the Product Description too: the 489-character version below
+names the product in its first words. Two steps remain before replying: deploy, then
 rename the portal record. The reply text and the send steps are in
 [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md#app-publishing-reply-2026-11-25).
 
@@ -93,7 +96,7 @@ The old 2026-09-25 no-response follow-up is cancelled: NVIDIA answered on 2026-0
 
 | Portal field | Value |
 |---|---|
-| Product/Service Name | **three.ws Forge: AI 3D Model Generator** (renamed from "three.ws 3D AI Studio" on 2026-11-25 at NVIDIA's request; see below) |
+| Product/Service Name | **Forge: AI 3D Model Generator** (renamed from "three.ws 3D AI Studio" on 2026-11-25 at NVIDIA's request; see below) |
 | Product/Service Webpage | **https://three.ws/forge** |
 | Product/Service Type | **Application** |
 | Development Stage | **Shipping** |
@@ -108,14 +111,17 @@ URL opens the shipping application directly, not the web desktop. The Forge page
 page, Audio2Face demo, NVIDIA model map, privacy policy, and product page all returned HTTP
 200 on 2026-10-17.
 
-### Product description, 447 characters
+### Product description, 489 characters
 
-> three.ws turns text prompts, photos, and sketches into textured, rigged, animation-ready
-> 3D avatars and models in the browser. Creators can generate, rig, pose, animate, and export
-> GLB, FBX, or USDZ with no local GPU or install. Developers can embed talking 3D agents
-> with one web component or use the same pipeline through APIs and MCP. Production
-> generation and voice workloads are accelerated by NVIDIA GPUs, CUDA, Riva, NIM, and
-> Audio2Face-3D.
+Revised 2026-11-26 so the description opens with the product name. The 447-character
+version saved on 2026-10-25 began "three.ws turns text prompts".
+
+> Forge by three.ws is an AI 3D model generator that turns text prompts, photos, and sketches
+> into textured, rigged, animation-ready 3D avatars and models in the browser. Creators can
+> generate, rig, pose, animate, and export GLB, FBX, or USDZ with no local GPU or install.
+> Developers can embed talking 3D agents with one web component or use the same pipeline
+> through APIs and MCP. Production generation and voice workloads are accelerated by NVIDIA
+> GPUs, CUDA, Riva, NIM, and Audio2Face-3D.
 
 ### Technical details, 820 characters
 
@@ -141,6 +147,15 @@ As filed, the record lists only CUDA libraries as used, and parks every NVIDIA p
 | **NIM microservices (hosted APIs)** | `integrate.api.nvidia.com`: Nemotron Super/Nano, Nemotron Nano VL, NV-EmbedQA-E5-v5, NemoGuard 8B |
 
 Keep in **Technologies Used** and add if the form offers them: CUDA Toolkit, cuDNN, cuBLAS, CUDA Python, **NVIDIA Kaolin**, **nvdiffrast**, **L4 GPUs**, **RTX PRO 6000 Blackwell (sm_120)**.
+
+Evidence for the CUDA library selections, re-checked 2026-11-26: Kaolin is installed in
+[workers/model-trellis/Dockerfile](../workers/model-trellis/Dockerfile) and the SAM 3D
+Objects worker; nvdiffrast in the TRELLIS.2 and AniGen workers; cuDNN and cuBLAS ship with
+the CUDA PyTorch builds every GPU worker uses. CUDA Python is the thinnest claim: its only
+evidence is CuPy (`cupy-cuda12x`) in
+[workers/model-hunyuan3d/requirements.hunyuan21.txt](../workers/model-hunyuan3d/requirements.hunyuan21.txt),
+a Python CUDA array library rather than NVIDIA's own `cuda-python` package. Keep it only
+while that worker ships; if a reviewer questions it, drop it rather than argue.
 
 Remove and leave unchecked:
 
@@ -210,7 +225,7 @@ no further catalog email to send unless NVIDIA answers or requests information.
 
 ## Core fields
 
-**App name:** three.ws Forge: AI 3D Model Generator
+**App name:** Forge: AI 3D Model Generator
 
 **Company name:** three.ws LLC
 
@@ -348,7 +363,9 @@ separate digital-human record.
 ## Submission checklist
 
 1. Log in to the Inception portal and edit the existing `three.ws` product.
-2. Change its name to **three.ws Forge: AI 3D Model Generator** and its URL to **https://three.ws/forge**.
+2. Change its name to **Forge: AI 3D Model Generator** and its URL to **https://three.ws/forge**.
+   Paste the 489-character Product Description above. The Brand Color field defaults to
+   NVIDIA green (`76B900`) on a fresh form; confirm it still reads `0B0D0C` before saving.
 3. Verify Development Stage is **Shipping** and acceleration is **GPU Accelerated**.
 4. Replace Product Description and Technical Details with the character-counted blocks above.
 5. Move Riva, Audio2Face, and applicable NIM services to Currently Used; retain the verified

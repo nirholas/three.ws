@@ -47,6 +47,11 @@ The catalog accepts any of these styles. What NVIDIA checks is that the title ma
 name used on the linked page. That is why App Publishing asked about "three.ws 3D AI
 Studio" on 2026-11-25.
 
+The catalog card prints the company on its own line directly above the product title, so a
+title that repeats the company reads twice. That is why our entry is **Forge: AI 3D Model
+Generator** with no "three.ws" in it; the card supplies the company line. Decision record in
+[nvidia-apps-catalog-request.md](../nvidia-apps-catalog-request.md#app-publishing-reply-2026-11-25).
+
 ### Nearby entries (3D generation, avatars, digital humans)
 
 Alpha3D, Kaedim3D, echo3D, Avaturn Realistic 3D Avatar Creator, Convai, Soul Machines
