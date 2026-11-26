@@ -164,7 +164,7 @@ import { shouldRetryForQuality, shouldEscalateToVisionQA } from './_lib/glb-qual
 import {
 	resolveLiveJob,
 	bindJobSuccessor,
-	pickRedispatchLane,
+	submitNextRedispatchLane,
 	retryBackendSuggestions,
 	submitFailoverJob,
 	MAX_FAILOVER_HOPS,
@@ -3521,21 +3521,24 @@ async function pollJob(req, res, jobId) {
 		// status:"running" with a new backend instead of a dead end. Scoped to
 		// platform image-path jobs with a stored reference view; sketch stays on
 		// its purpose-built lane and BYOK vendors are never silently swapped.
-		const attempted = [...new Set([...(live?.attempted || []), failedBackend].filter(Boolean))];
+		let attempted = [...new Set([...(live?.attempted || []), failedBackend].filter(Boolean))];
 		const hop = live?.hop || 0;
 		const redispatchable =
 			platformLaneFailed && hop < MAX_FAILOVER_HOPS && meta?.preview_image_url && meta?.path !== 'sketch';
 		if (redispatchable) {
-			const nextLane = await pickRedispatchLane({ attempted, country: requestTerritory(req) });
-			if (nextLane) {
-				try {
-					const submitted = await submitFailoverJob({
-						backend: nextLane,
-						imageUrl: meta.preview_image_url,
-						prompt: meta.prompt,
-						tierId: meta.tier,
-						path: meta.path,
-					});
+			try {
+				const submitted = await submitNextRedispatchLane({
+					attempted,
+					country: requestTerritory(req),
+					imageUrl: meta.preview_image_url,
+					prompt: meta.prompt,
+					tierId: meta.tier,
+					path: meta.path,
+				});
+				if (submitted) {
+					const nextLane = submitted.backend;
+					// Lanes that refused the submit join the list, so they are never re-asked.
+					attempted = submitted.attempted;
 					// Provenance row for the successor so later polls resolve its meta
 					// and the success path materializes into the store as usual. The
 					// redispatch reconstructs from the primary stored view, so a
@@ -3586,9 +3589,9 @@ async function pollJob(req, res, jobId) {
 							failover_from: failedBackend,
 						});
 					}
-				} catch (err) {
-					console.warn(`[forge] poll-time failover redispatch failed: ${err?.message || err}`);
 				}
+			} catch (err) {
+				console.warn(`[forge] poll-time failover redispatch failed: ${err?.message || err}`);
 			}
 		}
 

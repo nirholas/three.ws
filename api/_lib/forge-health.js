@@ -26,7 +26,7 @@ import { getRedisBurn } from './redis-usage.js';
 import { probeLlmHealth } from './llm-health.js';
 import { readGenerationMetrics } from './forge-events.js';
 import { providersInCooldown } from './provider-health.js';
-import { hfLaneCooling } from './forge-lane-health.js';
+import { hfLaneCooling, laneCooldownKey } from './forge-lane-health.js';
 
 const PROBE_TIMEOUT_MS = 4_000;
 const CACHE_TTL_MS = 60_000;
@@ -466,7 +466,22 @@ export async function probeForgeHealth({ force = false } = {}) {
 		readGenerationMetrics().catch(() => null),
 	]);
 
-	const backends = Object.fromEntries(entries.map((e) => [e.id, e]));
+	// Whether the router will use each lane right now, read from the same shared
+	// cooldown flags the failover path writes. Read-only annotation.
+	const platformIds = entries.filter((e) => !BACKENDS[e.id]?.byok).map((e) => e.id);
+	const laneCooling = await providersInCooldown(platformIds.map(laneCooldownKey)).catch(() => new Map());
+	const backends = Object.fromEntries(
+		entries.map((e) => {
+			if (BACKENDS[e.id]?.byok) return [e.id, { ...e, rotation: 'byok', rotation_reason: 'Runs only on the user\'s own key, never in automatic rotation.' }];
+			if (!backendIsConfigured(e.id)) {
+				return [e.id, { ...e, rotation: 'disabled', rotation_reason: 'Required environment is not set on this deployment, so the lane is skipped without a network call.' }];
+			}
+			if (laneCooling.has(laneCooldownKey(e.id))) {
+				return [e.id, { ...e, rotation: 'cooling', rotation_reason: 'Skipped after a recent failure; it is retried when the cooldown window ends.' }];
+			}
+			return [e.id, { ...e, rotation: 'in_rotation', rotation_reason: 'Configured and not cooling.' }];
+		}),
+	);
 	// llm carries an 'ok' | 'degraded' | 'down' overall plus per-provider verdicts.
 	// A down world degrades overall to 'degraded' (never 'down' — the forge still
 	// functions when the world is offline), which the cap below already enforces.

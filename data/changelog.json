@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-26",
+			"title": "Forge keeps going when a backup lane refuses the job",
+			"summary": "When a 3D generation fails mid-job and the next backup engine refuses the handover, Forge now tries the following engine instead of ending the job, and the health report shows for each engine whether it is in rotation, cooling or disabled.",
+			"tags": ["fix", "improvement"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-26",
 			"title": "Forge waits when the image engine asks it to",
 			"summary": "When the engine painting a text prompt's reference image says how long to wait, Forge now passes that wait to you instead of immediately asking again, which was refused and delayed your next try.",
 			"tags": ["fix"],

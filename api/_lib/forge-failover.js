@@ -156,6 +156,35 @@ export async function pickRedispatchLane({ attempted = [], country = null } = {}
 	}
 }
 
+/**
+ * Poll-time redispatch: pick the next healthy lane and submit to it. A lane
+ * that refuses the submit is cooled, marked attempted, and the next candidate
+ * is tried, so one unreachable successor cannot end a job a later lane could
+ * serve. Each lane is asked at most once, and at most MAX_LAST_RESORT_SUBMITS
+ * submits are spent per poll. Lanes with no env never reach the network
+ * (pickRedispatchLane filters them first).
+ *
+ * Returns { backend, extJobId, handle, attempted } or null. `attempted` also
+ * carries the lanes that refused, so the chain never re-asks them.
+ */
+export async function submitNextRedispatchLane({ attempted = [], country = null, imageUrl, prompt, tierId, path } = {}) {
+	const tried = [...attempted];
+	for (let i = 0; i < MAX_LAST_RESORT_SUBMITS; i++) {
+		const backend = await pickRedispatchLane({ attempted: tried, country });
+		if (!backend) return null;
+		tried.push(backend);
+		try {
+			const { extJobId, handle } = await submitFailoverJob({ backend, imageUrl, prompt, tierId, path });
+			// The serving lane joins `attempted` only if it fails later; refusers join now.
+			if (extJobId && handle) return { backend, extJobId, handle, attempted: tried.filter((id) => id !== backend) };
+		} catch (err) {
+			console.warn(`[forge] poll-time lane ${backend} refused the job: ${err?.message || err}`);
+		}
+		await markLaneUnhealthy(backend);
+	}
+	return null;
+}
+
 // Submits a last-resort rung may spend before the request fails. Each self-host
 // submit is an accept-and-queue call that answers in a second or two, so three
 // stays well inside a caller's request budget.
