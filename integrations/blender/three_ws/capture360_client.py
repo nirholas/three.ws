@@ -348,7 +348,7 @@ class Capture360Client(ThreeWSClient):
         part_count = state["part_count"]
         parts = {int(k): v for k, v in state["parts"].items()}
         state["parts"] = {str(k): v for k, v in parts.items()}
-        todo = [n for n in range(1, part_count + 1) if n not in parts]
+        missing = [n for n in range(1, part_count + 1) if n not in parts]
         lock = threading.Lock()
         stop = threading.Event()
         done_bytes = [sum(_part_len(n, part_size, size) for n in parts)]
@@ -358,10 +358,10 @@ class Capture360Client(ThreeWSClient):
                 progress(min(1.0, done_bytes[0] / size), len(parts), part_count)
 
         report()
-        if not todo:
+        if not missing:
             return
 
-        urls = self.sign_parts(state["upload_id"], state["key"], todo)
+        urls = self.sign_parts(state["upload_id"], state["key"], missing)
 
         def send(number: int) -> str:
             try:
@@ -411,7 +411,7 @@ class Capture360Client(ThreeWSClient):
         # actually failed (or the user's Cancelled), never a sibling's early _Stopped.
         failure: Optional[BaseException] = None
         with ThreadPoolExecutor(max_workers=self.parallel, thread_name_prefix="threews-part") as pool:
-            pending = {pool.submit(send, n): n for n in todo}
+            pending = {pool.submit(send, n): n for n in missing}
             try:
                 while pending:
                     finished, _ = wait(pending, return_when=FIRST_COMPLETED)

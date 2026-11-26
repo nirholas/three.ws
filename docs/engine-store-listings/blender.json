@@ -8,9 +8,9 @@
 	"releaseNotes": "1.0.0: first public release. Generate a model from a text prompt or reference image with the free Forge pipeline on three.ws, test the connection against the live backend list, and import the result into the scene with Blender's own glTF importer.",
 	"store": "Blender Extensions",
 	"productName": "Forge by three.ws",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"minEngine": "4.2.0",
-	"tagline": "Generate 3D models from text or images with Forge by three.ws",
+	"tagline": "3D from text or images, and 360 footage to splats",
 	"description": "Generate a textured 3D model from a text prompt or a reference image with the free Forge pipeline on three.ws, straight into your Blender scene. The add-on adds a three.ws panel to the 3D Viewport sidebar with a prompt field, a quality tier and a Generate button, plus a Test connection button that lists the live Forge backends. The finished .glb is imported with Blender's own glTF importer, so there is no custom mesh parser. It respects the Allow Online Access preference and the offline-mode flag, uses only the Python standard library and installs on a read-only profile. Every call goes to the live public three.ws API.",
 	"category": "Import-Export",
 	"tags": [
