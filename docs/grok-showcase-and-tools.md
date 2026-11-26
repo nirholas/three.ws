@@ -51,17 +51,17 @@ These are the ones to film. Each is shareable by link, renders a clip, and is so
 
 ### 4. Your agent, on-model, in any Imagine template
 
-- **What:** a template gallery (a dance, a reaction, a walk-on, a product unboxing). Your rigged avatar performs the move in three.js, and Grok Imagine uses those frames as first frame and references to produce a polished clip that stays on-model every time.
+- **What:** a template gallery (a dance, a reaction, a walk-on, a product unboxing). Your rigged avatar performs the move in three.js, and Grok Imagine uses those frames as first frame and references to produce a polished clip that stays on-model every time. Templates use our own or licensed choreography and music, never a copied song or routine.
 - **Why this shape:** Imagine templates spread through one-tap remixing (the "Soda Pop dance" template promoted in January 2026), and X Creators ran a prize contest for Imagine videos in February 2026 (reported; prize amounts from press). The weakness everyone hits is character drift; deterministic 3D motion solves it.
 - **Builds on:** engine 4, motion library ([src/motion-swap.js](../src/motion-swap.js)), [api/_lib/clip-director.js](../api/_lib/clip-director.js).
 - **Effort:** M. Imagine generation spends xAI credits.
 
 ### 5. Timeline City: a year on X as a 3D city
 
-- **What:** enter a public handle. Its year becomes a diorama: districts per theme, building height per engagement, a landmark for each big post, and an avatar mayor giving the tour. "X Wrapped, in 3D."
+- **What:** sign in with your own X account. Your year becomes a diorama: districts per theme, building height per engagement, a landmark for each big post, and an avatar mayor giving the tour. Your year on X, in 3D.
 - **Grok part:** `x_search` with a handle filter and monthly date windows is the only legitimate data path; structured outputs cluster themes; code execution computes stats.
 - **Builds on:** Diorama ([src/diorama/schema.js](../src/diorama/schema.js)), wrapped share cards ([api/wrapped-share.js](../api/wrapped-share.js)).
-- **Guardrails:** public posts only, an opt-out list, topic statistics only, no inferences about the person.
+- **Guardrails:** only the signed-in account's own public posts, topic statistics only, no inferences about the person, and our own product name with no borrowed brand names.
 - **Effort:** M.
 
 ### 6. Agent Town: the agent economy as a spectator sport
@@ -98,7 +98,7 @@ These are free or nearly free tools that put three.ws inside someone else's work
 ### 3. Retarget Doctor and VRM Doctor
 
 - **Evidence:** pixiv/three-vrm issue 1176, "Loading Mixamo animation rotates the legs by 90deg", has 10 comments (verified), and `@pixiv/three-vrm` gets 242,003 downloads a week (verified). Retargeting threads recur on the three.js forum. VRoid and VTuber users pay for blendshape and spring-bone fixes on freelance marketplaces (listings, not counted).
-- **Tool:** a free web tool and npm package. Drop any GLB or VRM plus any clip set; it maps bones with our canonicalizer ([src/glb-canonicalize.js](../src/glb-canonicalize.js)), fixes the leg and twist problems, checks VRM 0.x vs 1.0, adds ARKit blendshapes, and exports clean files. Grok vision rates the result from rendered frames and explains what changed.
+- **Tool:** a free web tool and npm package. Drop any GLB or VRM plus any clip set; it maps bones with our canonicalizer ([src/glb-canonicalize.js](../src/glb-canonicalize.js)), fixes the leg and twist problems, checks VRM 0.x vs 1.0, adds ARKit blendshapes, and exports clean files. It works only on files the user supplies; we never host or redistribute third-party clip libraries such as Mixamo's. Grok vision rates the result from rendered frames and explains what changed.
 - **Effort:** S. Plain code does most of the work; we already own the mapping.
 
 ### 4. Ready Player Me migration kit
@@ -137,7 +137,7 @@ Smaller, faster, and aimed at retention.
 
 - **Companion mode, owned and portable.** Grok's own animated companions (July 2025) drew huge attention (view counts reported by press, unverified), and moeru-ai/airi has 51,824 stars as a self-hosted companion. We add what neither has: the character is yours, carries a wallet, embeds anywhere, remembers you, and earns from its skills. Keep it SFW as the brand position. Builds on engine 3 and agent memory ([api/agent-memory.js](../api/agent-memory.js)).
 - **Casting Director.** Every forged character is born with a name, persona, a picked voice and a three-line voiced intro card. Grok vision looks at the model and writes the persona; Grok TTS speaks it. Effort S, and it lands at the moment of creation, when users decide whether to come back.
-- **Steal the Move.** Paste an X post with a dance or sports clip. Grok video understanding names the move and picks the usable segment; video-to-motion ([src/video-to-motion.js](../src/video-to-motion.js)) extracts it and retargets to your rig. A weekly "Move of the Week" picks trending clips with `x_search`. Personal use; posting is gated.
+- **Learn the Move.** Upload a dance or sports clip you filmed or have permission to use. Grok video understanding names the move and picks the usable segment; video-to-motion ([src/video-to-motion.js](../src/video-to-motion.js)) extracts it and retargets to your rig. A weekly "Move of the Week" uses `x_search` only to suggest a theme, which users then perform themselves. Never pull video from someone else's post; the uploader confirms they have the rights, and posting is gated.
 - **Imagine to Motion.** Prompt a movement, Imagine renders it from your avatar's references, video-to-motion turns it into a reusable animation clip. A/B it against the existing text-to-motion worker and promote only if it wins.
 - **Say and point.** In Scene Studio, click an object and say "make this brass and move it left". Voice tool calls plus a screenshot and object-id buffer. Base: [src/scene-studio/agent-tab.js](../src/scene-studio/agent-tab.js).
 - **Stage reads the room.** A Living Stage host ([api/stage/host.js](../api/stage/host.js)) reacts live to what X is saying about an event, quoting real posts with attribution over a five-minute rolling `x_search` window. Tips stay gated.
@@ -152,7 +152,7 @@ Read-only, cited, and measured. Each extends the first pass's X token intel rath
 
 - **Narrative Backtest.** Batch-label the 660k-article crypto archive ([api/news/archive.js](../api/news/archive.js)) by narrative, stance and ticker, then measure forward returns per narrative with code execution. Publish the result as a research page with a per-narrative track record. Batch jobs stay tool-free (see the first pass's Batch caveat).
 - **Grok Verify, crypto edition.** Grok's own "is this true?" answers on X are inconsistent and rarely cited (Maldita.es analysis of 2026 World Cup answers, reported; Indicator.media tracks it). Ours starts where we have unique data: a claim or post URL is checked against the archive back to 2017, live headlines and `x_search`, returning stance plus quoted sources, cached per claim so the same question gets the same answer.
-- **Logo clone detector.** A launch's logo and claimed X handle are checked for impersonation: vision compares the logo to known marks found by `web_search`, `x_search` checks the account's age and who vouches for it. A badge and a one-line reason on launch pages. Image-based, so distinct from the text intel in the first pass.
+- **Logo clone detector.** A launch's logo and claimed X handle are checked for possible impersonation: vision compares the logo to known marks found by `web_search`, `x_search` checks the account's age and who vouches for it. Launch pages show a "possible match" note with a one-line reason and the evidence, never a verdict, and the launcher can appeal. Image-based, so distinct from the text intel in the first pass.
 - **Forecaster League.** Models forecast open Event Markets in shadow mode, with citations; a public Brier-score board answers "which model forecasts best on live events". Base: [api/oracle/calibration.js](../api/oracle/calibration.js). Staking and payouts gated.
 - **Rule-Keeper.** Upload your own trading rules; every paper trade ([api/papertrade.js](../api/papertrade.js)) is checked against them and the avatar debriefs, citing the exact rule. Paper only.
 
