@@ -23,6 +23,7 @@
 // button to be present.
 
 import { mountMeshTools } from './mesh-ops/panel.js';
+import { forgeCopyError, forgeErrorFromResponse, forgeErrorMessage, forgeJobFailedError } from './forge-errors.js';
 
 const resultPanel = document.getElementById('state-result');
 const viewer = document.getElementById('viewer');
@@ -334,14 +335,13 @@ if (resultPanel && viewer) {
 		});
 		const data = await res.json().catch(() => ({}));
 		if (res.status === 503 || data.error === 'unconfigured') {
-			throw new Error('Mesh optimization is not configured on this deployment yet.');
+			throw forgeErrorFromResponse(res.status, { ...data, error: 'unconfigured' });
 		}
 		if (res.status === 429 || data.error === 'rate_limited') {
-			const secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 10;
-			throw new Error(`Optimizer is busy. Try again in about ${secs}s.`);
+			throw forgeErrorFromResponse(429, data);
 		}
 		if (!res.ok || !data.job_id) {
-			throw new Error(data.message || `Optimizer returned ${res.status}.`);
+			throw forgeErrorFromResponse(res.status, res.ok ? { error: 'remesh_failed' } : data);
 		}
 		return data.job_id;
 	}
@@ -356,11 +356,11 @@ if (resultPanel && viewer) {
 			});
 			const data = await res.json().catch(() => ({}));
 			if (data.status === 'done' && data.result_url) return data;
-			if (data.status === 'failed') throw new Error(data.error || 'Optimization failed.');
+			if (data.status === 'failed') throw forgeJobFailedError(data.error, 'remesh_failed');
 			setStatus(data.status === 'running' ? 'Optimizing topology…' : 'Queued…');
 		}
 		if (state.pollAbort) return null;
-		throw new Error('Optimization timed out.');
+		throw forgeCopyError('Optimize is taking too long', 'Optimizing took too long and was stopped. Try again with a lower face target.');
 	}
 
 	function showStats(data, format) {
@@ -418,7 +418,7 @@ if (resultPanel && viewer) {
 			applyResult(done);
 			setStatus('Done, optimized mesh ready to download.', 'done');
 		} catch (err) {
-			setStatus(err.message || 'Optimization failed.', 'error');
+			setStatus(forgeErrorMessage(err, 'remesh_failed'), 'error');
 		} finally {
 			setRunning(false);
 		}

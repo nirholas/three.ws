@@ -1,16 +1,18 @@
-// Forge — Auto-rig action (browser client).
+// Forge: Auto-rig action (browser client).
 //
 // Adds a "Rig for animation" button to the result action bar. Click it and the
 // current GLB goes through the same auto-rig lane the MCP `rig_mesh` tool and
 // avatar pipeline use (POST /api/forge?action=rig → the self-hosted GCP model-rig worker,
 // falling back to the configured Replicate rerig model), polling through the
 // same GET /api/forge?job=<id> contract every other forge job uses. Nothing
-// here is a separate mesh-generation lane — it is a skeleton + skin-weight
+// here is a separate mesh-generation lane: it is a skeleton + skin-weight
 // pass over the mesh already on screen.
 //
 // Self-contained on purpose, same pattern as forge-stylize.js: builds its own
 // DOM off `forge:model-ready`, owns its own styles, degrades to nothing on a
 // page that doesn't have the result actions bar.
+
+import { forgeErrorFromResponse, forgeJobFailedError } from './forge-errors.js';
 
 const POLL_INTERVAL_MS = 2500;
 const MAX_POLL_MS = 4 * 60 * 1000;
@@ -66,6 +68,35 @@ if (actions && resultBar && viewer) {
 		panel.classList.remove('is-hidden');
 	}
 
+	// Error text is set with textContent, never innerHTML: nothing a server
+	// returns is ever parsed as markup here.
+	function renderError(glyph, err, retryLabel) {
+		panel.replaceChildren();
+		const icon = document.createElement('span');
+		icon.className = 'rig-warn';
+		icon.setAttribute('aria-hidden', 'true');
+		icon.textContent = glyph;
+		const text = document.createElement('span');
+		if (err.title) {
+			const strong = document.createElement('strong');
+			strong.textContent = `${err.title}. `;
+			text.append(strong);
+		}
+		text.append(err.message || 'Auto-rig did not finish. Try again.');
+		panel.append(icon, text);
+		let button = null;
+		if (retryLabel) {
+			button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'btn btn--ghost btn--sm';
+			button.id = 'rig-retry';
+			button.textContent = retryLabel;
+			panel.append(button);
+		}
+		panel.classList.remove('is-hidden');
+		return button;
+	}
+
 	function hidePanel() {
 		panel.classList.add('is-hidden');
 		panel.innerHTML = '';
@@ -95,35 +126,33 @@ if (actions && resultBar && viewer) {
 		const tick = () => {
 			const s = Math.floor((performance.now() - t0) / 1000);
 			const node = document.getElementById('rig-status-text');
-			if (node) node.textContent = `${seed} — ${s}s`;
+			if (node) node.textContent = `${seed}: ${s}s`;
 		};
 		tick();
 		elapsedTimer = setInterval(tick, 1000);
 	}
 
 	async function startJob(glbUrl) {
-		const res = await fetch('/api/forge?action=rig', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ glb_url: glbUrl }),
-		});
+		let res;
+		try {
+			res = await fetch('/api/forge?action=rig', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ glb_url: glbUrl }),
+			});
+		} catch {
+			throw forgeErrorFromResponse(0, {});
+		}
 		const data = await res.json().catch(() => ({}));
+		// Every message comes from the copy map (src/forge-errors.js): the
+		// server's `message` can carry the rigger's raw output.
 		if (res.status === 501 || data.error === 'rig_unconfigured') {
-			const e = new Error(
-				data.message || 'Auto-rigging is not configured on this deployment.',
-			);
+			const e = forgeErrorFromResponse(res.status, { ...data, error: 'rig_unconfigured' });
 			e.kind = 'unconfigured';
 			throw e;
 		}
-		if (res.status === 429 || data.error === 'rate_limited') {
-			const secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 10;
-			const e = new Error(`The rigger is busy. Try again in about ${secs}s.`);
-			e.kind = 'busy';
-			throw e;
-		}
-		if (!res.ok || !data.job_id) {
-			throw new Error(data.message || `The rigger returned ${res.status}.`);
-		}
+		if (!res.ok) throw forgeErrorFromResponse(res.status, data);
+		if (!data.job_id) throw forgeErrorFromResponse(res.status, { error: 'rig_failed' });
 		return data;
 	}
 
@@ -132,15 +161,24 @@ if (actions && resultBar && viewer) {
 		while (token === runToken && performance.now() < deadline) {
 			await sleep(POLL_INTERVAL_MS);
 			if (token !== runToken) return null;
-			const res = await fetch(`/api/forge?job=${encodeURIComponent(jobId)}`);
+			let res;
+			try {
+				res = await fetch(`/api/forge?job=${encodeURIComponent(jobId)}`);
+			} catch {
+				// A dropped connection mid-poll is not a failed job: keep polling.
+				continue;
+			}
 			const data = await res.json().catch(() => ({}));
 			if (data.status === 'done' && data.glb_url) return data;
-			if (data.status === 'failed') {
-				throw new Error(data.error || 'Rigging failed.');
+			if (data.status === 'failed') throw forgeJobFailedError(data.error, 'rig_failed');
+			if (res.status === 404 || data.error === 'invalid_job' || data.error === 'missing_job') {
+				throw forgeErrorFromResponse(res.status, data);
 			}
 		}
 		if (token !== runToken) return null;
-		throw new Error('Rigging timed out. Try again — self-host GPUs occasionally cold-start slowly.');
+		const e = new Error('Rigging is taking longer than it should. Try again: a GPU that was asleep can take a minute to start.');
+		e.title = 'Auto-rig is taking too long';
+		throw e;
 	}
 
 	function renderDone(riggedUrl) {
@@ -148,7 +186,7 @@ if (actions && resultBar && viewer) {
 		const safeLabel = (originalLabel || 'forge').replace(/[^a-z0-9]+/gi, '-').slice(0, 40).replace(/^-|-$/g, '') || 'forge';
 		setPanel(`
 			<span class="rig-check" aria-hidden="true">✓</span>
-			<span>Rigged — ready to pose and animate.</span>
+			<span>Rigged and ready to pose and animate.</span>
 			<div class="rig-actions">
 				<a class="btn btn--ghost" href="${riggedUrl}" download="${safeLabel}-rigged.glb">Download rigged GLB</a>
 				<a class="btn btn--ghost" href="/pose?src=${encodeURIComponent(riggedUrl)}">Animate in Pose Studio</a>
@@ -175,17 +213,12 @@ if (actions && resultBar && viewer) {
 				unconfigured = true;
 				btn.disabled = true;
 				btn.title = 'Auto-rigging is not configured on this deployment yet.';
-				setPanel(
-					`<span class="rig-warn" aria-hidden="true">◌</span><span>${err.message}</span>`,
-				);
+				renderError('◌', err);
 				setTimeout(hidePanel, 6000);
 				return;
 			}
-			setPanel(
-				`<span class="rig-warn" aria-hidden="true">⚠</span><span>${err.message}</span> ` +
-					`<button type="button" class="btn btn--ghost btn--sm" id="rig-retry">Retry</button>`,
-			);
-			document.getElementById('rig-retry')?.addEventListener('click', runRig);
+			const retry = renderError('⚠', err, 'Retry');
+			retry.addEventListener('click', runRig);
 		} finally {
 			if (token === runToken) setBusy(false);
 		}

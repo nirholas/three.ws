@@ -18,6 +18,8 @@
 // The panel injects its own markup + styles so it survives independently of the
 // forge.html template: it only needs the result panel and viewer to be present.
 
+import { forgeCopyError, forgeErrorFromResponse, forgeErrorMessage, forgeJobFailedError } from './forge-errors.js';
+
 const resultPanel = document.getElementById('state-result');
 const viewer = document.getElementById('viewer');
 
@@ -268,16 +270,15 @@ if (resultPanel && viewer) {
 		});
 		const data = await res.json().catch(() => ({}));
 		if (res.status === 503 || data.error === 'unconfigured') {
-			const e = new Error(data.message || 'Segmentation is not configured on this deployment.');
+			const e = forgeErrorFromResponse(res.status, { ...data, error: 'unconfigured' });
 			e.kind = 'unconfigured';
 			throw e;
 		}
 		if (res.status === 429 || data.error === 'rate_limited') {
-			const secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 10;
-			throw new Error(`The segmenter is busy. Try again in about ${secs}s.`);
+			throw forgeErrorFromResponse(429, data);
 		}
 		if (!res.ok || !data.job_id) {
-			throw new Error(data.message || `The segmenter returned ${res.status}.`);
+			throw forgeErrorFromResponse(res.status, res.ok ? { error: 'segment_failed' } : data);
 		}
 		return data;
 	}
@@ -290,15 +291,15 @@ if (resultPanel && viewer) {
 			const res = await fetch(`/api/forge-segment?job=${encodeURIComponent(jobId)}`);
 			const data = await res.json().catch(() => ({}));
 			if (data.error === 'unconfigured') {
-				const e = new Error(data.message || 'unconfigured');
+				const e = forgeErrorFromResponse(503, { ...data, error: 'unconfigured' });
 				e.kind = 'unconfigured';
 				throw e;
 			}
 			if (data.status === 'done' && data.result_url) return data;
-			if (data.status === 'failed') throw new Error(data.error || 'Segmentation failed.');
+			if (data.status === 'failed') throw forgeJobFailedError(data.error, 'segment_failed');
 		}
 		if (token !== runToken) return null;
-		throw new Error('Segmentation timed out. Try fewer parts.');
+		throw forgeCopyError('Split into parts is taking too long', 'Splitting took too long and was stopped. Try again with fewer parts.');
 	}
 
 	function markUnconfigured(message) {
@@ -395,7 +396,7 @@ if (resultPanel && viewer) {
 				markUnconfigured(err.message);
 				return;
 			}
-			setStatus(err.message || 'Segmentation failed. Try another method.', 'error');
+			setStatus(forgeErrorMessage(err, 'segment_failed'), 'error');
 		} finally {
 			if (token === runToken && !unconfigured) setBusy(false);
 		}
@@ -447,7 +448,7 @@ if (resultPanel && viewer) {
 				markUnconfigured(err.message);
 				return;
 			}
-			setStatus(err.message || 'Could not isolate that part.', 'error');
+			setStatus(forgeErrorMessage(err, 'segment_failed'), 'error');
 		} finally {
 			if (token === runToken && !unconfigured) setBusy(false);
 		}

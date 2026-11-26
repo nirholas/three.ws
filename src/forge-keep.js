@@ -12,6 +12,7 @@
 
 import { payForConsumption } from './forge-pay.js';
 import { attachTierPass, getTierPass } from './three-access.js';
+import { describeForgeError } from './forge-errors.js';
 
 const usd = (n) => `$${Number(n).toFixed(2)}`;
 
@@ -126,7 +127,8 @@ export async function ensureKept(creationId, { headers = {} } = {}) {
 			({ res, data } = await keepRequest(creationId, headers, paid));
 			if (res.ok && data.kept) return { ok: true };
 		}
-		return { ok: false, message: data.message || 'Could not confirm this download. Try again.' };
+		// Copy comes from the map (src/forge-errors.js), never the server's text.
+		return { ok: false, message: describeForgeError({ status: res.status, body: data }).message };
 	} catch {
 		return { ok: true };
 	}

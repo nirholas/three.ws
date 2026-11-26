@@ -202,6 +202,50 @@ recovery accounting above matters more than the raw count.
   See [production-log-triage.md](production-log-triage.md) for the same
   distinction across the rest of the platform.
 
+## What the page tells the person
+
+The ledger above is for us. What the person sees when a request fails comes
+from one copy map, [src/forge-errors.js](../../src/forge-errors.js), used by
+both Forge pages (`/forge` and the studio) and every tool on the result panel
+(auto-rig, stylize, split into parts, optimize, game-ready), for submit, poll,
+upload and download failures.
+
+```bash
+npm run forge:error-codes              # every code a Forge endpoint can return: statuses, files
+npm run forge:error-codes -- --missing # only codes with no copy (exits 1 if any)
+npm run forge:error-codes -- --json
+```
+
+The inventory ([scripts/forge-error-codes.mjs](../../scripts/forge-error-codes.mjs))
+reads the handler source statically: `api/forge.js`, `api/forged.js`,
+`api/forge-*.js`, `api/forge/*.js`, `api/forge-off/*.js`, the
+`api/_lib/forge-*.js` helpers and `api/_lib/require-three.js`, plus the shared
+envelope codes from `api/_lib/http.js` and `api/_lib/creator-account.js`.
+It recognizes `error: 'code'` body literals, `error(res, NNN, 'code')` helper
+calls, `code: 'code'` on thrown errors, and `(…, NNN, 'code')` pairs. The
+provider webhook and `api/gpt-forge.js` (its own copy layer) are not scanned.
+
+Rules the map follows, and [tests/forge-error-copy.test.js](../../tests/forge-error-copy.test.js)
+enforces:
+
+- **Every extracted code has an entry.** Add a new `error: 'code'` to a Forge
+  handler without copy and the guard fails, naming the code. Add the entry to
+  `FORGE_ERROR_COPY` (a `title`, a `what` sentence, a `todo` sentence, `retry`
+  of `now`, `wait` or `never`, and the `action` the panel offers).
+- **The server's `message` is never shown.** It can carry provider output
+  (a vendor name, a URL with a token, a stack). Two exceptions are screened:
+  the poll's masked `status: 'failed'` sentence, and our own validation text on
+  `invalid_prompt` / `invalid_options`. Both pass through `isSafeServerText()`,
+  which rejects URLs, hosts, IPs, stack frames, key shapes, markup and vendor
+  names, and fall back to map copy when they fail.
+- **An unknown code still says something true and actionable** and carries a
+  reference: the server's `ref` correlation id when there is one, otherwise
+  `code/status at HH:MM UTC`. Ask a person who reports a failure for that
+  reference, then match it in the logs (`npm run logs`) or the ledger above.
+- **The prompt and settings are always kept**, and every failure is announced
+  through one visually hidden `role="alert"` region (`announceForgeError`),
+  since the error panel is revealed by toggling a class.
+
 ## Credentials
 
 The script reads `DATABASE_URL` from `.env.local`, then `.env`, then the shell,

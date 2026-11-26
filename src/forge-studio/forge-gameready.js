@@ -22,6 +22,7 @@
 import { payForConsumption } from './forge-pay.js';
 import { attachTierPass, getAccess, getTierPass } from '../three-access.js';
 import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
+import { forgeCopyError, forgeErrorFromResponse, forgeErrorMessage, forgeJobFailedError } from '../forge-errors.js';
 
 const resultPanel = document.getElementById('state-result');
 const viewer = document.getElementById('viewer');
@@ -447,7 +448,7 @@ if (resultPanel && viewer && triggerBtn) {
 		});
 		const data = await res.json().catch(() => ({}));
 		if (res.status === 503 || data.error === 'unconfigured') {
-			throw new Error('Game-Ready export is not configured on this deployment yet.');
+			throw forgeErrorFromResponse(res.status, { ...data, error: 'unconfigured' });
 		}
 		// $THREE hold-or-pay gate, or a pay-per-export proof that didn't verify — both
 		// recoverable by paying once. Tag it so run() can open the pay modal and retry.
@@ -457,24 +458,23 @@ if (resultPanel && viewer && triggerBtn) {
 				data.error === 'payment_invalid' ||
 				data.error === 'payment_expired')
 		) {
-			const e = new Error(data.message || 'Game-Ready export is a $THREE holder perk — or pay per export.');
+			const e = forgeErrorFromResponse(res.status, data);
 			e.kind = 'pay_required';
 			e.gate = data;
 			throw e;
 		}
 		// Proof already spent — clear it and re-offer Pay so a retry never replays it.
 		if (res.status === 409 && data.error === 'payment_already_used') {
-			const e = new Error(data.message || 'That payment was already used. Pay again to export.');
+			const e = forgeErrorFromResponse(res.status, data);
 			e.kind = 'pay_required';
 			e.gate = data;
 			throw e;
 		}
 		if (res.status === 429 || data.error === 'rate_limited') {
-			const secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 10;
-			throw new Error(`The exporter is busy. Try again in about ${secs}s.`);
+			throw forgeErrorFromResponse(429, data);
 		}
 		if (!res.ok || !data.job_id) {
-			throw new Error(data.message || `The exporter returned ${res.status}.`);
+			throw forgeErrorFromResponse(res.status, res.ok ? { error: 'gameready_failed' } : data);
 		}
 		return data.job_id;
 	}
@@ -521,11 +521,11 @@ if (resultPanel && viewer && triggerBtn) {
 			});
 			const data = await res.json().catch(() => ({}));
 			if (data.status === 'done' && data.outputs) return data;
-			if (data.status === 'failed') throw new Error(data.error || 'Game-Ready export failed.');
+			if (data.status === 'failed') throw forgeJobFailedError(data.error, 'gameready_failed');
 			setStatus(data.status === 'running' ? 'Retopologizing & baking…' : 'Queued…');
 		}
 		if (state.pollAbort) return null;
-		throw new Error('Export timed out. Try a lower poly budget.');
+		throw forgeCopyError('The export is taking too long', 'The export took too long and was stopped. Try again with a lower poly budget.');
 	}
 
 	function applyResult(data) {
@@ -566,7 +566,7 @@ if (resultPanel && viewer && triggerBtn) {
 			applyResult(done);
 			setStatus('Done — engine-ready asset is ready to download.', 'done');
 		} catch (err) {
-			setStatus(err.message || 'Export failed.', 'error');
+			setStatus(forgeErrorMessage(err, 'gameready_failed'), 'error');
 		} finally {
 			setRunning(false);
 		}

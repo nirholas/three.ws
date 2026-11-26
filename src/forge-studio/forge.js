@@ -21,7 +21,9 @@ import { coldStartLabel } from '../shared/forge-frames.js';
 import { initForgeDestinationPicker, storedForgeDestination } from '../shared/forge-destination-picker.js';
 import { regionRestrictedError, fetchRestrictedEngines } from '../forge-region.js';
 import { rememberFromResponse } from '../shared/forge-manage-tokens.js';
-import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, UPLOAD_SIGN_IN_SHORT } from '../shared/upload-sign-in.js';
+import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, uploadSignInUrl, UPLOAD_SIGN_IN_SHORT } from '../shared/upload-sign-in.js';
+import { classifyThrottle, createThrottlePanel } from '../forge-throttle.js';
+import { forgeErrorFromResponse, forgeJobFailedError, announceForgeError, forgeErrorDescriptor, forgeUploadFailure } from '../forge-errors.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -1132,28 +1134,19 @@ async function presignAndPut(file) {
 		});
 		presign = await presignRes.json().catch(() => ({}));
 	} catch {
-		return { ok: false, message: 'No connection. Check your network.' };
+		return forgeUploadFailure(0, {});
 	}
 
-	if (presignRes.status === 503) {
-		// The server distinguishes "this deployment has no storage" from "our
-		// storage is refusing us right now"; only the second is worth asking the
-		// user to come back for.
-		return {
-			ok: false,
-			message:
-				presign.error === 'storage_unavailable'
-					? 'Uploads are down right now. Try again shortly.'
-					: 'Uploads unavailable on this deployment.',
-		};
-	}
-	if (presignRes.status === 429) return { ok: false, message: 'Rate limited. Retry shortly.' };
+	// The server distinguishes "this deployment has no storage" (unconfigured)
+	// from "our storage is refusing us right now" (storage_unavailable); the copy
+	// map (src/forge-errors.js) says which, and only the second asks for a retry.
+	if (presignRes.status === 503 || presignRes.status === 429) return forgeUploadFailure(presignRes.status, presign);
 	if (isSignInRequired(presignRes.status, presign)) {
 		showUploadSignIn();
 		return { ok: false, message: UPLOAD_SIGN_IN_SHORT };
 	}
 	if (!presignRes.ok || !presign.upload_url || !presign.public_url) {
-		return { ok: false, message: presign.message || 'Upload failed.' };
+		return forgeUploadFailure(presignRes.status, presignRes.ok ? { error: 'presign_failed' } : presign);
 	}
 
 	try {
@@ -1162,10 +1155,10 @@ async function presignAndPut(file) {
 			headers: { 'content-type': file.type },
 			body: file,
 		});
-		if (!putRes.ok) return { ok: false, message: `Storage rejected the file (${putRes.status}).` };
+		if (!putRes.ok) return forgeUploadFailure(putRes.status, { error: 'upload_rejected' });
 		return { ok: true, url: presign.public_url };
 	} catch {
-		return { ok: false, message: 'Storage refused the upload. Try again shortly.' };
+		return forgeUploadFailure(0, { error: 'upload_rejected' });
 	}
 }
 
@@ -1430,7 +1423,7 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 	const data = await res.json().catch(() => ({}));
 	// Signed out (or the session expired mid-visit): the account gate refused it.
 	if (isSignInRequired(res.status, data)) {
-		const e = new Error(data.message || 'Sign in to make a 3D model.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'sign_in';
 		throw e;
 	}
@@ -1447,67 +1440,50 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 	// misfile it. When the server names configured engines that can take the
 	// request, hop to one visibly (the lane_failed path flips the picker and says
 	// so) rather than count down into the same dead lane; otherwise it is the
-	// recoverable high-demand countdown.
-	if (data.error === 'provider_busy') {
-		const e = new Error(data.message || 'The free 3D engines are at capacity right now.');
-		if (Array.isArray(data.retry_backends) && data.retry_backends.length) {
-			e.kind = 'lane_failed';
-			e.retryBackends = data.retry_backends;
-		} else {
-			e.kind = 'busy';
-			e.retryAfter = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 15;
-		}
+	// recoverable high-demand countdown (classifyThrottle below).
+	if (data.error === 'provider_busy' && Array.isArray(data.retry_backends) && data.retry_backends.length) {
+		const e = forgeErrorFromResponse(res.status, data);
+		e.kind = 'lane_failed';
+		e.retryBackends = data.retry_backends;
+		throw e;
+	}
+	// Every wait (a busy provider, our own image-step pacing, the account limit,
+	// the paid daily cap, a transient 503) goes through one shared classifier, so
+	// the page says which it is instead of calling them all "the limit".
+	const throttle = classifyThrottle({ status: res.status, body: data, headers: res.headers });
+	if (throttle) {
+		const e = forgeErrorFromResponse(res.status, data, { retryAfter: throttle.waitSeconds });
+		e.kind = 'throttled';
+		e.throttle = throttle;
 		throw e;
 	}
 	if (res.status === 503 || data.error === 'unconfigured') {
-		const e = new Error(data.message || 'unconfigured');
+		const e = forgeErrorFromResponse(res.status, { ...data, error: 'unconfigured' });
 		e.kind = 'unconfigured';
 		throw e;
 	}
 	// Geometry path needs a BYOK key we don't have — a recoverable, designed state.
 	if (data.error === 'needs_key') {
-		const e = new Error(data.message || 'An API key is required for this engine.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'needs_key';
 		e.provider = data.provider;
 		throw e;
 	}
 	if (data.error === 'invalid_key') {
-		const e = new Error(data.message || 'The provider rejected this API key.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'invalid_key';
 		throw e;
 	}
 	if (data.error === 'insufficient_credits') {
-		const e = new Error(data.message || 'The provider account is out of credits.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'credits';
 		throw e;
 	}
 	// Vision pre-check rejected the reference photo (Consumer 1). Recoverable:
 	// the user can swap the photo (Try again) or override (Generate anyway).
 	if (res.status === 422 && data.error === 'image_not_usable') {
-		const e = new Error(data.message || 'That photo doesn’t look usable for 3D.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'not_usable';
-		throw e;
-	}
-	if (res.status === 429 || data.error === 'rate_limited') {
-		const headerReset = Number(res.headers.get('ratelimit-reset'));
-		const secs =
-			Number(data.retry_after) > 0
-				? Math.ceil(Number(data.retry_after))
-				: headerReset > 0
-					? Math.ceil(headerReset)
-					: 10;
-		// `rate_limiter_unavailable` means the distributed limiter (Redis) is down
-		// and the paid lane is failing closed — not that the user spent their quota.
-		const unavailable = data.reason === 'rate_limiter_unavailable';
-		const e = new Error(
-			data.message ||
-				(unavailable
-					? 'The generator is temporarily unavailable. Refine your current model locally, or try again shortly.'
-					: `You've hit the generation limit. It resets in about ${secs}s.`),
-		);
-		e.kind = 'rate_limited';
-		e.retryAfter = secs;
-		e.unavailable = unavailable;
 		throw e;
 	}
 	// High-tier hold-to-access gate ($THREE) — a hold-OR-pay 402 (three_hold_required).
@@ -1515,7 +1491,7 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 	// Carries the full gate payload (held vs required, usd_to_go, acquire, pay_per_use)
 	// straight to the upsell modal.
 	if (res.status === 402 && data.error === 'three_hold_required') {
-		const e = new Error(data.message || 'High-quality generation is a $THREE holder perk.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'hold_required';
 		e.gate = data;
 		throw e;
@@ -1527,30 +1503,19 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 		res.status === 402 &&
 		(data.error === 'payment_invalid' || data.error === 'payment_expired')
 	) {
-		const e = new Error(data.message || 'That $THREE payment could not be verified.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'payment_invalid';
 		e.gate = data;
 		throw e;
 	}
 	if (res.status === 409 && data.error === 'payment_already_used') {
-		const e = new Error(data.message || 'That payment was already used. Pay again to generate.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'payment_used';
 		e.gate = data;
 		throw e;
 	}
-	// Free lane shed this request at the fleet concurrency cap — an influx of
-	// demand, not the user's quota. Recoverable with a short auto-retry, framed as
-	// "high demand" rather than a failure the user caused. (provider_busy comes
-	// from an explicit free-engine pick at capacity; free_lane_unavailable from the
-	// Spaces chain being briefly all-down.)
-	if (data.error === 'provider_busy' || data.error === 'free_lane_unavailable') {
-		const e = new Error(data.message || 'The free 3D engines are at capacity right now.');
-		e.kind = 'busy';
-		e.retryAfter = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 15;
-		throw e;
-	}
 	if (!res.ok) {
-		throw new Error(data.message || `The generator returned ${res.status}.`);
+		throw forgeErrorFromResponse(res.status, data);
 	}
 	return data;
 }
@@ -1571,7 +1536,7 @@ async function pollUntilDone(jobId) {
 		});
 		const data = await res.json().catch(() => ({}));
 		if (data.error === 'unconfigured') {
-			const e = new Error(data.message || 'unconfigured');
+			const e = forgeErrorFromResponse(res.status, { ...data, error: 'unconfigured' });
 			e.kind = 'unconfigured';
 			throw e;
 		}
@@ -1580,7 +1545,7 @@ async function pollUntilDone(jobId) {
 			// The server names the configured lanes that can still serve a fresh
 			// retry of this request (retry_backends) — carry them so the catch can
 			// auto-hop to a backup engine instead of dead-ending.
-			const e = new Error(data.error || 'Generation failed.');
+			const e = forgeJobFailedError(data.error, 'generation_failed');
 			if (data.retryable && Array.isArray(data.retry_backends) && data.retry_backends.length) {
 				e.kind = 'lane_failed';
 				e.retryBackends = data.retry_backends;
@@ -2142,6 +2107,8 @@ function showError(message, { allowOverride = false, title = null } = {}) {
 	}
 	els.errorMessage.classList.remove('upload-sign-in', 'upload-sign-in--panel');
 	els.errorMessage.textContent = message;
+	// Revealing the panel by class is not reliably announced; this is.
+	announceForgeError(els.errorTitle?.textContent || title, message);
 	// The "Generate anyway" affordance only exists for the vision pre-check
 	// rejection; every other error hides it so it can't leak across states.
 	if (els.generateAnyway) els.generateAnyway.classList.toggle('is-hidden', !allowOverride);
@@ -2205,61 +2172,55 @@ function showLaneFailed(message, backends) {
 	els.errorLanes.classList.remove('is-hidden');
 }
 
-// Rate-limit state: a designed, recoverable treatment for a 429. Instead of a
-// dead-end "busy, try again", we (1) show a live countdown to the reset and
-// re-enable Retry automatically when it elapses, and (2) — when a model is
-// already on screen — offer the local Refine path, which needs no API and never
-// throttles, so the user is never fully blocked. Distinguishes a genuine quota
-// hit from a temporarily-unavailable limiter (Redis degraded → fail-closed).
-let rateLimitTimer = null;
+// Throttle state (src/forge-throttle.js): a wait is not a failure. The panel
+// says which wait it is (a busy provider, our own pacing, the account limit or
+// the paid daily cap), counts down the server's own number, retries a busy
+// provider once by itself (cancellable) and keeps the prompt and settings. When
+// a model is already on screen, local Refine needs no API and never throttles.
+const throttlePanel = createThrottlePanel({
+	els: {
+		panel: document.getElementById('state-error'),
+		title: els.errorTitle,
+		message: els.errorMessage,
+		retry: els.retry,
+		lanes: els.errorLanes,
+		refineLocally: els.refineLocally,
+	},
+	onRetry: () => retryLastJob(),
+	actions: {
+		photo: () => {
+			setMode('image');
+			slotEl(0)?.focus();
+		},
+		free_engine: () => {
+			showState('empty');
+			els.engine?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			els.engine?.querySelector('button:not([disabled])')?.focus({ preventScroll: true });
+		},
+	},
+	buttonClass: 'btn btn-ghost',
+	signInUrl: uploadSignInUrl(),
+});
 function stopRateLimitCountdown() {
-	if (rateLimitTimer) {
-		clearInterval(rateLimitTimer);
-		rateLimitTimer = null;
-	}
+	throttlePanel.stop();
 }
 
-function showRateLimited({ retryAfter = 10, unavailable = false, busy = false }) {
+async function showThrottle(throttle) {
 	stopElapsed();
 	stopRateLimitCountdown();
 	if (els.generateAnyway) els.generateAnyway.classList.add('is-hidden');
-
-	// Offer local refinement whenever a model is already loaded — that's exactly
-	// the case after the Refine button 429s, and the one moment the user most
-	// wants to keep improving without waiting on the paid lane.
-	const canRefineLocally = Boolean(lastShownGlb && els.viewer.getAttribute('src'));
-	if (els.refineLocally) els.refineLocally.classList.toggle('is-hidden', !canRefineLocally);
-
-	let remaining = Math.max(1, Math.ceil(retryAfter));
-	const base = busy
-		? 'High demand — the free 3D engines are all busy right now.'
-		: unavailable
-			? 'The generator is temporarily unavailable.'
-			: 'You’ve hit the generation limit.';
-	const tail = canRefineLocally ? ' Or refine your current model now — instant and unlimited.' : '';
-
-	const render = () => {
-		els.errorMessage.textContent =
-			remaining > 0 ? `${base} Retrying is available in ${remaining}s.${tail}` : `${base} You can try again now.${tail}`;
-	};
-	// While counting down, Retry is disabled (it would just 429 again); it
-	// re-enables the moment the window resets.
-	if (els.retry) els.retry.disabled = remaining > 0;
-	render();
+	const signedIn = await signedInForUploads();
+	throttlePanel.show(throttle, {
+		signedIn,
+		canRefineLocally: Boolean(lastShownGlb && els.viewer.getAttribute('src')),
+	});
 	showState('error');
-
-	rateLimitTimer = setInterval(() => {
-		remaining -= 1;
-		if (remaining <= 0) {
-			stopRateLimitCountdown();
-			if (els.retry) els.retry.disabled = false;
-		}
-		render();
-	}, 1000);
+	throttlePanel.focus();
 }
 
 // Run a job (text or image/multi-view). `cfg` = { prompt, imageUrls }.
 async function run(cfg) {
+	stopRateLimitCountdown();
 	if (!(await requireCreateAccount())) return;
 	// Captured before the single-use payment proof is stripped — tells the upgrade
 	// funnel conversion which path (pay-per-use vs. hold) closed the loop.
@@ -2407,31 +2368,24 @@ async function run(cfg) {
 				els.providerKey.setAttribute('aria-invalid', 'true');
 				els.providerKey.focus();
 			}
-			showError(err.message || 'Add your API key to use this engine, then retry.');
+			showError(err.message, { title: err.title });
 			return;
 		}
 		if (err.kind === 'credits') {
 			stopElapsed();
-			showError(err.message || 'The provider account is out of credits.');
+			showError(err.message, { title: err.title });
 			return;
 		}
 		// The reference photo failed the vision pre-check. Offer "Generate anyway"
 		// so a confident user is never permanently blocked by a cautious verdict.
 		if (err.kind === 'not_usable') {
-			showError(err.message, { allowOverride: true });
+			showError(err.message, { allowOverride: true, title: err.title });
 			return;
 		}
-		// Rate limited (or the limiter is temporarily unavailable). Designed,
-		// recoverable state with a live countdown + the local-refine escape hatch.
-		if (err.kind === 'rate_limited') {
-			showRateLimited({ retryAfter: err.retryAfter, unavailable: err.unavailable });
-			return;
-		}
-		// Free lane at capacity under load — same recoverable countdown UI, framed as
-		// high demand. Auto-retry lands the user in line as slots free up, and the
-		// local-refine escape hatch still applies when a model is already on screen.
-		if (err.kind === 'busy') {
-			showRateLimited({ retryAfter: err.retryAfter, busy: true });
+		// Any wait: a busy provider, our pacing, the account limit or the daily cap.
+		// Designed, recoverable state with a live countdown that says which one.
+		if (err.kind === 'throttled') {
+			await showThrottle(err.throttle);
 			return;
 		}
 		// High-tier $THREE gate: open the designed upsell (Get $THREE / what you hold
@@ -2472,7 +2426,7 @@ async function run(cfg) {
 		if (err.kind === 'region') {
 			stopElapsed();
 			updateEngineAvailability();
-			showError(err.message);
+			showError(err.message, { title: err.title });
 			return;
 		}
 		// A presented pay-per-use proof was already spent — drop the stale payment so
@@ -2481,7 +2435,7 @@ async function run(cfg) {
 			stopElapsed();
 			if (lastJob) delete lastJob.payment;
 			showState('empty');
-			showError(err.message || 'That payment was already used. Pay again to generate.');
+			showError(err.message, { title: err.title });
 			return;
 		}
 		// The proof was rejected (bad/expired) before any model — drop it and surface
@@ -2491,13 +2445,11 @@ async function run(cfg) {
 			if (lastJob) delete lastJob.payment;
 			showState('empty');
 			if (err.gate) onGate(err.gate, gateOpts());
-			else showError(err.message || 'That $THREE payment could not be verified.');
+			else showError(err.message, { title: err.title });
 			return;
 		}
-		showError(
-			err.message ||
-				'Something went wrong. Try a simpler, single-subject prompt or cleaner photos.',
-		);
+		const failure = forgeErrorDescriptor(err, 'generation_failed');
+		showError(failure.message, { title: failure.title });
 	} finally {
 		setBusy(false);
 	}
@@ -2578,6 +2530,7 @@ function submit() {
 	// A fresh user-initiated generation resets the automatic lane-hop budget —
 	// the single silent hop belongs to one submission, never accumulates.
 	autoLaneHops = 0;
+	throttlePanel.resetAutoRetry();
 	if (cfg) run(cfg);
 }
 
@@ -2761,8 +2714,9 @@ els.again.addEventListener('click', () => {
 	}
 });
 
-els.retry.addEventListener('click', () => {
-	if (els.retry.disabled) return; // mid-countdown; Retry re-enables at reset
+// Replay the last job. Shared by the Retry button and the throttle panel's one
+// automatic retry when a busy provider's countdown ends.
+function retryLastJob() {
 	stopRateLimitCountdown();
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
 	destinationPicker.hide();
@@ -2772,6 +2726,13 @@ els.retry.addEventListener('click', () => {
 		showState('empty');
 		els.prompt.focus();
 	}
+}
+
+els.retry.addEventListener('click', () => {
+	if (els.retry.disabled) return; // mid-countdown; Retry re-enables at reset
+	// A retry the user asked for earns a fresh automatic retry if it is refused.
+	throttlePanel.resetAutoRetry();
+	retryLastJob();
 });
 
 // Rate-limit escape hatch: drop straight back to the loaded model and open the

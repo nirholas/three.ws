@@ -605,6 +605,7 @@
 		"db:check": "node scripts/apply-migrations.mjs --check",
 		"db:restamp": "node scripts/apply-migrations.mjs --restamp",
 		"forge:errors": "node scripts/forge-error-report.mjs",
+		"forge:error-codes": "node scripts/forge-error-codes.mjs",
 		"forge:lanes": "node scripts/forge-protected-lanes.mjs",
 		"forge:funnel": "node scripts/forge-funnel-report.mjs",
 		"forge:walkthrough": "node scripts/forge-live-walkthrough.mjs",
