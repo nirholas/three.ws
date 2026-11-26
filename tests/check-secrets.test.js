@@ -43,6 +43,25 @@ describe('credential leak guard', () => {
 		expect(result.stderr).toContain(`[${finding}]`);
 	});
 
+	// Assembled at runtime so this file never holds an AWS-shaped literal.
+	const awsKeyId = ['AKIA', 'QWERTYUIOPLKJHGF'].join('');
+
+	it.each([
+		['assigned to a variable', `AWS_ACCESS_KEY_ID=${awsKeyId}`],
+		['quoted in code', `const id = '${awsKeyId}';`],
+		['inside a presigned URL', `https://bucket.s3.amazonaws.com/o?X-Amz-Credential=${awsKeyId}%2F20260101`],
+	])('rejects an AWS access key id %s', (_label, line) => {
+		const result = scanAddedLine(line);
+		expect(result.status).toBe(1);
+		expect(result.stderr).toContain('[provider-api-key]');
+	});
+
+	it('ignores an AWS-shaped run inside a longer base64 blob, as minified wasm bundles contain', () => {
+		const result = scanAddedLine(`const wasm = "CfyAGK${awsKeyId}c3zARBXIgMQ";`);
+		expect(result.stderr).toBe('');
+		expect(result.status).toBe(0);
+	});
+
 	it('allows documented placeholders', () => {
 		const result = scanAddedLine('S3_SECRET_ACCESS_KEY=YOUR_SECRET_ACCESS_KEY');
 		expect(result.status).toBe(0);
