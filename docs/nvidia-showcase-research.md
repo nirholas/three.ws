@@ -4,7 +4,7 @@ Researched 2026-11-26. Every claim below was read on an NVIDIA page or repositor
 
 This is the companion to [nvidia-visibility-map.md](nvidia-visibility-map.md). That file lists every recognition surface and its gate. This one answers a different question: what are other companies actually doing with NVIDIA technology that NVIDIA chooses to show, and which of those things could three.ws build without touching what already works.
 
-The builds at the end are filed as independent work orders `871` to `877` in [prompts/finish/](../prompts/finish/).
+The builds at the end are filed as independent work orders `871` to `879` in [prompts/finish/](../prompts/finish/).
 
 ---
 
@@ -138,10 +138,13 @@ Ranked by how much each one improves the product for users first, and how reshar
 | 5 | Physics-checked simulation-ready assets from text | The Lightwheel story, on a pipeline we already have. | ovphysx, ovrtx, OpenUSD | [875](../prompts/finish/875-nvidia-25-physics-validated-simready.md) |
 | 6 | A 3D face for the Nemotron Voice Agent blueprint | NVIDIA's voice agent has no face, and no avatar blueprint exists. We already ship Pipecat and LiveKit plugins. | Nemotron Voice Agent blueprint, Riva | [876](../prompts/finish/876-nvidia-26-voice-agent-blueprint-face.md) |
 | 7 | A watch for NVIDIA contests and calls for submissions | Contests are the only surface with a guaranteed feature for winners, and we have missed two. | (none; an alert) | [877](../prompts/finish/877-nvidia-27-nvidia-contest-and-event-watch.md) |
+| 8 | An avatar that says one line in every supported language | NVIDIA's Content Localization blueprint fixes lip sync on translated video after the fact. A 3D face animated from the audio gets it right by construction. | Magpie multilingual speech, Audio2Face-3D | [878](../prompts/finish/878-nvidia-28-multilingual-talking-avatar.md) |
+| 9 | An open pack of simulation-ready props made by Forge | NVIDIA publishes its own SimReady library as an open dataset; robotics teams never have enough varied objects. | OpenUSD, TRELLIS on our GPUs | [879](../prompts/finish/879-nvidia-29-open-simready-prop-dataset.md) |
 
 Considered and not filed:
 
 - **A G-Assist plug-in from our MCP server.** NVIDIA's builder converts MCP servers, so the work is small, but it can only be tested on a Windows RTX PC, which we do not have. Worth doing by whoever has that machine.
+- **The Retail Agentic Commerce blueprint.** Our agents already transact, but NVIDIA-facing material must stay free of payment and token vocabulary, so this is a poor fit for co-marketing.
 - **Tokkio or an Omniverse renderer for avatars.** It would replace the browser rendering that makes us different.
 - **DGX Cloud Lepton, a paid NIM license.** New paid services need owner approval and nothing here requires them.
 
