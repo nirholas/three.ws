@@ -34,6 +34,7 @@ import {
 	liveRouteTable,
 } from './server/dev-api-pages.mjs';
 import { devSecurityHeadersMiddleware } from './server/security-headers.mjs';
+import { devWebManifestMiddleware } from './server/dev-web-manifest.mjs';
 import { mfaGateMiddleware } from './server/mfa-gate.mjs';
 
 // The production route table (vercel.json), re-read when it changes, for the
@@ -322,6 +323,175 @@ function serveBuiltChat(req, res) {
 // (configResolved) aren't guaranteed the same PluginContext as Rollup hooks
 // (resolveId).
 let i18nExternalEntryIsBuild = true;
+
+// The PWA web manifest. vite-plugin-pwa writes it into dist/ at build time,
+// and the dev-web-manifest plugin serves this same object in `npm run dev`
+// (server/dev-web-manifest.mjs), so the two can never drift.
+const PWA_MANIFEST = {
+	name: 'three.ws: Give Your AI a Body',
+	short_name: 'three.ws',
+	description:
+		'Create 3D AI agents, give them a voice and body, trade them on-chain, and embed them anywhere. The 3D layer for the agentic web.',
+	lang: 'en',
+	dir: 'ltr',
+	theme_color: '#000000',
+	background_color: '#080814',
+	display: 'standalone',
+	display_override: ['window-controls-overlay', 'standalone', 'browser'],
+	orientation: 'natural',
+	scope: '/',
+	// Stable app identity for Windows and the Microsoft Store. Pinned to the
+	// resolved start_url so installs made before `id` existed keep their identity.
+	id: '/?source=pwa',
+	start_url: '/?source=pwa',
+	categories: ['productivity', 'entertainment', 'social', 'utilities'],
+	icons: [
+		{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+		{ src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+		// Maskable icons keep the glyph inside the central safe zone on a
+		// padded brand background; the plain icon has transparent corners
+		// that Android's circle/squircle masks used to crop into.
+		{ src: 'pwa-maskable-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+		{ src: 'pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+	],
+	// Android share sheet target (Seeker app + installed PWA): photos
+	// land in the selfie flow, GLB files in the upload flow. The POST is
+	// handled by public/share-target-sw.js, imported into the SW below.
+	share_target: {
+		action: '/create/share',
+		method: 'POST',
+		enctype: 'multipart/form-data',
+		params: {
+			title: 'title',
+			text: 'text',
+			url: 'url',
+			files: [
+				{
+					name: 'media',
+					accept: ['image/jpeg', 'image/png', 'image/webp', 'model/gltf-binary', '.glb'],
+				},
+			],
+		},
+	},
+	// Double-clicking a model in Windows Explorer (or "Open with") launches
+	// the installed app on /app, which reads the file through launchQueue
+	// locally (src/pwa/launch-files.js). Nothing is uploaded unless the
+	// user presses Save. Only formats the /app viewer loads are claimed.
+	file_handlers: [
+		{
+			action: '/app?source=file-handler',
+			accept: {
+				'model/gltf-binary': ['.glb'],
+				'model/gltf+json': ['.gltf'],
+				'model/vrm': ['.vrm'],
+			},
+			icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
+			launch_type: 'single-client',
+		},
+	],
+	// web+threews://agent/<id>, model/<uuid>, forge?prompt=... links from
+	// Teams, Outlook, documents or the Run box. /open validates them with
+	// src/pwa/protocol-link.js before navigating.
+	protocol_handlers: [{ protocol: 'web+threews', url: '/open?link=%s' }],
+	// A second launch (file, link, shortcut) reuses the open window instead
+	// of stacking new ones; navigate-existing re-delivers launch params.
+	launch_handler: { client_mode: ['navigate-existing', 'auto'] },
+	// Pin to the Edge sidebar. The panel opens start_url; pages/desktop.html
+	// forwards the "Edge Side Panel" client to the narrow /sidebar layout.
+	edge_side_panel: { preferred_width: 400 },
+	// Windows 11 widgets board. The host fetches the Adaptive Card
+	// template once from /api/glance/template and then asks the service
+	// worker (public/glance-sw.js) for data, which comes from
+	// /api/glance/mine. `auth: false` keeps the widget installable while
+	// signed out: the card itself renders a sign-in state rather than
+	// letting the host block the install behind an account.
+	widgets: [
+		{
+			name: 'Agent glance',
+			short_name: 'Agent',
+			description:
+				'Your three.ws agent at a glance: what it did today, and one tap back into it.',
+			tag: 'agent-glance',
+			template: 'agent-glance',
+			ms_ac_template: '/api/glance/template',
+			data: '/api/glance/mine',
+			type: 'application/json',
+			auth: false,
+			update: 900,
+			icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+			screenshots: [
+				{
+					src: 'screenshots/glance-widget.png',
+					sizes: '480x200',
+					label: 'The Agent glance widget on the Windows 11 widgets board',
+				},
+			],
+		},
+	],
+	shortcuts: [
+		{
+			name: 'Create Avatar',
+			short_name: 'Create',
+			description: 'Build a new 3D AI avatar',
+			url: '/create?source=pwa-shortcut',
+			icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+		},
+		{
+			name: 'Marketplace',
+			short_name: 'Discover',
+			description: 'Browse AI agents and avatars',
+			url: '/marketplace?source=pwa-shortcut',
+			icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+		},
+		{
+			name: 'My Agents',
+			short_name: 'My Agents',
+			description: 'Manage your AI agents',
+			// /agents is the public index of every agent; the owner's own
+			// agents live at /my-agents. The shortcut said "My Agents" and
+			// opened the public list for months.
+			url: '/my-agents?source=pwa-shortcut',
+			icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+		},
+	],
+	screenshots: [
+		{
+			src: 'screenshots/landing.png',
+			sizes: '1440x900',
+			type: 'image/png',
+			form_factor: 'wide',
+			label: 'three.ws home: Give Your AI a Body',
+		},
+		{
+			src: 'screenshots/create.png',
+			sizes: '1440x900',
+			type: 'image/png',
+			form_factor: 'wide',
+			label: 'Create a 3D avatar',
+		},
+		{
+			src: 'screenshots/discover.png',
+			sizes: '1440x900',
+			type: 'image/png',
+			form_factor: 'wide',
+			label: 'Discover AI agents on the marketplace',
+		},
+		{
+			src: 'screenshots/studio.png',
+			sizes: '1440x900',
+			type: 'image/png',
+			form_factor: 'wide',
+			label: 'Agent studio and customization',
+		},
+		{
+			src: 'screenshots/features.png',
+			sizes: '1400x900',
+			type: 'image/png',
+			form_factor: 'wide',
+			label: 'Platform features overview',
+		},
+	],
+};
 
 const appConfig = {
 	server: {
@@ -1343,6 +1513,15 @@ const appConfig = {
 				server.middlewares.use(devSecurityHeadersMiddleware(devRouteTable));
 				// Half-finished sign-ins go to /login/verify, as in production.
 				server.middlewares.use(mfaGateMiddleware());
+			},
+		},
+		// /manifest.webmanifest in dev: vite-plugin-pwa only emits it at build
+		// time, so without this every page load logged a manifest 404.
+		{
+			name: 'dev-web-manifest',
+			apply: 'serve',
+			configureServer(server) {
+				server.middlewares.use(devWebManifestMiddleware(PWA_MANIFEST));
 			},
 		},
 		// Page URLs production answers with an api/ handler (sitemaps, crawler
@@ -4088,171 +4267,7 @@ const appConfig = {
 			// emit, so embed entries still get the script removed.
 			injectRegister: 'script-defer',
 			includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-192x192.png', 'pwa-maskable-512x512.png', 'pwa-icon.svg'],
-			manifest: {
-				name: 'three.ws — Give Your AI a Body',
-				short_name: 'three.ws',
-				description:
-					'Create 3D AI agents, give them a voice and body, trade them on-chain, and embed them anywhere. The 3D layer for the agentic web.',
-				lang: 'en',
-				dir: 'ltr',
-				theme_color: '#000000',
-				background_color: '#080814',
-				display: 'standalone',
-				display_override: ['window-controls-overlay', 'standalone', 'browser'],
-				orientation: 'natural',
-				scope: '/',
-				// Stable app identity for Windows and the Microsoft Store. Pinned to the
-				// resolved start_url so installs made before `id` existed keep their identity.
-				id: '/?source=pwa',
-				start_url: '/?source=pwa',
-				categories: ['productivity', 'entertainment', 'social', 'utilities'],
-				icons: [
-					{ src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-					{ src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-					// Maskable icons keep the glyph inside the central safe zone on a
-					// padded brand background; the plain icon has transparent corners
-					// that Android's circle/squircle masks used to crop into.
-					{ src: 'pwa-maskable-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-					{ src: 'pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-				],
-				// Android share sheet target (Seeker app + installed PWA): photos
-				// land in the selfie flow, GLB files in the upload flow. The POST is
-				// handled by public/share-target-sw.js, imported into the SW below.
-				share_target: {
-					action: '/create/share',
-					method: 'POST',
-					enctype: 'multipart/form-data',
-					params: {
-						title: 'title',
-						text: 'text',
-						url: 'url',
-						files: [
-							{
-								name: 'media',
-								accept: ['image/jpeg', 'image/png', 'image/webp', 'model/gltf-binary', '.glb'],
-							},
-						],
-					},
-				},
-				// Double-clicking a model in Windows Explorer (or "Open with") launches
-				// the installed app on /app, which reads the file through launchQueue
-				// locally (src/pwa/launch-files.js). Nothing is uploaded unless the
-				// user presses Save. Only formats the /app viewer loads are claimed.
-				file_handlers: [
-					{
-						action: '/app?source=file-handler',
-						accept: {
-							'model/gltf-binary': ['.glb'],
-							'model/gltf+json': ['.gltf'],
-							'model/vrm': ['.vrm'],
-						},
-						icons: [{ src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' }],
-						launch_type: 'single-client',
-					},
-				],
-				// web+threews://agent/<id>, model/<uuid>, forge?prompt=... links from
-				// Teams, Outlook, documents or the Run box. /open validates them with
-				// src/pwa/protocol-link.js before navigating.
-				protocol_handlers: [{ protocol: 'web+threews', url: '/open?link=%s' }],
-				// A second launch (file, link, shortcut) reuses the open window instead
-				// of stacking new ones; navigate-existing re-delivers launch params.
-				launch_handler: { client_mode: ['navigate-existing', 'auto'] },
-				// Pin to the Edge sidebar. The panel opens start_url; pages/desktop.html
-				// forwards the "Edge Side Panel" client to the narrow /sidebar layout.
-				edge_side_panel: { preferred_width: 400 },
-				// Windows 11 widgets board. The host fetches the Adaptive Card
-				// template once from /api/glance/template and then asks the service
-				// worker (public/glance-sw.js) for data, which comes from
-				// /api/glance/mine. `auth: false` keeps the widget installable while
-				// signed out: the card itself renders a sign-in state rather than
-				// letting the host block the install behind an account.
-				widgets: [
-					{
-						name: 'Agent glance',
-						short_name: 'Agent',
-						description:
-							'Your three.ws agent at a glance: what it did today, and one tap back into it.',
-						tag: 'agent-glance',
-						template: 'agent-glance',
-						ms_ac_template: '/api/glance/template',
-						data: '/api/glance/mine',
-						type: 'application/json',
-						auth: false,
-						update: 900,
-						icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
-						screenshots: [
-							{
-								src: 'screenshots/glance-widget.png',
-								sizes: '480x200',
-								label: 'The Agent glance widget on the Windows 11 widgets board',
-							},
-						],
-					},
-				],
-				shortcuts: [
-					{
-						name: 'Create Avatar',
-						short_name: 'Create',
-						description: 'Build a new 3D AI avatar',
-						url: '/create?source=pwa-shortcut',
-						icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
-					},
-					{
-						name: 'Marketplace',
-						short_name: 'Discover',
-						description: 'Browse AI agents and avatars',
-						url: '/marketplace?source=pwa-shortcut',
-						icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
-					},
-					{
-						name: 'My Agents',
-						short_name: 'My Agents',
-						description: 'Manage your AI agents',
-						// /agents is the public index of every agent; the owner's own
-						// agents live at /my-agents. The shortcut said "My Agents" and
-						// opened the public list for months.
-						url: '/my-agents?source=pwa-shortcut',
-						icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
-					},
-				],
-				screenshots: [
-					{
-						src: 'screenshots/landing.png',
-						sizes: '1440x900',
-						type: 'image/png',
-						form_factor: 'wide',
-						label: 'three.ws home — Give Your AI a Body',
-					},
-					{
-						src: 'screenshots/create.png',
-						sizes: '1440x900',
-						type: 'image/png',
-						form_factor: 'wide',
-						label: 'Create a 3D avatar',
-					},
-					{
-						src: 'screenshots/discover.png',
-						sizes: '1440x900',
-						type: 'image/png',
-						form_factor: 'wide',
-						label: 'Discover AI agents on the marketplace',
-					},
-					{
-						src: 'screenshots/studio.png',
-						sizes: '1440x900',
-						type: 'image/png',
-						form_factor: 'wide',
-						label: 'Agent studio and customization',
-					},
-					{
-						src: 'screenshots/features.png',
-						sizes: '1400x900',
-						type: 'image/png',
-						form_factor: 'wide',
-						label: 'Platform features overview',
-					},
-				],
-			},
+			manifest: PWA_MANIFEST,
 			workbox: {
 				maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
 				// Pull in the Web Push handlers (push + notificationclick). Kept in
