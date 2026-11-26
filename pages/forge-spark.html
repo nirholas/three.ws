@@ -417,6 +417,7 @@
 		<script src="/model-viewer-meshopt.js"></script>
 		<script type="module">
 			import { resolveDevR2Url } from '/src/shared/dev-r2-proxy.js';
+			import { requestEnhance } from '/src/forge-enhance-request.js';
 
 			const form = document.getElementById('composer');
 			const promptEl = document.getElementById('prompt');
@@ -544,31 +545,23 @@
 			async function refinePrompt(raw) {
 				setStage('nemotron', 'active', 'refining');
 				showStatus('Nemotron is sharpening your prompt…');
-				try {
-					const r = await fetch('/api/forge-enhance', {
-						method: 'POST',
-						headers: { 'content-type': 'application/json' },
-						body: JSON.stringify({ prompt: raw, engine: 'nemotron' }),
-					});
-					if (!r.ok) throw new Error('enhance ' + r.status);
-					const data = await r.json();
-					const refined = (data.prompt || raw).trim();
-					const model = data.model || 'Nemotron';
-					const label = prettyModel(model, data.provider);
-					refinedEl.hidden = false;
-					refinedEl.innerHTML =
-						'<b>Refined prompt</b> · ' + escapeHtml(refined) +
-						'<span class="by">refined with ' + escapeHtml(label) + '</span>';
-					setStageWho('nemotron', label);
-					setStage('nemotron', 'done', 'done');
-					return refined;
-				} catch (err) {
-					// Quiet fallback: keep the original prompt, mark the stage done.
-					refinedEl.hidden = false;
-					refinedEl.innerHTML = '<b>Using your prompt as written.</b><span class="by">refine step unavailable, generating anyway</span>';
+				// requestEnhance always settles (a stalled request ends at its timeout)
+				// and only reports a rewrite when one actually came back, so the
+				// "Refined prompt" card never shows the user's own words as refined.
+				const out = await requestEnhance(raw, { body: { engine: 'nemotron' } });
+				refinedEl.hidden = false;
+				if (out.kind !== 'rewritten') {
+					refinedEl.innerHTML = '<b>Using your prompt as written.</b><span class="by">' + escapeHtml(out.message) + '</span>';
 					setStage('nemotron', 'done', 'skipped');
 					return raw;
 				}
+				const label = prettyModel(out.model || 'Nemotron', out.provider);
+				refinedEl.innerHTML =
+					'<b>Refined prompt</b> · ' + escapeHtml(out.prompt) +
+					'<span class="by">refined with ' + escapeHtml(label) + '</span>';
+				setStageWho('nemotron', label);
+				setStage('nemotron', 'done', 'done');
+				return out.prompt;
 			}
 
 			// Steps 2 + 3: FLUX paints a reference, TRELLIS reconstructs. /api/forge
