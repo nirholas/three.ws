@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-26T05:02:01.001Z",
+	"generated_at": "2026-11-26T05:39:31.501Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -419,8 +419,8 @@
 		{
 			"date": "2026-11-25",
 			"type": "update",
-			"title": "The text and image to 3D page now says what it is: three.ws Forge, AI 3D Model Generator",
-			"summary": "The /forge page heading now reads three.ws Forge: AI 3D Model Generator instead of a bare Forge, and its browser, search and share titles and description lead with the same words. Someone searching for a free AI 3D model generator can now tell from the result that this is one. It is the same free text and photo to 3D studio, and on narrow screens the heading and tagline wrap cleanly instead of squeezing into a column.",
+			"title": "The text and image to 3D page now says what it is: Forge, AI 3D Model Generator",
+			"summary": "The /forge page heading now reads Forge: AI 3D Model Generator instead of a bare Forge, and its browser, search and share titles and description lead with the same words. Someone searching for a free AI 3D model generator can now tell from the result that this is one. It is the same free text and photo to 3D studio, and on narrow screens the heading and tagline wrap cleanly instead of squeezing into a column.",
 			"link": "/forge",
 			"tags": [
 				"improvement"

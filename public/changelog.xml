@@ -335,12 +335,12 @@
 			<description>curl three.ws/tty/walk plays a person walking in profile. The same stream now has a flock of birds, a lit torus, a raymarched shader, a lathed solid, and a point garden whose banner states the real point count. A parade plays two walks in turn, meet draws both characters in one frame, and say puts your words above the walker. Glyph styles are half-block, braille, density, ASCII, a green matrix tint, and points.</description>
 		</item>
 		<item>
-			<title>The text and image to 3D page now says what it is: three.ws Forge, AI 3D Model Generator</title>
+			<title>The text and image to 3D page now says what it is: Forge, AI 3D Model Generator</title>
 			<link>https://three.ws/forge</link>
-			<guid isPermaLink="false">2026-11-25:The text and image to 3D page now says what it is: three.ws Forge, AI 3D Model Generator</guid>
+			<guid isPermaLink="false">2026-11-25:The text and image to 3D page now says what it is: Forge, AI 3D Model Generator</guid>
 			<pubDate>Wed, 25 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
-			<description>The /forge page heading now reads three.ws Forge: AI 3D Model Generator instead of a bare Forge, and its browser, search and share titles and description lead with the same words. Someone searching for a free AI 3D model generator can now tell from the result that this is one. It is the same free text and photo to 3D studio, and on narrow screens the heading and tagline wrap cleanly instead of squeezing into a column.</description>
+			<description>The /forge page heading now reads Forge: AI 3D Model Generator instead of a bare Forge, and its browser, search and share titles and description lead with the same words. Someone searching for a free AI 3D model generator can now tell from the result that this is one. It is the same free text and photo to 3D studio, and on narrow screens the heading and tagline wrap cleanly instead of squeezing into a column.</description>
 		</item>
 		<item>
 			<title>The Trenches page keeps showing recent data when the market service is slow</title>
