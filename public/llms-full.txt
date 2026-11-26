@@ -756,12 +756,6 @@ URL: https://three.ws/splat
 
 Render Gaussian-splat and radiance-field avatars in the browser: the photoreal output of engines like GaussianAvatars and HumanGaussian. Load a .ply / .splat / .ksplat by URL or upload; decoding runs entirely client-side.
 
-### X Video Downloader
-
-URL: https://three.ws/x-video
-
-Paste an X post link and download its video or GIF in every quality, with the post's likes, replies, reposts and views. Free, no account, no API key.
-
 ### Scene Capture: Video to 3D Point Cloud
 
 URL: https://three.ws/capture
@@ -5078,11 +5072,11 @@ URL: https://three.ws/docs/mcp-registry-sentinel
 
 The daily cron that diffs every MCP server three.ws ships against the official registry and npm, and raises one ops alert when the set of gaps changes. What it reads and what it reports.
 
-### Docs · X post reader and free video tool
+### Docs · X post reader
 
 URL: https://three.ws/docs/x-video
 
-One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.
+One official X API v2 reader for public X posts, shared by the price-impact tools: how it authenticates, what it returns and where it is used.
 
 ### Docs · Doc freshness, keeping docs true to the code
 
@@ -5432,11 +5426,11 @@ URL: https://three.ws/docs/the-first-19-weeks
 
 The founding three.ws roundup: a week-by-week record of everything shipped from the first commit on 2026-04-14 through 2026-08-25, with every launch, partnership, announcement, and where $THREE fits.
 
-### Docs · The $THREE thesis
+### Docs · How $THREE is used
 
 URL: https://three.ws/docs/three-thesis
 
-The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.
+What the $THREE utility token pays for on three.ws, how the treasury handles it, and the risks. Not an investment, no revenue routed to holders, not financial advice.
 
 ### Docs · Paid plans
 
@@ -6551,11 +6545,11 @@ URL: https://three.ws/blog/three-ws-google-cloud-partnership
 
 three.ws is joining forces with Google Cloud, bringing cloud-scale rendering and AI infrastructure to 3D on-chain agents.
 
-### three.ws Listed on Anthropic's Official MCP Registry
+### three.ws Listed on the Official MCP Registry
 
-URL: https://three.ws/blog/three-ws-on-anthropic-mcp-registry
+URL: https://three.ws/blog/three-ws-on-mcp-registry
 
-three.ws is now listed on Anthropic's official Model Context Protocol Registry, the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor, and more.
+three.ws is now listed on the official Model Context Protocol Registry (registry.modelcontextprotocol.io), a community-run directory of MCP servers that MCP clients can discover.
 
 ## Legal
 

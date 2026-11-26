@@ -1096,14 +1096,6 @@
 					"added": "2026-06-26"
 				},
 				{
-					"path": "/x-video",
-					"title": "X Video Downloader",
-					"description": "Paste an X post link and download its video or GIF in every quality, with the post's likes, replies, reposts and views. Free, no account, no API key.",
-					"priority": 0.7,
-					"changefreq": "monthly",
-					"added": "2026-10-23"
-				},
-				{
 					"path": "/capture",
 					"title": "Scene Capture: Video to 3D Point Cloud",
 					"description": "Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.",
@@ -6618,8 +6610,8 @@
 				},
 				{
 					"path": "/docs/x-video",
-					"title": "Docs · X post reader and free video tool",
-					"description": "One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.",
+					"title": "Docs · X post reader",
+					"description": "One official X API v2 reader for public X posts, shared by the price-impact tools: how it authenticates, what it returns and where it is used.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-10-23"
@@ -7047,8 +7039,8 @@
 				},
 				{
 					"path": "/docs/three-thesis",
-					"title": "Docs · The $THREE thesis",
-					"description": "The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.",
+					"title": "Docs · How $THREE is used",
+					"description": "What the $THREE utility token pays for on three.ws, how the treasury handles it, and the risks. Not an investment, no revenue routed to holders, not financial advice.",
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-08-25"
@@ -8546,9 +8538,9 @@
 					"added": "2026-05-25"
 				},
 				{
-					"path": "/blog/three-ws-on-anthropic-mcp-registry",
-					"title": "three.ws Listed on Anthropic's Official MCP Registry",
-					"description": "three.ws is now listed on Anthropic's official Model Context Protocol Registry, the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor, and more.",
+					"path": "/blog/three-ws-on-mcp-registry",
+					"title": "three.ws Listed on the Official MCP Registry",
+					"description": "three.ws is now listed on the official Model Context Protocol Registry (registry.modelcontextprotocol.io), a community-run directory of MCP servers that MCP clients can discover.",
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-04-30",

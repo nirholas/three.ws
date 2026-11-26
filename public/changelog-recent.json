@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-26T21:26:49.238Z",
+	"generated_at": "2026-11-26T23:44:59.785Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4754,
+	"total": 4758,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "A generation Forge fails no longer costs you an allowance",
+			"summary": "When Forge itself fails a request (a lane down, storage unavailable), the hourly generation allowance and the daily paid allowance are handed back. The daily cap now follows your account instead of a browser id, and its 429 says when it resets (UTC midnight) with Retry-After and rate-limit headers. Tool limits (remesh, stylize, segment and the rest) name themselves in the 429 so the page can say which limit you hit.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -42,11 +53,55 @@
 		{
 			"date": "2026-11-26",
 			"type": "update",
+			"title": "Forge keeps going when a backup lane refuses the job",
+			"summary": "When a 3D generation fails mid-job and the next backup engine refuses the handover, Forge now tries the following engine instead of ending the job, and the health report shows for each engine whether it is in rotation, cooling or disabled.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Forge seeds you can paste, check and reuse",
+			"summary": "The Forge page has a Seed field under Engine. Leave it empty for a new random model every time, or paste a seed to get the same model again; it remembers the seed after a reload and tells you right away if a value is not a whole number from 0 to 4294967295. After each run it shows the seed that run used, with a button to keep it. The API now refuses an out-of-range seed with that same message instead of quietly changing it, so two different seeds can no longer come back as the same model, and every engine now gets a seed it actually accepts.",
+			"link": "/forge",
+			"tags": [
+				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Forge text prompts get a working NVIDIA image rung again",
+			"summary": "The NVIDIA image step behind text-to-3D now uses FLUX.2 klein, which answers in about 6 seconds, instead of FLUX.1 models that hung on NVIDIA's gateway. It also gives up after 30 seconds so the next image provider keeps the rest of the request's time.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
 			"title": "Forge waits when the image engine asks it to",
 			"summary": "When the engine painting a text prompt's reference image says how long to wait, Forge now passes that wait to you instead of immediately asking again, which was refused and delayed your next try.",
 			"link": "/forge",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Match my photo no longer makes you wait out a 16 minute cold start",
+			"summary": "If Match my photo has not finished inside 7 minutes, your job now continues on the standard engine from your original photo and the page says so. When the lane's recent success rate is low, new photos go straight to the standard engine. The estimate on the page shows the lane's measured recent time instead of a fixed guess.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -1498,58 +1553,6 @@
 			"link": "/forge",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Generate Forge models straight into NVIDIA Omniverse with the three.ws Kit extension",
-			"summary": "The new threews.forge extension adds a Forge panel to any Kit 110 app such as USD Composer. Type a prompt or pick a reference image, press Generate, and the textured model is referenced into the open USD stage upright and to scale, at the world origin, the selected prim or in front of the camera, with live progress and cancel. A My models browser imports anything saved in your three.ws account. On an NVIDIA L4 a real image to 3D job went from Generate to framed in the stage in 78.5 seconds, and all 62 extension tests passed with no Kit errors. Install steps are in the extension's README.",
-			"link": "/docs/omniverse-extension",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Get a Teams notification when your 3D model finishes or an agent needs you",
-			"summary": "Link your three.ws account to Microsoft Teams by sending the bot a one-time code, and finished or failed 3D models, mentions, messages and (if you choose) agent task reports appear in your Teams activity feed and on your phone. Each event has its own switch in Settings, Notifications, with a button that sends a real test notification. Tapping a notification opens the three.ws tab on that model or agent. Uninstalling the app removes the link. A tenant admin approves notifications once with the TeamsActivity.Send permission, and settings shows the consent link if that is still missing.",
-			"link": null,
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Image understanding now picks the best NVIDIA Nemotron model for each job",
-			"summary": "Every feature that reads an image (photo checks before 3D generation, the forge quality gate, avatar alt text, scene object boxes, photo to diorama, and the image review behind X mentions) now asks the Nemotron vision model that scored best on that exact job in a measured test of 162 real tasks. Nemotron 3.5 Super VL leads overall, Bolt E4B handles the quality gate and avatar review, and Nemotron 3 Nano Omni writes alt text, each with the others behind it as fallback. A bug that turned the seed judge's scores into text when it repaired a reply is fixed, and photo to diorama now reports which model read your photo.",
-			"link": null,
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Microsoft community gallery samples",
-			"summary": "Three ready-to-submit samples for the Microsoft PnP galleries: a Copilot declarative agent, a Teams message extension with link unfurl and a SharePoint 3D viewer web part, each built to its gallery's rules and checked against production.",
-			"link": null,
-			"tags": [
-				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Microsoft Marketplace free trials, from activation to the first paid month",
-			"summary": "Plans bought on Microsoft Marketplace can now start with a free trial. The activation page says when the trial ends and what it becomes afterwards, using the price Microsoft publishes for the plan. While the trial runs, a slim banner under the site header shows the days left, what it converts to and a Manage in Microsoft link, and you can dismiss it for the session. You get one notification and one email a week before the trial ends and again the day before, never more. Microsoft bills nothing until the trial is over, and cancelling in Microsoft before then means no charge.",
-			"link": "/microsoft/activate",
-			"tags": [
-				"feature"
 			]
 		}
 	]

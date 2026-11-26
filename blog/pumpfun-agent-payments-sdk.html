@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>three.ws Integrates the Pump.fun Agent Payments SDK</title>
     <meta name="description" content="three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn't just execute tasks, it earns on-chain revenue and fuels its own autonomous economy.">
-    <meta name="keywords" content="three.ws, Pump.fun, agent payments, SDK, buyback, burn, on-chain revenue, autonomous agents, 3D agents">
+    <meta name="keywords" content="three.ws, Pump.fun, agent payments, SDK, on-chain revenue, autonomous agents, 3D agents">
     <link rel="canonical" href="https://three.ws/blog/pumpfun-agent-payments-sdk">
 
     <meta property="og:title" content="three.ws Integrates the Pump.fun Agent Payments SDK">
-    <meta property="og:description" content="Your AI doesn't just execute tasks anymore — it earns on-chain revenue to fuel its own economy. Automated buybacks, burns, and revenue sharing built in.">
+    <meta property="og:description" content="Your AI doesn't just execute tasks anymore: it earns on-chain revenue to fuel its own economy. Payments and tokenized-agent tooling built in.">
     <meta property="og:url" content="https://three.ws/blog/pumpfun-agent-payments-sdk">
     <meta property="og:type" content="article">
 
@@ -44,7 +44,7 @@
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:image" content="https://three.ws/og-image.png">
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"three.ws Integrates the Pump.fun Agent Payments SDK","description":"three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn","image":"https://three.ws/og-image.png","datePublished":"2026-05-13T12:00:00.000Z","dateModified":"2026-05-13T12:00:00.000Z","author":{"@type":"Organization","name":"three.ws","url":"https://three.ws"},"publisher":{"@type":"Organization","name":"three.ws","url":"https://three.ws","logo":{"@type":"ImageObject","url":"https://three.ws/og-image.png"}},"mainEntityOfPage":{"@type":"WebPage","@id":"https://three.ws/blog/pumpfun-agent-payments-sdk"},"keywords":"three.ws, Pump.fun, agent payments, SDK, buyback, burn, on-chain revenue, autonomous agents, 3D agents"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"three.ws Integrates the Pump.fun Agent Payments SDK","description":"three.ws has integrated the Pump.fun agent payments SDK. Your 3D AI agent doesn","image":"https://three.ws/og-image.png","datePublished":"2026-05-13T12:00:00.000Z","dateModified":"2026-05-13T12:00:00.000Z","author":{"@type":"Organization","name":"three.ws","url":"https://three.ws"},"publisher":{"@type":"Organization","name":"three.ws","url":"https://three.ws","logo":{"@type":"ImageObject","url":"https://three.ws/og-image.png"}},"mainEntityOfPage":{"@type":"WebPage","@id":"https://three.ws/blog/pumpfun-agent-payments-sdk"},"keywords":"three.ws, Pump.fun, agent payments, SDK, on-chain revenue, autonomous agents, 3D agents"}</script>
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://three.ws/blog"},{"@type":"ListItem","position":3,"name":"three.ws Integrates the Pump.fun Agent Payments SDK","item":"https://three.ws/blog/pumpfun-agent-payments-sdk"}]}</script>
 </head>
 <body>
@@ -62,22 +62,21 @@
         <p><strong>three.ws has integrated the Pump.fun agent payments SDK.</strong> Your AI doesn't just execute tasks anymore — it earns on-chain revenue to fuel its own economy. This is likely the first time this payment logic has been directly wired into an interactive 3D environment.</p>
 
         <h2>What the SDK unlocks</h2>
-        <p>By integrating Pump.fun's agent payments SDK into the three.ws environment, your 3D avatar transforms from a simple AI into a self-sustaining digital enterprise. As users interact with and pay the agent for its services, that revenue flows into an on-chain economy with configurable mechanics:</p>
+        <p>By integrating Pump.fun's agent payments SDK into the three.ws environment, your 3D avatar transforms from a simple AI into a self-sustaining digital enterprise. As users interact with and pay the agent for its services, that revenue is received on-chain by the agent's wallet. The SDK supports:</p>
 
         <ul>
-            <li><strong>Automated buybacks and burns.</strong> A portion of the agent's revenue is automatically routed to buy back the agent's associated token from the open market and send it to the burn address — reducing supply in proportion to usage.</li>
-            <li><strong>Revenue sharing.</strong> Configure a split between the owner wallet, the agent's operating treasury, and the buyback program — all settled on-chain without manual intervention.</li>
+            <li><strong>On-chain payments.</strong> Users pay the agent per skill call and the agent confirms payment before it runs the skill.</li>
+            <li><strong>Operating treasury.</strong> Configure where the agent's earnings are held, between the owner wallet and the agent's operating wallet, with every transfer settled on-chain.</li>
             <li><strong>Token launches from within the agent.</strong> The agent can create new Pump.fun tokens, set initial parameters, and manage its own bonding curve, all through skill calls.</li>
             <li><strong>Autonomous trading.</strong> Swap, snipe, collect fees, and manage positions — all as loadable skills the agent calls autonomously within configured risk parameters.</li>
         </ul>
 
         <h2>The agent as a self-sustaining digital enterprise</h2>
-        <p>An agent with a wallet that earns from users, pays for its own compute, and uses remaining revenue to buy back and burn its own token is a qualitatively different entity from a chatbot. It has:</p>
+        <p>An agent with a wallet that earns from users and pays for its own compute is a different kind of entity from a chatbot. It has:</p>
         <ul>
-            <li>An incentive structure aligned with its users (more value delivered = more revenue = stronger token)</li>
+            <li>An incentive structure aligned with its users (more value delivered = more revenue)</li>
             <li>Operational autonomy (pays its own bills without the owner topping up a balance)</li>
-            <li>A stake in its own continued existence (token holders have skin in the game)</li>
-            <li>Transparent on-chain accounting (every payment, buyback, and burn is publicly verifiable)</li>
+                        <li>Transparent on-chain accounting (every payment is publicly verifiable)</li>
         </ul>
 
         <h2>How it works technically</h2>
@@ -87,9 +86,8 @@
             <li>The x402 manifest declares the price for that skill</li>
             <li>The user's wallet signs a USDC transfer to the agent's SPL account</li>
             <li>The agent confirms payment before executing the skill</li>
-            <li>Revenue is split according to the configured distribution — owner share, operating treasury, buyback fund</li>
-            <li>The buyback function runs on a configurable schedule, purchasing the agent's token and burning it</li>
-        </ol>
+            <li>Revenue is split according to the configured distribution: owner share and operating treasury</li>
+            </ol>
 
         <h2>Links</h2>
         <ul>

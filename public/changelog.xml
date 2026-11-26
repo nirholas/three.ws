@@ -15,6 +15,14 @@
 			<description>coinFees() read pump.fun's /coins-v2/&lt;mint&gt; route, which now answers 404 for every coin. It reads the coin record from pump.fun's search route (exact mint match) and reports an unknown mint as coin_not_found. A custom coinsV2Base still reads &lt;base&gt;/&lt;mint&gt; for devnet backends.</description>
 		</item>
 		<item>
+			<title>A generation Forge fails no longer costs you an allowance</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:A generation Forge fails no longer costs you an allowance</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When Forge itself fails a request (a lane down, storage unavailable), the hourly generation allowance and the daily paid allowance are handed back. The daily cap now follows your account instead of a browser id, and its 429 says when it resets (UTC midnight) with Retry-After and rate-limit headers. Tool limits (remesh, stylize, segment and the rest) name themselves in the 429 so the page can say which limit you hit.</description>
+		</item>
+		<item>
 			<title>Coin pages show what each coin actually paid its creator again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-26:Coin pages show what each coin actually paid its creator again</guid>
@@ -31,12 +39,44 @@
 			<description>The text and image to 3D generator is now called Forge across three.ws, and Forge by three.ws inside the tools it plugs into: the Blender add-on, the ComfyUI nodes, the Omniverse extension, the Unity, Godot and Unreal bridges, the Modly extension, the Semantic Kernel, n8n, Raycast and Poe integrations, and the Blender MCP server. Shared Forge model pages now end their titles with &quot;Forge · three.ws&quot;, and Forge models carry &quot;Forge by three.ws&quot; as their generator credit in GLB and OpenUSD files. The desktop app keeps its installed name, three.ws Forge.</description>
 		</item>
 		<item>
+			<title>Forge keeps going when a backup lane refuses the job</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:Forge keeps going when a backup lane refuses the job</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When a 3D generation fails mid-job and the next backup engine refuses the handover, Forge now tries the following engine instead of ending the job, and the health report shows for each engine whether it is in rotation, cooling or disabled.</description>
+		</item>
+		<item>
+			<title>Forge seeds you can paste, check and reuse</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-26:Forge seeds you can paste, check and reuse</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Forge page has a Seed field under Engine. Leave it empty for a new random model every time, or paste a seed to get the same model again; it remembers the seed after a reload and tells you right away if a value is not a whole number from 0 to 4294967295. After each run it shows the seed that run used, with a button to keep it. The API now refuses an out-of-range seed with that same message instead of quietly changing it, so two different seeds can no longer come back as the same model, and every engine now gets a seed it actually accepts.</description>
+		</item>
+		<item>
+			<title>Forge text prompts get a working NVIDIA image rung again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:Forge text prompts get a working NVIDIA image rung again</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The NVIDIA image step behind text-to-3D now uses FLUX.2 klein, which answers in about 6 seconds, instead of FLUX.1 models that hung on NVIDIA's gateway. It also gives up after 30 seconds so the next image provider keeps the rest of the request's time.</description>
+		</item>
+		<item>
 			<title>Forge waits when the image engine asks it to</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-26:Forge waits when the image engine asks it to</guid>
 			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the engine painting a text prompt's reference image says how long to wait, Forge now passes that wait to you instead of immediately asking again, which was refused and delayed your next try.</description>
+		</item>
+		<item>
+			<title>Match my photo no longer makes you wait out a 16 minute cold start</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:Match my photo no longer makes you wait out a 16 minute cold start</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>If Match my photo has not finished inside 7 minutes, your job now continues on the standard engine from your original photo and the page says so. When the lane's recent success rate is low, new photos go straight to the standard engine. The estimate on the page shows the lane's measured recent time instead of a fixed guess.</description>
 		</item>
 		<item>
 			<title>Oracle coin pages say plainly when a coin has no score</title>
@@ -4823,12 +4863,12 @@
 			<description>How every signed Solana trade is sent through several landing providers at once: the provider table, first-confirmation-wins racing, per-provider landed and latency stats, failure-streak skipping with health probes, and the per-trade tip ceiling.</description>
 		</item>
 		<item>
-			<title>Docs · X post reader and free video tool</title>
+			<title>Docs · X post reader</title>
 			<link>https://three.ws/docs/x-video</link>
-			<guid isPermaLink="false">2026-10-23:Docs · X post reader and free video tool</guid>
+			<guid isPermaLink="false">2026-10-23:Docs · X post reader</guid>
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.</description>
+			<description>One official X API v2 reader for public X posts, shared by the price-impact tools: how it authenticates, what it returns and where it is used.</description>
 		</item>
 		<item>
 			<title>Docs: Agent self-onboarding</title>
@@ -4877,14 +4917,6 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Why build an agent on three.ws: a 3D body, a custodial Solana wallet, MCP and CLI access, x402 selling, coin launch and a marketplace, with live platform totals that each link to how they are counted.</description>
-		</item>
-		<item>
-			<title>X Video Downloader</title>
-			<link>https://three.ws/x-video</link>
-			<guid isPermaLink="false">2026-10-23:X Video Downloader</guid>
-			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Paste an X post link and download its video or GIF in every quality, with the post's likes, replies, reposts and views. Free, no account, no API key.</description>
 		</item>
 		<item>
 			<title>Agent memory now learns from trade results, and the decision trail has a verify endpoint</title>
@@ -12047,20 +12079,20 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<description>Every text-to-3D generation starts by painting a concept image, and until today that step leaned on two providers. When one of them was cut off and the other stalled, text prompts failed for hours. The painter now tries five independent sources in order: Google's image model, NVIDIA's FLUX.1-dev, two more FLUX providers routed through Hugging Face, and a keyless public service as the final fallback, all under one shared time budget so a slow provider hands off instead of holding your request. A finished model's status is also remembered, so checking on a done job answers instantly instead of re-scoring it every time.</description>
 		</item>
 		<item>
+			<title>Docs · How $THREE is used</title>
+			<link>https://three.ws/docs/three-thesis</link>
+			<guid isPermaLink="false">2026-08-25:Docs · How $THREE is used</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What the $THREE utility token pays for on three.ws, how the treasury handles it, and the risks. Not an investment, no revenue routed to holders, not financial advice.</description>
+		</item>
+		<item>
 			<title>Docs · Open-Source Footprint</title>
 			<link>https://three.ws/docs/open-source-footprint</link>
 			<guid isPermaLink="false">2026-08-25:Docs · Open-Source Footprint</guid>
 			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every registry, marketplace, community, and directory where three.ws code and listings live, with live links and the number behind each one.</description>
-		</item>
-		<item>
-			<title>Docs · The $THREE thesis</title>
-			<link>https://three.ws/docs/three-thesis</link>
-			<guid isPermaLink="false">2026-08-25:Docs · The $THREE thesis</guid>
-			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.</description>
 		</item>
 		<item>
 			<title>Docs · The First 19 Weeks</title>
@@ -36815,20 +36847,20 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<description>three.ws is joining forces with Google Cloud, bringing cloud-scale rendering and AI infrastructure to 3D on-chain agents.</description>
 		</item>
 		<item>
-			<title>three.ws Listed on Anthropic's Official MCP Registry</title>
-			<link>https://three.ws/blog/three-ws-on-anthropic-mcp-registry</link>
-			<guid isPermaLink="false">2026-05-25:three.ws Listed on Anthropic's Official MCP Registry</guid>
-			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>three.ws is now listed on Anthropic's official Model Context Protocol Registry, the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor, and more.</description>
-		</item>
-		<item>
 			<title>three.ws Listed on Coinbase x402 Bazaar and agentic.market</title>
 			<link>https://three.ws/blog/three-ws-x402-bazaar</link>
 			<guid isPermaLink="false">2026-05-25:three.ws Listed on Coinbase x402 Bazaar and agentic.market</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market, the app store and discovery layer for AI agents with 480k active agents and $50M in volume.</description>
+		</item>
+		<item>
+			<title>three.ws Listed on the Official MCP Registry</title>
+			<link>https://three.ws/blog/three-ws-on-mcp-registry</link>
+			<guid isPermaLink="false">2026-05-25:three.ws Listed on the Official MCP Registry</guid>
+			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>three.ws is now listed on the official Model Context Protocol Registry (registry.modelcontextprotocol.io), a community-run directory of MCP servers that MCP clients can discover.</description>
 		</item>
 		<item>
 			<title>three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face</title>
