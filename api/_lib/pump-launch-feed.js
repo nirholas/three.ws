@@ -9,6 +9,7 @@
 // open positions still exit via real on-chain re-quotes).
 
 import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
+import { collectCreatorCoins } from './pump-coin-search.js';
 
 const PUMP_FRONTEND_BASE = process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
 const FETCH_TIMEOUT_MS = 6_000;
@@ -129,9 +130,9 @@ export async function enrichCreatorStats(launch, solPrice = 0) {
 	const hit = _creatorCache.get(launch.creator);
 	let coins = hit && Date.now() - hit.t < 60_000 ? hit.v : null;
 	if (!coins) {
-		coins = await fetchJsonWithTimeout(
-			`${PUMP_FRONTEND_BASE}/coins/user-created-coins/${encodeURIComponent(launch.creator)}?offset=0&limit=100&includeNsfw=true`,
-		);
+		// pump.fun retired /coins/user-created-coins/<creator> on 2026-11-25; the
+		// listing route's `creator` filter, paged, is the replacement.
+		coins = await collectCreatorCoins((url) => fetchJsonWithTimeout(url), launch.creator);
 		if (_creatorCache.size > 500) _creatorCache.clear();
 		_creatorCache.set(launch.creator, { t: Date.now(), v: coins });
 	}

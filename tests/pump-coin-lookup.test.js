@@ -104,3 +104,36 @@ describe('searchPumpFun (command palette fallback)', () => {
 		]);
 	});
 });
+
+// pump.fun retired /coins/user-created-coins/<creator> the same day. The
+// listing route's `creator` filter replaces it, but only pages of 50 are exact.
+describe('collectCreatorCoins', () => {
+	it('pages the creator listing 50 at a time until a short page', async () => {
+		const { collectCreatorCoins } = await import('../api/_lib/pump-coin-search.js');
+		const CREATOR = 'THREEsyntheticCreator111111111111111111111';
+		const total = 117;
+		const asked = [];
+		const getJson = async (url) => {
+			const u = new URL(url);
+			asked.push(u);
+			const offset = Number(u.searchParams.get('offset'));
+			const limit = Number(u.searchParams.get('limit'));
+			return Array.from({ length: Math.max(0, Math.min(limit, total - offset)) }, (_, i) => ({ mint: `m${offset + i}`, creator: CREATOR }));
+		};
+		const coins = await collectCreatorCoins(getJson, CREATOR);
+		expect(coins).toHaveLength(117);
+		expect(asked.map((u) => [u.pathname, u.searchParams.get('creator'), u.searchParams.get('offset'), u.searchParams.get('limit')])).toEqual([
+			['/coins', CREATOR, '0', '50'],
+			['/coins', CREATOR, '50', '50'],
+			['/coins', CREATOR, '100', '50'],
+		]);
+		expect(await collectCreatorCoins(getJson, CREATOR, { max: 60 })).toHaveLength(60);
+	});
+
+	it('returns null when a page fails rather than under-counting', async () => {
+		const { collectCreatorCoins } = await import('../api/_lib/pump-coin-search.js');
+		let n = 0;
+		const getJson = async () => (n++ === 0 ? Array.from({ length: 50 }, (_, i) => ({ mint: `m${i}`, creator: 'C' })) : null);
+		expect(await collectCreatorCoins(getJson, 'C')).toBeNull();
+	});
+});

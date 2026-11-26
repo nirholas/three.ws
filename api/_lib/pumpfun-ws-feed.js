@@ -7,6 +7,7 @@ import WebSocket from 'ws';
 import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
 import { pumpPortalWsUrl, handlePumpPortalAck, isPumpPortalRefusal } from './pumpportal.js';
 import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
+import { pumpCoinSearchUrl, pickPumpCoin, collectCreatorCoins } from './pump-coin-search.js';
 
 const RECONNECT_DELAY_MS = 2_000;
 const MAX_RECONNECTS = 5;
@@ -447,10 +448,10 @@ function normalizeTrade(d, solPrice = 0) {
 // keep stalls bounded so a slow upstream can't pin the SSE worker.
 
 const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins';
-// Per-coin lookups use the v2 route: pump.fun retired `/coins/:mint` on this host
-// around 2026-09-17 (404 "Cannot GET"); `/coins-v2/:mint` returns the same fields.
-const PUMPFUN_COIN_DETAIL_API = 'https://frontend-api-v3.pump.fun/coins-v2';
-const PUMPFUN_USER_COINS_API = 'https://frontend-api-v3.pump.fun/coins/user-created-coins';
+// pump.fun retired `/coins-v2/:mint` and `/coins/user-created-coins/:creator`
+// on 2026-11-25. The coin record comes from its search route (exact mint match)
+// and the creator's launches from the listing route's `creator` filter; both
+// URL builders live in pump-coin-search.js.
 const ENRICH_TIMEOUT_MS = 2_500;
 const COIN_CACHE_TTL_MS = 30_000;
 const _coinCache = new Map();
@@ -472,7 +473,7 @@ async function fetchJsonWithTimeout(url, ms = ENRICH_TIMEOUT_MS) {
 async function fetchCoin(mint) {
 	const hit = _coinCache.get(mint);
 	if (hit && Date.now() - hit.t < COIN_CACHE_TTL_MS) return hit.v;
-	const v = await fetchJsonWithTimeout(`${PUMPFUN_COIN_DETAIL_API}/${encodeURIComponent(mint)}`);
+	const v = pickPumpCoin(await fetchJsonWithTimeout(pumpCoinSearchUrl(mint)), mint);
 	if (_coinCache.size > 500) _coinCache.clear();
 	_coinCache.set(mint, { t: Date.now(), v });
 	return v;
@@ -482,9 +483,7 @@ async function fetchCreatorCoins(creator) {
 	if (!creator) return null;
 	const hit = _creatorCache.get(creator);
 	if (hit && Date.now() - hit.t < COIN_CACHE_TTL_MS) return hit.v;
-	const v = await fetchJsonWithTimeout(
-		`${PUMPFUN_USER_COINS_API}/${encodeURIComponent(creator)}?offset=0&limit=50&includeNsfw=true`,
-	);
+	const v = await collectCreatorCoins((url) => fetchJsonWithTimeout(url), creator);
 	if (_creatorCache.size > 500) _creatorCache.clear();
 	_creatorCache.set(creator, { t: Date.now(), v });
 	return v;

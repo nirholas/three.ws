@@ -36,7 +36,7 @@
 import { cacheGet, cacheSet } from './cache.js';
 import { pumpCoinSearchUrl, pickPumpCoin } from './pump-coin-search.js';
 
-export { pumpCoinSearchUrl, pickPumpCoin, pumpSearchUrl, solanaSearchRows } from './pump-coin-search.js';
+export { pumpCoinSearchUrl, pickPumpCoin, pumpSearchUrl, solanaSearchRows, pumpCreatorCoinsUrl, collectCreatorCoins } from './pump-coin-search.js';
 
 export const PUMP_FRONTEND_BASE =
 	process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';

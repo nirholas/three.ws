@@ -31,6 +31,46 @@ export function pumpCoinSearchUrl(mint) {
 	return pumpSearchUrl(mint, 5);
 }
 
+// Page size for the creator listing. Pages of 50 are exact; a larger `limit`
+// returns an arbitrary subset (limit=100 gave 70 of a creator's 117 coins).
+export const PUMP_CREATOR_PAGE = 50;
+
+/**
+ * One page of the coins a creator launched. Replaces
+ * GET /coins/user-created-coins/<creator>, retired on 2026-11-25; the listing
+ * route still honours a `creator` filter (verified: every row matches).
+ */
+export function pumpCreatorCoinsUrl(creator, offset = 0) {
+	const url = new URL('/coins', PUMP_SEARCH_BASE);
+	url.searchParams.set('creator', String(creator));
+	url.searchParams.set('offset', String(Math.max(0, Math.floor(offset))));
+	url.searchParams.set('limit', String(PUMP_CREATOR_PAGE));
+	url.searchParams.set('includeNsfw', 'true');
+	return url.toString();
+}
+
+/**
+ * Every coin a creator launched, up to `max`, paging the listing route.
+ * `getJson(url)` is the caller's own fetcher (parsed body, or null on
+ * failure), so this module stays import-free. Returns null when any page
+ * fails: a partial list would under-count the creator's launches.
+ *
+ * @param {(url: string) => Promise<any>} getJson
+ * @param {string} creator
+ * @param {{ max?: number }} [opts]
+ * @returns {Promise<Array<object>|null>}
+ */
+export async function collectCreatorCoins(getJson, creator, { max = 200 } = {}) {
+	const out = [];
+	for (let offset = 0; offset < max; offset += PUMP_CREATOR_PAGE) {
+		const rows = rowsFrom(await getJson(pumpCreatorCoinsUrl(creator, offset)));
+		if (!rows) return null;
+		out.push(...rows.filter((c) => c && c.creator === creator));
+		if (rows.length < PUMP_CREATOR_PAGE) break;
+	}
+	return out.slice(0, max);
+}
+
 /** Pull the coin array out of either accepted search envelope. */
 function rowsFrom(body) {
 	if (Array.isArray(body)) return body;
