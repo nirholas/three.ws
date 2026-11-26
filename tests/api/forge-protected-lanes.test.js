@@ -22,6 +22,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { resetImageRungBreakers } from '../../api/_lib/image-rung-breaker.js';
 
 // ── Network-boundary stubs (hoisted) ─────────────────────────────────────────
 
@@ -178,7 +179,10 @@ const VARS = [
 const saved = {};
 const ORIGINAL_FETCH = globalThis.fetch;
 
-beforeEach(() => {
+beforeEach(async () => {
+	// Every rung starts with a closed breaker: the breaker keeps its state in
+	// the shared cache, which outlives a single test.
+	await resetImageRungBreakers();
 	for (const v of VARS) {
 		saved[v] = process.env[v];
 		delete process.env[v];

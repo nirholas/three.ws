@@ -16,6 +16,7 @@
 // The accepted range of each engine is documented in api/_lib/forge-seed.js.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { resetImageRungBreakers } from '../api/_lib/image-rung-breaker.js';
 
 process.env.NVIDIA_API_KEY = 'nim-key';
 process.env.HF_TOKEN = 'hf-token';
@@ -165,7 +166,10 @@ const sse = (output) =>
 
 const sent = [];
 const ORIGINAL_FETCH = globalThis.fetch;
-beforeEach(() => {
+beforeEach(async () => {
+	// Every rung starts with a closed breaker: the breaker keeps its state in
+	// the shared cache, which outlives a single test.
+	await resetImageRungBreakers();
 	sent.length = 0;
 	globalThis.fetch = vi.fn(async (url, init = {}) => {
 		const u = String(url);
