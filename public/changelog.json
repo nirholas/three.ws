@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-26T06:46:06.593Z",
+	"generated_at": "2026-11-26T06:48:54.324Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -34,6 +34,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Pocket stops asking for private avatar bodies",
+			"summary": "A public agent can wear an avatar its owner keeps private. The /pocket console still loaded those bodies by avatar id, so 13 of the 24 roster agents logged a 404 and showed the boot error path. Visitors now get the agent's default body for a private avatar, while the owner still sees their own.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

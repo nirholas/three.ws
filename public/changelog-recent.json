@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-26T06:46:06.685Z",
+	"generated_at": "2026-11-26T06:48:54.376Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4752,
+	"total": 4753,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -37,6 +37,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Pocket stops asking for private avatar bodies",
+			"summary": "A public agent can wear an avatar its owner keeps private. The /pocket console still loaded those bodies by avatar id, so 13 of the 24 roster agents logged a 404 and showed the boot error path. Visitors now get the agent's default body for a private avatar, while the owner still sees their own.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1540,16 +1550,6 @@
 			"link": "/microsoft/activate",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Microsoft Phi joins the self-hosted model fleet",
-			"summary": "Microsoft's open Phi-4-mini model is built and tested on three.ws's own GPU fleet, with streaming and tool calling, ready to switch on as a brain an agent can pick by name. We tested it against the current default on 91 real platform tasks and published the results: it trails on every one, so it does not take over any internal work by default yet. If the Phi lane is slow or down, requests move to the next model automatically.",
-			"link": "/docs/phi-brain-lane",
-			"tags": [
-				"feature"
 			]
 		}
 	]

@@ -31,6 +31,14 @@
 			<description>The text and image to 3D generator is now called Forge across three.ws, and Forge by three.ws inside the tools it plugs into: the Blender add-on, the ComfyUI nodes, the Omniverse extension, the Unity, Godot and Unreal bridges, the Modly extension, the Semantic Kernel, n8n, Raycast and Poe integrations, and the Blender MCP server. Shared Forge model pages now end their titles with &quot;Forge · three.ws&quot;, and Forge models carry &quot;Forge by three.ws&quot; as their generator credit in GLB and OpenUSD files. The desktop app keeps its installed name, three.ws Forge.</description>
 		</item>
 		<item>
+			<title>Pocket stops asking for private avatar bodies</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:Pocket stops asking for private avatar bodies</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A public agent can wear an avatar its owner keeps private. The /pocket console still loaded those bodies by avatar id, so 13 of the 24 roster agents logged a 404 and showed the boot error path. Visitors now get the agent's default body for a private avatar, while the owner still sees their own.</description>
+		</item>
+		<item>
 			<title>pump.fun skill scripts read coins again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-26:pump.fun skill scripts read coins again</guid>
