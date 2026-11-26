@@ -4209,7 +4209,7 @@ solid threews_avatar
 endsolid threews_avatar
 ```
 
-<sub>A 3D avatar generated from a one-line text prompt on [three.ws Forge](https://three.ws/forge) (free), simplified from 10,194 to 600 triangles by `readme-3d`, and embedded right here in this README. Interactive on github.com - other markdown renderers show the raw STL text.</sub>
+<sub>A 3D avatar generated from a one-line text prompt on [Forge by three.ws](https://three.ws/forge) (free), simplified from 10,194 to 600 triangles by `readme-3d`, and embedded right here in this README. Interactive on github.com - other markdown renderers show the raw STL text.</sub>
 
 ## Quick start
 
@@ -4301,7 +4301,7 @@ GitHub renders markdown files up to **512 KB** - beyond that the whole file disp
 
 ## The full text-to-README pipeline
 
-You don't even need a model. [three.ws Forge](https://three.ws/forge) generates a textured GLB from a text prompt, free, no account:
+You don't even need a model. [Forge by three.ws](https://three.ws/forge) generates a textured GLB from a text prompt, free, no account:
 
 ```bash
 # Submit a text→3D job, then poll until status is "done"

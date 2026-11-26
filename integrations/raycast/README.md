@@ -1,6 +1,6 @@
 # Three.ws Forge for Raycast
 
-Describe an object, get a textured 3D model (GLB) from the free three.ws Forge lane. There is nothing to pay, but making a model needs a free three.ws account, so every model has an owner who can publish or delete it (new models stay unlisted until you publish them).
+Describe an object, get a textured 3D model (GLB) from the free Forge lane on three.ws. There is nothing to pay, but making a model needs a free three.ws account, so every model has an owner who can publish or delete it (new models stay unlisted until you publish them).
 
 ## Use
 

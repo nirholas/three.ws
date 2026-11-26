@@ -9,7 +9,7 @@ is on the Registry, ComfyUI Manager lists it automatically.
 |---|---|
 | Node id (`[project] name`, immutable) | `comfyui-three-ws` |
 | Publisher id (`[tool.comfy] PublisherId`, immutable) | `threews` |
-| Display name | `three.ws Forge` |
+| Display name | `Forge by three.ws` |
 | Version | `1.0.0` |
 | License | Apache-2.0 (`three_ws_nodes/LICENSE`) |
 | Icon | <https://three.ws/apple-touch-icon.png> (180x180 PNG) |
@@ -47,7 +47,7 @@ These need a human account, so they are the only steps left.
    ```bash
    cd integrations/comfyui/three_ws_nodes
    comfy node validate
-   comfy node publish --changelog "First release: Text to 3D and Image to 3D nodes backed by three.ws Forge"
+   comfy node publish --changelog "First release: Text to 3D and Image to 3D nodes backed by Forge by three.ws"
    ```
 
    Paste the API key when prompted (right-click paste on Windows; Ctrl+V can

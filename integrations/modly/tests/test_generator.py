@@ -4,7 +4,7 @@ The generator is loaded the way Modly's direct mode loads it: by file path,
 with the extension folder and Modly's ``services.generators.base`` importable.
 ``host/`` holds a copy of Modly's real ``BaseGenerator`` so the contract under
 test is the one the extension plugs into. A real in-process HTTP server stands
-in for three.ws Forge (no live network). Run with:
+in for Forge by three.ws (no live network). Run with:
 
     python -m unittest discover -s integrations/modly/tests -p 'test_*.py'
 """

@@ -455,7 +455,7 @@ export function parseWorkflow(input, types) {
 		}
 	}
 	if (!data || typeof data !== 'object') throw new Error('That file does not contain a workflow.');
-	if (data.kind !== WORKFLOW_KIND) throw new Error('That file is not a three.ws Forge workflow.');
+	if (data.kind !== WORKFLOW_KIND) throw new Error('That file is not a Forge workflow.');
 	if (typeof data.version !== 'number' || data.version > WORKFLOW_VERSION) {
 		throw new Error('That workflow was saved by a newer version of the builder. Reload the page and try again.');
 	}

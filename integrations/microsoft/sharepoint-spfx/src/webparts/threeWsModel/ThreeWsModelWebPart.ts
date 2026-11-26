@@ -1,6 +1,6 @@
 /**
  * three.ws 3D Model web part: an interactive 3D model on a modern SharePoint
- * page, picked from the three.ws Forge gallery or given as any https GLB URL.
+ * page, picked from the Forge gallery on three.ws or given as any https GLB URL.
  */
 import { IPropertyPaneField } from '@microsoft/sp-property-pane';
 import { ThemeChangedEventArgs, ThemeProvider } from '@microsoft/sp-component-base';

@@ -131,7 +131,7 @@ export const toolDefs = [
 		description:
 			'Use this when a 3D model has to run in a physics simulator or a USD pipeline (NVIDIA Omniverse, Isaac Sim, ' +
 			'synthetic-data generation) rather than only render on the web. ' +
-			'Convert a three.ws Forge model (creation_id) or any public GLB (glb_url) into a validated OpenUSD package ' +
+			'Convert a Forge model (creation_id) or any public GLB (glb_url) into a validated OpenUSD package ' +
 			'for NVIDIA Omniverse and Isaac Sim, with physics already set up: convex collision hulls (CoACD), a rigid ' +
 			'body whose mass is hull volume times a density for the object class, a friction and restitution material, ' +
 			'semantic class labels for synthetic-data annotators, and UsdSkel skeletons and animations for rigged ' +
@@ -144,7 +144,7 @@ export const toolDefs = [
 			type: 'object',
 			additionalProperties: false,
 			properties: {
-				creation_id: { type: 'string', description: 'A public or unlisted three.ws Forge creation id (UUID).' },
+				creation_id: { type: 'string', description: 'A public or unlisted Forge creation id (UUID).' },
 				glb_url: { type: 'string', format: 'uri', description: 'Public https URL of a .glb, when there is no creation id.' },
 				job: { type: 'string', description: 'A job id a previous call returned; polls it instead of starting an export.' },
 				prompt: { type: 'string', maxLength: 2000, description: 'What the object is. Picks the semantic class, typical size and density. Defaults to the creation prompt.' },

@@ -60,7 +60,7 @@
 				"three.ws/forge-max opens the Forge with its top tier already pinned: 200k-poly geometry, 4K PBR textures, and the engine picked by what you asked for."
 			],
 			"altText": [
-				"The three.ws Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing."
+				"The Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing."
 			]
 		},
 		"summary": "Every factual element (200k-poly geometry, 4K PBR textures, pinned top tier, subject-based engine routing) is on the live page quote and confirmed by passing page, API, and browser probes. The screenshot matches the live copy, alt text describes the image accurately, and the post sits inside the 100-179 band in the house voice; ship it.",

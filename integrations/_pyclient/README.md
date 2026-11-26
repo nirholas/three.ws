@@ -1,4 +1,4 @@
-# three.ws Forge Python client (canonical copy)
+# Forge by three.ws Python client (canonical copy)
 
 `three_ws_client.py` is the single source of truth for the Python wrapper around
 the public Forge generation contract (`api/forge.js` + `api/forge-upload.js`).

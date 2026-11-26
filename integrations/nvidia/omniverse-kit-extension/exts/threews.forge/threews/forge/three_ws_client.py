@@ -1,4 +1,4 @@
-"""three.ws Forge client, shared by the Blender add-on, the ComfyUI nodes and the Modly extension.
+"""Forge by three.ws client, shared by the Blender add-on, the ComfyUI nodes and the Modly extension.
 
 Single source of truth for the public Forge generation contract
 (``api/forge.js`` + ``api/forge-upload.js``). Stdlib-only (``urllib``) so it
@@ -135,7 +135,7 @@ def content_type_for_path(path: str) -> str:
 
 
 class ThreeWSClient:
-    """Submit, poll, and download three.ws Forge generations.
+    """Submit, poll, and download Forge generations on three.ws.
 
     Parameters
     ----------

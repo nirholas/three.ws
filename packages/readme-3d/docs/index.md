@@ -24,7 +24,7 @@ Paste any ASCII STL into the **[playground](playground.html)** to preview exactl
 
 1. **[Hello, 3D markdown](tutorials/01-hello-3d-markdown.md)** - your first embedded model in five minutes, no tools required
 2. **[Convert a GLB](tutorials/02-convert-a-glb.md)** - the CLI end to end: convert, budget, tune
-3. **[Text → 3D → README](tutorials/03-text-to-3d-avatar.md)** - generate a model from a text prompt with the free three.ws Forge API and embed it
+3. **[Text → 3D → README](tutorials/03-text-to-3d-avatar.md)** - generate a model from a text prompt with the free Forge API on three.ws and embed it
 4. **[Size budgets](tutorials/04-size-budgets.md)** - the exact math of GitHub's 512 KB render limit
 5. **[Beyond the README](tutorials/05-issues-prs-discussions.md)** - 3D in issues, PR reviews, discussions, gists, and printing projects
 

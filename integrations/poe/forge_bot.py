@@ -1,6 +1,6 @@
 """Poe server bot that turns a chat message into a textured 3D model (GLB).
 
-It wraps the free three.ws Forge lane (``POST /api/forge``, polled on
+It wraps the free Forge lane on three.ws (``POST /api/forge``, polled on
 ``GET /api/forge?job=``) through the shared stdlib client. Making a model needs
 a three.ws account, and a Poe user cannot hand the bot one, so the bot runs
 under its operator's account: set ``THREE_WS_API_KEY`` to a key from

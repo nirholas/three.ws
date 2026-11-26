@@ -44,7 +44,7 @@ curl -s https://three.ws/api/x402/forge
 ```jsonc
 {
   "route": "/api/x402/forge",
-  "description": "three.ws Forge: pay-per-call text→3D and image→3D ...",
+  "description": "Forge by three.ws: pay-per-call text→3D and image→3D ...",
   "method": "POST",
   "input_schema": { "$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object", "properties": { /* … */ } },
   "poll": "GET /api/forge?job=<id>",
@@ -121,7 +121,7 @@ curl -s -X POST https://three.ws/api/x402/forge \
   "error": "X-PAYMENT header is required",
   "resource": {
     "url": "https://three.ws/api/x402/forge",
-    "serviceName": "three.ws Forge: text/image to 3D",
+    "serviceName": "Forge: AI 3D Model Generator",
     "tags": ["3d", "ai", "text-to-3d", "image-to-3d", "utility"]
   },
   "accepts": [

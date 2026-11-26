@@ -129,7 +129,7 @@ export function buildDescription({ prompt, creationId, source }) {
 	const forge = showcaseLink('/forge');
 	const fixed = [
 		'',
-		`AI-generated on the three.ws Forge (text to 3D). ${pickLine}`,
+		`AI-generated on Forge by three.ws (text to 3D). ${pickLine}`,
 		'',
 		`View and remix in the browser: ${share}`,
 		`Forge your own, free, no account: ${forge}`,

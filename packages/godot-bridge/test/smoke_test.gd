@@ -1,4 +1,4 @@
-## Headless end-to-end smoke test against the LIVE three.ws Forge API.
+## Headless end-to-end smoke test against the LIVE Forge API on three.ws.
 ## No mock server: this is the exact contract in specs/ENGINE_BRIDGE.md
 ## exercised for real. Run with:
 ##

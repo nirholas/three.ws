@@ -14,7 +14,7 @@ This is a reference surface, not an endorsement and not a leaderboard. It exists
 | --- | --- | --- |
 | Photoreal head avatars | 5 | Gaussian-splat and neural-field heads reconstructed from video, the current state of the art for realistic faces |
 | Image to 3D human | 5 | One photo (or a few) into a posed, clothed, textured 3D human you can rig |
-| Text / image to 3D avatar | 5 | Generative pipelines that author a whole avatar from a prompt, the lane three.ws Forge lives in |
+| Text / image to 3D avatar | 5 | Generative pipelines that author a whole avatar from a prompt, the lane Forge lives in |
 | Parametric body and face models | 4 | The statistical human models nearly every method above is built on, the foundation layer |
 | Production and interop | 5 | Battle-tested avatar formats and platforms, the rigs three.ws already loads and animates |
 

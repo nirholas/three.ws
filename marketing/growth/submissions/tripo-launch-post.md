@@ -27,7 +27,7 @@ produced), or any deal term (none agreed).
 
 ## Post draft
 
-**Title:** Tripo is now a built-in engine in the three.ws Forge
+**Title:** Tripo is now a built-in engine in Forge by three.ws
 
 Tripo already ran in four places inside three.ws: the v3.1 model as a Forge lane, TripoSG
 behind our sketch-to-3D tool, TripoSR in the free photo-to-3D chain, and TripoSplat behind

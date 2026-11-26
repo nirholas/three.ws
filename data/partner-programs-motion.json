@@ -8,7 +8,7 @@
 		},
 		{
 			"name": "Blender",
-			"angle": "Submit the packaged three.ws Forge extension to Blender Extensions (free); the Development Fund is a paid, optional follow-up.",
+			"angle": "Submit the packaged Forge by three.ws extension to Blender Extensions (free); the Development Fund is a paid, optional follow-up.",
 			"moonshot": true
 		},
 		{
@@ -196,7 +196,7 @@
 		{
 			"id": "blender-blender-extensions-platform",
 			"company": "Blender",
-			"program": "Blender Extensions platform (three.ws Forge add-on)",
+			"program": "Blender Extensions platform (Forge by three.ws add-on)",
 			"kind": "directory",
 			"status": "research",
 			"url": "https://extensions.blender.org/about/",

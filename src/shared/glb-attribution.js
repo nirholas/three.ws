@@ -12,7 +12,7 @@
 const GLB_MAGIC = 0x46546c67; // 'glTF'
 const CHUNK_JSON = 0x4e4f534a; // 'JSON'
 
-export const FORGE_GENERATOR = 'three.ws Forge — text/image → 3D (https://three.ws/forge)';
+export const FORGE_GENERATOR = 'Forge by three.ws: text/image to 3D (https://three.ws/forge)';
 
 /**
  * @param {ArrayBuffer} buffer  A complete .glb file.

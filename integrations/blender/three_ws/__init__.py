@@ -1,6 +1,6 @@
-"""three.ws Forge: Blender extension.
+"""Forge by three.ws: Blender extension.
 
-Generate a 3D model from a text prompt or a reference image with three.ws Forge,
+Generate a 3D model from a text prompt or a reference image with Forge by three.ws,
 without leaving Blender. The "360 Capture" panel (``capture360_ui``) sends 360
 footage to three.ws and imports the finished splat or depth shell. The model is reconstructed on three.ws (FLUX→TRELLIS by
 default, or the Meshy/Tripo geometry path with your own key), then imported into
@@ -420,7 +420,7 @@ class THREEWS_OT_check_catalog(Operator):
 # -- panel --------------------------------------------------------------------
 
 class THREEWS_PT_panel(Panel):
-    bl_label = "three.ws Forge"
+    bl_label = "Forge by three.ws"
     bl_idname = "THREEWS_PT_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"

@@ -19,12 +19,12 @@ namespace ThreeWs.ForgeBridge.Editor
 		[MenuItem("Window/three.ws/Forge Bridge")]
 		public static void Open()
 		{
-			GetWindow<ThreeWsForgeWindow>("three.ws Forge");
+			GetWindow<ThreeWsForgeWindow>("Forge by three.ws");
 		}
 
 		private void OnGUI()
 		{
-			EditorGUILayout.LabelField("three.ws Forge", EditorStyles.boldLabel);
+			EditorGUILayout.LabelField("Forge by three.ws", EditorStyles.boldLabel);
 			EditorGUILayout.Space();
 
 			_prompt = EditorGUILayout.TextField("Prompt", _prompt);
@@ -92,7 +92,7 @@ namespace ThreeWs.ForgeBridge.Editor
 					return;
 				}
 
-				Undo.RegisterCreatedObjectUndo(imported, "Generate from three.ws Forge");
+				Undo.RegisterCreatedObjectUndo(imported, "Generate from Forge by three.ws");
 				Selection.activeGameObject = imported;
 				_status = $"Imported {downloaded.Bytes} bytes.";
 			}

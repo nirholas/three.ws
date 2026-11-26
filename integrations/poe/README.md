@@ -1,6 +1,6 @@
-# three.ws Forge bot for Poe
+# Forge by three.ws bot for Poe
 
-A Poe server bot. Send a description, get a textured 3D model (GLB) from the free three.ws Forge lane: status updates while it renders, then a GLB download link, a three.ws viewer link and, when Forge returns one, a preview image.
+A Poe server bot. Send a description, get a textured 3D model (GLB) from the free Forge lane on three.ws: status updates while it renders, then a GLB download link, a three.ws viewer link and, when Forge returns one, a preview image.
 
 ```
 a small wooden chair

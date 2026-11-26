@@ -77,7 +77,7 @@ Your own library, agents and wallet need the authenticated servers: see [Install
 
 ### Meet the avatar: a live 3D model, right here in markdown
 
-Drag to rotate. This is not an image or a video: it is an interactive 3D model rendered natively by GitHub. The avatar was generated from a one-line text prompt on [three.ws Forge](https://three.ws/forge) (free tier), decimated to 1,200 triangles, and embedded as ASCII STL with [readme-3d](packages/readme-3d), our open-source toolkit for putting 3D models in any GitHub README, issue, or discussion.
+Drag to rotate. This is not an image or a video: it is an interactive 3D model rendered natively by GitHub. The avatar was generated from a one-line text prompt on [Forge](https://three.ws/forge) (free tier), decimated to 1,200 triangles, and embedded as ASCII STL with [readme-3d](packages/readme-3d), our open-source toolkit for putting 3D models in any GitHub README, issue, or discussion.
 
 ```stl
 solid threews_avatar

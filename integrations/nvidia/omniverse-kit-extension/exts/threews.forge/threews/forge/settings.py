@@ -1,4 +1,4 @@
-"""Persistent settings for the three.ws Forge extension.
+"""Persistent settings for the Forge by three.ws extension.
 
 Values live under ``/persistent/exts/threews.forge/`` in carb settings, so Kit
 writes them to the user's ``user.config.json`` and they survive restarts. The

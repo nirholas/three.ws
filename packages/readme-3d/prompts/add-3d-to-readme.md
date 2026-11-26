@@ -9,7 +9,7 @@ Add an interactive 3D model to my README using GitHub's native STL-in-markdown r
 Model source: [path/to/model.glb - or describe the model you want generated]
 
 Steps:
-1. If I gave you a description instead of a file, generate the model with the free three.ws Forge API: `POST https://three.ws/api/v1/ai/text-to-3d` with `{"prompt": "<my description, single object, shape-first>"}`. If the response is `pending`, poll `GET https://three.ws/api/forge?job=<job>` until `done`, then download `glb_url`.
+1. If I gave you a description instead of a file, generate the model with the free Forge API on three.ws: `POST https://three.ws/api/v1/ai/text-to-3d` with `{"prompt": "<my description, single object, shape-first>"}`. If the response is `pending`, poll `GET https://three.ws/api/forge?job=<job>` until `done`, then download `glb_url`.
 2. Check my README's current byte size. GitHub stops rendering markdown files at 512 KB, so pick a `--budget` that leaves at least 100 KB of headroom.
 3. Convert: `npx readme-3d <model> --budget <n>kb --name <slug>`.
 4. Insert the resulting ```stl block into README.md at [location - e.g. "after the first paragraph"], with one italic caption line under it explaining the model is interactive.

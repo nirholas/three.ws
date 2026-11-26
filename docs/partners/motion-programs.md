@@ -92,7 +92,7 @@ Invite-only, a window that is not open yet, or eligibility we have not confirmed
 
 | # | Program | Company | Score | Next action |
 |---|---|---|---|---|
-| 1 | [Blender Extensions platform (three.ws Forge add-on)](https://extensions.blender.org/about/) | Blender | 13 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 1 | [Blender Extensions platform (Forge by three.ws add-on)](https://extensions.blender.org/about/) | Blender | 13 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
 | 2 | [Rokoko Studio Live plugins, Command API and Device SDK (integrations)](https://github.com/Rokoko) | Rokoko | 11 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
 | 3 | [CGTrader seller program, affiliate and API](https://api.cgtrader.com/) | CGTrader | 10 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
 | 4 | [ActorCore Partner Program (motion capture, 3D scan partners)](https://actorcore.reallusion.com/partner) | Reallusion | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
@@ -148,15 +148,15 @@ No submissions logged yet.
 
 ### Blender
 
-**How we partner with Blender:** Submit the packaged three.ws Forge extension to Blender Extensions (free); the Development Fund is a paid, optional follow-up.
+**How we partner with Blender:** Submit the packaged Forge by three.ws extension to Blender Extensions (free); the Development Fund is a paid, optional follow-up.
 
 | Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
 |---|---|---|---|---|---|---|---|
 | [Blender Development Fund corporate membership](https://fund.blender.org/corporate-memberships/) | Partner network | EUR 6,000 to 240,000 per year; Bronze EUR 6k and Silver EUR 12k: logo and URL; Gold EUR 30k: plus social media mention, credit in reports and at events; Platinum EUR 60k: plus a developer liaison; Titanium EUR 120k: plus blender.org front page mention and board contact; Patron EUR 240k: plus press release, tech blog post, dedicated product manager | Social posts, Featured placement, Press release, Blog post | Companies; fees are donations and do not imply alignment (per Blender policy) Cost: EUR 6k to 240k per year. | Eligible, not started | Bronze, Silver, Gold via checkout at fund.blender.org; Platinum, Titanium, Patron via francesco@blender.org Cadence: rolling. | 2·5·5 = **12** |
-| [Blender Extensions platform (three.ws Forge add-on)](https://extensions.blender.org/about/) | Store or directory | Appears in Blender 4.2+ Get Extensions for every user; GPL-compatible add-ons only |  | GPL-compliant extension, public review Cost: free. | Verify fit first | Read the live program page, confirm eligibility and terms, then set eligible or skip Apply: Upload a zip with blender_manifest.toml with a Blender ID, then wait for community review (steps in integrations/blender/SUBMITTING.md). Cadence: rolling. [kit](../../integrations/blender/SUBMITTING.md) [kit](../../integrations/blender/README.md) [kit](../../integrations/blender/three_ws) | 5·4·4 = **13** |
+| [Blender Extensions platform (Forge by three.ws add-on)](https://extensions.blender.org/about/) | Store or directory | Appears in Blender 4.2+ Get Extensions for every user; GPL-compatible add-ons only |  | GPL-compliant extension, public review Cost: free. | Verify fit first | Read the live program page, confirm eligibility and terms, then set eligible or skip Apply: Upload a zip with blender_manifest.toml with a Blender ID, then wait for community review (steps in integrations/blender/SUBMITTING.md). Cadence: rolling. [kit](../../integrations/blender/SUBMITTING.md) [kit](../../integrations/blender/README.md) [kit](../../integrations/blender/three_ws) | 5·4·4 = **13** |
 
 - **Blender Development Fund corporate membership.** Out of budget for a small startup beyond symbolic tiers; our integrations/blender add-on gives a free route to the same community.
-- **Blender Extensions platform (three.ws Forge add-on).** Our extension is packaged (id three_ws, GPL-3.0-or-later) but the listing URL in integrations/blender/README.md returns 404 on 2026-11-06, so it is not live; submit it.
+- **Blender Extensions platform (Forge by three.ws add-on).** Our extension is packaged (id three_ws, GPL-3.0-or-later) but the listing URL in integrations/blender/README.md returns 404 on 2026-11-06, so it is not live; submit it.
 
 ### Mesh2Motion
 

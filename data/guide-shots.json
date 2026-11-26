@@ -36,7 +36,7 @@
 					"note": "Generate. Results stream into the stage on the right."
 				}
 			],
-			"alt": "The three.ws Forge compose panel, with the Describe it tab, prompt box, Surprise me and Enhance buttons, the quality tier row, and the Generate button each marked with a numbered callout.",
+			"alt": "The Forge compose panel, with the Describe it tab, prompt box, Surprise me and Enhance buttons, the quality tier row, and the Generate button each marked with a numbered callout.",
 			"caption": "The Forge compose panel. Everything you need for a text-to-3D run is in this one column.",
 			"placements": [
 				{

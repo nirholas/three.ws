@@ -40,7 +40,7 @@ Generate a mesh from a prompt or a single photo. This is the front door of the p
 - [threestudio](https://github.com/threestudio-project/threestudio) - One framework, many text-to-3D methods (DreamFusion, Magic3D, ProlificDreamer, and more) behind a shared config system. The right place to compare approaches honestly.
 - [Shap-E](https://github.com/openai/shap-e) - Generates implicit functions that render as both meshes and neural radiance fields. Old now, but small, permissive, and easy to run.
 - [Point-E](https://github.com/openai/point-e) - Text to point cloud on a single GPU in a minute or two. Still the cheapest way to get rough 3D structure from a prompt.
-- [three.ws Forge](https://three.ws/forge) - A free hosted text-to-3D lane with no key and no account. Returns a GLB you can download, embed, or rig.
+- [Forge](https://three.ws/forge) - A free hosted text-to-3D lane with no key and no account. Returns a GLB you can download, embed, or rig.
 - [Meshy](https://www.meshy.ai) - Commercial text and image to 3D with quad remeshing and PBR texturing. Good API, generous enough free tier to evaluate properly.
 - [Tripo](https://www.tripo3d.ai) - The hosted product from the TripoSR authors. Fast previews, refined high-poly output, and a documented API.
 - [Rodin](https://hyper3d.ai) - Generation aimed at production assets: clean topology options, PBR materials, and part-level control.

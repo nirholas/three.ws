@@ -19,8 +19,8 @@ void FThreeWsBridgeEditorModule::StartupModule()
 					SNew(SThreeWsForgeWindow)
 				];
 		}))
-		.SetDisplayName(FText::FromString(TEXT("three.ws Forge")))
-		.SetTooltipText(FText::FromString(TEXT("Generate a mesh from a prompt with the three.ws Forge pipeline")))
+		.SetDisplayName(FText::FromString(TEXT("Forge by three.ws")))
+		.SetTooltipText(FText::FromString(TEXT("Generate a mesh from a prompt with the Forge pipeline on three.ws")))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FThreeWsBridgeEditorModule::RegisterMenus));
@@ -38,8 +38,8 @@ void FThreeWsBridgeEditorModule::RegisterMenus()
 	FToolMenuSection& Section = Menu->FindOrAddSection("ThreeWs");
 	Section.AddMenuEntry(
 		"ThreeWsForgeBridge",
-		FText::FromString(TEXT("three.ws Forge Bridge")),
-		FText::FromString(TEXT("Generate a mesh from a prompt with the three.ws Forge pipeline")),
+		FText::FromString(TEXT("Forge Bridge by three.ws")),
+		FText::FromString(TEXT("Generate a mesh from a prompt with the Forge pipeline on three.ws")),
 		FSlateIcon(),
 		FUIAction(FExecuteAction::CreateRaw(this, &FThreeWsBridgeEditorModule::OpenForgeWindow)));
 }

@@ -137,7 +137,7 @@ public sealed class ThreeWsClient : IDisposable
         prompt = (prompt ?? string.Empty).Trim();
         if (prompt.Length < 3) throw new ThreeWsException("describe the model in at least 3 characters", "validation_error");
         if (!Tiers.Contains(tier)) throw new ThreeWsException($"tier must be one of {string.Join(", ", Tiers)}", "validation_error");
-        if (ApiKey is null) throw new ThreeWsException($"three.ws Forge generation needs an API key. {KeyHint}", "needs_key");
+        if (ApiKey is null) throw new ThreeWsException($"Forge generation needs a three.ws API key. {KeyHint}", "needs_key");
 
         var waitedForRateLimit = false;
         for (var attempt = 0; ; attempt++)
@@ -193,7 +193,7 @@ public sealed class ThreeWsClient : IDisposable
             }
             await Task.Delay(TimeSpan.FromSeconds(1.5 * (attempt + 1)), ct).ConfigureAwait(false);
         }
-        throw last ?? new ThreeWsException("three.ws Forge job status is unavailable", "network");
+        throw last ?? new ThreeWsException("Forge job status is unavailable", "network");
     }
 
     /// <summary>

@@ -13,7 +13,7 @@
 
 ### Added
 
-- Forge panel (Window > three.ws Forge): text prompt or reference image (local
+- Forge panel (Window > Forge by three.ws): text prompt or reference image (local
   file or public URL), Draft, Standard and High lanes, live job progress and
   cancel, without blocking Kit.
 - Import into the open stage at the world origin, the selected prim, or in front

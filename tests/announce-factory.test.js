@@ -283,7 +283,7 @@ const BRIEF = {
 const GOOD = {
 	post: 'three.ws/forge-max opens the Forge with its top tier already pinned: 200k-poly geometry, 4K PBR textures, and the engine picked by what you asked for.',
 	thread: [],
-	alt: 'The three.ws Forge Max page with the High tier pinned in the quality row above the engine list, and the subtitle naming the geometry and texture budget.',
+	alt: 'The Forge Max page with the High tier pinned in the quality row above the engine list, and the subtitle naming the geometry and texture budget.',
 	claims: [{ says: '200k-poly geometry, 4K PBR textures', evidence: [BRIEF.evidenceCandidates[0]] }],
 	mentions: {},
 	telegram: '',

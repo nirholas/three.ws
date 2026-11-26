@@ -145,7 +145,7 @@
 		"forge-max-hero": {
 			"id": "forge-max-hero",
 			"src": "/announce/img/forge-max-hero.webp",
-			"alt": "The three.ws Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing.",
+			"alt": "The Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing.",
 			"caption": "Captured from the live /forge-max route for the forge-max announcement.",
 			"route": "/forge-max",
 			"viewport": "wide",

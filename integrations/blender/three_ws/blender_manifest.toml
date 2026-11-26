@@ -2,7 +2,7 @@ schema_version = "1.1.0"
 
 id = "three_ws"
 version = "1.1.0"
-name = "three.ws Forge"
+name = "Forge by three.ws"
 tagline = "3D from text or images, and 360 footage to splats"
 maintainer = "three.ws"
 type = "add-on"

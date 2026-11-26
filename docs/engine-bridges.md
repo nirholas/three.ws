@@ -53,10 +53,10 @@ provider instead of the free-tier lane.
 - **Unity:** install via Package Manager git URL, then **Window > three.ws
   > Forge Bridge**. See [`packages/unity-bridge/README.md`](https://github.com/nirholas/three.ws/blob/main/packages/unity-bridge/README.md).
 - **Godot:** copy the addon into `addons/`, enable it in Project Settings,
-  use the **three.ws Forge** dock. See
+  use the **Forge by three.ws** dock. See
   [`packages/godot-bridge/README.md`](https://github.com/nirholas/three.ws/blob/main/packages/godot-bridge/README.md).
 - **Unreal:** copy the plugin into `Plugins/`, enable Interchange glTF
-  import, use **Window > three.ws Forge Bridge**. See
+  import, use **Window > Forge Bridge by three.ws**. See
   [`packages/unreal-bridge/README.md`](https://github.com/nirholas/three.ws/blob/main/packages/unreal-bridge/README.md).
 
 Related: [the Forge pipeline](./forge-pipeline.md) for how a submission is

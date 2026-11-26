@@ -339,7 +339,7 @@
 					]
 				},
 				{
-					"name": "three.ws Forge",
+					"name": "Forge",
 					"url": "https://three.ws/forge",
 					"description": "A free hosted text-to-3D lane with no key and no account. Returns a GLB you can download, embed, or rig.",
 					"tags": [

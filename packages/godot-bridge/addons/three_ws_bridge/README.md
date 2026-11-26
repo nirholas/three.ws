@@ -1,4 +1,4 @@
-# three.ws Forge Bridge for Godot 4
+# Forge Bridge by three.ws for Godot 4
 
 Generate a textured 3D mesh from a text prompt or reference photos with the free
 [three.ws](https://three.ws) Forge pipeline and import the result into your scene
@@ -9,8 +9,8 @@ import library is needed.
 
 1. Copy this `three_ws_bridge` folder into your project's `addons/` directory,
    or install it from the Godot Asset Library.
-2. Open **Project > Project Settings > Plugins** and enable **three.ws Forge Bridge**.
-3. A **three.ws Forge** dock appears in the editor with a prompt field and a Generate button.
+2. Open **Project > Project Settings > Plugins** and enable **Forge Bridge by three.ws**.
+3. A **Forge by three.ws** dock appears in the editor with a prompt field and a Generate button.
 
 ## Use from your own scripts
 

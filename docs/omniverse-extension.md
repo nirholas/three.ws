@@ -1,4 +1,4 @@
-# three.ws Forge for NVIDIA Omniverse Kit
+# Forge by three.ws for NVIDIA Omniverse Kit
 
 `threews.forge` is a Kit extension that brings Forge into Omniverse: type a
 prompt or pick a reference image, press Generate, and the textured model lands
@@ -16,7 +16,7 @@ Screen capture of a real run: [generate-from-panel.mp4](../integrations/nvidia/o
 In any Kit 110 app (USD Composer, a kit-app-template app, or the
 `omniverse-kit` Python package): **Window > Extensions**, gear icon, add
 `integrations/nvidia/omniverse-kit-extension/exts` to the search paths, then
-enable **three.ws Forge**. Or from a shell:
+enable **Forge by three.ws**. Or from a shell:
 
 ```bash
 kit <your app>.kit --ext-folder integrations/nvidia/omniverse-kit-extension/exts --enable threews.forge

@@ -1,5 +1,5 @@
 ## Runnable example for packages/godot-bridge: type a prompt, press Generate,
-## watch a real three.ws Forge generation land in the scene.
+## watch a real Forge by three.ws generation land in the scene.
 ##
 ## Run it: `godot --path packages/godot-bridge` (opens the editor on this
 ## project) then press Play, or headless with

@@ -1,6 +1,6 @@
 # three.ws Blender extension
 
-Generate a 3D model from a text prompt or a reference image with three.ws Forge,
+Generate a 3D model from a text prompt or a reference image with Forge by three.ws,
 directly inside Blender. The model is reconstructed on three.ws and imported into
 your scene, selected and framed.
 
@@ -18,7 +18,7 @@ Requires **Blender 4.2 or newer** (the extension system). The package lives in
 1. In Blender: **Edit > Preferences > Get Extensions**.
 2. If prompted, click **Allow Online Access** (Blender needs it to browse the
    platform, and the add-on needs it to reach three.ws).
-3. Search for **three.ws Forge** and click **Install**. It is enabled right away.
+3. Search for **Forge by three.ws** and click **Install**. It is enabled right away.
 
 Listing: <https://extensions.blender.org/add-ons/three-ws/>
 
@@ -56,7 +56,7 @@ is made.
 
 ## Preferences
 
-**Edit > Preferences > Add-ons > three.ws Forge**:
+**Edit > Preferences > Add-ons > Forge by three.ws**:
 
 - **API URL**: defaults to `https://three.ws`. Point it at your own deployment
   if self-hosting.

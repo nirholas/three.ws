@@ -1135,7 +1135,7 @@ return { mint, signature, metadataUri, explorer: 'https://solscan.io/tx/' + sign
 		id: 'forge-text-to-3d',
 		name: 'Text → 3D Forge',
 		description:
-			'Generate a real, textured 3D model from a text prompt with the three.ws Forge: live progress and an interactive PBR orbit viewer rendered inline in the chat, with GLB download, browser viewer, and AR links. Same engine as three.ws/forge, free, no key required.',
+			'Generate a real, textured 3D model from a text prompt with Forge: live progress and an interactive PBR orbit viewer rendered inline in the chat, with GLB download, browser viewer, and AR links. Same engine as three.ws/forge, free, no key required.',
 		schema: [
 			{
 				clientDefinition: {
@@ -1188,7 +1188,7 @@ return { mint, signature, metadataUri, explorer: 'https://solscan.io/tx/' + sign
 				function: {
 					name: 'ForgeTextTo3D',
 					description:
-						'Generate a real 3D model (textured GLB) from a text prompt using the three.ws Forge, then render it inline in the chat with live progress and an interactive PBR orbit viewer (orbit/zoom, GLB download, browser viewer, AR link, recenter). Use whenever the user asks to make, create, generate, forge, render, show, or display a 3D model/object/mesh from a description. Returns immediately and the model appears in-place in about 30 to 90 seconds; do not poll or tell the user to wait. The prompt should describe ONE subject with material and style details.',
+						'Generate a real 3D model (textured GLB) from a text prompt using Forge, then render it inline in the chat with live progress and an interactive PBR orbit viewer (orbit/zoom, GLB download, browser viewer, AR link, recenter). Use whenever the user asks to make, create, generate, forge, render, show, or display a 3D model/object/mesh from a description. Returns immediately and the model appears in-place in about 30 to 90 seconds; do not poll or tell the user to wait. The prompt should describe ONE subject with material and style details.',
 					parameters: {
 						type: 'object',
 						properties: {

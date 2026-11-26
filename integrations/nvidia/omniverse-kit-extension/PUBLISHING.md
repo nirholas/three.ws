@@ -36,8 +36,8 @@ not open yet). Field values, all taken from `config/extension.toml`:
 | --- | --- |
 | Extension id | `threews.forge` |
 | Version | `1.0.0` |
-| Title | three.ws Forge |
-| Short description | Generate a textured 3D model from a text prompt or a reference image with three.ws Forge and drop it into the stage, upright and to scale. Browse and import the models saved in your three.ws account. |
+| Title | Forge by three.ws |
+| Short description | Generate a textured 3D model from a text prompt or a reference image with Forge by three.ws and drop it into the stage, upright and to scale. Browse and import the models saved in your three.ws account. |
 | Category | Content |
 | Keywords | 3D generation, text to 3D, image to 3D, GLB, assets, three.ws, generative |
 | Kit version | 110.x (tested on Kit 110.4.1) |
@@ -53,7 +53,7 @@ not open yet). Field values, all taken from `config/extension.toml`:
 
 Long description (paste as is):
 
-> three.ws Forge turns a text prompt or a reference image into a textured 3D
+> Forge by three.ws turns a text prompt or a reference image into a textured 3D
 > model and references it into the open USD stage. The import reads the stage's
 > up axis and meters per unit, so a one meter model is one meter in a Z-up
 > centimeter stage too, and it lands at the world origin, the selected prim or in

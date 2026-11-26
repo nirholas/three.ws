@@ -21,7 +21,7 @@ import { buildBazaarSchema } from './x402-spec.js';
 // serviceName MUST be ≤32 printable-ASCII chars or the CDP Bazaar validator
 // soft-drops it (see scripts/verify-x402-discovery.mjs and bazaar-helpers.js).
 // Kept ASCII on purpose — the em-dash/arrow variant would be silently discarded.
-export const FORGE_SERVICE_NAME = 'three.ws Forge: text/image to 3D'; // 32 chars
+export const FORGE_SERVICE_NAME = 'Forge: AI 3D Model Generator'; // 28 chars
 
 // Tags drive x402scan's category facets. These anchor the listing under the
 // three buckets the crown-jewel endpoint belongs in — 3D, AI, and Utility —
@@ -43,7 +43,7 @@ const HIGH_USD = priceUsdcForTier('high'); // "0.50"
 // free draft on-ramp (which needs a free account): everything an autonomous buyer needs to decide and to call, in the
 // order they need it. First sentence is the card headline; the rest is detail.
 export const FORGE_ROUTE_DESCRIPTION =
-	'three.ws Forge — pay-per-call text→3D and image→3D generation for autonomous ' +
+	'Forge by three.ws: pay-per-call text→3D and image→3D generation for autonomous ' +
 	`agents. Turn a text prompt (or up to ${FORGE_MAX_VIEWS} reference photos of one object) into ` +
 	'a production-ready GLB mesh for game assets, NFT collections, 3D scenes, and ' +
 	'product visualization — the only real 3D generation on any agent marketplace. ' +

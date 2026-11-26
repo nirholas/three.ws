@@ -1,4 +1,4 @@
-"""three.ws Forge as a Gradio app and a Model Context Protocol server.
+"""Forge by three.ws as a Gradio app and a Model Context Protocol server.
 
 ``demo.launch(mcp_server=True)`` publishes the ``forge_text_to_3d`` function as
 an MCP tool at ``/gradio_api/mcp/sse`` (and ``/gradio_api/mcp/``), next to the
@@ -37,7 +37,7 @@ def _viewer_url(glb_url: str) -> str:
 
 
 def forge_text_to_3d(prompt: str, tier: str = "draft", api_key: str = "", progress=gr.Progress()):
-    """Generate a textured 3D model (GLB) from a text prompt with three.ws Forge.
+    """Generate a textured 3D model (GLB) from a text prompt with Forge by three.ws.
 
     Args:
         prompt: Plain-language description of one object, for example "a small wooden chair".
@@ -76,9 +76,9 @@ def forge_text_to_3d(prompt: str, tier: str = "draft", api_key: str = "", progre
     return dest, _viewer_url(glb_url), f"Done in {int(time.monotonic() - started)}s via {submission.get('backend', 'forge')}: {glb_url}"
 
 
-with gr.Blocks(title="three.ws Forge") as demo:
+with gr.Blocks(title="Forge: AI 3D Model Generator") as demo:
     gr.Markdown(
-        "# three.ws Forge\nText to textured 3D (GLB) on the free engine grid. "
+        "# Forge: AI 3D Model Generator\nText to textured 3D (GLB) on the free engine grid. "
         "Making a model needs a free three.ws account: paste an API key from "
         "[three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys). "
         "This Space is also an MCP server: point an MCP client at `/gradio_api/mcp/sse`."

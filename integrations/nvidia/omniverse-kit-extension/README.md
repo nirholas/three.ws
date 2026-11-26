@@ -1,7 +1,7 @@
-# three.ws Forge for NVIDIA Omniverse Kit
+# Forge by three.ws for NVIDIA Omniverse Kit
 
 `threews.forge` is a Kit extension that turns a text prompt or a reference image
-into a textured 3D model with [three.ws Forge](https://three.ws/forge) and
+into a textured 3D model with [Forge by three.ws](https://three.ws/forge) and
 references it into the open USD stage, upright and to scale. It also browses
 the models saved in your three.ws account and imports any of them.
 
@@ -21,8 +21,8 @@ From this repository:
 1. Clone it, or download this folder.
 2. In the Kit app, open **Window > Extensions**, click the gear icon and add
    `<this folder>/exts` to the extension search paths.
-3. Search for **three.ws Forge** and enable it. The panel opens; it is also under
-   **Window > three.ws Forge**.
+3. Search for **Forge by three.ws** and enable it. The panel opens; it is also under
+   **Window > Forge by three.ws**.
 
 From the command line:
 

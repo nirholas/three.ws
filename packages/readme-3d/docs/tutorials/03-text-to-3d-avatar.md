@@ -1,11 +1,11 @@
 ---
 title: "Text → 3D → README: generate an avatar with AI and embed it"
-description: "Generate a 3D model from a one-line text prompt with the free three.ws Forge API, then embed it in your GitHub README."
+description: "Generate a 3D model from a one-line text prompt with the free Forge API on three.ws, then embed it in your GitHub README."
 ---
 
 # Text → 3D → README in five minutes
 
-You don't need a model, Blender skills, or a 3D artist. [three.ws Forge](https://three.ws/forge) turns a text prompt into a textured GLB on a free tier - no API key, no account - and `readme-3d` puts the result in your README.
+You don't need a model, Blender skills, or a 3D artist. [Forge by three.ws](https://three.ws/forge) turns a text prompt into a textured GLB on a free tier - no API key, no account - and `readme-3d` puts the result in your README.
 
 ## 1. Generate a model from text
 

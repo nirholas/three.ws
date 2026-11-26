@@ -1,14 +1,14 @@
-# three.ws Forge for Omniverse Kit
+# Forge by three.ws for Omniverse Kit
 
 Generate a textured 3D model from a text prompt or a reference image with
-[three.ws Forge](https://three.ws/forge) and drop it into the open stage,
+[Forge by three.ws](https://three.ws/forge) and drop it into the open stage,
 upright and to scale. Browse the models saved in your three.ws account and
 import any of them with one click.
 
 ## Open the panel
 
 Enable `threews.forge` in the Extension Manager, then choose
-**Window > three.ws Forge**.
+**Window > Forge by three.ws**.
 
 ## Generate
 

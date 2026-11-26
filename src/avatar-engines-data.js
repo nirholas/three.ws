@@ -90,7 +90,7 @@ export const FAMILIES = Object.freeze([
 	{
 		id: 'text-to-avatar',
 		label: 'Text / image → 3D avatar',
-		blurb: 'Generative pipelines that author a whole avatar from a prompt: the same lane three.ws Forge lives in.',
+		blurb: 'Generative pipelines that author a whole avatar from a prompt: the same lane Forge lives in.',
 	},
 	{
 		id: 'parametric',
@@ -345,7 +345,7 @@ export const ENGINES = Object.freeze([
 		commercial: true,
 		compute: 'Cloud API (NVIDIA NIM / self-host)',
 		integration: 'live',
-		integrationNote: 'Powers the free three.ws Forge lane (forge_free) end-to-end: text/image → rig-ready GLB. Click straight through to /forge.',
+		integrationNote: 'Powers the free Forge lane (forge_free) end-to-end: text/image → rig-ready GLB. Click straight through to /forge.',
 		blurb: 'Structured 3D latents for versatile, high-quality generation: the MIT-licensed engine behind the free three.ws text/image → 3D lane.',
 		links: {
 			repo: 'https://github.com/microsoft/TRELLIS',

@@ -215,7 +215,7 @@ class ThreeWsClient:
         if tier not in TIERS:
             raise ThreeWsError(f"tier must be one of {', '.join(TIERS)}", code="validation_error")
         if not self.api_key:
-            raise ThreeWsError(f"three.ws Forge generation needs an API key. {_KEY_HINT}", code="needs_key")
+            raise ThreeWsError(f"Forge generation needs a three.ws API key. {_KEY_HINT}", code="needs_key")
         rate_limit_waited = False
         for attempt in range(3):
             try:
@@ -226,7 +226,7 @@ class ThreeWsClient:
                     timeout=_SUBMIT_TIMEOUT,
                 )
             except httpx.HTTPError as err:
-                raise ThreeWsError(f"three.ws Forge is unreachable: {_describe(err)}", code="network") from err
+                raise ThreeWsError(f"Forge on three.ws is unreachable: {_describe(err)}", code="network") from err
             if res.status_code in _TRANSIENT_STATUSES and attempt < 2:
                 # A 502 here usually means every GPU lane is busy; give one a
                 # moment to free up instead of hammering it.
@@ -258,7 +258,7 @@ class ThreeWsClient:
                     self._url("/api/forge"), params={"job": job_id}, headers=self._auth_headers()
                 )
             except httpx.HTTPError as err:
-                last = ThreeWsError(f"three.ws Forge is unreachable: {_describe(err)}", code="network")
+                last = ThreeWsError(f"Forge on three.ws is unreachable: {_describe(err)}", code="network")
             else:
                 if res.status_code in _TRANSIENT_STATUSES:
                     last = _error_from_response(res, "Forge job status")
@@ -267,7 +267,7 @@ class ThreeWsClient:
                 else:
                     return self._decorate(res.json())
             await asyncio.sleep(1.5 * (attempt + 1))
-        raise last or ThreeWsError("three.ws Forge job status is unavailable", code="network")
+        raise last or ThreeWsError("Forge job status is unavailable", code="network")
 
     def _decorate(self, job: dict[str, Any]) -> dict[str, Any]:
         glb = job.get("glb_url")

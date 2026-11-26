@@ -34,7 +34,7 @@ void SThreeWsForgeWindow::Construct(const FArguments& InArgs)
 			SNew(SVerticalBox)
 			+ SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 8)
 			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("three.ws Forge")))
+				SNew(STextBlock).Text(FText::FromString(TEXT("Forge by three.ws")))
 			]
 			+ SVerticalBox::Slot().AutoHeight().Padding(0, 0, 0, 8)
 			[

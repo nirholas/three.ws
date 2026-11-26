@@ -27,7 +27,7 @@ export class ThreeWs implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
-		description: 'Generate 3D models with three.ws Forge and call three.ws MCP studio tools',
+		description: 'Generate 3D models with Forge by three.ws and call three.ws MCP studio tools',
 		defaults: { name: 'three.ws' },
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],

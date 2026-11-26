@@ -34,7 +34,7 @@ registry.
 ## Runnable example
 
 1. After installing, open **Window > Package Manager**, select
-   **three.ws Forge Bridge** in the *In Project* list, and import the
+   **Forge Bridge by three.ws** in the *In Project* list, and import the
    **Generate From Prompt** sample.
 2. Open **Window > three.ws > Forge Bridge**.
 3. Type a prompt (e.g. "a weathered lighthouse"), pick a tier, and click

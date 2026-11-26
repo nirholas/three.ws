@@ -40,7 +40,7 @@
 - File: [`images/02-holder-free-quota.png`](./images/02-holder-free-quota.png), 1600x900, captured 2026-09-16 from `/forge` by `node marketing/three-utility-season/capture.mjs --only 02`.
 - Alt text (required on every post):
 
-> The three.ws Forge page: a prompt box, quality options Draft, Standard, and High with a $THREE badge, a Generate button, and a line under it reading "Hold $THREE for up to 10x free generations" next to a Connect wallet button.
+> The Forge page: a prompt box, quality options Draft, Standard, and High with a $THREE badge, a Generate button, and a line under it reading "Hold $THREE for up to 10x free generations" next to a Connect wallet button.
 
 ## X post
 

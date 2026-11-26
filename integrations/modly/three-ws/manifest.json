@@ -3,7 +3,7 @@
   "name": "three.ws Cloud",
   "type": "model",
   "source": "https://github.com/nirholas/three.ws/tree/main/integrations/modly",
-  "description": "Cloud 3D generation, auto-rigging and retopology from three.ws Forge. No GPU, no weights, just a free three.ws account: image, text and sketch to 3D on hosted TRELLIS and Hunyuan3D lanes, a humanoid auto-rigger, a quad remesher, and one-click publishing to a shareable three.ws page.",
+  "description": "Cloud 3D generation, auto-rigging and retopology from Forge by three.ws. No GPU, no weights, just a free three.ws account: image, text and sketch to 3D on hosted TRELLIS and Hunyuan3D lanes, a humanoid auto-rigger, a quad remesher, and one-click publishing to a shareable three.ws page.",
   "version": "1.0.0",
   "author": "three.ws",
   "generator_class": "ThreeWSGenerator",

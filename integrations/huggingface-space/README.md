@@ -1,5 +1,5 @@
 ---
-title: three.ws Forge
+title: "Forge: AI 3D Model Generator"
 emoji: 🧊
 colorFrom: indigo
 colorTo: blue
@@ -8,7 +8,7 @@ sdk_version: 6.31.0
 app_file: app.py
 pinned: false
 license: apache-2.0
-short_description: Text to textured 3D (GLB) on the free three.ws Forge lane, with an MCP server.
+short_description: Text to textured 3D (GLB) by three.ws, with an MCP server
 tags:
   - mcp-server
   - 3d
@@ -16,7 +16,7 @@ tags:
   - glb
 ---
 
-# three.ws Forge (Gradio Space and MCP server)
+# Forge: AI 3D Model Generator (Gradio Space and MCP server)
 
 Type a prompt, get a textured GLB and a three.ws viewer link. The same function is exposed as an MCP tool, so any MCP client can generate 3D models from this Space.
 

@@ -21,12 +21,12 @@ contract shared with [`packages/unity-bridge`](../unity-bridge) and
 1. Copy `packages/unreal-bridge/` into your project's `Plugins/ThreeWsBridge`
    directory (or add this repository as a git submodule there).
 2. Open the project; Unreal prompts to rebuild the plugin's modules. Accept.
-3. In the editor: **Edit > Plugins**, confirm **three.ws Forge Bridge**
+3. In the editor: **Edit > Plugins**, confirm **Forge Bridge by three.ws**
    (under *Importers*) is enabled.
 
 ## Runnable example
 
-**Window > three.ws Forge Bridge** opens a dock tab with a prompt field, a
+**Window > Forge Bridge by three.ws** opens a dock tab with a prompt field, a
 tier dropdown, and a **Generate and import** button. Clicking it:
 
 1. Submits the prompt to `POST /api/forge` (`FThreeWsClient::SubmitText`).

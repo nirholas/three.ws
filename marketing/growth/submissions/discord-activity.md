@@ -31,7 +31,7 @@ provisioned.
 ## Step 1: create the Discord application
 
 1. Go to <https://discord.com/developers/applications> → **New Application**.
-2. Name: `three.ws` (or `three.ws Forge Room` if that name is taken by
+2. Name: `three.ws` (or `Forge Room by three.ws` if that name is taken by
    another of the owner's apps).
 3. Under **General Information**, copy the **Application ID** (this is
    `DISCORD_CLIENT_ID`) and the **Public Key** (this is `DISCORD_PUBLIC_KEY`,

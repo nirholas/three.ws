@@ -62,7 +62,7 @@ Our Agent Card is public JSON: ten declared skills an agent can read before it c
 ```
 
 **Media:** a capture of `{{LISTING_URL}}` for the launch anchor; `forge.png` for the fallback.
-**Alt text (fallback):** The three.ws Forge page: a prompt box, quality and engine selectors, and a
+**Alt text (fallback):** The Forge page: a prompt box, quality and engine selectors, and a
 Generate button.
 
 ## LinkedIn (launch day)

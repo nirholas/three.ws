@@ -34,7 +34,7 @@
 - File: [`images/04-forge-max-holder.png`](./images/04-forge-max-holder.png), 1600x900, captured 2026-09-16 from `/forge-max` by `node marketing/three-utility-season/capture.mjs --only 04`.
 - Alt text (required on every post):
 
-> The three.ws Forge Max page with High quality selected and a lock card reading "Requires Bronze, hold $THREE", with Get $THREE and Sign in buttons; the details line says High renders up to 200,000 polygons.
+> The Forge Max page with High quality selected and a lock card reading "Requires Bronze, hold $THREE", with Get $THREE and Sign in buttons; the details line says High renders up to 200,000 polygons.
 
 ## X post
 

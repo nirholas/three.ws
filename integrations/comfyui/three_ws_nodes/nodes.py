@@ -1,6 +1,6 @@
-"""three.ws Forge nodes for ComfyUI.
+"""Forge by three.ws nodes for ComfyUI.
 
-Two nodes drive the public three.ws Forge pipeline:
+Two nodes drive the public Forge pipeline on three.ws:
 
 * **three.ws Text→3D**  — prompt → GLB path
 * **three.ws Image→3D** — IMAGE → GLB path
@@ -85,7 +85,7 @@ def _dest(prefix, key_material):
 
 
 class ThreeWSTextTo3D:
-    """Generate a 3D model from a text prompt via three.ws Forge."""
+    """Generate a 3D model from a text prompt via Forge by three.ws."""
 
     CATEGORY = "three.ws"
     RETURN_TYPES = ("STRING", "STRING")
@@ -122,12 +122,12 @@ class ThreeWSTextTo3D:
             )
             client.download(glb_url, dest)
         except ThreeWSError as exc:
-            raise RuntimeError(f"three.ws Forge: {exc.message}") from exc
+            raise RuntimeError(f"Forge by three.ws: {exc.message}") from exc
         return (dest, "done")
 
 
 class ThreeWSImageTo3D:
-    """Generate a 3D model from a reference image via three.ws Forge."""
+    """Generate a 3D model from a reference image via Forge by three.ws."""
 
     CATEGORY = "three.ws"
     RETURN_TYPES = ("STRING", "STRING")
@@ -165,7 +165,7 @@ class ThreeWSImageTo3D:
             )
             client.download(glb_url, dest)
         except ThreeWSError as exc:
-            raise RuntimeError(f"three.ws Forge: {exc.message}") from exc
+            raise RuntimeError(f"Forge by three.ws: {exc.message}") from exc
         return (dest, "done")
 
 

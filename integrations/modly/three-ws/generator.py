@@ -7,7 +7,7 @@ on that id.
 
 The extension runs in Modly's direct mode: no venv, no setup step, no weights.
 Everything it needs is the Python standard library plus the vendored
-``three_ws_client.py`` beside this file. Work happens on three.ws Forge; the
+``three_ws_client.py`` beside this file. Work happens on Forge by three.ws; the
 mesh that comes back is written into the Modly workspace like any local model's
 output, so it flows into Modly's viewer, mesh tools, exports and workflows.
 

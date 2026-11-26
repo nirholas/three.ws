@@ -157,7 +157,7 @@ async function sendForge(res, format, { id, width, height }) {
 		provider_name: 'three.ws',
 		provider_url: origin,
 		title,
-		author_name: 'three.ws Forge',
+		author_name: 'Forge',
 		author_url: `${origin}/forge`,
 		html: buildEmbedIframe({ src: embedUrl, width, height, title }),
 		width,

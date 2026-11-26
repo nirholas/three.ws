@@ -28,7 +28,7 @@ Approved partnership wording only: "three.ws and Microsoft have announced a part
 >
 > three.ws Agent shows a live, animated agent your visitors can watch and talk to. Pick it from a searchable directory, no ids to copy.
 >
-> three.ws 3D Model shows an interactive model from the three.ws Forge gallery, or any https GLB file.
+> three.ws 3D Model shows an interactive model from the Forge gallery on three.ws, or any https GLB file.
 >
 > The Agent card puts an agent's avatar, name and live status on your Viva Connections dashboard with a quick view and a link to its page.
 >

@@ -1,4 +1,4 @@
-"""three.ws Forge service: account checks, generation jobs and the model library.
+"""Forge by three.ws service: account checks, generation jobs and the model library.
 
 Everything here is blocking, plain Python with no Kit imports, so it runs on a
 worker thread (see ``controller.py``) and can be exercised outside Kit. The vendored
@@ -163,7 +163,7 @@ class ForgeClient(ThreeWSClient):
             raise ForgeError(
                 "Making a model on three.ws needs your API key (a free account).",
                 code="missing_api_key",
-                hint="Create a key, then paste it in the Account section of the three.ws Forge panel.",
+                hint="Create a key, then paste it in the Account section of the Forge by three.ws panel.",
                 url=f"{self.base_url}/dashboard/api",
             )
         return {"authorization": f"Bearer {self._api_key}"}
@@ -258,7 +258,7 @@ def friendly(exc: Exception, base_url: str) -> ForgeError:
             "Making a model on three.ws needs a free account.",
             code="sign_in_required",
             status=status or 401,
-            hint="Create an API key and paste it in the Account section of the three.ws Forge panel.",
+            hint="Create an API key and paste it in the Account section of the Forge by three.ws panel.",
             url=keys_url,
         )
     if code == "invalid_api_key" or (status == 401 and code in ("unauthorized", "invalid_token", "")):

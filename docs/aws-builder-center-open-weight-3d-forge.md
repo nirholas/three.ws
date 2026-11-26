@@ -10,7 +10,7 @@ index: docs/aws-builder-center.md
 
 # Open-weight text-to-3D in production: lanes, failover, and the GPU workers behind a free 3D forge
 
-Type "a small cast-iron teapot with a bamboo handle" into the [three.ws Forge](https://three.ws/forge) and about a minute later you can orbit a textured GLB of it, view it in AR, or download it. No account and no key. Over the seven days to 8 October 2026 the Forge ran 5,262 generations; 4,889 finished. 147 jobs failed partway through on one engine and finished on another, without the user doing anything.
+Type "a small cast-iron teapot with a bamboo handle" into [Forge](https://three.ws/forge) and about a minute later you can orbit a textured GLB of it, view it in AR, or download it. No account and no key. Over the seven days to 8 October 2026 the Forge ran 5,262 generations; 4,889 finished. 147 jobs failed partway through on one engine and finished on another, without the user doing anything.
 
 That last number is what this article is about. Running one open-weight 3D model behind an API is a weekend. Running several as a product, where the chosen model can be cold, half-loaded, or gone when the request arrives, is mostly about everything around the model: which engine a request goes to, what happens when that engine fails after it has accepted the job, how a cold start is reported honestly, how 18 GiB of weights get onto a GPU container without killing it, and how you find out afterwards what really happened.
 

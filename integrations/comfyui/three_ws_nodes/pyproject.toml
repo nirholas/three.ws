@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-three-ws"
-description = "Text to 3D and image to 3D nodes for ComfyUI powered by three.ws Forge. Each node submits a real generation job, waits for it, and writes a GLB into the ComfyUI output directory for any 3D node downstream."
+description = "Text to 3D and image to 3D nodes for ComfyUI powered by Forge by three.ws. Each node submits a real generation job, waits for it, and writes a GLB into the ComfyUI output directory for any 3D node downstream."
 version = "1.0.0"
 license = { file = "LICENSE" }
 requires-python = ">=3.9"
@@ -22,5 +22,5 @@ Issues = "https://github.com/nirholas/three.ws/issues"
 
 [tool.comfy]
 PublisherId = "threews"
-DisplayName = "three.ws Forge"
+DisplayName = "Forge by three.ws"
 Icon = "https://three.ws/apple-touch-icon.png"

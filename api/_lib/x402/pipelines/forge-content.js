@@ -2,7 +2,7 @@
 //
 // 3D Forge Content Generation: autonomous pipeline (self/014).
 //
-// On each run it pays the paid three.ws Forge (standard tier) to generate one
+// On each run it pays the paid Forge (standard tier) to generate one
 // procedural prop from a combinatorial, platform-aligned catalog (club decor,
 // AR objects, diorama set-dressing, avatar items, vehicles, containers,
 // furniture, terrain tiles), hash-walked per hour so the /forged gallery stays

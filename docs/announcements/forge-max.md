@@ -58,7 +58,7 @@ Captured from the live route by `npm run announce:media`, which drives the real 
 
 **Alt text, required on the post:**
 
-> The three.ws Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing.
+> The Forge Max page: the quality row has High pinned with a $THREE badge above the engine list, and the page subtitle reads 200k-poly geometry, 4K PBR textures, subject-aware engine routing.
 
 ## The post
 

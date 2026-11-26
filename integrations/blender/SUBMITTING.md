@@ -12,7 +12,7 @@ instead, with the changelog below.
 | Manifest field | Value |
 |---|---|
 | `id` | `three_ws` (confirmed unused on extensions.blender.org, 2026-09-17 and 2026-11-21) |
-| `name` | `three.ws Forge` |
+| `name` | `Forge by three.ws` |
 | `version` | `1.1.0` |
 | `tagline` | `3D from text or images, and 360 footage to splats` (49 chars) |
 | `type` | `add-on` |
@@ -160,7 +160,7 @@ the code changed since.
 2. `curl -s https://extensions.blender.org/api/v1/extensions/ | grep -o '"id": *"three_ws"'`
    finds the listing in the platform index Blender reads.
 3. In a fresh Blender profile: **Get Extensions**, allow online access, search
-   `three.ws Forge`, install, and confirm it enables without errors in the
+   `Forge by three.ws`, install, and confirm it enables without errors in the
    console.
 4. Generate a model from text with the default image pipeline. The imported,
    selected object is the "first completed generation" evidence for the

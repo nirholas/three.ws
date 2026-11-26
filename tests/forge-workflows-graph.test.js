@@ -389,7 +389,7 @@ describe('serialization', () => {
 
 	it('rejects files that are not workflows with a readable error', () => {
 		expect(() => parseWorkflow('{nope', T)).toThrow(/not valid JSON/);
-		expect(() => parseWorkflow({ kind: 'other' }, T)).toThrow(/not a three.ws Forge workflow/);
+		expect(() => parseWorkflow({ kind: 'other' }, T)).toThrow(/not a Forge workflow/);
 		expect(() => parseWorkflow({ kind: WORKFLOW_KIND, version: 99, nodes: [], edges: [] }, T)).toThrow(/newer version/);
 		expect(() => parseWorkflow({ kind: WORKFLOW_KIND, version: 1, nodes: [{ id: 'a', type: 'teleport' }], edges: [] }, T)).toThrow(/unknown type/);
 		expect(() => parseWorkflow({ kind: WORKFLOW_KIND, version: 1, nodes: [{ id: 'a', type: 'rig' }, { id: 'a', type: 'rig' }], edges: [] }, T)).toThrow(/duplicate id/);

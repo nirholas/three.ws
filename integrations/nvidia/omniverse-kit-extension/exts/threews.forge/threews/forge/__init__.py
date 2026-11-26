@@ -1,4 +1,4 @@
-"""three.ws Forge for NVIDIA Omniverse Kit.
+"""Forge by three.ws for NVIDIA Omniverse Kit.
 
 Scripting API (Script Editor, a farm job, another extension)::
 

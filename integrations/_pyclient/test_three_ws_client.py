@@ -1,4 +1,4 @@
-"""Tests for the shared three.ws Forge client.
+"""Tests for the shared Forge by three.ws client.
 
 Runs a real in-process HTTP server that mimics the Forge contract (no live
 network), including its account gate, so the submit/upload/poll/download paths and error handling are all

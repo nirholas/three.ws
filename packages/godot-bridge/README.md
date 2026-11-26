@@ -15,7 +15,7 @@ contract shared with [`packages/unity-bridge`](../unity-bridge) and
    (or add this repository as a git submodule and symlink it there).
 2. In Godot: **Project > Project Settings > Plugins**, enable **three.ws
    Forge Bridge**.
-3. A **three.ws Forge** dock appears in the editor (bottom panel) with a
+3. A **Forge by three.ws** dock appears in the editor (bottom panel) with a
    prompt field and a Generate button.
 
 ## Runnable example

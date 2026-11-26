@@ -117,7 +117,7 @@ async function resolveTarget({ kind, args, auth, origin }) {
 			),
 		};
 	}
-	const title = creation.prompt ? String(creation.prompt).slice(0, 80) : 'three.ws Forge creation';
+	const title = creation.prompt ? String(creation.prompt).slice(0, 80) : 'Forge creation';
 	const target = forgeEmbedTarget(origin, creation.id, creation.glb_url, title);
 	// /api/oembed resolves /forge/share/:id (extractForgeId in api/agent-oembed.js),
 	// so Forge creations get a real oEmbed URL like every other embeddable target.

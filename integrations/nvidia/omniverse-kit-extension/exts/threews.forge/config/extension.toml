@@ -1,7 +1,7 @@
 [package]
 version = "1.0.0"
-title = "three.ws Forge"
-description = "Generate a textured 3D model from a text prompt or a reference image with three.ws Forge and drop it into the stage, upright and to scale. Browse and import the models saved in your three.ws account."
+title = "Forge by three.ws"
+description = "Generate a textured 3D model from a text prompt or a reference image with Forge by three.ws and drop it into the stage, upright and to scale. Browse and import the models saved in your three.ws account."
 category = "Content"
 keywords = ["3D generation", "text to 3D", "image to 3D", "GLB", "assets", "three.ws", "generative"]
 authors = ["three.ws"]

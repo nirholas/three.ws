@@ -1,6 +1,6 @@
 # three.ws integrations
 
-First-party plugins that drive the public **three.ws Forge** generation pipeline
+First-party plugins that drive the public **Forge by three.ws** generation pipeline
 (`/api/forge`) from inside the tools artists already use, so a model can be
 generated without leaving the DCC.
 

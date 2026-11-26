@@ -1,6 +1,6 @@
 # three.ws ComfyUI nodes
 
-Two nodes that drive the three.ws Forge pipeline from a ComfyUI graph:
+Two nodes that drive the Forge pipeline on three.ws from a ComfyUI graph:
 
 - **three.ws Text→3D**: prompt in, `glb_path` out
 - **three.ws Image→3D**: `IMAGE` in, `glb_path` out

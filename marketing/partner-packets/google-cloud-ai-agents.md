@@ -93,7 +93,7 @@ enterprise teams can discover through the agent finder.
 
 **Working link:** https://three.ws/forge (200 on 2026-09-16; the free lane needs no account)
 
-**Screenshot:** [images/forge.png](images/forge.png), captured 2026-09-16. Alt text: "The three.ws Forge
+**Screenshot:** [images/forge.png](images/forge.png), captured 2026-09-16. Alt text: "Forge
 page: a prompt box, quality and engine selectors, and a Generate button, free with no sign-up."
 
 **Two proposed dates** (intro call with the assigned partner manager after enrollment):

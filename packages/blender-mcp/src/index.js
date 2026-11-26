@@ -13,7 +13,7 @@
 // Blender runs headless (`blender -b`), one process per call, so this works on
 // a server, in CI, and in a container. Nothing is mocked: every tool drives the
 // real Blender on this machine, and blender_forge_import calls the live public
-// three.ws Forge pipeline.
+// Forge pipeline on three.ws.
 //
 // Run standalone:
 //   node packages/blender-mcp/src/index.js
@@ -66,7 +66,7 @@ export function buildServer() {
 				'and meshopt compression in one call, with an honest before/after. blender_render produces a still PNG, adding a framed camera and a key light when ' +
 				'the file has none, so a bare asset previews with no setup. blender_run_python runs a bpy script for ' +
 				'edits the other tools do not cover and can export the result in the same call. blender_forge_import ' +
-				'generates a model from a text prompt on the free public three.ws Forge lane and brings it in. Blender ' +
+				'generates a model from a text prompt through the free public Forge lane on three.ws and brings it in. Blender ' +
 				'must be installed locally (3.0+); set BLENDER_PATH if it is not on PATH.',
 		},
 	);

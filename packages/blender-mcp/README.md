@@ -15,7 +15,7 @@
 
 ---
 
-> A [Model Context Protocol](https://modelcontextprotocol.io) server that hands an AI assistant a real Blender over stdio. Inspect a 3D file, convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and `.blend`, render an auto-framed and auto-lit preview that comes back **inline** so the assistant can see it, run a `bpy` script against a scene, and generate a model from a text prompt on the three.ws Forge pipeline with a free three.ws account.
+> A [Model Context Protocol](https://modelcontextprotocol.io) server that hands an AI assistant a real Blender over stdio. Inspect a 3D file, convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and `.blend`, render an auto-framed and auto-lit preview that comes back **inline** so the assistant can see it, run a `bpy` script against a scene, and generate a model from a text prompt through the Forge pipeline on three.ws with a free three.ws account.
 
 Blender runs in background mode (`blender -b`), one process per call. That means it works on a server, in CI, and inside a container with no display, no GUI session to keep alive, and no add-on to install into Blender first. Everything is real: each tool drives the Blender installed on the machine, and `blender_forge_import` calls the live public three.ws generation pipeline.
 
@@ -71,7 +71,7 @@ Add `"env": { "BLENDER_PATH": "/path/to/blender" }` if Blender is not on `PATH`.
 | `blender_optimize` | The delivery pass in one call: decimate to a triangle budget, scale oversized textures, purge unreferenced datablocks, and compress the mesh streams with meshopt or Draco. Reports before and after triangles, texture bytes and file size. |
 | `blender_render` | Renders a still PNG and returns it **inline**, so the assistant can actually see the model in one call even with no filesystem access. Ask for several views and it orbits the model, every angle in the same launch. If the file has no camera, one is created and framed to the model's bounding sphere; if it has no light, a key light and a lit world are added. A scene that already has its own camera and lighting renders as authored. |
 | `blender_run_python` | Runs a `bpy` script against a scene, optionally opening a file first and exporting the result afterwards. The escape hatch for anything the other tools do not cover. |
-| `blender_forge_import` | Generates a model from a text prompt **or a reference image** on the public three.ws Forge pipeline and brings it into Blender, converting on the way in if the output asks for another format. Needs `THREE_WS_API_KEY` (a free account); the default lane costs nothing. |
+| `blender_forge_import` | Generates a model from a text prompt **or a reference image** through the public Forge pipeline on three.ws and brings it into Blender, converting on the way in if the output asks for another format. Needs `THREE_WS_API_KEY` (a free account); the default lane costs nothing. |
 
 ### Examples
 

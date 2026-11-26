@@ -1,4 +1,4 @@
-// Real HTTP access to the public three.ws Forge pipeline (/api/forge).
+// Real HTTP access to the public Forge pipeline on three.ws (/api/forge).
 //
 // Making a model on three.ws needs an account, so every three.ws API call
 // (submit, poll, reference-image presign) sends THREE_WS_API_KEY as a bearer,

@@ -20,9 +20,9 @@ Nothing has been submitted. Shared facts and owner-only inputs: [README.md](./RE
 
 | Field | Draft answer |
 |---|---|
-| Name | Forge Room (fallback: `three.ws Forge Room` if the name is taken) |
+| Name | Forge Room (fallback: `Forge Room by three.ws` if the name is taken) |
 | Tagline | Prompt, generate, and vote on a 3D model together, live in your voice channel. |
-| Description | Forge Room turns your voice channel into a tiny shared 3D studio. Anyone in the call can type a prompt, and everyone watches the same model generate in real time, powered by the free three.ws Forge pipeline. When it is done, vote on it as a group and open the full interactive 3D view in your browser with one tap. No sign-up, no wallet, nothing to buy. |
+| Description | Forge Room turns your voice channel into a tiny shared 3D studio. Anyone in the call can type a prompt, and everyone watches the same model generate in real time, powered by the free Forge pipeline on three.ws. When it is done, vote on it as a group and open the full interactive 3D view in your browser with one tap. No sign-up, no wallet, nothing to buy. |
 | Category | Creativity / Social |
 | Tags (1 to 5, at least 1 required) | 3D, Creative, AI, Social, Party |
 | Platforms | Desktop and mobile |

@@ -51,7 +51,7 @@ Every published model carries:
 - **AI disclosure**: Sketchfab's "Created With AI" tag (slug `createdwithai`),
   which its [AI-generated content policy](https://help.sketchfab.com/en/articles/16152133)
   requires on AI-generated models, plus a plain statement that the model was
-  AI-generated on the three.ws Forge. Without the tag Sketchfab can file the
+  AI-generated on Forge by three.ws. Without the tag Sketchfab can file the
   model as "Human Created" in its search filters.
 - **Backlinks with UTM parameters** (`utm_source=sketchfab`,
   `utm_medium=referral`, `utm_campaign=showcase`): one to the creation's

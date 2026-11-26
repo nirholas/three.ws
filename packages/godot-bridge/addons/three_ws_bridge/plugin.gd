@@ -1,4 +1,4 @@
-## Editor dock for the three.ws Forge bridge: a prompt box, a Generate
+## Editor dock for the Forge by three.ws bridge: a prompt box, a Generate
 ## button, and a status label. Builds the UI in code (no .tscn) so the
 ## whole addon is plain-text GDScript.
 @tool
@@ -27,10 +27,10 @@ func _exit_tree() -> void:
 
 func _build_dock() -> Control:
 	var panel := VBoxContainer.new()
-	panel.name = "three.ws Forge"
+	panel.name = "Forge by three.ws"
 
 	var title := Label.new()
-	title.text = "three.ws Forge"
+	title.text = "Forge by three.ws"
 	panel.add_child(title)
 
 	_prompt_edit = LineEdit.new()

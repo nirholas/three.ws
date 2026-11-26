@@ -126,14 +126,14 @@ function renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, embedUrl, ori
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>${t} — three.ws Forge</title>
+	<title>${t} · Forge · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 	<meta name="description" content="${d}">
 	<meta name="theme-color" content="#0b0d10">
 
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="${t} — three.ws Forge">
+	<meta property="og:title" content="${t} · Forge · three.ws">
 	<meta property="og:description" content="${d}">
 	<meta property="og:url" content="${esc(pageUrl)}">
 	<meta property="og:image" content="${esc(ogImage)}">
@@ -142,7 +142,7 @@ function renderHtml({ id, title, desc, pageUrl, forgeUrl, ogImage, embedUrl, ori
 	<meta property="og:image:alt" content="${t} forged on three.ws">
 
 	<meta name="twitter:card" content="${embedUrl ? 'player' : 'summary_large_image'}">
-	<meta name="twitter:title" content="${t} — three.ws Forge">
+	<meta name="twitter:title" content="${t} · Forge · three.ws">
 	<meta name="twitter:description" content="${d}">
 	<meta name="twitter:image" content="${esc(ogImage)}">
 	<meta name="twitter:creator" content="@trythreews">

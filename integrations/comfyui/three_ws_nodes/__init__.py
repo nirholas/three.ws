@@ -1,4 +1,4 @@
-"""three.ws Forge nodes for ComfyUI.
+"""Forge by three.ws nodes for ComfyUI.
 
 Drop this folder into ``ComfyUI/custom_nodes/`` and restart ComfyUI. Two nodes
 appear under the "three.ws" category: Text→3D and Image→3D.

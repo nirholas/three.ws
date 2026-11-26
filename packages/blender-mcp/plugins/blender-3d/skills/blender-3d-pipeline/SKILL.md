@@ -15,7 +15,7 @@ The plugin's `.mcp.json` launches `npx -y @three-ws/blender-mcp` (Node 20 or new
 - `blender_optimize` (`input`, `output`, `max_triangles`, `max_texture_px`, `compress`): decimate to a triangle budget, shrink textures, purge unused data, compress with `meshopt` (default), `draco` or `none`. Returns before and after numbers.
 - `blender_render` (`input`, `output`, `engine`, `samples`, `resolution`, `transparent`, `views`): a PNG preview returned inline so you can look at it. Adds a camera and light if the scene has none.
 - `blender_run_python` (`code`, `input`, `output`, `apply_modifiers`): run bpy code. `bpy`, `math` and `Vector` are pre-imported; assign a JSON-serializable value to `result` to get it back.
-- `blender_forge_import` (`prompt`, `image`, `image_url`, `output`, `tier`, `lane`, `backend`, `aspect_ratio`): generate a model on the three.ws Forge pipeline and bring it into Blender. It needs `THREE_WS_API_KEY` in the server's env (a free three.ws account, key from three.ws/dashboard/api-keys); the default image lane costs nothing. Describe one subject per call.
+- `blender_forge_import` (`prompt`, `image`, `image_url`, `output`, `tier`, `lane`, `backend`, `aspect_ratio`): generate a model through the Forge pipeline on three.ws and bring it into Blender. It needs `THREE_WS_API_KEY` in the server's env (a free three.ws account, key from three.ws/dashboard/api-keys); the default image lane costs nothing. Describe one subject per call.
 
 ## Workflow for a heavy asset
 

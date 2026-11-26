@@ -27939,7 +27939,7 @@
 		{
 			"name": "export_openusd",
 			"title": "Export a 3D model as simulation-ready OpenUSD",
-			"description": "Use this when a 3D model has to run in a physics simulator or a USD pipeline (NVIDIA Omniverse, Isaac Sim, synthetic-data generation) rather than only render on the web. Convert a three.ws Forge model (creation_id) or any public GLB (glb_url) into a validated OpenUSD package for NVIDIA Omniverse and Isaac Sim, with physics already set up: convex collision hulls (CoACD), a rigid body whose mass is hull volume times a density for the object class, a friction and restitution material, semantic class labels for synthetic-data annotators, and UsdSkel skeletons and animations for rigged avatars. Z-up, meters, standing on the ground at the origin. Every file passes OpenUSD usdchecker and the NVIDIA asset validator before it is returned. Returns .usdz, .usd (zipped with textures), .usda and a report.json with the mass method and every validator finding. Takes 10 to 60 s: the tool waits up to wait_seconds, otherwise returns a job; call again with job to collect the files. No per-call charge; rate limited per caller. Docs: https://three.ws/docs/openusd-export",
+			"description": "Use this when a 3D model has to run in a physics simulator or a USD pipeline (NVIDIA Omniverse, Isaac Sim, synthetic-data generation) rather than only render on the web. Convert a Forge model (creation_id) or any public GLB (glb_url) into a validated OpenUSD package for NVIDIA Omniverse and Isaac Sim, with physics already set up: convex collision hulls (CoACD), a rigid body whose mass is hull volume times a density for the object class, a friction and restitution material, semantic class labels for synthetic-data annotators, and UsdSkel skeletons and animations for rigged avatars. Z-up, meters, standing on the ground at the origin. Every file passes OpenUSD usdchecker and the NVIDIA asset validator before it is returned. Returns .usdz, .usd (zipped with textures), .usda and a report.json with the mass method and every validator finding. Takes 10 to 60 s: the tool waits up to wait_seconds, otherwise returns a job; call again with job to collect the files. No per-call charge; rate limited per caller. Docs: https://three.ws/docs/openusd-export",
 			"whenToUse": "Use this when a 3D model has to run in a physics simulator or a USD pipeline (NVIDIA Omniverse, Isaac Sim, synthetic-data generation) rather than only render on the web.",
 			"server": {
 				"id": "mcp-3d",
@@ -27966,7 +27966,7 @@
 				"properties": {
 					"creation_id": {
 						"type": "string",
-						"description": "A public or unlisted three.ws Forge creation id (UUID)."
+						"description": "A public or unlisted Forge creation id (UUID)."
 					},
 					"glb_url": {
 						"type": "string",
@@ -42632,7 +42632,7 @@
 		{
 			"name": "blender_forge_import",
 			"title": "Generate a 3D model with three.ws and open it in Blender",
-			"description": "Generate a 3D model from a text prompt OR a reference image on the public three.ws Forge pipeline, then bring it into Blender. Pass \"prompt\" to describe it, \"image\" for a local PNG/JPEG/WebP, or \"image_url\" for one already public; an image plus a prompt uses the prompt to steer the reconstruction. Needs a free three.ws account: set THREE_WS_API_KEY in this server's env (key from three.ws/dashboard/api-keys). The default image lane (FLUX to TRELLIS) costs nothing on a free account. The GLB is saved locally, and if the output path asks for another format (.blend, .fbx, .obj, .usd) Blender converts it on the way in. Returns the local path, the hosted GLB URL, and the geometry counts. Generation runs on a shared GPU lane and typically takes tens of seconds to a couple of minutes. Describe ONE subject per call. Use this when you need a new model that does not exist yet; to work on a file you already have, open it with blender_scene_info or blender_run_python instead.",
+			"description": "Generate a 3D model from a text prompt OR a reference image through the public Forge pipeline on three.ws, then bring it into Blender. Pass \"prompt\" to describe it, \"image\" for a local PNG/JPEG/WebP, or \"image_url\" for one already public; an image plus a prompt uses the prompt to steer the reconstruction. Needs a free three.ws account: set THREE_WS_API_KEY in this server's env (key from three.ws/dashboard/api-keys). The default image lane (FLUX to TRELLIS) costs nothing on a free account. The GLB is saved locally, and if the output path asks for another format (.blend, .fbx, .obj, .usd) Blender converts it on the way in. Returns the local path, the hosted GLB URL, and the geometry counts. Generation runs on a shared GPU lane and typically takes tens of seconds to a couple of minutes. Describe ONE subject per call. Use this when you need a new model that does not exist yet; to work on a file you already have, open it with blender_scene_info or blender_run_python instead.",
 			"whenToUse": "Use this when you need a new model that does not exist yet; to work on a file you already have, open it with blender_scene_info or blender_run_python instead.",
 			"server": {
 				"id": "blender-mcp",

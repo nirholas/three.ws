@@ -139,7 +139,7 @@ def export_glb(glb: bytes, out_dir: str, opts: ExportOptions,
     root.SetCustomDataByKey("threews", _vt_safe(meta))
     layer = stage.GetRootLayer()
     layer.customLayerData = {"threews": _vt_safe(meta)}
-    layer.documentation = (f"three.ws Forge model exported to simulation-ready OpenUSD by {EXPORTER_VERSION}: "
+    layer.documentation = (f"Forge by three.ws model, exported to simulation-ready OpenUSD by {EXPORTER_VERSION}: "
                            f"{cls.label} ({cls.group}), Z-up meters, UsdPhysics collision and mass, "
                            "UsdSemantics labels" + (", UsdSkel skeleton" if result.rigged else "") + ".")
     layer.Save()

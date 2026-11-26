@@ -11,7 +11,7 @@ GitHub renders ASCII STL inside a ` ```stl ` fenced code block as an interactive
 
 1. **Get the model file.** Accept `.glb`, `.gltf`, `.obj`, `.stl`, or `.ast`. If the user has no model but describes one, generate it first (step 2); otherwise skip to step 3.
 
-2. **(Optional) Generate from text.** POST to the free three.ws Forge API - no key or account:
+2. **(Optional) Generate from text.** POST to the free Forge API on three.ws - no key or account:
 
    ```bash
    curl -s -X POST https://three.ws/api/v1/ai/text-to-3d \

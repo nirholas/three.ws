@@ -16,7 +16,7 @@ import omni.ext
 from .controller import ForgeController
 
 MENU_PATH = "Window"
-MENU_NAME = "three.ws Forge"
+MENU_NAME = "Forge by three.ws"
 
 _controller: Optional[ForgeController] = None
 _extension: Optional["ThreeWSForgeExtension"] = None

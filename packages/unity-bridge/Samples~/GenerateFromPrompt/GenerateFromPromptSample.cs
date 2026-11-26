@@ -32,12 +32,12 @@ namespace ThreeWs.ForgeBridge.Samples
 		private async System.Threading.Tasks.Task GenerateAsync()
 		{
 			_busy = true;
-			Debug.Log($"three.ws Forge: submitting \"{Prompt}\" ({Tier})...");
+			Debug.Log($"Forge by three.ws: submitting \"{Prompt}\" ({Tier})...");
 
 			var submitted = await _client.SubmitTextAsync(Prompt, Tier);
 			if (!submitted.Ok)
 			{
-				Debug.LogError($"three.ws Forge: submit failed: {submitted.Error}");
+				Debug.LogError($"Forge by three.ws: submit failed: {submitted.Error}");
 				_busy = false;
 				return;
 			}
@@ -45,11 +45,11 @@ namespace ThreeWs.ForgeBridge.Samples
 			var glbUrl = submitted.GlbUrl;
 			if (string.IsNullOrEmpty(glbUrl))
 			{
-				Debug.Log($"three.ws Forge: generating on {submitted.Backend}...");
+				Debug.Log($"Forge by three.ws: generating on {submitted.Backend}...");
 				var finished = await _client.WaitForGlbAsync(submitted.JobId);
 				if (!finished.Ok)
 				{
-					Debug.LogError($"three.ws Forge: generation failed: {finished.Error}");
+					Debug.LogError($"Forge by three.ws: generation failed: {finished.Error}");
 					_busy = false;
 					return;
 				}
@@ -60,7 +60,7 @@ namespace ThreeWs.ForgeBridge.Samples
 			var downloaded = await _client.DownloadGlbAsync(glbUrl, destination);
 			if (!downloaded.Ok)
 			{
-				Debug.LogError($"three.ws Forge: download failed: {downloaded.Error}");
+				Debug.LogError($"Forge by three.ws: download failed: {downloaded.Error}");
 				_busy = false;
 				return;
 			}
@@ -68,7 +68,7 @@ namespace ThreeWs.ForgeBridge.Samples
 			var imported = await ThreeWsForgeImporter.ImportGlbAsync(destination);
 			if (imported == null)
 			{
-				Debug.LogError("three.ws Forge: glTFast could not read the downloaded file.");
+				Debug.LogError("Forge by three.ws: glTFast could not read the downloaded file.");
 				_busy = false;
 				return;
 			}
@@ -78,7 +78,7 @@ namespace ThreeWs.ForgeBridge.Samples
 			{
 				imported.transform.position = cam.transform.position + cam.transform.forward * 3f;
 			}
-			Debug.Log($"three.ws Forge: imported {downloaded.Bytes} bytes as \"{imported.name}\".");
+			Debug.Log($"Forge by three.ws: imported {downloaded.Bytes} bytes as \"{imported.name}\".");
 			_busy = false;
 		}
 	}

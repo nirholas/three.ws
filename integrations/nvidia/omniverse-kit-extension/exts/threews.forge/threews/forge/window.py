@@ -1,4 +1,4 @@
-"""The three.ws Forge panel.
+"""The Forge by three.ws panel.
 
 Sections, top to bottom: Account (API key, balance), Generate (text or image,
 lane, placement, Generate/Cancel, real progress), and My models (the key
@@ -19,7 +19,7 @@ from . import settings
 from .controller import ForgeController, Outcome
 from .service import LANES, Account, is_image_url, ForgeError, GenerationRequest, LibraryModel, Progress
 
-WINDOW_TITLE = "three.ws Forge"
+WINDOW_TITLE = "Forge by three.ws"
 
 LANE_IDS = ["draft", "standard", "high"]
 PLACEMENT_IDS = ["origin", "selection", "camera"]
