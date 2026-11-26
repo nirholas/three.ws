@@ -756,3 +756,6 @@ workers/model-panodepth/weights/
 # NVIDIA Accelerated Apps Catalog pulls (scripts/nvidia-apps-catalog-pull.mjs): regenerable third-party data
 docs/nvidia-apps-catalog/*.json
 docs/nvidia-apps-catalog/*.csv
+
+# Third-party X timelines pulled by scripts/x-user-timeline.mjs (regenerable, not ours to commit)
+data/x-research/
