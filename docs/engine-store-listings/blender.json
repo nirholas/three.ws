@@ -5,7 +5,7 @@
 	"documentationUrl": "https://three.ws/docs/engine-bridges",
 	"sourceUrl": "https://github.com/nirholas/three.ws/tree/main/integrations/blender",
 	"dataDisclosure": "The add-on sends the text prompt or reference image you submit to the public Forge API on three.ws over HTTPS and downloads the finished .glb. It sends a random per-install client handle for rate limiting. It reads no files other than the reference image you choose, writes the downloaded model to the system temp directory and deletes it after import, and sends no telemetry. Every network path checks Blender's Allow Online Access preference and the --offline-mode flag first.",
-	"releaseNotes": "1.0.0: first public release. Generate a model from a text prompt or reference image with the free Forge pipeline on three.ws, test the connection against the live backend list, and import the result into the scene with Blender's own glTF importer.",
+	"releaseNotes": "1.1.0: a 360 Capture panel sends 360 footage to three.ws and imports the result as a Gaussian splat or a depth shell. 1.0.0: first public release. Generate a model from a text prompt or reference image with the free Forge pipeline on three.ws, test the connection against the live backend list, and import the result into the scene with Blender's own glTF importer.",
 	"store": "Blender Extensions",
 	"productName": "Forge by three.ws",
 	"version": "1.1.0",
