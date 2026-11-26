@@ -24,7 +24,7 @@ Related: [gcp-production.md](gcp-production.md) (the main runbook),
 | GCS buckets `three-ws-storage-fallback`, `three-ws-x-content-bundles` | `aerial-vehicle-466722-p5` | `three-ws@three-ws` has `storage.objectAdmin` on both |
 | BigQuery `billing_export` | `aerial-vehicle-466722-p5` | `three-ws@three-ws` has `bigquery.jobUser` + `bigquery.dataViewer`; new service sets `GCP_BILLING_PROJECT=aerial-vehicle-466722-p5` |
 | Neon Postgres | external | Same database for both services |
-| Cloud Scheduler crons | `aerial-vehicle-466722-p5` | Moved only at cutover, never run in both |
+| Cloud Scheduler crons | `aerial-vehicle-466722-p5` | Moved only at cutover, never run in both. In `three-ws` they run as one tick job (`--tick`), not 180 jobs |
 
 The old project's billing must stay on while the GPU services, buckets, KMS key
 and billing export live there.
@@ -136,9 +136,13 @@ because the new URL map has the old name.
    and `curl --resolve three.ws:443:136.82.11.20 -I https://three.ws/releases/desktop/latest.yml`.
 4. Move the `@` and `www` A records at Namecheap from 136.68.246.178 to
    136.82.11.20.
-5. Create the crons in the new project, then pause or delete the old ones in the
-   same session:
-   `GCP_PROJECT=three-ws GCP_SERVICE_URL=https://three-ws-api-360846920264.us-central1.run.app node scripts/create-gcp-scheduler.mjs`
+5. Deploy current `main` first (step 6), because the tick endpoint ships with
+   it. Then create the single tick job in the new project and pause the old
+   per-cron jobs in the same session:
+   `GCP_PROJECT=three-ws GCP_SERVICE_URL=https://three-ws-api-360846920264.us-central1.run.app node scripts/create-gcp-scheduler.mjs --tick`
+   then `node scripts/create-gcp-scheduler.mjs --pause` against the old project.
+   One job instead of 180 saves about $18 a month (see "Crons" in
+   [gcp-production.md](gcp-production.md)).
 6. Deploy current `main` to the new project (`GCP_BILLING_PROJECT` only takes
    effect with code from 2026-11-25 on; the running image predates it).
 7. Scale the old `three-ws-api` to min 0 once traffic has drained. Keep the old

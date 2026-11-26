@@ -23,6 +23,8 @@ import {
 	selectCrons,
 	credentialFlags,
 	missingCrons,
+	syncPlan,
+	TICK_JOB_ID,
 } from '../scripts/create-gcp-scheduler.mjs';
 
 describe('runStateAction', () => {
@@ -305,5 +307,44 @@ describe('missingCrons', () => {
 
 	it('reports every cron missing when nothing is live', () => {
 		expect(missingCrons(crons, [])).toEqual(crons);
+	});
+});
+
+// Tick mode replaces one paid Scheduler job per cron with a single job. The
+// plan decides the order of the switch and refuses the one mix that fires
+// every cron twice.
+describe('syncPlan', () => {
+	const perCron = [
+		{ id: 'cron--api-cron-economy-tick', state: 'ENABLED' },
+		{ id: 'cron--api-cron-buyback', state: 'PAUSED' },
+		{ id: 'some-other-job', state: 'ENABLED' },
+	];
+
+	it('keeps the per-cron sync when no tick job exists', () => {
+		expect(syncPlan([], perCron)).toEqual({ mode: 'per-job' });
+		expect(syncPlan(['--missing-only'], perCron)).toEqual({ mode: 'per-job' });
+	});
+
+	it('pauses only the enabled per-cron jobs when switching to the tick', () => {
+		expect(syncPlan(['--tick'], perCron)).toEqual({
+			mode: 'tick',
+			pausePerCron: ['cron--api-cron-economy-tick'],
+		});
+	});
+
+	it('makes the post-deploy --missing-only a no-op once the tick runs the project', () => {
+		const live = [...perCron, { id: TICK_JOB_ID, state: 'ENABLED' }];
+		expect(syncPlan(['--missing-only'], live)).toEqual({ mode: 'tick-noop' });
+	});
+
+	it('refuses a per-cron sync beside the tick, which would fire every cron twice', () => {
+		const live = [{ id: TICK_JOB_ID, state: 'ENABLED' }];
+		expect(syncPlan([], live).mode).toBe('refuse');
+		expect(syncPlan(['--only', 'economy'], live).mode).toBe('refuse');
+	});
+
+	it('never treats the tick job as a per-cron job', () => {
+		expect(TICK_JOB_ID.startsWith('cron-')).toBe(false);
+		expect(syncPlan(['--tick'], [{ id: TICK_JOB_ID, state: 'ENABLED' }]).pausePerCron).toEqual([]);
 	});
 });

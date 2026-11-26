@@ -426,6 +426,36 @@ done
 
 ## Crons (Cloud Scheduler)
 
+**Tick mode (project `three-ws`, from the 2026-11 cutover).** One Scheduler job,
+`three-ws-scheduler-tick`, calls `/api/cron/scheduler-tick` every minute, and
+that handler fires every `vercel.json` cron due in that minute over loopback
+([api/_lib/cron-tick.js](../../api/_lib/cron-tick.js)). It replaces one job per
+cron, which cost $0.10 per job per month (about $18 a month for 180 crons) for
+nothing but a clock. Each cron still gets its own GET, secret and wrapCron
+heartbeat, and a cron declared in `vercel.json` fires with the deploy that ships
+it, with no sync step.
+
+```bash
+# Switch a project to tick mode: pauses every enabled per-cron job FIRST, then
+# creates the tick, so an interrupted run skips a minute rather than firing a
+# money-moving cron twice. --resume brings the per-cron jobs back.
+GCP_PROJECT=three-ws GCP_SERVICE_URL=https://three-ws-api-360846920264.us-central1.run.app \
+  node scripts/create-gcp-scheduler.mjs --tick
+
+# What will the current minute fire? Lists, never fires.
+curl -H "Authorization: Bearer $CRON_SECRET" \
+  'https://three-ws-api-360846920264.us-central1.run.app/api/cron/scheduler-tick?dry=1'
+
+# Drift in tick mode: the tick must exist, be enabled and run every minute, and
+# any enabled cron--* job beside it is reported as DOUBLE FIRE.
+GCP_PROJECT=three-ws npm run check:cron-drift
+```
+
+Once the tick job exists, a per-cron sync in that project is refused and the
+post-deploy `npm run deploy:gcp:sync-crons` does nothing. Per-cron failures show
+in the logs as `[scheduler-tick] <path> failed`, and in each cron's heartbeat.
+The per-cron mode below still describes `aerial-vehicle-466722-p5`.
+
 The schedules in `vercel.json` `crons` are mirrored to Cloud Scheduler jobs in
 us-central1, mostly named `cron--api-cron-<name>` (a few older ones use a bare
 name, so **match by target URI, not by job name**, when auditing). Vercel's crons

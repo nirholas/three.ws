@@ -26,12 +26,12 @@ import { fileURLToPath } from 'node:url';
 import { CronExpressionParser } from 'cron-parser';
 // The job-id derivation lives with the script that creates the jobs. Two copies
 // that drift by one character make every live job read as MISSING.
-import { jobId } from './create-gcp-scheduler.mjs';
+import { jobId, TICK_JOB_ID } from './create-gcp-scheduler.mjs';
 
 const execFileP = promisify(execFile);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const PROJECT = 'aerial-vehicle-466722-p5';
+const PROJECT = process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5';
 const LOCATION = 'us-central1';
 
 const argv = process.argv.slice(2);
@@ -90,6 +90,58 @@ function validate(schedule) {
 function intervalMinutes(next) {
 	if (!next || next.length < 2) return null;
 	return Math.round((Date.parse(next[1]) - Date.parse(next[0])) / 60_000);
+}
+
+/**
+ * Compare the declared crons with the live Scheduler jobs (a Map of id to
+ * `{ schedule, state }`).
+ *
+ * Per-cron mode is the original check: every declared cron needs its own
+ * enabled job with a matching schedule. Tick mode (the `three-ws-scheduler-tick`
+ * job exists, see scripts/create-gcp-scheduler.mjs --tick) needs only that one
+ * job, enabled, every minute: then every declared cron is driven by it. A
+ * paused tick stops every cron, so each is reported NOT ENABLED. A per-cron job
+ * still enabled beside the tick fires its cron twice, which is reported as
+ * DOUBLE FIRE.
+ */
+export function compareToLive(declared, live) {
+	const out = { mode: 'per-job', missing: [], mismatched: [], paused: [], orphaned: [], doubleFire: [] };
+	const declaredIds = new Set(declared.map((d) => d.id));
+	const tick = live.get(TICK_JOB_ID);
+	if (tick) {
+		out.mode = 'tick';
+		if (String(tick.schedule).trim() !== '* * * * *') {
+			out.mismatched.push({ path: TICK_JOB_ID, id: TICK_JOB_ID, declared: '* * * * *', live: tick.schedule });
+		}
+		if (tick.state && tick.state !== 'ENABLED') {
+			for (const d of declared) out.paused.push({ path: d.path, id: TICK_JOB_ID, state: `tick ${tick.state}` });
+		}
+		for (const [id, job] of live) {
+			if (id.startsWith('cron-') && job.state === 'ENABLED') {
+				out.doubleFire.push({ id, schedule: job.schedule });
+			}
+		}
+		return out;
+	}
+	for (const d of declared) {
+		const job = live.get(d.id);
+		if (!job) {
+			out.missing.push({ path: d.path, id: d.id, schedule: d.schedule });
+			continue;
+		}
+		if (String(job.schedule).trim() !== String(d.schedule).trim()) {
+			out.mismatched.push({ path: d.path, id: d.id, declared: d.schedule, live: job.schedule });
+		}
+		if (job.state && job.state !== 'ENABLED') {
+			out.paused.push({ path: d.path, id: d.id, state: job.state });
+		}
+	}
+	for (const [id, job] of live) {
+		if (id.startsWith('cron-') && !declaredIds.has(id)) {
+			out.orphaned.push({ id, schedule: job.schedule, state: job.state });
+		}
+	}
+	return out;
 }
 
 async function liveJobs() {
@@ -158,6 +210,8 @@ async function main() {
 		mismatched: [],
 		paused: [],
 		orphaned: [],
+		doubleFire: [],
+		mode: null,
 		checkedLive: false,
 	};
 
@@ -165,30 +219,7 @@ async function main() {
 		try {
 			const live = await liveJobs();
 			report.checkedLive = true;
-			for (const d of declared) {
-				const job = live.get(d.id);
-				if (!job) {
-					report.missing.push({ path: d.path, id: d.id, schedule: d.schedule });
-					continue;
-				}
-				if (String(job.schedule).trim() !== String(d.schedule).trim()) {
-					report.mismatched.push({
-						path: d.path,
-						id: d.id,
-						declared: d.schedule,
-						live: job.schedule,
-					});
-				}
-				if (job.state && job.state !== 'ENABLED') {
-					report.paused.push({ path: d.path, id: d.id, state: job.state });
-				}
-			}
-			const declaredIds = new Set(declared.map((d) => d.id));
-			for (const [id, job] of live) {
-				if (id.startsWith('cron-') && !declaredIds.has(id)) {
-					report.orphaned.push({ id, schedule: job.schedule, state: job.state });
-				}
-			}
+			Object.assign(report, compareToLive(declared, live));
 		} catch (err) {
 			report.liveError = err.message.split('\n')[0];
 		}
@@ -206,7 +237,8 @@ async function main() {
 		report.duplicates.length +
 		report.missing.length +
 		report.mismatched.length +
-		report.paused.length;
+		report.paused.length +
+		report.doubleFire.length;
 
 	// A live run that could not read Cloud Scheduler compared nothing at all, so it
 	// must not report success: a dead gcloud session is exactly how a declared-but-
@@ -244,6 +276,11 @@ async function main() {
 		],
 		['NOT ENABLED', report.paused, (r) => `${r.path}  state=${r.state}`],
 		['ORPHANED job (no longer declared)', report.orphaned, (r) => `${r.id}  "${r.schedule}"`],
+		[
+			`DOUBLE FIRE (enabled beside ${TICK_JOB_ID}; pause with gcloud scheduler jobs pause <id>)`,
+			report.doubleFire,
+			(r) => `${r.id}  "${r.schedule}"`,
+		],
 	]) {
 		if (!rows.length) continue;
 		console.log(`\n${label}: ${rows.length}`);
@@ -277,6 +314,10 @@ async function main() {
 		);
 		console.log(
 			'`npm run check:cron-syntax` if you only meant to validate the expressions.',
+		);
+	} else if (!OFFLINE && !problems && report.mode === 'tick') {
+		console.log(
+			`\nNo drift: ${TICK_JOB_ID} is enabled every minute and drives all ${report.declared} declared crons.`,
 		);
 	} else if (!OFFLINE && !problems) {
 		console.log(

@@ -65,6 +65,21 @@
 // The audience defaults to the Cloud Run service URL and must match
 // CRON_OIDC_AUDIENCE on the service; the service account defaults to the
 // runtime SA and must match CRON_OIDC_SERVICE_ACCOUNT.
+//
+// TICK MODE (cost, 2026-11-26). Cloud Scheduler bills $0.10 per job per month
+// past three free jobs, so one job per cron cost about $18 a month. `--tick`
+// replaces them with ONE job, `three-ws-scheduler-tick`, that calls
+// /api/cron/scheduler-tick every minute; that handler reads vercel.json and
+// fires whatever is due (api/_lib/cron-tick.js):
+//
+//   GCP_PROJECT=three-ws GCP_SERVICE_URL=<run.app url> node scripts/create-gcp-scheduler.mjs --tick
+//
+// The switch pauses every enabled per-cron job FIRST and only then creates the
+// tick, so the worst case of an interrupted run is one skipped minute, never a
+// money-moving cron firing twice. Pausing is reversible (--resume brings the
+// per-cron fleet back). Once the tick job exists in a project, a per-cron sync
+// there is refused and `--missing-only` (the post-deploy step) does nothing:
+// the tick picks up a newly declared cron on its own.
 
 import { readFileSync } from 'node:fs';
 import { execFile, execFileSync } from 'node:child_process';
@@ -90,6 +105,13 @@ const ATTEMPT_DEADLINE = '320s';
 // mismatch on either is a 401 at the edge, not a silent pass.
 const OIDC_SERVICE_ACCOUNT = `three-ws@${PROJECT}.iam.gserviceaccount.com`;
 const OIDC_AUDIENCE = SERVICE_URL;
+
+// The single job of tick mode, and the endpoint it drives. The id deliberately
+// does not start with `cron-`, so it can never collide with a per-cron jobId().
+export const TICK_JOB_ID = 'three-ws-scheduler-tick';
+export const TICK_PATH = '/api/cron/scheduler-tick';
+// The tick handler waits for its slowest child (300s budget) before answering.
+const TICK_ATTEMPT_DEADLINE = '420s';
 
 /**
  * Scheduler job id for a cron path: `/api/cron/economy-tick` →
@@ -163,6 +185,38 @@ export function selectCrons(crons, argv) {
 export function missingCrons(crons, liveJobNames) {
 	const live = new Set([...liveJobNames].map((name) => String(name).split('/').pop()));
 	return crons.filter((c) => !live.has(jobId(c.path)));
+}
+
+/**
+ * What a run should do given the live jobs (`[{ id, state }]`) and the flags.
+ *
+ *   tick       `--tick`: pause these enabled per-cron jobs, then create or
+ *              update the tick job.
+ *   tick-noop  the tick job already runs this project and the caller asked for
+ *              `--missing-only`: nothing to create.
+ *   refuse     the tick job runs this project and the caller asked for a
+ *              per-cron sync, which would fire every cron twice.
+ *   per-job    the original one-job-per-cron sync.
+ */
+export function syncPlan(argv, liveJobs) {
+	const jobs = [...liveJobs];
+	const hasTick = jobs.some((j) => j.id === TICK_JOB_ID);
+	if (argv.includes('--tick')) {
+		const pausePerCron = jobs
+			.filter((j) => j.id.startsWith('cron-') && j.state === 'ENABLED')
+			.map((j) => j.id);
+		return { mode: 'tick', pausePerCron };
+	}
+	if (hasTick && argv.includes('--missing-only')) return { mode: 'tick-noop' };
+	if (hasTick) {
+		return {
+			mode: 'refuse',
+			reason:
+				`${TICK_JOB_ID} already fires every cron in this project, so per-cron jobs would make each one run twice. ` +
+				'Re-run with --tick to update the tick job, or delete the tick job first to go back to per-cron jobs.',
+		};
+	}
+	return { mode: 'per-job' };
 }
 
 /** Read CRON_SECRET out of a `--env-file <path>` argument, if one was given. */
@@ -298,6 +352,50 @@ async function syncJob({ path: cronPath, schedule }, { secret, stateAction, oidc
 	return { id, action, state };
 }
 
+async function listLiveJobs() {
+	const { stdout } = await gcloud(['list', '--format=json']);
+	return JSON.parse(stdout || '[]').map((job) => ({
+		id: String(job.name || '').split('/').pop(),
+		state: job.state,
+	}));
+}
+
+async function syncTickJob({ secret, stateAction, oidc }) {
+	const common = [
+		'--schedule=* * * * *',
+		'--time-zone=Etc/UTC',
+		`--uri=${SERVICE_URL}${TICK_PATH}`,
+		'--http-method=GET',
+		`--attempt-deadline=${TICK_ATTEMPT_DEADLINE}`,
+		// A retried tick would re-run the same minute's crons.
+		'--max-retry-attempts=0',
+	];
+	let action;
+	try {
+		await gcloud(['describe', TICK_JOB_ID]);
+		await gcloud(['update', 'http', TICK_JOB_ID, ...common, ...credentialFlags(secret, { oidc })]);
+		action = 'updated';
+	} catch {
+		await gcloud(['create', 'http', TICK_JOB_ID, ...common, ...credentialFlags(secret, { oidc, create: true })]);
+		action = 'created';
+	}
+	if (stateAction === 'pause') await gcloud(['pause', TICK_JOB_ID]).catch(() => {});
+	if (stateAction === 'resume') await gcloud(['resume', TICK_JOB_ID]).catch(() => {});
+	return action;
+}
+
+async function runTickMode(plan, { secret, stateAction, oidc }) {
+	for (const id of plan.pausePerCron) {
+		await gcloud(['pause', id]);
+		console.log(`paused ${id}`);
+	}
+	const action = await syncTickJob({ secret, stateAction, oidc });
+	console.log(
+		`\n${action} ${TICK_JOB_ID} (* * * * * -> ${SERVICE_URL}${TICK_PATH}); paused ${plan.pausePerCron.length} per-cron job(s).`,
+	);
+	console.log(`Check what the next tick will fire: curl -H "Authorization: Bearer $CRON_SECRET" '${SERVICE_URL}${TICK_PATH}?dry=1'`);
+}
+
 async function main() {
 	const argv = process.argv.slice(2);
 
@@ -317,6 +415,26 @@ async function main() {
 			'CRON_SECRET not set: pass --env-file <pulled prod.env>, export it, or authenticate gcloud so it can be read off the three-ws-api service.',
 		);
 		process.exit(1);
+	}
+
+	let plan;
+	try {
+		plan = syncPlan(argv, await listLiveJobs());
+	} catch (err) {
+		console.error(`Could not list Cloud Scheduler jobs in ${PROJECT}: ${(err.stderr || err.message).trim()}`);
+		process.exit(1);
+	}
+	if (plan.mode === 'refuse') {
+		console.error(plan.reason);
+		process.exit(1);
+	}
+	if (plan.mode === 'tick-noop') {
+		console.log(`${TICK_JOB_ID} fires every cron declared in vercel.json; no per-cron job to create.`);
+		return;
+	}
+	if (plan.mode === 'tick') {
+		await runTickMode(plan, { secret, stateAction, oidc });
+		return;
 	}
 
 	const { crons } = JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));

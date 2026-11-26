@@ -10,7 +10,8 @@
 // production's own answer on the cron path instead of guessing.
 
 import { describe, it, expect } from 'vitest';
-import { classifyMissing } from '../scripts/check-cron-drift.mjs';
+import { classifyMissing, compareToLive } from '../scripts/check-cron-drift.mjs';
+import { TICK_JOB_ID } from '../scripts/create-gcp-scheduler.mjs';
 
 describe('classifyMissing', () => {
 	it('calls a 404 an undeployed handler, whose job belongs to the next deploy', () => {
@@ -30,5 +31,50 @@ describe('classifyMissing', () => {
 	it('stays silent when the probe never answered rather than inventing a cause', () => {
 		expect(classifyMissing(null)).toBe(null);
 		expect(classifyMissing(undefined)).toBe(null);
+	});
+});
+
+describe('compareToLive', () => {
+	const declared = [
+		{ path: '/api/cron/a', id: 'cron--api-cron-a', schedule: '*/5 * * * *' },
+		{ path: '/api/cron/b', id: 'cron--api-cron-b', schedule: '0 * * * *' },
+	];
+
+	it('per-cron mode: reports missing, mismatched, paused and orphaned jobs', () => {
+		const live = new Map([
+			['cron--api-cron-a', { schedule: '*/10 * * * *', state: 'PAUSED' }],
+			['cron--api-cron-gone', { schedule: '* * * * *', state: 'ENABLED' }],
+		]);
+		const out = compareToLive(declared, live);
+		expect(out.mode).toBe('per-job');
+		expect(out.missing.map((m) => m.path)).toEqual(['/api/cron/b']);
+		expect(out.mismatched.map((m) => m.path)).toEqual(['/api/cron/a']);
+		expect(out.paused.map((m) => m.path)).toEqual(['/api/cron/a']);
+		expect(out.orphaned.map((m) => m.id)).toEqual(['cron--api-cron-gone']);
+	});
+
+	it('tick mode: one enabled every-minute tick covers every declared cron', () => {
+		const live = new Map([[TICK_JOB_ID, { schedule: '* * * * *', state: 'ENABLED' }]]);
+		const out = compareToLive(declared, live);
+		expect(out).toMatchObject({ mode: 'tick', missing: [], mismatched: [], paused: [], doubleFire: [] });
+	});
+
+	it('tick mode: a paused tick stops every cron', () => {
+		const live = new Map([[TICK_JOB_ID, { schedule: '* * * * *', state: 'PAUSED' }]]);
+		expect(compareToLive(declared, live).paused.map((p) => p.path)).toEqual(['/api/cron/a', '/api/cron/b']);
+	});
+
+	it('tick mode: flags enabled per-cron jobs as double fire, but not paused ones', () => {
+		const live = new Map([
+			[TICK_JOB_ID, { schedule: '* * * * *', state: 'ENABLED' }],
+			['cron--api-cron-a', { schedule: '*/5 * * * *', state: 'ENABLED' }],
+			['cron--api-cron-b', { schedule: '0 * * * *', state: 'PAUSED' }],
+		]);
+		expect(compareToLive(declared, live).doubleFire.map((d) => d.id)).toEqual(['cron--api-cron-a']);
+	});
+
+	it('tick mode: a tick on any schedule but every minute is a mismatch', () => {
+		const live = new Map([[TICK_JOB_ID, { schedule: '*/5 * * * *', state: 'ENABLED' }]]);
+		expect(compareToLive(declared, live).mismatched.map((m) => m.id)).toEqual([TICK_JOB_ID]);
 	});
 });
