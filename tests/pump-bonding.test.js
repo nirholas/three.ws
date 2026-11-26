@@ -216,6 +216,18 @@ function jsonRes(body, status = 200) {
 	};
 }
 
+// pump.fun as it answers since 2026-11-25: GET /coins/<mint> and
+// /coins-v2/<mint> are gone (404 "Cannot GET") and a coin is read from the
+// search route keyed by the mint, which answers an array of matches.
+function pumpRoutes(coin) {
+	return vi.fn(async (url) => {
+		const u = new URL(String(url));
+		if (u.pathname !== '/coins/search-unrestricted') return jsonRes({ message: `Cannot GET ${u.pathname}` }, 404);
+		const term = u.searchParams.get('searchTerm');
+		return jsonRes(coin && coin.mint === term ? [coin] : []);
+	});
+}
+
 const bondingCoin = {
 	mint: THREE_MINT,
 	complete: false,
@@ -335,13 +347,14 @@ describe('getBondingStatus -- cache + last-known-good fallback', () => {
 	});
 
 	it('a successful fetch writes through to both the live and last-known-good caches', async () => {
-		const fetchMock = vi.fn().mockResolvedValue(jsonRes(bondingCoin));
+		const fetchMock = pumpRoutes(bondingCoin);
 		vi.stubGlobal('fetch', fetchMock);
 
 		const out = await getBondingStatus(THREE_MINT);
 		expect(out.kind).toBe('ok');
 		expect(out.stale).toBe(false);
-		expect(fetchMock).toHaveBeenCalledTimes(1); // coins-v2 hit, coins never tried
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(new URL(fetchMock.mock.calls[0][0]).pathname).toBe('/coins/search-unrestricted');
 
 		const live = cache.get(`pump:bonding:live:${THREE_MINT}`);
 		const lkg = cache.get(`pump:bonding:lkg:${THREE_MINT}`);
@@ -350,7 +363,7 @@ describe('getBondingStatus -- cache + last-known-good fallback', () => {
 	});
 
 	it('serves a second request for the same mint from the live cache without a second fetch', async () => {
-		const fetchMock = vi.fn().mockResolvedValue(jsonRes(bondingCoin));
+		const fetchMock = pumpRoutes(bondingCoin);
 		vi.stubGlobal('fetch', fetchMock);
 
 		await getBondingStatus(THREE_MINT);
@@ -362,7 +375,7 @@ describe('getBondingStatus -- cache + last-known-good fallback', () => {
 
 	it('not_found is never masked by a stale cache', async () => {
 		cache.set(`pump:bonding:lkg:${THREE_MINT}`, { status: mapBondingStatus(bondingCoin), coin: bondingCoin });
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes(null, 404)));
+		vi.stubGlobal('fetch', pumpRoutes(null));
 
 		const out = await getBondingStatus(THREE_MINT);
 		expect(out).toEqual({ kind: 'not_found' });
@@ -389,7 +402,7 @@ describe('getBondingStatus -- cache + last-known-good fallback', () => {
 		// The LKG tier exists to survive hours-long outages (a 6h RPC-lane
 		// cooldown, a multi-day Cloudflare block on pump.fun's frontend), so a
 		// 1800s (30min) TTL expires long before those windows close.
-		const fetchMock = vi.fn().mockResolvedValue(jsonRes(bondingCoin));
+		const fetchMock = pumpRoutes(bondingCoin);
 		vi.stubGlobal('fetch', fetchMock);
 
 		await getBondingStatus(THREE_MINT);
@@ -416,5 +429,55 @@ describe('getBondingStatus -- cache + last-known-good fallback', () => {
 		const lkgWrite = cacheSetCalls.find((c) => c.key === `pump:bonding:lkg:${THREE_MINT}`);
 		expect(lkgWrite).toBeDefined();
 		expect(lkgWrite.ttl).toBeGreaterThanOrEqual(21600);
+	});
+});
+
+describe('getBondingStatus -- pump.fun search rows carry no curve reserves', () => {
+	// The search route returns the coin record (complete, market cap, pools)
+	// but not real_token_reserves / real_sol_reserves, so an on-curve coin read
+	// from it alone would report no progress. The curve account on Solana
+	// fills those fields in.
+	const searchRow = {
+		mint: THREE_MINT,
+		complete: false,
+		bonding_curve: 'THREEsyntheticCurve1111111111111111111111111',
+		usd_market_cap: 30000,
+		program: 'pump',
+		indexed_by_pump: false,
+	};
+
+	it('fills progress and SOL in curve from the on-chain curve, keeping pump.fun market cap', async () => {
+		vi.stubGlobal('fetch', pumpRoutes(searchRow));
+		getCurveView.mockResolvedValue({
+			httpStatus: 200,
+			body: {
+				curve: {
+					realTokenReserves: String(PUMP_CURVE_INITIAL_REAL_TOKENS / 4),
+					realSolReserves: String(63 * 1e9),
+					complete: false,
+				},
+			},
+		});
+
+		const out = await getBondingStatus(THREE_MINT);
+
+		expect(out.kind).toBe('ok');
+		expect(out.coin).toEqual(searchRow);
+		expect(out.status.onCurve).toBe(true);
+		expect(out.status.bondingProgressPct).toBeCloseTo(75, 6);
+		expect(out.status.solInCurve).toBeCloseTo(63, 6);
+		expect(out.status.tokensRemaining).toBeCloseTo(PUMP_CURVE_INITIAL_REAL_TOKENS / 4 / 1e6, 6);
+		expect(out.status.marketCapUsd).toBe(30000);
+	});
+
+	it('still answers from pump.fun alone when the on-chain read has nothing', async () => {
+		vi.stubGlobal('fetch', pumpRoutes(searchRow));
+
+		const out = await getBondingStatus(THREE_MINT);
+
+		expect(out.kind).toBe('ok');
+		expect(out.status.onCurve).toBe(true);
+		expect(out.status.bondingProgressPct).toBeNull();
+		expect(out.status.marketCapUsd).toBe(30000);
 	});
 });

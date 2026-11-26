@@ -24,7 +24,7 @@
 // `source: 'onchain'` instead of `'pumpfun'`.
 
 import { isGraduated } from './pump-launch-feed.js';
-import { pumpFetchJson } from './pump-feed-fetch.js';
+import { fetchPumpCoin as fetchPumpCoinRecord } from './pump-feed-fetch.js';
 import { cacheGet, cacheSet } from './cache.js';
 import { getCurveView } from './pump-curve-view.js';
 
@@ -203,42 +203,51 @@ export function mapOnchainCurveView(body) {
 	};
 }
 
-// Bounded retry on 429/5xx (honours Retry-After), never throws: the same
-// resilience the sibling pump.fun readers (trending, whales, /api/pump/coin)
-// already rely on, so a Cloudflare rate-limit blip recovers inside one request
-// instead of being treated as a hard outage on the first non-OK response.
-async function fetchOnce(url) {
-	const { ok, status, body } = await pumpFetchJson(url, { timeoutMs: FETCH_TIMEOUT_MS, retries: 1 });
-	// 404 = this mint isn't a pump.fun-indexed coin; a hard distinction from a
-	// transient upstream fault (5xx / network / timeout) so the caller can answer
-	// 400 vs 503 correctly.
-	if (status === 404) return { kind: 'not_found' };
-	if (!ok) return { kind: 'upstream_down' };
-	// A returned record that isn't a native bonding-curve launch (an externally
-	// indexed token) is "not a pump.fun mint", not a data-source fault.
-	if (body && body.mint && isPumpLaunch(body)) return { kind: 'ok', coin: body };
-	return { kind: 'not_found' };
-}
-
 /**
- * Fetch a pump.fun coin object by mint. Tries the richer `coins-v2/<mint>` route
- * (carries the AMM pool fields) then falls back to `coins/<mint>`. Distinguishes
- * "not a pump.fun mint" (both routes 404 / empty) from "upstream temporarily
- * down" (network / timeout / 5xx) so the endpoint never turns a data-source blip
- * into a 400 or a 500.
+ * Fetch a pump.fun coin object by mint from pump.fun's search route (its
+ * /coins/<mint> and /coins-v2/<mint> routes were retired on 2026-11-25; see
+ * pump-coin-search.js). Bounded retry on 429/5xx, never throws. Distinguishes
+ * "not a pump.fun mint" (no exact match, or an externally indexed token) from
+ * "upstream temporarily down" (network / timeout / 5xx) so the endpoint never
+ * turns a data-source blip into a 400 or a 500.
  *
  * @param {string} mint
  * @returns {Promise<{ kind: 'ok', coin: object } | { kind: 'not_found' } | { kind: 'upstream_down' }>}
  */
 export async function fetchPumpCoin(mint) {
-	let sawUpstreamDown = false;
-	for (const path of [`coins-v2/${encodeURIComponent(mint)}`, `coins/${encodeURIComponent(mint)}`]) {
-		const r = await fetchOnce(`${PUMP_FRONTEND_BASE}/${path}`);
-		if (r.kind === 'ok') return r;
-		if (r.kind === 'upstream_down') sawUpstreamDown = true;
-		// not_found → try the next route before concluding it's not a pump mint.
+	const { ok, status, body } = await fetchPumpCoinRecord(mint, { timeoutMs: FETCH_TIMEOUT_MS, retries: 1 });
+	if (status === 404) return { kind: 'not_found' };
+	if (!ok) return { kind: 'upstream_down' };
+	if (body && body.mint && isPumpLaunch(body)) return { kind: 'ok', coin: body };
+	return { kind: 'not_found' };
+}
+
+// pump.fun's search rows carry no curve reserves, so an on-curve coin read
+// from it has no progress, SOL-in-curve or tokens-remaining. The bonding-curve
+// account on Solana holds exactly those numbers; read it and keep pump.fun's
+// market cap (the on-chain on-curve view has no USD leg). Best effort: when
+// the chain read has nothing, the pump.fun-only status stands.
+async function withOnchainCurve(status, mint) {
+	if (!status.onCurve || status.bondingProgressPct != null) return status;
+	let view;
+	try {
+		view = await getCurveView({ mint, network: 'mainnet' });
+	} catch {
+		return status;
 	}
-	return { kind: sawUpstreamDown ? 'upstream_down' : 'not_found' };
+	if (view?.httpStatus !== 200 || !view.body) return status;
+	if (view.body.graduated) {
+		const onchain = mapOnchainCurveView(view.body);
+		return { ...onchain, marketCapUsd: status.marketCapUsd ?? onchain.marketCapUsd, source: status.source };
+	}
+	if (!view.body.curve) return status;
+	const onchain = mapOnchainCurveView(view.body);
+	return {
+		...status,
+		bondingProgressPct: onchain.bondingProgressPct,
+		solInCurve: onchain.solInCurve,
+		tokensRemaining: onchain.tokensRemaining,
+	};
 }
 
 /**
@@ -266,7 +275,7 @@ export async function getBondingStatus(mint) {
 		// pump.fun's coin object already carries `usd_market_cap`, so no extra
 		// SOL-price fetch is needed on the hot path; pass 0 and let
 		// mapBondingStatus prefer it.
-		const status = mapBondingStatus(res.coin, { solPriceUsd: 0 });
+		const status = await withOnchainCurve(mapBondingStatus(res.coin, { solPriceUsd: 0 }), mint);
 		const entry = { status, coin: res.coin };
 		cacheSet(lk, entry, LIVE_TTL_S).catch(() => {});
 		cacheSet(bondingLkgKey(mint), entry, LKG_TTL_S).catch(() => {});
