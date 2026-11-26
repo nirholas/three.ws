@@ -178,6 +178,7 @@ import {
 	territoryReport,
 } from './_lib/forge-territory.js';
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
+import { allowanceExceeded, pixal3dLaneHealth, PIXAL3D_ALLOWANCE_S } from './_lib/forge-pixal3d-guard.js';
 import { directPrompt } from './_mcp-studio/forge-client.js';
 import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
 import { assertSafePublicUrl, SsrfBlockedError } from './_lib/ssrf-guard.js';
@@ -1250,6 +1251,8 @@ async function startJobWithBody(req, res, body) {
 	// Korea or an unknown country (api/_lib/forge-territory.js).
 	const country = requestTerritory(req);
 	let backendId = resolveBackendId({ path, tier, backend: body?.backend, userImages: isImageMode, subjectClass, country });
+	// Set when the "Match my photo" health gate sends a photo to the standard lane.
+	let laneFallback = null;
 	// Tracks whether the free NVIDIA NIM lane has already been attempted this
 	// request, so the paid-lane fallback below never retries a lane that just
 	// failed (draft already tries nvidia first; standard/high reach it only as a
@@ -2315,6 +2318,16 @@ async function startJobWithBody(req, res, body) {
 		// The Modly lanes (workers/modly: TripoSG, Hunyuan3D 2 Mini Turbo) ride the
 		// same block. They are explicit picks or late free fallbacks, and when their
 		// worker is down the request retries on TRELLIS.2, then TRELLIS v1.
+		// Health gate for "Match my photo": when the lane's recent worker-attributable
+		// success rate is low, send the photo straight to the standard TRELLIS lane
+		// (same request it already gets for photos) and say so in the response.
+		if (backendId === 'pixal3d' && backendIsConfigured('trellis_selfhost')) {
+			const gate = await pixal3dLaneHealth();
+			if (gate.gated) {
+				laneFallback = { from: 'pixal3d', to: 'trellis_selfhost', reason: gate.reason };
+				backendId = 'trellis_selfhost';
+			}
+		}
 		if (isSelfHostImageLane(backendId)) {
 			let gcp;
 			try {
@@ -2512,6 +2525,7 @@ async function startJobWithBody(req, res, body) {
 				const cold = await coldStartFor(backendId);
 				return json(res, 200, {
 					job_id: token,
+					lane_fallback: laneFallback || undefined,
 					creation_id: creationId,
 					status: 'queued',
 					mode: isImageMode ? 'image_to_3d' : 'text_to_3d',
@@ -3443,6 +3457,13 @@ async function pollJob(req, res, jobId) {
 		return json(res, 200, { job_id: jobId, status: 'running', ...metaFields, ...timingFields });
 	}
 
+	// "Match my photo" has a hard allowance: a job still pending past it moves to
+	// the standard photo lane through the failover below instead of making the user
+	// wait out a cold start that measured 16 minutes (see _lib/forge-pixal3d-guard.js).
+	if (allowanceExceeded({ backend: meta?.backend, status: result.status || 'running', createdAt: meta?.created_at })) {
+		result = { status: 'failed', error: `Match my photo did not finish inside ${PIXAL3D_ALLOWANCE_S}s; continuing on the standard engine.` };
+	}
+
 	if (result.status === 'done' && result.resultGlbUrl) {
 		// The compression choice a caller requested at submit time (see
 		// _lib/forge-job-options.js): this poll is a LATER, separate invocation
@@ -3691,7 +3712,12 @@ export default wrap(async (req, res) => {
 	// of recomputing per request. stale-while-revalidate keeps it instant even as
 	// the cache refreshes in the background.
 	if (url.searchParams.has('catalog')) {
-		return json(res, 200, buildCatalog(), {
+		const catalogBody = buildCatalog();
+		// Measured health of "Match my photo", so the page states its real typical
+		// time and whether new photos are currently routed to the standard engine.
+		const pixalEntry = catalogBody.backends?.find((b) => b.id === 'pixal3d');
+		if (pixalEntry?.configured) pixalEntry.health = await pixal3dLaneHealth();
+		return json(res, 200, catalogBody, {
 			'cache-control': 'public, max-age=60, s-maxage=600, stale-while-revalidate=86400',
 		});
 	}

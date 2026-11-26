@@ -1323,7 +1323,19 @@ function updateEstimate() {
 	// from the prompt first, so "builds from a reference image" would be wrong —
 	// the user supplied no image. Only the photos tab builds from a real reference.
 	const parts = [`<strong>${tierMeta.label}</strong>`, costSegment(backend, tierMeta)];
-	if (est?.eta_seconds) parts.push(`usually ~${est.eta_seconds}s`);
+	const lane = backend.id === 'pixal3d' ? backend.health : null;
+	if (lane?.gated) {
+		parts.push(lane.reason);
+	} else if (lane?.typical_seconds) {
+		// Measured, not hoped for: the median of recent finished jobs, and the point
+		// where the job moves to the standard engine so the wait has a ceiling.
+		const typicalMin = Math.max(1, Math.round(lane.typical_seconds / 60));
+		const capMin = Math.round(lane.allowance_seconds / 60);
+		parts.push(`recent runs took ~${typicalMin} min; after ${capMin} min it finishes on the standard engine`);
+	} else if (est?.eta_seconds) {
+		parts.push(`usually ~${est.eta_seconds}s`);
+		if (lane) parts.push(`after ${Math.round(lane.allowance_seconds / 60)} min it finishes on the standard engine`);
+	}
 	// Credits are a real charge only on metered lanes (BYOK or the paid High tier).
 	// Never tack a credit figure onto a "Free" line — "Free · ~3 credits" reads as
 	// a contradiction. costSegment() owns the cost word; this stays consistent with it.
@@ -2300,8 +2312,12 @@ async function pollUntilDone(jobId) {
 					// say so now rather than let an untextured result read as a bug.
 					const shapeOnly =
 						data.backend === 'triposg' ? ' It returns the shape without textures.' : '';
+					const reason =
+						data.failover_from === 'pixal3d'
+							? `${engineLabel('pixal3d')} was taking too long.`
+							: `${engineLabel(data.failover_from)} hit a snag.`;
 					setLaneNote(
-						`${engineLabel(data.failover_from)} hit a snag. Continuing on ${engineLabel(data.backend)}, no action needed.${shapeOnly}`,
+						`${reason} Your model is now being made with the standard engine (${engineLabel(data.backend)}) from your original photo, no action needed.${shapeOnly}`,
 					);
 				}
 			}
@@ -3232,6 +3248,9 @@ async function run(cfg) {
 		stopProgressWatch();
 		rememberFromResponse(job);
 		if (job.creation_id) currentCreationId = job.creation_id;
+		// The server routed this photo to the standard engine because "Match my photo"
+		// is recovering. Say so now instead of letting the swap go unmentioned.
+		if (job.lane_fallback?.reason) setLaneNote(job.lane_fallback.reason);
 
 		// Fold every real signal the submit response carries into the timeline: the
 		// lane that actually ran, the art-directed prompt, the reference view (shown

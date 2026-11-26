@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-26",
+			"title": "Match my photo no longer makes you wait out a 16 minute cold start",
+			"summary": "If Match my photo has not finished inside 7 minutes, your job now continues on the standard engine from your original photo and the page says so. When the lane's recent success rate is low, new photos go straight to the standard engine. The estimate on the page shows the lane's measured recent time instead of a fixed guess.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-26",
 			"title": "A generation Forge fails no longer costs you an allowance",
 			"summary": "When Forge itself fails a request (a lane down, storage unavailable), the hourly generation allowance and the daily paid allowance are handed back. The daily cap now follows your account instead of a browser id, and its 429 says when it resets (UTC midnight) with Retry-After and rate-limit headers. Tool limits (remesh, stylize, segment and the rest) name themselves in the 429 so the page can say which limit you hit.",
 			"tags": [
