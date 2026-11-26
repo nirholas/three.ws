@@ -1971,9 +1971,11 @@ const FALLBACK_SIBLINGS = {
 	openrouter: OPENROUTER_SIBLINGS,
 	groq: ['openai/gpt-oss-20b'],
 	// Like Groq, NVIDIA NIM rate-limits per key (one account), so a second NIM
-	// model would re-hit the same throttle — keep a single slot and give the
-	// next fallback slot to a different provider.
-	nvidia: ['nvidia/nemotron-3-ultra-550b-a55b'],
+	// model would re-hit the same throttle: keep a single slot and give the
+	// next fallback slot to a different provider. Every NIM model is its own
+	// function with its own queue, so the step-down is Lightning, the other
+	// model the free chain pins (NVIDIA_PINNED_MODELS in api/_lib/llm.js).
+	nvidia: ['nvidia/nemotron-3.5-lightning-30b-a3b'],
 	// Same one-account rationale as Groq/NVIDIA: one slot each, then move on
 	// to a different provider.
 	sambanova: ['Meta-Llama-3.3-70B-Instruct'],

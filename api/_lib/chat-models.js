@@ -679,7 +679,12 @@ export const PROVIDER_MODEL_DEFAULTS = {
 	anthropic: 'claude-sonnet-5',
 	openrouter: DEFAULT_FREE_MODEL,
 	groq: 'qwen/qwen3.8-27b',
-	nvidia: 'nvidia/nemotron-3.5-lightning-30b-a3b',
+	// The lead NIM rung of api/_lib/llm.js (NVIDIA_PINNED_MODELS[0]), which is the
+	// model /api/cron/nvidia-lane-probes watches. Lightning led here until
+	// 2026-11-26, when it stalled past the per-call cutoff on every request while
+	// the probed model answered in 1.3 s; tests/chat-models.test.js holds the two
+	// in step. This file cannot import llm.js (llm.js imports this file).
+	nvidia: 'nvidia/nemotron-3-ultra-550b-a55b',
 	sambanova: 'Meta-Llama-3.3-70B-Instruct',
 	mistral: 'mistral-small-latest',
 	zai: 'glm-4.7-flash',
