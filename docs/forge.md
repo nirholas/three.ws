@@ -535,7 +535,7 @@ before these existed.
 | `pose` | `"t"` \| `"a"` | Requested rest pose for a humanoid/character subject. Only backends without a caller-supplied reference image can honor this (`poseControl: true`); a photo-conditioned lane reports `pose_applied: false` rather than silently ignoring the field. |
 | `output_format` | `"glb"` \| `"glb-meshopt"` \| `"glb-draco"` | Compress the delivered GLB. |
 | `texture_size` | integer (px) | Bake textures at a specific resolution instead of the tier default. |
-| `seed` | integer | Reproducibility: the same seed, prompt and params reproduce the same mesh on backends that support it. |
+| `seed` | integer 0 to 4294967295, or a string of digits | Reproducibility: the same seed, prompt and params reproduce the same mesh on backends that support it. See [Seeds](#seeds) below. |
 
 ```bash
 # Target a 20k-triangle mesh, fit it into a 1.8m-tall box, and request a T-pose.
@@ -563,6 +563,31 @@ and, for `pose`, whether the chosen backend could honor it:
 
 An invalid value (e.g. `pose: "sitting"`, or a non-positive `bbox` entry)
 answers `400` naming the field rather than silently dropping it.
+
+### Seeds
+
+A seed is an unsigned 32-bit integer: a JSON number or a string of decimal
+digits from `0` to `4294967295`. Anything else that is present (a negative, a
+fraction, `4294967296`, letters) answers `400 invalid_options` with
+`seed must be a whole number from 0 to 4294967295.` Values are never clamped,
+because clamping turned different seeds into the same model and the same cache
+entry. Leave `seed` out for a random generation.
+
+The seed you send is the seed recorded and cached. An engine with a narrower
+range receives a fixed fold of it (`seed mod (max + 1)`), so replaying a seed
+always reproduces: the keyless Pollinations image rung takes `0` to
+`2147483647`, and the Hunyuan3D Hugging Face Space takes `0` to `10000000` (sent
+with its randomize switch off). The NVIDIA TRELLIS NIM reads `0` as "random", so
+a seed of `0` is sent to it as `4294967295`. Every other lane takes the full
+range unchanged. The per-engine ranges, with their sources, are listed in
+`api/_lib/forge-seed.js`. Two seeds that fold to the same engine value still
+get separate cache entries.
+
+On the Forge page the **Seed** field (under Engine) does the same check before
+anything is sent. Empty means a fresh random seed for every Generate. A typed or
+pasted seed (grouping such as `1,234,567` is accepted) locks every run to it and
+is remembered in this browser. After a run starts, the note under the field
+shows the seed that run used, with **Use this seed** to lock it.
 
 ## Batch generation
 

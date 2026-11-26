@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-11-26",
+			"title": "Forge now counts the requests that fail before a model starts",
+			"summary": "Forge's success rate only counted requests that reached a 3D engine, so it could read 93% while people saw failures earlier: at the reference image step, a rate limit, or an engine refusing the job. Every generation request is now counted by where it ended and why, with no prompt text or personal data, and recording never slows or changes your request. The health check, the ops reports and the NVIDIA benchmarks page now show an end-to-end success rate (models delivered out of all requests accepted after sign-in) beside the engine success rate, so a breakdown before the engines shows up in the numbers.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/nvidia/benchmarks"
+		},
+		{
+			"date": "2026-11-26",
+			"title": "Forge seeds you can paste, check and reuse",
+			"summary": "The Forge page has a Seed field under Engine. Leave it empty for a new random model every time, or paste a seed to get the same model again; it remembers the seed after a reload and tells you right away if a value is not a whole number from 0 to 4294967295. After each run it shows the seed that run used, with a button to keep it. The API now refuses an out-of-range seed with that same message instead of quietly changing it, so two different seeds can no longer come back as the same model, and every engine now gets a seed it actually accepts.",
+			"tags": [
+				"feature",
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-26",
 			"title": "Match my photo no longer makes you wait out a 16 minute cold start",
 			"summary": "If Match my photo has not finished inside 7 minutes, your job now continues on the standard engine from your original photo and the page says so. When the lane's recent success rate is low, new photos go straight to the standard engine. The estimate on the page shows the lane's measured recent time instead of a fixed guess.",
 			"tags": [
