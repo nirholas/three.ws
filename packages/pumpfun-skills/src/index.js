@@ -20,7 +20,14 @@ export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js'
 
 /** pump.fun's agent transaction API: builds the unsigned/mint-signed tx. */
 export const AGENT_API_BASE = 'https://fun-block.pump.fun/agents';
-/** pump.fun's public coins read API. Override with PUMP_COINS_V2_BASE. */
+/** pump.fun's public frontend API, which serves the coin record by search. */
+export const PUMP_FRONTEND_BASE = 'https://frontend-api-v3.pump.fun';
+/**
+ * pump.fun's retired per-mint coins route. It answers 404 for every mint since
+ * 2026-11-25, so it is only used when a caller points `coinsV2Base` (or
+ * PUMP_COINS_V2_BASE) at a backend that still serves `<base>/<mint>`, such as
+ * a devnet coins API.
+ */
 export const COINS_V2_BASE = 'https://frontend-api-v3.pump.fun/coins-v2';
 /** Wrapped-SOL mint. Use as inputMint for buys, outputMint for sells. */
 export const NATIVE_MINT = 'So11111111111111111111111111111111111111112';
@@ -36,18 +43,19 @@ const FEE_DESTINATIONS = ['creator', 'cashback', 'sharing_config'];
  *
  * @param {object} [options]
  * @param {string} [options.agentBaseUrl]  Agent build API origin (default fun-block.pump.fun/agents).
- * @param {string} [options.coinsV2Base]   coins-v2 read origin (default frontend-api-v3, or PUMP_COINS_V2_BASE).
+ * @param {string} [options.coinsV2Base]   A backend serving `<base>/<mint>` coin records (e.g. devnet), or PUMP_COINS_V2_BASE. Default: pump.fun's search route.
  * @param {typeof fetch} [options.fetch]   fetch implementation (default globalThis.fetch).
  * @param {string} [options.apiKey]        Bearer token attached to build calls.
  * @param {Record<string,string>} [options.headers]  Extra headers on every call.
  */
 export function createPumpfunSkills(options = {}) {
-	// Build calls hit pump.fun's agent API; reads hit coins-v2. Both are off the
-	// three.ws origin, so each gets its own createHttp bound to the right base.
+	// Build calls hit pump.fun's agent API; coin reads hit pump.fun's frontend
+	// API (or a caller-supplied per-mint backend). Both are off the three.ws
+	// origin, so each gets its own createHttp bound to the right base.
 	const agentBaseUrl = String(options.agentBaseUrl || AGENT_API_BASE).replace(/\/+$/, '');
 	const coinsV2Base = resolveCoinsV2Base(options.coinsV2Base);
 	const build = createHttp({ ...options, baseUrl: agentBaseUrl });
-	const read = createHttp({ baseUrl: coinsV2Base, fetch: options.fetch, headers: options.headers });
+	const read = createHttp({ baseUrl: coinsV2Base || PUMP_FRONTEND_BASE, fetch: options.fetch, headers: options.headers });
 
 	// Post the inputs (camelCase, as the agent API expects) plus encoding:base64,
 	// and return the built transaction. Every build endpoint shares this shape.
@@ -156,14 +164,31 @@ export function createPumpfunSkills(options = {}) {
 	/** Read the fee destination, vault balances, and graduation state for a mint. */
 	async function coinFees(mint, opts = {}) {
 		requireString(mint, 'mint', 'coinFees');
-		const coin = await read(`${encodeURIComponent(mint)}`, { signal: opts.signal });
+		const coin = coinsV2Base
+			? await read(`${encodeURIComponent(mint)}`, { signal: opts.signal })
+			: await searchCoin(mint, opts.signal);
 		if (!coin || typeof coin !== 'object') {
 			throw new ThreeWsError(
-				`coins-v2 returned an empty body for mint ${mint}. If using devnet, set PUMP_COINS_V2_BASE to the devnet coins API.`,
+				`The coins backend returned an empty body for mint ${mint}. If using devnet, set PUMP_COINS_V2_BASE to the devnet coins API.`,
 				{ code: 'empty_coin' },
 			);
 		}
 		return shapeFeeInfo(coin, mint);
+	}
+
+	// pump.fun retired GET /coins-v2/<mint> on 2026-11-25; the full coin record
+	// is served by its search route, keyed by the mint. Search also returns
+	// fuzzy hits for other coins, so only the exact mint match counts.
+	async function searchCoin(mint, signal) {
+		const rows = await read('/coins/search-unrestricted', {
+			query: { searchTerm: mint, offset: 0, limit: 10, includeNsfw: true },
+			signal,
+		});
+		const coin = Array.isArray(rows) ? rows.find((c) => c?.mint === mint) : null;
+		if (!coin) {
+			throw new ThreeWsError(`pump.fun has no coin with mint ${mint}.`, { code: 'coin_not_found', status: 404 });
+		}
+		return coin;
 	}
 
 	return { createCoin, swap, collectFees, sharingConfig, coinFees };
@@ -262,9 +287,10 @@ function shapeSharingConfig(cfg) {
 	};
 }
 
-// pump.fun encodes cashback either as a plain boolean or an Anchor option tuple.
+// pump.fun encodes cashback either as a plain boolean or an Anchor option tuple;
+// its search route names the flag is_cashback_enabled.
 function readCashback(coin) {
-	const raw = coin.is_cashback_coin ?? coin.isCashbackCoin;
+	const raw = coin.is_cashback_coin ?? coin.isCashbackCoin ?? coin.is_cashback_enabled;
 	if (raw === true) return true;
 	if (Array.isArray(raw)) return raw[0] === true;
 	return false;
@@ -310,7 +336,8 @@ function assertJitoTip(input, fn) {
 
 function resolveCoinsV2Base(explicit) {
 	const env = typeof process !== 'undefined' && process.env ? process.env.PUMP_COINS_V2_BASE : null;
-	return String(explicit || env || COINS_V2_BASE).replace(/\/+$/, '');
+	const base = explicit || env;
+	return base ? String(base).replace(/\/+$/, '') : null;
 }
 
 function prune(obj) {

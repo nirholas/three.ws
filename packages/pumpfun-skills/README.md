@@ -28,8 +28,8 @@
 > exposed as plain functions instead of [Agent Skills](https://agentskills.io)
 > tools. It wraps pump.fun's agent transaction API
 > (`https://fun-block.pump.fun/agents/*`), which builds the unsigned or
-> mint-signed Solana transaction for you, and the public coins read API
-> (`frontend-api-v3.pump.fun/coins-v2`). Every function is **coin-agnostic**:
+> mint-signed Solana transaction for you, and pump.fun's public coin search
+> (`frontend-api-v3.pump.fun/coins/search-unrestricted`). Every function is **coin-agnostic**:
 > the mint, amounts, and wallet are supplied at call time; nothing is
 > hardcoded. You build, you co-sign, you broadcast. It pairs with
 > [`@three-ws/agent-payments`](https://www.npmjs.com/package/@three-ws/agent-payments)
@@ -126,7 +126,7 @@ units for SPL). `NATIVE_MINT` is re-exported as a convenience for SOL.
 
 Also exported: `createPumpfunSkills(options)` builds a configured client (custom
 `fetch`, `agentBaseUrl`, `coinsV2Base`, `apiKey`, `headers`) whose methods match
-the functions below; plus the `AGENT_API_BASE`, `COINS_V2_BASE`, and
+the functions below; plus the `AGENT_API_BASE`, `PUMP_FRONTEND_BASE`, `COINS_V2_BASE`, and
 `FEE_DESTINATIONS` constants and the `ThreeWsError` / `PaymentRequiredError`
 error classes.
 
@@ -198,8 +198,15 @@ set `outputMint` to `NATIVE_MINT`. Wraps `POST /agents/swap`.
 ### `coinFees(mint) → Promise<FeeInfo>`
 
 Read-only. Resolve the fee destination, vault balances, sharing config, and
-graduation state for a mint. Reads the public `coins-v2` API, which carries the
-bonding-curve, pool, cashback, and sharing-config state. No transaction, no RPC.
+graduation state for a mint. Reads the coin record from pump.fun's public
+search route, keyed by the mint and matched exactly (search also returns fuzzy
+hits for other coins). No transaction, no RPC. pump.fun retired the per-mint
+`/coins-v2/<mint>` route on 2026-11-25 (404 for every mint); the search record
+carries the bonding curve, pool, creator, graduation and cashback state, but no
+sharing config and no vault balance. For those, read the chain (the
+`pump-fun-skills/coin-fees/scripts/fetch-fee-info.mjs` script does) or point
+`coinsV2Base` at a backend that serves them. A mint the search does not return
+rejects with `code: 'coin_not_found'`.
 
 **Returns** `FeeInfo`
 
@@ -210,9 +217,9 @@ bonding-curve, pool, cashback, and sharing-config state. No transaction, no RPC.
 | `pool` | `string \| null` | AMM pool PDA, or `null` if not graduated. |
 | `isGraduated` | `boolean` | True once the coin migrated to an AMM pool. |
 | `isCashbackCoin` | `boolean` | True if fees route as cashback. |
-| `hasSharingConfig` | `boolean` | True if a fee-sharing config is active. |
+| `hasSharingConfig` | `boolean` | True if the coin record carries an active fee-sharing config (pump.fun's search record never does). |
 | `creator` | `string` | Effective creator public key. |
-| `creatorVaultLamports` | `string` | Claimable lamports in the creator vault (`'0'` when `coins-v2` carries no balance). |
+| `creatorVaultLamports` | `string` | Claimable lamports in the creator vault (`'0'` when the coin record carries no balance, which pump.fun's search record never does). |
 | `sharingConfig` | `object \| null` | `{ address, admin, adminRevoked, shareholders[] }`. |
 | `feeDestination` | `'creator' \| 'cashback' \| 'sharing_config'` | Where fees go. |
 
@@ -251,7 +258,7 @@ Two surfaces, one rule (**the function builds, you sign**):
 createCoin / swap        coinFees                 collectFees / sharingConfig
    │                        │                          │
    ▼                        ▼                          ▼
-POST fun-block.pump.fun   read coins-v2 (curve,      POST fun-block.pump.fun
+POST fun-block.pump.fun   read coin search (curve,   POST fun-block.pump.fun
   /agents/create-coin     pool + fee state)            /agents/collect-fees
   /agents/swap            (no transaction)             /agents/sharing-config
    │                        │                          │
@@ -270,14 +277,15 @@ base64 transaction        FeeInfo JSON               base64 transaction
   **mint keypair already signed**: you only add the wallet signature. `swap`,
   `collect-fees`, and `sharing-config` return a transaction for the wallet to
   sign outright.
-- **Read calls** (`coinFees`) hit `coins-v2`, which carries the bonding-curve,
-  pool, cashback, and sharing-config state, and derive the fee destination and
-  balances from it. No wallet, no signing, no RPC.
+- **Read calls** (`coinFees`) read the coin record from pump.fun's search
+  route, which carries the bonding-curve, pool, graduation and cashback state,
+  and derive the fee destination from it. No wallet, no signing, no RPC.
 - **State detection is automatic.** `swap` and `collectFees` inspect whether the
   coin is still on the bonding curve or graduated to an AMM pool and build the
   correct route; you never branch on it yourself.
 
-Override the read backend (e.g. for devnet) with the `PUMP_COINS_V2_BASE`
+Point the read at a backend that serves `<base>/<mint>` coin records (e.g. a
+devnet coins API) with the `coinsV2Base` option or the `PUMP_COINS_V2_BASE`
 environment variable; the build API base is `https://fun-block.pump.fun/agents`.
 
 ## Errors & edge cases
@@ -293,7 +301,8 @@ never swallowed:
 | `swap` | coin not found | Mint isn't a pump.fun coin. | Verify the mint. |
 | `sharingConfig` | `bps` ≠ 10000 | Shareholder splits don't total 100%. | Adjust `bps` to sum to `10000`. |
 | `collectFees` | empty vault | `coinFees(mint).creatorVaultLamports === '0'`. | Read first; skip if nothing to claim. |
-| `coinFees` | empty `coins-v2` body | Wrong cluster, or coin missing. | Set `PUMP_COINS_V2_BASE` for devnet. |
+| `coinFees` | `coin_not_found` | pump.fun's search has no coin with that mint (wrong cluster, or not a pump.fun coin). | Verify the mint; for devnet set `PUMP_COINS_V2_BASE`. |
+| `coinFees` | `empty_coin` | A custom `coinsV2Base` answered an empty body. | Check the backend and cluster. |
 | any | `frontRunningProtection: true`, no `tipAmount` | Jito route needs a tip. | Pass `tipAmount` (SOL). |
 
 A built transaction is **partially signed at most**: it is never broadcast for

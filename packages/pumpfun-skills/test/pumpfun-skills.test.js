@@ -112,25 +112,34 @@ test('swap() targets /agents/swap with the buy route', async () => {
 	assert.equal(res.transaction, 'BUYTX');
 });
 
-test('coinFees() reads coins-v2 and maps snake_case → camelCase FeeInfo', async () => {
+// pump.fun retired GET /coins-v2/<mint> on 2026-11-25 (404 for every mint,
+// $THREE included), so coinFees() failed for every coin. The coin record is now
+// read from the search route, keyed by the mint, taking only the exact match
+// because search also returns fuzzy hits for other coins.
+test('coinFees() reads the coin from pump.fun search and maps snake_case → camelCase FeeInfo', async () => {
 	const { fetch, calls } = stubFetch([
 		{
-			body: {
-				mint: THREE_MINT,
-				creator: WALLET,
-				complete: false,
-				bonding_curve: 'BondingCurve111',
-				pump_swap_pool: null,
-				is_cashback_coin: false,
-			},
+			body: [
+				{ mint: SYNTH_MINT, creator: 'SomeoneElse', complete: true, bonding_curve: 'Wrong', pump_swap_pool: 'WrongPool' },
+				{
+					mint: THREE_MINT,
+					creator: WALLET,
+					complete: false,
+					bonding_curve: 'BondingCurve111',
+					pump_swap_pool: null,
+					is_cashback_enabled: false,
+				},
+			],
 		},
 	]);
 	const client = createPumpfunSkills({ fetch });
 	const fees = await client.coinFees(THREE_MINT);
 
 	assert.equal(calls[0].url.origin, 'https://frontend-api-v3.pump.fun');
-	assert.equal(calls[0].url.pathname, `/coins-v2/${THREE_MINT}`);
+	assert.equal(calls[0].url.pathname, '/coins/search-unrestricted');
+	assert.equal(calls[0].url.searchParams.get('searchTerm'), THREE_MINT);
 	assert.equal(fees.mint, THREE_MINT);
+	assert.equal(fees.creator, WALLET);
 	assert.equal(fees.bondingCurve, 'BondingCurve111');
 	assert.equal(fees.pool, null);
 	assert.equal(fees.isGraduated, false);
@@ -138,17 +147,29 @@ test('coinFees() reads coins-v2 and maps snake_case → camelCase FeeInfo', asyn
 	assert.equal(fees.creatorVaultLamports, '0');
 });
 
+test('coinFees() reports a mint the search does not return as coin_not_found', async () => {
+	const { fetch } = stubFetch([{ body: [{ mint: SYNTH_MINT, creator: WALLET, complete: false }] }]);
+	const client = createPumpfunSkills({ fetch });
+	await assert.rejects(client.coinFees(THREE_MINT), (e) => {
+		assert.ok(e instanceof ThreeWsError);
+		assert.equal(e.code, 'coin_not_found');
+		return true;
+	});
+});
+
 test('coinFees() detects graduation and cashback routing', async () => {
 	const { fetch } = stubFetch([
 		{
-			body: {
-				mint: SYNTH_MINT,
-				creator: WALLET,
-				complete: true,
-				bonding_curve: 'BC',
-				pump_swap_pool: 'Pool222',
-				is_cashback_coin: [true],
-			},
+			body: [
+				{
+					mint: SYNTH_MINT,
+					creator: WALLET,
+					complete: true,
+					bonding_curve: 'BC',
+					pump_swap_pool: 'Pool222',
+					is_cashback_enabled: true,
+				},
+			],
 		},
 	]);
 	const client = createPumpfunSkills({ fetch });

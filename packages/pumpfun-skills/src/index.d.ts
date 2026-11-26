@@ -15,6 +15,8 @@ export declare class PaymentRequiredError extends ThreeWsError {
 
 export declare const DEFAULT_BASE_URL: string;
 export declare const AGENT_API_BASE: string;
+export declare const PUMP_FRONTEND_BASE: string;
+/** pump.fun's retired per-mint coins route; only used through a `coinsV2Base` override. */
 export declare const COINS_V2_BASE: string;
 export declare const NATIVE_MINT: string;
 export declare const FEE_DESTINATIONS: FeeDestination[];
@@ -150,7 +152,7 @@ export interface ReadOptions {
 export interface PumpfunSkillsOptions {
 	/** Agent build API origin (default fun-block.pump.fun/agents). */
 	agentBaseUrl?: string;
-	/** coins-v2 read origin (default frontend-api-v3, or PUMP_COINS_V2_BASE). */
+	/** A backend serving `<base>/<mint>` coin records (e.g. devnet), or PUMP_COINS_V2_BASE. Default: pump.fun's search route. */
 	coinsV2Base?: string;
 	fetch?: typeof fetch;
 	apiKey?: string;
