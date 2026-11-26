@@ -2,6 +2,8 @@
 
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/116-forge-hardening-16-trellis2-lane-diagnosis.md`.
 
+**Status (2026-11-26):** Diagnosed and finished in-repo. Cause: `MODEL_TRELLIS2_URL` was never set on `three-ws-api`, so the lane is skipped before any network call (pinned free by `tests/api/forge-trellis2-unconfigured.test.js`). The worker now caps itself at 512 on a 32 GiB host (6baac1139), and docs no longer call the lane the default. Remaining, owner-owned: deploy the fixed `model-trellis2` image, approve an explicit-only routing gate before the URL is ever set, and decide on the four idle bench/lab services. All of it is in `docs/ops/trellis2-lane-decision.md`.
+
 **Priority:** P1. **Area:** TRELLIS.2 lane. **Dev port:** 4116. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
 
 ## Operating clause (binding)
