@@ -2,12 +2,19 @@
 
 FastAPI inference service that turns **one image into a PBR-textured GLB** with
 [Microsoft TRELLIS.2](https://github.com/microsoft/TRELLIS.2) (4B flow
-transformer over O-Voxel structured latents, MIT license). It is the default
-image-to-3D lane of the Forge (`/forge`, `/api/forge`) and the only default lane
-that serves the European Union, the United Kingdom and South Korea, where the
+transformer over O-Voxel structured latents, MIT license). The Forge (`/forge`,
+`/api/forge`) names it first in the image fallback list, and as an MIT model it
+can serve the European Union, the United Kingdom and South Korea, where the
 Tencent Hunyuan3D license does not apply (see
 [`../model-hunyuan3d/README.md`](../model-hunyuan3d/README.md) and
 `api/_lib/forge-territory.js`).
+
+**Production status (2026-11-26): not serving.** `MODEL_TRELLIS2_URL` has never
+been set on `three-ws-api`, so the lane is skipped before any network call and
+the self-hosted TRELLIS worker (`../model-trellis`) serves every photo. Setting
+the URL would make this lane the first choice for every photo at once; the
+deploy, cost and trial plan are in
+[`../../docs/ops/trellis2-lane-decision.md`](../../docs/ops/trellis2-lane-decision.md).
 
 What a caller gets back:
 
@@ -20,7 +27,8 @@ What a caller gets back:
   verified in the Dockerfile). Quantisation is on, texture compression is off, so
   the baked PBR maps and alpha stay byte-exact.
 - Three resolutions: `512` (latency lane), `1024` (default), `1536` (maximum
-  detail, cascaded).
+  detail, cascaded). A host with 32 GiB of memory or less serves only `512`
+  (see Known limit below).
 
 Work is asynchronous: `POST /infer` returns `202` with a `task_id`, and the caller
 polls `GET /tasks/{id}` until `status` is `completed`. With `GCS_BUCKET` set the
@@ -112,7 +120,8 @@ curl -s localhost:8080/tasks/$TASK -H "Authorization: Bearer dev-secret"
 
 Through the platform the same lane is reached with
 `POST /api/forge` using `{"path":"image","backend":"trellis2","resolution":1024}`,
-or implicitly: it is the default for every image-to-3D tier. The catalog
+or implicitly once `MODEL_TRELLIS2_URL` is set, because every tier names it
+first. The catalog
 (`GET /api/forge?catalog`) lists the accepted `resolutions` on the `trellis2`
 backend.
 
@@ -220,8 +229,16 @@ sampling stages, but the container is then killed with signal 9 in decode and
 `to_glb`, so the failure is in host RAM, not VRAM. The instance holds 16.9 GiB right
 after load (`memory after load` log line), and 32 GiB is the Cloud Run ceiling. The
 worker steps down on CUDA out-of-memory and reports `resolution_served`, but a
-host-RAM kill bypasses that and the API records the job as orphaned. Reducing the
-resident host footprint, or the postprocess peak, is the open fix.
+host-RAM kill bypasses that and the API records the job as orphaned. A 512 job
+on image `server:2dff87f51` peaked at 27.1 of 32 GiB (2026-11-20).
+
+Since 2026-11-26 the worker reads its own memory limit and never starts a
+resolution that host is measured to be killed at
+(`request_policy.HOST_RAM_KILLED_AT_GIB`): on a 32 GiB host every tier runs at
+`512`, `GET /health` lists only `512`, and the boot log says so. A larger host
+(the RTX PRO 6000 shape is 20 vCPU, 80 GiB) keeps the full tier mapping.
+Reducing the resident host footprint, or the postprocess peak, is the open fix
+for 1024 and 1536 on an L4.
 
 Related: [`../model-trellis`](../model-trellis) (TRELLIS v1, the failover behind
 this lane), [`../../docs/forge-pipeline.md`](../../docs/forge-pipeline.md),

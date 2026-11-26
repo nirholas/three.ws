@@ -44,7 +44,7 @@ Not protected (broken or unproven; fix these):
 
 - `triposg` (sketch to 3D): 25 done and 35 failed in 7 days, 41.7%.
 - `pixal3d` ("Match my photo"): 2 done and 9 failed in 7 days, 18.2%, and the two successes took about 16 minutes each.
-- `trellis2` (the configured first choice): no jobs in 7 days, 2 done and 2 failed in 30 days.
+- `trellis2` (the configured first choice): no jobs in 7 days, 2 done and 2 failed in 30 days. Not failing: `MODEL_TRELLIS2_URL` was never set on `three-ws-api`, so the lane is skipped (re-measured 2026-11-26, [trellis2-lane-decision.md](./trellis2-lane-decision.md)).
 - `trellis_nvcf` (TRELLIS hosted by NVIDIA): no jobs in 7 days, 60.7% over 30 days.
 - `hunyuan3d`: no jobs in 7 days, 8 done and 0 failed in 30 days. Too few to call working.
 - The text-to-image rungs ahead of the keyless one, and the prompt-direction LLM chain, were all down on this date.

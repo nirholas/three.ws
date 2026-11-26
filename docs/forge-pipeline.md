@@ -294,7 +294,7 @@ Tracing: the API propagates a W3C `traceparent` (`api/_lib/tracing.js`) through 
 
 | Worker | Role |
 | --- | --- |
-| `workers/model-trellis2/` | Self-hosted TRELLIS.2, the default `trellis2` lane. `resolution` 512, 1024 or 1536, PBR GLB with alpha, meshopt packed. |
+| `workers/model-trellis2/` | Self-hosted TRELLIS.2, the `trellis2` lane: named first for every tier, not serving in production (`MODEL_TRELLIS2_URL` unset). `resolution` 512, 1024 or 1536, PBR GLB with alpha, meshopt packed. |
 | `workers/modly/` | Modly's backend headless, the `modly` (TripoSG) and `modly_hunyuan` (Hunyuan3D 2 Mini Turbo) lanes. Untextured GLB, repaired and decimated to the tier's face budget. |
 | `workers/model-trellis/` | Self-hosted TRELLIS, the `trellis_selfhost` lane. Quality-tiered up to 4096px textures. |
 | `workers/model-hunyuan3d/` | Hunyuan3D-2.1 single image to textured mesh, the `hunyuan3d` lane. |

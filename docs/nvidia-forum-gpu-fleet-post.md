@@ -26,8 +26,8 @@ Every generation lane runs as its own Cloud Run service on an **NVIDIA L4**, plu
 
 The lanes, and what each is for:
 
-- **TRELLIS.2** (`model-trellis2`): the default image lane at every tier. Native single-hop image to 3D with PBR materials and transparency, at a resolution the caller can pick. It is MIT licensed with no territory exclusions, which is why it replaced Hunyuan3D as the default.
-- **TRELLIS** (`model-trellis`): the first-generation native single-hop image to 3D lane. It accepts a user's photo, and also the view that our text lane synthesizes for a text prompt. Textured GLB out. It stays in the chain as the next rung behind TRELLIS.2.
+- **TRELLIS.2** (`model-trellis2`): named first in the routing order at every tier, deployed but not yet wired to production traffic. Native single-hop image to 3D with PBR materials and transparency, at a resolution the caller can pick. It is MIT licensed with no territory exclusions, which is why it is ordered ahead of Hunyuan3D.
+- **TRELLIS** (`model-trellis`): the first-generation native single-hop image to 3D lane. It accepts a user's photo, and also the view that our text lane synthesizes for a text prompt. Textured GLB out. It serves every photo today and is the next rung behind TRELLIS.2 once that lane is wired.
 - **Hunyuan3D** (`model-hunyuan3d`): high-poly image-conditioned reconstruction, poly-budget aware. It is now a fallback lane rather than the default, because its licence excludes some regions and the router keeps it out of those.
 - **TripoSG** (`model-triposg`): sketch to 3D. A drawing plus a prompt naming it, untextured geometry out.
 - **TripoSR**, plus the mesh pipeline around all of them: rigging, remeshing, texturing, segmentation, stylization, background removal, garment generation, avatar reconstruction from photos, text to motion, video to motion, video to scene, and sign-language synthesis.
