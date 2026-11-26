@@ -90,6 +90,23 @@ describe.each([
 		expect(calls.ladder).toBe(1);
 	});
 
+	// budgetExhausted() in api/_mcp3d/text-to-image.js carries a retryAfter of its
+	// own (15 s) but no providerStatus: it is our own time budget running out, not
+	// a provider stating its wait, so the recovery pass must still run.
+	it('still makes the standing-ladder attempt when the ladder ran out of its own time budget', async () => {
+		calls.moduleImpl = async () => {
+			throw Object.assign(new Error('Image generation is taking longer than usual, please retry in a few seconds.'), {
+				code: 'rate_limited',
+				queued: true,
+				retryAfter: 15,
+				budgetMs: 60_000,
+			});
+		};
+		const out = await seedReferenceImage({ prompt: 'a fox', aspect: '1:1', seed: 7 });
+		expect(out.model).toBe('pollinations/flux');
+		expect(calls.ladder).toBe(1);
+	});
+
 	it('goes straight to the standing ladder when the reference module is switched off', async () => {
 		process.env.FORGE_REFERENCE_IMAGE = 'off';
 		calls.moduleImpl = async () => ({ imageUrl: 'https://cdn.test/ref.png', model: 'vertex/gemini-image' });

@@ -467,8 +467,10 @@ export async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
 		} catch (err) {
 			// The module already ran the standing ladder. A provider that stated how
 			// long to wait will refuse an immediate second request, and that request
-			// restarts its window, so hand the wait to the caller instead.
-			if (err?.code === 'rate_limited' && err.retryAfter > 0) throw err;
+			// restarts its window, so hand the wait to the caller instead. The ladder's
+			// own exhausted time budget carries no providerStatus and still gets the
+			// attempt below.
+			if (err?.code === 'rate_limited' && err.providerStatus && err.retryAfter > 0) throw err;
 			// Module not landed yet, or both Vertex AND its internal fallthrough failed.
 			// Make one more standing-provider attempt below so this path never dead-ends.
 			console.warn(`[forge] reference-image module unavailable, using standing provider: ${err?.message || err}`);
