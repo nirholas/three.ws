@@ -2,6 +2,8 @@
 
 Gap analysis of the xAI developer docs against what three.ws already ships on Grok, ranked by value per unit of work. Written 2026-11-21, after joining Grok for Startups. Read it with [grok.md](grok.md) (current integration), [ops/llm-lanes.md](ops/llm-lanes.md) (model menus) and [ops/xai-credits.md](ops/xai-credits.md) (credit ledger).
 
+For what the wider open-source ecosystem builds on other models that we can bring to Grok (Vertex-hosted Grok, SIP phone agents, render-look-fix forge loops, cited X intelligence, a multi-agent research council), see [grok-ecosystem-opportunities.md](grok-ecosystem-opportunities.md).
+
 The local reference copy of the docs lives in `docs/vendor/xai-docs/`. It is gitignored because the text is xAI's copyright. Refresh it with `npm run sync:xai-docs`. Agents can also query the docs live through the `xai-docs` MCP server in `.mcp.json`. Routes below are docs.x.ai paths, and each one is also a file under that folder.
 
 ## The key waits for this plan
