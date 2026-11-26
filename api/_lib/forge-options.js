@@ -41,6 +41,7 @@
 // that is simply absent is never an error — it just keeps the current default.
 
 import { TRELLIS2_RESOLUTIONS, PIXAL3D_VIEW_LABELS, BACKENDS } from './forge-tiers.js';
+import { parseSeed } from './forge-seed.js';
 
 // glb is the universal default. The two compressed variants run a post-generation
 // pass (see glb-compress.js) that shrinks the delivered file without changing the
@@ -51,7 +52,6 @@ export const TEXTURE_SIZES = Object.freeze([512, 1024, 2048, 4096]);
 
 const POLYCOUNT_MIN = 100;
 const POLYCOUNT_MAX = 500_000;
-const SEED_MAX = 4_294_967_295; // uint32 - the range every provider's RNG accepts
 const BBOX_MIN = 0.01; // meters - below this a "fit" is numerically meaningless
 const BBOX_MAX = 50; // meters - above this a caller almost certainly meant cm/mm
 export const POSE_VALUES = Object.freeze(['t', 'a', 'none']);
@@ -136,16 +136,12 @@ export function normalizeForgeOptions(body) {
 	const errors = [];
 	const b = body && typeof body === 'object' ? body : {};
 
-	// seed — accept any integer; clamp into the uint32 range providers accept.
-	let seed = null;
-	if (b.seed !== undefined && b.seed !== null) {
-		const n = Number(b.seed);
-		if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0) {
-			errors.push({ field: 'seed', message: 'seed must be a non-negative integer.' });
-		} else {
-			seed = Math.min(n, SEED_MAX);
-		}
-	}
+	// seed: a uint32 as a number or a digit string (forge-seed.js holds the
+	// contract and each engine's range). Out of range is refused, never clamped:
+	// a clamp merged every larger seed into one model and one cache entry.
+	const parsedSeed = parseSeed(b.seed);
+	const seed = parsedSeed.seed;
+	if (parsedSeed.error) errors.push({ field: 'seed', message: parsedSeed.error });
 
 	// output_format / format — controls the post-generation compression variant.
 	let outputFormat = 'glb';

@@ -39,9 +39,10 @@ describe('normalizeForgeOptions — seed', () => {
 		expect(o.hasOptions).toBe(true);
 	});
 
-	it('clamps an over-large seed into uint32', () => {
+	it('refuses an over-large seed with the range instead of clamping it', () => {
 		const o = normalizeForgeOptions({ seed: 9_999_999_999 });
-		expect(o.seed).toBe(4_294_967_295);
+		expect(o.seed).toBeNull();
+		expect(o.errors[0]).toEqual({ field: 'seed', message: 'seed must be a whole number from 0 to 4294967295.' });
 	});
 
 	it('rejects a negative or non-integer seed', () => {

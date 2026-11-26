@@ -52,6 +52,7 @@
 //   provider_error — so the forge layer can route around a dead/limited lane.
 
 import { env } from '../_lib/env.js';
+import { SEED_MAX } from '../_lib/forge-seed.js';
 
 const TRELLIS_INVOKE_URL = 'https://ai.api.nvidia.com/v1/genai/microsoft/trellis';
 const NVCF_STATUS_URL = 'https://api.nvcf.nvidia.com/v2/nvcf/pexec/status';
@@ -308,7 +309,11 @@ function buildTextBody({ prompt, tier, seed }) {
 		slat_sampling_steps: steps.slat,
 		output_format: 'glb',
 	};
-	if (Number.isInteger(seed)) body.seed = seed;
+	// The TRELLIS NIM takes 0..4294967295 (minimum 0, exclusiveMaximum
+	// 4294967296) but reads 0 as "pick a random seed", so a caller's seed 0 would
+	// never reproduce. It is sent as 4294967295, a fixed mapping, so the same
+	// caller seed always lands on the same mesh. See api/_lib/forge-seed.js.
+	if (Number.isInteger(seed) && seed >= 0 && seed <= SEED_MAX) body.seed = seed === 0 ? SEED_MAX : seed;
 	return body;
 }
 

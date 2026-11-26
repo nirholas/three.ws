@@ -33,6 +33,7 @@
 //   HF_RECONSTRUCT_API_NAME       — legacy single-API alias.
 
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { foldSeed, HUNYUAN_SPACE_SEED_MAX } from '../_lib/forge-seed.js';
 
 const HF_INFERENCE_TIMEOUT_MS = 280_000; // leave headroom for response framing
 // Per-call deadlines. The SSE read is bounded by HF_INFERENCE_TIMEOUT_MS in
@@ -189,6 +190,12 @@ function extractFirstGlbCandidates(data, spaceUrl) {
 // result; selfie callers can override via params.steps / params.seed / etc.
 function buildHunyuanPayload({ photos, params }) {
 	const [frontal, left, right] = photos;
+	// The Space's seed slider runs 0..1e7 (gradio_app.py MAX_SEED) and
+	// randomize_seed defaults on, which replaces the seed with a random one. A
+	// caller seed is therefore folded into the slider range (fixed mapping, see
+	// api/_lib/forge-seed.js) and randomize is turned off so the seed is used.
+	const callerSeed = Number(params?.seed);
+	const hasSeed = params?.seed !== undefined && params?.seed !== null && Number.isInteger(callerSeed) && callerSeed >= 0;
 	return [
 		params?.caption ?? '',
 		toFileData(params?.image || frontal),
@@ -198,11 +205,11 @@ function buildHunyuanPayload({ photos, params }) {
 		toFileData(right),
 		Number(params?.steps ?? 30),
 		Number(params?.guidance_scale ?? 5.0),
-		Number(params?.seed ?? 1234),
+		hasSeed ? foldSeed(callerSeed, HUNYUAN_SPACE_SEED_MAX) : 1234,
 		Number(params?.octree_resolution ?? 256),
 		params?.check_box_rembg !== false,
 		Number(params?.num_chunks ?? 8000),
-		params?.randomize_seed !== false,
+		hasSeed ? params?.randomize_seed === true : params?.randomize_seed !== false,
 	];
 }
 

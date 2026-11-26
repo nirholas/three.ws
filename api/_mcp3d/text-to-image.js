@@ -313,6 +313,7 @@ export const HF_IMAGE_PROVIDERS = Object.freeze([
 			image_size: { width, height },
 			num_inference_steps: 4,
 			num_images: 1,
+			// fal schema: integer seed, no max documented; the uint32 seed is sent as is.
 			...(Number.isInteger(seed) ? { seed } : {}),
 		}),
 		// fal answers with a hosted URL; the bytes are fetched and persisted so the
@@ -341,6 +342,8 @@ export const HF_IMAGE_PROVIDERS = Object.freeze([
 			size: `${width}*${height}`,
 			num_inference_steps: 4,
 			num_images: 1,
+			// WaveSpeed schema: integer seed, no max documented (-1 means random);
+			// the uint32 seed is sent as is.
 			...(Number.isInteger(seed) ? { seed } : {}),
 		}),
 		extract: wavespeedResult,
@@ -867,7 +870,8 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 		// reconstructs into a far better mesh than a busy scene — steer flux
 		// toward that without overriding a caller's own composition cues.
 		go_fast: true,
-		// Deterministic seed when the caller supplied one (flux accepts `seed`).
+		// Deterministic seed when the caller supplied one (flux accepts `seed`:
+		// integer, no max documented, seeds a torch.Generator, so uint32 is safe).
 		...(hasSeed ? { seed } : {}),
 	};
 

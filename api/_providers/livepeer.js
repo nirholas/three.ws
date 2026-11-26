@@ -135,6 +135,8 @@ export async function livepeerTextToImage(prompt, { aspectRatio = '1:1', seed, m
 		height,
 		num_images_per_prompt: 1,
 		safety_check: true,
+		// Integer seed, no max documented; the runner seeds a torch.Generator,
+		// which takes up to 2^64 - 1, so the uint32 seed is sent as is.
 		...(Number.isInteger(seed) && seed >= 0 ? { seed } : {}),
 	};
 
