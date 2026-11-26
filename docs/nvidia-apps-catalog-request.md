@@ -350,27 +350,38 @@ the record for the catalog. They asked two things:
    `https://three.ws/forge`, but that page calls the product "Forge" and never says
    "3D AI Studio". What exact name should they show, and which page on our site uses it?
 
-**Decision: the product name is "three.ws Forge".** "3D AI Studio" was a descriptive label
-that we only ever used in the portal. "three.ws Forge" is the name the product already uses
-across the site: the desktop build at `/forge-desktop`, the sitemap, the partners page, and
-the viewer. We dropped the label rather than adding it to the site, because a catalog entry
-should carry the name visitors actually see.
+**Decision: the catalog name is "three.ws Forge: AI 3D Model Generator".** It is the brand
+plus the phrase people actually search for, the same pattern other Inception entries use
+(`Avaturn Realistic 3D Avatar Creator`, `Soul Machines Digital People`; see
+[nvidia-apps-catalog/README.md](./nvidia-apps-catalog/README.md)). Why not the other options:
 
-To make the product page match, `/forge` now uses the name exactly. Its heading and its
-`<title>`, `og:title`, `twitter:title`, and JSON-LD `name` all read
-"three.ws Forge" (`pages/forge.html` plus the `forge.*` keys in `public/locales/en.json`).
+- **"three.ws 3D AI Studio"** was a label used only in the portal, and "3D AI Studio" is
+  another company's brand (3daistudio.com, an AI 3D generator). Putting it on our page
+  would send our search traffic toward a competitor's name.
+- **"three.ws Forge"** alone is the name the product already uses across the site (the
+  desktop build at `/forge-desktop`, the sitemap, the partners page, the viewer), and it
+  stays the short brand. But "forge" says nothing to someone searching for what the product
+  does, so the catalog title and the page title carry the descriptor too.
+
+To make the product page match, `/forge` now uses the full name. Its heading reads
+**three.ws Forge: AI 3D Model Generator** (the descriptor in a lighter weight), and its
+`og:title`, `twitter:title`, JSON-LD `name` and share-image text read the same. The
+`<title>` is `three.ws Forge: AI 3D Model Generator (Text & Image to 3D)`, and the meta
+description leads with "free AI 3D model generator" (`pages/forge.html` plus the `forge.*`
+keys in `public/locales/en.json`).
 
 ### Send steps (in order)
 
 1. **Deploy** so the live `/forge` shows the new name (`npm run deploy:gcp:full`, owner
    approval). Before you send, check it:
    `curl -s https://three.ws/forge | grep -o "<title[^>]*>[^<]*"` should print
-   `three.ws Forge · Text & Image → 3D`, and the page heading should read **three.ws Forge**.
-   Reviewers read the rendered page in English, and the runtime English catalog comes from
-   `/api/locale`, so the new name only shows once the deploy is live.
+   `three.ws Forge: AI 3D Model Generator (Text &amp; Image to 3D)`, and the page heading
+   should read **three.ws Forge: AI 3D Model Generator**. Reviewers read the rendered page
+   in English, and the runtime English catalog comes from `/api/locale`, so the new name
+   only shows once the deploy is live.
 2. **Rename the portal record:** Portal > Profile > Products > edit `three.ws 3D AI Studio`,
-   set Product/Service Name to **three.ws Forge**, and keep the URL as
-   `https://three.ws/forge`. Save it.
+   set Product/Service Name to **three.ws Forge: AI 3D Model Generator**, and keep the URL
+   as `https://three.ws/forge`. Save it.
 3. **Reply all** in the same thread, so the reply reaches AppPublishingRequests and the
    Inception program together:
 
@@ -380,13 +391,13 @@ To make the product page match, `/forge` now uses the name exactly. Its heading 
 >
 > 1. Yes. Please consider three.ws for listing in the NVIDIA Accelerated Apps Catalog.
 >
-> 2. The product name is **three.ws Forge**. "three.ws 3D AI Studio" was a descriptive label
-> I used only in the portal. I have renamed the portal record to three.ws Forge so the two
-> match.
+> 2. The product name is **three.ws Forge: AI 3D Model Generator**. "three.ws 3D AI Studio"
+> was a descriptive label I used only in the portal. I have renamed the portal record so
+> the two match.
 >
-> The name is used on the product page in the record, https://three.ws/forge. It is the
-> page heading and the page title ("three.ws Forge · Text & Image to 3D"). The desktop
-> build of the same product uses it too, at https://three.ws/forge-desktop.
+> The name is used on the product page in the record, https://three.ws/forge, as the page
+> heading and in the page title. The desktop build of the same product, three.ws Forge,
+> is at https://three.ws/forge-desktop.
 >
 > Please let me know if you need anything else for the listing.
 >
@@ -397,7 +408,8 @@ To make the product page match, `/forge` now uses the name exactly. Its heading 
 > three.ws
 
 4. Record the send date in the header bullets at the top of this doc. Then, once a month,
-   search the public catalog for `three.ws Forge`.
+   run `node scripts/nvidia-apps-catalog-pull.mjs --inception --find three.ws` to see
+   whether the entry is live.
 
 ## After you send
 

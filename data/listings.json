@@ -143,7 +143,7 @@
 			"status": "pending",
 			"url": "https://marketplace.nvidia.com/en-us/enterprise/applications/",
 			"evidence": "Requested 2026-09-04; NVIDIA replied 2026-09-14; portal record saved 2026-10-25; NVIDIA App Publishing reviewing it and asked for the exact product name on 2026-11-25; not yet in the public catalog",
-			"next": "Deploy, rename the portal record to three.ws Forge, then send the reply in docs/nvidia-apps-catalog-request.md",
+			"next": "Deploy, rename the portal record to three.ws Forge: AI 3D Model Generator, then send the reply in docs/nvidia-apps-catalog-request.md",
 			"checked": "2026-11-25"
 		},
 		{

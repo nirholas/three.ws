@@ -1824,7 +1824,7 @@
 			"fit": 2,
 			"reach": 3,
 			"access": 3,
-			"next": "Deploy so /forge shows three.ws Forge, rename the portal record to three.ws Forge, then send the App Publishing reply (docs/nvidia-apps-catalog-request.md)",
+			"next": "Deploy so /forge shows three.ws Forge: AI 3D Model Generator, rename the portal record to match, then send the App Publishing reply (docs/nvidia-apps-catalog-request.md)",
 			"why": "Our product runs on NVIDIA GPUs and NVIDIA-hosted models end to end; NVIDIA App Publishing is now reviewing the record and asked us to confirm the product name.",
 			"assets": [
 				"docs/nvidia-apps-catalog-listing.md",
@@ -1847,7 +1847,7 @@
 				},
 				{
 					"date": "2026-11-25",
-					"action": "NVIDIA App Publishing asked us to confirm the listing request and the exact product name; product renamed three.ws Forge to match /forge, reply drafted",
+					"action": "NVIDIA App Publishing asked us to confirm the listing request and the exact product name; catalog name set to three.ws Forge: AI 3D Model Generator (brand plus search phrase) and /forge updated to match, reply drafted",
 					"ref": "docs/nvidia-apps-catalog-request.md"
 				}
 			]
