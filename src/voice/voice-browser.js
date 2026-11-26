@@ -243,7 +243,7 @@ export function mountVoiceBrowser({ root, onSelect, onCatalog }) {
 	// then English, then everything else; multi-language lanes (Gemini, OpenAI,
 	// NVIDIA) count as speaking it. Ties break on provider order, then name.
 	const PROVIDER_ORDER = new Map(
-		['gemini', 'edge', 'nvidia', 'openai', 'elevenlabs'].map((id, i) => [id, i]),
+		['gemini', 'nvidia', 'openai', 'elevenlabs'].map((id, i) => [id, i]),
 	);
 	const uiLocale = String(
 		(typeof navigator !== 'undefined' && navigator.language) || 'en-US',

@@ -39,15 +39,6 @@ const DUNNING_403 = JSON.stringify(
 	2,
 );
 
-const EDGE_VOICES = [
-	{
-		ShortName: 'en-US-AriaNeural',
-		Locale: 'en-US',
-		Gender: 'Female',
-		FriendlyName: 'Microsoft Aria Online (Natural) - English (United States)',
-		VoiceTag: { ContentCategories: ['General'], VoicePersonalities: ['Positive'] },
-	},
-];
 
 function mockRes() {
 	return {
@@ -118,9 +109,6 @@ beforeEach(async () => {
 	delete process.env.NVIDIA_API_KEY;
 	global.fetch = vi.fn(async (url) => {
 		const href = String(url);
-		if (href.includes('speech.platform.bing.com')) {
-			return { ok: true, status: 200, json: async () => EDGE_VOICES };
-		}
 		if (href.includes('generativelanguage.googleapis.com')) {
 			return { ok: false, status: 403, text: async () => DUNNING_403 };
 		}
@@ -165,7 +153,7 @@ describe('a lane that is configured but refusing', () => {
 		const { error_description: message, detail } = res.json;
 		expect(message).not.toMatch(/dunning|PERMISSION_DENIED|projects\//);
 		expect(message).not.toContain('\n');
-		expect(message).toMatch(/Microsoft Edge and NVIDIA Magpie are free/);
+		expect(message).toMatch(/NVIDIA Magpie is free/);
 		// The diagnostic text survives, it just stops being the headline.
 		expect(detail).toMatch(/403/);
 	});
@@ -177,14 +165,15 @@ describe('a lane that is configured but refusing', () => {
 		const second = await speak();
 		expect(second.statusCode).toBe(503);
 		expect(second.json.error).toBe('lane_unavailable');
-		expect(second.json.retry_with).toEqual(['edge', 'nvidia']);
+		expect(second.json.retry_with).toEqual(['nvidia']);
 		expect(global.fetch.mock.calls.length).toBe(calls);
 	});
 
 	it('leaves every other lane alone', async () => {
+		process.env.NVIDIA_API_KEY = 'test-nvidia-key';
 		await speak();
 		const after = (await catalog()).json;
-		expect(after.providers.find((p) => p.id === 'edge').available).toBe(true);
-		expect(after.counts.edge).toBeGreaterThan(0);
+		expect(after.providers.find((p) => p.id === 'nvidia').available).toBe(true);
+		expect(after.counts.nvidia).toBeGreaterThan(0);
 	});
 });

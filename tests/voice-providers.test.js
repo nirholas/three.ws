@@ -72,7 +72,7 @@ function geminiAudioResponse(bytes = 32) {
 
 describe('registry shape', () => {
 	it('exposes every lane the platform ships', () => {
-		expect(PROVIDER_IDS).toEqual(['edge', 'gemini', 'nvidia', 'openai', 'elevenlabs']);
+		expect(PROVIDER_IDS).toEqual(['gemini', 'nvidia', 'openai', 'elevenlabs']);
 	});
 
 	it('gives every lane the fields a picker renders', () => {
@@ -90,8 +90,8 @@ describe('registry shape', () => {
 });
 
 describe('availability', () => {
-	it('keeps the keyless Edge lane on with no env at all', () => {
-		expect(providerAvailability().edge).toBe(true);
+	it('has no Edge lane (retired for licensing)', () => {
+		expect(providerAvailability().edge).toBeUndefined();
 	});
 
 	it('gates the keyed lanes on their credentials', () => {
@@ -120,7 +120,7 @@ describe('availability', () => {
 
 describe('billing', () => {
 	it('never charges for a free or GCP-credit lane', () => {
-		for (const provider of ['edge', 'gemini', 'nvidia']) {
+		for (const provider of ['gemini', 'nvidia']) {
 			expect(usdForSynthesis({ provider, chars: 100_000 })).toBe(0);
 			expect(creditActionFor(provider)).toBeNull();
 		}
@@ -179,8 +179,7 @@ describe('catalogs', () => {
 
 	it('reports the models and default voice a lane offers', () => {
 		expect(providerModels('gemini').length).toBeGreaterThan(0);
-		expect(providerModels('edge')).toEqual([]);
-		expect(providerDefaultVoice('edge')).toBe('en-US-AriaNeural');
+		expect(providerDefaultVoice('edge')).toBe(null);
 		expect(providerDefaultVoice('gemini')).toBe(GEMINI_DEFAULT_VOICE);
 	});
 });

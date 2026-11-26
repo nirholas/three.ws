@@ -2,12 +2,12 @@
  * POST /api/tts/synthesize
  *
  * One endpoint that renders text on any voice lane the platform exposes:
- * Microsoft Edge, Gemini, NVIDIA Magpie, OpenAI and ElevenLabs. Callers pass
+ * Gemini, NVIDIA Magpie, OpenAI and ElevenLabs. Callers pass
  * the `provider` + `voiceId` pair they got from /api/tts/catalog; everything
  * else (protocol, container, billing) is handled here.
  *
  * Body: {
- *   provider: 'edge'|'gemini'|'nvidia'|'openai'|'elevenlabs',
+ *   provider: 'gemini'|'nvidia'|'openai'|'elevenlabs',
  *   voiceId: string,
  *   text: string,                 // <= 1000 chars
  *   model?: string,               // lane-specific; validated per lane
@@ -19,7 +19,7 @@
  * }
  *
  * Billing (`x-tts-billing` reports which rung served):
- *   free    : Edge / NVIDIA: no vendor invoice, nothing charged.
+ *   free    : NVIDIA: no vendor invoice, nothing charged.
  *   gcp     : Gemini on Vertex: platform Google credits, nothing charged.
  *   byok    : the request carried `x-eleven-key`: the user's ElevenLabs account pays.
  *   credits : a vendor-billed lane on the platform key: metered to the caller's
@@ -40,6 +40,8 @@ import { chargeCreditsForAction, refundCredits } from '../_lib/credits.js';
 import { resolveElevenKey } from '../_lib/elevenlabs.js';
 import {
 	getProvider,
+	resolveProviderId,
+	DEFAULT_PROVIDER_ID,
 	providerAvailability,
 	isKnownVoice,
 	synthesizeVoice,
@@ -90,7 +92,7 @@ function userFacingLaneError(provider, err) {
 		case 'not_configured':
 			return (
 				`${provider.label} is temporarily unavailable: the provider rejected this ` +
-				"deployment's credentials. Microsoft Edge and NVIDIA Magpie are free and unaffected."
+				"deployment's credentials. NVIDIA Magpie is free and unaffected."
 			);
 		case 'rate_limited':
 			return `${provider.label} is rate limiting right now. Wait a moment or pick another lane.`;
@@ -116,7 +118,7 @@ export default wrap(async (req, res) => {
 		return error(res, e.status || 400, 'bad_request', e.message);
 	}
 
-	const providerId = String(body.provider || 'edge').trim();
+	const providerId = resolveProviderId(body.provider || DEFAULT_PROVIDER_ID);
 	const provider = getProvider(providerId);
 	if (!provider) return error(res, 400, 'validation_error', `unknown provider "${providerId}"`);
 
@@ -176,8 +178,8 @@ export default wrap(async (req, res) => {
 				503,
 				'lane_unavailable',
 				`${provider.label} is temporarily unavailable: ${laneOutageCopy(laneOutage)}. ` +
-					'Microsoft Edge and NVIDIA Magpie are free and unaffected.',
-				{ provider: providerId, retry_with: ['edge', 'nvidia'] },
+					'NVIDIA Magpie is free and unaffected.',
+				{ provider: providerId, retry_with: ['nvidia'] },
 			);
 		}
 	}

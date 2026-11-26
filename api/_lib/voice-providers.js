@@ -10,8 +10,7 @@
 //
 // Billing doctrine (owner policy 2026-08-06, no free tier on a vendor-billed
 // feature):
-//   free    : no vendor invoice at all (Edge) or a free vendor tier
-//             (NVIDIA NIM). Served without charge.
+//   free    : a free vendor tier (NVIDIA NIM). Served without charge.
 //   credits : the vendor bills the platform (ElevenLabs, OpenAI). Metered to
 //             the caller's prepaid credit wallet, or bypassed entirely with
 //             BYOK where the provider supports it.
@@ -22,14 +21,7 @@
 import { env } from './env.js';
 import { TTS_ELEVEN_USD_PER_1K, TTS_OPENAI_USD_PER_1K } from './pricing/catalog.js';
 import { synthesizeNvidiaTts, nvidiaTtsConfigured, VOICE_TO_MAGPIE } from './tts-nvidia.js';
-import {
-	synthesizeEdge,
-	listEdgeVoices,
-	EDGE_VOICE_RE,
-	EDGE_RATE_RE,
-	EDGE_PITCH_RE,
-	EDGE_DEFAULT_VOICE,
-} from './tts-edge.js';
+import { isLegacyEdgeVoiceId, mapLegacyEdgeVoice } from './tts-voice-map.js';
 import {
 	synthesizeGeminiTts,
 	geminiTtsConfigured,
@@ -76,18 +68,6 @@ const SYNTH_TIMEOUT_MS = 45_000;
  * by /api/tts/catalog, /api/tts/synthesize and the client.
  */
 export const VOICE_PROVIDERS = Object.freeze([
-	{
-		id: 'edge',
-		label: 'Microsoft Edge',
-		tagline: 'Free · every Microsoft neural voice · 100+ locales',
-		billing: 'free',
-		usdPer1k: 0,
-		byok: false,
-		clone: false,
-		direction: false,
-		anonymous: true,
-		docs: 'https://learn.microsoft.com/azure/ai-services/speech-service/language-support',
-	},
 	{
 		id: 'gemini',
 		label: 'Google Gemini',
@@ -140,14 +120,27 @@ export const VOICE_PROVIDERS = Object.freeze([
 
 export const PROVIDER_IDS = VOICE_PROVIDERS.map((p) => p.id);
 
+/** The lane used when a caller names none: Google Gemini TTS on platform credits. */
+export const DEFAULT_PROVIDER_ID = 'gemini';
+
+/**
+ * The Microsoft Edge lane was retired (its protocol is a consumer browser
+ * feature, not a licensed API). Callers that still send provider "edge" are
+ * served by the default lane instead of failing.
+ */
+export function resolveProviderId(id) {
+	const v = String(id || '').trim();
+	return v === 'edge' ? DEFAULT_PROVIDER_ID : v;
+}
+
 export function getProvider(id) {
-	return VOICE_PROVIDERS.find((p) => p.id === id) || null;
+	const resolved = resolveProviderId(id);
+	return VOICE_PROVIDERS.find((p) => p.id === resolved) || null;
 }
 
 /** Which lanes this deployment can actually serve right now. */
 export function providerAvailability({ elevenUserKey = false } = {}) {
 	return {
-		edge: true, // keyless by construction
 		gemini: geminiTtsConfigured(),
 		nvidia: nvidiaTtsConfigured(),
 		openai: Boolean(env.OPENAI_API_KEY),
@@ -166,7 +159,6 @@ export function providerModels(providerId) {
 /** The lane's default voice id. */
 export function providerDefaultVoice(providerId) {
 	switch (providerId) {
-		case 'edge': return EDGE_DEFAULT_VOICE;
 		case 'gemini': return GEMINI_DEFAULT_VOICE;
 		case 'nvidia': return OPENAI_DEFAULT_VOICE; // Magpie is addressed by OpenAI-style ids
 		case 'openai': return OPENAI_DEFAULT_VOICE;
@@ -251,10 +243,7 @@ function normalizeElevenVoice(v) {
  */
 export async function listProviderVoices(providerId, { elevenKey = null, byok = false } = {}) {
 	switch (providerId) {
-		case 'edge': {
-			const { voices } = await listEdgeVoices();
-			return voices;
-		}
+		case 'edge':
 		case 'gemini':
 			return GEMINI_VOICE_LIST;
 		case 'nvidia':
@@ -293,17 +282,10 @@ export async function isKnownVoice(providerId, voiceId) {
 	const id = String(voiceId || '').trim();
 	if (!id) return true;
 	switch (providerId) {
-		case 'edge': {
-			if (!EDGE_VOICE_RE.test(id)) return false;
-			try {
-				const { voices } = await listEdgeVoices();
-				return voices.some((v) => v.id === id);
-			} catch {
-				return true;
-			}
-		}
+		case 'edge':
 		case 'gemini':
-			return GEMINI_VOICE_IDS.has(id);
+			// A stored legacy id ("en-US-AriaNeural") is mapped at synthesis time, never rejected.
+			return GEMINI_VOICE_IDS.has(id) || isLegacyEdgeVoiceId(id);
 		case 'nvidia':
 			return NVIDIA_VOICE_IDS.has(id);
 		case 'openai':
@@ -332,38 +314,15 @@ function tagged(message, code, extra = {}) {
  * @returns {Promise<{ audio:Buffer, contentType:string, format:string, provider:string, model:string, voiceId:string, lane?:string }>}
  */
 export async function synthesizeVoice(opts) {
-	const provider = String(opts.provider || '');
+	const provider = resolveProviderId(opts.provider);
 	const text = String(opts.text || '').trim();
 	if (!text) throw tagged('text is required', 'invalid_argument');
 
 	switch (provider) {
-		case 'edge': {
-			const voiceId = EDGE_VOICE_RE.test(String(opts.voiceId || ''))
-				? String(opts.voiceId)
-				: EDGE_DEFAULT_VOICE;
-			// Edge takes prosody as SSML strings; accept the numeric `speed` every
-			// other lane uses and convert, so one client control drives them all.
-			const rate =
-				opts.rate && EDGE_RATE_RE.test(opts.rate)
-					? opts.rate
-					: `${Math.round((clampSpeed(opts.speed) - 1) * 100) >= 0 ? '+' : ''}${Math.round((clampSpeed(opts.speed) - 1) * 100)}%`;
-			const pitch = opts.pitch && EDGE_PITCH_RE.test(opts.pitch) ? opts.pitch : '+0Hz';
-			const audio = await synthesizeEdge(voiceId, text, rate, pitch);
-			if (!audio.length) throw tagged('Edge TTS returned empty audio', 'provider_error');
-			return {
-				audio,
-				contentType: 'audio/mpeg',
-				format: 'mp3',
-				provider,
-				model: 'edge-readaloud',
-				voiceId,
-			};
-		}
-
 		case 'gemini': {
 			const out = await synthesizeGeminiTts({
 				text,
-				voice: opts.voiceId,
+				voice: isLegacyEdgeVoiceId(opts.voiceId) ? mapLegacyEdgeVoice(opts.voiceId) : opts.voiceId,
 				model: opts.model || GEMINI_TTS_DEFAULT_MODEL,
 				direction: opts.direction,
 				timeoutMs: SYNTH_TIMEOUT_MS,

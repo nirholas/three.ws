@@ -145,7 +145,7 @@ describe('narrateStep', () => {
 		expect(out.audio.base64.length).toBeGreaterThan(0);
 		expect(out.audioUrl).toBeNull();
 		expect(fetchSpy).not.toHaveBeenCalled();
-		expect(synthesizeVoice).toHaveBeenCalledWith(expect.objectContaining({ provider: 'edge', voiceId: narrate.NARRATION_VOICE }));
+		expect(synthesizeVoice).toHaveBeenCalledWith(expect.objectContaining({ provider: 'gemini', voiceId: narrate.NARRATION_VOICE }));
 	});
 
 	for (const [status, body] of [[401, XAI_401_NO_KEY], [400, XAI_400_BAD_KEY]]) {
