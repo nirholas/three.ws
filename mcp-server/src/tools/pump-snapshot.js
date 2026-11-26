@@ -10,7 +10,7 @@
 // Sources:
 //   - Jupiter Lite price API (lite-api.jup.ag/price/v3)         → price, priceChange24h, liquidity
 //   - Dexscreener (api.dexscreener.com/latest/dex/tokens/<mint>) → volume24h, pair url, dex
-//   - pump.fun frontend-api-v3 (frontend-api-v3.pump.fun/coins/<mint>) → image, name, symbol, market_cap, creator
+//   - pump.fun frontend-api-v3 (frontend-api-v3.pump.fun/coins/search-unrestricted) → image, name, symbol, market_cap, creator
 //   - Solana RPC getTokenLargestAccounts                         → top holder distribution
 //   - Helius DAS getAsset (if HELIUS_API_KEY is set)             → exact holder count when available
 
@@ -96,10 +96,16 @@ async function getDexscreener(mint) {
 	}
 }
 
-async function getPumpFunMeta(mint) {
+// pump.fun retired GET /coins/<mint> on 2026-11-25 (404 for every mint). The
+// search route keyed by the mint still serves the full coin record, alongside
+// fuzzy hits for other coins, so only an exact mint match counts.
+export async function getPumpFunMeta(mint) {
 	try {
-		const data = await fetchJson(`https://frontend-api-v3.pump.fun/coins/${mint}`);
-		if (!data || data.error) return null;
+		const rows = await fetchJson(
+			`https://frontend-api-v3.pump.fun/coins/search-unrestricted?searchTerm=${encodeURIComponent(mint)}&offset=0&limit=10&includeNsfw=true`,
+		);
+		const data = Array.isArray(rows) ? rows.find((c) => c?.mint === mint) : null;
+		if (!data) return null;
 		return {
 			name: data.name || null,
 			symbol: data.symbol || null,
