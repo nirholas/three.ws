@@ -777,9 +777,20 @@ sharing), so a *public* REST proxy is unreachable (its SRH bearer token collides
 with the Google auth token Cloud Run would demand). Fronting the proxy with a
 **regional internal LB** and reaching it over the VPC connector keeps the proxy
 off the public internet AND keeps the app's external egress on the fast direct
-path. The connector + Redis env are **pinned in `server/cloudbuild.yaml`** so a
+path. The VPC path + Redis env are **pinned in `server/cloudbuild.yaml`** so a
 full-config redeploy can never silently drop Redis back to the capped Upstash
 tier.
+
+**Superseded in project `three-ws` (2026-11-26):** Redis there is the
+`three-ws-redis` VM (`deploy/redis-vm/README.md`), and `three-ws-api` reaches it
+over **Direct VPC egress** on the `default` subnet instead of the connector
+(`--network default --subnet default --clear-vpc-connector`, pinned in
+`server/cloudbuild.yaml`). Direct egress has no always-on instances, so it bills
+nothing on top of the service; the connector billed about $12 a month. Verified on
+revision `three-ws-api-00003-tjr`: the VM's connection table showed the API's
+requests arriving from a `10.128.0.x` subnet address and none from the old
+connector range. The default `default-allow-internal` firewall rule already
+admits the subnet, so no new rule was needed.
 
 Verified 2026-07-10 on revision `three-ws-api-00052-kbg`: `/api/healthz`
 overall `ok`, cache backend healthy (the client self-labels "upstash" — it is

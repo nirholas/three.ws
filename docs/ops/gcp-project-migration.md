@@ -17,7 +17,7 @@ Related: [gcp-production.md](gcp-production.md) (the main runbook),
 | --- | --- | --- |
 | `three-ws-api` (new) | `three-ws` | https://three-ws-api-360846920264.us-central1.run.app, SA `three-ws@three-ws`, 8Gi, 2 CPU, min 1, max 5 |
 | `three-ws-api` (live) | `aerial-vehicle-466722-p5` | Still serves three.ws until DNS moves |
-| Redis | `three-ws` | VM `three-ws-redis` at 10.128.0.50 behind connector `three-ws-vpc` |
+| Redis | `three-ws` | VM `three-ws-redis` at 10.128.0.50, reached over Direct VPC egress (subnet `default`); the `three-ws-vpc` connector is no longer used |
 | Secrets | both | All 87 copied; sha256 of every old and new value matched |
 | Wallet backup KMS key | both | New envelopes use `projects/three-ws/.../wallet-backup`; old envelopes keep opening with the old key (see below) |
 | Model and GPU services | `aerial-vehicle-466722-p5` | Public URLs, called cross-project. The trial has no GPU quota, so they stay |
