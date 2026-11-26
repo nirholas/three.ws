@@ -178,6 +178,7 @@ import {
 	territoryReport,
 } from './_lib/forge-territory.js';
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
+import { decideStalledPoll } from './_lib/forge-job-deadline.js';
 import { allowanceExceeded, pixal3dLaneHealth, PIXAL3D_ALLOWANCE_S } from './_lib/forge-pixal3d-guard.js';
 import { directPrompt } from './_mcp-studio/forge-client.js';
 import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
@@ -3293,6 +3294,17 @@ async function pollGcpStatus({ gcp, upstreamId, clientKey, createdAt }) {
 	return result; // genuinely orphaned → existing failover path acts on it
 }
 
+// A non-terminal upstream answer for a job the finalizer already failed, or one
+// past its allowance, ends the job here with a reason (see forge-job-deadline.js).
+// Returns true when it answered.
+async function answerStalledPoll(res, { pendingStatus, meta, upstreamId, clientKey, jobId, metaFields }) {
+	const stalled = decideStalledPoll({ pendingStatus, row: meta });
+	if (!stalled) return false;
+	if (stalled.markFailed) await markFailed({ replicateJobId: upstreamId, clientKey, error: stalled.storedError });
+	json(res, 200, { job_id: jobId, status: 'failed', error: stalled.error, ...metaFields });
+	return true;
+}
+
 async function pollJob(req, res, jobId) {
 	// A job handle is either a bare Replicate prediction id (legacy / image-
 	// TRELLIS path) or a forge token encoding the geometry/GCP provider + the
@@ -3453,7 +3465,9 @@ async function pollJob(req, res, jobId) {
 		}
 	} catch {
 		// A transient poll error shouldn't fail the job: report running so the
-		// client's loop retries.
+		// client's loop retries. Unless the job is already past its allowance: a
+		// worker that stopped answering must not keep a page polling forever.
+		if (await answerStalledPoll(res, { pendingStatus: 'running', meta, upstreamId, clientKey, jobId, metaFields })) return;
 		return json(res, 200, { job_id: jobId, status: 'running', ...metaFields, ...timingFields });
 	}
 
@@ -3664,6 +3678,7 @@ async function pollJob(req, res, jobId) {
 	// while queued: a worker that answered "running" is up by definition, so the
 	// flag clears on a real signal rather than on a timer.
 	const pendingStatus = result.status || 'running';
+	if (await answerStalledPoll(res, { pendingStatus, meta, upstreamId, clientKey, jobId, metaFields })) return;
 	const cold = pendingStatus === 'queued' ? await laneColdStart(metaFields.backend) : false;
 	return json(res, 200, {
 		job_id: jobId,

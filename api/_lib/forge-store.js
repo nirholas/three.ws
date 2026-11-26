@@ -381,7 +381,8 @@ export async function findByJob({ replicateJobId, clientKey }) {
 		const rows = await sql`
 			select id, status, glb_url, glb_key, prompt, preview_image_url,
 				views_requested, views_used, multiview, backend, tier, path, model_category,
-				user_id, created_at, destination, internal, visibility, outcome
+				user_id, created_at, destination, internal, visibility, outcome,
+				error, superseded_by
 			from forge_creations
 			where replicate_job_id = ${replicateJobId} and client_key = ${clientKey}
 			limit 1

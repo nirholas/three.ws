@@ -181,6 +181,7 @@ import {
 	isTencentLane,
 } from './_lib/forge-territory.js';
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
+import { decideStalledPoll } from './_lib/forge-job-deadline.js';
 import { directPrompt } from './_mcp-studio/gpt-forge-client.js';
 import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
 
@@ -2993,6 +2994,17 @@ async function pollTicket(req, res, ticket) {
 	return json(res, 404, { error: 'unknown_job', message: 'That job id is not recognized (it may be mistyped or expired).' });
 }
 
+// A non-terminal upstream answer for a job the finalizer already failed, or one
+// past its allowance, ends the job here with a reason (see forge-job-deadline.js).
+// Returns true when it answered.
+async function answerStalledPoll(res, { pendingStatus, meta, upstreamId, clientKey, jobId, metaFields }) {
+	const stalled = decideStalledPoll({ pendingStatus, row: meta });
+	if (!stalled) return false;
+	if (stalled.markFailed) await markFailed({ replicateJobId: upstreamId, clientKey, error: stalled.storedError });
+	json(res, 200, { job_id: jobId, status: 'failed', error: stalled.error, ...metaFields });
+	return true;
+}
+
 async function pollJob(req, res, jobId) {
 	// A job handle is either a bare Replicate prediction id (legacy / image-
 	// TRELLIS path) or a forge token encoding the geometry/GCP provider + the
@@ -3131,7 +3143,9 @@ async function pollJob(req, res, jobId) {
 		}
 	} catch {
 		// A transient poll error shouldn't fail the job: report running so the
-		// client's loop retries.
+		// client's loop retries. Unless the job is already past its allowance: a
+		// worker that stopped answering must not keep a caller polling forever.
+		if (await answerStalledPoll(res, { pendingStatus: 'running', meta, upstreamId, clientKey, jobId, metaFields })) return;
 		return json(res, 200, { job_id: jobId, status: 'running', ...metaFields });
 	}
 
@@ -3327,6 +3341,7 @@ async function pollJob(req, res, jobId) {
 	// poll), and only while queued: a worker that answered "running" is up by
 	// definition, so the flag clears on a real signal rather than on a timer.
 	const pendingStatus = result.status || 'running';
+	if (await answerStalledPoll(res, { pendingStatus, meta, upstreamId, clientKey, jobId, metaFields })) return;
 	const cold = pendingStatus === 'queued' ? await laneColdStart(meta?.backend) : false;
 	return json(res, 200, {
 		job_id: jobId,
