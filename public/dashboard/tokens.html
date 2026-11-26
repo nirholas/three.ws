@@ -46,15 +46,30 @@
 				return (await r.json()).agent;
 			}
 
-			// Pump.fun Frontend API for live state. Public, no auth.
-			async function fetchPumpData(mint) {
+			// Live state from three.ws's own reads: the coin record (/api/pump/coin,
+			// pump.fun's search route server-side) and the bonding curve read on-chain
+			// (/api/pump/curve). The page used to call pump.fun's /coins/<mint> from the
+			// browser; pump.fun retired that route on 2026-11-25.
+			async function getJson(url) {
 				try {
-					const r = await fetch(`https://frontend-api-v3.pump.fun/coins/${mint}`);
-					if (!r.ok) return null;
-					return r.json();
+					const r = await fetch(url);
+					return r.ok ? await r.json() : null;
 				} catch {
 					return null;
 				}
+			}
+			async function fetchPumpData(mint) {
+				const q = encodeURIComponent(mint);
+				const [coin, view] = await Promise.all([getJson(`/api/pump/coin?mint=${q}`), getJson(`/api/pump/curve?mint=${q}`)]);
+				if (!coin && !view) return null;
+				const curve = view?.curve || null;
+				const usd = coin?.usd_market_cap ?? view?.graduatedPrice?.marketCapUsd ?? view?.price?.marketCapUsd ?? null;
+				return {
+					usd_market_cap: Number.isFinite(Number(usd)) && usd != null ? Number(usd) : null,
+					sol_in_curve: curve && !curve.complete ? Number(curve.realSolReserves) / 1e9 : null,
+					tokens_left: curve && !curve.complete ? Number(curve.realTokenReserves) / 1e6 : null,
+					complete: Boolean(coin?.complete || view?.graduated || curve?.complete),
+				};
 			}
 
 			async function render(agentId) {
@@ -86,8 +101,8 @@
 
 				const live = token.cluster === 'mainnet' ? await fetchPumpData(token.mint) : null;
 				const usdMc = live?.usd_market_cap;
-				const solBalance = (live?.virtual_sol_reserves || 0) / 1e9;
-				const tokensLeft = (live?.virtual_token_reserves || 0) / 1e6;
+				const solBalance = live?.sol_in_curve;
+				const tokensLeft = live?.tokens_left;
 				const complete = live?.complete;
 
 				contentEl.innerHTML = `
@@ -120,15 +135,15 @@
 									<div class="dash-row" style="gap:24px">
 										<div>
 											<div class="dash-muted" style="font-size:11px;text-transform:uppercase">Market cap</div>
-											<div style="font-size:18px">${usdMc != null ? '$' + Number(usdMc).toLocaleString(undefined, { maximumFractionDigits: 0 }) : '—'}</div>
+											<div style="font-size:18px">${usdMc != null ? '$' + Number(usdMc).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 'n/a'}</div>
 										</div>
 										<div>
 											<div class="dash-muted" style="font-size:11px;text-transform:uppercase">SOL in curve</div>
-											<div style="font-size:18px">${solBalance.toFixed(2)}</div>
+											<div style="font-size:18px">${Number.isFinite(solBalance) ? solBalance.toFixed(2) : 'n/a'}</div>
 										</div>
 										<div>
 											<div class="dash-muted" style="font-size:11px;text-transform:uppercase">Tokens left</div>
-											<div style="font-size:18px">${tokensLeft.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+											<div style="font-size:18px">${Number.isFinite(tokensLeft) ? tokensLeft.toLocaleString(undefined, { maximumFractionDigits: 0 }) : 'n/a'}</div>
 										</div>
 										<div>
 											<div class="dash-muted" style="font-size:11px;text-transform:uppercase">Status</div>
@@ -137,7 +152,7 @@
 									</div>
 								</div>`
 							: token.cluster === 'mainnet'
-								? '<div class="dash-empty">Pump.fun returned no data for this mint — token may be very new.</div>'
+								? '<div class="dash-empty">No live market data for this mint yet. A brand-new token can take a minute to appear; reload to try again.</div>'
 								: '<div class="dash-muted" style="text-align:center;padding:12px">Devnet token — live Pump.fun stats are mainnet-only.</div>'
 					}
 
