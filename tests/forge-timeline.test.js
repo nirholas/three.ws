@@ -31,6 +31,9 @@ const stateOf = (id) => document.querySelector(`#stages .step[data-stage="${id}"
 const labelOf = (id) =>
 	document.querySelector(`#stages .step[data-stage="${id}"] .step-label`)?.textContent;
 
+const detailOf = (id) =>
+	document.querySelector(`#stages .step[data-stage="${id}"] .step-detail`)?.textContent;
+
 describe('forge timeline stages', () => {
 	let timeline;
 	beforeEach(() => {
@@ -89,6 +92,43 @@ describe('forge timeline stages', () => {
 		timeline.applySubmit({ status: 'queued', preview_image_url: 'https://cdn.example/ref.png' });
 		expect(labelOf('direct')).toBe('Prompt handed to the painter');
 		expect(stateOf('direct')).toBe('done');
+	});
+
+	// Since 2026-11-26 /api/forge reports a `direction` record. When the director
+	// was skipped (every chat model refusing or cooling down, or its rewrite was
+	// discarded) `directed_prompt` is null too, and the old label claimed "The
+	// director left it unchanged", a director that never answered.
+	it('says the prompt assistant was skipped, not that it left the prompt alone', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit({
+			status: 'queued',
+			directed_prompt: null,
+			direction: { status: 'skipped', reason: 'chain_cooling', ms: 4 },
+			preview_image_url: 'https://cdn.example/ref.png',
+		});
+		expect(stateOf('direct')).toBe('done');
+		expect(labelOf('direct')).toBe('Prompt used as you wrote it');
+		expect(detailOf('direct')).toMatch(/assistant was unavailable/i);
+		expect(detailOf('direct')).not.toMatch(/left it unchanged/i);
+	});
+
+	it('names a discarded rewrite as discarded', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit({ status: 'queued', directed_prompt: null, direction: { status: 'skipped', reason: 'off_topic', ms: 900 }, preview_image_url: 'https://cdn.example/ref.png' });
+		expect(detailOf('direct')).toMatch(/not usable/i);
+	});
+
+	it('says direction was off when the request turned it off', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit({ status: 'queued', directed_prompt: null, direction: { status: 'off' }, preview_image_url: 'https://cdn.example/ref.png' });
+		expect(labelOf('direct')).toBe('Prompt used as you wrote it');
+		expect(detailOf('direct')).toMatch(/turned off/i);
+	});
+
+	it('reads the direction record from the pre-submit crumb too', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applyProgress([{ stage: 'directed', at: 1, directed_prompt: null, direction: { status: 'skipped', reason: 'chain_failed', ms: 300 } }]);
+		expect(detailOf('direct')).toMatch(/assistant was unavailable/i);
 	});
 
 	it('reveals a reference view that only arrives on a later poll', () => {
@@ -202,8 +242,6 @@ describe('forge timeline pre-submit progress crumbs', () => {
 		timeline = mount();
 	});
 
-	const detailOf = (id) =>
-		document.querySelector(`#stages .step[data-stage="${id}"] .step-detail`)?.textContent;
 
 	it('retires the director stage on the crumb, before any submit response', () => {
 		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });

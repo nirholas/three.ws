@@ -72,6 +72,11 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			// deployment) is not the same claim as present-and-null (the director
 			// genuinely left the prompt alone), and the label must not conflate them.
 			directedReported: false,
+			// The `direction` record /api/forge reports since 2026-11-26:
+			// { status: 'directed'|'known_mark'|'skipped'|'off', reason?, ms? }.
+			// A skipped director also reports directed_prompt null, so this is what
+			// tells "never answered" apart from "chose to leave it alone".
+			direction: null,
 			directorRan: false, // the submit response came back, so the pass is over
 			// Extra reference views the fusing lane painted around the primary one.
 			// 0 means the lane painted a single view, which is not a missing stage.
@@ -189,9 +194,20 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 		return f.directedReported ? 'Prompt used as you wrote it' : 'Prompt handed to the painter';
 	}
 
+	// Reasons the director answered but its rewrite was thrown away; every other
+	// skip reason (chain_failed, chain_cooling, budget_spent, no_reply) means no
+	// usable answer came back in time.
+	const DISCARDED_REASONS = new Set(['refusal', 'off_topic', 'empty', 'too_long', 'unfinished', 'link', 'not_enriched']);
+
 	function directDetail() {
 		if (!f.directorRan) return 'Rewriting it into a single-subject brief with material and lighting cues';
 		if (f.directedPrompt) return 'Expanded with materials, lighting and composition cues. See it with your model';
+		if (f.direction?.status === 'off') return 'Art direction was turned off for this run, so the model saw your exact words';
+		if (f.direction?.status === 'skipped') {
+			return DISCARDED_REASONS.has(f.direction.reason)
+				? 'The prompt assistant’s rewrite was not usable, so the model saw your exact words'
+				: 'The prompt assistant was unavailable, so the model saw your exact words';
+		}
 		return f.directedReported
 			? 'The director left it unchanged, so the model saw your exact words'
 			: 'This lane does not report the director’s rewrite back';
@@ -431,6 +447,7 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			f.directorRan = true;
 			if (job?.backend) f.backend = job.backend;
 			f.directedReported = Boolean(job) && Object.prototype.hasOwnProperty.call(job, 'directed_prompt');
+			if (job?.direction && typeof job.direction === 'object') f.direction = job.direction;
 			if (typeof job?.directed_prompt === 'string' && job.directed_prompt.trim()) {
 				f.directedPrompt = job.directed_prompt.trim();
 			}
@@ -491,6 +508,7 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 				if (crumb?.stage === 'directed' && !f.directorRan) {
 					f.directorRan = true;
 					f.directedReported = Object.prototype.hasOwnProperty.call(crumb, 'directed_prompt');
+					if (crumb.direction && typeof crumb.direction === 'object') f.direction = crumb.direction;
 					if (typeof crumb.directed_prompt === 'string' && crumb.directed_prompt.trim()) {
 						f.directedPrompt = crumb.directed_prompt.trim();
 					}
