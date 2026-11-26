@@ -390,6 +390,16 @@ async function hfRoutedImage(provider, prompt, aspectRatio, seed, { timeoutMs = 
 // so that a day when every keyed provider is down still produces a model
 // instead of a 429; the text chain already relies on the same service.
 const POLLINATIONS_TIMEOUT_MS = 40_000;
+// Pollinations validates `seed <= 2147483647` and answers 400 above it. Every
+// other lane, the public image API and the Forge page (which mints seeds from a
+// Uint32Array) work in uint32, so half of all seeded requests were refused here
+// on 2026-11-26, the day this was the only rung serving. Fold instead of
+// rejecting: the mapping is fixed, so a replayed seed still reproduces its image.
+const POLLINATIONS_SEED_MAX = 2_147_483_647;
+const pollinationsSeed = (seed) => seed % (POLLINATIONS_SEED_MAX + 1);
+// How long a refusal's stated wait is believed for. Pollinations says 45 s; a
+// bogus header must not park a user's retry for minutes.
+const POLLINATIONS_MAX_RETRY_AFTER_S = 120;
 
 // Pollinations explains a refusal in a JSON body, e.g. 402
 // {"error":{"code":"FREE_LIMIT","message":"Free limit reached: 1 image every
@@ -415,7 +425,7 @@ async function pollinationsImage(prompt, aspectRatio, seed, { timeoutMs = POLLIN
 		height: String(height),
 		nologo: 'true',
 		model: 'flux',
-		...(Number.isInteger(seed) ? { seed: String(seed) } : {}),
+		...(Number.isInteger(seed) && seed >= 0 ? { seed: String(pollinationsSeed(seed)) } : {}),
 	});
 	const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.slice(0, 1_000))}?${q}`;
 	let res;
@@ -434,7 +444,18 @@ async function pollinationsImage(prompt, aspectRatio, seed, { timeoutMs = POLLIN
 		// state: tag it rate_limited (as the HF rung above already does for both
 		// 429 and 402) so a caller never mistakes a dead free lane for the
 		// platform's own paid Replicate/TRELLIS account running out of credit.
-		if (res.status === 429 || res.status === 402) err.code = 'rate_limited';
+		if (res.status === 429 || res.status === 402) {
+			err.code = 'rate_limited';
+			// The free tier serves one image per 45 s per IP and says so in
+			// Retry-After. Carry that wait: the forge boundary turns it into the
+			// countdown the user sees, and without it the default (10 s) invited a
+			// retry that was certain to be refused again.
+			const wait = Number(res.headers.get('retry-after'));
+			if (Number.isFinite(wait) && wait > 0) {
+				err.retryAfter = Math.min(POLLINATIONS_MAX_RETRY_AFTER_S, Math.ceil(wait));
+				err.queued = true;
+			}
+		}
 		throw err;
 	}
 	const bytes = Buffer.from(await res.arrayBuffer());

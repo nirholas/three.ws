@@ -134,6 +134,60 @@ describe('the ladder reaches every rung in order', () => {
 		expect(err.message).toMatch(/pollinations returned 402: FREE_LIMIT/);
 		expect(err.message).toMatch(/1 image every 45 seconds/);
 	});
+
+	// 2026-11-26 production outage: Vertex, both HF rungs and NIM were out, so
+	// keyless Pollinations was the only rung serving, and every Forge text prompt
+	// answered 429. The Forge page stamps each generation with a uint32 seed
+	// (crypto.getRandomValues on a Uint32Array) and Pollinations validates
+	// `seed <= 2147483647`: any seed in the upper half answered 400
+	// {"fieldErrors":{"seed":["Too big: expected number to be <=2147483647"]}} in
+	// under a second. Probed live with seed=2882449376, the one a failed run sent.
+	it('folds a uint32 seed into the range Pollinations accepts', async () => {
+		const sent = () => Number(new URL(hits.findLast((u) => u.includes('image.pollinations.ai'))).searchParams.get('seed'));
+		await textToImage('a fox', { budgetMs: 20_000, seed: 2_882_449_376 });
+		const folded = sent();
+		expect(Number.isInteger(folded)).toBe(true);
+		expect(folded).toBeGreaterThanOrEqual(0);
+		expect(folded).toBeLessThanOrEqual(2_147_483_647);
+		// Reproducibility is the whole point of the seed: the same input must
+		// always land on the same Pollinations seed.
+		await textToImage('a fox', { budgetMs: 20_000, seed: 2_882_449_376 });
+		expect(sent()).toBe(folded);
+		// The top of the uint32 range and the int32 ceiling itself.
+		await textToImage('a fox', { budgetMs: 20_000, seed: 4_294_967_295 });
+		expect(sent()).toBeLessThanOrEqual(2_147_483_647);
+		await textToImage('a fox', { budgetMs: 20_000, seed: 2_147_483_647 });
+		expect(sent()).toBe(2_147_483_647);
+	});
+
+	it('sends a seed Pollinations already accepts unchanged', async () => {
+		await textToImage('a fox', { budgetMs: 20_000, seed: 12_345 });
+		const url = new URL(hits.find((u) => u.includes('image.pollinations.ai')));
+		expect(url.searchParams.get('seed')).toBe('12345');
+	});
+
+	// Same outage: Pollinations refuses a second image inside its window with
+	// 402 FREE_LIMIT and `Retry-After: 45`. The refusal reached the user as "busy,
+	// try again in a few seconds" with a 10 s countdown, so the retry it invited
+	// was refused too. The wait the provider states has to ride on the error.
+	it('carries the wait Pollinations states on a free-limit refusal', async () => {
+		lane.pollinations = () =>
+			new Response(JSON.stringify({ error: { code: 'FREE_LIMIT', message: 'Free limit reached: 1 image every 45 seconds per IP. Retry after 45s' } }), {
+				status: 402,
+				headers: { 'content-type': 'application/json', 'retry-after': '45' },
+			});
+		const err = await textToImage('a fox', { budgetMs: 20_000 }).catch((e) => e);
+		expect(err.code).toBe('rate_limited');
+		expect(err.retryAfter).toBe(45);
+		expect(err.queued).toBe(true);
+	});
+
+	it('does not invent a wait when a Pollinations refusal states none', async () => {
+		lane.pollinations = () => json(429, { error: 'slow down' });
+		const err = await textToImage('a fox', { budgetMs: 20_000 }).catch((e) => e);
+		expect(err.code).toBe('rate_limited');
+		expect(err.retryAfter).toBeUndefined();
+	});
 });
 
 // On 2026-10-08 NIM FLUX filtered a rocket-booster prompt: HTTP 200, a solid
