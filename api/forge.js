@@ -181,7 +181,7 @@ import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
 import { decideStalledPoll } from './_lib/forge-job-deadline.js';
 import { allowanceExceeded, pixal3dLaneHealth, PIXAL3D_ALLOWANCE_S } from './_lib/forge-pixal3d-guard.js';
 import { directPrompt } from './_mcp-studio/forge-client.js';
-import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
+import { directForReference } from './_lib/forge-direction.js';
 import { assertSafePublicUrl, SsrfBlockedError } from './_lib/ssrf-guard.js';
 
 // Circuit-breaker key + window for the free NVIDIA NIM TRELLIS text→3D lane. The
@@ -926,6 +926,9 @@ async function runHfImageLane({
 	// from the caller's raw prompt. Reported back verbatim so the client can show
 	// what the model was actually asked for. Null on image→3D (nothing to rewrite).
 	directedPrompt = null,
+	// What the direction step did (api/_lib/forge-direction.js): directed,
+	// known_mark, skipped with its reason, or off. Null on image→3D.
+	direction = null,
 	opts = null,
 	cacheKey = null,
 	// Whether a requested pose was already baked into the reference image this
@@ -1171,6 +1174,7 @@ async function runHfImageLane({
 		backend: backendId,
 		prompt: prompt || null,
 		directed_prompt: directedPrompt,
+		direction,
 		preview_image_url: preview,
 		reference_image_urls: isImageMode ? [imageUrls[0]] : [preview],
 		text_to_image_model: isImageMode ? null : textToImageModel,
@@ -2169,6 +2173,9 @@ async function startJobWithBody(req, res, body) {
 		// instead of leaving the rewrite invisible. Null means the raw prompt was
 		// used verbatim (director off, no rewrite, or the pass failed soft).
 		let directedPrompt = null;
+		// Why: the truthful record of the direction step, so the page can tell
+		// "the director rewrote it" from "the director was unavailable".
+		let direction = null;
 		if (isImageMode) {
 			views = imageUrls;
 			referenceImageUrl = imageUrls[0];
@@ -2185,24 +2192,15 @@ async function startJobWithBody(req, res, body) {
 			// the free-first LLM chain, so it costs no GCP/vendor spend. This is the
 			// single biggest lever on "does this look like a real photograph"
 			// available before the reference image is even generated.
-			let promptForReference = prompt;
-			if (body?.director !== false) {
-				// Known brand marks resolve deterministically before the LLM gets a
-				// say: no model reliably knows a niche mark's geometry, and the
-				// lexicon spec is already a tight single-subject description.
-				const knownMark = resolveLogoPrompt(prompt);
-				if (knownMark) {
-					promptForReference = knownMark.prompt;
-				} else {
-					// Subject-classified briefing (person/animal/vehicle/food/architecture/
-					// object) so the director reaches for the material/construction cues
-					// that actually matter for THIS subject's failure mode.
-					const directed = await directPrompt(meshDirectorFor(meshSubjectClass(prompt)), prompt).catch(
-						() => null,
-					);
-					if (directed) promptForReference = directed;
-				}
-			}
+			// Known marks resolve deterministically; otherwise the director gets one
+			// short budget (FORGE_DIRECTOR_BUDGET_MS) and skips cooled providers
+			// without a network call, so a dead chat chain costs milliseconds.
+			const directionRun = await directForReference(prompt, {
+				enabled: body?.director !== false,
+				direct: directPrompt,
+			});
+			let promptForReference = directionRun.prompt;
+			direction = directionRun.direction;
 			// Pose directive, appended AFTER the director rewrite so it survives
 			// verbatim into the reference image. Baked into the synthesized image's
 			// pixels, so it applies no matter which image-conditioned backend this
@@ -2220,7 +2218,7 @@ async function startJobWithBody(req, res, body) {
 			// Milestone 1: the director pass is over. Crumb it before the (much
 			// longer) image synthesis starts so the page can retire that stage and
 			// show the real rewrite instead of holding it for the whole request.
-			recordForgeProgress(progressId, 'directed', { directed_prompt: directedPrompt }).catch(() => {});
+			recordForgeProgress(progressId, 'directed', { directed_prompt: directedPrompt, direction }).catch(() => {});
 			// Seed the reconstruction reference from the dedicated Vertex-Gemini
 			// photoreal module when it is live, so a text prompt reconstructs from the
 			// most photoreal single view we can synthesize. Fail-open: an absent module
@@ -2535,6 +2533,7 @@ async function startJobWithBody(req, res, body) {
 					backend: backendId,
 					prompt: prompt || null,
 					directed_prompt: directedPrompt,
+					direction,
 					preview_image_url: reportableRefUrl,
 					reference_image_urls: views,
 					text_to_image_model: isImageMode ? null : textToImageModel,
@@ -2584,6 +2583,7 @@ async function startJobWithBody(req, res, body) {
 					previewImageUrl: reportableRefUrl,
 					textToImageModel,
 					directedPrompt,
+					direction,
 					opts,
 					cacheKey,
 					poseApplied,
@@ -2632,6 +2632,7 @@ async function startJobWithBody(req, res, body) {
 					previewImageUrl: reportableRefUrl,
 					textToImageModel,
 					directedPrompt,
+					direction,
 					opts,
 					cacheKey,
 					poseApplied,
@@ -2803,6 +2804,7 @@ async function startJobWithBody(req, res, body) {
 						previewImageUrl: reportableRefUrl,
 						textToImageModel,
 						directedPrompt,
+						direction,
 						opts,
 						cacheKey,
 						poseApplied,
@@ -2897,6 +2899,7 @@ async function startJobWithBody(req, res, body) {
 			backend: backendId,
 			prompt: prompt || null,
 			directed_prompt: directedPrompt,
+			direction,
 			preview_image_url: reportableRefUrl,
 			reference_image_urls: views,
 			views_requested: viewsRequested,
