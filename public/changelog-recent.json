@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-26T23:44:59.785Z",
+	"generated_at": "2026-11-26T23:47:06.026Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4758,
+	"total": 4760,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -64,11 +64,32 @@
 		{
 			"date": "2026-11-26",
 			"type": "update",
+			"title": "Forge now counts the requests that fail before a model starts",
+			"summary": "Forge's success rate only counted requests that reached a 3D engine, so it could read 93% while people saw failures earlier: at the reference image step, a rate limit, or an engine refusing the job. Every generation request is now counted by where it ended and why, with no prompt text or personal data, and recording never slows or changes your request. The health check, the ops reports and the NVIDIA benchmarks page now show an end-to-end success rate (models delivered out of all requests accepted after sign-in) beside the engine success rate, so a breakdown before the engines shows up in the numbers.",
+			"link": "/nvidia/benchmarks",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
 			"title": "Forge seeds you can paste, check and reuse",
 			"summary": "The Forge page has a Seed field under Engine. Leave it empty for a new random model every time, or paste a seed to get the same model again; it remembers the seed after a reload and tells you right away if a value is not a whole number from 0 to 4294967295. After each run it shows the seed that run used, with a button to keep it. The API now refuses an out-of-range seed with that same message instead of quietly changing it, so two different seeds can no longer come back as the same model, and every engine now gets a seed it actually accepts.",
 			"link": "/forge",
 			"tags": [
 				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Forge tells you when it is busy, instead of saying you hit your limit",
+			"summary": "When the image step or a 3D engine was busy, Forge said \"Generation limit reached\" as if you had used up your account. It now says which wait it is: a busy engine counts down the real wait, keeps your prompt and settings, and tries again once by itself (you can cancel). Your own limit says when it resets, and the daily cap on paid engines points you to the free engines that stay open.",
+			"link": "/forge",
+			"tags": [
 				"fix"
 			]
 		},
@@ -1533,26 +1554,6 @@
 			"link": "/docs/openusd-export",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Forge reads photos from and saves models to OneDrive and SharePoint",
-			"summary": "In Forge image mode, From OneDrive or SharePoint opens Microsoft's file picker so you can bring in up to six photos from a personal or work OneDrive or a SharePoint library, and Save to OneDrive in the Download menu writes the GLB, a poster image and, for a stored model, a one-slide PowerPoint deck into the folder you choose. Microsoft sign-in is asked for on that click only, existing files are never overwritten, large uploads resume after throttling, and closing the picker simply cancels. The buttons appear once the three.ws Microsoft app is connected on the server.",
-			"link": "/docs/onedrive",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Forge results and agent 3D bodies load again",
-			"summary": "Storage's old public download domain stopped serving files, so some forge results opened to a blank viewer with a broken Download button, and many agents in the directory, the Teams tab and search showed no 3D body. Every one of those links now goes through three.ws's own file proxy, which serves the same files reliably. Older links saved before the change are rewritten when they are read, so nothing has to be regenerated.",
-			"link": "/forge",
-			"tags": [
-				"fix"
 			]
 		}
 	]

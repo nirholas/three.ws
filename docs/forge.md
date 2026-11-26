@@ -645,7 +645,8 @@ with the Generate node's current engine, quality and controls.
 - **The High tier is $THREE hold-or-pay gated** in the handler regardless of which free engine serves it: we charge for quality, not to recover vendor cost. A verified $THREE tier pass also lifts the free-lane quota.
 - **BYOK engines** (Meshy, Tripo, Rodin, Stability, Replicate) require your own key; they are never billed to a platform account.
 - **Photo input** accepts up to six views of one object (front, back, left, right, top, three-quarter); text-only engines are filtered out of the photo modes automatically.
-- Rate limits are per client IP on the shared 3D generation buckets.
+- Rate limits are per account on the shared 3D generation buckets (per client IP only for a caller without an account).
+- **Waits are told apart, never all called "the limit"**: both Forge pages classify every 429 and busy 503 with one shared module (`src/forge-throttle.js`). A **busy provider** (our own image-step pacing, a busy 3D engine, the free engines at capacity, a transient 503) says it is not a limit on your account, counts down the server's own `retry_after`, keeps your prompt and settings, and retries once by itself when the countdown ends (you can cancel it; a refused retry falls back to a manual countdown and never loops). The **account limit** (`ratelimit-*` headers) says when it resets, at your local time, and that nothing was charged. The **paid daily cap** (`daily_limit_reached`) says paid engines reset at midnight UTC and offers a free engine, since free engines stay open. A screen reader hears the state once at the start and once at the end, not every second.
 
 ## Cost preview and pay-to-keep
 
