@@ -7,6 +7,12 @@
 // synthetic non-pump address — never a real third-party mint.
 
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
+
+// pump.fun's search rows no longer carry the bonding-curve reserves, so an
+// on-curve coin's progress is read off the curve account on Solana.
+const curveView = vi.hoisted(() => ({ fn: async () => ({ httpStatus: 404, body: { error: 'no_curve' } }) }));
+vi.mock('../../api/_lib/pump-curve-view.js', () => ({ getCurveView: (...a) => curveView.fn(...a) }));
+
 import { mergeMarketSources, fetchCoinMarket, __resetCoinMarketCache } from '../../api/_lib/oracle/market.js';
 
 const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -120,7 +126,12 @@ describe('fetchCoinMarket', () => {
 		global.fetch = vi.fn(async (url) => {
 			const u = String(url);
 			if (u.includes('dexscreener.com')) return jres({ pairs: [{ chainId: 'solana', dexId: 'pumpswap', url: 'https://d/x', pairAddress: 'P', baseToken: { name: 'three.ws', symbol: 'three' }, quoteToken: { symbol: 'SOL' }, priceUsd: '0.0021', priceNative: '0.000027', priceChange: { h24: 3 }, volume: { h24: 465000 }, txns: { h24: { buys: 20, sells: 5 } }, liquidity: { usd: 223000 }, marketCap: 2100000, fdv: 2100000, info: { imageUrl: 'i.png', socials: [{ type: 'twitter', url: 'https://x.com/trythreews' }], websites: [{ url: 'https://three.ws/' }] } }] });
-			if (u.includes('frontend-api-v3.pump.fun')) return jres({ mint: THREE, name: 'three.ws', symbol: 'three', complete: true, total_supply: 1_000_000_000_000_000, real_token_reserves: 0, creator: 'C', created_timestamp: 1777441309000, ath_market_cap: 16_000_000 });
+			// pump.fun serves a coin from its search route only (GET /coins/<mint> and
+			// /coins-v2/<mint> answer 404 since 2026-11-25).
+			if (u.includes('frontend-api-v3.pump.fun/coins/search-unrestricted') && new URL(u).searchParams.get('searchTerm') === THREE) {
+				return jres([{ mint: THREE, name: 'three.ws', symbol: 'three', complete: true, total_supply: 1_000_000_000_000_000, creator: 'C', created_timestamp: 1777441309000, ath_market_cap: 16_000_000 }]);
+			}
+			if (u.includes('frontend-api-v3.pump.fun')) return jres({ message: 'Cannot GET' }, false, 404);
 			if (u.includes('geckoterminal.com')) return jres({ data: { attributes: { decimals: 6, coingecko_coin_id: 'three-ws', normalized_total_supply: '999687956', price_usd: '0.00211', market_cap_usd: '2105000', fdv_usd: '2105000', volume_usd: { h24: '769000' }, total_reserve_in_usd: '158000' } } });
 			if (u.includes('gopluslabs.io')) return jres({ result: { [THREE]: { holder_count: 12943, total_supply: 999688101, mintable: { status: '0' }, freezable: { status: '0' }, metadata_mutable: { status: '0' }, transfer_fee: {}, holders: [{ account: 'a', percent: '0.05' }, { account: 'b', percent: '0.03' }] } } });
 			if (u.includes('birdeye.so')) return jres({ data: { price: 0.002, holder: 12000, supply: 1_000_000_000, mc: 2_000_000, v24hUSD: 460000, liquidity: 220000 } });
@@ -133,6 +144,7 @@ describe('fetchCoinMarket', () => {
 		expect(m.holders).toBe(12943);
 		expect(m.security.mint_authority_revoked).toBe(true);
 		expect(m.pumpfun.graduated).toBe(true);
+		expect(m.pumpfun.ath_market_cap_usd).toBe(16_000_000);
 		expect(m.listing.market_cap_rank).toBe(2181);
 		expect(cgCalls.length).toBe(1); // called exactly once, gated on the gecko id
 	});
@@ -153,6 +165,32 @@ describe('fetchCoinMarket', () => {
 		expect(m.price.usd).toBe(0.001);
 		expect(cgHit).toBe(false);
 		expect(m.listing).toBeNull();
+	});
+
+	it('fills an on-curve coin\'s progress from the Solana curve account, since search rows carry no reserves', async () => {
+		const ONCURVE = 'THREEsynthetic11111111111111111111111111pump';
+		const views = [];
+		curveView.fn = async (args) => {
+			views.push(args);
+			return { httpStatus: 200, body: { curve: { realTokenReserves: 793_100_000 * 1e6 * 0.25, realSolReserves: 63 * 1e9 } } };
+		};
+		global.fetch = vi.fn(async (url) => {
+			const u = String(url);
+			if (u.includes('frontend-api-v3.pump.fun/coins/search-unrestricted')) {
+				return jres([{ mint: ONCURVE, name: 'synthetic', symbol: 'SYN', complete: false, total_supply: 1_000_000_000_000_000, usd_market_cap: 30000 }]);
+			}
+			if (u.includes('frontend-api-v3.pump.fun')) return jres({ message: 'Cannot GET' }, false, 404);
+			return jres({}, false, 404);
+		});
+		try {
+			const m = await fetchCoinMarket(ONCURVE, 'mainnet', { fresh: true });
+			expect(views).toEqual([{ mint: ONCURVE, network: 'mainnet' }]);
+			expect(m.pumpfun.complete).toBe(false);
+			expect(m.pumpfun.bonding_curve_pct).toBe(75);
+			expect(m.pumpfun.real_sol_reserves).toBe(63);
+		} finally {
+			curveView.fn = async () => ({ httpStatus: 404, body: { error: 'no_curve' } });
+		}
 	});
 
 	it('returns null when every source is down', async () => {

@@ -29,14 +29,15 @@
 import { cacheGet, cacheSet } from '../cache.js';
 import { createCache } from '../mem-cache.js';
 import { fetchRugcheckSummary } from '../rugcheck.js';
-import { bondingProgressPct } from '../pump-bonding.js';
+import { bondingProgressPct, mapOnchainCurveView } from '../pump-bonding.js';
+import { pumpCoinSearchUrl, pickPumpCoin } from '../pump-coin-search.js';
+import { getCurveView } from '../pump-curve-view.js';
 import { gmgnTokenUrl, dextoolsTokenUrl } from '../../../src/shared/trading-terminals.js';
 import { dextoolsUrl } from '../../../src/shared/dextools.js';
 import { DEXTOOLS_PAIR_URL } from '../../../src/pump/dextools-social-boost.js';
 import { THREE_MINT } from '../stage-split.js';
 
 const DEXSCREENER = 'https://api.dexscreener.com/latest/dex/tokens';
-const PUMP_V3 = 'https://frontend-api-v3.pump.fun';
 const GECKOTERMINAL = 'https://api.geckoterminal.com/api/v2/networks/solana/tokens';
 const GOPLUS = 'https://api.gopluslabs.io/api/v1/solana/token_security';
 const BIRDEYE = 'https://public-api.birdeye.so';
@@ -128,13 +129,40 @@ async function fromDexScreener(mint) {
 	};
 }
 
+// pump.fun's search rows dropped the curve reserves; for a coin still on the
+// curve, read them off its bonding-curve account on Solana. Never throws: a
+// failed read leaves the curve fields null rather than dropping the coin.
+async function onchainCurve(mint) {
+	try {
+		const view = await getCurveView({ mint, network: 'mainnet' });
+		if (view?.httpStatus !== 200 || !view.body || (!view.body.curve && !view.body.graduated)) return null;
+		return mapOnchainCurveView(view.body);
+	} catch {
+		return null;
+	}
+}
+
 async function fromPumpFun(mint) {
-	const d = await fetchJson(`${PUMP_V3}/coins-v2/${mint}`, { headers: { accept: 'application/json' } });
-	if (!d || !d.mint) return null;
-	const complete = Boolean(d.complete);
+	// GET /coins-v2/<mint> was retired on 2026-11-25; the record now comes from
+	// pump.fun's search route, exact mint match only (see pump-coin-search.js).
+	const rows = await fetchJson(pumpCoinSearchUrl(mint), { headers: { accept: 'application/json' } });
+	const d = pickPumpCoin(rows, mint);
+	if (!d) return null;
+	let complete = Boolean(d.complete);
 	// Graduation progress: 100 once complete; otherwise the share of the curve's
-	// initial token float that's been bought out (shared curve math — pump-bonding.js).
-	const bondingPct = complete ? 100 : bondingProgressPct(d.real_token_reserves);
+	// initial token float that's been bought out (shared curve math in pump-bonding.js).
+	let bondingPct = complete ? 100 : bondingProgressPct(d.real_token_reserves);
+	let realSol = num(d.real_sol_reserves) != null ? num(d.real_sol_reserves) / 1e9 : null;
+	if (!complete && bondingPct == null) {
+		const curve = await onchainCurve(mint);
+		if (curve?.graduated) {
+			complete = true;
+			bondingPct = 100;
+		} else if (curve) {
+			bondingPct = curve.bondingProgressPct;
+			realSol = curve.solInCurve;
+		}
+	}
 	return {
 		sources: ['pumpfun'],
 		identity: {
@@ -156,7 +184,7 @@ async function fromPumpFun(mint) {
 			complete,
 			graduated: complete,
 			bonding_curve_pct: bondingPct,
-			real_sol_reserves: num(d.real_sol_reserves) != null ? num(d.real_sol_reserves) / 1e9 : null,
+			real_sol_reserves: realSol,
 			virtual_sol_reserves: num(d.virtual_sol_reserves) != null ? num(d.virtual_sol_reserves) / 1e9 : null,
 			reply_count: num(d.reply_count),
 			is_live: Boolean(d.is_currently_live),
