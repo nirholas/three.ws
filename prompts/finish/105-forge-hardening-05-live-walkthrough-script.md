@@ -4,6 +4,8 @@
 
 **Priority:** P0. **Area:** end-to-end verification. **Dev port:** 4105. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
 
+**Status (2026-11-26):** Built and committed (63a726c47, b38ca32a3): `npm run forge:walkthrough`, its tests and `docs/ops/forge-walkthrough.md`. `--skip-generate` passes 8 of 8 against production. The live photo run proved generation, the GLB, the share page and the creations listing (the viewer stage then hit a too-short limit, since fixed and re-verified). The live text run fails in production with two `rate_limited` responses stating `retry_after: 10`, because production (f0eed584f) predates b41786cd6. Remaining, owner: deploy (`npm run deploy:gcp:full`), then run `npm run forge:walkthrough` once to prove the text path and archive this order.
+
 ## Operating clause (binding)
 
 - Read `CLAUDE.md` at the repo root before anything else. It overrides this file wherever they disagree.
