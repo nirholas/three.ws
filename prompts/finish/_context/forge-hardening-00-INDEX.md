@@ -21,7 +21,7 @@ A Forge lane that is measurably working is never switched, reordered, re-tuned, 
 ## Run these first
 
 - [184](../184-forge-hardening-84-undeployed-fixes-and-deploy-readiness.md): Find out exactly which Forge fixes are not live yet, and make the deploy a single safe command for the owner.
-- [101](../101-forge-hardening-01-reference-step-stated-wait.md): Stop asking the image provider twice when it has just said how long to wait.
+- [101](../../archive/101-forge-hardening-01-reference-step-stated-wait.md): Stop asking the image provider twice when it has just said how long to wait.
 - [102](../102-forge-hardening-02-throttle-honesty-on-page.md): Tell the user the truth when a provider is busy, instead of "Generation limit reached".
 - [103](../103-forge-hardening-03-image-ladder-outage-contract.md): Make the text-to-image ladder fail fast, fall through correctly and recover on its own.
 - [182](../182-forge-hardening-82-background-jobs-must-not-starve-users.md): Stop our own scheduled jobs from using the capacity real users are waiting for.
@@ -58,7 +58,7 @@ Each agent stops at the CLAUDE.md gates and reports. These are yours:
 
 | Order | Area | What it does | Live generations |
 |---|---|---|---|
-| [101](../101-forge-hardening-01-reference-step-stated-wait.md) | text to 3D, reference image step | Stop asking the image provider twice when it has just said how long to wait | 1 |
+| [101](../../archive/101-forge-hardening-01-reference-step-stated-wait.md) | text to 3D, reference image step | Stop asking the image provider twice when it has just said how long to wait | 1 |
 | [102](../102-forge-hardening-02-throttle-honesty-on-page.md) | Forge page, error messages | Tell the user the truth when a provider is busy, instead of "Generation limit reached" | 1 |
 | [103](../103-forge-hardening-03-image-ladder-outage-contract.md) | text-to-image provider ladder | Make the text-to-image ladder fail fast, fall through correctly and recover on its own | 1 |
 | [104](../104-forge-hardening-04-pre-job-failure-visibility.md) | observability, failures before a job exists | Count the generations that die before a job is created | 0 |
