@@ -104,7 +104,7 @@ export SOLANA_RPC_URL=https://rpc.solanatracker.io/public
 - **NEVER** sign transactions on behalf of a user — scripts build txs; the user (or their wallet) co-signs and sends.
 - Always validate that amounts are `> 0` before building instructions.
 - Use the correct decimal precision: **9 decimals for SOL** (1 SOL = 1,000,000,000 lamports), **6 decimals for pump tokens**.
-- **NEVER trust `token_program` from the HTTP API** (`coins-v2`). Always fetch the mint account on-chain via `connection.getAccountInfo(mint)` and use `.owner` to determine the correct token program (SPL Token or Token-2022).
+- **NEVER trust `token_program` from the HTTP API** (the coin search record). Always fetch the mint account on-chain via `connection.getAccountInfo(mint)` and use `.owner` to determine the correct token program (SPL Token or Token-2022).
 - **Verify imports:** use `@pump-fun/pump-sdk` (not internal monorepo paths). In TypeScript apps, `BN` from `bn.js` matches what the SDKs expect (Anchor `BN` is the same type in practice).
 
 ## Program IDs
@@ -265,7 +265,9 @@ Then confirm as usual with `connection.confirmTransaction`.
 
 ## Get coin data (HTTP)
 
-`GET https://frontend-api-v3.pump.fun/coins-v2/{mint}`
+`GET https://frontend-api-v3.pump.fun/coins/search-unrestricted?searchTerm={mint}&offset=0&limit=10&includeNsfw=true`
+
+The response is an array of coins. Search also returns fuzzy matches for other coins, so use only the row whose `mint` equals the mint you asked for. (`/coins-v2/{mint}` and `/coins/{mint}` were retired on 2026-11-25 and answer 404 for every mint.)
 
 > **CORS-protected:** `frontend-api-v3.pump.fun` does not allow browser-origin requests. When building a web application, always call this endpoint from your backend/server and proxy the result to the frontend. Do not call it directly from client-side JavaScript.
 
@@ -296,7 +298,7 @@ Then confirm as usual with `connection.confirmTransaction`.
 }
 ```
 
-> **NEVER trust `token_program` from the HTTP API.** The `coins-v2` endpoint may return a stale or incorrect `token_program`. Always resolve it on-chain by fetching the mint account and reading its owner:
+> **NEVER trust `token_program` from the HTTP API.** The coin search record may carry a stale or incorrect `token_program`. Always resolve it on-chain by fetching the mint account and reading its owner:
 >
 > ```typescript
 > const mintAccountInfo = await connection.getAccountInfo(mintPublicKey);

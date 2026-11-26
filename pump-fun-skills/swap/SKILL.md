@@ -98,7 +98,7 @@ export SOLANA_RPC_URL=https://rpc.solanatracker.io/public
 - Use the correct decimal precision: **9 decimals for SOL** (1 SOL = 1,000,000,000 lamports), **6 decimals for pump tokens**.
 - Always check the coin state (bonding curve vs AMM pool) before choosing the right path.
 - Always apply slippage protection on buy/sell transactions.
-- **NEVER trust `token_program` from the HTTP API** (`coins-v2`). Always fetch the mint account on-chain via `connection.getAccountInfo(mint)` and use `.owner` to determine the correct token program (SPL Token or Token-2022).
+- **NEVER trust `token_program` from the HTTP API** (the coin search record). Always fetch the mint account on-chain via `connection.getAccountInfo(mint)` and use `.owner` to determine the correct token program (SPL Token or Token-2022).
 - **Verify imports:** use `@pump-fun/pump-sdk` / `@pump-fun/pump-swap-sdk` (not internal monorepo paths). In TypeScript apps, `BN` from `bn.js` matches what the SDKs expect (Anchor `BN` is the same type in practice).
 
 ## Program IDs
@@ -152,7 +152,9 @@ Full transaction building (compute budget, blockhash, partial sign) is implement
 
 Use `node scripts/fetch-coin.mjs --mint <MINT> --subset` or `GET`:
 
-`https://frontend-api-v3.pump.fun/coins-v2/{mint}`
+`https://frontend-api-v3.pump.fun/coins/search-unrestricted?searchTerm={mint}&offset=0&limit=10&includeNsfw=true`
+
+The response is an array of coins. Search also returns fuzzy matches for other coins, so use only the row whose `mint` equals the mint you asked for. (`/coins-v2/{mint}` and `/coins/{mint}` were retired on 2026-11-25 and answer 404 for every mint.)
 
 > **CORS-protected:** `frontend-api-v3.pump.fun` does not allow browser-origin requests. When building a web application, always call this endpoint from your backend/server and proxy the result to the frontend. Do not call it directly from client-side JavaScript.
 
@@ -351,7 +353,9 @@ Use `connection.getBalance` for lamports; `getAssociatedTokenAddressSync` + `get
 
 ## Get coin data (HTTP)
 
-`GET https://frontend-api-v3.pump.fun/coins-v2/{mint}`
+`GET https://frontend-api-v3.pump.fun/coins/search-unrestricted?searchTerm={mint}&offset=0&limit=10&includeNsfw=true`
+
+The response is an array of coins. Search also returns fuzzy matches for other coins, so use only the row whose `mint` equals the mint you asked for. (`/coins-v2/{mint}` and `/coins/{mint}` were retired on 2026-11-25 and answer 404 for every mint.)
 
 > **CORS-protected** — call from backend only (see note in "Determining coin state" above).
 
@@ -389,7 +393,7 @@ Use `connection.getBalance` for lamports; `getAssociatedTokenAddressSync` + `get
 | `bonding_curve`          | Bonding curve PDA address                  |
 | `token_program`          | **Do NOT trust this value** — always verify on-chain (see below) |
 
-> **NEVER trust `token_program` from the HTTP API.** The `coins-v2` endpoint may return a stale or incorrect `token_program`. Always resolve it on-chain by fetching the mint account and reading its owner:
+> **NEVER trust `token_program` from the HTTP API.** The coin search record may carry a stale or incorrect `token_program`. Always resolve it on-chain by fetching the mint account and reading its owner:
 >
 > ```typescript
 > const mintAccountInfo = await connection.getAccountInfo(mintPublicKey);
@@ -412,7 +416,7 @@ All need `global`, `feeConfig` (`fetchFeeConfig()`), `mintSupply`, and `bondingC
 
 - **`complete === true` but `pump_swap_pool` is null** — migration window; retry later; do not use bonding instructions.
 - **Bonding curve account missing** — wrong mint, wrong network, or uninitialized coin.
-- **`Coin has graduated` / AMM script errors on bonding-only coin** — re-fetch `coins-v2` and switch script path.
+- **`Coin has graduated` / AMM script errors on bonding-only coin**: re-fetch the coin record (`scripts/fetch-coin.mjs`) and switch script path.
 - **Insufficient SOL** — user cannot pay buy amount or fees; check `nativeLamports` before building.
 - **Slippage / simulation failures** — increase slippage cautiously, check pool reserves, retry with fresh blockhash (re-run script).
 - **ATA missing** — first buy may create ATA inside the same tx; if a custom flow fails, ensure ATA creation is included or pre-created.

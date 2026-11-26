@@ -12,7 +12,8 @@ import {
 
 const HELP = `Usage: node scripts/fetch-coin.mjs --mint <MINT> [--subset]
 
-GET https://frontend-api-v3.pump.fun/coins-v2/{mint}
+GET https://frontend-api-v3.pump.fun/coins/search-unrestricted?searchTerm={mint}
+(exact mint match only; /coins-v2/{mint} was retired on 2026-11-25)
 
 Options:
   --mint       Coin mint (base58)
@@ -20,7 +21,7 @@ Options:
   -h, --help   Show help
 
 Environment:
-  (none — uses public pump.fun API)`;
+  PUMP_COINS_V2_BASE  optional backend that serves <base>/<mint> (devnet)`;
 
 async function main() {
   const { values } = parseArgs({
