@@ -535,15 +535,20 @@ describe('textToImage: Vertex → Replicate fallback', () => {
 		expect(calls.some((c) => c.url.includes('flux-schnell'))).toBe(true);
 	});
 
-	it('rethrows the Vertex error when no Replicate token exists to fall back to', async () => {
+	it('hands a Vertex failure to the keyless rung when no Replicate token exists (2026-11-26: it was thrown as the terminal error)', async () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
 		vertexState.configured = true;
 		vertexState.generate = async () => {
-			throw Object.assign(new Error('vertex broke'), { code: 'unconfigured' });
+			throw Object.assign(new Error('vertex broke'), { providerStatus: 403 });
 		};
+		const calls = stubFetch([
+			['image.pollinations.ai', () => new Response(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0]), { status: 200, headers: { 'content-type': 'image/jpeg' } })],
+		]);
 
 		const textToImage = await freshTextToImage();
-		await expect(textToImage('a red teapot')).rejects.toThrow('vertex broke');
+		const result = await textToImage('a red teapot');
+		expect(result.model).toBe('pollinations/flux');
+		expect(calls.map((c) => new URL(c.url).host)).toEqual(['image.pollinations.ai']);
 	});
 
 	it('classifies a Replicate 429 as rate_limited without leaking the account credit balance', async () => {
