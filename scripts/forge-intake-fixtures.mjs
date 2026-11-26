@@ -64,15 +64,35 @@ export function tinyPdf() {
 	return Buffer.from(out, 'latin1');
 }
 
-const photo = (width, height, channels = 3) =>
-	sharp({ create: { width, height, channels, background: { r: 180, g: 120, b: 60, alpha: channels === 4 ? 0.6 : 1 } } })
-		.composite([
-			{
-				input: Buffer.from(
-					`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><circle cx="${width / 2}" cy="${height / 2}" r="${Math.min(width, height) / 3}" fill="#2a6"/></svg>`,
-				),
-			},
-		]);
+// A plain product-style photo: a flat backdrop with a centered disc. The disc is
+// drawn at the shorter side and centered, so a 12000 px panorama stays cheap.
+const photo = (width, height, channels = 3) => {
+	const side = Math.min(width, height);
+	return sharp({ create: { width, height, channels, background: { r: 180, g: 120, b: 60, alpha: channels === 4 ? 0.6 : 1 } } }).composite([
+		{
+			input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${side}" height="${side}"><circle cx="${side / 2}" cy="${side / 2}" r="${side / 3}" fill="#2a6"/></svg>`),
+			gravity: 'centre',
+		},
+	]);
+};
+
+// About 30 MB: a 4000 x 3000 JPEG at quality 100 with 4:4:4 chroma, filled with
+// noise so it cannot compress. The noise is one 400 x 300 tile repeated (JPEG
+// codes each 8 x 8 block on its own, so repetition does not shrink it), which
+// builds in about 2 s instead of 20.
+async function hugePhoto() {
+	const W = 4000;
+	const H = 3000;
+	const TW = 400;
+	const TH = 300;
+	const tile = await sharp({ create: { width: TW, height: TH, channels: 3, noise: { type: 'gaussian', mean: 128, sigma: 40 } } }).raw().toBuffer();
+	const out = Buffer.alloc(W * H * 3);
+	for (let y = 0; y < H; y++) {
+		const row = (y % TH) * TW * 3;
+		for (let x = 0; x < W; x += TW) tile.copy(out, (y * W + x) * 3, row, row + TW * 3);
+	}
+	return sharp(out, { raw: { width: W, height: H, channels: 3 } }).jpeg({ quality: 100, chromaSubsampling: '4:4:4' }).toBuffer();
+}
 
 /**
  * Every entry: { id, name (as the person's file is called), type (what the
@@ -133,11 +153,7 @@ export async function buildIntakeImageSet({ realHeic = null } = {}) {
 		height: 3000,
 		reasons: ['dimensions'],
 	});
-	const big = await sharp({
-		create: { width: 6000, height: 4500, channels: 3, noise: { type: 'gaussian', mean: 128, sigma: 70 } },
-	})
-		.jpeg({ quality: 100, chromaSubsampling: '4:4:4' })
-		.toBuffer();
+	const big = await hugePhoto();
 	add('huge-bytes', 'dslr.jpg', 'image/jpeg', big, {
 		action: 'convert',
 		format: 'jpeg',
