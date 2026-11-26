@@ -5714,6 +5714,7 @@
 		"hold_the_button_and_ask": "Hold knappen nede og spørg hvad som helst. <strong>NVIDIA Riva</strong> hører dig, et sprogmodel skriver svaret, og hver sætning stemmes af <strong>NVIDIA Magpie</strong> mens den næste stadig skrives. Præcis den lyd driver <strong>NVIDIA Audio2Face-3D</strong>, som animerer ansigtet frame for frame på det rig du vælger. Hvis et trin fejler, skifter avatar til en backup, og pillerne nedenfor viser, hvilken.",
 		"hud_ms": "HUD · ms",
 		"live_blendshapes": "Live blendshapes",
+		"live_riva_magpie_audio2face": "live · Riva → LLM → Magpie → Audio2Face",
 		"magpie_tts_voice": "<span class=\"dot\"></span>Magpie TTS · stemme",
 		"make_it_say_a_line": "Få den til at sige en replik",
 		"meta_description": "Skriv tekst, hør den med NVIDIA Magpies stemme, og se 3D-avatarens ansigt animere i realtid — drevet frame-for-frame af NVIDIA Audio2Face-3D. Ægte ARKit blendshapes, mappet til ethvert rig.",
@@ -9458,8 +9459,7 @@
 		"view_this_model_in_ar_place_title": "Se denne model i AR, placeret i dit rum",
 		"what_does_the_sketch_depict_required": "Hvad viser skitsen? (påkrævet)",
 		"what_other_people_just_forged_open_one": "Hvad andre lige har smedet. Åbn en i viseren, eller <strong>Remix</strong> dens prompt og gør den til din.",
-		"your_creations": "Dine kreationer",
-		"product_name": "Forge<span class=\"forge-h1-kw\">: AI 3D Model Generator</span>"
+		"your_creations": "Dine kreationer"
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge din egen 3D-model på three.ws",
