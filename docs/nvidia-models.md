@@ -32,7 +32,7 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | Capability | NVIDIA model(s) | Wired in | Free? |
 | --- | --- | --- | --- |
 | **Text → 3D** | `microsoft/trellis` | `api/_providers/nvidia.js`, `api/_lib/forge-tiers.js` | ✅ |
-| **Text → image** | `black-forest-labs/flux.1-dev` | `api/_mcp3d/text-to-image.js` | ✅ |
+| **Text → image** | `black-forest-labs/flux.2-klein-4b` | `api/_mcp3d/text-to-image.js` | ✅ |
 | **LLM (default lane)** | `nvidia/nemotron-3-super-120b-a12b`, then `nvidia/nemotron-3-ultra-550b-a55b` (step-down rung: `nvidia/nemotron-3.5-lightning-30b-a3b`) | `api/_lib/llm.js`, `api/_lib/chat-models.js` | ✅ |
 | **LLM (model garden)** | Three Nemotron picks (Ultra 550B and 3.5 Lightning 30B behind them), plus DeepSeek V4.1 Flash on the NIM lane via the open-model roster | `api/brain/chat.js`, `api/_lib/model-roster.js` | ✅ |
 | **Vision / VLM** | `nvidia/nemotron-3.5-super-vl-120b-a12b`, then `nemotron-3.5-bolt-e4b` and `nemotron-3-nano-omni-30b-a3b-reasoning` (per-task leads), then free OpenRouter `:free` VLM rungs | `api/_lib/vision.js` | ✅ |
@@ -69,12 +69,12 @@ This is the headline free model. **Microsoft TRELLIS hosted on NVIDIA NVCF gives
 
 ---
 
-## 2. Text → image: FLUX.1-dev
+## 2. Text → image: FLUX.2 klein 4B
 
-**Model:** `black-forest-labs/flux.1-dev` · **Endpoint:** `ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev`
+**Model:** `black-forest-labs/flux.2-klein-4b` · **Endpoint:** `ai.api.nvidia.com/v1/genai/black-forest-labs/flux.2-klein-4b`
 **Source:** [api/_mcp3d/text-to-image.js](../api/_mcp3d/text-to-image.js).
 
-FLUX.1-dev is the **free NVIDIA text-to-image lane** (the hosted FLUX.1-schnell preview was retired, so the lane moved to the dev checkpoint at 20 steps, CFG 3.5). It is a synchronous invoke: the image returns inline as base64, no poll.
+FLUX.2 klein 4B is the **free NVIDIA text-to-image lane**. Probed live on 2026-11-26: `flux.1-dev` and `flux.1-schnell` accept a request on the hosted gateway and then never answer (70 s and 90 s probes hung), so the lane moved to klein-4b, which served a 1024x1024 JPEG in 6.5 s warm and 14 s cold. Request: 4 steps, CFG 1, no `mode` field (the endpoint rejects steps above 4, CFG above 1 and extra fields). The rung runs under its own 30 s cap and a 60 s cooldown after a degradation. It is a synchronous invoke: the image returns inline as base64, no poll.
 
 **Where it's used:**
 - **The reference-image step of the image-intermediate 3D path.** When a prompt is reconstructed to a mesh, FLUX paints the reference view first, which the free reconstruction lanes (TRELLIS / Hunyuan3D) then turn into geometry. A photo-quality reference reconstructs into a far better mesh than a busy scene, so the lane steers FLUX toward a clean, centered subject.

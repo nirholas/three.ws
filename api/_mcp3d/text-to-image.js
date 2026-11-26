@@ -111,16 +111,20 @@ function isNimLaneDegraded(err) {
 // { artifacts: [{ base64, finishReason }] }. flux-schnell is the fast 4-step
 // distilled model, so a tight per-attempt timeout is safe: a hung free lane must
 // hand off to the paid lanes, never stall the whole text→3D pipeline.
-// FLUX.1-dev, not schnell. On 2026-08-27 the schnell endpoint stopped
-// answering at all (every call hung to the client timeout for hours) while
-// flux.1-dev on the same gateway served a real 1024x1024 image in ~5 s. dev
-// is guidance-trained: it wants steps >= 5 (the endpoint 422s below that) and
-// accepts a cfg_scale, both of which schnell refused.
-const NIM_FLUX_URL = 'https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev';
-const NIM_FLUX_MODEL = 'black-forest-labs/flux.1-dev';
-const NIM_FLUX_STEPS = 20;
-const NIM_FLUX_CFG_SCALE = 3.5;
-const NIM_TIMEOUT_MS = 60_000;
+// FLUX.2 klein 4B, not FLUX.1. Probed live on 2026-11-26 with the production
+// key: flux.1-dev and flux.1-schnell both accept the request on NVIDIA's gateway
+// and then never answer (70s and 90s probes hung to the client timeout), which
+// is why this rung timed out on every request. flux.2-klein-4b answered 200 in
+// 6.5s warm and 14s cold with a real 1024x1024 JPEG. It is the 4-step distilled
+// model: the endpoint 422s on steps > 4 and cfg_scale > 1, and rejects a `mode`
+// field (extra_forbidden), so none is sent. The rung owns a 30s cap, well past
+// klein's cold start, so a hang hands the rest of the request's time to the
+// rungs behind it.
+const NIM_FLUX_URL = 'https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.2-klein-4b';
+const NIM_FLUX_MODEL = 'black-forest-labs/flux.2-klein-4b';
+const NIM_FLUX_STEPS = 4;
+const NIM_FLUX_CFG_SCALE = 1;
+const NIM_TIMEOUT_MS = 30_000;
 
 // NVCF fronts the free NIM lane with a gateway that answers a cold model or a
 // momentary capacity/routing blip with a transient 502/503/504 that returns
@@ -481,7 +485,7 @@ async function persistDataUriImage(result) {
 // comes back inline as base64, no poll. Caller guarantees NVIDIA_API_KEY is set.
 // Throws on any failure (timeout, throttle, malformed body) so the caller can
 // degrade to the paid lanes; never returns a half-result.
-// No `seed`: the flux.1-dev schema forbids extra fields and seed is not one of
+// No `seed`: the FLUX schema forbids extra fields and seed is not one of
 // its inputs, so sending it turns every request into a 422 extra_forbidden.
 async function nimFluxImage(prompt, aspectRatio, { timeoutMs = NIM_TIMEOUT_MS } = {}) {
 	const key = readEnv('NVIDIA_API_KEY');
@@ -503,7 +507,6 @@ async function nimFluxImage(prompt, aspectRatio, { timeoutMs = NIM_TIMEOUT_MS } 
 				},
 				body: JSON.stringify({
 					prompt,
-					mode: 'base',
 					width,
 					height,
 					steps: NIM_FLUX_STEPS,
