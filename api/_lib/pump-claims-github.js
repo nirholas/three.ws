@@ -8,9 +8,9 @@
 // commit-feed-push.js): a token raises the rate limit but is never required.
 
 import { searchPumpTokens } from './pump-search.js';
+import { pumpCoinSearchUrl, pickPumpCoin } from './pump-coin-search.js';
 
 const GITHUB_API = 'https://api.github.com';
-const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins-v2';
 const CACHE_TTL_MS = 10 * 60_000;
 
 function githubHeaders() {
@@ -107,11 +107,13 @@ export function extractGithubRepoRefs(text) {
 export async function resolveCoinGithubContext(mint) {
 	let coin;
 	try {
-		const resp = await fetch(`${PUMPFUN_COIN_API}/${encodeURIComponent(mint)}`, {
+		// pump.fun retired /coins-v2/<mint> on 2026-11-25; the search route keyed
+		// by the mint still carries description, website and socials.
+		const resp = await fetch(pumpCoinSearchUrl(mint), {
 			headers: { accept: 'application/json' },
 			signal: AbortSignal.timeout(7000),
 		});
-		coin = resp.ok ? await resp.json() : null;
+		coin = resp.ok ? pickPumpCoin(await resp.json(), mint) : null;
 	} catch {
 		coin = null;
 	}

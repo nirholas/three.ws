@@ -33,10 +33,11 @@ before(() => {
 		if (u.includes('api.github.com/users/octocat')) {
 			return { ok: true, json: async () => ({ login: 'octocat', created_at: '2015-01-01T00:00:00Z' }) };
 		}
-		if (u.includes('frontend-api-v3.pump.fun/coins-v2/')) {
+		if (u.includes('frontend-api-v3.pump.fun/coins/search-unrestricted')) {
+			const mint = new URL(u).searchParams.get('searchTerm');
 			return {
 				ok: true,
-				json: async () => ({ creator: SYNTH.RECIPIENT, name: 'Test Coin', usd_market_cap: 50_000 }),
+				json: async () => [{ mint, creator: SYNTH.RECIPIENT, name: 'Test Coin', usd_market_cap: 50_000 }],
 			};
 		}
 		return { ok: false, status: 404, json: async () => ({}) };
