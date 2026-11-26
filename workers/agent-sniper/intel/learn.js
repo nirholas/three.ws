@@ -11,13 +11,15 @@
 // Run both from a cron (see api/cron or the worker loop). Pure-math helpers are
 // exported for testing.
 
-// The v2 coin route. pump.fun retired `/coins/:mint` on this host around
-// 2026-09-17 ("Cannot GET", 404), and because fetchCoin() reads any non-2xx as
-// "no data", the labeler silently stopped labeling: oracle_training_set froze and
-// every Oracle refit retrained on the same rows. `/coins-v2/:mint` carries every
-// field this module reads (complete, pump_swap_pool, usd_market_cap, market_cap,
-// ath_market_cap) with the same types.
-const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins-v2';
+// The coin record comes from pump.fun's search route keyed by the mint.
+// pump.fun retired `/coins/:mint` around 2026-09-17 and `/coins-v2/:mint` on
+// 2026-11-25 (both "Cannot GET", 404). Because fetchCoin() reads any non-2xx as
+// "no data", each retirement silently stopped the labeler: oracle_training_set
+// froze and every Oracle refit retrained on the same rows. The search row
+// carries every field this module reads (complete, pump_swap_pool,
+// usd_market_cap, market_cap, ath_market_cap) with the same types, next to
+// fuzzy hits for other coins, so only an exact mint match counts.
+const PUMPFUN_SEARCH_API = 'https://frontend-api-v3.pump.fun/coins/search-unrestricted';
 const FETCH_TIMEOUT_MS = 4_000;
 
 // Signals we train on - all are ~0..1 (or normalized below). Counts are excluded;
@@ -180,16 +182,18 @@ async function getSql() {
 	return _sqlPromise;
 }
 
-async function fetchCoin(mint) {
+export async function fetchCoin(mint) {
 	const ctrl = new AbortController();
 	const tid = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
 	try {
-		const r = await fetch(`${PUMPFUN_COIN_API}/${encodeURIComponent(mint)}`, {
+		const q = new URLSearchParams({ searchTerm: mint, offset: '0', limit: '10', includeNsfw: 'true' });
+		const r = await fetch(`${PUMPFUN_SEARCH_API}?${q}`, {
 			signal: ctrl.signal,
 			headers: { accept: 'application/json', 'user-agent': 'three.ws-coin-intel/1' },
 		});
 		if (!r.ok) return null;
-		return await r.json();
+		const rows = await r.json();
+		return (Array.isArray(rows) ? rows.find((c) => c?.mint === mint) : null) ?? null;
 	} catch { return null; } finally { clearTimeout(tid); }
 }
 
