@@ -32,7 +32,8 @@ Every generation spends real GPU time. Run a generating walkthrough when you nee
 
 - `--skip-generate`: about 70 seconds (measured 71 s on 2026-11-26; most of it is the viewer loading the public model in software WebGL).
 - A text generation: about 2 to 3 minutes when the engines are warm. The text path paints a reference image first, then builds the mesh.
-- A photo generation: about 2 to 3 minutes warm, since it skips the image step.
+- A photo generation: about 4 minutes warm (measured 2026-11-26: the model was ready in 179 s on trellis_selfhost, about 229 s including the on-device photo check). It skips the image step.
+- The viewer stage adds 30 s to 4 minutes: the browser renders in software WebGL, and a 7 MB textured result takes 45 to 90 s to load there.
 - Cold engines (scaled to zero) add several minutes. A generation that has not finished after 12 minutes fails the stage. A heartbeat line prints every 30 seconds so a long wait never looks hung.
 
 ## The stages, what a failure means, and who fixes it
@@ -42,7 +43,7 @@ Every generation spends real GPU time. Run a generating walkthrough when you nee
 - **Forge page loads cleanly** (`page`): `/forge` loads with no console error, no page error, no failed request and no 4xx or 5xx response. A failure lists each one. The owner of the failing asset or endpoint fixes it, usually a frontend regression.
 - **Text prompt makes a model** / **Photo makes a model** (`text.generate`, `photo.generate`): the page reaches its result state with a creation id. A failure quotes the page's error title and message and the last `/api/forge` responses. A 429 that persists after the one stated wait means the engine or the image step is throttled (see below). An `unconfigured` state means a backend credential is missing on Cloud Run. A timeout means a GPU worker is cold, stuck or down: check the lane in `npm run forge:lanes` and the worker logs.
 - **Model downloads as a valid 3D file** (`*.file`): the GLB header and JSON chunk are checked (magic bytes, version 2, the declared length matches, at least one mesh, between 100 and 5,000,000 triangles, buffer views inside the binary chunk). This reads only the header and accessors, so Draco and meshopt compression do not matter. A failure means storage served an error page, a truncated upload, or an engine produced an empty or broken mesh: the Forge backend owner.
-- **Model shows in the viewer** (`*.viewer`): the model-viewer reports loaded, and its canvas has enough changed pixels and distinct colours to be a shaded model rather than a blank frame. With `--out`, a screenshot is saved. A failure with a valid GLB points at the viewer or the frontend: the frontend owner.
+- **Model shows in the viewer** (`*.viewer`): the model-viewer reports loaded, and its canvas has enough changed pixels and distinct colours to be a shaded model rather than a blank frame. With `--out`, a screenshot is saved. The script records the viewer's own load, progress and error events, so a failure says which happened: "reported an error loading <url>" (with the viewer's detail) is a real fault in the file or the viewer for the frontend owner; "was never given a model" is a page wiring fault; "still loading after 240s" on a valid GLB is the software renderer being too slow for that file, so rerun with `--headed` on a machine with a GPU before calling it broken.
 - **Share page and preview image work** (`*.share`): `/forge/share/<id>` answers 200 with an `og:image`, that image loads, and `/api/forge-og?id=` resolves to an image. A failure is the share or OG card code.
 - **Model is listed under the account's creations** (`*.creations`): `/api/forge/mine` lists the new id (retried once after 10 s for write lag). A failure means the creation was not recorded against the user, which breaks "My creations".
 
@@ -60,3 +61,5 @@ A lock file at `$TMPDIR/three-ws-forge-walkthrough.lock` holds the running proce
 
 - 2026-11-26, `--skip-generate` against production (commit f0eed584f): 8 of 8 passed in 71 s.
 - 2026-11-26, text generation against production (f0eed584f): the page and health passed; the generation failed with two `rate_limited` responses stating `retry_after: 10`. Production predates the fix that passes the image provider's real wait through (b41786cd6); the deploy carries it.
+- 2026-11-26, photo generation against production (f0eed584f): 7 of 8 passed. The model was ready in 179 s on trellis_selfhost (6.94 MB GLB, 68,094 triangles), and the share page and creations listing passed. The viewer stage hit the then 120 s limit. Reopening the same creation showed the viewer loads it with no error (the full GLB in about 47 s in software WebGL), so the limit went to 4 minutes and the stage now reports the viewer's own events.
+- 2026-11-26, `--skip-generate` again after that change: 8 of 8 passed in 121 s.

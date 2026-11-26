@@ -46,7 +46,10 @@ const LOCK_FILE = join(tmpdir(), 'three-ws-forge-walkthrough.lock');
 const GENERATION_TIMEOUT_MS = 12 * 60_000;
 // The on-device photo check downloads its model the first time it runs.
 const PHOTO_PREP_TIMEOUT_MS = 4 * 60_000;
-const VIEWER_LOAD_TIMEOUT_MS = 2 * 60_000;
+// Measured 2026-11-26: a 7 MB textured Forge GLB takes 45 to 90 s to load in
+// software WebGL, because each frame blocks the main thread. Four minutes clears
+// that with room; a real fault is caught sooner by the viewer's own error event.
+const VIEWER_LOAD_TIMEOUT_MS = 4 * 60_000;
 const HEARTBEAT_MS = 30_000;
 // The longest stated wait this script will sit through before calling it a failure.
 const MAX_STATED_WAIT_S = 300;
@@ -224,6 +227,21 @@ export function judgeCanvas(stats) {
 	}
 	if (stats.distinctColors < 8) return { blank: true, reason: `the canvas has only ${stats.distinctColors} distinct colours` };
 	return { blank: false };
+}
+
+/**
+ * Why the viewer did not finish loading, from what it reported about the model it
+ * holds now: its own error event, no model at all, or a load still running.
+ */
+export function explainViewerWait(state, timeoutMs) {
+	if (!state) return 'the page has no #viewer element';
+	if (!state.src) return 'the viewer was never given a model to load';
+	const events = state.events || [];
+	const error = events.find((e) => e.type === 'error');
+	if (error) return `the viewer reported an error loading ${state.src}: ${error.detail || 'no detail'}`;
+	const progress = [...events].reverse().find((e) => e.type === 'progress');
+	const pct = progress ? ` (last progress ${Math.round(Number(progress.detail) * 100)}%)` : '';
+	return `the viewer was still loading ${state.src} after ${Math.round(timeoutMs / 1000)}s${pct}`;
 }
 
 /** Point the saved session cookies at another host (a local dev server proxying /api). */
@@ -593,7 +611,25 @@ async function checkGlb(base, url) {
 }
 
 async function checkViewer(page, screenshotPath) {
-	await page.waitForFunction(() => document.getElementById('viewer')?.loaded === true, null, { timeout: VIEWER_LOAD_TIMEOUT_MS, polling: 500 });
+	const settled = await page
+		.waitForFunction(
+			() => {
+				const v = document.getElementById('viewer');
+				if (v?.loaded === true) return true;
+				const src = v?.getAttribute('src');
+				return (window.__forgeViewerEvents || []).some((e) => e.type === 'error' && e.src === src);
+			},
+			null,
+			{ timeout: VIEWER_LOAD_TIMEOUT_MS, polling: 1000 },
+		)
+		.then(() => true, () => false);
+	const state = await page.evaluate(() => {
+		const v = document.getElementById('viewer');
+		if (!v) return null;
+		const src = v.getAttribute('src') || '';
+		return { src, loaded: v.loaded === true, events: (window.__forgeViewerEvents || []).filter((e) => e.src === src) };
+	});
+	if (!settled || !state?.loaded) return failed(explainViewerWait(state, VIEWER_LOAD_TIMEOUT_MS), state || {});
 	const stats = await page.evaluate(async () => {
 		const v = document.getElementById('viewer');
 		await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -772,6 +808,25 @@ async function main() {
 		const context = await browser.newContext({
 			viewport: { width: 1366, height: 900 },
 			...(state ? { storageState: scopeStorageState(state, base) } : {}),
+		});
+		await context.addInitScript(() => {
+			// Record the viewer's own load, progress and error events, tagged with the
+			// model they were for, so a timeout can say which of them happened.
+			window.__forgeViewerEvents = [];
+			const hook = () => {
+				const v = document.getElementById('viewer');
+				if (!v || v.__forgeWalkthroughHooked) return;
+				v.__forgeWalkthroughHooked = true;
+				const log = (type, detail) => {
+					const list = window.__forgeViewerEvents;
+					list.push({ type, detail, src: v.getAttribute('src') || '' });
+					if (list.length > 200) list.splice(0, list.length - 200);
+				};
+				v.addEventListener('load', () => log('load', ''));
+				v.addEventListener('error', (e) => log('error', JSON.stringify(e.detail ?? {}).slice(0, 300)));
+				v.addEventListener('progress', (e) => log('progress', String(e.detail?.totalProgress ?? '')));
+			};
+			new MutationObserver(hook).observe(document, { childList: true, subtree: true });
 		});
 		const page = await context.newPage();
 		const watch = watchPage(page);

@@ -13,6 +13,7 @@ import {
 	MIN_TRIANGLES,
 	cookieHeader,
 	exitCodeFor,
+	explainViewerWait,
 	freshPrompt,
 	inspectGlb,
 	isThrottled,
@@ -150,6 +151,23 @@ describe('judgeCanvas', () => {
 
 	it('passes a canvas with a drawn, shaded model', () => {
 		expect(judgeCanvas({ width: 800, height: 600, changedFraction: 0.05, distinctColors: 181 }).blank).toBe(false);
+	});
+});
+
+describe('explainViewerWait', () => {
+	it('quotes the error the viewer itself raised, so a broken model is not called slow', () => {
+		const why = explainViewerWait({ src: 'https://three.ws/cdn/forge/x.glb', events: [{ type: 'error', detail: '{"type":"loadfailure"}' }] }, 240_000);
+		expect(why).toMatch(/the viewer reported an error loading https:\/\/three\.ws\/cdn\/forge\/x\.glb: \{"type":"loadfailure"\}/);
+	});
+
+	it('says when the page never handed the viewer a model', () => {
+		expect(explainViewerWait({ src: '', events: [] }, 240_000)).toMatch(/never given a model to load/);
+		expect(explainViewerWait(null, 240_000)).toMatch(/no #viewer element/);
+	});
+
+	it('names a load that is still running after the limit, with how far it got', () => {
+		const why = explainViewerWait({ src: 'https://three.ws/a.glb', events: [{ type: 'progress', detail: '0.4' }] }, 240_000);
+		expect(why).toMatch(/still loading https:\/\/three\.ws\/a\.glb after 240s \(last progress 40%\)/);
 	});
 });
 
