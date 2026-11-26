@@ -37,6 +37,7 @@ import { generateWithModly, defaultModlyParams } from './modly-local.js';
 import { createModlyPanel, promoteModlyGlb, saveModlyResultToLibrary } from './forge-modly.js';
 import { regionRestrictedError, fetchRestrictedEngines } from './forge-region.js';
 import { engineFromQuery } from './forge-engine-link.js';
+import { mountSeedField } from './forge-seed-field.js';
 import { rememberFromResponse } from './shared/forge-manage-tokens.js';
 import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, UPLOAD_SIGN_IN_SHORT } from './shared/upload-sign-in.js';
 ensureStateKitStyles();
@@ -210,6 +211,13 @@ function mintSeed() {
 	}
 	return Math.floor(Math.random() * SEED_MAX);
 }
+// The seed field (src/forge-seed-field.js): empty mints a fresh seed per submit
+// as above; a typed seed locks every submit to it. Junk is refused before any
+// request (or payment) goes out.
+const seedField = mountSeedField({
+	input: document.getElementById('forge-seed'),
+	msg: document.getElementById('forge-seed-msg'),
+});
 // Automatic engine hops taken for the current submission (lane_failed → switch
 // to the first suggested backup and re-run). Budget of 1 per user submit; the
 // server's own poll-time failover already walked the async lanes before this.
@@ -3205,6 +3213,7 @@ async function run(cfg) {
 	// upgrade-funnel conversion which path (pay-per-use vs. hold) closed the loop.
 	const wasPaidGeneration = !!cfg.payment;
 	lastJob = cfg;
+	seedField.noteUsed(cfg.seed);
 	pollAbort = false;
 	currentCreationId = null;
 	setBusy(true);
@@ -4027,7 +4036,9 @@ function submit() {
 	// A fresh user-initiated generation resets the automatic lane-hop budget —
 	// the single silent hop belongs to one submission, never accumulates.
 	autoLaneHops = 0;
-	if (cfg) run({ ...cfg, seed: mintSeed() });
+	if (!cfg) return;
+	const seed = seedField.seedForSubmit(mintSeed);
+	if (seed !== null) run({ ...cfg, seed });
 }
 
 // Options handed to the gate modal / in-place lock so their "Pay per generation"
@@ -4047,12 +4058,14 @@ async function payThenGenerate(pay) {
 	if (!(usd > 0)) return;
 	const cfg = collectComposerCfg();
 	if (!cfg) return;
+	const seed = seedField.seedForSubmit(mintSeed);
+	if (seed === null) return;
 	// Ensure the job runs at High (the tier the payment buys) even if the click
 	// came from the in-place lock before any submit.
 	if (selectedTier !== 'high') selectTier('high');
 	const result = await payForHighGeneration({ usd });
 	if (!result?.ok) return; // cancelled or failed — the modal explained why
-	run({ ...cfg, seed: mintSeed(), payment: { paymentId: result.paymentId, refId: result.refId } });
+	run({ ...cfg, seed, payment: { paymentId: result.paymentId, refId: result.refId } });
 }
 
 // Wiring ----------------------------------------------------------------------

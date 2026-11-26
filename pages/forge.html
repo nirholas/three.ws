@@ -901,6 +901,54 @@
 			   engine can change twice in 70ms), and each variant wraps to a different
 			   number of lines. The ghost holds the longest variant's height in the
 			   same grid cell, so the row never resizes under the content below it. */
+			/* Seed: shares the API-key input's look (hover, focus ring, invalid ring);
+			   the note under it carries the range error or the last run's seed. */
+			.seed-input {
+				flex: 0 1 13rem;
+				font-variant-numeric: tabular-nums;
+			}
+			.seed-msg {
+				flex-basis: 100%;
+				margin: 0;
+				font-size: var(--text-xs);
+				line-height: 1.5;
+				color: var(--ink-dim);
+				overflow-wrap: anywhere;
+			}
+			.seed-msg[data-state='error'] {
+				color: var(--danger);
+			}
+			.seed-msg strong {
+				font-family: var(--font-mono);
+				font-weight: 500;
+				color: var(--ink);
+			}
+			.seed-reuse {
+				margin-left: 0.25rem;
+				padding: 0.1rem 0.5rem;
+				border: 1px solid var(--stroke);
+				border-radius: var(--radius-md);
+				background: transparent;
+				color: var(--accent);
+				font: inherit;
+				font-weight: 500;
+				cursor: pointer;
+				transition:
+					border-color var(--duration-fast),
+					background var(--duration-fast);
+			}
+			.seed-reuse:hover {
+				border-color: var(--accent);
+				background: var(--accent-soft);
+			}
+			.seed-reuse:active {
+				transform: translateY(1px);
+			}
+			.seed-reuse:focus-visible {
+				outline: none;
+				border-color: var(--accent);
+				box-shadow: 0 0 0 3px var(--accent-soft);
+			}
 			.fq-estimate-wrap {
 				display: grid;
 			}
@@ -4181,6 +4229,22 @@
 							aria-describedby="byok-hint"
 						/>
 						<span class="byok-hint" id="byok-hint"></span>
+					</div>
+					<div class="fq-row fq-row--seed">
+						<label class="fq-label" for="forge-seed">Seed</label>
+						<input
+							class="byok-input seed-input"
+							id="forge-seed"
+							type="text"
+							inputmode="numeric"
+							autocomplete="off"
+							spellcheck="false"
+							maxlength="20"
+							placeholder="Random"
+							title="A whole number from 0 to 4294967295. Leave empty for a random seed every run."
+							aria-describedby="forge-seed-msg"
+						/>
+						<p class="seed-msg" id="forge-seed-msg" aria-live="polite"></p>
 					</div>
 					<div class="fq-estimate-wrap">
 						<p class="fq-estimate fq-estimate-ghost" aria-hidden="true"><strong>Standard</strong> · billed to your own key · usually ~75s · ~20 credits · up to 30,000 polygons · shapes geometry straight from the prompt</p>
