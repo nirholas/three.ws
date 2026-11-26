@@ -37,6 +37,7 @@ import {
 	buildLaunchMatchPayload,
 } from './pump-alert-eval.js';
 import { deliverAlert } from './alert-delivery.js';
+import { pumpCoinSearchUrl, pickPumpCoin, fetchPumpTrades } from './pump-feed-fetch.js';
 import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
 import { getVenue, sideProbability } from './predictions/index.js';
 
@@ -52,10 +53,9 @@ const MAX_MARKETS = 120; // distinct prediction markets priced per run
 const TRADES_LIMIT = 50;
 const FETCH_TIMEOUT_MS = 2_500;
 
-// Per-coin lookups use the v2 route: pump.fun retired `/coins/:mint` on this host
-// around 2026-09-17 (404 "Cannot GET"); `/coins-v2/:mint` returns the same fields.
-const PUMPFUN_COIN_API = 'https://frontend-api-v3.pump.fun/coins-v2';
-const PUMPFUN_TRADES_API = 'https://frontend-api-v3.pump.fun/trades/all';
+// pump.fun retired `/coins-v2/:mint` and `/trades/all/:mint` on 2026-11-25.
+// Coins come from its search route (exact mint match) and trades from the
+// shared feed decoded from Solana (./pump-chain-trades.js).
 
 /**
  * Evaluate all enabled pump alert rules and deliver matches.
@@ -265,7 +265,7 @@ async function runPriceRules(rules, fireState, report, ctx) {
 	const priced = new Map();
 	await Promise.all(
 		mints.map(async (mint) => {
-			priced.set(mint, await fetchCoin(mint));
+			priced.set(mint, await fetchAlertCoin(mint));
 		}),
 	);
 
@@ -467,8 +467,8 @@ async function fetchJsonWithTimeout(url, ms = FETCH_TIMEOUT_MS) {
 }
 
 /** Current coin snapshot → { mint, name, symbol, market_cap_usd } or null. */
-async function fetchCoin(mint) {
-	const d = await fetchJsonWithTimeout(`${PUMPFUN_COIN_API}/${encodeURIComponent(mint)}`);
+export async function fetchAlertCoin(mint) {
+	const d = pickPumpCoin(await fetchJsonWithTimeout(pumpCoinSearchUrl(mint)), mint);
 	if (!d) return null;
 	const mc = typeof d.usd_market_cap === 'number' ? d.usd_market_cap : null;
 	return { mint, name: d.name || null, symbol: d.symbol || null, market_cap_usd: mc };
@@ -479,17 +479,18 @@ async function fetchCoin(mint) {
  * { signature, is_buy, sol_amount (SOL), sol_value_usd, buyer, ts }.
  */
 export async function fetchRecentTrades(mint, solPrice = 0) {
-	const d = await fetchJsonWithTimeout(`${PUMPFUN_TRADES_API}/${encodeURIComponent(mint)}?limit=${TRADES_LIMIT}&offset=0`);
-	if (!Array.isArray(d)) return [];
-	return d.map((t) => {
-		const sol = typeof t.sol_amount === 'number' ? t.sol_amount / 1e9 : null;
+	const feed = await fetchPumpTrades(mint, { limit: TRADES_LIMIT });
+	if (!feed) return [];
+	return feed.rows.map((t) => {
+		const sol = Number.isFinite(Number(t.amountSol)) ? Number(t.amountSol) : null;
+		const usd = Number(t.amountUsd) > 0 ? Number(t.amountUsd) : sol != null && solPrice > 0 ? sol * solPrice : null;
 		return {
-			signature: t.signature || t.tx_signature || null,
-			is_buy: t.is_buy === true,
+			signature: t.signature || t.tx || null,
+			is_buy: String(t.type).toLowerCase() === 'buy',
 			sol_amount: sol,
-			sol_value_usd: sol != null && solPrice > 0 ? sol * solPrice : null,
-			buyer: t.user || t.trader || null,
-			ts: typeof t.timestamp === 'number' ? new Date(t.timestamp * 1000) : null,
+			sol_value_usd: usd,
+			buyer: t.userAddress || t.user || null,
+			ts: typeof t.timestamp === 'number' ? new Date(t.timestamp < 1e12 ? t.timestamp * 1000 : t.timestamp) : null,
 		};
 	});
 }
