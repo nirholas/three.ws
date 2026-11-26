@@ -51,7 +51,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 - [What is three.ws?](https://three.ws/what-is): Plain-English introduction to three.ws: what a 3D AI agent is, real use-cases, and where to begin.
 - [Everything three.ws Does](https://three.ws/everything): Every three.ws feature organised by what you want to do: make a 3D avatar, build an agent, embed it, sell skills, launch a token, trade and more. Searchable, with pins and a new-this-month feed.
 - [Create](https://three.ws/create): The front door for everything you can create on three.ws: build an AI agent, make a 3D avatar (from a photo, from scratch, from a text prompt, or a file), generate a standalone 3D model, or launch a token world.
-- [Forge: Text & Image to 3D](https://three.ws/forge): Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.
+- [Forge: AI 3D Model Generator](https://three.ws/forge): Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.
 - [Image to 3D: Turn a Photo into a 3D Model](https://three.ws/image-to-3d): Upload a photo (or up to 6 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly: for objects and props; for faces, use Selfie to Avatar.
 - [Create an Agent](https://three.ws/create-agent): Step-by-step wizard to create a 3D AI agent: name, 3D body, skills, personality, voice, and on-chain identity.
 - [Agents Index](https://three.ws/agents): Browse every registered agent on three.ws.

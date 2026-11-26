@@ -36335,9 +36335,9 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<description>Automated token launching and trading via pump.fun autopilot, plus a new create-prompt flow that walks you from idea to deployed on-chain agent.</description>
 		</item>
 		<item>
-			<title>Forge: Text &amp; Image to 3D</title>
+			<title>Forge: AI 3D Model Generator</title>
 			<link>https://three.ws/forge</link>
-			<guid isPermaLink="false">2026-06-04:Forge: Text &amp; Image to 3D</guid>
+			<guid isPermaLink="false">2026-06-04:Forge: AI 3D Model Generator</guid>
 			<pubDate>Thu, 04 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.</description>

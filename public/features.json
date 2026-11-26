@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-26T07:51:06.157Z",
+	"generated_at": "2026-11-26T20:04:33.104Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1381,7 +1381,7 @@
 				},
 				{
 					"path": "/forge",
-					"title": "Forge: Text & Image to 3D",
+					"title": "Forge: AI 3D Model Generator",
 					"description": "Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
 					"added": "2026-06-04",
 					"auth": null,

@@ -684,7 +684,7 @@ URL: https://three.ws/create/prompt
 
 Type a description. About a minute later: a rigged 3D avatar you can animate and download.
 
-### Forge: Text & Image to 3D
+### Forge: AI 3D Model Generator
 
 URL: https://three.ws/forge
 

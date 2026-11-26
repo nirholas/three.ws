@@ -4980,7 +4980,7 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 
 ## 2026-06-04
 
-- **Forge: Text & Image to 3D** (`/forge`): Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.
+- **Forge: AI 3D Model Generator** (`/forge`): Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.
 
 ## 2026-06-03
 

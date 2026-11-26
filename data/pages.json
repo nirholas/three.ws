@@ -1000,7 +1000,7 @@
 				},
 				{
 					"path": "/forge",
-					"title": "Forge: Text & Image to 3D",
+					"title": "Forge: AI 3D Model Generator",
 					"description": "Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
 					"priority": 0.9,
 					"changefreq": "weekly",
