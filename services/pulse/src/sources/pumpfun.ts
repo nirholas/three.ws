@@ -43,10 +43,17 @@ export const pumpLive = () => coins('/coins/currently-live?limit=50&offset=0&inc
 /** Most recently traded coins. */
 export const pumpActive = () => coins('/coins?offset=0&limit=50&sort=last_trade_timestamp&order=DESC&includeNsfw=false', 'pump:active');
 
-/** Full pump.fun record for one mint (description, ATH). */
+/**
+ * Full pump.fun record for one mint (description, ATH). pump.fun retired
+ * GET /coins/<mint> on 2026-11-25; the search route keyed by the mint still
+ * serves the record, next to fuzzy hits for other coins, so only an exact
+ * mint match counts.
+ */
 export async function pumpCoin(mint: string): Promise<Coin | null> {
   try {
-    return await fetchJson<Coin>(`${BASE}/coins/${mint}`);
+    const q = new URLSearchParams({ searchTerm: mint, offset: '0', limit: '10', includeNsfw: 'true' });
+    const rows = await fetchJson<Coin[]>(`${BASE}/coins/search-unrestricted?${q}`);
+    return (Array.isArray(rows) ? rows.find((c) => c?.mint === mint) : null) ?? null;
   } catch {
     return null;
   }
