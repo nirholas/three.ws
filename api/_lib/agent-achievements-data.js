@@ -16,9 +16,8 @@
 import { sql } from './db.js';
 import { getRedis } from './redis.js';
 import { computeAchievements, isLaunchGraduated } from './agent-achievements.js';
-import { pumpFetchJson } from './pump-feed-fetch.js';
+import { fetchPumpCoin } from './pump-feed-fetch.js';
 
-const PUMP_FRONTEND_BASE = 'https://frontend-api-v3.pump.fun';
 const CACHE_TTL_S = 120;
 const CACHE_KEY = (id) => `agent-achievements:v1:${id}`;
 // Cap the live market lookups so a creator with dozens of launches can't fan out
@@ -32,7 +31,7 @@ async function fetchCoin(mint) {
 		// Called once per mint for up to thirty mints in a request, so a throttle
 		// silently un-awards a batch of achievements. Retrying on the lane's own
 		// Retry-After is what keeps that from happening on a busy launch day.
-		const resp = await pumpFetchJson(String(new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE)), { timeoutMs: 7000 });
+		const resp = await fetchPumpCoin(mint, { timeoutMs: 7000 });
 		if (!resp.ok) return null;
 		return resp.body;
 	} catch {

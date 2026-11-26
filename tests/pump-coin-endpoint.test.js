@@ -367,3 +367,62 @@ describe('handleCoin -- true triple-miss (regression guard on the honest-failure
 		expect(res.json.error_description).toContain('pump.fun');
 	});
 });
+
+// Production, 2026-11-25: pump.fun's frontend-api-v3 dropped its single-coin
+// route. GET /coins/<mint> now answers 404 "Cannot GET /coins/<mint>" for every
+// mint, $THREE included, while the list routes still work. handleCoin treated
+// that 404 as "no such coin", so /api/pump/coin 404'd $THREE on /play even
+// though the chain and the token metadata resolver both know it.
+describe('handleCoin -- pump.fun answers 404 for a coin other sources know', () => {
+	// A synthetic mint standing in for $THREE: the live-fetch test above already
+	// primed handleCoin's in-process cache for the real one.
+	it('serves the coin from the chain and the metadata resolver instead of 404ing', async () => {
+		const mint = synthMint('T');
+		pumpFetchJson.mockResolvedValue({ ok: false, status: 404, body: null });
+		getCurveView.mockResolvedValue(onchainCurveBody(mint));
+		getMetadataForMints.mockImplementation(async (mints) =>
+			new Map(mints.map((m) => [m, { mint: m, name: 'three.ws', symbol: 'THREE', logo: 'https://ipfs.io/ipfs/bafy-three', decimals: 6 }])));
+
+		const res = mockRes();
+		await handleCoin(mockReq(mint), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res._headers['x-pump-degraded']).toBe('onchain');
+		expect(res.json).toMatchObject({ mint, symbol: 'THREE', name: 'three.ws', complete: true });
+	});
+
+	it('prefers the last good pump.fun body over the thinner on-chain view', async () => {
+		const mint = synthMint('F');
+		cache.set(`pump:coin:lkg:${mint}`, { at: Date.now() - 60_000, body: pumpfunCoinBody(mint) });
+		pumpFetchJson.mockResolvedValue({ ok: false, status: 404, body: null });
+
+		const res = mockRes();
+		await handleCoin(mockReq(mint), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res._headers['x-pump-stale']).toBe('1');
+		expect(res.json.symbol).toBe('THREE');
+	});
+
+	it('still 404s a mint that no source knows', async () => {
+		const mint = synthMint('G');
+		pumpFetchJson.mockResolvedValue({ ok: false, status: 404, body: null });
+
+		const res = mockRes();
+		await handleCoin(mockReq(mint), res);
+
+		expect(res.statusCode).toBe(404);
+		expect(res.json.error).toBe('coin_not_found');
+	});
+
+	it('treats an empty 200 the same way', async () => {
+		pumpFetchJson.mockResolvedValue({ ok: false, status: 200, body: null });
+		getCurveView.mockResolvedValue(onchainCurveBody(synthMint('H')));
+
+		const res = mockRes();
+		await handleCoin(mockReq(synthMint('H')), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res._headers['x-pump-degraded']).toBe('onchain');
+	});
+});

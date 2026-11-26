@@ -28,7 +28,7 @@ import {
 	UnconfiguredError,
 } from '../_lib/coin-communities.js';
 import { readWorldGate, writeWorldGate, normalizeMinTokens } from '../_lib/world-gate.js';
-import { pumpFetchJson, PUMP_FRONTEND_BASE } from '../_lib/pump-feed-fetch.js';
+import { fetchPumpCoin } from '../_lib/pump-feed-fetch.js';
 import { cacheWrapLastGood } from '../_lib/cache.js';
 
 // A coin's creator never changes, so a resolved answer can be reused for a
@@ -54,8 +54,7 @@ async function resolveCoinCreator(mint) {
 // does not know (404) is a definite answer and is thrown as such so the
 // last-good layer never papers over it with an older lookup.
 async function fetchCoinCreator(mint) {
-	const url = new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE).toString();
-	const { ok, status, body } = await pumpFetchJson(url, { timeoutMs: 8000, retries: 1 });
+	const { ok, status, body } = await fetchPumpCoin(mint, { timeoutMs: 8000, retries: 1 });
 	if (!ok && status === 404) return '';
 	if (!ok) throw new Error(`pump.fun ${status || 'unreachable'}`);
 	const creator = typeof body?.creator === 'string' ? body.creator.trim() : '';

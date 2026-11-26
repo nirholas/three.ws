@@ -34,6 +34,9 @@
 // trades look like a pump.fun outage.
 
 import { cacheGet, cacheSet } from './cache.js';
+import { pumpCoinSearchUrl, pickPumpCoin } from './pump-coin-search.js';
+
+export { pumpCoinSearchUrl, pickPumpCoin, pumpSearchUrl, solanaSearchRows } from './pump-coin-search.js';
 
 export const PUMP_FRONTEND_BASE =
 	process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
@@ -69,6 +72,26 @@ function retryDelayMs(res) {
 		if (Number.isFinite(at)) return Math.min(Math.max(at - Date.now(), 0), MAX_RETRY_WAIT_MS);
 	}
 	return 400;
+}
+
+// ── single coin by mint ──────────────────────────────────────────────────────
+// pump.fun retired GET /coins/<mint> on 2026-11-25; the coin record now comes
+// from its search route (see ./pump-coin-search.js for the full story).
+
+/**
+ * One pump.fun coin by mint, in pumpFetchJson's shape. A search that does not
+ * contain the mint is `{ ok: false, status: 404 }`; an upstream failure keeps
+ * its own status so callers can tell an outage from a miss.
+ *
+ * @param {string} mint
+ * @param {{ timeoutMs?: number, retries?: number }} [opts]
+ * @returns {Promise<{ ok: boolean, status: number, body: object|null }>}
+ */
+export async function fetchPumpCoin(mint, opts) {
+	const r = await pumpFetchJson(pumpCoinSearchUrl(mint), opts);
+	if (!r.ok) return r;
+	const coin = pickPumpCoin(r.body, mint);
+	return coin ? { ok: true, status: r.status, body: coin } : { ok: false, status: 404, body: null };
 }
 
 /**

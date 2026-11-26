@@ -103,7 +103,7 @@ import { THREE_WS_VANITY, hasThreeWsMark } from '../../src/solana/vanity/brand.j
 import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/grinder-node.js';
 import { logger } from '../_lib/usage.js';
 import { cacheGet, cacheSet } from '../_lib/cache.js';
-import { pumpFetchJson } from '../_lib/pump-feed-fetch.js';
+import { pumpFetchJson, fetchPumpCoin } from '../_lib/pump-feed-fetch.js';
 import { getCurveView } from '../_lib/pump-curve-view.js';
 import { collectFeeAgentSchema } from '../_lib/pump-fee-schemas.js';
 import { isRpcOutageError, staleEnvelope } from '../_lib/rpc-degrade.js';
@@ -4350,7 +4350,9 @@ async function fetchOnchainCoinDegrade(mint) {
 	};
 }
 
-async function serveStaleCoin(res, mint, status, code, message) {
+// `onMiss` runs when neither the last good body nor the on-chain view knows the
+// mint; without it the caller gets the upstream error it named.
+async function serveStaleCoin(res, mint, status, code, message, onMiss = null) {
 	const hit = COIN_CACHE.get(mint) || (await cacheGet(coinLkgKey(mint)));
 	if (hit && hit.body && typeof hit.at === 'number') {
 		res.setHeader('cache-control', 'public, max-age=10');
@@ -4363,6 +4365,7 @@ async function serveStaleCoin(res, mint, status, code, message) {
 		res.setHeader('x-pump-degraded', 'onchain');
 		return json(res, 200, { ...degraded, stale: true, as_of: new Date().toISOString() });
 	}
+	if (onMiss) return onMiss();
 	res.setHeader('Retry-After', '15');
 	return error(res, status, code, message, { retry_after: 15 });
 }
@@ -4395,15 +4398,19 @@ export async function handleCoin(req, res) {
 		return json(res, 200, hit.body);
 	}
 
-	// Bounded retry on 429/5xx with Retry-After honoured; never throws.
-	const r = await pumpFetchJson(new URL(`/coins/${mint}`, PUMP_FRONTEND_BASE).toString(), { timeoutMs: 8000 });
+	// pump.fun's search route keyed by mint (its /coins/<mint> route is gone);
+	// bounded retry on 429/5xx with Retry-After honoured; never throws.
+	const r = await fetchPumpCoin(mint, { timeoutMs: 8000 });
 	if (!r.ok) {
-		// pump.fun returns 200 with an empty body for an unknown/unmigrated mint;
-		// pumpFetchJson reports that as ok:false with the 200 status. That is a
-		// real "coin not found", not an outage, so it never falls to last-good.
-		if (r.status >= 200 && r.status < 300) return notFound();
+		// pump.fun answering "no coin" (an empty 200, or a 404) is not proof the
+		// coin does not exist: on 2026-11-25 its frontend API dropped the
+		// /coins/<mint> route and began 404ing every mint, $THREE included. So a
+		// miss there still tries the last good body and the on-chain view, and
+		// only a mint no source knows is reported as not found.
+		if ((r.status >= 200 && r.status < 300) || r.status === 404) {
+			return serveStaleCoin(res, mint, 404, 'coin_not_found', 'no pump.fun coin for that mint', notFound);
+		}
 		if (r.status === 0) return serveStaleCoin(res, mint, 504, 'upstream_timeout', 'pump.fun did not respond');
-		if (r.status === 404) return notFound();
 		return serveStaleCoin(res, mint, 502, 'upstream_failed', `pump.fun returned ${r.status}`);
 	}
 	const parsed = r.body;

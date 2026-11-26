@@ -46,7 +46,7 @@ import { BREAKER_REASON, evaluateDrawdownBreaker, leaderDrawdownPcts, checkLeade
 import { getConnection } from '../_lib/pump.js';
 import { loadDripConfigs, newTierCache, priceRelease, releaseDueDrips } from '../_lib/copy-drip-runtime.js';
 import { requireCron } from '../_lib/cron-auth.js';
-import { pumpFetchJson, PUMP_FRONTEND_BASE } from '../_lib/pump-feed-fetch.js';
+import { fetchPumpCoin } from '../_lib/pump-feed-fetch.js';
 import { fetchTokenMarketData } from '../_lib/market/token-market.js';
 
 const NETWORKS = ['mainnet', 'devnet'];
@@ -110,7 +110,7 @@ async function coinContext(mint, oracleScore) {
 	}
 	let ctx = null;
 	try {
-		const { ok, body: c } = await pumpFetchJson(`${PUMP_FRONTEND_BASE}/coins/${mint}`, { timeoutMs: 5000, retries: 1 });
+		const { ok, body: c } = await fetchPumpCoin(mint, { timeoutMs: 5000, retries: 1 });
 		if (ok && c) {
 			ctx = { market_cap_usd: Number(c.usd_market_cap) || null, graduated: !!c.complete };
 		} else {
