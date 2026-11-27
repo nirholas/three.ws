@@ -382,3 +382,13 @@ instead: it calls `face_pipeline.process` directly and touches neither service.
 ```bash
 docker run --rm avatar-reconstruction python /app/smoke_test.py
 ```
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** Photo to avatar reconstruction, the `reconstruct` mode of the GCP provider (`api/_providers/gcp.js`).
+- **Production:** Wired: `GCP_RECONSTRUCTION_URL` is set on `three-ws-api`.
+- **GPU and memory:** CPU only (no GPU): 8 vCPU, 16 GiB.
+- **Cold start:** The MediaPipe face models are baked into the image and the dense fit loads once in the server lifespan; `cloudbuild.yaml` puts the face pipeline cold start at about 15 s. Repo default `_MIN_INSTANCES` is "1"; the live floor is 0 since the owner's 2026-11-25 spend cut, so pass `--substitutions=_MIN_INSTANCES=0` on a redeploy unless the owner has approved a warm floor.
+- **Deploy:** `gcloud builds submit --config workers/avatar-reconstruction/cloudbuild.yaml .` (see Deploy above).

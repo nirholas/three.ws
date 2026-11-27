@@ -414,3 +414,13 @@ while :; do
 	sleep 10
 done
 ```
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** The `hunyuan3d` image to 3D engine (`GCP_HUNYUAN3D_URL`, mode `hunyuan`).
+- **Production:** Wired to `model-hunyuan3d-21-rtx` (built from `cloudbuild.hunyuan21rtx.yaml`). The L4 services from `cloudbuild.yaml` and `cloudbuild.hunyuan21.yaml` are not what production calls.
+- **GPU and memory:** `model-hunyuan3d-21-rtx`: 1 x NVIDIA RTX PRO 6000, 20 vCPU, 80 GiB. L4 variants: 1 x L4, 8 vCPU, 32 GiB.
+- **Cold start:** The port opens at once and the pipeline loads in the background after staging weights from `WEIGHTS_GCS_URI`; `cloudbuild.hunyuan21rtx.yaml` puts one model load at about 10 minutes. The RTX deploy step releases the single RTX GPU first, so the lane is down for that load during a deploy. Repo default `_MIN_INSTANCES` for the RTX service is "1"; the live floor follows the owner's 2026-11-25 spend cut, so do not redeploy it with a floor without an owner yes. The health probe on `/api/forge?health=1` answered in 80 ms on 2026-11-27 with zero jobs in the prior 7 days, which means something keeps waking it; see `docs/ops/gcp-model-workers.md`.
+- **Deploy:** `gcloud builds submit --config workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml --substitutions=SHORT_SHA=... .` (see Deploy above).

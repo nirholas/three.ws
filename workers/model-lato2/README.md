@@ -53,3 +53,13 @@ Scale-to-zero. Tests (no GPU): `python -m pytest workers/model-lato2 -q`.
 
 - `nvdiffrast` (NVIDIA Source Code License) is compiled in because upstream imports it through `o_voxel`. This is the same open licensing question as the TRELLIS.2 lanes (see [docs/research/forge-3d-adoption-2026-10-30.md](../../docs/research/forge-3d-adoption-2026-10-30.md)).
 - Inference runs as a subprocess per attempt, so each attempt pays checkpoint load time. A resident-model server is the next optimisation once real traffic shows it matters.
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** The Game-Ready "Artist mesh" topology in `api/forge-gameready.js` (mode `lato2`).
+- **Production:** Not wired: `MODEL_LATO2_URL` is unset, so the catalog reports `tools.lato2.available: false` and Game-Ready hides "Artist mesh" (the API would deliver QuadriFlow instead).
+- **GPU and memory:** 1 x NVIDIA L4, 8 vCPU, 24 GiB.
+- **Cold start:** `weights_sync.py` copies the checkpoints from `WEIGHTS_GCS_URI` and prefetches DINOv2 before uvicorn starts, so the startup probe on `/health` waits for the copy. Each job then runs LATO in a subprocess that loads the checkpoints for that run. Not timed on 2026-11-27: timing it would wake the GPU. Scales to zero (repo default `_MIN_INSTANCES` is 0).
+- **Deploy:** `gcloud builds submit --config workers/model-lato2/cloudbuild.yaml --project aerial-vehicle-466722-p5 .`, then set `MODEL_LATO2_URL` on `three-ws-api`.

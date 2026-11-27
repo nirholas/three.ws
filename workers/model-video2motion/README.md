@@ -242,3 +242,13 @@ around 6x the clip's own length on the deployed 8-core instance (a 6 s clip at
 against the live service 2026-08-11; the 30 s clip behind
 `MODE_ETA.video2motion = 120` in `api/_providers/gcp.js` lands in the same
 ratio).
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** Video to motion capture (`GCP_VIDEO2MOTION_URL`, mode `video2motion`).
+- **Production:** Wired: `GCP_VIDEO2MOTION_URL` is set.
+- **GPU and memory:** CPU only (no GPU): 8 vCPU, 16 GiB.
+- **Cold start:** The MediaPipe bundles are baked into the image and startup only checks they exist, so a cold start is the container boot. Repo default `_MIN_INSTANCES` is "1"; the live floor is 0 since the owner's 2026-11-25 spend cut, so pass `--substitutions=_MIN_INSTANCES=0` on a redeploy unless the owner has approved a warm floor.
+- **Deploy:** `gcloud builds submit --config workers/model-video2motion/cloudbuild.yaml .` (see Deploy above).

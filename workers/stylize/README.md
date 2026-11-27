@@ -291,3 +291,13 @@ curl -s -X POST https://three.ws/api/forge-stylize \
 | [`requirements.txt`](requirements.txt) | Pinned deps (`trimesh[easy]` with `pycollada`, `open3d`, `scipy`, `pynacl`, …). |
 | [`Dockerfile`](Dockerfile) | `python:3.11-slim` + GL/OpenMP/BLAS system libs + pinned `gltfpack`; uvicorn on `:8080`. |
 | [`cloudbuild.yaml`](cloudbuild.yaml) | Cloud Build → Artifact Registry → Cloud Run deploy. |
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** Stylize (`api/forge-stylize.js`, mode `stylize`).
+- **Production:** Wired: `GCP_STYLIZE_URL` is set.
+- **GPU and memory:** CPU only (no GPU): 8 vCPU, 16 GiB.
+- **Cold start:** No model: startup opens the bucket client and imports trimesh, so a cold start is the container boot. Repo default `_MIN_INSTANCES` is "1"; the live floor is 0 since the owner's 2026-11-25 spend cut, so pass `--substitutions=_MIN_INSTANCES=0` on a redeploy unless the owner has approved a warm floor.
+- **Deploy:** `gcloud builds submit --config workers/stylize/cloudbuild.yaml .` (see Deploy above).

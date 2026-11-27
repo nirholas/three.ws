@@ -418,3 +418,13 @@ It loads `/avatar-embed`, NOT `/viewer`. Those are different pages: `/viewer`
 hands the model to `<model-viewer>`, which brings its own three.js and never runs
 this pass, and it rejects any `?src=` that is not an absolute https URL. A
 readback taken there reports zero meshes no matter what the pass does.
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** Magic Brush region retexture in the editor (`api/studio/retexture-region.js`, mode `retex_region`) and whole-model retexture (mode `retex`).
+- **Production:** Not wired: `GCP_TEXTURE_URL` is unset, so the catalog reports `tools.texture.available: false` and the editor hides Magic Brush.
+- **GPU and memory:** 1 x NVIDIA L4, 8 vCPU, 32 GiB.
+- **Cold start:** The SDXL and ControlNet pipeline loads in the lifespan before the port answers, from weights staged at `gs://three-ws-model-weights/sdxl-texture`. Not timed on 2026-11-27: timing it would wake the GPU. Scales to zero (repo default `_MIN_INSTANCES` is 0).
+- **Deploy:** `gcloud builds submit --config workers/texture/cloudbuild.yaml .` (see Deploy above), then set `GCP_TEXTURE_URL` on `three-ws-api`.

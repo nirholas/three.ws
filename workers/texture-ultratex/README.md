@@ -32,3 +32,13 @@ gcloud builds submit --config workers/texture-ultratex/cloudbuild.yaml .   # own
 ```
 
 `worker_security.py` and `tracing.py` are vendored byte-identical (`npm run check:vendored`).
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** The optional UltraTex retexture mode `retex_ultratex`, selected only when `FORGE_TEXTURE_ULTRATEX=1` and `GCP_TEXTURE_ULTRATEX_URL` are set.
+- **Production:** Not wired: `GCP_TEXTURE_ULTRATEX_URL` is unset, and every route but `/health` answers `503 license_gate_closed` until the base-model license is acknowledged.
+- **GPU and memory:** 1 x NVIDIA L4, 8 vCPU, 32 GiB.
+- **Cold start:** No model loads at boot. Each job runs the operator-staged UltraTex command in a subprocess, which loads the FLUX base weights for that run. Never run on a GPU (see above). Scales to zero (repo default `_MIN_INSTANCES` is 0).
+- **Deploy:** `gcloud builds submit --config workers/texture-ultratex/cloudbuild.yaml .` (owner-approved deploys only).

@@ -107,3 +107,13 @@ TMPDIR=/home/user/.cache/gcloud-tmp gcloud builds submit \
 Cloud Build runs `test_export.py` inside the image build, so a regression never
 reaches Cloud Run. The API service reads the worker from `GCP_USD_EXPORT_URL`.
 Full write-up: [`docs/openusd-export.md`](../../docs/openusd-export.md).
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** OpenUSD export (`api/forge/export-usd.js`).
+- **Production:** Wired: `GCP_USD_EXPORT_URL` is set.
+- **GPU and memory:** CPU only (no GPU): 8 vCPU, 16 GiB.
+- **Cold start:** No model: startup imports OpenUSD, so a cold start is the container boot. Scales to zero (repo default `_MIN_INSTANCES` is 0).
+- **Deploy:** `gcloud builds submit --config workers/usd-export/cloudbuild.yaml .` (see Deploy above).

@@ -197,3 +197,13 @@ reports, and what to do about it:
 Uploads of the finished GLB retry on transient network faults
 (`DEFAULT_RETRY`); the default policy retries nothing without a generation
 precondition, which once discarded a completed rig on a dropped connection.
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** Auto-rig (`GCP_UNIRIG_URL`, mode `rerig`); it calls `model-rig-nonhuman` itself for non-humanoid meshes.
+- **Production:** Wired: `GCP_UNIRIG_URL` points at `model-rig`.
+- **GPU and memory:** 1 x NVIDIA L4, 4 vCPU, 16 GiB.
+- **Cold start:** The lifespan loads MIA's six checkpoints and the ARKit template before the port answers (TCP startup probe, 60 s period). Not timed on 2026-11-27: timing it would wake the GPU. Repo default `_MIN_INSTANCES` is "1"; the live floor is 0 since the owner's 2026-11-25 spend cut, so pass `--substitutions=_MIN_INSTANCES=0` on a redeploy unless the owner has approved a warm floor.
+- **Deploy:** `gcloud builds submit --config workers/rig/cloudbuild.yaml .` (see Deploy above).
