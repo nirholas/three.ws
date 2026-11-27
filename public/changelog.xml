@@ -151,6 +151,14 @@
 			<description>The Optimize panel under a finished model used to strip the texture and materials in its default Triangle mode, leaving a grey shape, and Quad retopo could make a light model bigger. Triangle now cuts triangles and right-sizes textures while keeping the UVs, materials, texture and any rig, so a 2.5 MB model came out at 0.74 MB and looked the same. A model that is already light is kept as it is, with a plain note saying why, and it does not count against your limit. The panel shows size, triangles, textures and rig before and after, lets you flip the viewer between the original and the optimized copy, and only switches your download when you press Use optimized (Back to original undoes it). The default download opens everywhere, and a smaller meshopt or Draco copy is offered beside it, labelled with what a viewer needs to open it. Oversized models, out-of-range targets and rigged models in Quad or Low-poly now get a clear message instead of a broken result. Forge Studio uses the same panel.</description>
 		</item>
 		<item>
+			<title>Paying for Forge in $THREE can no longer charge you twice or for nothing</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Paying for Forge in $THREE can no longer charge you twice or for nothing</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>We audited every paid Forge step (High generation, keeping a model, Game-Ready export) and closed the gaps. If your payment leaves your wallet but confirmation is slow or the page loses the answer, the sheet now says the payment was sent and checks the same transaction again, instead of offering a second payment. A transfer that landed while its quote was valid is recorded even if the confirmation arrives after the quote expired. A payment you made but did not get to use (the page reloaded, or the next step failed) is remembered and used for your next try of the same thing, with no new charge. A paid generation that fails gives its payment back. The confirm step now also shows who is paid, each share and the wallet address, next to the amount and the token, before your wallet opens.</description>
+		</item>
+		<item>
 			<title>Signing in from Forge no longer loses your prompt</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-27:Signing in from Forge no longer loses your prompt</guid>

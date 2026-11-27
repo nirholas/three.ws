@@ -820,6 +820,16 @@ npm run forge:pay-to-keep -- off
 
 Price points are derived from the tier prices (`forge.keep.draft` follows the Draft tier price, `forge.keep.standard` the Standard tier price) and are changed in the pricing catalog, not hardcoded in the UI.
 
+## Paying in $THREE: never for nothing, never twice
+
+Every paid Forge step (a High generation, keeping a model, a Game-Ready export) settles a $THREE payment first and redeems it in a second request. These rules keep the two halves honest, and each one has a test:
+
+- **The confirm step names the recipient.** Before the wallet opens, the pay sheet shows the price, the token, and who is paid: the consumption split from `/api/token/config` (three.ws treasury and holder rewards pool, each with its share and address). These are the legs the signed quote carries and settle checks. When the rail cannot route, the sheet says nothing was charged and shows no Pay button ([src/shared/forge-pay-recipients.js](../src/shared/forge-pay-recipients.js), `tests/forge-pay-recipient.test.js`).
+- **A sent payment is never re-sent.** If the transfer left the wallet but the settle call failed or never answered, the sheet shows "Payment sent, not verified yet" and re-checks the same transaction, never a new quote ([src/token-pay.js](../src/token-pay.js) `settleTokenPayment`).
+- **A late or retried settle is recorded.** `POST /api/token/settle` accepts an expired quote when the transaction's block time proves it was paid inside the quote window (30 s skew), and a settle retried after the first one recorded the payment returns that payment (`replay: true`) for the same user and transaction instead of a 409 ([api/_lib/token/payments.js](../api/_lib/token/payments.js), `tests/token-settle-recovery.test.js`). A transfer made after expiry is still refused.
+- **An unspent proof survives a reload.** The sheet remembers each settled proof for 23 hours in `localStorage` (`forge:settled-proofs:v1`) and reuses it for the same action and price instead of charging again. Callers forget it once the server redeemed or refused it; a refused reused proof is replaced by exactly one fresh payment ([src/shared/forge-paid-proofs.js](../src/shared/forge-paid-proofs.js)). A proof is single-use on the server, so a stale entry can only be refused, never spent twice.
+- **A failed paid job gives the payment back.** A High proof whose job failed is released for reuse after a 45 s grace window (`409 payment_settling` with `retry_after` until then), and the `/api/cron/forge-paid-make-whole` cron (every 5 minutes) refunds credit spends for paid generations that never delivered ([api/_lib/forge-paid-generation.js](../api/_lib/forge-paid-generation.js)).
+
 ## Measuring realism
 
 Any change that could affect output quality (a tier's sampler budget, a new

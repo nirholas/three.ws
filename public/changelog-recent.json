@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-27T10:56:37.007Z",
+	"generated_at": "2026-11-27T19:35:53.244Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4786,
+	"total": 4787,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -203,6 +203,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Paying for Forge in $THREE can no longer charge you twice or for nothing",
+			"summary": "We audited every paid Forge step (High generation, keeping a model, Game-Ready export) and closed the gaps. If your payment leaves your wallet but confirmation is slow or the page loses the answer, the sheet now says the payment was sent and checks the same transaction again, instead of offering a second payment. A transfer that landed while its quote was valid is recorded even if the confirmation arrives after the quote expired. A payment you made but did not get to use (the page reloaded, or the next step failed) is remembered and used for your next try of the same thing, with no new charge. A paid generation that fails gives its payment back. The confirm step now also shows who is paid, each share and the wallet address, next to the amount and the token, before your wallet opens.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -1560,16 +1571,6 @@
 			"title": "Admin consent (Microsoft Entra)",
 			"summary": "What the three.ws sign-in app asks for in plain language, and the tenant-wide admin consent link for a Microsoft Entra administrator, with clear success and error results.",
 			"link": "/enterprise/admin-consent",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "launch",
-			"title": "Docs · Agent chat guardrails (NemoGuard)",
-			"summary": "Owner opt-in checks on an agent's chat: jailbreak detection, content safety on the visitor's message and the streamed reply, and topic control with a polite redirect. The flow, budgets, fail-open posture, block counts and the owner API.",
-			"link": "/docs/agent-guardrails",
 			"tags": [
 				"launch"
 			]
