@@ -163,29 +163,29 @@
 			"id": "project:litellm-grok-gateway",
 			"kind": "project",
 			"group": "Example projects",
-			"title": "litellm-grok-gateway",
-			"description": "",
+			"title": "Grok with three.ws 3D tools through a LiteLLM proxy",
+			"description": "LiteLLM is a self-hosted, open-source gateway to 100+ models that also hosts an MCP gateway. This example gives you one OpenAI-compatible endpoint that serves Grok together with the three.ws 3D tools.",
 			"path": "examples/litellm-grok-gateway",
 			"files": [
 				"main.py"
 			],
-			"run": "cd examples/litellm-grok-gateway && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python main.py",
+			"run": "cd examples/litellm-grok-gateway && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && LITELLM_MASTER_KEY=sk-pick-any-local-secret .venv/bin/litellm --config config.yaml --host 127.0.0.1 --port 4317",
 			"runKind": "command",
-			"readme": null
+			"readme": "examples/litellm-grok-gateway/README.md"
 		},
 		{
 			"id": "project:metagpt-3d-studio",
 			"kind": "project",
 			"group": "Example projects",
-			"title": "metagpt-3d-studio",
-			"description": "",
+			"title": "MetaGPT 3D studio (Grok as the LLM, three.ws as the 3D tools)",
+			"description": "MetaGPT models a software company as AI roles that pass messages. It has no 3D capability. This example hires a three-person studio into a MetaGPT Team, with Grok as every role's LLM and the three.ws studio MCP server as the hands.",
 			"path": "examples/metagpt-3d-studio",
 			"files": [
 				"main.py"
 			],
-			"run": "cd examples/metagpt-3d-studio && python3 main.py",
+			"run": "cd examples/metagpt-3d-studio && uv venv --python 3.11 .venv && uv pip install --no-deps --python .venv/bin/python -r requirements.txt && .venv/bin/python main.py --check",
 			"runKind": "command",
-			"readme": null
+			"readme": "examples/metagpt-3d-studio/README.md"
 		},
 		{
 			"id": "project:metamask-agent-wallet",

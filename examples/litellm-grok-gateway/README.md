@@ -1,8 +1,12 @@
+<!-- run: cd examples/litellm-grok-gateway && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && LITELLM_MASTER_KEY=sk-pick-any-local-secret .venv/bin/litellm --config config.yaml --host 127.0.0.1 --port 4317 -->
 # Grok with three.ws 3D tools through a LiteLLM proxy
 
 [LiteLLM](https://github.com/BerriAI/litellm) is a self-hosted, open-source
 gateway to 100+ models that also hosts an MCP gateway. This example gives you
-one OpenAI-compatible endpoint that does two things:
+one OpenAI-compatible endpoint that serves Grok together with the three.ws 3D
+tools.
+
+Its config does two things:
 
 1. Routes the model alias `grok` to xAI's Grok (`xai/grok-4.7`).
 2. Registers the three.ws studio MCP server (`https://three.ws/api/mcp-studio`,
@@ -110,9 +114,9 @@ body = {
   `x-mcp-three_ws-authorization: Bearer $THREE_WS_API_KEY` (the pattern is
   `x-mcp-<server>-authorization`). `main.py` does this when `THREE_WS_API_KEY`
   is set, on the `/mcp` calls and in the Responses `tools` entry (`headers`).
-  The header is verified on the `/mcp` path only; a run with a valid key was not
-  made here. three.ws checks the key when it lists tools, so a key that is not
-  valid makes the gateway list no tools. The alternative, a server-wide token in
+  A full run with a valid key forwarded this way passed on 2026-11-27 (Grok's
+  `search_catalog` call went through). three.ws checks the key when it lists
+  tools, so a key that is not valid makes the gateway list no tools. The alternative, a server-wide token in
   `config.yaml` (`auth_type: bearer_token` with
   `authentication_token: os.environ/THREE_WS_API_KEY`), makes LiteLLM refuse to
   list the server's tools while that variable is unset (LiteLLM 1.111.0 answers
@@ -175,9 +179,10 @@ ID: `object:WoodenChair_01`
 viewer   https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FWoodenChair_01.glb&title=Wooden%20Chair%2001
 ```
 
-A run with a three.ws key (making a model, `forge_free`) was not captured here;
-the same call path is captured without a key above, and the studio's free
-generation is shown in the [curl example](../grok-curl/README.md).
+Making a model through the gateway (`forge_free`, which needs the three.ws key)
+was not captured here: Grok finds a catalog chair for this request and stops.
+The studio's free generation is shown in the
+[curl example](../grok-curl/README.md).
 
 ## Supply chain
 

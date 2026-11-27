@@ -71,6 +71,13 @@ function firstProse(md) {
 		.trim();
 }
 
+// The run command a README states for itself, as `<!-- run: <command> -->`.
+// For an example whose setup the heuristics below cannot infer: a Python
+// version the machine may lack, install flags, a server to start first.
+function declaredRun(md) {
+	return md.match(/<!--\s*run:\s*([^\n]+?)\s*-->/)?.[1] ?? null;
+}
+
 function firstHeading(md) {
 	const m = md.match(/^#\s+(.+)$/m);
 	return m ? m[1].replace(/`/g, '').trim() : null;
@@ -226,7 +233,7 @@ for (const name of readdirSync(examplesDir)) {
 		description: clamp(firstProse(readme)) || clamp(projectPkgDescription),
 		path: `examples/${name}`,
 		files,
-		run: runHint(`examples/${name}`, files),
+		run: declaredRun(readme) ?? runHint(`examples/${name}`, files),
 		runKind: 'command',
 		readme: existsSync(join(abs, 'README.md')) ? `examples/${name}/README.md` : null,
 	});

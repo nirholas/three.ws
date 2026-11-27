@@ -87,6 +87,19 @@ describe('examples index generator', () => {
 		expect(byId['project:grok-build-workflow'].run).toBe('cd examples/grok-build-workflow/starter && npm install && npm run dev');
 	});
 
+	it("uses the command an example declares when the default install would not run it", () => {
+		run();
+		const { examples } = JSON.parse(readFileSync(JSON_OUT, 'utf8'));
+		const byId = Object.fromEntries(examples.map((e) => [e.id, e]));
+		// MetaGPT cannot install on the machine's default Python or with its own dependency pins.
+		const metagpt = byId['project:metagpt-3d-studio'].run;
+		expect(metagpt).toContain('--python 3.11');
+		expect(metagpt).toContain('--no-deps');
+		expect(metagpt).not.toContain('<!--');
+		// The LiteLLM client talks to a proxy, so the proxy is what a reader starts first.
+		expect(byId['project:litellm-grok-gateway'].run).toContain('litellm --config config.yaml');
+	});
+
 	it('is idempotent: running it repeatedly does not grow or shrink the doc', () => {
 		run();
 		const afterFirst = readFileSync(DOC, 'utf8');

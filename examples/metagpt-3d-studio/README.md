@@ -1,9 +1,12 @@
+<!-- run: cd examples/metagpt-3d-studio && uv venv --python 3.11 .venv && uv pip install --no-deps --python .venv/bin/python -r requirements.txt && .venv/bin/python main.py --check -->
 # MetaGPT 3D studio (Grok as the LLM, three.ws as the 3D tools)
 
 [MetaGPT](https://github.com/FoundationAgents/MetaGPT) models a software company
 as AI roles that pass messages. It has no 3D capability. This example hires a
 three-person studio into a MetaGPT `Team`, with Grok as every role's LLM and the
-three.ws studio MCP server as the hands:
+three.ws studio MCP server as the hands.
+
+The three roles:
 
 - **ArtDirector** turns a one-line brief into a precise model spec (subject,
   checkable features, faults to reject) and a catalog search query.
@@ -24,6 +27,10 @@ is the GLB URL, a viewer link and the review.
 - **Python 3.9, 3.10 or 3.11.** MetaGPT declares `python_requires >=3.9, <3.12`,
   so Python 3.12 and newer cannot install it. `.python-version` pins 3.11.
   `--check` uses only the standard library and runs on any Python 3.10+.
+- [uv](https://docs.astral.sh/uv/getting-started/installation/), which fetches
+  Python 3.11 when the machine lacks it. With your own Python 3.11, use
+  `python3.11 -m venv .venv` and `pip install --no-deps -r requirements.txt`
+  in its place.
 - `XAI_API_KEY` (or `GROK_API_KEY`): an xAI API key from [console.x.ai](https://console.x.ai).
 - Optional `THREE_WS_API_KEY`: a free key from
   [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys). Without it the
@@ -35,8 +42,8 @@ is the GLB URL, a viewer link and the review.
 
 ```bash
 cd examples/metagpt-3d-studio
-python3 -m pip install uv && uv venv --python 3.11 .venv && . .venv/bin/activate
-uv pip install --no-deps -r requirements.txt     # or: pip install --no-deps -r requirements.txt
+uv venv --python 3.11 .venv && . .venv/bin/activate
+uv pip install --no-deps -r requirements.txt
 
 # three.ws leg only: list tools, search the catalog, render (no xAI key)
 python main.py --check
