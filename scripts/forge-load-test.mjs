@@ -12,24 +12,80 @@
 // (api/_lib/forge-scale.js#forgeRequestHash), which would make a load test of 10
 // look like a load test of 1.
 //
-// Usage:
-//   node scripts/forge-load-test.mjs                       # 10 jobs at https://three.ws
-//   node scripts/forge-load-test.mjs --n 6 --origin http://localhost:3000
+// Safe by default (Forge hardening 78). It starts REAL generations, so:
+//   - the default origin is a local dev server, never production;
+//   - any production host (three.ws, its subdomains, a Cloud Run *.run.app
+//     service) is refused unless --allow-production is passed;
+//   - it prints the plan before anything is sent, and --dry-run stops there.
+// Production has one GPU behind the main lane and a reference-image rung that
+// serves one image per 45 seconds; a load test there takes that from real people.
+//
+// POST /api/forge needs an account. Set FORGE_LOAD_API_KEY to an API key of a
+// test account (sent as a bearer token). One account holds ONE place in the
+// waiting line, so with one key the run shows the line working (positions,
+// waits, turns) rather than N people generating in parallel.
+//
+// Usage (safe local run, see docs/forge.md "Load testing"):
+//   npx vite --port 4178 --strictPort        # in another terminal
+//   node scripts/forge-load-test.mjs --origin http://localhost:4178 --n 4 --dry-run
+//   FORGE_LOAD_API_KEY=... node scripts/forge-load-test.mjs --origin http://localhost:4178 --n 4
 //   node scripts/forge-load-test.mjs --tiers draft,standard
 
 import { inspectGlb, isValidGlbHeader } from '../api/_lib/glb-inspect.js';
 
 function arg(name, fallback) {
 	const i = process.argv.indexOf(`--${name}`);
-	return i > -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
+	return i > -1 && process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : fallback;
 }
+const flag = (name) => process.argv.includes(`--${name}`);
 
-const ORIGIN = String(arg('origin', 'https://three.ws')).replace(/\/+$/, '');
+const DEFAULT_ORIGIN = 'http://localhost:3000';
+const ORIGIN = String(arg('origin', DEFAULT_ORIGIN)).replace(/\/+$/, '');
 const N = Math.max(1, Number(arg('n', 10)) || 10);
 const TIERS = String(arg('tiers', 'draft,standard'))
 	.split(',')
 	.map((t) => t.trim())
 	.filter(Boolean);
+const DRY_RUN = flag('dry-run');
+const ALLOW_PRODUCTION = flag('allow-production');
+const API_KEY = process.env.FORGE_LOAD_API_KEY || '';
+
+function isProductionOrigin(origin) {
+	let host;
+	try {
+		host = new URL(origin).hostname.toLowerCase();
+	} catch {
+		return false;
+	}
+	return host === 'three.ws' || host.endsWith('.three.ws') || host.endsWith('.run.app');
+}
+
+const production = isProductionOrigin(ORIGIN);
+if (production && !ALLOW_PRODUCTION) {
+	console.error(
+		`[forge-load] refusing to run against production (${ORIGIN}).\n` +
+			'  It would start real generations on the production GPU and image rung, taking them from real people.\n' +
+			'  Run it against a local server instead: --origin http://localhost:4178 (see docs/forge.md "Load testing").\n' +
+			'  If the owner has approved a production load test, pass --allow-production.',
+	);
+	process.exit(2);
+}
+
+console.log(
+	[
+		`[forge-load] plan: ${N} real generation${N === 1 ? '' : 's'} submitted at once to ${ORIGIN}/api/forge`,
+		`  tiers: ${TIERS.join(', ')} (round-robin), every prompt unique so nothing is served from cache`,
+		`  each job is polled every 3s for up to 12 min, and its GLB is downloaded and parsed`,
+		`  a queued answer is followed: check-ins at the line's own interval, resubmit on your turn`,
+		`  auth: ${API_KEY ? 'bearer API key from FORGE_LOAD_API_KEY' : 'none (expect 401 sign_in_required: set FORGE_LOAD_API_KEY)'}`,
+		production ? '  WARNING: this is PRODUCTION (--allow-production given)' : '  target is not production',
+	].join('\n'),
+);
+if (DRY_RUN) {
+	console.log('[forge-load] dry run: nothing was sent.');
+	process.exit(0);
+}
+
 const POLL_MS = 3000;
 const MAX_WAIT_MS = 12 * 60 * 1000; // matches every in-repo forge poll ceiling
 
@@ -78,20 +134,37 @@ async function runOne(index) {
 		elapsedMs: null,
 		glbUrl: null,
 		meshes: null,
+		linePositions: [],
 		note: '',
 	};
 
+	const headers = { 'content-type': 'application/json', 'x-forge-client': clientId };
+	if (API_KEY) headers.authorization = `Bearer ${API_KEY}`;
 	let submit;
 	try {
-		const res = await fetch(`${ORIGIN}/api/forge`, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json', 'x-forge-client': clientId },
-			body: JSON.stringify({ prompt, tier }),
-		});
-		rec.submitStatus = res.status;
-		submit = await res.json().catch(() => ({}));
-		if (!res.ok) {
-			rec.outcome = res.status === 429 ? 'rate_limited' : 'submit_failed';
+		const lineDeadline = Date.now() + MAX_WAIT_MS;
+		for (;;) {
+			const res = await fetch(`${ORIGIN}/api/forge`, { method: 'POST', headers, body: JSON.stringify({ prompt, tier }) });
+			rec.submitStatus = res.status;
+			submit = await res.json().catch(() => ({}));
+			if (res.ok) break;
+			// A place in the waiting line: follow it the way the page does, checking
+			// in at the interval the line asks for and resubmitting on our turn.
+			if (submit.error === 'forge_queued' && Date.now() < lineDeadline) {
+				rec.linePositions.push(submit.position);
+				let turn = false;
+				while (!turn && Date.now() < lineDeadline) {
+					await sleep(Math.max(1, Number(submit.check_again_seconds) || 5) * 1000);
+					const st = await fetch(`${ORIGIN}${submit.line_url || '/api/forge?line=1'}`, { headers })
+						.then((r) => r.json())
+						.catch(() => ({}));
+					if (st.your_turn || st.in_line === false) turn = true;
+					else if (st.check_again_seconds) submit.check_again_seconds = st.check_again_seconds;
+				}
+				continue;
+			}
+			rec.outcome =
+				submit.error === 'forge_full' ? 'line_full' : res.status === 429 ? 'rate_limited' : 'submit_failed';
 			rec.note = String(submit.message || submit.error || `HTTP ${res.status}`).slice(0, 120);
 			rec.elapsedMs = Date.now() - started;
 			return rec;
@@ -122,9 +195,7 @@ async function runOne(index) {
 			await sleep(POLL_MS);
 			let data;
 			try {
-				const res = await fetch(`${ORIGIN}/api/forge?job=${encodeURIComponent(submit.job_id)}`, {
-					headers: { 'x-forge-client': clientId },
-				});
+				const res = await fetch(`${ORIGIN}/api/forge?job=${encodeURIComponent(submit.job_id)}`, { headers });
 				if (res.status >= 500) continue; // transient gateway blip, keep polling
 				data = await res.json().catch(() => ({}));
 			} catch {
@@ -190,7 +261,6 @@ async function runOne(index) {
 }
 
 const t0 = Date.now();
-console.log(`[forge-load] ${N} concurrent generations at ${ORIGIN}, tiers=${TIERS.join(',')}`);
 const results = await Promise.all(Array.from({ length: N }, (_, i) => runOne(i)));
 
 const okDurations = results.filter((r) => r.outcome === 'ok').map((r) => r.elapsedMs).sort((a, b) => a - b);
@@ -209,6 +279,7 @@ for (const r of results) {
 			String(r.queuedPolls).padStart(11),
 			String(r.coldStart).padStart(5),
 			String(r.failoverFrom || '-').padStart(9),
+			r.linePositions.length ? ` line positions ${r.linePositions.join('>')}` : '',
 			r.note ? ` ${r.note}` : '',
 		].join(' '),
 	);
