@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-26",
+			"title": "Forge keeps generating when every prompt-writing model is down, and says so plainly",
+			"summary": "Before Forge paints the picture your 3D model is built from, an assistant model rewrites your prompt with materials and lighting. When every one of those models was refusing, Forge used to wait on each of them in turn and then reported the step as if it had run. Now a model that refuses for billing or credit is set aside for half an hour, a busy one for exactly as long as it asks, and when none is available your own prompt goes forward in a fraction of a second. The progress list says whether your prompt was rewritten, used as written because the assistant was unavailable, or used as written because its rewrite was not usable. The Enhance button answers within seconds, leaves your text untouched when it cannot help, tells you so in one sentence, and never keeps spinning.",
+			"tags": ["fix", "improvement"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-26",
 			"title": "Forge now counts the requests that fail before a model starts",
 			"summary": "Forge's success rate only counted requests that reached a 3D engine, so it could read 93% while people saw failures earlier: at the reference image step, a rate limit, or an engine refusing the job. Every generation request is now counted by where it ended and why, with no prompt text or personal data, and recording never slows or changes your request. The health check, the ops reports and the NVIDIA benchmarks page now show an end-to-end success rate (models delivered out of all requests accepted after sign-in) beside the engine success rate, so a breakdown before the engines shows up in the numbers.",
 			"tags": [

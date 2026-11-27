@@ -112,8 +112,10 @@ curl -sS "https://three.ws/api/forge?progress=$TRACE"
 #    ]}
 ```
 
-The four stages are `directed` (the art-director pass is over, and
-`directed_prompt` is null when it left your words alone), `reference` (the view
+The four stages are `directed` (the art-director pass is over; `directed_prompt`
+holds the brief, and `direction` says whether it was `directed`, `skipped` with
+a reason, or `off`, see
+[Forge direction](ops/llm-lanes.md#forge-direction-the-chain-its-cooldowns-and-failing-open)), `reference` (the view
 the mesh is reconstructed from now exists), `views` (the turnaround views the
 fusing lane adds, only when the lane painted any), and `submitting` (every image
 is stored and the job is going to a GPU). Nothing here is predicted: a crumb is
