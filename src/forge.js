@@ -14,6 +14,7 @@ import {
 	nextBackoff,
 } from './shared/resilient-poll.js';
 import { showSharePanel } from './shared/share.js';
+import { guardSketchFile } from './forge-studio/sketch-guard.js';
 import { stampGlbAttribution } from './shared/glb-attribution.js';
 import {
 	primeTierPass,
@@ -106,6 +107,8 @@ const els = {
 	sketchPane: document.getElementById('sketch-pane'),
 	sketchGrid: document.getElementById('sketch-grid'),
 	sketchFileInput: document.getElementById('sketch-file-input'),
+	drawSketchBtn: document.getElementById('draw-sketch-btn'),
+	sketchGuardNote: document.getElementById('sketch-guard-note'),
 	sketchPrompt: document.getElementById('sketch-prompt'),
 	states: {
 		empty: document.getElementById('state-empty'),
@@ -1909,6 +1912,7 @@ function renderSketchSlot() {
 function clearSketch() {
 	if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
 	Object.assign(sketch, { state: 'empty', url: null, objectUrl: null, errorMsg: '' });
+	setSketchGuardNote('');
 	renderSketchSlot();
 }
 
@@ -1928,10 +1932,28 @@ async function uploadSketch(file) {
 		renderSketchSlot();
 		return;
 	}
+	// A blank page, a dot or a scribble over the whole frame gives the sketch
+	// model nothing to build from. Say so here, before the file reaches storage
+	// and before a generation slot is spent on it.
+	const out = await guardSketchFile(file, sendSketch);
+	if (out && out.ok === false && out.code) {
+		if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
+		Object.assign(sketch, {
+			state: 'error',
+			url: null,
+			objectUrl: null,
+			errorMsg: 'Draw a clearer outline',
+		});
+		renderSketchSlot();
+		setSketchGuardNote(out.message);
+	}
+}
+
+async function sendSketch(file) {
 	if (!(await requireUploadAccount())) {
 		Object.assign(sketch, { state: 'error', url: null, errorMsg: UPLOAD_SIGN_IN_SHORT });
 		renderSketchSlot();
-		return;
+		return { ok: true };
 	}
 	if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
 	Object.assign(sketch, {
@@ -1940,13 +1962,28 @@ async function uploadSketch(file) {
 		objectUrl: URL.createObjectURL(file),
 		errorMsg: '',
 	});
+	setSketchGuardNote('');
 	renderSketchSlot();
 
 	const up = await presignAndPut(file);
 	if (up.ok) Object.assign(sketch, { state: 'uploaded', url: up.url, errorMsg: '' });
 	else Object.assign(sketch, { state: 'error', url: null, errorMsg: up.message });
 	renderSketchSlot();
+	return { ok: true };
 }
+
+function setSketchGuardNote(message) {
+	const note = els.sketchGuardNote;
+	if (!note) return;
+	note.textContent = message;
+	note.classList.toggle('is-hidden', !message);
+}
+
+els.drawSketchBtn?.addEventListener('click', async () => {
+	const { openSketchCanvas } = await import('./forge-studio/sketch-canvas.js');
+	const file = await openSketchCanvas();
+	if (file) uploadSketch(file);
+});
 
 function firstPreviewUrl() {
 	const s = slots.find((x) => x.state === 'uploaded' && (x.objectUrl || x.url));
@@ -2269,7 +2306,9 @@ async function pollUntilDone(jobId) {
 				// Poll-time failover: the server moved this job onto a backup lane and
 				// keeps it running under the same id. Surface the switch so the user
 				// sees which engine is now serving, rather than a silent swap.
-				if (data.failover_from && data.backend && data.backend !== data.failover_from) {
+				if (data.failover_note) {
+					setLaneNote(data.failover_note);
+				} else if (data.failover_from && data.backend && data.backend !== data.failover_from) {
 					// TripoSG is the last-resort photo lane and returns shape only, so
 					// say so now rather than let an untextured result read as a bug.
 					const shapeOnly =
@@ -3207,6 +3246,9 @@ async function run(cfg) {
 		// The server routed this photo to the standard engine because "Match my photo"
 		// is recovering. Say so now instead of letting the swap go unmentioned.
 		if (job.lane_fallback?.reason) setLaneNote(job.lane_fallback.reason);
+		// A sketch request the scribble engine could not take is being built from the
+		// drawing as a picture; the server says so in its own words.
+		if (job.failover_note) setLaneNote(job.failover_note);
 
 		// Fold every real signal the submit response carries into the timeline: the
 		// lane that actually ran, the art-directed prompt, the reference view (shown

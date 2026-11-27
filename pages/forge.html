@@ -1207,6 +1207,50 @@
 				margin: var(--space-sm) 0 0;
 				text-align: center;
 			}
+			/* "Draw here instead": opens the in-browser sketch canvas
+			   (src/forge-studio/sketch-canvas.js) as an alternative to uploading a drawing. */
+			.draw-cta-row {
+				display: flex;
+				justify-content: center;
+				margin-top: var(--space-sm);
+			}
+			.draw-cta {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				background: transparent;
+				border: 1px dashed var(--stroke-strong);
+				color: var(--ink-dim);
+				border-radius: var(--radius-sm, 8px);
+				padding: 0.4rem 0.8rem;
+				font-size: var(--text-xs);
+				cursor: pointer;
+				transition:
+					border-color var(--duration-fast),
+					color var(--duration-fast),
+					background var(--duration-fast);
+			}
+			.draw-cta svg {
+				width: 14px;
+				height: 14px;
+			}
+			.draw-cta:hover {
+				border-color: var(--accent);
+				color: var(--ink);
+			}
+			.draw-cta:active {
+				transform: translateY(1px);
+			}
+			.draw-cta:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.sketch-guard-note {
+				color: var(--ink);
+				border: 1px solid var(--stroke-strong);
+				border-radius: var(--radius-sm, 8px);
+				padding: 0.5rem 0.75rem;
+			}
 
 			/* Match my photo (Pixal3D): shown only while that engine is selected
 			   (src/forge.js updatePixal3dPanel). */
@@ -4121,6 +4165,13 @@
 						id="sketch-grid"
 						aria-label="Your sketch — add one drawing"
 					></div>
+					<div class="draw-cta-row">
+						<button type="button" class="draw-cta" id="draw-sketch-btn">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+							Draw here instead
+						</button>
+					</div>
+					<p class="views-hint sketch-guard-note is-hidden" id="sketch-guard-note" role="alert"></p>
 					<input
 						type="file"
 						id="sketch-file-input"
