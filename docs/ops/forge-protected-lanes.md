@@ -42,7 +42,7 @@ Protected:
 
 Not protected (broken or unproven; fix these):
 
-- `triposg` (sketch to 3D): 25 done and 35 failed in 7 days, 41.7%.
+- `triposg` (sketch to 3D): 25 done and 35 failed in 7 days, 41.7%. Read this figure with care: the lane's backend column also counts photo jobs that landed on TripoSG as the last failover rung (path `image`). Over 30 days the sketch path itself finished 54 of 56 jobs (96.4%), and the two failures were orphaned tasks. The real weak points were unguarded input (blank, dot and full-frame drawings), a dead end when the engine was down, and a healthy lane being cooled for a drawing it could not read; all three are fixed (2026-11-27, see [forge-pipeline.md](../forge-pipeline.md), Sketch to 3D).
 - `pixal3d` ("Match my photo"): 2 done and 9 failed in 7 days, 18.2%, and the two successes took about 16 minutes each.
 - `trellis2` (the configured first choice): no jobs in 7 days, 2 done and 2 failed in 30 days. Not failing: `MODEL_TRELLIS2_URL` was never set on `three-ws-api`, so the lane is skipped (re-measured 2026-11-26, [trellis2-lane-decision.md](./trellis2-lane-decision.md)).
 - `trellis_nvcf` (TRELLIS hosted by NVIDIA): no jobs in 7 days, 60.7% over 30 days.

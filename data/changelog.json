@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "Sketch to 3D now tells you when a drawing is blank, a dot or scribbled edge to edge, and no longer ends in a dead end",
+			"summary": "A blank canvas, a single dot or a drawing smeared over the whole frame is now refused on your device with a message that says what to draw, before anything is uploaded or a generation slot is spent. The drawing canvas lines strokes up under your finger on a phone, keeps Use sketch available after you undo a Clear, keeps keyboard focus inside the dialog and fits any screen height with Use sketch always reachable. The Forge page gets a Draw here instead button for the same canvas. If the sketch engine cannot take or finish a drawing, Forge now continues the job on the standard image engine and tells you, instead of ending in an error, and a drawing the engine could not read no longer takes a healthy engine out of rotation.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/forge-studio"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "The NVIDIA-hosted 3D lane now rejects bad results and backs off when NVIDIA says wait",
 			"summary": "When Forge falls back to NVIDIA's hosted TRELLIS, a result is now checked to be a real 3D model before the job is marked done, so an error page or a half-downloaded file can no longer show up as a finished creation. Large results delivered by redirect or zip are fetched safely. When NVIDIA throttles the lane, Forge waits as long as NVIDIA asks, instead of a fixed two minutes, and stops polling a throttled job until the wait is over. A dead key or an empty account takes the lane out of rotation for five minutes instead of being retried by every request, and the same rules now apply to the ChatGPT Forge pipeline.",
 			"tags": [
