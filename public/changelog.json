@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-27T05:19:01.286Z",
+	"generated_at": "2026-11-27T05:21:54.175Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -57,6 +57,17 @@
 			"link": "/forge",
 			"tags": [
 				"improvement",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Forge caching never hands back a wrong, failed, private or removed model",
+			"summary": "Forge answers a repeated prompt from its cache instead of generating again, and that cache is now strict about what it hands out. Every setting that changes the model (size, pose, aspect ratio, sampler settings, the prompt director and more) gives a separate entry, so you never get a model made with different settings. A failed, partial or rejected model is never cached. A model you did not make public is only ever served back to you. A model that is deleted or taken down stops being served at once, and a poll for it says it was removed. Two identical requests sent together, such as a double click or a second tab, now make one model instead of two. If the cache itself is down, Forge still generates, just without the shortcut.",
+			"link": "/forge",
+			"tags": [
+				"fix",
 				"security"
 			]
 		},

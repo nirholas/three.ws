@@ -639,6 +639,19 @@ pasted seed (grouping such as `1,234,567` is accepted) locks every run to it and
 is remembered in this browser. After a run starts, the note under the field
 shows the seed that run used, with **Use this seed** to lock it.
 
+### Cached results
+
+A text prompt that someone already generated with the same settings is
+answered from the result cache at once: status `done`, a `glb_url`, `cached:
+true` and a null `job_id`. Every setting that changes the model is part of
+the cache key. Letter case and extra spaces in the prompt are ignored, but
+punctuation is not. A model that was not made public is only served back to
+the account that made it. Failed, partial and rejected models are never cached,
+and a deleted or taken-down model stops being served at once. Send
+`force_regenerate: true` to skip the cache. Every Forge cache, its key, its
+lifetime and what clears it is listed in
+[Forge caches](./ops/forge-caches.md).
+
 ## Batch generation
 
 **`POST /api/forge-batch`** fans one call out to up to 8 independent
@@ -754,6 +767,7 @@ dashboard at [/quality-bench](https://three.ws/quality-bench) (internal).
 ## Related
 
 - [The Forge pipeline](./forge-pipeline.md) is the architecture deep dive: the engine grid, routing, failover, job lifecycle, workers, and payments, end to end. [How the Forge works](./how-forge-works.md) is the same story in plain language.
+- [Forge caches](./ops/forge-caches.md) lists every cache Forge keeps, its key and lifetime, and the rules that stop it serving a wrong, failed, private or removed model.
 - [Forge input security](./forge-input-security.md) lists every address, upload and model file a stranger can send to Forge, the guard in front of each, and what is still open.
 - [Image to 3D](./image-to-3d.md) is the photo lane opened directly at [/image-to-3d](https://three.ws/image-to-3d).
 - [/forge-max](https://three.ws/forge-max) is the maximum-quality lane opened directly: the same Forge with the High tier pinned on arrival (200k-poly target, 4K PBR and HD textures, subject-aware engine routing). `?tier=draft|standard|high` presets the quality selector on any Forge URL the same way. The High tier's $THREE hold-or-pay gate applies unchanged; BYOK engines (your own Meshy, Tripo, or Rodin key) are exempt as always. For DamagedHelmet-class artist benchmarks, remember the ceiling is the current state of generative 3D, not the routing: this lane maxes every budget the engines expose, and [Measuring realism](#measuring-realism) is how we track that ceiling moving.

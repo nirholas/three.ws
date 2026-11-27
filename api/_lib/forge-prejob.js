@@ -147,7 +147,9 @@ export function classifySubmitExit({ status, body = null, trace = null, replayed
 	return {
 		outcome: stage === 'sign_in' ? 'sign_in' : 'failed',
 		stage,
-		cause: code || `http_${status}`,
+		// A designed refusal can name why it happened (`all_lanes_failed`), which
+		// says more than the shared error code it is answered under.
+		cause: (typeof body?.reason === 'string' && body.reason) || code || `http_${status}`,
 		provider: WORK_STAGES.has(stage) ? providerFrom(error, body) : null,
 		retryAfterS: statedWait(body, retryAfterHeader),
 		upstreamStatus: error?.providerStatus ?? null,

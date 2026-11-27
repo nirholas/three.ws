@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 	<head>
+		<script>/* Forge account hint, no-flash: a visitor this browser last saw signed in does not see the sign-in note flash in and out (src/forge.js confirms with /api/auth/me) */(function(){try{if(localStorage.getItem('forge:signed-in')==='1')document.documentElement.setAttribute('data-forge-account','in');}catch(e){}})();</script>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -730,6 +731,61 @@
 			}
 			.fq-holder-note[data-state='unlocked'] .fq-holder-ico {
 				color: #6ee7a8;
+			}
+			/* Account note under Generate (src/forge-sign-in-return.js). Ships
+			   visible: signed out is the state a first visit is in, so the line is
+			   there from the first frame and never pushes the rail down. A visitor
+			   who is signed in (or whose state is unknown) gets it removed, which is
+			   the rarer reflow. After a sign-in round trip it carries the "your
+			   prompt is back" line instead. */
+			.fq-account-note {
+				margin: 0.6rem 0 0;
+				padding: 0.55rem 0.7rem;
+				border: 1px solid var(--line);
+				border-radius: 10px;
+				background: color-mix(in srgb, var(--ink) 4%, transparent);
+				font-size: var(--text-xs);
+				line-height: 1.5;
+				color: var(--ink-dim);
+			}
+			.fq-account-note[data-state='restored'] {
+				border-color: color-mix(in srgb, #6ee7a8 45%, var(--line));
+				color: var(--ink);
+			}
+			.fq-account-note[data-state='ended'] {
+				border-color: color-mix(in srgb, var(--danger, #f87171) 45%, var(--line));
+				color: var(--ink);
+			}
+			.fq-account-links {
+				display: inline-flex;
+				flex-wrap: wrap;
+				gap: 0.25rem 0.75rem;
+				margin-left: 0.25rem;
+			}
+			.fq-account-links a {
+				color: var(--accent);
+				font-weight: 600;
+				text-decoration: underline;
+				text-underline-offset: 2px;
+				border-radius: 3px;
+				transition: color var(--duration-fast), text-decoration-thickness var(--duration-fast);
+			}
+			.fq-account-links a:hover {
+				color: var(--ink);
+				text-decoration-thickness: 2px;
+			}
+			.fq-account-links a:active {
+				opacity: 0.75;
+			}
+			.fq-account-links a:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			html[data-forge-account='in'] .fq-account-note:not([data-state='restored']),
+			html[data-forge-account='unknown'] .fq-account-note:not([data-state='restored']),
+			html[data-forge-account='in'] .fq-account-links,
+			html[data-forge-account='unknown'] .fq-account-links {
+				display: none;
 			}
 			/* Quiet holder free-quota line under Generate + the Forge-local wallet
 			   connect chip (Part A). Token-only, matches the holder-note treatment. */
@@ -4352,6 +4408,14 @@
 					<span id="generate-label">Generate</span>
 					<kbd class="gen-kbd" aria-hidden="true">↵</kbd>
 				</button>
+
+				<!-- Why an account is needed, said before any effort is spent. Hidden for
+				     signed-in visitors; after a sign-in round trip it says the prompt and
+				     settings are back. Links are pointed at this exact page by forge.js. -->
+				<p class="fq-account-note" id="forge-account-note" data-state="signed-out" aria-live="polite">
+					<span id="forge-account-note-text">A free account is needed to make a model: each one is saved to its owner, unlisted, so you can find, download or delete it later.</span>
+					<span class="fq-account-links"><a href="/login?next=%2Fforge" data-auth="login">Sign in</a><a href="/register?next=%2Fforge" data-auth="register">Create a free account</a></span>
+				</p>
 
 				<!-- Quiet holder line under Generate: an active free-quota perk for $THREE
 				     holders, or a non-blocking upsell + a reachable wallet connect so a

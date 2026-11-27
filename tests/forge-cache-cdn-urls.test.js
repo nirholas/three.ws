@@ -34,6 +34,10 @@ function fakeRedis() {
 	};
 }
 
+// Every hit is checked against its creation row; this suite is about URLs, so the
+// row is a live public one.
+const liveRow = async (id) => ({ id, status: 'done', visibility: 'public', safety_status: 'clear' });
+
 describe('getCachedForgeResult URL normalization', () => {
 	it('rewrites a pre-fix raw bucket URL to the /cdn/ proxy', async () => {
 		const { putCachedForgeResult, getCachedForgeResult } = await import('../api/_lib/forge-cache.js');
@@ -41,10 +45,10 @@ describe('getCachedForgeResult URL normalization', () => {
 		const key = 'a'.repeat(40);
 		await putCachedForgeResult(
 			key,
-			{ glb_url: `${DEAD_PUBLIC_DOMAIN}/forge/nvidia/cc3b4e67-fe43-4bb3-8a8d-0624180c8b33.glb`, backend: 'nvidia' },
+			{ glb_url: `${DEAD_PUBLIC_DOMAIN}/forge/nvidia/cc3b4e67-fe43-4bb3-8a8d-0624180c8b33.glb`, creation_id: 'c1', backend: 'nvidia' },
 			{ redis },
 		);
-		const hit = await getCachedForgeResult(key, { redis });
+		const hit = await getCachedForgeResult(key, { redis, lookup: liveRow });
 		expect(hit.glb_url).toBe('https://three.ws/cdn/forge/nvidia/cc3b4e67-fe43-4bb3-8a8d-0624180c8b33.glb');
 		expect(hit.backend).toBe('nvidia');
 	});
@@ -54,8 +58,8 @@ describe('getCachedForgeResult URL normalization', () => {
 		const redis = fakeRedis();
 		for (const url of ['https://three.ws/cdn/forge/x.glb', 'https://assets.example.org/model.glb']) {
 			const key = Buffer.from(url).toString('hex').slice(0, 40);
-			await putCachedForgeResult(key, { glb_url: url }, { redis });
-			expect((await getCachedForgeResult(key, { redis })).glb_url).toBe(url);
+			await putCachedForgeResult(key, { glb_url: url, creation_id: 'c1' }, { redis });
+			expect((await getCachedForgeResult(key, { redis, lookup: liveRow })).glb_url).toBe(url);
 		}
 	});
 });

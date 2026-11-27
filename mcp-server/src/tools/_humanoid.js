@@ -157,9 +157,12 @@ const HUMANOID_TERMS = [
 	'cartoon character',
 ];
 
-// Tokens that strongly imply a NON-humanoid subject. A confident hit here is
-// what blocks the paid rig. Grouped only for readability.
-const NON_HUMANOID_TERMS = [
+// Tokens that name a thing with no body to move: furniture, vehicles, props,
+// places and food. Split from the animals below so the rig preflight
+// (classifyRigSubject) can refuse an object outright while still sending a
+// creature to the non-human rigger. NON_HUMANOID_TERMS is the two lists
+// joined, so classifyHumanoidPrompt reads exactly what it always read.
+const OBJECT_TERMS = [
 	// Furniture / household objects
 	'chair',
 	'armchair',
@@ -302,7 +305,27 @@ const NON_HUMANOID_TERMS = [
 	'sushi',
 	'cookie',
 	'food',
-	// Quadrupeds & other non-biped animals (won't drive a humanoid rig)
+	// Added for the rig preflight: common Forge props that name no body.
+	'katana',
+	'saber',
+	'sabre',
+	'scimitar',
+	'sheath',
+	'guitar',
+	'violin',
+	'piano',
+	'skateboard',
+	'surfboard',
+	'lamppost',
+	'streetlight',
+	'go-kart',
+	'moped',
+	'snowmobile',
+];
+
+// Animals and other non-biped bodies. They can move, just not on a humanoid
+// skeleton, so the rig preflight routes them to the non-human rigger.
+const CREATURE_TERMS = [
 	'horse',
 	'pony',
 	'donkey',
@@ -366,7 +389,21 @@ const NON_HUMANOID_TERMS = [
 	'hydra',
 	'griffin',
 	'phoenix',
+	// Added for the rig preflight.
+	'hound',
+	'quadruped',
+	'beast',
+	'unicorn',
+	'pegasus',
+	'wyvern',
+	'raptor',
+	'insect',
+	'horseback',
 ];
+
+// Tokens that strongly imply a NON-humanoid subject. A confident hit here is
+// what blocks the paid rig.
+const NON_HUMANOID_TERMS = [...OBJECT_TERMS, ...CREATURE_TERMS];
 
 // Word-boundary match for a single term against the already-lowercased prompt.
 // Multi-word terms (e.g. "anime girl") match as a substring on boundaries.
@@ -378,11 +415,22 @@ function hasTerm(text, term) {
 	return re.test(text);
 }
 
-function countMatches(text, terms) {
+// "two chairs", "boots", "a pack of wolves": the plural of a single-word term.
+// Only the rig preflight reads plurals; classifyHumanoidPrompt keeps its exact
+// matching so its verdicts do not move.
+function hasPlural(text, term) {
+	if (term.includes(' ') || term.includes('-')) return false;
+	const forms = [`${term}s`, `${term}es`];
+	if (term.endsWith('f')) forms.push(`${term.slice(0, -1)}ves`);
+	if (term.endsWith('y')) forms.push(`${term.slice(0, -1)}ies`);
+	return forms.some((f) => new RegExp(`\\b${f}\\b`).test(text));
+}
+
+function countMatches(text, terms, { plural = false } = {}) {
 	let n = 0;
 	const hits = [];
 	for (const term of terms) {
-		if (hasTerm(text, term)) {
+		if (hasTerm(text, term) || (plural && hasPlural(text, term))) {
 			n += 1;
 			hits.push(term);
 		}
@@ -474,4 +522,37 @@ export function classifyHumanoidPrompt(prompt) {
 		reason: 'no decisive signal; proceeding because an avatar was explicitly requested',
 		signals,
 	};
+}
+
+/**
+ * What kind of body a prompt describes, for the rig preflight
+ * (api/_lib/rig-preflight.js). Unlike classifyHumanoidPrompt it has no
+ * "an avatar was requested" default: a prompt that names nothing decisive is
+ * `unknown`, and the preflight falls back to the mesh's own shape.
+ *
+ * - `humanoid`: a person or biped character, props allowed ("a knight with a sword").
+ * - `creature`: an animal or other non-biped body ("a robotic hound").
+ * - `object`: a thing with no body to move ("a katana with sheath", "two chairs").
+ * - `figure`: both a humanoid and a creature ("a knight on horseback"); it can
+ *   move, but no single rigger is the obvious one, so no hint is sent.
+ * - `unknown`: nothing decisive.
+ *
+ * @param {string} prompt
+ * @returns {{ subject: 'humanoid'|'creature'|'object'|'figure'|'unknown', hits: { humanoid: string[], creature: string[], object: string[] } }}
+ */
+export function classifyRigSubject(prompt) {
+	const text = String(prompt || '').toLowerCase().trim();
+	const empty = { humanoid: [], creature: [], object: [] };
+	if (text.length < 3 || !/[a-z]/.test(text)) return { subject: 'unknown', hits: empty };
+	const h = countMatches(text, HUMANOID_TERMS, { plural: true });
+	const c = countMatches(text, CREATURE_TERMS, { plural: true });
+	const o = countMatches(text, OBJECT_TERMS, { plural: true });
+	const hits = { humanoid: h.hits, creature: c.hits, object: o.hits };
+	const bodies = h.n + c.n;
+	// A body word wins over the props it holds or wears, unless the props
+	// outnumber it ("fighter jet" hits fighter, jet and "fighter jet").
+	if (o.n > bodies) return { subject: 'object', hits };
+	if (bodies === 0) return { subject: 'unknown', hits };
+	if (h.n > 0 && c.n > 0) return { subject: 'figure', hits };
+	return { subject: h.n > 0 ? 'humanoid' : 'creature', hits };
 }

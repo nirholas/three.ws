@@ -15,6 +15,7 @@
 
 import { createHash, randomUUID } from 'node:crypto';
 import { getRedis } from './redis.js';
+import { normalizePrompt, extraIdentityInputs } from './forge-request-identity.js';
 
 const redis = getRedis();
 
@@ -31,7 +32,7 @@ const INFLIGHT_PREFIX = 'fc:inflight:';
 const INFLIGHT_TTL_S = 360; // ~ the longest a generation stays pollable end-to-end
 
 // Stable fingerprint of what makes two generations interchangeable. Prompt is
-// normalized (trim + lowercase) and image lists are order-independent so the same
+// normalized (forge-request-identity.js normalizePrompt) and image lists are order-independent so the same
 // multi-view set in any order collapses to one key. Truncated to 32 hex chars —
 // 128 bits of collision resistance is ample for a 6-minute dedup window.
 //
@@ -45,21 +46,29 @@ const INFLIGHT_TTL_S = 360; // ~ the longest a generation stays pollable end-to-
 // came back byte-identical. That also silently defeated Refine, which replays a
 // job's seed one tier up. A null option keeps the key identical to a request that
 // never sent options, so existing callers coalesce exactly as before.
-export function forgeRequestHash({ path, tier, backend, prompt, images, options }) {
+export function forgeRequestHash({ path, tier, backend, prompt, images, options, aspectRatio, director, scope }) {
 	const tierId = typeof tier === 'string' ? tier : tier?.id || '';
 	const imgs = Array.isArray(images) ? images.filter(Boolean).slice().sort() : [];
 	const opt = options || {};
+	// Same identity as the result cache (forge-request-identity.js): every input
+	// that changes the model, and who may be handed it. Coalescing a private
+	// request onto a stranger's job would hand the stranger's job handle, and so
+	// their model, to this caller.
+	const extras = extraIdentityInputs({ options: opt, aspectRatio, director });
+	const sc = typeof scope === 'string' && scope && scope !== 'public' ? scope : null;
 	const basis = JSON.stringify([
 		path || '',
 		tierId,
 		backend || '',
-		String(prompt || '').trim().toLowerCase(),
+		normalizePrompt(prompt),
 		imgs,
 		opt.seed ?? null,
 		opt.outputFormat || 'glb',
 		opt.textureSize ?? null,
 		opt.targetPolycount ?? null,
 		...(opt.resolution ? [opt.resolution] : []),
+		...(extras.length ? [['x', extras]] : []),
+		...(sc ? [['scope', sc]] : []),
 	]);
 	return createHash('sha256').update(basis).digest('hex').slice(0, 32);
 }

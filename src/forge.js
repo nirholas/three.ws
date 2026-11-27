@@ -54,7 +54,8 @@ import { engineFromQuery } from './forge-engine-link.js';
 import { byokUseNote, mountByokKeyField } from './shared/byok-key-ui.js';
 import { mountSeedField } from './forge-seed-field.js';
 import { rememberFromResponse } from './shared/forge-manage-tokens.js';
-import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, uploadSignInUrl, UPLOAD_SIGN_IN_SHORT } from './shared/upload-sign-in.js';
+import { signedInForUploads, accountState, isSignInRequired, renderUploadSignIn, renderCreateSignIn, uploadSignInUrl, UPLOAD_SIGN_IN_SHORT } from './shared/upload-sign-in.js';
+import { forgeAuthHref, installSignInDraftCapture, takeSignInDraft, restoredDraftNote } from './forge-sign-in-return.js';
 import { classifyThrottle, createThrottlePanel } from './forge-throttle.js';
 import { forgeErrorFromResponse, forgeJobFailedError, announceForgeError, forgeErrorDescriptor, forgeCopyError } from './forge-errors.js';
 import { normalizeForgeImage } from './shared/forge-image-normalize.js';
@@ -1732,8 +1733,9 @@ function setPhotoPrepNote(text) {
 
 // Photos need an account (api/forge-upload.js), as does generating.
 function showUploadSignIn() {
+	photoRefusedForSignIn = true;
 	const el = photoPrepNoteEl();
-	if (el) renderUploadSignIn(el);
+	if (el) renderUploadSignIn(el, { sessionEnded: noteSignedOut() });
 }
 
 // Asked before the on-device photo check, so a signed-out visitor is not walked
@@ -3096,11 +3098,117 @@ function showError(message, { allowOverride = false, title = 'Generation failed'
 // The stage shows why and a sign-in link that returns here, in place of Retry,
 // which could only be refused again.
 function showCreateSignIn() {
-	showError('', { title: 'Sign in to make a 3D model' });
+	const sessionEnded = noteSignedOut();
+	showError('', { title: sessionEnded ? 'Your session ended' : 'Sign in to make a 3D model' });
 	if (els.retry) els.retry.disabled = true;
-	const link = renderCreateSignIn(els.errorMessage);
+	const link = renderCreateSignIn(els.errorMessage, { sessionEnded });
 	const ax = document.activeElement;
 	if (!ax || ax === document.body || ax === els.generate || ax === els.retry) link.focus({ preventScroll: true });
+}
+
+// ── Account note and sign-in round trip ─────────────────────────────────────
+// Whether the visitor had a session when this page loaded. A 401 after that is a
+// session that ended mid-visit, which the prompts say in those words.
+let sessionWasSignedIn = false;
+// A photo was turned away for want of an account. The file itself is never
+// stored, so the restore note asks for it again.
+let photoRefusedForSignIn = false;
+
+async function initAccountNote() {
+	for (const a of document.querySelectorAll('#forge-account-note a[data-auth]')) {
+		a.href = forgeAuthHref(a.dataset.auth, location);
+	}
+	const state = await accountState();
+	document.documentElement.dataset.forgeAccount = state;
+	sessionWasSignedIn = state === 'in';
+	try {
+		if (state === 'in') localStorage.setItem('forge:signed-in', '1');
+		else if (state === 'out') localStorage.removeItem('forge:signed-in');
+	} catch {
+		// Storage blocked: only the no-flash hint is lost.
+	}
+	// Editing tools report a refusal through the site-wide banner
+	// (public/sign-in-watch.js), which reads this to say the session ended.
+	if (sessionWasSignedIn) document.documentElement.dataset.sessionSignedIn = '1';
+}
+
+// The server just refused this visitor for want of a session. Show the account
+// note with its sign-in links again, and return whether that session ended
+// mid-visit (as opposed to never having existed).
+function noteSignedOut() {
+	document.documentElement.dataset.forgeAccount = 'out';
+	try {
+		localStorage.removeItem('forge:signed-in');
+	} catch {
+		// Storage blocked: nothing to forget.
+	}
+	const note = document.getElementById('forge-account-note');
+	const text = document.getElementById('forge-account-note-text');
+	if (sessionWasSignedIn && note && text) {
+		note.dataset.state = 'ended';
+		text.textContent = 'Your session ended. Sign in again to keep making models: your prompt and settings come back with you.';
+	}
+	return sessionWasSignedIn;
+}
+
+// What the composer holds right now, saved when a sign-in link is followed.
+function readComposerDraft() {
+	return {
+		prompt: els.prompt?.value || '',
+		mode,
+		tier: selectedTier,
+		engineId: userPickedEngine ? selectedEngine.id : null,
+		aspect: aspectRatio,
+		hadPhotos: photoRefusedForSignIn || slots.some((s) => s.state !== 'empty') || sketch.state !== 'empty',
+		creationId: lastShownGlb ? currentCreationId : null,
+	};
+}
+
+// Put the saved composer back after the round trip, ready to generate in one
+// click. A generation still in flight or a share link keeps the stage; the
+// composer is restored either way.
+async function restoreSignInDraft() {
+	const draft = takeSignInDraft(globalThis.localStorage);
+	if (!draft) return;
+	const tab = document.getElementById(`tab-${draft.mode}`);
+	if (draft.mode !== mode && tab && !tab.hidden) setMode(draft.mode);
+	selectTier(draft.tier);
+	if (draft.engineId) {
+		const btn = els.engine?.querySelector(`button[data-engine="${draft.engineId}"]:not(:disabled)`);
+		if (btn) {
+			userPickedEngine = true;
+			selectEngine(btn);
+		}
+	}
+	els.aspect?.querySelector(`button[data-aspect="${draft.aspect}"]`)?.click();
+	if (draft.prompt && els.prompt) {
+		els.prompt.value = draft.prompt;
+		els.prompt.dispatchEvent(new Event('input', { bubbles: true }));
+	}
+	const note = document.getElementById('forge-account-note');
+	const text = document.getElementById('forge-account-note-text');
+	if (note && text) {
+		note.dataset.state = 'restored';
+		text.textContent = restoredDraftNote(draft);
+	}
+	const stageBusy = Boolean(readInflight() || window.__forgeShareId);
+	if (stageBusy) return;
+	if (draft.creationId) await reopenCreation(draft.creationId);
+	els.generate?.scrollIntoView({ block: 'center' });
+	els.generate?.focus({ preventScroll: true });
+}
+
+// Reopen the model that was on screen when the visitor left to sign in, so an
+// edit they were about to make is one click away again. Quiet on failure: the
+// model is in their creations either way.
+async function reopenCreation(id) {
+	try {
+		const res = await fetch(`/api/forge-creation?id=${encodeURIComponent(id)}`, { headers: CLIENT_HEADERS });
+		const data = await res.json().catch(() => ({}));
+		if (data?.creation?.glb_url) openCreation(data.creation, { scroll: false });
+	} catch {
+		// Offline or gone: the gallery still lists it.
+	}
 }
 
 // Asked before the generating panel opens, so a signed-out visitor is never
@@ -4774,7 +4882,15 @@ document.addEventListener('forge:open-creation', (e) => {
 
 // Build the quality/engine controls from the live catalog (tiers, backends,
 // cost/time matrix). Falls back silently to the defaults if it can't load.
-loadCatalog();
+const catalogReady = loadCatalog();
+
+// Sign-in round trip (src/forge-sign-in-return.js): say up front that making a
+// model needs a free account, save the composer whenever a sign-in or
+// registration link is followed, and put it back once the catalog has built the
+// engine buttons it may name.
+initAccountNote();
+installSignInDraftCapture(readComposerDraft);
+catalogReady.then(restoreSignInDraft);
 
 // Surface the $THREE holder gate on the High control up front (pill + note),
 // independent of the catalog so the affordance lands even on older deploys.

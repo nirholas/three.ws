@@ -40,8 +40,17 @@
 // message rather than silently doing something the caller didn't ask for. A value
 // that is simply absent is never an error — it just keeps the current default.
 
-import { TRELLIS2_RESOLUTIONS, PIXAL3D_VIEW_LABELS, BACKENDS } from './forge-tiers.js';
+import { TRELLIS2_RESOLUTIONS, PIXAL3D_VIEW_LABELS, BACKENDS, PATHS, TIER_IDS, DEFAULT_PATH, DEFAULT_TIER } from './forge-tiers.js';
 import { parseSeed } from './forge-seed.js';
+import {
+	FORGE_ASPECT_RATIOS,
+	laneHonorsTier,
+	laneHonorsSeed,
+	laneFillsOtherSides,
+	tierIgnoredReason,
+	seedIgnoredReason,
+	fillSidesRejectedReason,
+} from './forge-controls.js';
 
 // glb is the universal default. The two compressed variants run a post-generation
 // pass (see glb-compress.js) that shrinks the delivered file without changing the
@@ -107,6 +116,57 @@ function compressionFor(format) {
 	if (format === 'glb-draco') return 'draco';
 	if (format === 'glb-meshopt') return 'meshopt';
 	return 'none';
+}
+
+function present(v) {
+	return v !== undefined && v !== null && v !== '';
+}
+
+// The generation controls the page shows (tier, path, engine, aspect ratio)
+// and the combinations a named engine cannot honor (forge-controls.js holds
+// what each lane does with each control). Every one of these used to fall back
+// silently: an unknown tier became Standard, an unknown aspect ratio 1:1, an
+// unknown engine the default engine, and fill_other_sides was dropped on every
+// lane but Pixal3D. An absent field is still never an error, and "" or "auto"
+// for the engine means automatic routing.
+function controlCombinationErrors(b, { seed, fillOtherSides }, errors) {
+	let path = DEFAULT_PATH;
+	if (present(b.path)) {
+		if (PATHS.includes(b.path)) path = b.path;
+		else errors.push({ field: 'path', message: `path must be one of: ${PATHS.join(', ')}.` });
+	}
+	let tier = DEFAULT_TIER;
+	if (present(b.tier)) {
+		if (TIER_IDS.includes(b.tier)) tier = b.tier;
+		else errors.push({ field: 'tier', message: `tier must be one of: ${TIER_IDS.join(', ')}.` });
+	}
+	if (present(b.aspect_ratio) && !FORGE_ASPECT_RATIOS.includes(b.aspect_ratio)) {
+		errors.push({ field: 'aspect_ratio', message: `aspect_ratio must be one of: ${FORGE_ASPECT_RATIOS.join(', ')}.` });
+	}
+
+	let backend = null;
+	if (present(b.backend) && b.backend !== 'auto') {
+		const lane = typeof b.backend === 'string' ? BACKENDS[b.backend] : null;
+		if (!lane) {
+			errors.push({ field: 'backend', message: `backend must be one of: ${Object.keys(BACKENDS).join(', ')}, or omitted for automatic routing.` });
+		} else if (!lane.paths.includes(path)) {
+			errors.push({ field: 'backend', message: `${lane.label} does not build from the ${path} path. It serves: ${lane.paths.join(', ')}.` });
+		} else {
+			backend = b.backend;
+		}
+	}
+
+	if (fillOtherSides && !(backend && laneFillsOtherSides(backend))) {
+		errors.push({ field: 'fill_other_sides', message: fillSidesRejectedReason() });
+	}
+	if (!backend) return;
+	const label = BACKENDS[backend].label;
+	if (tier !== DEFAULT_TIER && !laneHonorsTier(backend)) {
+		errors.push({ field: 'tier', message: tierIgnoredReason(label) });
+	}
+	if (seed !== null && !laneHonorsSeed(backend)) {
+		errors.push({ field: 'seed', message: seedIgnoredReason(label) });
+	}
 }
 
 /**
@@ -317,6 +377,8 @@ export function normalizeForgeOptions(body) {
 
 	// sampler: TRELLIS.2 per-stage flow sampler overrides (the lab's controls).
 	const sampler = normalizeSampler(b.sampler, errors);
+
+	controlCombinationErrors(b, { seed, fillOtherSides }, errors);
 
 	const hasOptions =
 		sampler !== null ||

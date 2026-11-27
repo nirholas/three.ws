@@ -87,11 +87,16 @@ export const HF_LANE_COOLDOWN_SECONDS = 300;
 // and costs one caller a probe every half hour instead of every five minutes.
 export const HF_QUOTA_COOLDOWN_SECONDS = 1800;
 
-/** True while a recent chain-wide HuggingFace failure has the lane paused. */
-export async function hfLaneCooling() {
-	const key = laneCooldownKey('huggingface');
+/** True while a recent failure has `backendId` cooled, on any instance. */
+export async function laneCooling(backendId) {
+	const key = laneCooldownKey(backendId);
 	const cooling = await providersInCooldown([key]).catch(() => new Map());
 	return cooling.has(key);
+}
+
+/** True while a recent chain-wide HuggingFace failure has the lane paused. */
+export function hfLaneCooling() {
+	return laneCooling('huggingface');
 }
 
 const PROBE_TIMEOUT_MS = 2_500;

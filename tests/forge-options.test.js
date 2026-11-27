@@ -192,7 +192,7 @@ describe('normalizeForgeOptions: view_labels & fill_other_sides', () => {
 	});
 
 	it('accepts fill_other_sides as a boolean and defaults to false', () => {
-		expect(normalizeForgeOptions({ fill_other_sides: true }).fillOtherSides).toBe(true);
+		expect(normalizeForgeOptions({ fill_other_sides: true, backend: 'pixal3d' }).fillOtherSides).toBe(true);
 		expect(normalizeForgeOptions({}).fillOtherSides).toBe(false);
 	});
 
@@ -300,5 +300,67 @@ describe('summarizeForgeOptions', () => {
 		const s = summarizeForgeOptions(o);
 		expect(s.view_labels).toEqual(['front', 'back']);
 		expect(s.fill_other_sides).toBe(true);
+	});
+});
+
+// A control the request names but the chosen lane cannot honor used to fall
+// back silently (an unknown tier became Standard, an unknown aspect became 1:1,
+// an unknown engine became the default engine, fill_other_sides was dropped on
+// every lane but Pixal3D). Each is now a 400 that names the field.
+describe('normalizeForgeOptions: control combinations a lane cannot honor', () => {
+	const fields = (body) => normalizeForgeOptions(body).errors.map((e) => e.field);
+
+	it('accepts every valid tier, path, aspect ratio and engine without an error', () => {
+		for (const tier of ['draft', 'standard', 'high']) expect(fields({ tier })).toEqual([]);
+		for (const path of ['image', 'geometry', 'sketch']) expect(fields({ path })).toEqual([]);
+		for (const aspect_ratio of ['1:1', '4:3', '3:4', '16:9', '9:16']) expect(fields({ aspect_ratio })).toEqual([]);
+		expect(fields({ path: 'image', backend: 'trellis_selfhost' })).toEqual([]);
+		expect(fields({ path: 'sketch', backend: 'triposg' })).toEqual([]);
+	});
+
+	it('treats an absent, empty or "auto" engine as automatic routing', () => {
+		expect(fields({ backend: '' })).toEqual([]);
+		expect(fields({ backend: 'auto' })).toEqual([]);
+		expect(fields({ backend: null })).toEqual([]);
+	});
+
+	it('rejects an unknown tier, path and aspect ratio by name', () => {
+		expect(fields({ tier: 'ultra' })).toEqual(['tier']);
+		expect(fields({ path: 'video' })).toEqual(['path']);
+		expect(fields({ aspect_ratio: '21:9' })).toEqual(['aspect_ratio']);
+	});
+
+	it('rejects an unknown engine, and an engine that does not serve the path', () => {
+		expect(fields({ backend: 'nonexistent-lane' })).toEqual(['backend']);
+		const wrongPath = normalizeForgeOptions({ path: 'sketch', backend: 'trellis_selfhost' });
+		expect(wrongPath.errors.map((e) => e.field)).toEqual(['backend']);
+		expect(wrongPath.errors[0].message).toMatch(/sketch/);
+		// No path means the image path.
+		expect(fields({ backend: 'triposg' })).toEqual(['backend']);
+	});
+
+	it('rejects fill_other_sides: true on any engine but Pixal3D, including automatic routing', () => {
+		expect(fields({ fill_other_sides: true })).toEqual(['fill_other_sides']);
+		expect(fields({ fill_other_sides: true, backend: 'trellis_selfhost' })).toEqual(['fill_other_sides']);
+		expect(fields({ fill_other_sides: true, backend: 'pixal3d' })).toEqual([]);
+		expect(fields({ fill_other_sides: false, backend: 'trellis_selfhost' })).toEqual([]);
+	});
+
+	it('rejects Draft or High on a named engine that runs one quality, so nobody pays for High that changes nothing', () => {
+		for (const backend of ['anigen', 'partcrafter', 'huggingface', 'trellis', 'replicate_byok']) {
+			expect(fields({ backend, tier: 'high' })).toEqual(['tier']);
+			expect(fields({ backend, tier: 'draft' })).toEqual(['tier']);
+			expect(fields({ backend, tier: 'standard' })).toEqual([]);
+			expect(fields({ backend })).toEqual([]);
+		}
+		// Automatic routing picks a lane that honors the tier.
+		expect(fields({ tier: 'high' })).toEqual([]);
+	});
+
+	it('rejects a seed on a named engine that takes none', () => {
+		expect(fields({ backend: 'stability', seed: 7 })).toEqual(['seed']);
+		expect(fields({ backend: 'meshy', seed: 7, prompt: 'a chair' })).toEqual(['seed']);
+		expect(fields({ backend: 'tripo', seed: 7, prompt: 'a chair' })).toEqual([]);
+		expect(fields({ backend: 'trellis_selfhost', seed: 7 })).toEqual([]);
 	});
 });

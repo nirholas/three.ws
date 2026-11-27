@@ -77,17 +77,22 @@ export function extraIdentityInputs({ options, aspectRatio, director } = {}) {
 	return out;
 }
 
+const VISIBILITIES = new Set(['public', 'unlisted', 'private']);
+
 /**
  * Who a result may be shared with, as a key segment. A request that asked for
  * 'public' shares with every public request; any other request is private to its
  * requester, so one account's unlisted or private model is never what another
- * account's identical prompt resolves to.
+ * account's identical prompt resolves to. A platform seed job (`internal`) that
+ * names no visibility is born public (forge-store.js createCreation), so it keys
+ * as public too: that is how the showcase seeder warms the cache for everyone.
  *
- * @param {{ visibility?: unknown, userId?: string|null, clientKey?: string|null }} who
+ * @param {{ visibility?: unknown, userId?: string|null, clientKey?: string|null, internal?: boolean }} who
  * @returns {string}
  */
-export function requestScope({ visibility, userId, clientKey } = {}) {
-	if (visibility === 'public') return 'public';
+export function requestScope({ visibility, userId, clientKey, internal = false } = {}) {
+	const v = VISIBILITIES.has(visibility) ? visibility : null;
+	if (v === 'public' || (internal === true && v === null)) return 'public';
 	if (userId) return `u:${userId}`;
 	if (typeof clientKey === 'string' && clientKey && clientKey !== 'anon') return `c:${clientKey}`;
 	return 'anon';

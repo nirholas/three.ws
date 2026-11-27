@@ -19,6 +19,10 @@ import { createRegenProvider } from '../../_providers/gcp.js';
 import {
 	canonicalNodeMapFromObject,
 	retargetClip,
+	retargetClipToObject,
+	hipRestLocalHeight,
+	hipGroundLocalY,
+	clipHipBaselineY,
 	scaleClipSpeed,
 	parseClipJSON,
 	MIN_COVERAGE,
@@ -32,6 +36,7 @@ import {
 } from '../../../src/runtime/motion-signature.js';
 import { SLOTS, DEFAULT_ANIMATION_MAP } from '../../../src/runtime/animation-slots.js';
 import { fetchUpstream } from '../../_lib/upstream-fetch.js';
+import { libraryReadyClip } from '../../_lib/motion-seed.js';
 
 // Largest base64-encoded GLB we'll inline in a JSON-RPC response before falling
 // back to the (small) clip JSON. Keeps responses sane for very heavy avatars.
@@ -135,8 +140,11 @@ function installDomShims() {
 
 async function parseGLB(bytes) {
 	const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+	// The Forge auto-rig, the avatar pipeline and every published avatar ship
+	// meshopt-compressed geometry; without the decoder the loader refuses them all.
+	const { MeshoptDecoder } = await import('three/examples/jsm/libs/meshopt_decoder.module.js');
 	const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-	const loader = new GLTFLoader();
+	const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 	return new Promise((resolve, reject) => loader.parse(ab, '', resolve, reject));
 }
 
@@ -578,15 +586,9 @@ export const toolDefs = [
 				throw rpcError(-32001, 'text-to-animation is not configured (GCP_TEXT2MOTION_URL unset)');
 			}
 
-			const duration = Math.max(1, Math.min(10, Number(args.duration_seconds) || 4));
-			const clipJSON = await generateMotionClip(provider, {
-				prompt: args.prompt,
-				duration_seconds: duration,
-			});
-
+			// Fetch and check the rig before the GPU runs: an unrigged mesh can never
+			// take the motion, so it must not cost a worker job or a wait.
 			installDomShims();
-			const baseClip = parseClipJSON(clipJSON, clipJSON.name || 'generated');
-
 			const { bytes, url, filename } = await safeFetchModel(args.model_url);
 			let gltf;
 			try {
@@ -596,13 +598,39 @@ export const toolDefs = [
 			}
 			const scene = gltf.scene || gltf.scenes?.[0];
 			if (!scene) throw new Error('the model has no scene to animate');
-
-			const map = canonicalNodeMapFromObject(scene);
-			if (map.size === 0) {
-				throw new Error('no recognizable humanoid skeleton found — text_to_animation needs a rigged GLB');
+			if (canonicalNodeMapFromObject(scene).size === 0) {
+				throw rpcError(
+					-32602,
+					'This model has no humanoid skeleton, so a motion cannot play on it. Rig it first, then describe the motion again.',
+					{ hint: 'Call rig_mesh with this model_url to add a humanoid skeleton, then call text_to_animation on the rigged GLB it returns.' },
+				);
 			}
-			const hipScale = await computeHipScale(scene, baseClip);
-			const result = retargetClip(baseClip, map, { hipScale });
+
+			const duration = Math.max(1, Math.min(10, Number(args.duration_seconds) || 4));
+			const workerClip = await generateMotionClip(provider, {
+				prompt: args.prompt,
+				duration_seconds: duration,
+			});
+			// The worker writes HumanML3D's raw rest basis; the library basis is what
+			// the retarget's rest corrections are built against (same conversion
+			// /api/forge-motion applies before /pose plays a clip).
+			const clipJSON = libraryReadyClip(workerClip);
+			const baseClip = parseClipJSON(clipJSON, clipJSON.name || 'generated');
+
+			// Hip translation lands in the hips-parent's local units, as the in-app
+			// player (src/animation-manager.js) does it: a centimetre armature
+			// (Mixamo exports at scale 0.01) needs ~100x, and world-height matching
+			// would sink the body to the floor.
+			let hipScale = 1;
+			const hipLocalY = hipRestLocalHeight(scene);
+			const hipBaseline = clipHipBaselineY(baseClip);
+			if (hipLocalY > 0.05 && hipBaseline > 0.05) {
+				hipScale = Math.min(200, Math.max(0.2, hipLocalY / hipBaseline));
+			}
+			const result = retargetClipToObject(baseClip, scene, {
+				hipScale,
+				hipOffsetY: hipGroundLocalY(scene),
+			});
 
 			const report = {
 				prompt: args.prompt,

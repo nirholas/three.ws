@@ -45,6 +45,7 @@ import { announceIndexNow } from './indexnow-queue.js';
 import { isIndexableCreation } from './seo-resources.js';
 import { verifyManageToken } from './forge-manage-token.js';
 import { gatePublish } from './content-safety-store.js';
+import { currentPaidGeneration, bindPaidGeneration } from './forge-paid-generation.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -306,6 +307,10 @@ export async function createCreation({
 		// Funnel start — counts attempts so the health rollup can show how many
 		// generations began vs. completed. Best-effort; never blocks the insert.
 		if (recordStart) await recordGenerationEvent({ phase: 'start', backend, tier, path, source: 'create' });
+		// A paid submit's charge follows the row it paid for, so a job that fails
+		// after the 200 can still be made whole (forge-paid-generation.js).
+		const paid = currentPaidGeneration();
+		if (paid) await bindPaidGeneration(id, paid);
 		return id;
 	} catch (err) {
 		if (isDbUnavailableError(err)) console.warn('[forge-store] createCreation skipped (db unavailable):', err?.message);

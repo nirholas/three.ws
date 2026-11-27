@@ -40,6 +40,17 @@ function ownsRow(row, viewer) {
 }
 
 /**
+ * Pure: is this creation's model still out in the world at all (finished, not
+ * blocked by the content-safety sweep or a takedown, not held for review)? The
+ * question a job's own poller asks: it owns the job, so visibility is not its
+ * concern, but a removed model must stop being handed out even to its owner.
+ */
+export function creationLive(row) {
+	if (!row || row.status !== 'done') return false;
+	return row.safety_status !== 'blocked' && row.safety_status !== 'held';
+}
+
+/**
  * Pure: may `viewer` be handed this creation's model? `viewer: null` asks the
  * public question (is it servable to anyone).
  *
@@ -47,8 +58,7 @@ function ownsRow(row, viewer) {
  * @param {{ userId?: string|null, clientKey?: string|null }|null} [viewer]
  */
 export function creationServableTo(row, viewer = null) {
-	if (!row || row.status !== 'done') return false;
-	if (row.safety_status === 'blocked' || row.safety_status === 'held') return false;
+	if (!creationLive(row)) return false;
 	// A row with no visibility is legacy and reads as public everywhere.
 	if (row.visibility == null || row.visibility === 'public') return true;
 	return ownsRow(row, viewer);

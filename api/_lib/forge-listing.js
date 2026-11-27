@@ -16,6 +16,7 @@
 
 import { priceUsdcForTier } from './forge-tiers.js';
 import { buildBazaarSchema } from './x402-spec.js';
+import { FORGE_ASPECT_RATIOS } from './forge-controls.js';
 
 // ── Service metadata (facilitator search rows) ──────────────────────────────
 // serviceName MUST be ≤32 printable-ASCII chars or the CDP Bazaar validator
@@ -29,7 +30,9 @@ export const FORGE_SERVICE_NAME = 'Forge: AI 3D Model Generator'; // 28 chars
 // limit); withService()/the mirror both slice to 5, so keep it at 5 exactly.
 export const FORGE_TAGS = Object.freeze(['3d', 'ai', 'text-to-3d', 'image-to-3d', 'utility']);
 
-export const FORGE_ASPECT_RATIOS = Object.freeze(['1:1', '4:3', '3:4', '16:9', '9:16']);
+// One list of reference-image aspect ratios, shared with the /forge validator
+// and the page (forge-controls.js).
+export { FORGE_ASPECT_RATIOS };
 export const FORGE_MAX_VIEWS = 6;
 
 // Prices sourced from forge-tiers.js so the prose never carries a second copy of

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-27T05:19:01.560Z",
+	"generated_at": "2026-11-27T05:21:54.425Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4776,
+	"total": 4777,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -60,6 +60,17 @@
 			"link": "/forge",
 			"tags": [
 				"improvement",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Forge caching never hands back a wrong, failed, private or removed model",
+			"summary": "Forge answers a repeated prompt from its cache instead of generating again, and that cache is now strict about what it hands out. Every setting that changes the model (size, pose, aspect ratio, sampler settings, the prompt director and more) gives a separate entry, so you never get a model made with different settings. A failed, partial or rejected model is never cached. A model you did not make public is only ever served back to you. A model that is deleted or taken down stops being served at once, and a poll for it says it was removed. Two identical requests sent together, such as a double click or a second tab, now make one model instead of two. If the cache itself is down, Forge still generates, just without the shortcut.",
+			"link": "/forge",
+			"tags": [
+				"fix",
 				"security"
 			]
 		},
@@ -1550,16 +1561,6 @@
 			"title": "Docs · Talking-avatar clips (Make a clip)",
 			"summary": "Turn an avatar and a line of text, or an uploaded recording, into a shareable MP4 of that avatar saying it: NVIDIA Magpie voice, Audio2Face-3D lip sync, rendered and encoded in your browser.",
 			"link": "/docs/talking-avatar-clips",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "launch",
-			"title": "Docs · The /enterprise procurement page",
-			"summary": "How the three.ws enterprise page is built: purchase paths, identity, security answers, Microsoft surface statuses from data, the printable procurement packet and the contact form that files a lead.",
-			"link": "/docs/enterprise",
 			"tags": [
 				"launch"
 			]

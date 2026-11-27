@@ -1921,6 +1921,10 @@ function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 	// (download, share, segment, refine) keeps the canonical public URL.
 	els.viewer.setAttribute('src', resolveDevR2Url(glbUrl));
 	els.viewer.setAttribute('alt', `3D model: ${label}`);
+	// A turntable that never stops is the motion prefers-reduced-motion exists to
+	// silence. camera-controls stays, so the model is still inspectable by drag,
+	// pinch and arrow key.
+	if (REDUCED_MOTION) els.viewer.removeAttribute('auto-rotate');
 	lastShownGlb = glbUrl;
 	els.resultLabel.textContent = label;
 	// Hide the saved chip by default; caller re-shows it for fresh generations.
