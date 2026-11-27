@@ -2,6 +2,7 @@
 //
 //   POST /api/studio/retexture-region   submit a masked region edit → { job }
 //   GET  /api/studio/retexture-region?job=<token>   poll → { status, result_url? }
+//   GET  /api/studio/retexture-region?health=1      → { available, message } (no auth)
 //
 // Repaints ONLY the masked UV region of an existing texture from a prompt and/or
 // colour, preserving the rest of the surface and feathering the seam. The heavy
@@ -13,11 +14,18 @@
 // back to the client and, on status, re-validate that its baseUrl is the worker
 // we actually configured before polling — so a forged token can never steer the
 // server's fetch at an attacker-chosen host (no SSRF, no DB row needed).
+//
+// A finished edit is never handed over on the worker's word alone: the poll
+// downloads the source and the result and runs checkTextureResult
+// (api/_lib/texture-result-checks.js). A result that moved the mesh or UVs,
+// dropped the rig or clips, or wrote a wrong-size or linear atlas is reported
+// as failed, so the page keeps the model the user had.
 
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { limits } from '../_lib/rate-limit.js';
-import { assertSafePublicUrl } from '../_lib/ssrf-guard.js';
+import { assertSafePublicUrl, fetchSafePublicUrlPinned } from '../_lib/ssrf-guard.js';
+import { checkTextureResult } from '../_lib/texture-result-checks.js';
 import { createRegenProvider } from '../_providers/gcp.js';
 import { parse } from '../_lib/validate.js';
 import { z } from 'zod';
@@ -27,6 +35,12 @@ const MODE = 'retex_region';
 // Mask is a small 1-channel PNG; base64 of a 1024² mask is well under 1 MB even
 // when busy. Cap generously and let readJson enforce the transport ceiling.
 const MAX_MASK_B64 = 10 * 1024 * 1024;
+
+// The source and the result are both downloaded to check the edit. Matches the
+// worker's own 128 MB input ceiling (workers/texture/main.py fetch_remote_bytes).
+const MAX_CHECK_BYTES = 128 * 1024 * 1024;
+const CHECK_FETCH_TIMEOUT_MS = 30_000;
+const UNCHANGED = 'Your model is unchanged. Press Apply to try again.';
 
 const submitSchema = z
 	.object({
@@ -66,21 +80,97 @@ const UNCONFIGURED_HINT =
 // base URL. Check them together so submit and status give the same 501 with the
 // same code, rather than one 501 from the missing key and a different failure
 // deeper in the provider from the missing URL.
-function getProviderOr501(res) {
+function resolveProvider() {
 	let provider;
 	try {
 		provider = createRegenProvider();
 	} catch (err) {
-		error(res, 501, 'region_retex_unconfigured', UNCONFIGURED_HINT, { reason: err.message });
-		return null;
+		return { provider: null, reason: err.message };
 	}
-	if (!provider.supportsMode(MODE)) {
-		error(res, 501, 'region_retex_unconfigured', UNCONFIGURED_HINT, {
-			reason: 'GCP_TEXTURE_URL is not set',
-		});
+	if (!provider.supportsMode(MODE)) return { provider: null, reason: 'GCP_TEXTURE_URL is not set' };
+	return { provider, reason: null };
+}
+
+function getProviderOr501(res) {
+	const { provider, reason } = resolveProvider();
+	if (!provider) {
+		error(res, 501, 'region_retex_unconfigured', UNCONFIGURED_HINT, { reason });
 		return null;
 	}
 	return provider;
+}
+
+// The page asks before it offers the tool, so a deployment without the worker
+// never lets someone paint a mask only to be told at Apply that it cannot run.
+function handleHealth(res) {
+	const { provider } = resolveProvider();
+	return json(res, 200, {
+		ok: true,
+		available: !!provider,
+		message: provider
+			? 'Magic Brush is available.'
+			: 'Magic Brush is not available on this deployment right now: the texture worker is not running.',
+	});
+}
+
+// The provider's opaque job token is base64url JSON. The source mesh and the
+// requested size ride along in it so the poll can check the result against
+// them. They are unsigned, which is fine: a caller who edits them only changes
+// what their own result is compared with, and the source is fetched through
+// the same SSRF guard as on submit.
+function withCheckContext(token, src, size) {
+	const job = JSON.parse(Buffer.from(String(token), 'base64url').toString('utf8'));
+	return Buffer.from(JSON.stringify({ ...job, src, size }), 'utf8').toString('base64url');
+}
+
+function checkContext(token) {
+	try {
+		const { src, size } = JSON.parse(Buffer.from(String(token), 'base64url').toString('utf8'));
+		return typeof src === 'string' && Number.isInteger(size) ? { src, size } : null;
+	} catch {
+		return null;
+	}
+}
+
+async function fetchModel(url) {
+	const resp = await fetchSafePublicUrlPinned(
+		url,
+		{ signal: AbortSignal.timeout(CHECK_FETCH_TIMEOUT_MS) },
+		{ maxBytes: MAX_CHECK_BYTES },
+	);
+	if (!resp.ok) throw new Error(`download returned ${resp.status}`);
+	return new Uint8Array(await resp.arrayBuffer());
+}
+
+// Returns null when the result may be shown, or the failed poll body.
+async function verifyResult(token, resultUrl) {
+	const ctx = checkContext(token);
+	if (!ctx) {
+		return { status: 'failed', error: `This edit cannot be checked, so it was not applied. ${UNCHANGED}`, checks: [] };
+	}
+	let source;
+	let result;
+	try {
+		[source, result] = await Promise.all([fetchModel(ctx.src), fetchModel(resultUrl)]);
+	} catch (err) {
+		return {
+			status: 'failed',
+			error: `The edit finished but could not be downloaded to check it (${err.message}). ${UNCHANGED}`,
+			checks: [],
+		};
+	}
+	let verdict;
+	try {
+		verdict = await checkTextureResult({ source, result, mode: 'region', textureSize: ctx.size });
+	} catch (err) {
+		return { status: 'failed', error: `The edit could not be checked (${err.message}). ${UNCHANGED}`, checks: [] };
+	}
+	if (verdict.ok) return null;
+	return {
+		status: 'failed',
+		error: `${verdict.failures.map((f) => f.message).join(' ')} ${UNCHANGED}`,
+		checks: verdict.failures,
+	};
 }
 
 // Re-validate that an opaque job token points at THE worker we configured, not
@@ -144,7 +234,7 @@ async function handleSubmit(req, res) {
 
 	return json(res, 202, {
 		ok: true,
-		job: submission.extJobId,
+		job: withCheckContext(submission.extJobId, body.mesh_url, body.texture_size),
 		status: 'queued',
 		eta: submission.eta ?? null,
 	});
@@ -181,6 +271,11 @@ async function handleStatus(req, res) {
 		return error(res, 502, 'provider_error', err.message || 'status poll failed');
 	}
 
+	if (update.status === 'done' && update.resultGlbUrl) {
+		const rejected = await verifyResult(token, update.resultGlbUrl);
+		if (rejected) return json(res, 200, { ok: true, result_url: null, ...rejected });
+	}
+
 	return json(res, 200, {
 		ok: true,
 		status: update.status,
@@ -193,5 +288,6 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (req.method === 'POST') return handleSubmit(req, res);
+	if (new URL(req.url, 'http://x').searchParams.get('health') === '1') return handleHealth(res);
 	return handleStatus(req, res);
 });

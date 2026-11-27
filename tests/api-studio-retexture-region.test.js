@@ -47,12 +47,54 @@ vi.mock('../api/_lib/ssrf-guard.js', () => ({
 		if (/^(localhost|127\.|10\.|192\.168\.)/.test(u.hostname)) throw new Error('private host');
 		return u;
 	},
+	// The gateway downloads the source and the worker's result to check the
+	// edit kept the model. Served from the fixture map below; never the network.
+	fetchSafePublicUrlPinned: async (raw) => {
+		const bytes = served.get(String(raw));
+		if (!bytes) return new Response('not found', { status: 404 });
+		return new Response(bytes, { status: 200, headers: { 'content-type': 'model/gltf-binary' } });
+	},
+	MaxBytesExceededError: class extends Error {},
 }));
 
+// Real GLBs: the model the user painted on (rigged, with a 1024 atlas), a good
+// region edit of it, and a bad one that dropped the rig.
+const served = new Map();
+async function fixtureGlb({ rgb, rigged }) {
+	const { Document, NodeIO } = await import('@gltf-transform/core');
+	const sharp = (await import('sharp')).default;
+	const image = new Uint8Array(
+		await sharp({ create: { width: 1024, height: 1024, channels: 3, background: { r: rgb[0], g: rgb[1], b: rgb[2] } } })
+			.png()
+			.toBuffer(),
+	);
+	const doc = new Document();
+	const buf = doc.createBuffer();
+	const acc = (type, arr) => doc.createAccessor().setType(type).setArray(arr).setBuffer(buf);
+	const prim = doc
+		.createPrimitive()
+		.setAttribute('POSITION', acc('VEC3', new Float32Array([0, 0, 0, 1, 0, 0, 1, 1, 0])))
+		.setAttribute('TEXCOORD_0', acc('VEC2', new Float32Array([0, 0, 1, 0, 1, 1])))
+		.setMaterial(doc.createMaterial('m').setBaseColorTexture(doc.createTexture('t').setImage(image).setMimeType('image/png')));
+	const node = doc.createNode('body').setMesh(doc.createMesh('body').addPrimitive(prim));
+	const scene = doc.createScene().addChild(node);
+	if (rigged) {
+		const hip = doc.createNode('hips');
+		scene.addChild(hip);
+		node.setSkin(doc.createSkin('rig').addJoint(hip));
+	}
+	return new NodeIO().writeBinary(doc);
+}
+
 const WORKER = 'https://texture-worker.test';
+const GOOD_RESULT = 'https://storage.googleapis.com/bucket/textured/task-42.glb';
+const RIGLESS_RESULT = 'https://storage.googleapis.com/bucket/textured/task-rigless.glb';
 const { default: handler } = await import('../api/studio/retexture-region.js');
 
 const MESH = 'https://three.ws/cdn/models/avatar.glb';
+served.set(MESH, await fixtureGlb({ rgb: [120, 120, 120], rigged: true }));
+served.set(GOOD_RESULT, await fixtureGlb({ rgb: [200, 30, 30], rigged: true }));
+served.set(RIGLESS_RESULT, await fixtureGlb({ rgb: [200, 30, 30], rigged: false }));
 const MASK = 'iVBORw0KGgoAAAANSUhEUg==';
 
 function mkReq({ method = 'GET', url = '/api/studio/retexture-region', headers = {}, body = null } = {}) {
@@ -129,7 +171,7 @@ beforeEach(() => {
 			return {
 				ok: true,
 				status: 200,
-				json: async () => ({ status: 'done', result_url: 'https://three.ws/cdn/out/avatar-retex.glb' }),
+				json: async () => ({ status: 'done', result_url: GOOD_RESULT }),
 			};
 		}
 		throw new Error(`unexpected fetch: ${u}`);
@@ -185,10 +227,65 @@ describe('POST /api/studio/retexture-region: the success path', () => {
 		expect(body).toMatchObject({
 			ok: true,
 			status: 'done',
-			result_url: 'https://three.ws/cdn/out/avatar-retex.glb',
+			result_url: GOOD_RESULT,
 			error: null,
 		});
 		expect(workerCalls[1].url).toBe(`${WORKER}/tasks/task-42`);
+	});
+});
+
+describe('the result is checked before the user gets it', () => {
+	it('discards a result that dropped the rig and says the model is unchanged', async () => {
+		const { body: submitted } = await post({ mesh_url: MESH, prompt: 'brushed steel', mask_b64: MASK });
+		global.fetch = vi.fn(async () => ({
+			ok: true,
+			status: 200,
+			json: async () => ({ status: 'done', result_url: RIGLESS_RESULT }),
+		}));
+		const { status, body } = await poll(submitted.job);
+		expect(status).toBe(200);
+		expect(body.status).toBe('failed');
+		expect(body.result_url).toBeNull();
+		expect(body.error).toMatch(/skeleton/);
+		expect(body.error).toMatch(/model is unchanged/i);
+		expect(body.checks.map((f) => f.code)).toContain('rig_changed');
+	});
+
+	it('fails honestly when the result cannot be downloaded', async () => {
+		const { body: submitted } = await post({ mesh_url: MESH, prompt: 'brushed steel', mask_b64: MASK });
+		global.fetch = vi.fn(async () => ({
+			ok: true,
+			status: 200,
+			json: async () => ({ status: 'done', result_url: 'https://storage.googleapis.com/bucket/missing.glb' }),
+		}));
+		const { body } = await poll(submitted.job);
+		expect(body.status).toBe('failed');
+		expect(body.result_url).toBeNull();
+		expect(body.error).toMatch(/model is unchanged/i);
+	});
+
+	it('the token carries the source and size it must be checked against', async () => {
+		const { body } = await post({ mesh_url: MESH, prompt: 'gold leaf', mask_b64: MASK, texture_size: 512 });
+		const job = JSON.parse(Buffer.from(body.job, 'base64url').toString('utf8'));
+		expect(job).toMatchObject({ src: MESH, size: 512 });
+	});
+});
+
+describe('GET ?health=1 says whether Magic Brush can serve', () => {
+	it('is available when the worker is configured, without signing in', async () => {
+		getSessionUserMock.mockResolvedValue(null);
+		const { status, body } = await call({ url: '/api/studio/retexture-region?health=1' });
+		expect(status).toBe(200);
+		expect(body).toMatchObject({ ok: true, available: true });
+		expect(workerCalls).toHaveLength(0);
+	});
+
+	it('is unavailable, with a reason, when the worker URL is unset', async () => {
+		delete process.env.GCP_TEXTURE_URL;
+		const { status, body } = await call({ url: '/api/studio/retexture-region?health=1' });
+		expect(status).toBe(200);
+		expect(body.available).toBe(false);
+		expect(body.message).toMatch(/not available/i);
 	});
 });
 
