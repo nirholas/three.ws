@@ -19,14 +19,37 @@ vi.mock('../../api/_lib/db.js', async (importActual) => {
 const alerts = [];
 vi.mock('../../api/_lib/alerts.js', () => ({ sendOpsAlert: async (...a) => { alerts.push(a); } }));
 vi.mock('../../api/_lib/indexnow-queue.js', () => ({ announceIndexNow: () => {} }));
+// The object store is an in-memory bucket: the one thing stubbed at the storage
+// boundary. `bucket.down` makes every call fail the way a rejected credential
+// does, so the takedown's queue-for-purge path runs for real.
+const bucket = vi.hoisted(() => ({ objects: new Map(), down: false }));
 vi.mock('../../api/_lib/r2.js', async (importActual) => {
 	const actual = await importActual();
-	return { ...actual, objectStorageConfigured: () => true };
+	const refuse = () => {
+		if (!bucket.down) return;
+		const err = new Error('The AWS Access Key Id you provided does not exist in our records.');
+		err.name = 'InvalidAccessKeyId';
+		err.$metadata = { httpStatusCode: 403 };
+		throw err;
+	};
+	return {
+		...actual,
+		objectStorageConfigured: () => true,
+		listObjectsPage: async ({ prefix = '' }) => {
+			refuse();
+			return { objects: [...bucket.objects.keys()].filter((k) => k.startsWith(prefix)).map((key) => ({ key })), nextToken: null };
+		},
+		deleteObject: async (key) => {
+			refuse();
+			bucket.objects.delete(key);
+		},
+	};
 });
 
 process.env.DATABASE_URL ||= 'postgres://pglite.test/db';
 process.env.CRON_SECRET = 'coverage-secret';
 process.env.SKETCHFAB_UPLOADS_PER_RUN = '5';
+process.env.S3_PUBLIC_DOMAIN = 'https://bucket.coverage.test';
 
 let pg;
 let n = 0;
@@ -80,6 +103,8 @@ beforeAll(async () => {
 beforeEach(async () => {
 	holder.db = createPgliteSql({ pg });
 	alerts.length = 0;
+	bucket.objects.clear();
+	bucket.down = false;
 	await holder.db.sql`delete from sketchfab_uploads`;
 	await holder.db.sql`delete from content_safety_reviews`;
 	await holder.db.sql`delete from forge_removal_requests`;
@@ -144,5 +169,64 @@ describe('the social preview image honours visibility', () => {
 			expect(out.headers.location).toBeUndefined();
 			expect(out.text).not.toContain(word);
 		}
+	});
+});
+
+// A creation as production writes it: the mesh, the preview, the web and LOD
+// variants, a browser poster, the display thumbnail, a game-ready export of the
+// mesh, and the /cdn/ derivatives of each image. Every object is in the bucket.
+async function seedWithFiles(over = {}) {
+	const { createHash } = await import('node:crypto');
+	const { cdnUrl } = await import('../../api/_lib/r2.js');
+	const id = crypto.randomUUID();
+	const base = `forge/${CK.slice(0, 12)}/${id}`;
+	const glbKey = `${base}.glb`;
+	const previewKey = `${base}.png`;
+	const meshUrl = cdnUrl(glbKey);
+	const h = createHash('sha256').update(meshUrl).digest('hex').slice(0, 12);
+	const keys = [
+		glbKey, previewKey, `${base}.web.glb`, `${base}.lod.glb`, `${base}-poster.webp`,
+		`forge/thumb/${id}.webp`, `forge/thumb/${id}.png`,
+		`forge/gameready/${h}/quad-30000.glb`, `forge/gameready/${h}/quad-30000.fbx`,
+		`variants/256/${previewKey}.abc123.webp`, `variants/512/forge/thumb/${id}.webp.def456.webp`,
+	];
+	for (const k of keys) bucket.objects.set(k, Buffer.from('x'));
+	// Another model's files must survive a takedown of this one.
+	bucket.objects.set('forge/gameready/ffffffffffff/quad-30000.glb', Buffer.from('other'));
+	bucket.objects.set('forge/thumb/not-this-one.webp', Buffer.from('other'));
+	await holder.db.sql`
+		insert into forge_creations (id, client_key, prompt, glb_key, glb_url, preview_key, preview_image_url,
+			web_glb_key, lod_glb_key, status, outcome, visibility, safety_status)
+		values (${id}, ${CK}, ${over.prompt || 'a tidy wooden stool'}, ${glbKey}, ${meshUrl}, ${previewKey}, ${cdnUrl(previewKey)},
+			${`${base}.web.glb`}, ${`${base}.lod.glb`}, 'done', 'accepted', 'public', 'clear')
+	`;
+	return { id, keys, glbKey };
+}
+
+describe('a takedown reaches every stored copy of the model', () => {
+	// deleteCreation walked the creation's own prefix and the /cdn/ derivatives of
+	// the images it found. The display thumbnail (forge/thumb/<id>.*) and the
+	// game-ready exports (forge/gameready/<hash of the mesh URL>/) live under other
+	// prefixes, so a removed model's rendered thumbnail and its engine exports kept
+	// serving from the bucket.
+	it('removes the thumbnail, the game-ready exports and their variants, and nothing of another model', async () => {
+		const { id, keys } = await seedWithFiles();
+		const { deleteCreation } = await import('../../api/_lib/forge-store.js');
+		expect(await deleteCreation({ id, moderator: true })).toBe('deleted');
+		for (const k of keys) expect(bucket.objects.has(k), `${k} should be gone`).toBe(false);
+		expect(bucket.objects.has('forge/gameready/ffffffffffff/quad-30000.glb')).toBe(true);
+		expect(bucket.objects.has('forge/thumb/not-this-one.webp')).toBe(true);
+		const rows = await holder.db.sql`select id from forge_creations where id = ${id}`;
+		expect(rows.length).toBe(0);
+	});
+
+	it('queues the derived copies for the purge cron when storage refuses the delete', async () => {
+		const { id } = await seedWithFiles();
+		bucket.down = true;
+		const { deleteCreation } = await import('../../api/_lib/forge-store.js');
+		expect(await deleteCreation({ id, moderator: true })).toBe('deleted');
+		const queued = (await holder.db.sql`select target from forge_storage_purges where creation_id = ${id}`).map((r) => r.target);
+		expect(queued.some((t) => t.startsWith('forge/gameready/'))).toBe(true);
+		expect(queued).toContain(`forge/thumb/${id}.webp`);
 	});
 });

@@ -20,6 +20,7 @@ import { sql, isDbUnavailableError } from './db.js';
 import { databaseConfigured } from './env.js';
 import { putObject, cdnUrl, deleteObject, listObjectsPage, keyFromPublicUrl, normalizeStoredUrl, objectStorageConfigured, isStorageInfrastructureError } from './r2.js';
 import { queueStoragePurges } from './forge-storage-purges.js';
+import { thumbKeysFor, gameReadyPrefixesFor } from './forge-derived-keys.js';
 import { VARIANT_WIDTHS } from '../../src/shared/cdn-variant.js';
 import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
@@ -1238,6 +1239,12 @@ export async function deleteCreation({ id, clientKey = null, userId = null, mana
 		};
 		const ownPrefix = creationPrefix(row);
 		if (ownPrefix) for (const k of await listOrQueue(ownPrefix)) if (k.startsWith('forge/')) keys.add(k);
+		// Copies outside the creation's own prefix that the row never records: the
+		// display thumbnail and the game-ready exports of each form of its mesh URL.
+		for (const k of thumbKeysFor(row.id)) keys.add(k);
+		for (const prefix of gameReadyPrefixesFor(row)) {
+			for (const k of await listOrQueue(prefix)) if (k.startsWith('forge/')) keys.add(k);
+		}
 		const derived = new Set();
 		for (const prefix of variantPrefixes([...keys])) {
 			for (const k of await listOrQueue(prefix)) derived.add(k);
