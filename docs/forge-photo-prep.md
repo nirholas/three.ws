@@ -2,6 +2,26 @@
 
 When a visitor picks a photo for photo-to-3D in [Forge](https://three.ws/forge), the browser checks and prepares it before anything is uploaded. ONNX Runtime Web (Microsoft, MIT) runs a background matting model on the visitor's device, the page crops a square around the subject, and plain-language warnings flag photos that would produce a bad mesh. The visitor sees the original next to the prepared image and decides what to send. Code: [`src/forge-photo-prep/`](../src/forge-photo-prep/README.md).
 
+## Which files work, and what happens to each
+
+Before the check above, every file goes through one intake step shared by /forge and Forge Studio ([`src/shared/forge-image-intake.js`](../src/shared/forge-image-intake.js) decides, [`src/shared/forge-image-normalize.js`](../src/shared/forge-image-normalize.js) converts). A file is judged by its leading bytes, never by its name or the type the operating system guessed, so a HEIC with no type is read and a PDF renamed `.jpg` is refused.
+
+- **Passed through untouched:** a PNG, JPEG or WebP under 8 MB, upright, still, with a longer edge of 8192 px or less. The same file object is uploaded, so the lane receives exactly the bytes it received before this step existed.
+- **Converted on the device:** HEIC and HEIF (the browser's own decoder in Safari, the vendored libheif WebAssembly build in [`public/vendor/libheif/`](../public/vendor/libheif/) elsewhere), AVIF, GIF (the first frame of an animation), SVG (drawn at 2048 px), a JPEG with an EXIF rotation (turned upright, since the lane ignores the tag), a file over 8 MB, or one wider than 8192 px. The result is an upright JPEG, or WebP when the image has transparency, at most 4096 px on its longer edge and stepped down in quality until it fits under 8 MB. A one-line note says what was done.
+- **Refused with a reason:** an empty file, anything that is not an image (the message names the format it found, such as PDF, web page or ZIP, and lists the formats that work: JPG, PNG, WebP, HEIC, AVIF or GIF), an image under 64 px on a side, or a file over 100 MB. The photo tile shows a few words and the full sentence appears beside it.
+
+### Four ways in, one path
+
+Picking a file, dropping it on a view slot or anywhere on the page, pasting an image (Cmd+V or Ctrl+V), and pasting or dragging an image link all end in the same intake and upload code ([`src/shared/forge-dropzone.js`](../src/shared/forge-dropzone.js) is the one dropzone both pages install). A link is fetched for the visitor by `POST /api/forge-upload { source_url }` through the SSRF guard ([API reference](./api-reference.md)): a private, local or metadata address is refused, a page link follows its preview image once, and a link that 404s, times out, is too large or is not an image gets a sentence saying which, and what to do instead. A link pasted into a text field is left alone.
+
+### When the upload fails
+
+The upload ([`src/shared/forge-upload-client.js`](../src/shared/forge-upload-client.js)) keeps the photo on every failure. A dropped connection, a storage error (5xx), a PUT that runs past two minutes and an expired session each get their own message, and the tile's Retry button sends the same prepared photo again without asking the visitor to find it. A file storage refuses as too large (413) is final, so Retry becomes "Choose another".
+
+### Checking it in a browser
+
+[`scripts/forge-intake-verify.mjs`](../scripts/forge-intake-verify.mjs) pushes the whole test image set ([`scripts/forge-intake-fixtures.mjs`](../scripts/forge-intake-fixtures.mjs), built at run time, nothing binary committed) through the picker, paste, drop and link paths of the real page, signed in as the QA account, and records each tile's outcome and the exact bytes each upload sent. It stops before generation.
+
 ## What runs on the device
 
 | Step | Detail |
@@ -35,7 +55,7 @@ Nothing leaves the device until the visitor confirms the review dialog. The brow
 
 ## Fallback
 
-The check is skipped and the original uploads exactly as before, with a one-line note, when the browser lacks Web Workers, `OffscreenCanvas` or `createImageBitmap`, reports under 1 GB of device memory, the photo is over 40 MB, or the model fails to load or run.
+The check is skipped and the photo uploads as the intake step left it (untouched when it already worked, converted when the lane could not read it), with a one-line note, when the browser lacks Web Workers, `OffscreenCanvas` or `createImageBitmap`, reports under 1 GB of device memory, the photo is over 40 MB, or the model fails to load or run.
 
 | State | Screen |
 |---|---|

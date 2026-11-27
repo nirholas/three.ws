@@ -2129,6 +2129,26 @@ labeled with the prompt.
 | `502`  | `generation_failed`              | The lane could not start the job; retry is free                      |
 | `503`  | `not_configured` / `lane_timeout`| Lane unavailable on this deployment, or slow to accept; retry later  |
 
+### Forge reference photos: `POST /api/forge-upload`
+
+The page uploads reference photos in two steps: presign here, then `PUT` the bytes straight to object storage. Signed in only; rate limited per account.
+
+```
+POST /api/forge-upload  { "content_type": "image/jpeg", "size_bytes": 812345 }
+  -> 200 { "upload_url": "<presigned PUT>", "public_url": "https://three.ws/cdn/forge/uploads/..." }
+```
+
+`content_type` is `image/png`, `image/jpeg` or `image/webp` (`400 invalid_content_type` otherwise) and `size_bytes` at most 8 MB (`400 invalid_size` otherwise). The page converts every other format, and anything larger, on the device first. Pass `public_url` in `image_urls` on `POST /api/forge`. A deployment with no bucket answers `503 unconfigured`; a bucket refusing our credential answers `503 storage_unavailable`.
+
+The same endpoint fetches an image the visitor pasted as a link, since the browser cannot read most other sites itself:
+
+```
+POST /api/forge-upload  { "source_url": "https://example.com/photos/mug.jpg" }
+  -> 200 application/octet-stream (the image bytes), x-image-format: jpeg|png|webp|heic|avif|gif|svg
+```
+
+The fetch runs through the SSRF guard with a pinned address, reads at most 25 MB, and judges the result by its bytes, not the content type the site claims. A link to a web page follows its `og:image` preview once. Refusals carry a sentence for the visitor in `message`: `400 url_blocked` (not http(s), or a private, loopback or metadata address), `415 url_not_image` (names what it found, such as a PDF or a page with no preview image), `413 url_too_large`, `422 url_unreachable` (the site answered with an error status, named in the message) and `502 url_unreachable` (no answer in time, or the connection dropped). The bytes come back as an attachment with `nosniff` and are never rendered by the server; the page then prepares and uploads them like a dropped photo. Code: [`api/_lib/forge-image-import.js`](../api/_lib/forge-image-import.js).
+
 ### Forge in a world: the `world` field
 
 `POST /api/forge` accepts an optional `world` string (letters, digits, `: _ . -`, up
