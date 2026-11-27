@@ -17,12 +17,16 @@ The verdict is `clear`, `blocked` or `undecided`. This gate fails closed: `undec
 | null | never screened (private or unlisted models) | no |
 | pending | publish requested, screen has not answered yet | no, retried by the sweep |
 | clear | screened clean, or approved by an admin | yes, when the maker publishes |
-| held | unscreenable for 6 hours, or hidden by 3 or more reports | no, waits for an admin |
-| blocked | unsafe verdict; forced private | no, maker cannot publish |
+| held | unscreenable for 6 hours, hidden by 3 or more reports, or requested by an account with repeat blocks | no, waits for an admin |
+| blocked | unsafe verdict; forced private | no, maker cannot publish, and the model is viewable only by its maker (no share link, no social preview card) |
 
 Born-public models (explicit public at creation, public reconstruction or selfie avatars) are inserted `unlisted` with `publish_requested_at` set and are promoted automatically once clear. Platform seeds (`internal`) are exempt.
 
 The sweep also backfills models that were public before the screen existed. A blocked one goes private; an undecided one is left and retried.
+
+## Repeat abuse
+
+An account with 3 or more blocked models in 30 days (`REPEAT_BLOCK_THRESHOLD` and `REPEAT_BLOCK_WINDOW_DAYS` in `api/_lib/content-safety-store.js`) pages the operator (`Repeat content-screen blocks from one account`, naming the account id and the count, never a prompt). Its later publish requests are held for an operator even when the screen clears them, and the review row notes why. Only signed-in accounts count: the anonymous browser key is a shared bucket, so it never flags anyone. A block an admin approves stops counting, so a false positive clears itself. Generation is never refused; only public listing waits.
 
 ## Reports
 
@@ -46,6 +50,7 @@ npm run forge:takedown -- <id> --prod-env --apply --reason harmful --resolution 
 
 - `Content screen blocked a Forge model` (warn): forced private, review with `npm run forge:safety -- --prod-env`.
 - `CSAM screen hit on a public Forge model` (critical): see the runbook below.
+- `Repeat content-screen blocks from one account` (warn): see Repeat abuse above.
 - `Forge model held for manual safety review` (warn): a publish waited 6 hours with no answer.
 - `Content safety screen is not answering` (warn): a sweep run screened 3 or more models and every one came back undecided. Nothing will publish until a screen answers. Check `NVIDIA_API_KEY` and the vision chain in `api/_lib/vision.js`; the usual causes are a retired model, an exhausted key, or a GCP billing lock (see the Vertex billing note in memory).
 
@@ -57,6 +62,19 @@ A `sexual_minors` rubric hit or a NemoGuard minor category sets `csam: true`. Th
 2. The owner files the report (NCMEC CyberTipline or the applicable authority) from an ESP account registered to the owner. This step cannot be automated from the code.
 3. Only after the report is filed and retention requirements are met, remove the model with `npm run forge:takedown -- <id> --prod-env --apply --reason harmful --resolution "..." --evidence-released "<report reference>"`. The release reference is appended to the removal record.
 
+## What a takedown removes
+
+`npm run forge:takedown` with no `--apply` prints everything it will touch first. With `--apply` it removes:
+
+- the creation record and its stored GLB, preview, source images and the whole `forge/<id>/` prefix
+- the display thumbnail (`forge/thumb/<id>.webp` and `.png`) and the game-ready exports, which live outside the model prefix (`forge/gameready/<hash of the mesh URL>/`, derived from every URL spelling the model has)
+- every resized variant of those (`variants/...`)
+- avatar copies saved from the model (`/api/avatars/from-forge`, found by `source_meta.source_glb_url`), including their stored files
+- the Sketchfab listing, when the model was uploaded there
+- the CDN cache for the model page, share page, social preview card, the gallery and explore feeds, and every `/cdn/` and `/cdn/_v/` key
+
+A remix made from the model is listed but not removed: it is another maker's creation and needs its own request. Anything that could not be removed is printed as `COULD NOT REMOVE` and the script exits 1, so a half-finished takedown is never read as done. If object storage is down the keys go to the `forge_storage_purges` queue and are retried. The CSAM evidence hold above applies unchanged.
+
 ## Configuration
 
 No new env vars. The text signal uses the existing publish-safety config (`NVIDIA_API_KEY`, `PUBLISH_SAFETY_*`). The image signal uses the vision chain. If neither answers, models stay pending then held; they are never published unscreened.
@@ -67,4 +85,4 @@ Apply migration `20261120140000` before the new code serves traffic. Read `npm r
 
 ## Tests
 
-`tests/content-safety.test.js` (pure combiner and parsers) and `tests/content-safety-db.test.js` (gate, sweep, admin queue and report auto-hide against the real schema on PGlite).
+`tests/content-safety.test.js` (pure combiner and parsers) and `tests/content-safety-db.test.js` (gate, sweep, admin queue and report auto-hide against the real schema on PGlite). `tests/api/forge-safety-coverage.test.js` covers the publish gate with the provider down, refusal copy, the removal-request handler, repeat abuse, every surface that must honour visibility (Sketchfab showcase, social preview) and the takedown reach (stored copies, derived items, cache paths).

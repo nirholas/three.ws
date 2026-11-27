@@ -19,6 +19,9 @@ vi.mock('../../api/_lib/db.js', async (importActual) => {
 const alerts = [];
 vi.mock('../../api/_lib/alerts.js', () => ({ sendOpsAlert: async (...a) => { alerts.push(a); } }));
 vi.mock('../../api/_lib/indexnow-queue.js', () => ({ announceIndexNow: () => {} }));
+vi.mock('../../api/_lib/forge-owner-credentials.js', () => ({
+	ownerCredentials: async () => ({ userId: '00000000-0000-4000-8000-0000000000aa', clientKey: null, manageToken: null }),
+}));
 // The object store is an in-memory bucket: the one thing stubbed at the storage
 // boundary. `bucket.down` makes every call fail the way a rejected credential
 // does, so the takedown's queue-for-purge path runs for real.
@@ -335,5 +338,236 @@ describe('takedownCdnPaths names every cached surface of the model', () => {
 		]) expect(paths, p).toContain(p);
 		expect(paths.some((p) => p.includes(`${id}.glb`) && p.includes('/_v/'))).toBe(false);
 		expect(new Set(paths).size).toBe(paths.length);
+	});
+});
+
+// ── The publish gate when the screening provider is down ────────────────────
+const providerDown = {
+	screenTextFn: async () => { throw new Error('NemoGuard 503 service unavailable'); },
+	screenImageFn: async () => ({ checked: false, flagged: false, categories: [], error: 'vision_unconfigured' }),
+};
+
+describe('the publish gate with the screening provider down', () => {
+	// Design: the screen fails CLOSED for public listing and open for everything
+	// else. Generation, private use and link sharing never wait on it (owner
+	// directive 2026-08-07: no refusal at generation); only "public" does, and an
+	// outage reads as "being checked", never as clear and never as blocked.
+	it('keeps the model unlisted and pending, records an undecided review, and never calls it clear', async () => {
+		const { gatePublish } = await import('../../api/_lib/content-safety-store.js');
+		const { screenCreation } = await import('../../api/_lib/content-safety.js');
+		const id = await seed({ visibility: 'unlisted', safety_status: null, prompt: 'a tidy wooden stool' });
+		const out = await gatePublish(id, { screen: (c) => screenCreation(c, providerDown) });
+		expect(out).toEqual({ allow: false, outcome: 'pending' });
+		const [row] = await holder.db.sql`select safety_status, visibility, publish_requested_at from forge_creations where id = ${id}`;
+		expect(row.safety_status).toBe('pending');
+		expect(row.visibility).toBe('unlisted');
+		expect(row.publish_requested_at).not.toBeNull();
+		const reviews = await holder.db.sql`select verdict from content_safety_reviews where subject_id = ${id}`;
+		expect(reviews.map((r) => r.verdict)).toEqual(['undecided']);
+	});
+
+	it('still lets a model that was already cleared go public while the provider is down', async () => {
+		const { gatePublish } = await import('../../api/_lib/content-safety-store.js');
+		const id = await seed({ visibility: 'unlisted', safety_status: 'clear' });
+		const screen = vi.fn();
+		expect(await gatePublish(id, { screen })).toEqual({ allow: true });
+		expect(screen).not.toHaveBeenCalled();
+	});
+
+	it('does not let one failed signal be outvoted by a clean one', async () => {
+		const { screenCreation } = await import('../../api/_lib/content-safety.js');
+		const out = await screenCreation(
+			{ prompt: 'a tidy wooden stool', previewImageUrl: 'https://x.test/p.png' },
+			{ screenTextFn: async () => ({ checked: true, flagged: false, categories: [] }), screenImageFn: providerDown.screenImageFn },
+		);
+		expect(out.verdict).toBe('undecided');
+	});
+});
+
+describe('what the safety screen records and what the maker is told', () => {
+	it('stores categories and model names for the operator, never the prompt or the image text', async () => {
+		const { screenAndRecord } = await import('../../api/_lib/content-safety-store.js');
+		const secret = 'ZEBRA-PROMPT-MARKER describe the flagged thing';
+		const id = await seed({ prompt: secret, visibility: 'unlisted', safety_status: 'pending' });
+		const [row] = await holder.db.sql`select id, prompt, preview_image_url, source_image_urls from forge_creations where id = ${id}`;
+		const { screenCreation } = await import('../../api/_lib/content-safety.js');
+		await screenAndRecord(row, {
+			screen: (c) => screenCreation(c, {
+				screenTextFn: async () => ({ checked: true, flagged: true, categories: ['violence'], model: 'nemoguard' }),
+				screenImageFn: async () => ({ checked: true, flagged: false, categories: [], model: 'vision-x' }),
+			}),
+		});
+		const reviews = await holder.db.sql`select * from content_safety_reviews where subject_id = ${id}`;
+		expect(reviews).toHaveLength(1);
+		expect(reviews[0].verdict).toBe('blocked');
+		expect(reviews[0].categories).toEqual(['violence']);
+		expect(JSON.stringify(reviews[0])).not.toContain('ZEBRA');
+		expect(alerts.flat().join(' ')).not.toContain('ZEBRA');
+	});
+});
+
+describe('the visibility endpoint answers a refusal plainly', () => {
+	const patch = async (id, visibility) => {
+		const { default: handler } = await import('../../api/forge-creation.js');
+		const body = Buffer.from(JSON.stringify({ visibility }));
+		return new Promise((resolve) => {
+			const sent = {};
+			const res = {
+				statusCode: 200, headersSent: false,
+				setHeader(k, v) { sent[k.toLowerCase()] = v; }, getHeader(k) { return sent[k.toLowerCase()]; }, removeHeader() {},
+				writeHead(code) { this.statusCode = code; return this; }, write() { return true; },
+				end(out) { this.headersSent = true; resolve({ status: this.statusCode, body: out ? JSON.parse(String(out)) : null }); },
+			};
+			handler({ method: 'PATCH', url: `/api/forge-creation?id=${id}`, headers: { host: 'three.ws', 'content-type': 'application/json' }, rawBody: body, socket: { remoteAddress: '203.0.113.9' } }, res);
+		});
+	};
+	const UID = '00000000-0000-4000-8000-0000000000aa';
+	beforeEach(async () => {
+		await holder.db.sql`insert into users (id, email, display_name) values (${UID}, 'maker@coverage.test', 'maker') on conflict do nothing`;
+	});
+
+	it('answers 403 with a recovery path and no category for a blocked model', async () => {
+		const id = await seed({ visibility: 'private', safety_status: 'blocked', user_id: UID, client_key: 'b'.repeat(64) });
+		const out = await patch(id, 'public');
+		expect(out.status).toBe(403);
+		expect(out.body.error).toBe('blocked_by_safety_review');
+		expect(out.body.message).toContain('/support');
+		expect(out.body.message).not.toMatch(/violence|sexual|csam|minor|hate|abuse|illegal|you (made|tried|uploaded)/i);
+	});
+
+	it('answers 202 "being checked" when the screen could not answer', async () => {
+		const id = await seed({ visibility: 'unlisted', safety_status: null, user_id: UID, client_key: 'b'.repeat(64) });
+		const out = await patch(id, 'public');
+		expect(out.status).toBe(202);
+		expect(out.body.pending).toBe(true);
+		expect(out.body.visibility).toBe('unlisted');
+		expect(out.body.message).toMatch(/checked/);
+	});
+});
+
+describe('the removal-request handler on the real schema', () => {
+	const post = async (body, { ip = '198.51.100.7' } = {}) => {
+		const { default: handler } = await import('../../api/forge-removal-request.js');
+		return new Promise((resolve) => {
+			const sent = {};
+			const res = {
+				statusCode: 200, headersSent: false,
+				setHeader(k, v) { sent[k.toLowerCase()] = v; }, getHeader(k) { return sent[k.toLowerCase()]; }, removeHeader() {},
+				writeHead(code, h) { this.statusCode = code; Object.entries(h || {}).forEach(([k, v]) => this.setHeader(k, v)); return this; }, write() { return true; },
+				end(out) { this.headersSent = true; resolve({ status: this.statusCode, headers: sent, body: out ? JSON.parse(String(out)) : null }); },
+			};
+			handler({ method: 'POST', url: '/api/forge-removal-request', headers: { host: 'three.ws', 'content-type': 'application/json', 'x-forwarded-for': ip }, rawBody: Buffer.from(JSON.stringify(body)), socket: { remoteAddress: ip } }, res);
+		});
+	};
+
+	it('files a request, hands back a receipt id, and stores no raw IP or address', async () => {
+		const id = await seed();
+		const out = await post({ creation_id: id, reason: 'copyright', details: 'This is my character, I hold the rights.', contact: 'owner@rights.test' }, { ip: '198.51.100.20' });
+		expect(out.status).toBe(201);
+		expect(out.body.id).toBeTruthy();
+		expect(out.body.message).toMatch(/received/i);
+		const rows = await holder.db.sql`select * from forge_removal_requests where id = ${out.body.id}`;
+		expect(rows).toHaveLength(1);
+		expect(rows[0].status).toBe('open');
+		expect(rows[0].creation_id).toBe(id);
+		expect(JSON.stringify(rows[0])).not.toContain('198.51.100.20');
+	});
+
+	it('answers 404 for an id that is not a model, and 400 naming the field for a bad request', async () => {
+		expect((await post({ creation_id: crypto.randomUUID(), reason: 'my_content' })).status).toBe(404);
+		const bad = await post({ creation_id: await seed(), reason: 'harmful' });
+		expect(bad.status).toBe(400);
+		expect(bad.body.field).toBe('details');
+	});
+
+	it('limits one caller to ten requests an hour with a Retry-After', async () => {
+		const id = await seed();
+		let last;
+		for (let i = 0; i < 11; i++) last = await post({ creation_id: id, reason: 'my_content' }, { ip: '198.51.100.99' });
+		expect(last.status).toBe(429);
+		expect(last.headers['retry-after']).toBeTruthy();
+	});
+});
+
+// ── Repeat abuse ────────────────────────────────────────────────────────────
+describe('an owner whose models keep being blocked', () => {
+	const OWNER = '00000000-0000-4000-8000-0000000000bb';
+	const OTHER = '00000000-0000-4000-8000-0000000000cc';
+	const blockedScreen = async () => ({ verdict: 'blocked', categories: ['violence'], csam: false, models: ['m'], signals: null });
+	const clearScreen = async () => ({ verdict: 'clear', categories: [], csam: false, models: ['m'], signals: null });
+	beforeEach(async () => {
+		for (const [u, e] of [[OWNER, 'owner'], [OTHER, 'other']]) {
+			await holder.db.sql`insert into users (id, email, display_name) values (${u}, ${`${e}@abuse.test`}, ${e}) on conflict do nothing`;
+		}
+	});
+	const rowOf = async (id) => (await holder.db.sql`select id, prompt, preview_image_url, source_image_urls from forge_creations where id = ${id}`)[0];
+	const block = async (userId, n) => {
+		const { screenAndRecord } = await import('../../api/_lib/content-safety-store.js');
+		for (let i = 0; i < n; i++) {
+			const id = await seed({ visibility: 'unlisted', safety_status: 'pending', user_id: userId });
+			await screenAndRecord(await rowOf(id), { screen: blockedScreen, requested: true });
+		}
+	};
+
+	it('pages the operator at the third blocked model, and not before', async () => {
+		await block(OWNER, 2);
+		expect(alerts.filter(([t]) => /repeat/i.test(t))).toHaveLength(0);
+		await block(OWNER, 1);
+		const repeat = alerts.filter(([t]) => /repeat/i.test(t));
+		expect(repeat).toHaveLength(1);
+		expect(repeat[0][1]).toContain(OWNER);
+	});
+
+	it('holds a later model that screens clear for an operator instead of promoting it', async () => {
+		await block(OWNER, 3);
+		const { gatePublish, adminDecision } = await import('../../api/_lib/content-safety-store.js');
+		const id = await seed({ visibility: 'unlisted', safety_status: null, user_id: OWNER });
+		expect(await gatePublish(id, { screen: clearScreen })).toEqual({ allow: false, outcome: 'pending' });
+		const [held] = await holder.db.sql`select safety_status, visibility from forge_creations where id = ${id}`;
+		expect(held.safety_status).toBe('held');
+		expect(held.visibility).toBe('unlisted');
+		const reviewNote = await holder.db.sql`select note from content_safety_reviews where subject_id = ${id} order by created_at desc limit 1`;
+		expect(reviewNote[0].note).toMatch(/repeat/i);
+		// An operator can still approve it.
+		await adminDecision({ id, action: 'approve', note: 'checked by hand', actor: 'cli:test' });
+		const { gatePublish: again } = await import('../../api/_lib/content-safety-store.js');
+		expect(await again(id)).toEqual({ allow: true });
+	});
+
+	it('leaves other accounts, and anonymous callers sharing the anon key, alone', async () => {
+		await block(OWNER, 3);
+		const { gatePublish, screenAndRecord } = await import('../../api/_lib/content-safety-store.js');
+		const other = await seed({ visibility: 'unlisted', safety_status: null, user_id: OTHER, client_key: 'd'.repeat(64) });
+		expect(await gatePublish(other, { screen: clearScreen })).toEqual({ allow: true });
+		for (let i = 0; i < 3; i++) {
+			const id = await seed({ visibility: 'unlisted', safety_status: 'pending', client_key: 'anon' });
+			await screenAndRecord(await rowOf(id), { screen: blockedScreen, requested: true });
+		}
+		const stranger = await seed({ visibility: 'unlisted', safety_status: null, client_key: 'anon' });
+		expect(await gatePublish(stranger, { screen: clearScreen })).toEqual({ allow: true });
+	});
+
+	it('keeps the sweep from promoting a repeat owner\'s requested model, and does not report it as an outage', async () => {
+		await block(OWNER, 3);
+		const { sweepContentSafety } = await import('../../api/_lib/content-safety-sweep.js');
+		const id = await seed({ visibility: 'unlisted', safety_status: 'pending', user_id: OWNER });
+		await holder.db.sql`update forge_creations set publish_requested_at = now() where id = ${id}`;
+		const setVisibility = vi.fn(async () => ({ outcome: 'updated' }));
+		const alert = vi.fn(async () => {});
+		const stats = await sweepContentSafety({}, { screen: clearScreen, setVisibility, alert });
+		expect(setVisibility).not.toHaveBeenCalled();
+		expect(stats.held).toBe(1);
+		expect(stats.undecided).toBe(0);
+		expect(alert).not.toHaveBeenCalled();
+		const [row] = await holder.db.sql`select safety_status, visibility from forge_creations where id = ${id}`;
+		expect(row).toMatchObject({ safety_status: 'held', visibility: 'unlisted' });
+	});
+
+	it('forgets blocks older than the window', async () => {
+		await block(OWNER, 3);
+		await holder.db.sql`update forge_creations set safety_checked_at = now() - interval '40 days' where user_id = ${OWNER}`;
+		const { gatePublish } = await import('../../api/_lib/content-safety-store.js');
+		const id = await seed({ visibility: 'unlisted', safety_status: null, user_id: OWNER });
+		expect(await gatePublish(id, { screen: clearScreen })).toEqual({ allow: true });
 	});
 });
