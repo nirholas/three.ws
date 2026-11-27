@@ -17,7 +17,7 @@ export function byokUseNote(providerLabel) {
 
 const STYLE_ID = 'byok-clear-style';
 const CLEAR_CSS = `
-.byok-clear{background:transparent;border:1px solid var(--stroke,rgba(255,255,255,.18));border-radius:var(--radius-md,8px);color:var(--ink-dim,#a8a8b3);font:inherit;font-size:var(--text-xs,.75rem);padding:.45rem .7rem;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.byok-clear{flex:none;margin-left:auto;background:transparent;border:1px solid var(--stroke,rgba(255,255,255,.18));border-radius:var(--radius-md,8px);color:var(--ink-dim,#a8a8b3);font:inherit;font-size:var(--text-xs,.75rem);padding:.45rem .7rem;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 .byok-clear[hidden]{display:none}
 .byok-clear:hover{border-color:var(--stroke-strong,rgba(255,255,255,.35));color:var(--ink,#fff)}
 .byok-clear:active{background:var(--surface-2,rgba(255,255,255,.06))}

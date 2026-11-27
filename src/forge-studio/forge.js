@@ -30,6 +30,9 @@ import { forgeErrorFromResponse, forgeJobFailedError, announceForgeError, forgeE
 import { RESUME_WINDOW_MS, createRunGate, newIdempotencyKey } from '../forge-inflight.js';
 import { createHiddenClock, waitUntilVisible, fetchJobStatus, nextBackoff } from '../shared/resilient-poll.js';
 import { byokUseNote, mountByokKeyField } from '../shared/byok-key-ui.js';
+import { createLaneTimings, describeRange, describeWait, announceFor, formatClock } from '../forge-eta.js';
+import { createTabTitle } from '../forge-tab-title.js';
+import { announcePolite } from '../forge-sr.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -194,11 +197,11 @@ let health = null;
 // Engines the server refuses for this visitor's region (GET /api/forge?territory,
 // plus any lane a region_restricted 403 named). Disabled in the picker.
 let restrictedEngines = new Set();
-let selectedTier = 'standard';
 // Whether the server resolved this visitor's country: true, false, or null when
 // it did not say. Decides how the region note is worded (never asserts a region
 // it did not resolve).
 let territoryResolved = null;
+let selectedTier = 'standard';
 let selectedEngine = {
 	id: 'trellis',
 	path: 'image',
@@ -310,6 +313,7 @@ function showState(name) {
 	for (const [key, node] of Object.entries(els.states)) {
 		node.classList.toggle('is-hidden', key !== name);
 	}
+	tabTitle.show(name);
 	// Leaving the result state always leaves cinema mode with it.
 	if (name !== 'result' && cinemaOn) setCinema(false);
 }
@@ -325,10 +329,20 @@ function setStepLabel(step, text) {
 	if (node) node.textContent = text;
 }
 
-// The typical end-to-end time for the current engine+tier, straight from the
-// catalog's real estimate matrix (estimateEtaSeconds). Null when no catalog or
-// estimate exists — the meter then runs indeterminate rather than inventing a
-// duration.
+// Measured lane timings (p50 and p95 of finished jobs) from the public
+// /api/nvidia/stats endpoint. They replace the catalog's hand-set ETA wherever a
+// lane has enough history; when the request fails the catalog figure is used and
+// worded as an estimate. See src/forge-eta.js.
+const laneTimings = createLaneTimings();
+laneTimings.onChange(() => updateEstimate());
+
+// The tab title follows the generation: running with the real elapsed clock,
+// then done or stopped. See src/forge-tab-title.js.
+const tabTitle = createTabTitle(document);
+
+// The catalog's estimate for the current engine+tier (estimateEtaSeconds). Only
+// the fallback now: a measured lane timing wins. Null when no catalog or
+// estimate exists.
 function currentEtaSeconds() {
 	if (!catalog) return null;
 	const backend = catalog.backends?.find((b) => b.id === selectedEngine.backend);
@@ -338,60 +352,72 @@ function currentEtaSeconds() {
 	return Number(est?.eta_seconds) > 0 ? Number(est.eta_seconds) : null;
 }
 
-// Map real elapsed seconds onto an honest fill fraction. The curve approaches
-// 1 asymptotically and is capped below it, so the bar can never reach full on
-// time alone — only a real finished GLB sets it to 100% (see markDone). At
-// elapsed = typical the fill sits ~0.78; it keeps creeping past that but never
-// claims completion.
-function honestFill(elapsedS, typicalS) {
-	const frac = 1 - Math.exp(-elapsedS / (typicalS * 0.66));
-	return Math.min(frac, 0.95);
-}
-
 function setProgress(pct) {
-	if (!els.genProgressFill || !els.genProgress) return;
+	if (!els.genProgress) return;
 	const clamped = Math.max(0, Math.min(100, pct));
-	els.genProgressFill.style.width = `${clamped}%`;
+	if (els.genProgressFill) els.genProgressFill.style.width = `${clamped}%`;
 	els.genProgress.setAttribute('aria-valuenow', String(Math.round(clamped)));
 }
+
+// The wait has no percentage the server can stand behind: the workers report
+// queued and running, nothing in between. So while a job runs the bar is an
+// indeterminate "working" indicator (a progressbar with no aria-valuenow), and
+// the only value it ever shows is the finished GLB (100).
+function setIndeterminate(on) {
+	if (!els.genProgress) return;
+	els.genProgress.dataset.indeterminate = String(on);
+	if (on) els.genProgress.removeAttribute('aria-valuenow');
+}
+
+// What the wait meter last told a screen reader, so only a change is spoken.
+let waitPhase;
 
 function startElapsed() {
 	const started = performance.now();
 	stopElapsed();
-	const typical = currentEtaSeconds();
+	waitPhase = undefined;
+	laneTimings.load();
 	// Reset the meter to a clean running state for this job.
 	if (els.genProgress) {
 		els.genProgress.dataset.done = 'false';
 		els.genProgress.dataset.over = 'false';
-		els.genProgress.dataset.indeterminate = typical ? 'false' : 'true';
 	}
-	setProgress(0);
+	setIndeterminate(true);
 	const tick = () => {
 		const s = Math.floor((performance.now() - started) / 1000);
-		if (typical) {
-			const over = s > typical;
-			setProgress(honestFill(s, typical) * 100);
-			if (els.genProgress) els.genProgress.dataset.over = String(over);
-			els.genMeta.innerHTML = over
-				? `Elapsed <strong>${s}s</strong> · longer than usual, still working`
-				: `Elapsed <strong>${s}s</strong> · ~${Math.max(1, typical - s)}s left`;
-		} else {
-			// Unknown duration — the bar travels (indeterminate) and we report only
-			// the honest elapsed count.
-			els.genMeta.innerHTML = `Elapsed <strong>${s}s</strong>`;
-		}
+		tabTitle.running(s);
+		// The range comes from what the lane actually did (measured p50 and p95);
+		// with no measurement it is the catalog estimate, worded as an estimate.
+		// Nothing here moves the bar: it only travels.
+		const wait = describeWait({
+			elapsedS: s,
+			timing: laneTimings.timing(selectedEngine.backend),
+			catalogEtaS: currentEtaSeconds(),
+		});
+		if (els.genProgress) els.genProgress.dataset.over = String(wait.over);
+		const say = announceFor(wait.phase, waitPhase);
+		waitPhase = wait.phase;
+		if (say) announcePolite(say);
+		els.genMeta.innerHTML = wait.text
+			? `Elapsed <strong>${formatClock(s)}</strong> · ${wait.text}`
+			: `Elapsed <strong>${formatClock(s)}</strong>`;
 	};
 	tick();
 	elapsedTimer = window.setInterval(tick, 1000);
 }
 
-// Snap the meter to a finished, successful state — the only path to 100%.
+// Snap the meter to a finished, successful state, the only path to 100%. This
+// is the one path every successful generation takes, so it also tells the tab
+// title and, politely, a screen reader.
 function markProgressDone() {
-	if (!els.genProgress) return;
-	els.genProgress.dataset.indeterminate = 'false';
-	els.genProgress.dataset.over = 'false';
-	els.genProgress.dataset.done = 'true';
-	setProgress(100);
+	if (els.genProgress) {
+		els.genProgress.dataset.indeterminate = 'false';
+		els.genProgress.dataset.over = 'false';
+		els.genProgress.dataset.done = 'true';
+		setProgress(100);
+	}
+	tabTitle.done();
+	announcePolite('Your model is ready.');
 }
 
 function stopElapsed() {
@@ -477,6 +503,7 @@ async function loadCatalog() {
 	qualityEl?.classList.remove('is-hidden');
 	buildEngineButtons();
 	selectTier(selectedTier);
+	laneTimings.load();
 	revealSketchMode();
 	loadHealth();
 	loadTerritory();
@@ -487,8 +514,8 @@ async function loadCatalog() {
 async function loadTerritory() {
 	const { restricted, resolved } = await fetchTerritory(CLIENT_HEADERS);
 	for (const id of restricted) restrictedEngines.add(id);
-	if (restrictedEngines.size) updateEngineAvailability();
 	territoryResolved = resolved;
+	if (restrictedEngines.size) updateEngineAvailability();
 }
 
 // Render the retryable notice that replaces the quality/engine controls when the
@@ -631,13 +658,13 @@ function updateEngineAvailability() {
 		}
 		if (blocked && btn.dataset.backend === selectedEngine.backend) bounceTo = true;
 	}
-	const defaultId =
 	applyRegionNote({
 		note: document.getElementById('engine-region-note'),
 		picker: els.engine,
 		restricted: restrictedEngines,
 		resolved: territoryResolved,
 	});
+	const defaultId =
 		catalog.default_backend_for_tier?.[selectedTier]?.[selectedEngine.path] ?? null;
 	if (bounceTo) {
 		// Forced move: the selected engine can't serve photos. Prefer the standing
@@ -940,7 +967,13 @@ function updateEstimate() {
 	// what the engine does, in plain words. The mechanism ("builds from a
 	// reference image") replaces jargon like "image-intermediate · fast path".
 	const parts = [`<strong>${tierMeta.label}</strong>`, costSegment(backend, tierMeta)];
-	if (est?.eta_seconds) parts.push(`usually ~${est.eta_seconds}s`);
+	// Measured p50 and p95 of the lane's finished jobs when it has enough
+	// history, the catalog figure worded as an estimate when it does not.
+	const range = describeRange({
+		timing: laneTimings.timing(selectedEngine.backend),
+		catalogEtaS: est?.eta_seconds,
+	});
+	if (range) parts.push(range);
 	if (est && est.credits != null) parts.push(`~${est.credits} credits`);
 	if (backend.poly_control) parts.push(`up to ${tierMeta.polycount.toLocaleString()} polygons`);
 	if (selectedEngine.path === 'geometry') parts.push('shapes geometry straight from the prompt');

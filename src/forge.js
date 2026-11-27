@@ -40,6 +40,9 @@ import { renderQuote, ensureKept } from './forge-keep.js';
 import { initWalletButton, getConnectedWalletAddress } from './wallet.js';
 import { generateForgePrompt } from './forge-prompt-gen.js';
 import { createForgeTimeline } from './forge-timeline.js';
+import { createLaneTimings, describeRange, describeWait, announceFor, formatClock } from './forge-eta.js';
+import { createTabTitle } from './forge-tab-title.js';
+import { announcePolite } from './forge-sr.js';
 import { createCompare } from './forge-compare.js';
 import { initForgeDestinationPicker, storedForgeDestination } from './shared/forge-destination-picker.js';
 import { openedFromShare } from './shared/share-beacon.js';
@@ -280,11 +283,11 @@ let health = null;
 // Engines the server refuses for this visitor's region (GET /api/forge?territory,
 // plus any lane a region_restricted 403 named). Disabled in the picker.
 let restrictedEngines = new Set();
-let selectedTier = 'standard';
 // Whether the server resolved this visitor's country: true, false, or null when
 // it did not say. Decides how the region note is worded (never asserts a region
 // it did not resolve).
 let territoryResolved = null;
+let selectedTier = 'standard';
 // What the composer submits before the catalog has rendered an engine button.
 const DEFAULT_ENGINE = Object.freeze({
 	id: 'trellis',
@@ -481,6 +484,7 @@ function showState(name) {
 	for (const [key, node] of Object.entries(els.states)) {
 		node.classList.toggle('is-hidden', key !== name);
 	}
+	tabTitle.show(name);
 	// Leaving the result state always leaves cinema mode with it.
 	if (name !== 'result' && cinemaOn) setCinema(false);
 }
@@ -545,10 +549,23 @@ function setLaneNote(text) {
 // panel reset that a re-run performs.
 let pendingLaneNote = '';
 
+// Measured lane timings (p50 and p95 of finished jobs) from the public
+// /api/nvidia/stats endpoint. They replace the catalog's hand-set ETA wherever a
+// lane has enough history; when the request fails the catalog figure is used and
+// worded as an estimate. Loaded once the catalog is, and again on every
+// generation (the cache makes that free), so a visible estimate line repaints
+// when the numbers land.
+const laneTimings = createLaneTimings();
+laneTimings.onChange(() => updateEstimate());
+
+// The tab title follows the generation: running with the real elapsed clock,
+// then done or stopped. See src/forge-tab-title.js.
+const tabTitle = createTabTitle(document);
+
 // The typical end-to-end time for the current engine+tier, straight from the
 // catalog's real estimate matrix (estimateEtaSeconds). Null when no catalog or
 // estimate exists — the meter then runs indeterminate rather than inventing a
-// duration.
+// duration. Only the fallback: a measured lane timing wins (see describeWait).
 function currentEtaSeconds() {
 	// Once the job is accepted the server's own estimate wins: it names the lane
 	// that actually ran and widens for a cold worker, which the catalog matrix
@@ -568,62 +585,70 @@ function warmEtaFor(backendId, path, tierId) {
 	return Number(est?.eta_seconds) > 0 ? Number(est.eta_seconds) : null;
 }
 
-// Map real elapsed seconds onto an honest fill fraction. The curve approaches
-// 1 asymptotically and is capped below it, so the bar can never reach full on
-// time alone — only a real finished GLB sets it to 100% (see markDone). At
-// elapsed = typical the fill sits ~0.78; it keeps creeping past that but never
-// claims completion.
-function honestFill(elapsedS, typicalS) {
-	const frac = 1 - Math.exp(-elapsedS / (typicalS * 0.66));
-	return Math.min(frac, 0.95);
-}
-
 function setProgress(pct) {
-	if (!els.genProgressFill || !els.genProgress) return;
+	if (!els.genProgress) return;
 	const clamped = Math.max(0, Math.min(100, pct));
-	els.genProgressFill.style.width = `${clamped}%`;
+	if (els.genProgressFill) els.genProgressFill.style.width = `${clamped}%`;
 	els.genProgress.setAttribute('aria-valuenow', String(Math.round(clamped)));
 }
+
+// The wait has no percentage the server can stand behind: the workers report
+// queued and running, nothing in between. So while a job runs the bar is an
+// indeterminate "working" indicator (a progressbar with no aria-valuenow), and
+// the only way it ever shows a value is the finished GLB (100) or a local
+// engine that reports a real percent.
+function setIndeterminate(on) {
+	if (!els.genProgress) return;
+	els.genProgress.dataset.indeterminate = String(on);
+	if (on) els.genProgress.removeAttribute('aria-valuenow');
+}
+
+// What the wait meter last told a screen reader, so only a change is spoken.
+let waitPhase;
 
 function startElapsed(offsetMs = 0) {
 	// `offsetMs` backdates the counter for a resumed job, so the elapsed line
 	// stays honest about how long the generation has really been running.
 	elapsedStart = performance.now() - Math.max(0, offsetMs);
 	stopElapsed();
+	waitPhase = undefined;
+	laneTimings.load();
 	// Reset the meter to a clean running state for this job.
 	if (els.genProgress) {
 		els.genProgress.dataset.done = 'false';
 		els.genProgress.dataset.over = 'false';
-		els.genProgress.dataset.indeterminate = currentEtaSeconds() ? 'false' : 'true';
 	}
-	setProgress(0);
+	setIndeterminate(true);
 	const tick = () => {
 		const s = Math.floor((performance.now() - elapsedStart) / 1000);
-		// Re-read every tick: the accepted job replaces the catalog guess with the
-		// server's real ETA for the lane that actually ran (cold start included).
+		tabTitle.running(s);
 		// A run on the user's own GPU reports a real percent and step, so the
-		// meter shows exactly that instead of a time-based estimate.
+		// meter shows exactly that instead of an estimate.
 		if (modlyRun) {
 			timeline.tick(s);
 			paintModlyProgress(s);
 			return;
 		}
-		const typical = currentEtaSeconds();
-		if (els.genProgress) els.genProgress.dataset.indeterminate = typical ? 'false' : 'true';
-		// The timeline's warming card counts real seconds against that same ETA.
 		timeline.tick(s);
-		if (typical) {
-			const over = s > typical;
-			setProgress(honestFill(s, typical) * 100);
-			if (els.genProgress) els.genProgress.dataset.over = String(over);
-			els.genMeta.innerHTML = over
-				? `Elapsed <strong>${s}s</strong> · longer than usual, still working`
-				: `Elapsed <strong>${s}s</strong> · ~${Math.max(1, typical - s)}s left`;
-		} else {
-			// Unknown duration — the bar travels (indeterminate) and we report only
-			// the honest elapsed count.
-			els.genMeta.innerHTML = `Elapsed <strong>${s}s</strong>`;
-		}
+		// The range comes from what the serving lane actually did (measured p50 and
+		// p95), re-read every tick because the lane can change under a failover.
+		// With no measurement it falls back to the server's own ETA for the job,
+		// worded as an estimate. Nothing here moves the bar: it only travels.
+		const wait = describeWait({
+			elapsedS: s,
+			timing: laneTimings.timing(timeline.backend()),
+			catalogEtaS: currentEtaSeconds(),
+			cold: timeline.isCold(),
+			coldAllowanceS: timeline.coldSeconds(),
+		});
+		setIndeterminate(true);
+		if (els.genProgress) els.genProgress.dataset.over = String(wait.over);
+		const say = announceFor(wait.phase, waitPhase);
+		waitPhase = wait.phase;
+		if (say) announcePolite(say);
+		els.genMeta.innerHTML = wait.text
+			? `Elapsed <strong>${formatClock(s)}</strong> · ${wait.text}`
+			: `Elapsed <strong>${formatClock(s)}</strong>`;
 	};
 	tick();
 	elapsedRetick = tick;
@@ -654,11 +679,16 @@ function anchorElapsed(serverElapsedS) {
 
 // Snap the meter to a finished, successful state — the only path to 100%.
 function markProgressDone() {
-	if (!els.genProgress) return;
-	els.genProgress.dataset.indeterminate = 'false';
-	els.genProgress.dataset.over = 'false';
-	els.genProgress.dataset.done = 'true';
-	setProgress(100);
+	if (els.genProgress) {
+		els.genProgress.dataset.indeterminate = 'false';
+		els.genProgress.dataset.over = 'false';
+		els.genProgress.dataset.done = 'true';
+		setProgress(100);
+	}
+	// The model is finished: say so in the tab title and, politely, to a screen
+	// reader. This is the one path every successful generation goes through.
+	tabTitle.done();
+	announcePolite('Your model is ready.');
 }
 
 function stopElapsed() {
@@ -825,6 +855,7 @@ async function loadCatalog() {
 		return;
 	}
 	if (!cached || cachedJson !== JSON.stringify(catalog)) buildEngineButtons();
+	laneTimings.load();
 	selectTier(selectedTier);
 	applyEngineDeepLink();
 	revealSketchMode();
@@ -848,8 +879,8 @@ function applyEngineDeepLink() {
 async function loadTerritory() {
 	const { restricted, resolved } = await fetchTerritory(CLIENT_HEADERS);
 	for (const id of restricted) restrictedEngines.add(id);
-	if (restrictedEngines.size) updateEngineAvailability();
 	territoryResolved = resolved;
+	if (restrictedEngines.size) updateEngineAvailability();
 }
 
 // Sketch→3D needs the self-host TripoSG worker — the tab stays hidden unless
@@ -987,13 +1018,13 @@ function updateEngineAvailability() {
 		}
 		if (blocked && btn.dataset.backend === selectedEngine.backend) bounceTo = true;
 	}
-	const defaultId =
 	applyRegionNote({
 		note: document.getElementById('engine-region-note'),
 		picker: els.engine,
 		restricted: restrictedEngines,
 		resolved: territoryResolved,
 	});
+	const defaultId =
 		catalog.default_backend_for_tier?.[selectedTier]?.[selectedEngine.path] ?? null;
 	if (bounceTo) {
 		// Forced move: the selected engine can't serve photos. Prefer the standing
@@ -1343,7 +1374,13 @@ function updateEstimate() {
 		const capMin = Math.round(lane.allowance_seconds / 60);
 		parts.push(`recent runs took ~${typicalMin} min; after ${capMin} min it finishes on the standard engine`);
 	} else if (est?.eta_seconds) {
-		parts.push(`usually ~${est.eta_seconds}s`);
+		// Measured p50 and p95 of the lane's finished jobs when it has enough
+		// history, the catalog figure worded as an estimate when it does not.
+		const range = describeRange({
+			timing: laneTimings.timing(selectedEngine.backend),
+			catalogEtaS: est.eta_seconds,
+		});
+		if (range) parts.push(range);
 		if (lane) parts.push(`after ${Math.round(lane.allowance_seconds / 60)} min it finishes on the standard engine`);
 	}
 	// Credits are a real charge only on metered lanes (BYOK or the paid High tier).
@@ -1379,7 +1416,10 @@ function updateTierTitles() {
 		if (!t) continue;
 		const est = (backend?.estimates?.[selectedEngine.path] || []).find((e) => e.tier === t.id);
 		const parts = [t.blurb];
-		if (est?.eta_seconds) parts.push(`usually ~${est.eta_seconds}s on ${backend.label}`);
+		const range = est?.eta_seconds
+			? describeRange({ timing: laneTimings.timing(backend.id), catalogEtaS: est.eta_seconds })
+			: '';
+		if (range) parts.push(`${range} on ${backend.label}`);
 		if (Number(t.polycount) > 0) parts.push(`up to ${t.polycount.toLocaleString()} polygons`);
 		btn.title = `${t.label}: ${parts.filter(Boolean).join(' · ')}`;
 	}
@@ -3638,10 +3678,8 @@ function renderModlyEstimate() {
 
 function paintModlyProgress(elapsedS) {
 	const pending = modlyRun.state === 'pending';
-	if (els.genProgress) {
-		els.genProgress.dataset.indeterminate = String(pending);
-		els.genProgress.dataset.over = 'false';
-	}
+	setIndeterminate(pending);
+	if (els.genProgress) els.genProgress.dataset.over = 'false';
 	if (!pending) setProgress(modlyRun.pct);
 	const strong = document.createElement('strong');
 	strong.textContent = `${elapsedS}s`;

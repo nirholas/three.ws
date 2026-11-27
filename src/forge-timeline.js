@@ -36,6 +36,8 @@
 // the real difference between the response's cold ETA and the catalog's warm ETA
 // and it ends on a real signal (the first `running` poll), never on the clock.
 
+import { formatDuration } from './forge-eta.js';
+
 const STAGE_ORDER = ['direct', 'reference', 'input', 'mesh', 'finish'];
 
 // A tiny inline "open in a new tab" affordance is overkill for a 30px thumb; the
@@ -368,8 +370,10 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 		const body = warming.querySelector('.gen-warming-body');
 		const count = warming.querySelector('.gen-warming-count');
 		const budget = f.coldSeconds;
-		const left = budget ? Math.round(budget - f.elapsedS) : null;
-		const over = left != null && left <= 0;
+		// The budget is the lane's boot allowance, a ceiling and not a forecast: the
+		// card states it as one and never counts down toward a finish it cannot
+		// promise. The only thing that ends the card is the worker answering.
+		const over = budget != null && f.elapsedS >= budget;
 		warming.dataset.phase = over ? 'over' : 'warming';
 		const engine = engineLabel(f.backend || f.plannedBackend);
 		const nextTitle = over ? 'Still waking the GPU' : 'Waking up a GPU';
@@ -379,9 +383,9 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			: `${engine} scales to zero when nobody is using it, so this request is booting a container. Your job is already accepted and starts the second the worker is up.`;
 		if (body.textContent !== nextBody) body.textContent = nextBody;
 		const nextCount = over
-			? 'Past the usual boot time. Still waiting on the worker'
-			: left != null
-				? `~${left}s of warm-up left, then sculpting starts`
+			? 'Past the usual boot allowance. Still waiting on the worker'
+			: budget != null
+				? `The boot can take up to about ${formatDuration(budget)}, then sculpting starts`
 				: 'First request after an idle spell, so the worker is booting';
 		if (count.textContent !== nextCount) count.textContent = nextCount;
 	}
@@ -566,6 +570,15 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			if (data.status === 'queued') {
 				f.status = 'queued';
 				f.queuedSeconds += 1;
+				// A queued poll restates whether the lane is still booting (the server
+				// re-reads the lane's liveness for it). Absent means the worker has
+				// answered since, or this is a different lane after a failover, and
+				// either way the boot card must not keep describing a wait that ended.
+				f.coldStart = Boolean(data.cold_start);
+				if (f.coldStart) {
+					const stated = Number(data.cold_start_seconds);
+					if (stated > 0) f.coldSeconds = Math.round(stated);
+				}
 			} else if (data.status === 'running') {
 				f.status = 'running';
 				f.queuedSeconds = 0;
@@ -620,6 +633,16 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 		/** The honest ETA the server reported for this job, or null. */
 		etaSeconds() {
 			return f.etaSeconds;
+		},
+
+		/** The boot allowance (seconds) the server stated for a cold worker, or null. */
+		coldSeconds() {
+			return f.coldStart ? f.coldSeconds : null;
+		},
+
+		/** The lane serving the current job (follows a failover), or null. */
+		backend() {
+			return f.backend || f.plannedBackend || null;
 		},
 
 		/** The art-directed prompt for the current job, or null. */

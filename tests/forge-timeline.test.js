@@ -201,10 +201,79 @@ describe('forge timeline cold start', () => {
 		);
 		expect(warming().classList.contains('is-hidden')).toBe(false);
 		timeline.tick(20);
-		// 110 - 60 = a 50s boot budget; 30s of it is left after 20s elapsed.
-		expect(warming().querySelector('.gen-warming-count').textContent).toContain('~30s');
+		// 110 - 60 = a 50s boot allowance. It is an allowance, not a promise, so
+		// the card states it as one instead of counting down to a finish.
+		const count = warming().querySelector('.gen-warming-count').textContent;
+		expect(count).toContain('up to about 50 s');
+		expect(count).not.toMatch(/left/);
 		timeline.tick(80);
 		expect(warming().dataset.phase).toBe('over');
+		expect(warming().querySelector('.gen-warming-count').textContent).toContain('Past the usual boot allowance');
+	});
+
+	it('says why the first request is slower and how long the boot may take', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit({
+			status: 'queued',
+			backend: 'trellis_selfhost',
+			cold_start: true,
+			cold_start_seconds: 510,
+			eta_seconds: 570,
+		});
+		const copy = warming().textContent;
+		expect(copy).toContain('scales to zero');
+		expect(copy).toContain('up to about 8 min 30 s');
+	});
+
+	it('stops claiming a boot once a poll reports the worker is no longer cold', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit(
+			{ status: 'queued', backend: 'trellis_selfhost', cold_start: true, cold_start_seconds: 510, eta_seconds: 570 },
+		);
+		expect(warming().classList.contains('is-hidden')).toBe(false);
+		// Still queued, but the liveness probe now answers: the boot is over and the
+		// job is only waiting for a free GPU, which is a different statement.
+		timeline.applyPoll({ status: 'queued', backend: 'trellis_selfhost' });
+		expect(timeline.isCold()).toBe(false);
+		expect(warming().classList.contains('is-hidden')).toBe(true);
+	});
+
+	it('keeps the boot card while polls keep reporting a cold worker', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit(
+			{ status: 'queued', backend: 'trellis_selfhost', cold_start: true, cold_start_seconds: 510, eta_seconds: 570 },
+		);
+		timeline.applyPoll({ status: 'queued', backend: 'trellis_selfhost', cold_start: true, cold_start_seconds: 510 });
+		expect(timeline.isCold()).toBe(true);
+		expect(warming().classList.contains('is-hidden')).toBe(false);
+	});
+
+	it('does not blame the old lane for a boot after the job fails over to another lane', () => {
+		timeline.begin({ mode: 'image', backend: 'trellis_selfhost', viewCount: 1 });
+		timeline.applySubmit(
+			{ status: 'queued', backend: 'trellis_selfhost', cold_start: true, cold_start_seconds: 510, eta_seconds: 570 },
+		);
+		timeline.applyPoll({ status: 'running', backend: 'hunyuan3d', failover_from: 'trellis_selfhost' });
+		expect(warming().classList.contains('is-hidden')).toBe(true);
+		expect(timeline.backend()).toBe('hunyuan3d');
+	});
+
+	it('names the new lane and its own allowance when the lane it fails over to is cold too', () => {
+		timeline.begin({ mode: 'image', backend: 'trellis_selfhost', viewCount: 1 });
+		timeline.applySubmit(
+			{ status: 'queued', backend: 'trellis_selfhost', cold_start: true, cold_start_seconds: 510, eta_seconds: 570 },
+		);
+		timeline.applyPoll({
+			status: 'queued',
+			backend: 'hunyuan3d',
+			failover_from: 'trellis_selfhost',
+			cold_start: true,
+			cold_start_seconds: 120,
+		});
+		const copy = warming().textContent;
+		expect(copy).toContain('hunyuan3d');
+		expect(copy).toContain('up to about 2 min');
+		expect(copy).not.toContain('8 min');
 	});
 
 	it('ends the warming state on the first running poll, never on the clock', () => {
