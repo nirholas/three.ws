@@ -22,7 +22,7 @@ const submit = vi.fn(async () => ({ extJobId: `task-sam3d-${'x'.repeat(20)}`, et
 const status = vi.fn(async () => ({
 	status: 'done',
 	resultGlbUrl: 'https://storage.googleapis.com/bucket/sam3d/task.glb',
-	objects: [{ id: 'object_01', centroid: [0, 0, -3] }],
+	objects: [{ id: 'object_01', name: 'object_01', input_index: 0, bbox: { min: [-0.5, 0, -3.5], max: [0.5, 1, -2.5] }, centroid: [0, 0.5, -3] }],
 	objectCount: 1,
 	leveling: { applied: true, tilt_deg: 28.4, up: [0, 0.88, 0.47] },
 }));
@@ -49,6 +49,9 @@ vi.mock('../../api/_lib/ssrf.js', async (importOriginal) => {
 		assertPublicHttpsUrl: vi.fn(async (url) => {
 			const parsed = new URL(url);
 			if (parsed.protocol !== 'https:') throw new mod.SsrfError('https required');
+			// IP literals and localhost resolve without the network, so they go
+			// through the real guard: that is the case this suite pins.
+			if (/^(\d|\[)|^localhost$/i.test(parsed.hostname)) return mod.assertPublicHttpsUrl(url);
 			return url;
 		}),
 	};
@@ -63,11 +66,13 @@ vi.mock('../../api/_lib/rate-limit.js', async (importActual) => {
 			...actual.limits,
 			mcp3dGenerate: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })),
 			mcp3dStatus: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })),
+			mcp3dGenerateRefund: vi.fn(async () => undefined),
 		},
 	};
 });
 
 const { default: handler } = await import('../../api/forge-scene-objects.js');
+const { limits } = await import('../../api/_lib/rate-limit.js');
 
 function makeRes() {
 	return {
@@ -97,6 +102,8 @@ const PHOTO = 'https://storage.googleapis.com/bucket/room.jpg';
 beforeEach(() => {
 	submit.mockClear();
 	status.mockClear();
+	limits.mcp3dGenerate.mockClear();
+	limits.mcp3dGenerateRefund.mockClear();
 	detect.mockReset();
 	supportsSam3d = true;
 });
@@ -143,12 +150,49 @@ describe('POST /api/forge-scene-objects', () => {
 		expect(res.statusCode).toBe(502);
 		expect(JSON.parse(res.body).error).toBe('detect_failed');
 
+	});
+
+	it('reports a photo with nothing in it as a clean "nothing found", not an error, and gives the allowance back', async () => {
 		detect.mockResolvedValue({ json: { objects: [] } });
-		res = makeRes();
+		const res = makeRes();
 		await handler(makeReq({ body: { image_url: PHOTO } }), res);
-		expect(res.statusCode).toBe(422);
-		expect(JSON.parse(res.body).error).toBe('no_objects_found');
+		expect(res.statusCode).toBe(200);
+		const body = JSON.parse(res.body);
+		expect(body).toMatchObject({ status: 'empty', job_id: null, error: null, error_code: 'nothing_found', objects: [] });
+		expect(body.message).toMatch(/nothing found to lift out of this photo/i);
 		expect(submit).not.toHaveBeenCalled();
+		expect(limits.mcp3dGenerateRefund).toHaveBeenCalledTimes(1);
+	});
+
+	it.each([
+		['loopback', 'https://127.0.0.1/room.jpg'],
+		['localhost', 'https://localhost/room.jpg'],
+		['private network', 'https://10.0.0.7/room.jpg'],
+		['cloud metadata', 'https://169.254.169.254/latest/meta-data'],
+	])('refuses a %s image address before any work', async (_label, url) => {
+		const res = makeRes();
+		await handler(makeReq({ body: { image_url: url, boxes: [[0.1, 0.1, 0.4, 0.5]] } }), res);
+		expect(res.statusCode).toBe(400);
+		const body = JSON.parse(res.body);
+		expect(body.error).toBe('invalid_image_url');
+		expect(body.message).toMatch(/private|rejected/i);
+		expect(submit).not.toHaveBeenCalled();
+		expect(detect).not.toHaveBeenCalled();
+	});
+
+	it('does not spend the allowance on a request it refuses as invalid', async () => {
+		const res = makeRes();
+		await handler(makeReq({ body: { image_url: PHOTO, boxes: [[0.5, 0.5, 0.4, 0.4]] } }), res);
+		expect(res.statusCode).toBe(400);
+		expect(limits.mcp3dGenerate).not.toHaveBeenCalled();
+	});
+
+	it('does not spend the allowance while the worker is not configured', async () => {
+		supportsSam3d = false;
+		const res = makeRes();
+		await handler(makeReq({ body: { image_url: PHOTO, boxes: [[0.1, 0.1, 0.4, 0.5]] } }), res);
+		expect(res.statusCode).toBe(503);
+		expect(limits.mcp3dGenerate).not.toHaveBeenCalled();
 	});
 
 	it('turns away a comprehensively sanctioned jurisdiction before any work', async () => {
@@ -201,9 +245,113 @@ describe('GET /api/forge-scene-objects?job=<id>', () => {
 		const body = JSON.parse(res.body);
 		expect(body.status).toBe('done');
 		expect(body.result_url).toBe('https://storage.googleapis.com/bucket/sam3d/task.glb');
-		expect(body.objects).toEqual([{ id: 'object_01', centroid: [0, 0, -3] }]);
+		expect(body.objects).toEqual([{ id: 'object_01', name: 'object_01', input_index: 0, bbox: { min: [-0.5, 0, -3.5], max: [0.5, 1, -2.5] }, centroid: [0, 0.5, -3] }]);
 		expect(body.object_count).toBe(1);
 		expect(body.leveling).toEqual({ applied: true, tilt_deg: 28.4, up: [0, 0.88, 0.47] });
+	});
+
+	const poll = async (jobId) => {
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', url: `/api/forge-scene-objects?job=${jobId}` }), res);
+		return { statusCode: res.statusCode, body: JSON.parse(res.body) };
+	};
+	const goodObject = (n) => ({
+		id: `object_0${n}`, name: `object_0${n}`, input_index: n - 1,
+		bbox: { min: [n - 1, 0, -1], max: [n, 1, 0] }, centroid: [n - 0.5, 0.5, -0.5], size: [1, 1, 1],
+	});
+
+	it('keeps a job alive while a cold worker misses a poll, and says it is waking', async () => {
+		status.mockResolvedValueOnce({ status: 'running', error: 'poll failed: upstream timeout after 15000ms' });
+		const { body } = await poll(`task-sam3d-cold-${'c'.repeat(20)}`);
+		expect(body.status).toBe('running');
+		expect(body.error).toBeNull();
+		expect(body.waking).toBe(true);
+		expect(limits.mcp3dGenerateRefund).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		['out_of_memory', 'no object could be reconstructed (CUDA out of memory. Tried to allocate 2.00 GiB)', /ran out of memory/i, true],
+		['worker_cold', 'pipeline not ready (model load timed out)', /still starting/i, true],
+		['worker_unavailable', 'pipeline unavailable: model load error (ref 9f)', /could not load/i, true],
+		['timeout', 'object reconstruction timed out after 600s', /took too long/i, true],
+		['bad_photo', 'photo is not a readable image (use PNG, JPEG or WebP)', /could not read that photo/i, false],
+		['worker_error', 'internal error (ref 0a1b2c3d4e5f)', /ref 0a1b2c3d4e5f/, true],
+	])('maps a worker failure to %s with a clear message and a retry hint', async (code, raw, message, retryable) => {
+		status.mockResolvedValueOnce({ status: 'failed', error: raw });
+		const { body } = await poll(`task-sam3d-${code}-${'f'.repeat(20)}`);
+		expect(body.status).toBe('failed');
+		expect(body.error_code).toBe(code);
+		expect(body.error).toMatch(message);
+		expect(body.error).not.toMatch(/CUDA|Tried to allocate/);
+		expect(body.retryable).toBe(retryable);
+	});
+
+	it('reports a worker that lifted nothing out of the photo as a clean "nothing found"', async () => {
+		status.mockResolvedValueOnce({
+			status: 'failed',
+			error: 'no object could be reconstructed (the model returned no mesh for this object; the model returned no mesh for this object)',
+		});
+		const { body } = await poll(`task-sam3d-empty-${'e'.repeat(20)}`);
+		expect(body.status).toBe('empty');
+		expect(body.error).toBeNull();
+		expect(body.error_code).toBe('nothing_found');
+		expect(body.message).toMatch(/nothing found to lift out of this photo/i);
+	});
+
+	it('reports a finished scene with no objects as "nothing found"', async () => {
+		status.mockResolvedValueOnce({ status: 'done', resultGlbUrl: 'https://storage.googleapis.com/b/s.glb', objects: [], objectCount: 0 });
+		const { body } = await poll(`task-sam3d-zero-${'z'.repeat(20)}`);
+		expect(body.status).toBe('empty');
+		expect(body.result_url).toBeNull();
+		expect(body.error_code).toBe('nothing_found');
+	});
+
+	it('checks a finished scene before handing it over', async () => {
+		const bad = { ...goodObject(3), centroid: [Number.NaN, 0, 0] };
+		status.mockResolvedValueOnce({
+			status: 'done', resultGlbUrl: 'https://storage.googleapis.com/b/s.glb',
+			objects: [goodObject(1), goodObject(2), bad, { name: '../../etc' }], objectCount: 4,
+		});
+		const { body } = await poll(`task-sam3d-check-${'k'.repeat(20)}`);
+		expect(body.status).toBe('done');
+		expect(body.objects.map((o) => o.name)).toEqual(['object_01', 'object_02']);
+		expect(body.object_count).toBe(2);
+	});
+
+	it.each([
+		['a result that is not a public https file', { status: 'done', resultGlbUrl: '/results/x.glb', objects: [goodObject(1)], objectCount: 1 }],
+		['a manifest with no usable object', { status: 'done', resultGlbUrl: 'https://storage.googleapis.com/b/s.glb', objects: [{ name: 'object_01', centroid: ['x'] }], objectCount: 1 }],
+		['more objects than the lane allows', { status: 'done', resultGlbUrl: 'https://storage.googleapis.com/b/s.glb', objects: Array.from({ length: 13 }, (_, i) => ({ ...goodObject(1), name: `object_${String(i + 1).padStart(2, '0')}` })), objectCount: 13 }],
+	])('refuses %s as an unusable result', async (_label, result) => {
+		status.mockResolvedValueOnce(result);
+		const { body } = await poll(`task-sam3d-bad-${'b'.repeat(20)}`);
+		expect(body.status).toBe('failed');
+		expect(body.error_code).toBe('bad_result');
+		expect(body.result_url).toBeNull();
+		expect(body.retryable).toBe(true);
+	});
+
+	it('gives the allowance back once when a job it charged for fails on the worker', async () => {
+		const jobId = `task-sam3d-refund-${'r'.repeat(20)}`;
+		submit.mockResolvedValueOnce({ extJobId: jobId, eta: 150 });
+		const start = makeRes();
+		await handler(makeReq({ body: { image_url: PHOTO, boxes: [[0.1, 0.1, 0.4, 0.5]] } }), start);
+		expect(start.statusCode).toBe(202);
+		expect(limits.mcp3dGenerate).toHaveBeenCalledTimes(1);
+
+		status
+			.mockResolvedValueOnce({ status: 'failed', error: 'internal error (ref 0a1b2c3d4e5f)' })
+			.mockResolvedValueOnce({ status: 'failed', error: 'internal error (ref 0a1b2c3d4e5f)' });
+		await poll(jobId);
+		await poll(jobId);
+		expect(limits.mcp3dGenerateRefund).toHaveBeenCalledTimes(1);
+		expect(limits.mcp3dGenerateRefund).toHaveBeenCalledWith('user:creator-test-user');
+	});
+
+	it('never refunds a job id it did not charge for', async () => {
+		status.mockResolvedValueOnce({ status: 'failed', error: 'internal error (ref 0a1b2c3d4e5f)' });
+		await poll(`task-sam3d-stranger-${'s'.repeat(20)}`);
+		expect(limits.mcp3dGenerateRefund).not.toHaveBeenCalled();
 	});
 
 	it('rejects a malformed or missing job id', async () => {

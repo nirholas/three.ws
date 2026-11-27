@@ -125,3 +125,125 @@ export async function detectObjectBoxes(imageUrl, maxObjects = DEFAULT_SCENE_OBJ
 	});
 	return normalizeDetectedBoxes(result.json, maxObjects);
 }
+
+export const NOTHING_FOUND_MESSAGE =
+	'Nothing found to lift out of this photo. Try one with clear, whole objects that stand apart from the background, ' +
+	'like a desk, a shelf or a corner of a room.';
+
+const NO_MESH_REASON = /no mesh|no objects/i;
+const OUT_OF_MEMORY = /out of memory|\bOOM\b|CUBLAS_STATUS_ALLOC_FAILED|MemoryError/i;
+
+/**
+ * Turn the worker's failure string (workers/model-sam3d-objects/main.py and
+ * pipeline.py) into a code, a sentence a visitor can act on, and whether trying
+ * again can help. The worker's own wording never reaches the page: it can name
+ * libraries and allocator sizes. An opaque correlation id ("ref abc123") is kept
+ * so a reported failure can be joined to the worker log.
+ *
+ * `nothing_found` is not a failure: the photo simply had nothing the model could
+ * lift out, and the endpoint reports it as an empty result.
+ *
+ * @returns {{ code: string, message: string, retryable: boolean }}
+ */
+export function classifySceneFailure(error, code = null) {
+	const raw = typeof error === 'string' ? error : '';
+	if (code === 'gcp_task_missing' || /task not found/i.test(raw)) {
+		return {
+			code: 'job_lost',
+			message: 'The scene job was lost when its GPU restarted. Start it again; your allowance was not used.',
+			retryable: true,
+		};
+	}
+	if (OUT_OF_MEMORY.test(raw)) {
+		return {
+			code: 'out_of_memory',
+			message: 'The GPU ran out of memory on this photo. Try again with fewer objects, or a photo with less in it.',
+			retryable: true,
+		};
+	}
+	if (/pipeline not ready|model load timed out/i.test(raw)) {
+		return {
+			code: 'worker_cold',
+			message: 'The 3D model was still starting up and did not finish loading in time. Try again: once it is awake it starts much faster.',
+			retryable: true,
+		};
+	}
+	if (/pipeline unavailable/i.test(raw)) {
+		return {
+			code: 'worker_unavailable',
+			message: 'The 3D model could not load on its GPU just now. Try again in a few minutes.',
+			retryable: true,
+		};
+	}
+	if (/not a readable image|refused to fetch|returned HTTP \d+|source .* (rejected|unreachable after)|^mask \d+:/i.test(raw)) {
+		return {
+			code: 'bad_photo',
+			message: 'The 3D model could not read that photo. Use a JPG, PNG or WebP that is publicly reachable, then try again.',
+			retryable: false,
+		};
+	}
+	if (/timed out|timeout|deadline/i.test(raw)) {
+		return {
+			code: 'timeout',
+			message: 'Rebuilding the objects took too long and was stopped. Try again, or choose fewer objects.',
+			retryable: true,
+		};
+	}
+	const allEmpty = raw.match(/^no object could be reconstructed \((.*)\)$/is);
+	if (allEmpty && allEmpty[1].split(';').every((r) => NO_MESH_REASON.test(r))) {
+		return { code: 'nothing_found', message: NOTHING_FOUND_MESSAGE, retryable: false };
+	}
+	const ref = raw.match(/\bref ([0-9a-f]{6,32})\b/i);
+	return {
+		code: 'worker_error',
+		message: `The 3D model hit an error while rebuilding the objects${ref ? ` (ref ${ref[1]})` : ''}. Try again.`,
+		retryable: true,
+	};
+}
+
+const OBJECT_NAME = /^object_\d{2,3}$/;
+const isVec3 = (v) => Array.isArray(v) && v.length === 3 && v.every((n) => typeof n === 'number' && Number.isFinite(n));
+
+function usableObject(o) {
+	return (
+		o && typeof o === 'object' &&
+		typeof o.name === 'string' && OBJECT_NAME.test(o.name) &&
+		isVec3(o.centroid) &&
+		o.bbox && isVec3(o.bbox.min) && isVec3(o.bbox.max) &&
+		o.bbox.min.every((v, i) => v <= o.bbox.max[i])
+	);
+}
+
+/**
+ * Check a finished scene before it is handed to the page: the file is a public
+ * https GLB, the object count is within what the lane allows, and every object
+ * the page will place has a node name and a finite position and extent in the
+ * shared scene frame (so the objects sit where they did relative to each other).
+ * Malformed entries are dropped; a scene with none left is unusable.
+ *
+ * @returns {{ status: 'done', resultUrl: string, objects: object[] }
+ *         | { status: 'empty' }
+ *         | { status: 'failed', message: string }}
+ */
+export function checkSceneResult({ resultGlbUrl, objects, objectCount } = {}) {
+	const list = Array.isArray(objects) ? objects : [];
+	if (list.length === 0 && (objectCount === 0 || objectCount == null)) return { status: 'empty' };
+	const unusable = (why) => ({ status: 'failed', message: `The scene came back unusable (${why}). Try again.` });
+	let url;
+	try {
+		url = new URL(String(resultGlbUrl || ''));
+	} catch {
+		return unusable('no file');
+	}
+	if (url.protocol !== 'https:') return unusable('no public file');
+	if (list.length > MAX_SCENE_OBJECTS) return unusable(`${list.length} objects, more than ${MAX_SCENE_OBJECTS}`);
+	const seen = new Set();
+	const kept = [];
+	for (const o of list) {
+		if (!usableObject(o) || seen.has(o.name)) continue;
+		seen.add(o.name);
+		kept.push(o);
+	}
+	if (!kept.length) return unusable('no object had a usable position');
+	return { status: 'done', resultUrl: url.href, objects: kept };
+}

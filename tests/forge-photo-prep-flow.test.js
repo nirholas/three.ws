@@ -239,3 +239,115 @@ describe('a photo that is already cut out', () => {
 		expect(out.file.name).toBe('shoe-prepared.webp');
 	});
 });
+
+describe('the visitor can always move on while the check runs', () => {
+	it('skips a check part way and hands back the original, with no dialog and the worker stopped', async () => {
+		const ctl = new AbortController();
+		const file = photo();
+		const run = reviewPhoto(file, { signal: ctl.signal });
+		await vi.advanceTimersByTimeAsync(5000);
+		ctl.abort();
+		const outcome = await run;
+		expect(outcome).toMatchObject({ action: 'skipped', file });
+		expect(outcome.note).toMatch(/skipped the photo check/);
+		expect(FakeWorker.instances[0].terminated).toBe(true);
+		expect(dialog()).toBeNull();
+	});
+
+	it('opens no dialog when the result arrives after the skip', async () => {
+		let late = null;
+		FakeWorker.script = (w, msg) => (late = () => w.reply(msg, { type: 'result', result: result() }));
+		const ctl = new AbortController();
+		const run = reviewPhoto(photo(), { signal: ctl.signal });
+		await flush();
+		ctl.abort();
+		await run;
+		late();
+		await flush();
+		expect(dialog()).toBeNull();
+	});
+
+	it('closes an open review when the photo is taken back', async () => {
+		FakeWorker.script = (w, msg) => w.reply(msg, { type: 'result', result: result() });
+		const ctl = new AbortController();
+		const file = photo();
+		const run = reviewPhoto(file, { signal: ctl.signal });
+		await flush();
+		expect(dialog()).not.toBeNull();
+		ctl.abort();
+		expect(await run).toMatchObject({ action: 'skipped', file });
+		expect(dialog()).toBeNull();
+		expect(URL.revokeObjectURL).toHaveBeenCalled();
+	});
+
+	it('lets a photo waiting behind another be skipped at once, and never checks it', async () => {
+		const posted = [];
+		FakeWorker.script = (w, msg) => posted.push(msg);
+		const first = reviewPhoto(photo());
+		const ctl = new AbortController();
+		const second = photo();
+		const run = reviewPhoto(second, { signal: ctl.signal });
+		await flush();
+		ctl.abort();
+		expect(await run).toMatchObject({ action: 'skipped', file: second });
+		FakeWorker.instances[0].reply(posted[0], { type: 'result', result: result() });
+		await flush();
+		press('use');
+		await first;
+		await flush();
+		expect(posted).toHaveLength(1);
+		expect(dialog()).toBeNull();
+	});
+
+	it('offers to go on with the original once the check runs slow, and only once', async () => {
+		const onSlow = vi.fn();
+		const run = reviewPhoto(photo(), { onSlow });
+		await vi.advanceTimersByTimeAsync(PREP_WAIT.offerOriginalMs - 100);
+		expect(onSlow).not.toHaveBeenCalled();
+		await vi.advanceTimersByTimeAsync(200);
+		expect(onSlow).toHaveBeenCalledTimes(1);
+		await vi.advanceTimersByTimeAsync(PREP_WAIT.totalMs);
+		await run;
+		expect(onSlow).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not offer the skip when the check reaches review in time', async () => {
+		FakeWorker.script = (w, msg) => w.reply(msg, { type: 'result', result: result() });
+		const onSlow = vi.fn();
+		const run = reviewPhoto(photo(), { onSlow });
+		await flush();
+		await vi.advanceTimersByTimeAsync(PREP_WAIT.offerOriginalMs * 2);
+		expect(onSlow).not.toHaveBeenCalled();
+		press('use');
+		await run;
+	});
+
+	it('offers the skip before the bounded wait gives up on its own', () => {
+		expect(PREP_WAIT.offerOriginalMs).toBeLessThan(PREP_WAIT.loadIdleMs);
+		expect(PREP_WAIT.offerOriginalMs).toBeLessThan(PREP_WAIT.runIdleMs);
+	});
+
+	it('starts a fresh worker for the next photo after a skip', async () => {
+		const ctl = new AbortController();
+		const skipped = reviewPhoto(photo(), { signal: ctl.signal });
+		await flush();
+		ctl.abort();
+		await skipped;
+		FakeWorker.script = (w, msg) => w.reply(msg, { type: 'result', result: result() });
+		const next = reviewPhoto(photo());
+		await flush();
+		expect(FakeWorker.instances).toHaveLength(2);
+		press('use');
+		expect((await next).action).toBe('use');
+	});
+});
+
+describe('preparePhoto with a signal', () => {
+	it('rejects at once, without starting the worker, when the signal is already aborted', async () => {
+		const { preparePhoto } = await import('../src/forge-photo-prep/client.js');
+		const ctl = new AbortController();
+		ctl.abort();
+		await expect(preparePhoto(photo(), { signal: ctl.signal })).rejects.toMatchObject({ name: 'AbortError' });
+		expect(FakeWorker.instances).toHaveLength(0);
+	});
+});
