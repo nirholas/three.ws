@@ -78,6 +78,7 @@ import {
 	selfhostQualityForTier,
 } from '../_lib/forge-tiers.js';
 import { laneHealthSnapshot, markLaneUnhealthy } from '../_lib/forge-lane-health.js';
+import { laneAllowedInTerritory, requestTerritory } from '../_lib/forge-territory.js';
 import {
 	FORGE_SERVICE_NAME,
 	FORGE_TAGS,
@@ -180,7 +181,13 @@ export function buildRequirements(resourceUrl, priceAtomics) {
 // FLUX→TRELLIS reconstruct lane so a paid call never dead-ends. Image→3D always
 // reconstructs (NVIDIA's hosted preview is text-only). Throws on any submit
 // failure so the caller can avoid settling payment.
-export async function submitGeneration({ prompt, imageUrls, isImageMode, aspect, tier }) {
+//
+// `country` is the requester's resolved country (requestTerritory). The
+// HuggingFace lane runs Tencent Hunyuan3D Spaces, whose licence excludes the EU,
+// the UK and South Korea, so it is skipped unless the country is known and
+// allowed. Omitted or null means unknown, which fails closed (the pipeline
+// generate stage runs from a job record with no request, so it lands here).
+export async function submitGeneration({ prompt, imageUrls, isImageMode, aspect, tier, country = null }) {
 	// Text prompts → the free NVIDIA NIM TRELLIS lane first (zero vendor cost).
 	if (!isImageMode) {
 		const viaNvidia = await submitTextViaNvidia({ prompt, tier });
@@ -197,7 +204,7 @@ export async function submitGeneration({ prompt, imageUrls, isImageMode, aspect,
 	// — the paid account while a free lane can serve it. Reversible via
 	// FORGE_PREFER_FREE=false. Returns null when the lane is unavailable (no
 	// HF_TOKEN) or it fails, so the call falls through to the Replicate reconstruct.
-	if (preferFreeReconstruct()) {
+	if (preferFreeReconstruct() && laneAllowedInTerritory('huggingface', country)) {
 		const viaHf = await submitViaHuggingFace({ prompt, imageUrls, isImageMode, aspect, tier });
 		if (viaHf) return viaHf;
 	}
@@ -700,7 +707,7 @@ export default wrap(async (req, res) => {
 			result = await runForgeHealthCheck(parsed);
 		} else {
 			try {
-				result = await submitGeneration(parsed);
+				result = await submitGeneration({ ...parsed, country: requestTerritory(req) });
 			} catch (err) {
 				return respondGenerationError(res, err);
 			}
@@ -770,7 +777,7 @@ export default wrap(async (req, res) => {
 		result = await runForgeHealthCheck(parsed);
 	} else {
 		try {
-			result = await submitGeneration(parsed);
+			result = await submitGeneration({ ...parsed, country: requestTerritory(req) });
 		} catch (err) {
 			if (ownsReservation) await releaseSlot({ route: ROUTE, paymentId });
 			return respondGenerationError(res, err);
