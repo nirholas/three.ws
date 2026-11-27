@@ -137,7 +137,8 @@ vi.mock('@upstash/ratelimit', () => {
 });
 
 let textToImageImpl = async () => ({ imageUrl: 'https://cdn.example/ref.png', model: 'flux' });
-vi.mock('../../api/_mcp3d/text-to-image.js', () => ({
+vi.mock('../../api/_mcp3d/text-to-image.js', async (orig) => ({
+	...(await orig()),
 	textToImage: vi.fn((...a) => textToImageImpl(...a)),
 }));
 
@@ -423,7 +424,6 @@ describe.each(HANDLERS)('%s: a request Forge failed first costs nothing', (_name
 		const key = freshUser();
 		const before = await freeLeft(key);
 		const sub = await submit(handler, FREE_TEXT);
-		if (sub.statusCode !== 200) console.log('DBG', JSON.stringify(sub.body));
 		expect(sub.statusCode).toBe(200);
 		gcpStatusImpl = async () => ({ status: 'running' });
 		await poll(handler, sub.body.job_id);
