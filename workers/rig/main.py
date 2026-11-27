@@ -15,11 +15,14 @@ creatures, props) is forwarded, by GCS url, to the VAST-AI-Research
 SkinTokens/UniRig worker (workers/rig-nonhuman, MIT) and its task is polled
 to completion under this same task_id, so callers see one API contract no
 matter which engine rigged their mesh. If RIG_NONHUMAN_URL is unset, every
-mesh takes the humanoid path unchanged (the pre-existing behavior).
+mesh takes the humanoid path unchanged (the pre-existing behavior). When the
+request names a `subject`, it decides the branch instead of the silhouette
+(rig_route.py): a sword passes the silhouette test and a T-posed human fails it.
 
 API contract (identical to the retired unirig worker, so the platform's
 GCP_UNIRIG_URL wiring is a config-only cutover):
-  POST /rig   { mesh_gcs_url: str, template?: str, blendshapes?: bool, job_id?: str }
+  POST /rig   { mesh_gcs_url: str, template?: str, blendshapes?: bool, job_id?: str,
+               subject?: "humanoid" | "creature" }
            -> 202 { task_id, status: "queued" }
   GET  /tasks/:id -> { task_id, status, rigged_gcs_url?, error?, elapsed_ms? }
   GET  /health    -> { ok, model, gpu_available, gpu_name, model_loaded, queued }
@@ -71,7 +74,8 @@ import engine_mia
 import rig_glb
 from blendshapes import head_mask_from_weights, load_template, transfer_blendshapes
 from gltf_meshopt import decode_if_meshopt
-from mesh_classify import HUMANOID, classify_mesh
+from mesh_classify import classify_mesh
+from rig_route import NONHUMAN_ENGINE, choose_engine, normalize_subject
 from tracing import install_tracing
 from worker_security import (
     UnsafeUrlError,
@@ -203,7 +207,9 @@ async def _forward_to_nonhuman(mesh_gcs_url: str, job_id: str) -> str:
         )
 
 
-async def _run_task(task_id: str, mesh_gcs_url: str, want_blendshapes: bool) -> None:
+async def _run_task(
+    task_id: str, mesh_gcs_url: str, want_blendshapes: bool, subject: Optional[str] = None
+) -> None:
     async with _sem:
         _tasks[task_id]["status"] = "running"
         loop = asyncio.get_event_loop()
@@ -221,8 +227,13 @@ async def _run_task(task_id: str, mesh_gcs_url: str, want_blendshapes: bool) -> 
             mesh_bytes, _ = decode_if_meshopt(mesh_bytes, ".glb")
             rig_glb.validate_input_mesh(mesh_bytes)
             classification = classify_mesh(rig_glb.load_mesh_vertices(mesh_bytes))
+            engine = choose_engine(classification, subject, bool(RIG_NONHUMAN_URL))
+            log.info(
+                "[%s] silhouette=%s subject=%s -> %s rigger",
+                task_id, classification, subject or "-", engine,
+            )
 
-            if classification != HUMANOID and RIG_NONHUMAN_URL:
+            if engine == NONHUMAN_ENGINE:
                 timeout_s = RIG_NONHUMAN_TIMEOUT_S
                 work = _forward_to_nonhuman(mesh_gcs_url, task_id)
             else:
@@ -291,6 +302,10 @@ class RigRequest(BaseModel):
     template: str = "arkit_ict"
     blendshapes: bool = True
     job_id: str | None = None
+    # What the model was made as ("humanoid" | "creature"), read by the
+    # platform from the words it was made from. Outranks the silhouette test
+    # when present (see rig_route.py); anything else is ignored.
+    subject: str | None = None
 
 
 @app.post("/rig", status_code=202)
@@ -307,7 +322,9 @@ async def rig(
         "status": "queued",
         "created_at": time.time(),
     }
-    background_tasks.add_task(_run_task, task_id, body.mesh_gcs_url, body.blendshapes)
+    background_tasks.add_task(
+        _run_task, task_id, body.mesh_gcs_url, body.blendshapes, normalize_subject(body.subject)
+    )
     return {"task_id": task_id, "status": "queued"}
 
 

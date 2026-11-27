@@ -56,8 +56,8 @@ RUN git clone https://github.com/jasongzy/Make-It-Animatable.git /app/mia \
     && rm -rf /app/mia/.git
 
 WORKDIR /app
-COPY worker_security.py gltf_meshopt.py rig_glb.py blendshapes.py engine_mia.py mesh_classify.py main.py entrypoint.sh /app/
-COPY test_rig_glb.py test_blendshapes.py test_pipeline.py test_gltf_meshopt.py test_mesh_classify.py /app/
+COPY worker_security.py gltf_meshopt.py rig_glb.py blendshapes.py engine_mia.py mesh_classify.py rig_route.py main.py entrypoint.sh /app/
+COPY test_rig_glb.py test_blendshapes.py test_pipeline.py test_gltf_meshopt.py test_mesh_classify.py test_rig_route.py /app/
 RUN chmod +x /app/entrypoint.sh
 
 # Build-time guards, the same pattern workers/garment-forge uses. These
@@ -73,7 +73,8 @@ RUN python3 /app/test_rig_glb.py \
     && python3 /app/test_blendshapes.py \
     && python3 /app/test_pipeline.py \
     && python3 /app/test_gltf_meshopt.py \
-    && python3 /app/test_mesh_classify.py
+    && python3 /app/test_mesh_classify.py \
+    && python3 /app/test_rig_route.py
 
 # Weights, Mixamo bone templates, and the baked ARKit template are staged in
 # GCS (stage-assets.sh) and mounted at /weights by Cloud Run; entrypoint.sh
