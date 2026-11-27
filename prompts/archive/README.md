@@ -86,3 +86,21 @@ Grok campaign orders below (`grok-startups-` 871 to 886, and the `x-grok-` owner
 | 930 launch announcement | `bbce29792` | drafts queued in `data/x-content/queue.json`; posting is the owner's |
 | 931 X player card | `bbce29792` | `docs/partners/x-player-card-submission.md`; production `/forge/embed` sends `frame-ancestors *` |
 | 941 xAI remote MCP e2e | `150c5c4ec` | dry run matches the xAI remote MCP docs; the live run comes with the key (owner step 2) |
+
+Orders below were archived on 2026-11-27 by the [queue audit](../finish/_context/queue-audit-2026-11-27.md), which checked each definition of done against the committed code, the tests and production (`f0eed584f`). Every commit listed is live in production.
+
+| Order | Shipped in | Verified 2026-11-27 |
+|---|---|---|
+| 331 360 photo as the avatar's world | `cbe317633`, `5625e6be0` | `tests/pano-environment.test.js` passes (20 of 20); `src/viewer/pano-*` wired through `src/splat-viewer.js`; `docs/viewer.md` and changelog present. The `/splat` backdrop line rests on wiring and the logged 72 MP decode, not a screenshot (SwiftShader cannot read back the splat canvas) |
+| 626 metered OpenAI-compatible router | `fbb235df5`, `b24e4b077` | `tests/metered-router.test.js` passes (9 tests, streaming close and measured-token settlement); production `/api/v1/chat/completions` routed; `docs/metered-router.md` and STRUCTURE row present |
+| 714 no `'unsafe-eval'` in the site-wide CSP | `f0927e10d`, `1e31f959f`, `2618e578c`, `6ee95cb8e` | production `script-src` carries `'wasm-unsafe-eval'` and no `'unsafe-eval'` outside `/scene`; `node scripts/audit-csp.mjs --headers-only --base https://three.ws` clean across 26 pages; six CSP test files present |
+| 767 war results ticker and jumbotron | `72202b0f2` | `tests/activity-feeds.test.js` passes (22 of 22) with its `noteWarResult` block; `onResult` wired from `src/game/war-portal.js` into `src/game/coincommunities.js`; `docs/coin-wars.md` line present |
+| 851 live /nvidia lane health and benchmarks | `72b323d0d`, `f01b9d114`, `95d3dd512`, `e647d25ad` | production `/api/nvidia/stats` serves populated per-lane probes; `/nvidia/benchmarks` 200; probe cron, migration and `tests/nvidia-stats.test.js`, `tests/nvidia-live.test.js` present |
+| 852 Nemotron vision lane | `b36d6020f`, `5eb344a63`, `6a5280b5c`, `29fe889b6` | production stats show the Nemotron vision lane serving; eval report `docs/nvidia/evals/vision-2026-11-16.md`, `npm run nvidia:vision-eval` and three vision test files present |
+| 854 NVIDIA reranker revived | `af7a6030d`, `96660abd5`, `2334a6c78` | `tests/rerank.test.js` passes; the eval missed the enable rule at the 2.5 s timeout, so the stage ships opt-in (`KNOWLEDGE_RERANK_ENABLED=1`) as the order prescribes |
+| 855 day-zero NIM adoption autopilot | `6628ae687` to `65c4199f0` | release-eval and lane-probe crons registered; `/admin/nim-releases` page, migration, `tests/nim-release-eval.test.js` and `tests/nvidia-release-watch.test.js` present; changelog present |
+| 856 NemoGuard agent chat guardrails | `d869376a6` and later | `tests/chat-guardrails.test.js` passes (79 tests); owner endpoint covered by `tests/agent-guard-endpoint.test.js`; eval report, `npm run nvidia:guard-eval` and changelog present |
+| 858 NeMo Retriever PDF knowledge | `399ef84eb`, `54f47fb7b` | migration `20261116182500_agent_knowledge_pdf_jobs.sql` applied in production (`db:status`); four PDF test files, eval report (38.6% to 90.9%), cron and changelog present |
+| 860 /cosmos on current Cosmos models | `a3772362a`, `b89e2e665`, `9273f68b9` | `tests/cosmos-world-lane.test.js`, `docs/cosmos.md` and the eval report (5 prompts, old vs new) present; the self-hosted Cosmos 3 Nano worker serves |
+| 864 OpenUSD simulation-ready export | `e070a1aaa`, `0a2c650d7`, `6e3610e21`, `b86290b61` | production `/api/forge/export-usd` routed; `/docs/openusd-export` 200; `workers/usd-export`, `tests/forge-export-usd.test.js` and `tests/mcp-export-openusd.test.js` present |
+| 869 Audio2Face emotion expression | `f4d0f44be`, `845780c47`, `5cd7e6324`, `a70849afb` | `tests/a2f-emotion.test.js` and `tests/a2f-emotion-request.test.js` with their fixture present; browser verify script and changelog present |

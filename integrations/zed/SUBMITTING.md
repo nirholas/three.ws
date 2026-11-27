@@ -33,4 +33,4 @@ Zed extensions are listed through a pull request to <https://github.com/zed-indu
 4. Run `pnpm sort-extensions`, commit, and open the pull request. Zed's CI builds the extension and a maintainer reviews it.
 5. After it merges, bump `version` in both `extension.toml` and `Cargo.toml` for every later release.
 
-Order 938 (`prompts/finish/938-partners-15-listings-prs-and-sends.md`) owns sending this pull request.
+Order 938 (`prompts/awaiting-owner/938-partners-15-listings-prs-and-sends.md`) owns sending this pull request.

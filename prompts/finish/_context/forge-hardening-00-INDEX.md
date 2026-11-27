@@ -25,8 +25,8 @@ A Forge lane that is measurably working is never switched, reordered, re-tuned, 
 - [102](../102-forge-hardening-02-throttle-honesty-on-page.md): Tell the user the truth when a provider is busy, instead of "Generation limit reached".
 - [103](../103-forge-hardening-03-image-ladder-outage-contract.md): Make the text-to-image ladder fail fast, fall through correctly and recover on its own.
 - [182](../182-forge-hardening-82-background-jobs-must-not-starve-users.md): Stop our own scheduled jobs from using the capacity real users are waiting for.
-- [177](../177-forge-hardening-77-nvidia-catalog-reply-readiness.md): Verify every claim behind the NVIDIA catalog listing, and draft the reply for the owner to send.
-- [105](../105-forge-hardening-05-live-walkthrough-script.md): Build the one command that proves Forge works end to end, as a real user.
+- [177](../../awaiting-owner/177-forge-hardening-77-nvidia-catalog-reply-readiness.md): Verify every claim behind the NVIDIA catalog listing, and draft the reply for the owner to send.
+- [105](../../awaiting-owner/105-forge-hardening-05-live-walkthrough-script.md): Build the one command that proves Forge works end to end, as a real user.
 - [106](../106-forge-hardening-06-protected-lane-contract-tests.md): Pin the working lane with tests so nobody can move it by accident.
 
 Order 184 comes first because of what it will confirm: on 2026-11-26 at 20:50 UTC production ran commit `f0eed584f` (`curl -s https://three.ws/api/version`), 17 commits behind local `main`. Commit `b41786cd6`, which fixes two bugs in the only image rung that was serving, was committed and not live. Until a deploy happens, the live site shows the old behavior whatever the agents fix.
@@ -62,19 +62,19 @@ Each agent stops at the CLAUDE.md gates and reports. These are yours:
 | [102](../102-forge-hardening-02-throttle-honesty-on-page.md) | Forge page, error messages | Tell the user the truth when a provider is busy, instead of "Generation limit reached" | 1 |
 | [103](../103-forge-hardening-03-image-ladder-outage-contract.md) | text-to-image provider ladder | Make the text-to-image ladder fail fast, fall through correctly and recover on its own | 1 |
 | [104](../104-forge-hardening-04-pre-job-failure-visibility.md) | observability, failures before a job exists | Count the generations that die before a job is created | 0 |
-| [105](../105-forge-hardening-05-live-walkthrough-script.md) | end-to-end verification | Build the one command that proves Forge works end to end, as a real user | 2 |
+| [105](../../awaiting-owner/105-forge-hardening-05-live-walkthrough-script.md) | end-to-end verification | Build the one command that proves Forge works end to end, as a real user | 2 |
 | [106](../106-forge-hardening-06-protected-lane-contract-tests.md) | protected lanes, regression safety | Pin the working lane with tests so nobody can move it by accident | 0 |
 | [107](../107-forge-hardening-07-seed-range-end-to-end.md) | generation inputs, seeds | Make every seed the page can send valid for every engine it can reach | 1 |
-| [108](../108-forge-hardening-08-director-llm-fail-open.md) | prompt direction, LLM chain | Keep generating when every language model is down | 1 |
-| [109](../109-forge-hardening-09-photo-to-3d-intake.md) | photo to 3D, upload and validation | Make every photo a user can reasonably drop turn into a model, or a clear reason why not | 1 |
+| [108](../../awaiting-owner/108-forge-hardening-08-director-llm-fail-open.md) | prompt direction, LLM chain | Keep generating when every language model is down | 1 |
+| [109](../../awaiting-owner/109-forge-hardening-09-photo-to-3d-intake.md) | photo to 3D, upload and validation | Make every photo a user can reasonably drop turn into a model, or a clear reason why not | 1 |
 | [110](../110-forge-hardening-10-lane-failover-and-breakers.md) | 3D lane failover | Prove that when the working lane fails, the user still gets a model | 0 |
-| [111](../111-forge-hardening-11-job-lifecycle-poll-resume.md) | job lifecycle, polling and resume | Never lose a generation: closing the tab, reloading or double-clicking must all be safe | 1 |
+| [111](../../awaiting-owner/111-forge-hardening-11-job-lifecycle-poll-resume.md) | job lifecycle, polling and resume | Never lose a generation: closing the tab, reloading or double-clicking must all be safe | 1 |
 | [112](../112-forge-hardening-12-limits-and-daily-caps.md) | rate limits and daily caps | Make every limit fair, accurate and explained | 0 |
 | [113](../113-forge-hardening-13-error-copy-taxonomy.md) | error handling, page copy | Give every error Forge can return a message that says what happened and what to do | 0 |
-| [167](../167-forge-hardening-67-input-security-uploads-and-urls.md) | security: what Forge accepts from the internet | Make sure nothing a stranger sends to Forge can reach inside our systems | 0 |
+| [167](../../awaiting-owner/167-forge-hardening-67-input-security-uploads-and-urls.md) | security: what Forge accepts from the internet | Make sure nothing a stranger sends to Forge can reach inside our systems | 0 |
 | [168](../168-forge-hardening-68-ownership-and-token-security.md) | security: who may do what | Make sure one user can never see, change or spend another user's Forge work | 0 |
-| [169](../169-forge-hardening-69-content-safety-and-takedown.md) | safety: what Forge will make and how it is removed | Make sure Forge refuses what it must, and that removal requests actually remove | 0 |
-| [177](../177-forge-hardening-77-nvidia-catalog-reply-readiness.md) | the reply to NVIDIA | Verify every claim behind the NVIDIA catalog listing, and draft the reply for the owner to send | 1 |
+| [169](../../awaiting-owner/169-forge-hardening-69-content-safety-and-takedown.md) | safety: what Forge will make and how it is removed | Make sure Forge refuses what it must, and that removal requests actually remove | 0 |
+| [177](../../awaiting-owner/177-forge-hardening-77-nvidia-catalog-reply-readiness.md) | the reply to NVIDIA | Verify every claim behind the NVIDIA catalog listing, and draft the reply for the owner to send | 1 |
 | [182](../182-forge-hardening-82-background-jobs-must-not-starve-users.md) | operations: scheduled jobs that share Forge's capacity | Stop our own scheduled jobs from using the capacity real users are waiting for | 0 |
 | [184](../184-forge-hardening-84-undeployed-fixes-and-deploy-readiness.md) | operations: what is fixed in code but not live | Find out exactly which Forge fixes are not live yet, and make the deploy a single safe command for the owner | 0 |
 
@@ -84,13 +84,13 @@ Each agent stops at the CLAUDE.md gates and reports. These are yours:
 |---|---|---|---|
 | [114](../114-forge-hardening-14-nim-flux-and-nvidia-text-lane.md) | NVIDIA NIM image rung and NVIDIA text lane | Find out why the NVIDIA FLUX rung times out, and make the NVIDIA lanes of Forge dependable | 1 |
 | [115](../115-forge-hardening-15-vertex-reference-image-breaker.md) | Vertex reference image module | Make the Vertex image step step aside instantly when billing blocks it, and come back by itself | 0 |
-| [116](../116-forge-hardening-16-trellis2-lane-diagnosis.md) | TRELLIS.2 lane | Find out why the configured first-choice lane serves nothing, without moving traffic onto it | 0 |
-| [117](../117-forge-hardening-17-pixal3d-match-my-photo.md) | Pixal3D lane ("Match my photo") | Fix or honestly gate "Match my photo", which fails four times out of five | 1 |
+| [116](../../awaiting-owner/116-forge-hardening-16-trellis2-lane-diagnosis.md) | TRELLIS.2 lane | Find out why the configured first-choice lane serves nothing, without moving traffic onto it | 0 |
+| [117](../../awaiting-owner/117-forge-hardening-17-pixal3d-match-my-photo.md) | Pixal3D lane ("Match my photo") | Fix or honestly gate "Match my photo", which fails four times out of five | 1 |
 | [118](../118-forge-hardening-18-triposg-sketch-lane.md) | TripoSG lane (sketch to 3D) | Fix sketch to 3D, which fails more often than it works | 1 |
-| [119](../119-forge-hardening-19-hunyuan-hf-lanes-and-regions.md) | Hunyuan3D and Hugging Face lanes, region rules | Prove the Hunyuan3D and Hugging Face lanes work as fallbacks and obey their region rules | 0 |
-| [120](../120-forge-hardening-20-nvidia-hosted-trellis-lane.md) | TRELLIS hosted by NVIDIA (NVCF) | Make the NVIDIA-hosted TRELLIS lane a fallback we can rely on | 0 |
-| [121](../121-forge-hardening-21-byok-geometry-lanes.md) | bring-your-own-key lanes | Make the bring-your-own-key lanes safe with users' keys and honest about failures | 0 |
-| [122](../122-forge-hardening-22-multi-view-inputs.md) | multiple photos and generated views | Make multi-view generation help when it works and vanish when it does not | 1 |
+| [119](../../awaiting-owner/119-forge-hardening-19-hunyuan-hf-lanes-and-regions.md) | Hunyuan3D and Hugging Face lanes, region rules | Prove the Hunyuan3D and Hugging Face lanes work as fallbacks and obey their region rules | 0 |
+| [120](../../awaiting-owner/120-forge-hardening-20-nvidia-hosted-trellis-lane.md) | TRELLIS hosted by NVIDIA (NVCF) | Make the NVIDIA-hosted TRELLIS lane a fallback we can rely on | 0 |
+| [121](../../awaiting-owner/121-forge-hardening-21-byok-geometry-lanes.md) | bring-your-own-key lanes | Make the bring-your-own-key lanes safe with users' keys and honest about failures | 0 |
+| [122](../../awaiting-owner/122-forge-hardening-22-multi-view-inputs.md) | multiple photos and generated views | Make multi-view generation help when it works and vanish when it does not | 1 |
 | [123](../123-forge-hardening-23-background-removal-photo-prep.md) | background removal and photo preparation | Make photo preparation dependable: background removal, cropping and review | 0 |
 | [124](../124-forge-hardening-24-quality-gate-and-retry.md) | quality gate and automatic retry | Make sure the quality gate can only improve results, never block or double-spend them | 0 |
 | [125](../125-forge-hardening-25-cache-correctness.md) | generation and catalog caches | Make caching correct: never a wrong model, never a failed one, never a removed one | 0 |

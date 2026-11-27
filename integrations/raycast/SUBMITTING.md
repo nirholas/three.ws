@@ -19,4 +19,4 @@ Store review is a pull request to <https://github.com/raycast/extensions> (docs:
 4. Run `npm run publish`. It forks `raycast/extensions`, copies this folder to `extensions/three-ws` and opens the pull request.
 5. Answer review comments. Raycast reviewers ask for a CHANGELOG.md on later versions.
 
-Order 938 (`prompts/finish/938-partners-15-listings-prs-and-sends.md`) owns sending the pull request.
+Order 938 (`prompts/awaiting-owner/938-partners-15-listings-prs-and-sends.md`) owns sending the pull request.

@@ -4,8 +4,11 @@ Internal work-order documents for Claude agents: self-contained prompts, each wr
 into a fresh Claude Code chat and executed to 100% without further input. These are operator
 documents, not a product surface. Nothing here ships to users.
 
-**Everything still to finish lives in one folder: [finish/](finish/).** Open a work order there,
-paste it, run it. That folder is the whole queue; nothing outstanding is filed anywhere else.
+**Everything an agent can still finish lives in one folder: [finish/](finish/).** Open a work
+order there, paste it, run it. That folder is the whole agent queue. Orders whose code is
+finished and that wait only on an owner step (a deploy, a key, a spend, a listing, a decision)
+live in [awaiting-owner/](awaiting-owner/) since 2026-11-27. Nothing outstanding is filed
+anywhere else.
 
 **The filenames are the running order.** Since 2026-09-07 every order is numbered by priority,
 so sorting the folder by name gives you the sequence to work through: open the first file, run
@@ -29,7 +32,8 @@ run. Read the one your order names.
 | Path | What it holds |
 |---|---|
 | [finish/](finish/) | Every open work order, flat, one file each. The filename is `<campaign>-<order>.md`, so `911-okx-ai-08-forge-relisting.md` is the relisting order of the OKX.AI campaign. Sorting the directory groups each campaign together. A campaign's index (`<campaign>-00-INDEX.md`, `-00-CONTEXT.md`, `-README.md`) and its handoff log (`<campaign>-PROGRESS.md`) sit beside its orders under the same prefix. |
-| [archive/](archive/) | Finished work orders, moved out of `finish/` once every definition-of-done line was verified. Read-only record; never run one. See [archive/README.md](archive/README.md). |
+| [awaiting-owner/](awaiting-owner/) | Work orders whose code, tests and docs are committed and whose only remaining step is the owner's. Moved out of `finish/` by the [2026-11-27 queue audit](finish/_context/queue-audit-2026-11-27.md), which names each order's remaining step. An order goes to `archive/` once that step is done and its definition of done is verified, or back to `finish/` if agent work turns up. See [awaiting-owner/README.md](awaiting-owner/README.md). |
+| [archive/](archive/) | Finished work orders, moved out of `finish/` or `awaiting-owner/` once every definition-of-done line was verified. Read-only record; never run one. See [archive/README.md](archive/README.md). |
 | [masters/](masters/) | The nine reusable master prompts. They take a supplied TARGET instead of fixed tasks and never retire, so they are not part of the finish queue. |
 | `<campaign>/_generated/`, `okx-ai/assets/`, `okx-ai/e2e-evidence/` | Machine-written evidence (JSON captures, screenshots, transcripts) produced by scripts. These stayed at their original paths because scripts read and write them by hardcoded path; see **Runtime consumption** below. |
 | [bnb-chain/](bnb-chain/), [robinhood-chain/](robinhood-chain/) | Two fully shipped campaigns kept as reference: their context and progress files carry adversarially-verified chain facts that other work still cites. No open orders. |

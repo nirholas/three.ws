@@ -163,8 +163,8 @@ Rows `third_party/designcode-agent-skills/agent-skills/web-design/funky-purple-c
 | `workers/agent-screen-pool/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md). cloudbuild present, no service; verify build |
 | `workers/agent-screen-worker/README.md` | no-open-work | owner-run by design, no Cloud Run deployment intended |
 | `workers/agent-sniper/README.md` | no-open-work | deployed worker reference (service live in gcloud run services list) |
-| `workers/agora-citizens/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md), [770](../770-plan-agora-cartographer-profession-reactivation.md). deploy-ready but no service; cartographer profession deferred |
-| `workers/agora-citizens/work/README.md` | order | [770](../770-plan-agora-cartographer-profession-reactivation.md). cartographer runner deferred pending in-budget compose |
+| `workers/agora-citizens/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md), [770](../../awaiting-owner/770-plan-agora-cartographer-profession-reactivation.md). deploy-ready but no service; cartographer profession deferred |
+| `workers/agora-citizens/work/README.md` | order | [770](../../awaiting-owner/770-plan-agora-cartographer-profession-reactivation.md). cartographer runner deferred pending in-budget compose |
 | `workers/avatar-pipeline-controller/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md). no Cloud Run service; verify build |
 | `workers/avatar-reconstruction/eval/README.md` | no-open-work | deployed worker reference (service live in gcloud run services list) |
 | `workers/avatar-reconstruction/README.md` | no-open-work | deployed worker reference (service live in gcloud run services list) |
