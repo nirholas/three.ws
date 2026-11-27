@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "3D for the open Grok toolkit: xAI's SDKs, MetaGPT, LiteLLM and 11 more",
+			"summary": "A new page lists 14 open-source projects built around Grok and what three.ws gives each one, all through the same free 3D server. New this week: an example on xAI's TypeScript SDK that streams Grok's tool calls, a LiteLLM proxy config that serves Grok together with the 3D tools from one endpoint, a three-role MetaGPT team where Grok reviews renders of the model and sends it back with the fault named, a plugin for Orca and a config file Happy reads on open. The page says which of these were run against production and gives the command that repeats each check. The MetaGPT team also now starts a new generation when the free generator is busy, instead of ending the run.",
+			"tags": ["feature", "docs"],
+			"link": "/docs/grok-toolkit"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "The six Grok examples show real runs, and the curl one reads xAI's answers",
 			"summary": "All six Grok examples were run live with a working xAI key, and each README now shows what came back: the tool call Grok made to three.ws, the model and viewer link, and the reply. The curl example used to stop on every answer from xAI, good or bad. It now prints the model on success and xAI's own message on an error. The Grok Build plugin page shows a real turn where Grok searched the three.ws catalog.",
 			"tags": ["fix", "docs"],

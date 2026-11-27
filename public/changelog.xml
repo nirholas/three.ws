@@ -15,6 +15,14 @@
 			<description>Every address, uploaded photo and model file a stranger can send to Forge, the guard in front of each (SSRF checks, DNS pinning, streaming size caps, type from bytes, pixel limits), and the one gap still open.</description>
 		</item>
 		<item>
+			<title>3D for the open Grok toolkit: xAI's SDKs, MetaGPT, LiteLLM and 11 more</title>
+			<link>https://three.ws/docs/grok-toolkit</link>
+			<guid isPermaLink="false">2026-11-27:3D for the open Grok toolkit: xAI's SDKs, MetaGPT, LiteLLM and 11 more</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new page lists 14 open-source projects built around Grok and what three.ws gives each one, all through the same free 3D server. New this week: an example on xAI's TypeScript SDK that streams Grok's tool calls, a LiteLLM proxy config that serves Grok together with the 3D tools from one endpoint, a three-role MetaGPT team where Grok reviews renders of the model and sends it back with the fault named, a plugin for Orca and a config file Happy reads on open. The page says which of these were run against production and gives the command that repeats each check. The MetaGPT team also now starts a new generation when the free generator is busy, instead of ending the run.</description>
+		</item>
+		<item>
 			<title>A private Forge model now stays private on every page, and old job links stop working</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-27:A private Forge model now stays private on every page, and old job links stop working</guid>
