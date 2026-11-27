@@ -9459,8 +9459,7 @@
 		"view_this_model_in_ar_place_title": "Zobraziť tento model v AR, umiestnený vo vašej izbe",
 		"what_does_the_sketch_depict_required": "Čo zobrazuje skica? (povinné)",
 		"what_other_people_just_forged_open_one": "Čo iní práve vytvorili. Otvorte jeden vo prehliadači, alebo <strong>Remix</strong> jeho príkaz a urobte ho svojim.",
-		"your_creations": "Vaše kreácie",
-		"product_name": "Forge<span class=\"forge-h1-kw\">: AI 3D Model Generator</span>"
+		"your_creations": "Vaše kreácie"
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge svoj 3D model na three.ws",
@@ -24489,6 +24488,7 @@
 		"t_well_known_chat_plugin_json": ".well-known/chat-plugin.json",
 		"t_well_known_mcp_json": ".well-known/mcp.json",
 		"t_well_known_oauth_authorization_server": ".well-known/oauth-authorization-server",
+		"t_well_known_skill_md": "",
 		"t_well_known_x402": ".well-known/x402",
 		"t_well_known_x402_json": ".well-known/x402.json",
 		"t_what_is": "Čo je three.ws?",

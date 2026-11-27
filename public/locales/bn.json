@@ -9459,8 +9459,7 @@
 		"view_this_model_in_ar_place_title": "এই মডেল AR-এ দেখুন, আপনার রুমে প্লেসড",
 		"what_does_the_sketch_depict_required": "স্কেচটি কী চিত্রিত করে? (অবশ্যই প্রয়োজন)",
 		"what_other_people_just_forged_open_one": "অন্যরা কী তৈরি করেছে। দর্শকে একটি খুলুন, অথবা <strong>Remix</strong> এর প্রম্পটটি পরিবর্তন করুন এবং এটি আপনার করুন।",
-		"your_creations": "আপনার সৃষ্টিসমূহ",
-		"product_name": "Forge<span class=\"forge-h1-kw\">: AI 3D Model Generator</span>"
+		"your_creations": "আপনার সৃষ্টিসমূহ"
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "আপনার নিজের 3D মডেল three.ws-এ Forge করুন",
