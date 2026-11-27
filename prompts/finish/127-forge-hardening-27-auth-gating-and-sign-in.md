@@ -1,5 +1,7 @@
 # Forge hardening 27: Make the sign-in wall lose no one: keep the prompt, explain why, and recover from expiry
 
+**Status (2026-11-27):** Done in code and on threews/main, not yet in production. The sign-in round trip (account note under Generate, prompt and settings kept through sign-in or registration, validated return address, session-ended copy, photo notice) landed in 863171ef6 with tests/forge-signed-out-flow.test.js; the stale no-account claims in docs/forge.md and the Daily Forge tour narration were corrected in the docs commit after it. Production still serves f0eed584f. Remaining and owned by the owner: deploy (`npm run deploy:gcp:full`), then archive this file. Out of scope and open: the home widget (src/home-forge.js) and Studio submit (src/forge-studio/create-prompt.js) still drop the prompt at the sign-in wall.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/127-forge-hardening-27-auth-gating-and-sign-in.md`.
 
 **Priority:** P1. **Area:** sign-in flow around Forge. **Dev port:** 4127. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
