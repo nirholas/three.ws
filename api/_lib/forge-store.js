@@ -704,33 +704,40 @@ const WEB_VARIANT_MIN_BYTES = 512 * 1024;
 // Below this the variant is not worth a second object: keep storage honest.
 const WEB_VARIANT_MIN_GAIN = 0.9;
 
-export function buildWebVariant({ buffer, creationId, keyPrefix }) {
-	if (!buffer?.length || buffer.length < WEB_VARIANT_MIN_BYTES) return Promise.resolve(null);
+// Build, store and record the variant. Answers null only when the variant is
+// not worth a second object (too small to bother, or no real gain); every
+// failure throws, so a caller that keeps a queue (api/cron/forge-web-variants.js)
+// can tell a storage outage from a model that cannot be compressed.
+export async function writeWebVariant({ buffer, creationId, keyPrefix }) {
+	if (!buffer?.length || buffer.length < WEB_VARIANT_MIN_BYTES) return null;
 	const key = `${keyPrefix}.web.glb`;
-	return Promise.resolve()
-		.then(() => compressGlb(buffer, deliveryCompressionOptions()))
-		.then(async (result) => {
-			if (result.grew || result.outputBytes > buffer.length * WEB_VARIANT_MIN_GAIN) return null;
-			await putObject({
-				key,
-				body: result.buffer,
-				contentType: 'model/gltf-binary',
-				metadata: { source: 'forge-web-variant' },
-			});
-			await sql`
-				update forge_creations
-				set web_glb_key = ${key},
-					web_glb_url = ${cdnUrl(key)},
-					web_size_bytes = ${result.outputBytes},
-					updated_at = now()
-				where id = ${creationId}
-			`;
-			return { key, url: cdnUrl(key), bytes: result.outputBytes };
-		})
-		.catch((err) => {
-			console.warn('[forge-store] web delivery variant failed:', err?.message);
-			return null;
-		});
+	const result = await compressGlb(buffer, deliveryCompressionOptions());
+	if (result.grew || result.outputBytes > buffer.length * WEB_VARIANT_MIN_GAIN) return null;
+	await putObject({
+		key,
+		body: result.buffer,
+		contentType: 'model/gltf-binary',
+		metadata: { source: 'forge-web-variant' },
+	});
+	await sql`
+		update forge_creations
+		set web_glb_key = ${key},
+			web_glb_url = ${cdnUrl(key)},
+			web_size_bytes = ${result.outputBytes},
+			updated_at = now()
+		where id = ${creationId}
+	`;
+	return { key, url: cdnUrl(key), bytes: result.outputBytes };
+}
+
+// Fire-and-forget form for the materialize path: a failure is logged and the
+// row keeps web_glb_url null, which every reader serves as glb_url. The
+// backfill cron picks the row up later.
+export function buildWebVariant({ buffer, creationId, keyPrefix }) {
+	return writeWebVariant({ buffer, creationId, keyPrefix }).catch((err) => {
+		console.warn('[forge-store] web delivery variant failed:', err?.message);
+		return null;
+	});
 }
 
 // The opt-in LOD chain variant: a real MSFT_lod GLB (packages/glb-tools's
