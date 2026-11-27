@@ -3357,7 +3357,10 @@ async function pollGcpStatus({ gcp, upstreamId, clientKey, createdAt }) {
 async function answerStalledPoll(res, { pendingStatus, meta, upstreamId, clientKey, jobId, metaFields }) {
 	const stalled = decideStalledPoll({ pendingStatus, row: meta });
 	if (!stalled) return false;
-	if (stalled.markFailed) await markFailed({ replicateJobId: upstreamId, clientKey, error: stalled.storedError });
+	if (stalled.markFailed) {
+		await markFailed({ replicateJobId: upstreamId, clientKey, error: stalled.storedError });
+		await refundFailedRigJob({ meta, upstreamId }).catch(() => {});
+	}
 	json(res, 200, { job_id: jobId, status: 'failed', error: stalled.error, ...metaFields });
 	return true;
 }
@@ -3641,6 +3644,8 @@ async function pollJob(req, res, jobId) {
 		// adapter strings can name the vendor ("meshy task not found"), its billing
 		// state, a task id, an IP, or a leaked key. Mask to neutral copy on the wire.
 		await markFailed({ replicateJobId: upstreamId, clientKey, error: result.error });
+		// A rig the worker failed does not count against the caller's allowance.
+		await refundFailedRigJob({ meta, upstreamId }).catch(() => {});
 
 		// Cool the platform lane that actually failed so health-aware routing
 		// steers new submits away immediately: the poll-time twin of the
