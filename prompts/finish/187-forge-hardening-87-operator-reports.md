@@ -1,5 +1,7 @@
 # Forge hardening 87: Make the Forge operator reports run, agree with each other, and point at the real problem
 
+**Status (2026-11-27):** Code, tests and docs are done and committed locally (8991ae9c9, 46472813b, 1e723e267, 570f6f91c, 6e34fd1a9, 2b04183f9, c7809c403). What remains belongs to the owner: (1) push and deploy (`git push threews main`, then `npm run deploy:gcp:full`) so production gets the 503-on-unreadable-ledger endpoint, the new /forge-funnel page and the ops-auth verification fix; (2) `gcloud auth login nich@sperax.io` (its token is expired, invalid_grant), then run `npm run forge:funnel -- --days 7 --requests` once to record the first measured count of requests refused before a job existed.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/187-forge-hardening-87-operator-reports.md`.
 
 **Priority:** P2. **Area:** operations: the reports operators rely on. **Dev port:** 4187. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
