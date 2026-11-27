@@ -41,7 +41,8 @@ function nextPowerOfTwo(n) {
  * Full retexture: exactly the requested size. Region edit: the larger of the
  * requested size and the source atlas (rounded up to a power of two, capped at
  * MAX_ATLAS), so a 1024 edit on a 2048 atlas never throws the rest of the
- * surface's detail away. workers/texture/main.py region_atlas_size mirrors this.
+ * surface's detail away. workers/texture/glb_region.py region_atlas_size mirrors
+ * this, keyed on the atlas of the material it repainted.
  */
 export function expectedAtlasSize({ mode, requested, sourceSize = 0 }) {
 	if (mode !== 'region' || !sourceSize) return requested;
@@ -160,15 +161,26 @@ export async function checkTextureResult({ source, result, mode, textureSize }) 
 
 	const srcBase = baseColorTextures(srcDoc);
 	const srcHashes = new Set(srcBase.map((t) => hashImage(t.getImage())));
-	const sourceSize = Math.max(0, ...srcBase.map((t) => Math.max(...(t.getSize() || [0, 0]))));
-	const expected = expectedAtlasSize({ mode, requested: textureSize, sourceSize });
+	const sizeOf = (tex) => Math.max(...(tex?.getSize() || [0, 0]));
+	const srcMaterials = srcDoc.getRoot().listMaterials();
 
 	// The atlases the worker actually wrote: anything not byte-identical to a
 	// source atlas. A region edit leaves every other material's map untouched.
-	const fresh = outBase.filter((t) => !srcHashes.has(hashImage(t.getImage())));
+	// A region atlas is sized from the map it repainted (the same material in
+	// the source, since materials keep their order), as the worker does.
+	const fresh = new Map();
+	outDoc
+		.getRoot()
+		.listMaterials()
+		.forEach((m, i) => {
+			const tex = m.getBaseColorTexture();
+			if (!tex || srcHashes.has(hashImage(tex.getImage())) || fresh.has(tex)) return;
+			const sourceSize = sizeOf(srcMaterials[i]?.getBaseColorTexture());
+			fresh.set(tex, expectedAtlasSize({ mode, requested: textureSize, sourceSize }));
+		});
 	const linear = linearSlotTextures(outDoc);
 	let atlas = null;
-	for (const tex of fresh) {
+	for (const [tex, expected] of fresh) {
 		const size = tex.getSize();
 		if (!size) {
 			failures.push({ code: 'unreadable', message: 'The new colour texture could not be decoded.' });

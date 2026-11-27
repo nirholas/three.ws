@@ -96,6 +96,23 @@ async function glb({ texture = null, uvShift = 0, extraTri = false, rigged = fal
 	return new NodeIO().writeBinary(doc);
 }
 
+// Two quads, two materials, each with its own base colour map.
+async function twoMaterialGlb(texA, texB) {
+	const doc = new Document();
+	const buf = doc.createBuffer();
+	const scene = doc.createScene();
+	for (const [name, img] of [['body', texA], ['trim', texB]]) {
+		const prim = doc
+			.createPrimitive()
+			.setAttribute('POSITION', doc.createAccessor().setType('VEC3').setArray(new Float32Array([0, 0, 0, 1, 0, 0, 1, 1, 0])).setBuffer(buf))
+			.setAttribute('TEXCOORD_0', doc.createAccessor().setType('VEC2').setArray(new Float32Array([0, 0, 1, 0, 1, 1])).setBuffer(buf));
+		const mat = doc.createMaterial(name).setBaseColorTexture(doc.createTexture(name).setImage(img).setMimeType('image/png'));
+		prim.setMaterial(mat);
+		scene.addChild(doc.createNode(name).setMesh(doc.createMesh(name).addPrimitive(prim)));
+	}
+	return new NodeIO().writeBinary(doc);
+}
+
 describe('expectedAtlasSize', () => {
 	it('a full retexture is exactly the size requested', () => {
 		expect(expectedAtlasSize({ mode: 'full', requested: 1024, sourceSize: 4096 })).toBe(1024);
@@ -143,6 +160,16 @@ describe('checkTextureResult: a good result passes', () => {
 		const result = await glb({ texture: await png(2048), uvShift: 0.1 });
 		const out = await checkTextureResult({ source, result, mode: 'full', textureSize: 2048 });
 		expect(out.ok).toBe(true);
+	});
+
+	it('a region edit is sized from the painted material, not a bigger atlas elsewhere', async () => {
+		// The worker (workers/texture/glb_region.py) sizes the new atlas from the
+		// atlas it repainted. A 2048 map on another material must not change that.
+		const source = await twoMaterialGlb(await png(512), await png(2048, [0, 0, 255]));
+		const result = await twoMaterialGlb(await png(512, [255, 0, 0]), await png(2048, [0, 0, 255]));
+		const out = await checkTextureResult({ source, result, mode: 'region', textureSize: 512 });
+		expect(out.failures).toEqual([]);
+		expect(out.atlas).toEqual({ width: 512, height: 512, expected: 512 });
 	});
 
 	it('accepts an explicit sRGB gamma chunk', async () => {

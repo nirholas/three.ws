@@ -215,6 +215,23 @@ curl -X POST https://$SERVICE_URL/retexture_region \
 The inpaint pipeline is loaded lazily on the first region request, so the
 `/texture` path pays no extra startup cost or VRAM until a magic-brush edit runs.
 
+**What a region result keeps.** The edit never round-trips the model through a
+mesh library (a trimesh export drops the skeleton, skin weights and animation
+clips). [`glb_region.py`](./glb_region.py) edits the glTF directly: it picks
+the primitive the editor painted on by the editor's own rule (has
+`TEXCOORD_0`, a base colour map wins, then the most vertices, as in
+`src/editor/magic-brush.js`), repaints that material's base colour atlas, and
+writes the PNG back in place of the old image. Every node, mesh, UV, skin and
+clip comes out byte-identical; an atlas another material shares gets a new
+image for the painted material only. The atlas is a power of two: the larger
+of `texture_size` and the source atlas rounded up, capped at 2048 (the same
+rule `api/_lib/texture-result-checks.js` checks). A source alpha channel is
+kept. A model with no UV map, a KTX2-compressed atlas, or a map on a second UV
+set is refused with a reason instead of guessed at. The gateway then
+re-checks every result (mesh, UVs, rig, atlas size, colour space) before the
+user is handed it. Tests: `python3 test_glb_region.py` (numpy and Pillow only;
+also a Docker build gate).
+
 ### `GET /tasks/{task_id}`
 
 ```json

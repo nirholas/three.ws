@@ -25,17 +25,18 @@ Full-retexture pipeline:
   6. Bake final texture atlas and export as textured GLB
 
 Region-retexture pipeline (UV-space inpainting):
-  1. Load the GLB WITHOUT repacking UVs and pull out its existing baseColour
-     atlas — the frontend painted the mask in exactly this UV space, so we must
-     not unwrap/concatenate or the mask would no longer align.
+  1. Read the GLB directly (glb_region.py), pick the primitive the editor
+     painted on by the editor's own rule, and pull out its baseColour atlas at
+     a power-of-two working size. A model with no UVs is refused: the mask
+     was painted in UV space and has nowhere to land.
   2. Decode the caller's UV-space mask (white = repaint, black = keep).
   3. Run real SDXL inpainting on the atlas, regenerating only the masked region
      (optionally pre-tinted toward a target colour).
   4. Composite the inpaint output back over the original atlas through a
      feathered alpha so untouched texels are bit-identical and the seam ramps
      smoothly — invisible blend, no global quality loss across repeated passes.
-  5. Re-export the GLB with the same mesh, UVs, and material (only baseColour
-     swapped).
+  5. Write the new atlas (alpha kept) back into the original GLB in place of
+     the old image; every node, mesh, UV, skin and clip stays byte-identical.
 
 API contract:
   POST /texture  {
@@ -106,6 +107,7 @@ from google.cloud import storage
 from PIL import Image, ImageFilter
 from pydantic import BaseModel, Field, field_validator
 
+import glb_region
 import texture_projection as tp
 from gltf_meshopt import decode_if_meshopt
 from tracing import install_tracing
@@ -599,67 +601,6 @@ def _build_masks(
     return inpaint_mask, blend_alpha
 
 
-def _load_textured_mesh(url: str):
-    """Load a GLB preserving its original UVs/material (no unwrap, no repack).
-
-    Region edits must operate in the exact UV space the caller painted against,
-    so we deliberately avoid trimesh's processing/concatenation here. Returns
-    (scene, geometry_name, mesh) — for a bare mesh we wrap it in a one-item
-    scene so the export path is uniform.
-    """
-    import trimesh
-
-    data = fetch_remote_bytes(url, timeout=60, max_bytes=128 * 1024 * 1024)
-    suffix = Path(url.split("?")[0]).suffix.lower() or ".glb"
-    data, suffix = decode_if_meshopt(data, suffix)
-    loaded = trimesh.load(
-        io.BytesIO(data), file_type=suffix.lstrip("."), process=False
-    )
-
-    if isinstance(loaded, trimesh.Scene):
-        geoms = [
-            (name, g)
-            for name, g in loaded.geometry.items()
-            if isinstance(g, trimesh.Trimesh)
-        ]
-        if not geoms:
-            raise ValueError("GLB contains no mesh geometry")
-        # Prefer a geometry that already carries UVs + a texture; among those
-        # (or all, as a fallback) pick the largest by face count.
-        textured = [
-            (n, g)
-            for n, g in geoms
-            if getattr(g.visual, "uv", None) is not None
-        ]
-        name, mesh = max(textured or geoms, key=lambda ng: len(ng[1].faces))
-        tp.assert_face_budget(sum(len(g.faces) for _, g in geoms))
-        return loaded, name, mesh
-
-    tp.assert_face_budget(len(loaded.faces))
-    scene = trimesh.Scene(geometry={"mesh": loaded})
-    return scene, "mesh", loaded
-
-
-def _existing_base_texture(mesh, texture_size: int) -> Image.Image:
-    """Pull the mesh's baseColour texture, or synthesize a flat base from its
-    base-colour factor / vertex colours so unmasked regions stay coherent."""
-    visual = mesh.visual
-    mat = getattr(visual, "material", None)
-    base_img = None
-    if mat is not None:
-        base_img = getattr(mat, "baseColorTexture", None) or getattr(mat, "image", None)
-
-    if base_img is not None:
-        return base_img.convert("RGB")
-
-    # No texture present — fall back to a solid base from the material factor.
-    color = (180, 180, 180)
-    factor = getattr(mat, "baseColorFactor", None) if mat is not None else None
-    if factor is not None and len(factor) >= 3:
-        color = tuple(int(max(0.0, min(1.0, float(c))) * 255) for c in factor[:3])
-    return Image.new("RGB", (texture_size, texture_size), color)
-
-
 def _inpaint_region(
     base_rgb: Image.Image,
     inpaint_mask: Image.Image,
@@ -715,57 +656,41 @@ def _run_region_texturing(
     feather: int,
     seed: int,
 ) -> bytes:
-    import trimesh
-
     color = _parse_hex_color(color_hex)
     if not prompt and color is None:
         raise ValueError("provide a prompt and/or a color for the region")
 
-    scene, geom_name, mesh = _load_textured_mesh(mesh_url)
-
-    uv = getattr(mesh.visual, "uv", None)
-    base_rgb = _existing_base_texture(mesh, texture_size)
-    # Work at the larger of the requested size and the existing texture so we
-    # never throw away detail the source already has outside the edit region.
-    work = max(texture_size, min(max(base_rgb.size), 2048))
-    base_rgb = base_rgb.resize((work, work), Image.LANCZOS)
-
-    if uv is None:
-        # No UVs at all — we can still texture, but the painted mask can't be
-        # trusted to align, so unwrap and treat this as a flat fill of the region.
-        mesh = mesh.unwrap()
-        uv = mesh.visual.uv
-
+    data = fetch_remote_bytes(mesh_url, timeout=60, max_bytes=128 * 1024 * 1024)
+    suffix = Path(mesh_url.split("?")[0]).suffix.lower() or ".glb"
+    data, suffix = decode_if_meshopt(data, suffix)
+    gltf, _ = glb_region.read_glb(data)
+    tp.assert_face_budget(glb_region.triangle_count(gltf))
     mask_bytes = _decode_mask_bytes(mask_b64, mask_url)
-    inpaint_mask, blend_alpha = _build_masks(mask_bytes, (work, work), feather)
 
-    log.info(
-        "Region inpaint: atlas=%dpx feather=%d strength=%.2f color=%s",
-        work, feather, strength, color_hex or "none",
-    )
-    _load_inpaint_pipeline()
     full_prompt = prompt
     if color is not None and prompt:
         full_prompt = f"{prompt}, predominantly {color_hex} colour"
-    new_atlas = _inpaint_region(
-        base_rgb, inpaint_mask, blend_alpha, full_prompt, negative_prompt,
-        color, strength, seed,
-    )
 
-    # Preserve the existing material; swap only the baseColour texture.
-    mat = getattr(mesh.visual, "material", None)
-    if isinstance(mat, trimesh.visual.material.PBRMaterial):
-        mat.baseColorTexture = new_atlas
-    else:
-        mat = trimesh.visual.material.PBRMaterial(
-            baseColorTexture=new_atlas, metallicFactor=0.0, roughnessFactor=0.9
+    def paint(base_rgb: Image.Image, work: int) -> Image.Image:
+        inpaint_mask, blend_alpha = _build_masks(mask_bytes, (work, work), feather)
+        log.info(
+            "Region inpaint: atlas=%dpx feather=%d strength=%.2f color=%s",
+            work, feather, strength, color_hex or "none",
         )
-    mesh.visual = trimesh.visual.TextureVisuals(uv=uv, material=mat)
-    scene.geometry[geom_name] = mesh
+        _load_inpaint_pipeline()
+        return _inpaint_region(
+            base_rgb, inpaint_mask, blend_alpha, full_prompt, negative_prompt,
+            color, strength, seed,
+        )
 
-    buf = io.BytesIO()
-    scene.export(buf, file_type="glb")
-    return buf.getvalue()
+    # Only the painted material's base colour image changes; nodes, meshes,
+    # UVs, skeleton, skin weights and clips are written back byte-identical
+    # (a trimesh round trip drops the rig). See glb_region.py.
+    out, info = glb_region.repaint_base_color(
+        data, texture_size, paint, open_image=tp.open_bounded_image
+    )
+    log.info("Region edit wrote material %s at %dpx", info["material"], info["atlas"])
+    return out
 
 
 # ── Task runner ───────────────────────────────────────────────────────────────────

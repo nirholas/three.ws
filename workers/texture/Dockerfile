@@ -75,16 +75,19 @@ WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY gltf_meshopt.py /app/gltf_meshopt.py
 COPY texture_projection.py /app/texture_projection.py
+COPY glb_region.py /app/glb_region.py
+COPY test_glb_region.py /app/test_glb_region.py
 COPY test_texture_projection.py /app/test_texture_projection.py
 COPY test_gltf_meshopt.py /app/test_gltf_meshopt.py
 COPY stage_weights.py /app/stage_weights.py
 COPY main.py /app/main.py
 
 # Core-path gate: the UV rasterizer and back-projection that decide where a
-# generated pixel lands, and the meshopt decode every caller mesh passes
-# through. Both are CPU-only, so a regression fails the image instead of
+# generated pixel lands, the meshopt decode every caller mesh passes
+# through, and the region edit's GLB surgery that keeps mesh, UVs and rig.
+# All three are CPU-only, so a regression fails the image instead of
 # reaching a user mid-retexture.
-RUN python3 /app/test_texture_projection.py && python3 /app/test_gltf_meshopt.py
+RUN python3 /app/test_texture_projection.py && python3 /app/test_gltf_meshopt.py && python3 /app/test_glb_region.py
 
 EXPOSE 8080
 COPY tracing.py test_tracing.py /app/
