@@ -11,7 +11,7 @@ import {
 	trackUpgradeConverted,
 } from '../three-access.js';
 import { renderLock, lockStateFromAccess } from '../three-lock.js';
-import { payForHighGeneration } from './forge-pay.js';
+import { payForHighGeneration, forgetPaidProof } from './forge-pay.js';
 import { initWalletButton, getConnectedWalletAddress } from '../wallet.js';
 import { openSketchCanvas } from './sketch-canvas.js';
 import { guardSketchFile } from './sketch-guard.js';
@@ -2461,7 +2461,9 @@ async function run(cfg, { handoff = false } = {}) {
 		if (pollAbort || !done) return; // cancelled
 
 		// A pay-per-use proof is single-use and now redeemed on the server — drop it
-		// so a later Retry/Refine of this job never replays a spent payment.
+		// so a later Retry/Refine of this job never replays a spent payment. The pay
+		// sheet remembers unspent proofs across reloads; tell it this one is spent.
+		if (lastJob?.payment) forgetPaidProof(lastJob.payment.paymentId);
 		if (lastJob) delete lastJob.payment;
 
 		rememberFromResponse(done);
@@ -2583,18 +2585,26 @@ async function run(cfg, { handoff = false } = {}) {
 		// Retry doesn't replay it, and re-open the pay flow for a fresh generation.
 		if (err.kind === 'payment_used') {
 			stopElapsed();
+			const spent = lastJob?.payment;
+			if (spent) forgetPaidProof(spent.paymentId);
 			if (lastJob) delete lastJob.payment;
 			showState('empty');
-			showError(err.message, { title: err.title });
+			// A remembered proof the server had already taken: pay fresh once. A fresh
+			// payment is never reused, so this cannot loop.
+			if (spent?.reused) payThenGenerate({ usd: spent.usd });
+			else showError(err.message, { title: err.title });
 			return;
 		}
 		// The proof was rejected (bad/expired) before any model — drop it and surface
 		// the gate's Pay-per-use path again so the user can pay cleanly.
 		if (err.kind === 'payment_invalid') {
 			stopElapsed();
+			const spent = lastJob?.payment;
+			if (spent) forgetPaidProof(spent.paymentId);
 			if (lastJob) delete lastJob.payment;
 			showState('empty');
-			if (err.gate) onGate(err.gate, gateOpts());
+			if (spent?.reused) payThenGenerate({ usd: spent.usd });
+			else if (err.gate) onGate(err.gate, gateOpts());
 			else showError(err.message, { title: err.title });
 			return;
 		}
@@ -2707,7 +2717,7 @@ async function payThenGenerate(pay) {
 	if (selectedTier !== 'high') selectTier('high');
 	const result = await payForHighGeneration({ usd });
 	if (!result?.ok) return; // cancelled or failed — the modal explained why
-	run({ ...cfg, payment: { paymentId: result.paymentId, refId: result.refId } });
+	run({ ...cfg, payment: { paymentId: result.paymentId, refId: result.refId, reused: Boolean(result.reused), usd } });
 }
 
 // Wiring ----------------------------------------------------------------------

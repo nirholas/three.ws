@@ -19,7 +19,7 @@
 // designed $THREE pay modal and the export retries with the settled proof. The
 // price is whatever the server gate quotes — never hardcoded here.
 
-import { payForConsumption } from './forge-pay.js';
+import { payForConsumption, forgetPaidProof } from './forge-pay.js';
 import { attachTierPass, getAccess, getTierPass } from '../three-access.js';
 import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
 import { forgeCopyError, forgeErrorFromResponse, forgeErrorMessage, forgeJobFailedError } from '../forge-errors.js';
@@ -494,20 +494,39 @@ if (resultPanel && viewer && triggerBtn) {
 			if (err.kind !== 'pay_required') throw err;
 			const usd = Number(err.gate?.pay_per_use?.usd) || 0;
 			if (!(usd > 0)) throw err; // hold-only with no pay path — surface the gate copy
-			setStatus('Waiting for payment…');
-			const paid = await payForConsumption({
-				usd,
-				unit: 'one Game-Ready export',
-				confirm: 'One engine-ready export (retopology + PBR re-bake), paid in $THREE.',
-				footnote: '$THREE is the only coin on three.ws. Draft &amp; Standard generation stay free.',
-				successText: 'Payment confirmed — starting your export…',
-				refPrefix: 'forge-gameready',
-			});
-			if (!paid?.ok) {
-				setStatus('Export cancelled — no $THREE was spent.');
-				return null;
-			}
-			return await startExport(formats, { paymentId: paid.paymentId, refId: paid.refId });
+			return await payAndStart(formats, usd);
+		}
+	}
+
+	// Pay once and start the export with the settled proof. The pay sheet may hand
+	// back a remembered proof that a failed earlier attempt never spent; tell it
+	// what happened so it is never offered twice: forget it once the export
+	// started (the server redeemed it) or the server refused it, and keep it when
+	// the request faulted so the next try is free. A refused reused proof is
+	// replaced by one fresh payment, never more.
+	async function payAndStart(formats, usd, allowFresh = true) {
+		setStatus('Waiting for payment…');
+		const paid = await payForConsumption({
+			usd,
+			unit: 'one Game-Ready export',
+			confirm: 'One engine-ready export (retopology + PBR re-bake), paid in $THREE.',
+			footnote: '$THREE is the only coin on three.ws. Draft &amp; Standard generation stay free.',
+			successText: 'Payment confirmed. Starting your export…',
+			refPrefix: 'forge-gameready',
+		});
+		if (!paid?.ok) {
+			setStatus('Export cancelled. No $THREE was spent.');
+			return null;
+		}
+		try {
+			const jobId = await startExport(formats, { paymentId: paid.paymentId, refId: paid.refId });
+			forgetPaidProof(paid.paymentId);
+			return jobId;
+		} catch (err) {
+			if (err.kind !== 'pay_required') throw err;
+			forgetPaidProof(paid.paymentId);
+			if (paid.reused && allowFresh) return payAndStart(formats, usd, false);
+			throw err;
 		}
 	}
 

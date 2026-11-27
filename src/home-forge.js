@@ -420,6 +420,17 @@ async function startJob(prompt, { config = DEFAULT_CFG, headers, payment } = {})
 			data.message || 'High quality is a $THREE holder feature — open Options to hold or pay per generation.',
 		);
 	}
+	// The presented $THREE proof was refused (bad, expired or already spent): the
+	// controls drop it from the remembered proofs and, if it was a reused one, pay
+	// fresh once. Tagged so run() can report it.
+	if (
+		(res.status === 402 && (data.error === 'payment_invalid' || data.error === 'payment_expired')) ||
+		(res.status === 409 && data.error === 'payment_already_used')
+	) {
+		throw Object.assign(new Error(data.message || 'That $THREE payment could not be used. Pay again to continue.'), {
+			paymentRefused: true,
+		});
+	}
 	if (res.status === 429 || data.error === 'rate_limited') {
 		const secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 10;
 		throw new Error(data.message || `The forge is busy. Try again in about ${secs} seconds.`);
@@ -704,10 +715,15 @@ async function run(prompt, { payment } = {}) {
 		// The initial POST always carries the persisted creation id; the async
 		// poll result may not, so prefer the job's id and fall back to done's.
 		showResult(done.glb_url, prompt, { creationId: job.creation_id || done.creation_id || '' });
+		return 'delivered';
 	} catch (err) {
 		if (!pollAbort && seq === runSeq) {
-			showError(err.message || 'Something went wrong. Try a simpler prompt.');
+			// A refused reused proof is replaced by a fresh payment right away, so
+			// there is nothing to show; any other failure is explained.
+			if (err.paymentRefused && payment?.reused) showState('idle');
+			else showError(err.message || 'Something went wrong. Try a simpler prompt.');
 		}
+		if (err.paymentRefused) return 'refused';
 	} finally {
 		if (seq === runSeq) setBusy(false);
 	}
@@ -1014,7 +1030,8 @@ function boot() {
 		},
 		onRerun: (payment) => {
 			const p = (els.prompt.value.trim() || lastPrompt || '').trim();
-			if (p) run(p, { payment });
+			if (p) return run(p, { payment });
+			return undefined;
 		},
 		onBlockedChange: (blocked) => {
 			highBlocked = blocked;
