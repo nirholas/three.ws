@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "Forge stops waiting on a dead NVIDIA image model",
+			"summary": "When you describe an object, Forge first paints a reference picture. NVIDIA's free FLUX.1 image model had stopped answering, so that step could sit for a full minute before Forge moved on. Forge now uses NVIDIA's FLUX.2 klein model, gives it 30 seconds at most, and tries it less and less often while it keeps failing, so a bad stretch on NVIDIA's side no longer slows every build. The image health check now says when NVIDIA stops serving the model instead of reporting it healthy, the /nvidia status page probes this step every hour, and /nim-forge says plainly when no self-hosted TRELLIS NIM is connected instead of inviting an upload that could only fail.",
+			"tags": ["fix", "improvement"],
+			"link": "/nvidia"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "The Forge wait now tells the truth the whole way through",
 			"summary": "While a model builds, the Elapsed clock on Forge only ever moves forward. Before, it could jump back (from 0:40 to 0:05, for example) once the engine picked up the job. The time it quotes now comes from what the engine serving your job actually took on recent runs, counted from when your job reached that engine, so the art direction and reference image steps no longer make a normal run look slow. Before the engine has your job, the page says the build starts after these first steps. A GPU worker that is booting gets its own line, with the boot time the server gives, and the page says so plainly if the boot runs long. The build after a boot is never called slow because of the boot. Screen readers hear when a boot runs long, and the Studio page now follows the same rules, including stopping the turntable for people who asked for reduced motion. A slow 3D viewer download no longer prints an error either.",
 			"tags": ["fix", "improvement"],

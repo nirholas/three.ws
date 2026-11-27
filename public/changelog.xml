@@ -79,6 +79,14 @@
 			<description>Generating extra side and back views is now optional and time-limited: if it fails, is throttled or takes too long, your model carries on from the image you gave. Generated views are checked before they are used, and a photo in a set that is plainly a different object, or empty, is left out and named. Engines that read a single photo now get your front view and the page tells you, instead of implying every photo counted. You can reorder photos with Alt and the arrow keys and remove one with Delete, and an upload that is refused says which photo it was.</description>
 		</item>
 		<item>
+			<title>Forge stops waiting on a dead NVIDIA image model</title>
+			<link>https://three.ws/nvidia</link>
+			<guid isPermaLink="false">2026-11-27:Forge stops waiting on a dead NVIDIA image model</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When you describe an object, Forge first paints a reference picture. NVIDIA's free FLUX.1 image model had stopped answering, so that step could sit for a full minute before Forge moved on. Forge now uses NVIDIA's FLUX.2 klein model, gives it 30 seconds at most, and tries it less and less often while it keeps failing, so a bad stretch on NVIDIA's side no longer slows every build. The image health check now says when NVIDIA stops serving the model instead of reporting it healthy, the /nvidia status page probes this step every hour, and /nim-forge says plainly when no self-hosted TRELLIS NIM is connected instead of inviting an upload that could only fail.</description>
+		</item>
+		<item>
 			<title>Forge takes iPhone photos, big photos and sideways photos, and tells you plainly when a file is not a photo</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-27:Forge takes iPhone photos, big photos and sideways photos, and tells you plainly when a file is not a photo</guid>
