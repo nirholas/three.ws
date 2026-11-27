@@ -66,6 +66,7 @@ import { randomUUID } from 'node:crypto';
 import { cors, json as sendJson, method, readJson, wrap, rateLimited, setRateLimitHeaders } from './_lib/http.js';
 import { withManageToken } from './_lib/forge-manage-token.js';
 import { limits, clientIp, refundOnServerFailure } from './_lib/rate-limit.js';
+import { preflightRig, refundRigAllowance } from './_lib/rig-preflight.js';
 import { textToImage, synthesizeTurnaroundViews, ladderBudgetMs } from './_mcp3d/text-to-image.js';
 import { createRegenProvider } from './_providers/replicate.js';
 import { createRegenProvider as createGcpProvider } from './_providers/gcp.js';
@@ -2844,8 +2845,26 @@ async function startRigJob(req, res) {
 		});
 	}
 
+	// Same preflight as /api/forge?action=rig: an object with no limbs, an
+	// oversized, already-rigged or multi-piece model is refused with the reason,
+	// and a Draco or meshopt file is decoded to a copy the worker can read
+	// (api/_lib/rig-preflight.js). A refusal gives the hourly slot back.
+	const pre = await preflightRig({
+		glbUrl,
+		creationId: typeof body?.creation_id === 'string' ? body.creation_id : null,
+		prompt: typeof body?.prompt === 'string' ? body.prompt : null,
+	});
+	if (!pre.ok) {
+		if (pre.status < 500) await refundRigAllowance(rigKey);
+		return json(res, pre.status, pre.body);
+	}
+
 	try {
-		const job = await provider.submit({ mode: 'rerig', sourceUrl: glbUrl, params: {} });
+		const job = await provider.submit({
+			mode: 'rerig',
+			sourceUrl: pre.sourceUrl,
+			params: pre.subject ? { subject: pre.subject } : {},
+		});
 		// GCP rig jobs poll through a token-encoded handle so /api/forge?action=status
 		// routes back to the GCP worker; Replicate jobs use the bare prediction id.
 		const jobToken =
@@ -2868,6 +2887,7 @@ async function startRigJob(req, res) {
 			status: 'queued',
 			mode: 'rig',
 			source_glb_url: glbUrl,
+			subject: pre.subject,
 			eta_seconds: typeof job.eta === 'number' ? job.eta : null,
 		});
 	} catch (err) {
@@ -2875,6 +2895,8 @@ async function startRigJob(req, res) {
 			return json(res, 501, { error: 'rig_unconfigured', message: err.message });
 		}
 		if (err?.code === 'rate_limited' || err?.providerStatus === 429) {
+			// The rigger turned the job away, so this call does not count.
+			await refundRigAllowance(rigKey);
 			res.setHeader('retry-after', '10');
 			return json(res, 429, {
 				error: 'rate_limited',
