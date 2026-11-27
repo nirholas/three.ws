@@ -103,6 +103,12 @@ import {
 } from './_lib/forge-lane-health.js';
 import { resolveProviderKey } from './_lib/forge-provider-key.js';
 import { validateForgeImage } from './_lib/forge-image-validate.js';
+import { findUnsafeUrl, verifyUploadedReferences } from './_lib/forge-input-guard.js';
+import {
+	SKETCH_FALLBACK_NOTE,
+	SKETCH_UNREADABLE_MESSAGE,
+	isUnusableInputError,
+} from './_lib/forge-sketch-fallback.js';
 import { encodeJobToken, decodeJobToken } from './_lib/forge-job-token.js';
 import {
 	hashClient,
@@ -1681,13 +1687,64 @@ async function startJob(req, res) {
 							'Sketch-to-3D is not configured on this deployment (GCP_TRIPOSG_URL is not set).',
 					});
 				}
-				// The sketch model is conditioned on the drawing: no other lane can
-				// serve it, so there is nothing to fail over to. Cool the worker so the
-				// next request skips it while it recovers, and return a designed,
+				// Cool the worker so the next request skips it while it recovers. The
+				// drawing is still a picture, so an image lane can build it: try the
+				// configured ones before giving up, and only then return a designed,
 				// retryable state instead of a raw provider error.
 				if (isUpstreamUnavailable(err)) {
 					await markLaneUnhealthy('triposg');
 					console.warn(`[forge] self-host sketch lane unavailable: ${err?.message || err}`);
+					const rescued = await submitLastResortLane({
+						attempted: ['triposg'],
+						country,
+						imageUrl: sketchUrl,
+						prompt,
+						tierId: tier.id,
+						path: 'image',
+					});
+					if (rescued) {
+						console.warn(`[forge] sketch request served by image lane ${rescued.backend}`);
+						const rescuedCreationId = await createCreation({
+							clientKey: clientKeyFrom(req),
+							userId: await sessionUserIdFromReq(req),
+							ipHash: hashIp(ip),
+							prompt,
+							aspect: null,
+							previewImageUrl: sketchUrl,
+							replicateJobId: rescued.extJobId,
+							textToImageModel: null,
+							viewsRequested: 1,
+							viewsUsed: 1,
+							multiview: false,
+							backend: rescued.backend,
+							tier: tier.id,
+							path: 'image',
+						});
+						await bindJobToOptions(rescued.handle, opts);
+						const rescuedCold = await coldStartFor(rescued.backend);
+						return json(res, 200, {
+							job_id: rescued.handle,
+							creation_id: rescuedCreationId,
+							status: 'queued',
+							mode: 'image_to_3d',
+							path: 'image',
+							tier: tier.id,
+							backend: rescued.backend,
+							prompt,
+							preview_image_url: sketchUrl,
+							reference_image_urls: [sketchUrl],
+							views_requested: 1,
+							views_used: 1,
+							multiview: false,
+							cold_start: rescuedCold,
+							cold_start_seconds: rescuedCold ? coldStartSecondsFor(rescued.backend) : undefined,
+							eta_seconds: estimateEtaSeconds({ backendId: rescued.backend, tier, cold: rescuedCold }),
+							estimated_credits: estimateCredits({ backendId: rescued.backend, path: 'image', tier }),
+							options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
+							failover_from: 'triposg',
+							failover_note: SKETCH_FALLBACK_NOTE,
+						});
+					}
 					res.setHeader('retry-after', '20');
 					return json(res, 503, {
 						error: 'generation_unavailable',
@@ -3246,18 +3303,27 @@ async function pollJob(req, res, jobId) {
 		// submit-side cooldown. BYOK lanes are excluded (never auto-selected).
 		const failedBackend = meta?.backend || null;
 		const platformLaneFailed = Boolean(failedBackend && BACKENDS[failedBackend] && !BACKENDS[failedBackend].byok);
-		if (platformLaneFailed) await markLaneUnhealthy(failedBackend);
+		// A worker that refuses the INPUT is healthy: the image was the problem, and
+		// cooling the lane would send the next user's good request elsewhere.
+		const inputUnusable = isUnusableInputError(result.error);
+		if (platformLaneFailed && !inputUnusable) await markLaneUnhealthy(failedBackend);
 
 		// Automatic redispatch (see _lib/forge-failover.js): recover the original
 		// inputs from the creation row and continue the SAME job on the next
 		// configured lane: the client keeps polling this id and sees
 		// status:"running" with a new backend instead of a dead end. Scoped to
-		// platform image-path jobs with a stored reference view; sketch stays on
-		// its purpose-built lane and BYOK vendors are never silently swapped.
+		// platform jobs with a stored reference view, and BYOK vendors are never
+		// silently swapped. A sketch job whose scribble worker failed continues on
+		// the standard image lanes, which read the drawing as a picture; a drawing
+		// the worker could not read at all would fail on every lane, so it stops here.
 		let attempted = [...new Set([...(live?.attempted || []), failedBackend].filter(Boolean))];
 		const hop = live?.hop || 0;
+		const sketchFallback = meta?.path === 'sketch';
 		const redispatchable =
-			platformLaneFailed && hop < MAX_FAILOVER_HOPS && meta?.preview_image_url && meta?.path !== 'sketch';
+			platformLaneFailed &&
+			hop < MAX_FAILOVER_HOPS &&
+			meta?.preview_image_url &&
+			!(sketchFallback && inputUnusable);
 		if (redispatchable) {
 			try {
 				const submitted = await submitNextRedispatchLane({
@@ -3266,7 +3332,7 @@ async function pollJob(req, res, jobId) {
 					imageUrl: meta.preview_image_url,
 					prompt: meta.prompt,
 					tierId: meta.tier,
-					path: meta.path,
+					path: sketchFallback ? 'image' : meta.path,
 				});
 				if (submitted) {
 					const nextLane = submitted.backend;
@@ -3288,7 +3354,9 @@ async function pollJob(req, res, jobId) {
 						multiview: false,
 						backend: nextLane,
 						tier: meta.tier,
-						path: meta.path,
+						// The successor is an image job whatever the original was, so its
+						// outcome is counted against the lane that actually serves it.
+						path: sketchFallback ? 'image' : meta.path,
 					});
 					// Report "running" ONLY once the successor is durably chaseable -
 					// otherwise the client would poll a dead handle forever.
@@ -3308,6 +3376,7 @@ async function pollJob(req, res, jobId) {
 							...metaFields,
 							backend: nextLane,
 							failover_from: failedBackend,
+							...(sketchFallback ? { failover_note: SKETCH_FALLBACK_NOTE } : {}),
 						});
 					}
 				}
@@ -3327,7 +3396,10 @@ async function pollJob(req, res, jobId) {
 		return json(res, 200, {
 			job_id: jobId,
 			status: 'failed',
-			error: sanitizeJobError(result.error) || '3D generation hit a snag, please try again.',
+			error:
+				sketchFallback && inputUnusable
+					? SKETCH_UNREADABLE_MESSAGE
+					: sanitizeJobError(result.error) || '3D generation hit a snag, please try again.',
 			...metaFields,
 			...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),
 		});
