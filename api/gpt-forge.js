@@ -143,6 +143,7 @@ import {
 	refundCredits,
 } from './_lib/credits.js';
 import { markProviderCooldown, providersInCooldown } from './_lib/provider-health.js';
+import { forgeToolAvailability } from './_lib/forge-tool-availability.js';
 import { acquireLock, releaseLock, cacheGet, cacheSet } from './_lib/cache.js';
 import { recallDoneFrame, rememberDoneFrame } from './_lib/forge-done-cache.js';
 import {
@@ -3369,7 +3370,7 @@ export default wrap(async (req, res) => {
 	// of recomputing per request. stale-while-revalidate keeps it instant even as
 	// the cache refreshes in the background.
 	if (url.searchParams.has('catalog')) {
-		return json(res, 200, buildCatalog(), {
+		return json(res, 200, { ...buildCatalog(), tools: forgeToolAvailability() }, {
 			'cache-control': 'public, max-age=60, s-maxage=600, stale-while-revalidate=86400',
 		});
 	}
