@@ -1,5 +1,7 @@
 # Forge hardening 22: Make multi-view generation help when it works and vanish when it does not
 
+**Status (2026-11-27):** Built and tested locally in four commits (88f60e7d8, bb7e64f53, 0b59f44f5, da2ddace1). Left in place, not archived, because production still runs the pre-fix code: the one live generation showed only today's behavior (no views_* fields, one image sent to trellis_selfhost), so the bounded view step and the vetting need a post-deploy live check. Deploy and push are the owner's.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/122-forge-hardening-22-multi-view-inputs.md`.
 
 **Priority:** P1. **Area:** multiple photos and generated views. **Dev port:** 4122. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
