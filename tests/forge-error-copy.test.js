@@ -223,6 +223,27 @@ describe('page wiring', () => {
 		const hits = src.split('\n').filter((l) => /new Error\(\s*data\.(message|error)\b/.test(l));
 		expect(hits, hits.join('\n')).toEqual([]);
 	});
+
+	// Bug reproduced 2026-11-26 in a real browser: the throttle and storage-down
+	// states write their own title and message instead of going through
+	// showError, and #state-error has no live role, so a screen reader heard
+	// nothing when Forge said "high demand" or "storage is down".
+	const body = (src, name) => {
+		const start = src.search(new RegExp(`(async )?function ${name}\\(`));
+		if (start === -1) return '';
+		const next = src.slice(start + 1).search(/\n(async )?function /);
+		return next === -1 ? src.slice(start) : src.slice(start, start + 1 + next);
+	};
+	it.each([
+		['src/forge.js', 'showThrottle'],
+		['src/forge.js', 'showStorageDown'],
+		['src/forge-studio/forge.js', 'showThrottle'],
+	])('%s %s announces the state to screen readers', (file, fn) => {
+		const src = readFileSync(join(ROOT, file), 'utf8');
+		const text = body(src, fn);
+		expect(text, `${fn} not found in ${file}`).not.toBe('');
+		expect(text).toMatch(/announceForgeError\(/);
+	});
 });
 
 // Bug reproduced 2026-11-26: a failed auto-rig showed the server's message,

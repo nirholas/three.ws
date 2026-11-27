@@ -3085,6 +3085,8 @@ function showStorageDown({ retryAfter = 60, message = '' } = {}) {
 	render();
 	showState('error');
 	revealStage();
+	// Once, not on every countdown tick: #state-error has no live role.
+	announceForgeError(els.errorTitle?.textContent || '', base);
 
 	rateLimitTimer = setInterval(() => {
 		remaining -= 1;
@@ -3146,6 +3148,7 @@ async function showThrottle(throttle) {
 	});
 	showState('error');
 	revealStage();
+	announceForgeError(els.errorTitle?.textContent || '', els.errorMessage?.textContent || '');
 	throttlePanel.focus();
 }
 

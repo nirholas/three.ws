@@ -2215,6 +2215,7 @@ async function showThrottle(throttle) {
 		canRefineLocally: Boolean(lastShownGlb && els.viewer.getAttribute('src')),
 	});
 	showState('error');
+	announceForgeError(els.errorTitle?.textContent || '', els.errorMessage?.textContent || '');
 	throttlePanel.focus();
 }
 
