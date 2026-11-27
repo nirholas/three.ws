@@ -63,6 +63,20 @@ class CancellablePopupApplication extends PublicClientApplication {
 	}
 }
 
+/**
+ * MSAL settings for the OneDrive session. Tokens live in sessionStorage: scoped
+ * to the three.ws origin and to this tab, gone when the tab closes, and never
+ * written to localStorage or a cookie that outlives the session.
+ * tests/onedrive-token-storage.test.js runs real MSAL with this config.
+ */
+export function msalConfig(clientId, origin) {
+	return {
+		auth: { clientId, authority: AUTHORITY, redirectUri: `${origin}${REDIRECT_PATH}` },
+		cache: { cacheLocation: 'sessionStorage' },
+		system: { popupBridgeTimeout: SIGN_IN_TIMEOUT_MS },
+	};
+}
+
 /** How long the picker page may take to say hello before we call it broken. */
 const PICKER_INIT_TIMEOUT_MS = 45_000;
 
@@ -75,11 +89,7 @@ const PICKER_INIT_TIMEOUT_MS = 45_000;
  */
 export function createOneDriveSession({ clientId, askToContinue }) {
 	if (!clientId) throw new OneDriveError('not_configured', 'OneDrive is not set up on this site.');
-	const pca = new CancellablePopupApplication({
-		auth: { clientId, authority: AUTHORITY, redirectUri: `${location.origin}${REDIRECT_PATH}` },
-		cache: { cacheLocation: 'sessionStorage' },
-		system: { popupBridgeTimeout: SIGN_IN_TIMEOUT_MS },
-	});
+	const pca = new CancellablePopupApplication(msalConfig(clientId, location.origin));
 	let ready = null;
 	let pickerBase = null;
 	const init = () => (ready ||= pca.initialize());
