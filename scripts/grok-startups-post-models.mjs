@@ -4,6 +4,7 @@
 // AUDIT_EMAIL / AUDIT_PASSWORD in .env and revoked afterwards.
 //
 //   node scripts/grok-startups-post-models.mjs [--base https://three.ws]
+//   node scripts/grok-startups-post-models.mjs --set repost   # the 2026-11-27 repost
 //
 // Steps, each one a real tool call:
 //   prop       forge_free     a textured model from a sentence (post 2)
@@ -11,8 +12,11 @@
 //   character  forge_avatar   a rigged character (post 2)
 //   character_rig  rig_mesh   rigs that mesh when forge_avatar returned it unrigged
 //   look       look_at_model  the render check on the prop (post 3)
+//   pickup     forge_free     repost set only: the model on the Ask @grok card (post 17)
 //
-// Writes public/x-media/grok-startups-announce/src/models.json (tool, prompt,
+// Each set writes its own folder, so the repost never touches the 2026-11-25
+// media: announce -> public/x-media/grok-startups-announce/src, repost ->
+// public/x-media/grok-startups-repost/src. Each gets models.json (tool, prompt,
 // GLB URL, seconds) and the look_at_model frames as look-<view>.png beside it.
 // A step that already has a result in models.json is skipped, so a rerun only
 // redoes what failed. Pass --fresh to redo everything.
@@ -26,15 +30,32 @@ const arg = (name, def = null) => {
 	return i > -1 ? process.argv[i + 1] : def;
 };
 const base = arg('base', 'https://three.ws');
-const outDir = resolve('public/x-media/grok-startups-announce/src');
+const SETS = {
+	announce: {
+		dir: 'public/x-media/grok-startups-announce/src',
+		prompts: {
+			prop: 'a retro tin toy robot with round glass eyes, a boxy body, riveted panels and a small antenna',
+			chrome: 'make it chrome',
+			character: 'a mountain explorer in a red insulated jacket, dark trousers, hiking boots and a small backpack, full body',
+		},
+	},
+	repost: {
+		dir: 'public/x-media/grok-startups-repost/src',
+		prompts: {
+			prop: 'a sleek red electric sports car with a low glass roof, smooth curved body panels and aero wheels',
+			chrome: 'make it chrome',
+			character: 'a sleek humanoid robot with a white and black body, a glossy black face panel and slim jointed limbs, full body',
+			pickup: 'an angular electric pickup truck in brushed stainless steel with flat faceted panels and a sharp triangular roofline',
+		},
+	},
+};
+const setName = arg('set', 'announce');
+const set = SETS[setName];
+if (!set) throw new Error(`--set must be one of ${Object.keys(SETS).join(', ')}`);
+const PROMPTS = set.prompts;
+const outDir = resolve(set.dir);
 const manifestPath = join(outDir, 'models.json');
 mkdirSync(outDir, { recursive: true });
-
-const PROMPTS = {
-	prop: 'a retro tin toy robot with round glass eyes, a boxy body, riveted panels and a small antenna',
-	chrome: 'make it chrome',
-	character: 'a mountain explorer in a red insulated jacket, dark trousers, hiking boots and a small backpack, full body',
-};
 const LOOK_VIEWS = ['front', 'three-quarter', 'side', 'back'];
 
 const manifest = !process.argv.includes('--fresh') && existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : {};
@@ -73,8 +94,35 @@ const call = async (name, args) => {
 const glbOf = (sc) => sc?.glb_url || sc?.glbUrl || sc?.model?.glb_url || sc?.result?.glb_url || null;
 const jobOf = (sc) => sc?.job_id || sc?.jobId || null;
 
-// A generation either finishes inside its call or returns a job to poll.
+// get_job answers a slow check with isError plus retryable: true while the job
+// keeps running; wait retry_after and ask again rather than abandoning the job.
+async function pollJob(job) {
+	for (let attempt = 1; ; attempt++) {
+		const result = await rpc('tools/call', { name: 'get_job', arguments: { job_id: job } });
+		const sc = result.structuredContent || {};
+		if (!result.isError) return sc;
+		if (!sc.retryable || attempt >= 20) throw new Error(`get_job failed: ${JSON.stringify(sc || result.content).slice(0, 400)}`);
+		const wait = Math.min(Math.max(Number(sc.retry_after) || 10, 5), 30);
+		process.stdout.write(`  get_job: ${sc.reason || 'retryable'}, asking again in ${wait}s\n`);
+		await new Promise((r) => setTimeout(r, wait * 1000));
+	}
+}
+
+// A busy engine fails the job with "start a new generation"; the retry is
+// routed to a healthy engine, so start over up to three times.
 async function generate(name, args) {
+	for (let attempt = 1; ; attempt++) {
+		try {
+			return await generateOnce(name, args);
+		} catch (err) {
+			if (attempt >= 3 || !/start a new generation|generator is busy/i.test(err.message)) throw err;
+			console.log(`  ${name}: engine busy, starting a new generation (attempt ${attempt + 1} of 3)`);
+		}
+	}
+}
+
+// A generation either finishes inside its call or returns a job to poll.
+async function generateOnce(name, args) {
 	const started = Date.now();
 	let sc = (await call(name, args)).structuredContent || {};
 	while (!glbOf(sc)) {
@@ -84,7 +132,7 @@ async function generate(name, args) {
 		const wait = Math.min(Math.max(Number(sc.eta_seconds) || 15, 5), 30);
 		process.stdout.write(`  ${name}: ${sc.status || 'pending'} ${sc.phase || ''} ${sc.progress != null ? Math.round(sc.progress * 100) + '%' : ''}, next check in ${wait}s\n`);
 		await new Promise((r) => setTimeout(r, wait * 1000));
-		sc = (await call('get_job', { job_id: job })).structuredContent || {};
+		sc = await pollJob(job);
 	}
 	return { glb_url: glbOf(sc), seconds: Math.round((Date.now() - started) / 100) / 10, structured: sc };
 }
@@ -143,6 +191,13 @@ try {
 		const text = (result.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('\n');
 		return { tool: 'look_at_model', glb_url: prop.glb_url, views: LOOK_VIEWS, frames, geometry: sc.geometry || sc.stats || null, reading: sc.reading || text.slice(0, 1200) };
 	});
+
+	if (PROMPTS.pickup) {
+		await step('pickup', async () => {
+			const r = await generate('forge_free', { prompt: PROMPTS.pickup, tier: 'high' });
+			return { tool: 'forge_free', prompt: PROMPTS.pickup, glb_url: r.glb_url, seconds: r.seconds };
+		});
+	}
 } finally {
 	console.log(`key ${(await revokeQaKey(minted)) ? 'revoked' : 'NOT revoked (it expires in 2 hours)'}`);
 }

@@ -1,17 +1,24 @@
 {
-	"source": "satellites/grok-3d-starter: node scripts/live-xai.mjs --prompt \"a small brass desk lamp\" --follow-up \"make it chrome\", 2026-11-27, model grok-4.7 against production three.ws",
+	"source": "satellites/grok-3d-starter: node scripts/live-xai.mjs --prompt \"a white two-stage rocket standing upright on a launch pad\" --follow-up \"make it stainless steel\", 2026-11-27, model grok-4.7 against production three.ws",
 	"model": "grok-4.7",
-	"ask": "a small brass desk lamp",
-	"followUp": "make it chrome",
-	"calls": ["search_catalog", "forge_free", "check_job", "refine_model", "check_job"],
+	"ask": "a white two-stage rocket standing upright on a launch pad",
+	"followUp": "make it stainless steel",
+	"firstLabel": "Two-stage rocket",
+	"calls": [
+		"search_catalog",
+		"forge_free",
+		"check_job",
+		"refine_model",
+		"check_job"
+	],
 	"first": {
-		"glb_url": "https://three.ws/cdn/forge/anon/7cf2ba0e-ab3c-41ab-a312-dc8b0526b3fe.glb",
-		"prompt": "a small brass desk lamp, polished golden brass, round weighted base, short adjustable arm, conical shade, classic banker's style, sitting on a desk",
-		"seconds": 90
+		"glb_url": "https://three.ws/cdn/forge/anon/7d38ca0c-5d5e-45d8-82a0-33b8cfcf6498.glb",
+		"prompt": "A slender two-stage launch vehicle standing upright, smooth white composite fuselage (~2 m dia., ~18 m tall) tapering to an ogive nose cone, thin matte-black interstage band, four small trapezoidal grid fins at the base; seamless monocoque skin with faint circumferential weld seams and micro-orange-peel texture, graphite-epoxy fairing, black ablative nozzle exit; concrete launch pad with exposed aggregate and hairline cracks, galvanized steel lattice tower with bolted flanges and cable trays; photoreal, natural daylight studio lighting from large soft key, shallow depth of field, crisp focus, true color, visible surface grain and light dust, full subject centered on neutral background, single angle, no cropping.",
+		"seconds": 483
 	},
 	"second": {
-		"glb_url": "https://three.ws/cdn/forge/anon/6a6ca012-74e6-48e5-b271-275831aa41ad.glb",
-		"instruction": "make it chrome",
-		"seconds": 248
+		"glb_url": "https://three.ws/cdn/forge/anon/1863832f-1139-4726-8ba4-23e8f7c13677.glb",
+		"instruction": "make it stainless steel",
+		"seconds": 720
 	}
 }

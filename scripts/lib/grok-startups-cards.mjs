@@ -14,9 +14,11 @@ import { dataUrl, esc, frame, torusKnot } from './x-card-kit.mjs';
 
 // Usage window, 2026-10-08 to 2026-11-20 (co-marketing kit appendix).
 export const USAGE = {
+	window: 'Grok connector, before acceptance, Oct 8 to Nov 20, 2026',
 	calls: '5,547',
 	days: '44 of 44',
 	errors: '2',
+	prompts: '718',
 	renders: '426',
 	weeks: [
 		['Oct 5', 1125],
@@ -45,14 +47,17 @@ export async function renderAnnounceModels(shot, models) {
  * The original cards keyed by their 2026-11-25 post number (2, 3, 5, 6, 7, 8, 9).
  * `num` maps that number to the counter shown on this thread; `total` is the
  * thread length; `smokePassed` shows the "all 6 passed" line on the examples
- * card, which only belongs there when a smoke run proved it.
+ * card, which only belongs there when a smoke run proved it. `showErrors` keeps
+ * the error count as the usage card's third figure; without it that slot shows
+ * the distinct prompts from people and agents we have never met instead.
+ * `usage` replaces USAGE when a thread carries refreshed figures.
  */
-export function announceCards({ renders, models, srcDir, total, num = (n) => n, smokePassed }) {
+export function announceCards({ renders, models, srcDir, total, num = (n) => n, smokePassed, showErrors = true, usage = USAGE }) {
 	const look = models.look || { frames: [], views: [] };
 	const lookFrames = look.frames.map((f, i) => ({ src: dataUrl(join(srcDir, f), 'image/png'), view: (look.views[i] || '').replace('-', ' ') }));
 	const geo = look.geometry || {};
 	const geoLine = [geo.triangles != null && `${Number(geo.triangles).toLocaleString('en-US')} triangles`, geo.materials != null && `${geo.materials} material${geo.materials === 1 ? '' : 's'}`, geo.textures != null && `${geo.textures} texture${geo.textures === 1 ? '' : 's'}`].filter(Boolean).join(' · ');
-	const maxWeek = Math.max(...USAGE.weeks.map((w) => w[1]));
+	const maxWeek = Math.max(...usage.weeks.map((w) => w[1]));
 	const f = (n, body, css) => frame(num(n), total, body, css);
 
 	const modelCards = !renders ? {} : {
@@ -81,7 +86,7 @@ export function announceCards({ renders, models, srcDir, total, num = (n) => n, 
 			3,
 			`<div class="head"><h1>Grok checks its own work.</h1><div class="sub">Before it answers, it renders the model from every side and looks.</div></div>
 			<div class="row">${lookFrames.map((fr) => `<figure><div class="tile"><img src="${fr.src}"></div><div class="label">${esc(fr.view)}</div></figure>`).join('')}</div>
-			<div class="stat"><span class="big">${USAGE.renders}</span><span class="label">render checks so far</span>${geoLine ? `<span class="cap">${esc(geoLine)}</span>` : ''}</div>`,
+			<div class="stat"><span class="big">${usage.renders}</span><span class="label">render checks so far</span>${geoLine ? `<span class="cap">${esc(geoLine)}</span>` : ''}</div>`,
 			`.row { position: absolute; left: 72px; right: 72px; top: 200px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
 			figure { margin: 0; }
 			.tile { height: 236px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; background: #0b0b0e; }
@@ -147,13 +152,13 @@ export function announceCards({ renders, models, srcDir, total, num = (n) => n, 
 
 		7: f(
 			7,
-			`<div class="head"><div class="label">Grok connector, before acceptance, Oct 8 to Nov 20, 2026</div></div>
+			`<div class="head"><div class="label">${esc(usage.window)}</div></div>
 			<div class="stats">
-				<div><div class="big">${USAGE.calls}</div><div class="label">tool calls</div></div>
-				<div><div class="big">${USAGE.days}</div><div class="label">days with traffic</div></div>
-				<div><div class="big">${USAGE.errors}</div><div class="label">errors</div></div>
+				<div><div class="big">${usage.calls}</div><div class="label">tool calls</div></div>
+				<div><div class="big">${usage.days}</div><div class="label">days with traffic</div></div>
+				${showErrors ? `<div><div class="big">${usage.errors}</div><div class="label">errors</div></div>` : `<div><div class="big">${usage.prompts}</div><div class="label">distinct prompts</div></div>`}
 			</div>
-			<div class="chart">${USAGE.weeks
+			<div class="chart">${usage.weeks
 				.map(([wk, n]) => `<div class="col"><div class="n cap">${n.toLocaleString('en-US')}</div><div class="bar" style="height:${Math.round((n / maxWeek) * 150)}px"></div><div class="wk cap">${wk}</div></div>`)
 				.join('')}</div>
 			<div class="chartlabel label">Tool calls per week</div>`,

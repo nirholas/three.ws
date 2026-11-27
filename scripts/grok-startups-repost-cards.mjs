@@ -3,11 +3,15 @@
 // (docs/x-posts/2026-11-27-grok-for-startups-repost.md), in the original
 // thread's look: near-black ground, Inter, thin white line art, footer marks.
 //
-//   node scripts/grok-startups-repost-cards.mjs [--only post-07,post-16]
+//   node scripts/grok-startups-post-models.mjs --set repost   # once: the repost's own models
+//   node scripts/grok-startups-repost-cards.mjs [--only post-07.png,post-16.png]
 //
 // Media per post (19 posts):
 //   1   public/x-media/grok-startups-announce/head.mp4 (head.png still), unchanged
-//   2, 3, 6, 8, 15, 18, 19   the original cards, counter "NN / 19" (scripts/lib/grok-startups-cards.mjs)
+//   2, 3, 6, 8, 15, 18, 19   the original layouts, counter "NN / 19" (scripts/lib/grok-startups-cards.mjs),
+//         with this thread's own models (src/models.json: a red electric sports car, its
+//         "make it chrome" refine, a rigged humanoid robot, the render check on the car)
+//         and no error count on the usage card (15)
 //   4   public/x-media/grok-startups-announce/ffsc-engine.mp4, unchanged
 //   5   post-05-launch-stack.mp4, a real render of the launch stack cutaway:
 //         node scripts/anatomy-cutaway-video.mjs --id d72da3e9-8aae-47cd-a96c-45ccd33bf1a0 \
@@ -17,34 +21,38 @@
 //
 // Every figure on a new card is real:
 //   7   the Grok Build plugin in integrations/grok/three-ws (commands, agent)
-//   9   a live run of satellites/grok-3d-starter on grok-4.7 (src/starter.json)
+//   9   a live run of satellites/grok-3d-starter on grok-4.7 asking for a rocket (src/starter.json)
 //   10  the four task templates and their measured runtimes on /grok
 //   11  the event names, signature and retry schedule in api/_lib/webhook-dispatch.js
 //   12  the five pano tools in api/_mcp-studio/pano-tools.js
 //   13  the Grok 4.7 prices in api/_lib/chat-models.js
 //   16  /api/status/mcp, fetched when this script runs (written to src/live.json)
-//   17  the Ask @grok text that src/shared/grok-ask.js builds for a real model
+//   17  the Ask @grok text that src/shared/grok-ask.js builds for a real model (the pickup in src/models.json)
 //
 // Output: public/x-media/grok-startups-repost/post-NN.png, 1200x675 at 2x.
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { esc, frame, launchBrowser, openRenderer, shootCards } from './lib/x-card-kit.mjs';
-import { announceCards, hasAnnounceModels, renderAnnounceModels } from './lib/grok-startups-cards.mjs';
+import { USAGE, announceCards, hasAnnounceModels, renderAnnounceModels } from './lib/grok-startups-cards.mjs';
 import { GROK_MODELS } from '../api/_lib/chat-models.js';
 import { grokAskText } from '../src/shared/grok-ask.js';
 
 const TOTAL = 19;
 const outDir = resolve('public/x-media/grok-startups-repost');
 const srcDir = join(outDir, 'src');
-const announceSrc = resolve('public/x-media/grok-startups-announce/src');
-const models = JSON.parse(readFileSync(join(announceSrc, 'models.json'), 'utf8'));
-if (!hasAnnounceModels(models)) throw new Error('public/x-media/grok-startups-announce/src/models.json is incomplete: run node scripts/grok-startups-post-models.mjs');
+const modelsPath = join(srcDir, 'models.json');
+const models = existsSync(modelsPath) ? JSON.parse(readFileSync(modelsPath, 'utf8')) : {};
+if (!hasAnnounceModels(models) || !models.pickup) throw new Error(`${modelsPath} is incomplete: run node scripts/grok-startups-post-models.mjs --set repost`);
 const starterPath = join(srcDir, 'starter.json');
 if (!existsSync(starterPath)) throw new Error('src/starter.json is missing: run satellites/grok-3d-starter scripts/live-xai.mjs and record its two GLBs there');
 const starter = JSON.parse(readFileSync(starterPath, 'utf8'));
 // Old post number (2026-11-25 thread) to its number in the repost.
 const RENUMBER = { 2: 2, 3: 3, 5: 6, 6: 8, 7: 15, 8: 18, 9: 19 };
+// Refreshed usage figures (posts 3 and 15), when a numbers run has written
+// src/usage.json; the 2026-11-25 window otherwise.
+const usagePath = join(srcDir, 'usage.json');
+const usage = { ...USAGE, ...(existsSync(usagePath) ? JSON.parse(readFileSync(usagePath, 'utf8')) : {}) };
 // The examples smoke line returns only once order 458 proves all six live.
 const smokePassed = process.argv.includes('--smoke-passed');
 const card = (n, body, css) => frame(n, TOTAL, body, css);
@@ -66,7 +74,7 @@ const grok47 = GROK_MODELS.find((m) => m.id === 'grok-4.7');
 if (!grok47) throw new Error('grok-4.7 is not in api/_lib/chat-models.js');
 const usd = (n) => `$${n.toFixed(2)}`;
 
-const askEntity = { kind: 'forge', id: models.prop.glb_url.match(/([0-9a-f-]{36})\.glb$/)[1], prompt: models.prop.prompt };
+const askEntity = { kind: 'forge', id: models.pickup.glb_url.match(/([0-9a-f-]{36})\.glb$/)[1], prompt: models.pickup.prompt };
 const askText = grokAskText(askEntity, { url: 'https://three.ws' });
 
 const n = (v) => Number(v).toLocaleString('en-US');
@@ -124,8 +132,8 @@ function newCards({ uptime, starterRenders, askRender }) {
 				.map(([said, tools]) => `<div class="turn"><div class="said">${esc(said)}</div>${tools.map((t) => `<div class="tool">${t}</div>`).join('')}</div>`)
 				.join('')}<div class="cap small">1 Node server · 1 page · 1 dependency</div></div>
 			<div class="row">${[
-				[starterRenders.first.png, 'Brass desk lamp', `forge_free, ready at ${starter.first.seconds} s`],
-				[starterRenders.second.png, '"Make it chrome"', `refine_model, ready at ${starter.second.seconds} s`],
+				[starterRenders.first.png, starter.firstLabel, `forge_free, ready at ${starter.first.seconds} s`],
+				[starterRenders.second.png, `"${starter.followUp[0].toUpperCase()}${starter.followUp.slice(1)}"`, `refine_model, ready at ${starter.second.seconds} s`],
 			]
 				.map(([png, label, cap]) => `<figure><div class="tile"><img src="${png}"></div><div class="label">${esc(label)}</div><div class="cap">${esc(cap)}</div></figure>`)
 				.join('')}</div>`,
@@ -281,13 +289,14 @@ try {
 
 	const renderer = await openRenderer(browser);
 	const renders = await renderAnnounceModels(renderer.shot, models);
+	const askRender = await renderer.shot(models.pickup.glb_url);
 	const starterRenders = { first: await renderer.shot(starter.first.glb_url), second: await renderer.shot(starter.second.glb_url) };
 	await renderer.close();
 
-	const old = announceCards({ renders, models, srcDir: announceSrc, total: TOTAL, num: (k) => RENUMBER[k], smokePassed });
+	const old = announceCards({ renders, models, srcDir, total: TOTAL, num: (k) => RENUMBER[k], smokePassed, showErrors: false, usage });
 	const cards = {
 		...Object.fromEntries(Object.entries(old).map(([k, html]) => [`post-${String(RENUMBER[k]).padStart(2, '0')}.png`, html])),
-		...newCards({ uptime, starterRenders, askRender: renders.prop }),
+		...newCards({ uptime, starterRenders, askRender }),
 	};
 	const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1].split(',') : null;
 	await shootCards(browser, outDir, Object.fromEntries(Object.entries(cards).sort(([a], [b]) => a.localeCompare(b))), only);
