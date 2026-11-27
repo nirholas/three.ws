@@ -110,9 +110,7 @@ class SketchCanvasModal {
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 		this.canvas.width = CANVAS_SIZE * dpr;
 		this.canvas.height = CANVAS_SIZE * dpr;
-		this.canvas.style.width = `${CANVAS_SIZE}px`;
-		this.canvas.style.height = `${CANVAS_SIZE}px`;
-		const ctx = this.canvas.getContext('2d');
+		const ctx = this.canvas.getContext('2d', { willReadFrequently: true });
 		ctx.scale(dpr, dpr);
 		ctx.lineJoin = 'round';
 		ctx.lineCap = 'round';
@@ -322,6 +320,7 @@ function injectStyles() {
 			margin: 4vh auto; background: var(--surface, #16181f); color: var(--text, #f1f2f6);
 			border: 1px solid var(--border, rgba(255,255,255,.1)); border-radius: 16px;
 			padding: 20px; display: flex; flex-direction: column; gap: 12px;
+			max-height: 92dvh; overflow-y: auto;
 			box-shadow: 0 24px 60px rgba(0,0,0,.45);
 		}
 		.sk-header { display: flex; align-items: center; justify-content: space-between; }
@@ -329,8 +328,15 @@ function injectStyles() {
 		.sk-close { background: transparent; border: none; color: inherit; opacity: .7; cursor: pointer; padding: 4px; border-radius: 8px; }
 		.sk-close:hover { opacity: 1; background: rgba(255,255,255,.08); }
 		.sk-hint { font-size: .84rem; opacity: .68; margin: 0; line-height: 1.4; }
-		.sk-stage { position: relative; align-self: center; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.14); touch-action: none; }
-		.sk-canvas { display: block; max-width: 100%; height: auto; cursor: crosshair; background: #fff; }
+		.sk-stage {
+			position: relative; align-self: center; border-radius: 12px; overflow: hidden;
+			border: 1px solid rgba(255,255,255,.14); touch-action: none;
+			/* Square, as wide as the panel allows, and never taller than the screen
+			   leaves room for (header, hint, toolbar and footer take about 350px), so
+			   Use sketch is always reachable. */
+			width: min(100%, 768px, max(220px, calc(100dvh - 400px))); aspect-ratio: 1; flex: none;
+		}
+		.sk-canvas { display: block; width: 100%; height: 100%; cursor: crosshair; background: #fff; }
 		.sk-empty-overlay {
 			position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
 			color: rgba(20,20,26,.32); font-size: .95rem; pointer-events: none; margin: 0; font-weight: 600;
@@ -363,8 +369,6 @@ function injectStyles() {
 		.sk-btn-primary:disabled { opacity: .4; cursor: not-allowed; }
 		@media (max-width: 480px) {
 			.sk-panel { margin: 2vh auto; padding: 14px; }
-			.sk-stage { width: 100%; }
-			.sk-canvas { width: 100% !important; height: auto !important; }
 		}
 	`;
 	document.head.appendChild(style);
