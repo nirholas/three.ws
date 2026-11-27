@@ -203,6 +203,25 @@ export function createModlyPanel({ root, onChange = () => {} }) {
 	};
 }
 
+/**
+ * When a run on the user's own GPU fails, the hosted engine to offer the same
+ * photo to, or null. A cancel is the person's own choice, so it gets no offer.
+ * Never another local engine (the one that failed is usually why it failed)
+ * and never a lane that needs the user's own API key. The standing photo
+ * engine wins when it can serve; otherwise the first hosted lane that is up.
+ *
+ * @param {{ code?: string } | null} err  the ModlyError (or a code-only stand-in)
+ * @param {Array<{ backend: string, disabled: boolean, modly: boolean, byok: string, houseKey: boolean }>} engines
+ * @param {string} preferred  catalog.default_backend.image
+ */
+export function hostedFallbackFor(err, engines, preferred) {
+	if (err?.code === 'CANCELLED') return null;
+	const hosted = (Array.isArray(engines) ? engines : []).filter(
+		(e) => e && e.backend && !e.disabled && !e.modly && (!e.byok || e.houseKey),
+	);
+	return hosted.find((e) => e.backend === preferred) || hosted[0] || null;
+}
+
 async function readError(res, fallback) {
 	const body = await res.json().catch(() => null);
 	return body?.message || body?.error_description || fallback;

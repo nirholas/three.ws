@@ -34,7 +34,7 @@ import { createCompare } from './forge-compare.js';
 import { initForgeDestinationPicker, storedForgeDestination } from './shared/forge-destination-picker.js';
 import { openedFromShare } from './shared/share-beacon.js';
 import { generateWithModly, defaultModlyParams } from './modly-local.js';
-import { createModlyPanel, promoteModlyGlb, saveModlyResultToLibrary } from './forge-modly.js';
+import { createModlyPanel, hostedFallbackFor, promoteModlyGlb, saveModlyResultToLibrary } from './forge-modly.js';
 import { regionRestrictedError, fetchRestrictedEngines } from './forge-region.js';
 import { engineFromQuery } from './forge-engine-link.js';
 import { rememberFromResponse } from './shared/forge-manage-tokens.js';
@@ -3626,6 +3626,7 @@ async function runModly(modelId) {
 			'Forge could not reach Modly on this computer. Start Modly, then press Try again. The "Use your GPU" panel in the photos tab shows what the browser saw.',
 			{ title: 'Modly is not reachable' },
 		);
+		offerHostedFallback({ code: 'NOT_RUNNING' });
 		return;
 	}
 	if (!model) {
@@ -3633,6 +3634,7 @@ async function runModly(modelId) {
 			`${modelId} is no longer downloaded in Modly. Pick another engine, or download it again in Modly's Models page.`,
 			{ title: 'Model not available in Modly' },
 		);
+		offerHostedFallback({ code: 'UNKNOWN_MODEL' });
 		return;
 	}
 	const source = modlySourceSlot();
@@ -3755,11 +3757,44 @@ async function runModly(modelId) {
 		}
 		const copy = modlyErrorCopy(err, model.name);
 		showError(copy.message, { title: copy.title });
+		offerHostedFallback(err);
 	} finally {
 		if (modlyRun?.controller === controller) modlyRun = null;
 		if (els.genLeaveHint) els.genLeaveHint.hidden = false;
 		setBusy(false);
 	}
+}
+
+// A run on the user's own GPU failed. Beside Try again, offer the same photo on
+// a hosted engine in one click. Never automatic: the person chose their own
+// machine, so moving the work to our servers is their call, and the note says
+// plainly where it will run.
+function offerHostedFallback(err) {
+	if (!els.errorLanes || !els.engine) return;
+	const engines = [...els.engine.querySelectorAll('button')].map((btn) => ({
+		backend: btn.dataset.backend,
+		disabled: btn.disabled,
+		modly: btn.dataset.modly === '1',
+		byok: btn.dataset.byok || '',
+		houseKey: btn.dataset.housekey === 'true',
+	}));
+	const target = hostedFallbackFor(err, engines, catalog?.default_backend?.image);
+	if (!target) return;
+	const info = catalog?.backends?.find((b) => b.id === target.backend);
+	const label = ENGINE_LABELS[target.backend] || info?.label || target.backend;
+	const btn = document.createElement('button');
+	btn.type = 'button';
+	btn.className = 'btn btn-ghost';
+	btn.textContent = info?.free ? `Make it on three.ws instead (${label}, free)` : `Make it on three.ws instead (${label})`;
+	btn.addEventListener('click', () => {
+		if (selectEngineByBackend(target.backend)) submit();
+	});
+	const note = document.createElement('p');
+	note.className = 'error-lanes__note';
+	note.textContent = `${label} runs on three.ws servers instead of your graphics card, using the same photo.`;
+	els.errorLanes.setAttribute('aria-label', 'Make this model on three.ws instead');
+	els.errorLanes.append(btn, note);
+	els.errorLanes.classList.remove('is-hidden');
 }
 
 function releaseModlyResult() {
