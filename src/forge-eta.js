@@ -83,22 +83,61 @@ export function describeRange({ timing, catalogEtaS = null }) {
 /**
  * What the wait meter says at this moment.
  *
+ * `elapsedS` is the time the job has been on its lane (src/forge-wait-clock.js
+ * laneS), not the time since the click: the measured range is created_at to
+ * completed_at of the job row, which is written only after the director and the
+ * reference image are done. Null means no job exists yet.
+ *
+ * `bootS` is how long a cold worker took to come up on this job (measured: the
+ * lane seconds at which the cold flag cleared). The build is judged against the
+ * range from the end of the boot, so a normal run after a long boot is not
+ * called slow.
+ *
  * phase:
- *   'typical'  inside the typical time
- *   'slower'   past the typical time, still inside the range slow runs take
- *   'slowest'  past the slow mark: slower than the slowest recent runs
- *   'unknown'  nothing is known about this lane's duration
- * `over` is true once the job has passed the typical time, so the page can tint
- * the meter. `text` is the sentence for the meter line, `announce` is the same
- * fact phrased for a screen reader and is only set on a phase change.
+ *   'preparing'  no job on a lane yet (director, reference image, submit)
+ *   'cold'       the worker is booting, inside its stated boot allowance
+ *   'cold_over'  the worker is booting, past its stated boot allowance
+ *   'typical'    inside the typical time
+ *   'slower'     past the typical time, still inside the range slow runs take
+ *   'slowest'    past the slow mark: slower than the slowest recent runs
+ *   'unknown'    nothing is known about this lane's duration
+ * `over` is true once the job has passed the typical time (or the boot
+ * allowance), so the page can tint the meter. `text` is the sentence for the
+ * meter line.
  */
-export function describeWait({ elapsedS, timing, catalogEtaS = null, cold = false, coldAllowanceS = null }) {
-	const e = Math.max(0, Math.floor(Number(elapsedS) || 0));
-	const coldNote =
-		cold && Number(coldAllowanceS) > 0
-			? ` A cold start can add up to ${formatDuration(coldAllowanceS)} on top.`
-			: '';
+export function describeWait({ elapsedS, timing, catalogEtaS = null, cold = false, coldAllowanceS = null, bootS = 0 }) {
+	if (elapsedS === null || elapsedS === undefined) {
+		const range = describeRange({ timing, catalogEtaS });
+		return {
+			phase: 'preparing',
+			over: false,
+			text: range ? `The build starts after these first steps, then takes ${range}.` : '',
+		};
+	}
+	const lane = Math.max(0, Math.floor(Number(elapsedS) || 0));
 
+	if (cold) {
+		const allowance = Number(coldAllowanceS) > 0 ? Number(coldAllowanceS) : null;
+		const range = describeRange({ timing, catalogEtaS });
+		const after = range ? ` After that the build itself takes ${range}.` : '';
+		if (allowance === null) {
+			return { phase: 'cold', over: false, text: `The GPU worker is booting after an idle spell.${after}` };
+		}
+		if (lane < allowance) {
+			return {
+				phase: 'cold',
+				over: false,
+				text: `The GPU worker is booting, which can take up to ${formatDuration(allowance)}.${after}`,
+			};
+		}
+		return {
+			phase: 'cold_over',
+			over: true,
+			text: `The GPU worker is taking longer than its usual ${formatDuration(allowance)} boot. Still waiting on it, and nothing is lost.`,
+		};
+	}
+
+	const e = Math.max(0, lane - Math.max(0, Math.floor(Number(bootS) || 0)));
 	if (timing) {
 		const typical = formatDuration(timing.typicalS);
 		const slow = formatDuration(timing.slowS);
@@ -106,7 +145,7 @@ export function describeWait({ elapsedS, timing, catalogEtaS = null, cold = fals
 			return {
 				phase: 'typical',
 				over: false,
-				text: `Typically ${typical}, slower runs up to ${slow}.${coldNote}`,
+				text: `Typically ${typical}, slower runs up to ${slow}.`,
 			};
 		}
 		if (e < timing.slowS) {
@@ -129,7 +168,7 @@ export function describeWait({ elapsedS, timing, catalogEtaS = null, cold = fals
 	if (Number(catalogEtaS) > 0) {
 		const eta = Number(catalogEtaS);
 		if (e <= eta) {
-			return { phase: 'typical', over: false, text: `Estimated ${formatDuration(eta)}.${coldNote}` };
+			return { phase: 'typical', over: false, text: `Estimated ${formatDuration(eta)}.` };
 		}
 		return {
 			phase: 'slowest',
@@ -146,6 +185,7 @@ export function announceFor(phase, previous) {
 	if (phase === previous) return '';
 	if (phase === 'slower') return 'Taking a little longer than typical. Still running.';
 	if (phase === 'slowest') return 'Taking longer than most runs. Still running, nothing is lost.';
+	if (phase === 'cold_over') return 'The GPU worker is taking longer than usual to boot. Still waiting, nothing is lost.';
 	return '';
 }
 

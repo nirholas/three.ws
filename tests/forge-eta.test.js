@@ -146,6 +146,44 @@ describe('describeWait', () => {
 		expect(late.text).toContain('Still running');
 	});
 
+	it('judges nothing before the job is on a lane: the range starts when the build does', () => {
+		// The measured range is created_at to completed_at of the job row, which
+		// is written after the director and the reference image. Seventy seconds
+		// of image work must not count against it.
+		const w = describeWait({ elapsedS: null, timing });
+		expect(w).toMatchObject({ phase: 'preparing', over: false });
+		expect(w.text).toContain('2 min 30 s');
+		expect(w.text).toContain('7 min 30 s');
+		expect(w.text).not.toMatch(/Still running|Slower|Past/);
+		expect(describeWait({ elapsedS: null, timing: null, catalogEtaS: 60 }).text).toContain('estimated 1 min');
+		expect(describeWait({ elapsedS: null, timing: null, catalogEtaS: null })).toEqual({ phase: 'preparing', over: false, text: '' });
+	});
+
+	it('does not call a booting worker slow while it is inside its boot allowance', () => {
+		// trellis_selfhost: p95 about 448 s, boot allowance 510 s. At 460 s into a
+		// cold start the job is on schedule, not slower than 19 in 20 runs.
+		const w = describeWait({ elapsedS: 460, timing, cold: true, coldAllowanceS: 510 });
+		expect(w.phase).toBe('cold');
+		expect(w.over).toBe(false);
+		expect(w.text).not.toContain('Slower than');
+		expect(w.text).toContain('8 min 30 s');
+		const late = describeWait({ elapsedS: 600, timing, cold: true, coldAllowanceS: 510 });
+		expect(late).toMatchObject({ phase: 'cold_over', over: true });
+		expect(late.text).toContain('Still');
+		// A cold flag with no stated allowance says the worker is booting and
+		// claims no duration for the boot.
+		const unknown = describeWait({ elapsedS: 40, timing, cold: true, coldAllowanceS: null });
+		expect(unknown.phase).toBe('cold');
+		expect(unknown.text).toMatch(/booting/);
+	});
+
+	it('measures the build from the end of the boot once the worker is up', () => {
+		// 500 s booting, then 100 s of building: inside the typical time.
+		const w = describeWait({ elapsedS: 600, timing, bootS: 500 });
+		expect(w).toMatchObject({ phase: 'typical', over: false });
+		expect(describeWait({ elapsedS: 1000, timing, bootS: 500 }).phase).toBe('slowest');
+	});
+
 	it('is silent when the lane has no known duration', () => {
 		expect(describeWait({ elapsedS: 400, timing: null, catalogEtaS: null })).toEqual({ phase: 'unknown', over: false, text: '' });
 	});
@@ -166,6 +204,12 @@ describe('announceFor', () => {
 		expect(announceFor('slower', 'slower')).toBe('');
 		expect(announceFor('slowest', 'slower')).toContain('longer than most runs');
 		expect(announceFor('typical', undefined)).toBe('');
+	});
+
+	it('tells a screen reader when a cold boot runs past its allowance', () => {
+		expect(announceFor('cold_over', 'cold')).toContain('longer than usual to boot');
+		expect(announceFor('cold_over', 'cold_over')).toBe('');
+		expect(announceFor('cold', 'preparing')).toBe('');
 	});
 });
 

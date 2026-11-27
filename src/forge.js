@@ -41,6 +41,7 @@ import { initWalletButton, getConnectedWalletAddress } from './wallet.js';
 import { generateForgePrompt } from './forge-prompt-gen.js';
 import { createForgeTimeline } from './forge-timeline.js';
 import { createLaneTimings, describeRange, describeWait, announceFor, formatClock } from './forge-eta.js';
+import { createWaitClock } from './forge-wait-clock.js';
 import { createTabTitle } from './forge-tab-title.js';
 import { announcePolite } from './forge-sr.js';
 import { createCompare } from './forge-compare.js';
@@ -206,10 +207,9 @@ const els = {
 
 let aspectRatio = '1:1';
 let elapsedTimer = null;
-// Wall-clock origin of the running elapsed meter, and a handle to repaint it on
-// demand. Module-level because anchorElapsed() re-points the origin at the
-// server's own job age when a poll frame reports one.
-let elapsedStart = 0;
+// The running wait's two clocks (time since the click, time on the GPU lane; see
+// src/forge-wait-clock.js), and a handle to repaint the meter on demand.
+const waitClock = createWaitClock();
 let elapsedRetick = null;
 let pollAbort = false;
 let mode = 'text'; // 'text' | 'image' | 'sketch' — input mode (prompt vs photos vs drawing)
@@ -605,13 +605,21 @@ function setIndeterminate(on) {
 
 // What the wait meter last told a screen reader, so only a change is spoken.
 let waitPhase;
+// A cold worker's measured boot: the lane seconds at which this job's cold flag
+// first cleared, so the build after it is judged against the lane range on its
+// own (see describeWait's bootS).
+let waitWasCold = false;
+let waitBootS = 0;
 
-function startElapsed(offsetMs = 0) {
-	// `offsetMs` backdates the counter for a resumed job, so the elapsed line
-	// stays honest about how long the generation has really been running.
-	elapsedStart = performance.now() - Math.max(0, offsetMs);
+// `resumed` ({ waitedS, onLane }) backdates the clocks for a generation picked
+// up again, so the elapsed line stays honest about how long it has really run.
+function startElapsed(resumed = null) {
+	if (resumed) waitClock.resume(resumed.waitedS, { onLane: resumed.onLane });
+	else waitClock.start();
 	stopElapsed();
 	waitPhase = undefined;
+	waitWasCold = false;
+	waitBootS = 0;
 	laneTimings.load();
 	// Reset the meter to a clean running state for this job.
 	if (els.genProgress) {
@@ -620,7 +628,7 @@ function startElapsed(offsetMs = 0) {
 	}
 	setIndeterminate(true);
 	const tick = () => {
-		const s = Math.floor((performance.now() - elapsedStart) / 1000);
+		const s = waitClock.totalS();
 		tabTitle.running(s);
 		// A run on the user's own GPU reports a real percent and step, so the
 		// meter shows exactly that instead of an estimate.
@@ -629,17 +637,25 @@ function startElapsed(offsetMs = 0) {
 			paintModlyProgress(s);
 			return;
 		}
-		timeline.tick(s);
+		// The lane range and the boot allowance are both measured from when the job
+		// reached its lane, so they are judged on the lane clock, never on the time
+		// the director and the reference image took before it.
+		const lane = waitClock.laneS();
+		const cold = timeline.isCold();
+		if (cold) waitWasCold = true;
+		else if (waitWasCold && !waitBootS && lane !== null) waitBootS = lane;
+		timeline.tick(lane ?? 0);
 		// The range comes from what the serving lane actually did (measured p50 and
 		// p95), re-read every tick because the lane can change under a failover.
 		// With no measurement it falls back to the server's own ETA for the job,
 		// worded as an estimate. Nothing here moves the bar: it only travels.
 		const wait = describeWait({
-			elapsedS: s,
+			elapsedS: lane,
 			timing: laneTimings.timing(timeline.backend()),
 			catalogEtaS: currentEtaSeconds(),
-			cold: timeline.isCold(),
+			cold,
 			coldAllowanceS: timeline.coldSeconds(),
+			bootS: waitBootS,
 		});
 		setIndeterminate(true);
 		if (els.genProgress) els.genProgress.dataset.over = String(wait.over);
@@ -655,26 +671,13 @@ function startElapsed(offsetMs = 0) {
 	elapsedTimer = window.setInterval(tick, 1000);
 }
 
-// Re-anchor the running meter to the server's own age for this job.
-//
-// The meter interpolates between polls with a local 1s tick, which is what keeps
-// it smooth, but the tick alone has no idea when the JOB started: only when this
-// tab did. `elapsed_seconds` on every non-terminal poll frame is measured from
-// the creation row, so it is the same number for every viewer of the same job.
-// Snapping to it costs nothing when they already agree and is the difference
-// between "3s in" and the truth on a resumed page.
-//
-// A drift under 2s is ignored, so an ordinary round-trip does not re-snap the
-// display on every poll; past that the server wins in both directions, because
-// the one case that matters (a resumed or coalesced job, where the local clock
-// reads far too LOW) is a correction the meter has to make.
-function anchorElapsed(serverElapsedS) {
-	const s = Number(serverElapsedS);
-	if (!Number.isFinite(s) || s < 0 || !elapsedTimer) return;
-	const localS = (performance.now() - elapsedStart) / 1000;
-	if (Math.abs(s - localS) < 2) return;
-	elapsedStart = performance.now() - s * 1000;
-	elapsedRetick?.();
+// Fold the server's age of this job into the meter. `elapsed_seconds` on every
+// non-terminal poll frame is measured from the creation row, which exists only
+// once the lane accepted the job, so it anchors the lane clock; the Elapsed
+// readout is only ever pushed forward by it (src/forge-wait-clock.js).
+function anchorElapsed(serverElapsedS, { laneChanged = false } = {}) {
+	if (!elapsedTimer) return;
+	if (waitClock.anchor(serverElapsedS, { laneChanged })) elapsedRetick?.();
 }
 
 // Snap the meter to a finished, successful state — the only path to 100%.
@@ -2317,11 +2320,14 @@ async function pollUntilDone(jobId, stats = {}) {
 			// the elapsed readout and the cold-start countdown describe the
 			// generation rather than the tab, while the 1s tick keeps them moving
 			// smoothly between polls.
-			anchorElapsed(data.elapsed_seconds);
 			// One place folds the poll into the stage timeline: queued vs running, the
 			// lane a poll-time failover moved to, and a reference view that only
 			// becomes visible now (coalesced job, resumed session, failover successor).
+			// A lane change means a new, younger job row, the one case where the lane
+			// clock may go back.
+			const laneBefore = timeline.backend();
 			timeline.applyPoll(data);
+			anchorElapsed(data.elapsed_seconds, { laneChanged: timeline.backend() !== laneBefore });
 			if (data.status === 'done' && data.glb_url) {
 				stats.finishedAway = firstAfterAway;
 				return data;
@@ -3332,6 +3338,9 @@ async function run(cfg, { handoff = false } = {}) {
 		// The POST answered, so it now carries every fact the crumbs were standing
 		// in for. Nothing left to watch.
 		stopProgressWatch();
+		// The job row exists from here: the lane clock starts now, and the first
+		// poll's job age corrects it.
+		waitClock.accepted();
 		rememberFromResponse(job);
 		if (job.creation_id) currentCreationId = job.creation_id;
 		// The server routed this photo to the standard engine because "Match my photo"
@@ -4000,7 +4009,7 @@ async function resumeInflight({ note } = {}) {
 		elapsedS: Math.max(0, Math.round((Date.now() - inflight.startedAt) / 1000)),
 	});
 	setLaneNote(note || 'Welcome back. This generation kept running while you were away.');
-	startElapsed(Date.now() - inflight.startedAt);
+	startElapsed({ waitedS: (Date.now() - inflight.startedAt) / 1000, onLane: Boolean(inflight.jobId) });
 	showState('generating');
 
 	const pollStats = { resumed: true };
@@ -4013,6 +4022,7 @@ async function resumeInflight({ note } = {}) {
 		if (!jobId) {
 			const job = await startJob(inflight.body, inflight.key);
 			if (pollAbort) return true;
+			waitClock.accepted();
 			rememberFromResponse(job);
 			if (job.creation_id) currentCreationId = job.creation_id;
 			if (job.status === 'done' && job.glb_url) {
