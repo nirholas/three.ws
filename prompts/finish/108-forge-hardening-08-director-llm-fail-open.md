@@ -1,5 +1,7 @@
 # Forge hardening 08: Keep generating when every language model is down
 
+**Status (2026-11-27):** Built and tested locally, committed in 29d1efd32, 55615dae8, 1fbd8f3a5, f50994942, 530857dee, db667a674 and f765e84c1. The director and Enhance fail open in under a second with the chain down and make no call to a cooled provider on the next request; responses carry a `direction` record and the page says when direction was skipped. Remaining owner step: deploy (`npm run deploy:gcp:full`); production still ran f0eed584f on 2026-11-27, where the dead chain cost about 12 s per generation. The billing holds (OpenRouter credit, OpenAI billing, Vertex Gemini billing) are the owner's to clear and are not needed for Forge to work.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/108-forge-hardening-08-director-llm-fail-open.md`.
 
 **Priority:** P0. **Area:** prompt direction, LLM chain. **Dev port:** 4108. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
