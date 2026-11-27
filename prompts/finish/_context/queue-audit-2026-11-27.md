@@ -90,7 +90,7 @@ Each one's code is committed and in production.
 - 854 NVIDIA reranker revived. The stage is opt-in on purpose, through `KNOWLEDGE_RERANK_ENABLED=1`.
 - 855 Day-zero NIM adoption autopilot.
 - 856 NemoGuard agent chat guardrails.
-- 858 NeMo Retriever PDF knowledge. The code is complete. One thing could not be checked from here: whether migration `20261116182500_agent_knowledge_pdf_jobs.sql` is applied (check with `npm run db:status`).
+- 858 NeMo Retriever PDF knowledge. The code is complete, and migration `20261116182500_agent_knowledge_pdf_jobs.sql` is applied in production (checked with `db:status` on 2026-11-27).
 - 860 /cosmos world lane on current Cosmos models.
 - 864 OpenUSD simulation-ready export.
 - 869 Audio2Face emotion expression.
@@ -171,12 +171,14 @@ These all sit in the 185+ commits between `f0eed584f` and HEAD.
 - 937 Sponsorships. Decide which sponsorships to pay for. Each one is a spend.
 - 958 Creator fee payouts. A decision on how claims start: extend the claimer to agent coins, or start minting with the global launcher. Nothing has minted yet, so nothing can be distributed.
 
-### E. Database migrations (read `npm run db:status` first; `db:migrate` applies immediately)
+### E. Migrations already applied, follow-up check remaining
 
-- 755 Inference network buyer endpoint. Then run `packages/node-operator/scripts/e2e-local.mjs` and one real paid call.
-- 765 Growth campaign attribution. Then open one tagged `/forge` URL and confirm the row with `scripts/campaign-report.mjs`.
-- 923 Builder competition. The owner also supplies the competition parameters, and prize payouts need spend approval.
-- 949 Launch funnel default coin path. Then rerun the appendix queries and do a browser check of the Next step card.
+Checked 2026-11-27 with `db:status` against production: every migration in `api/_lib/migrations/` is applied, including the ones these four orders need (`20261105050000_inference_node_earnings`, `20261105110000_campaign_attribution_ledger`, `20261023200000_competition_entries`, `20261104120000_agent_launch_funnel`). What remains is the check after each.
+
+- 755 Inference network buyer endpoint. Run `packages/node-operator/scripts/e2e-local.mjs` and one real paid call.
+- 765 Growth campaign attribution. `campaign_touches` and `campaign_conversions` are still empty. Open one tagged `/forge` URL and confirm the row with `scripts/campaign-report.mjs`.
+- 923 Builder competition. The owner supplies the competition parameters, and prize payouts need spend approval.
+- 949 Launch funnel default coin path. Rerun the appendix queries and do a browser check of the Next step card.
 
 ### F. Publishing, listings, store submissions and outreach
 
@@ -225,7 +227,7 @@ These all sit in the 185+ commits between `f0eed584f` and HEAD.
 - 706 Bounties and Build program. Insert the first `program_rounds` row. `/build` shows its designed "no round open" state until then.
 - 722 Payments accounting export. The admin opens `/api/admin/accounting-export?from=2026-10-01&to=2026-10-31&format=csv` and sees the 200.
 - 739 Glasses lens app. The on-lens check needs the physical display glasses.
-- 748 Seed vision gate cron. Confirm one fresh `forge_seed_jobs` row has `gate->'vision'->>'status' = 'judged'`, and decide whether the 30% accept rate is acceptable.
+- 748 Seed vision gate cron. Confirmed 2026-11-27: 101 `forge_seed_jobs` rows carry a `judged` vision verdict, the latest on 2026-11-26. 23 of them were accepted (23%, below the 30% the order expected). The owner decides whether that rate is acceptable.
 - 965 Revenue ledger and reinvest.
   - Confirm the scheduler tick fires the two new crons.
   - Create the first live reinvest rule (spend gate).
@@ -465,4 +467,4 @@ These all sit in the 185+ commits between `f0eed584f` and HEAD.
 3. **Clear the GCP billing hold.** Clears 731, 736 and 741 and unblocks the translation runs behind 262 and 857.
 4. **Rotate the production R2 credential.** Clears 338 and 713, and is half of 339.
 5. **Record the image digests in `deploy/insta360/images.json`, then run `npm run ship:insta360`.** Clears 332, 339 and 341, and feeds the numbers that 337, 346 and 347 need.
-6. **Apply the four pending migrations** (755, 765, 923, 949) after reading `npm run db:status`.
+6. **Run the follow-up checks for 755, 765, 923 and 949.** Their migrations are already applied (checked 2026-11-27).
