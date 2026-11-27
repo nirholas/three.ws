@@ -40,7 +40,13 @@ afterAll(() => {
 	if (realCosmos !== undefined) process.env.COSMOS_REASON_URL = realCosmos;
 });
 
-beforeEach(() => describeImageJson.mockReset());
+// A block body on purpose: vitest runs a function returned from beforeEach as
+// that test's teardown, and mockReset() returns the mock itself, so the arrow
+// form called the stub once more after every test (rejecting, or hanging the
+// hook for the full timeout after the hang cases).
+beforeEach(() => {
+	describeImageJson.mockReset();
+});
 
 const score = (extra = {}) =>
 	runQualityGate({ renderBase64: PNG_1PX, mimeType: 'image/png', prompt: 'a ceramic teapot', ...extra });
