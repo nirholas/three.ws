@@ -179,11 +179,29 @@ function draw(source, width, height) {
 	return canvas;
 }
 
+const LIBHEIF_URL = '/vendor/libheif/libheif-bundle.mjs';
 let libheifReady = null;
-function loadLibheif() {
+
+/**
+ * The libheif module, loaded once. It is fetched as bytes and imported from an
+ * object URL rather than imported by path: Vite rewrites a dynamic import() to
+ * request `<path>?import`, and its dev server refuses that for a /public file
+ * with a 500. Production serves the bytes the same way either way. The bundle
+ * inlines its WebAssembly, so it needs nothing relative to its own URL.
+ */
+export function loadLibheif({ fetchImpl = fetch, importImpl = (u) => import(/* @vite-ignore */ u) } = {}) {
 	if (!libheifReady) {
-		const url = '/vendor/libheif/libheif-bundle.mjs';
-		libheifReady = import(/* @vite-ignore */ url).then((m) => m.default());
+		libheifReady = (async () => {
+			const res = await fetchImpl(LIBHEIF_URL);
+			if (!res.ok) throw new Error(`libheif: HTTP ${res.status}`);
+			const objectUrl = URL.createObjectURL(new Blob([await res.arrayBuffer()], { type: 'text/javascript' }));
+			try {
+				const m = await importImpl(objectUrl);
+				return m.default();
+			} finally {
+				URL.revokeObjectURL(objectUrl);
+			}
+		})();
 		libheifReady.catch(() => {
 			libheifReady = null;
 		});
