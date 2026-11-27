@@ -75,6 +75,7 @@ async function slotState(page) {
 			message: el.querySelector('.vs-error-msg')?.textContent || '',
 			preparing: el.querySelector('.vs-preparing-text')?.textContent || '',
 			retryLabel: el.querySelector('.vs-retry')?.textContent || '',
+			note: document.querySelector('.photo-prep-note')?.textContent?.trim() || '',
 		};
 	});
 }
@@ -85,6 +86,9 @@ async function clearSlots(page) {
 			const slot = btn.closest('.view-slot');
 			if (slot && slot.dataset.state !== 'empty') btn.click();
 		}
+		// The note under the slots belongs to the last photo; start each row clean.
+		const note = document.querySelector('.photo-prep-note');
+		if (note) note.textContent = '';
 	});
 }
 
@@ -169,28 +173,57 @@ async function main() {
 		}
 	});
 
-	await page.goto(`${BASE}${PAGE}`, { waitUntil: 'domcontentloaded' });
-	await page.waitForSelector('#mode-switch [data-mode="image"]', { timeout: 60_000 });
-	await page.click('#mode-switch [data-mode="image"]');
-	await page.waitForSelector('.view-slot', { timeout: 30_000 });
-
+	// Both pages' toasts: the dropzone's own (.forge-toast) and the page's
+	// (ui-helpers .three-toast). Installed before every load so a reload keeps it.
 	const toasts = [];
 	await page.exposeFunction('__intakeToast', (t) => toasts.push(t));
-	await page.evaluate(() => {
-		new MutationObserver(() => {
-			const t = document.querySelector('.forge-toast');
-			if (t && t.dataset.show === 'true' && t.textContent) window.__intakeToast(t.textContent);
-		}).observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
+	await page.addInitScript(() => {
+		document.addEventListener('DOMContentLoaded', () => {
+			new MutationObserver(() => {
+				for (const t of document.querySelectorAll('.forge-toast[data-show="true"], .three-toast-text')) {
+					if (t.textContent) window.__intakeToast(t.textContent.trim());
+				}
+			}).observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
+		});
 	});
 
+	async function openPage() {
+		await page.goto(`${BASE}${PAGE}`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+		await page.waitForSelector('#mode-switch [data-mode="image"]', { timeout: 60_000 });
+		await page.click('#mode-switch [data-mode="image"]');
+		await page.waitForSelector('.view-slot', { timeout: 30_000 });
+	}
+	await openPage();
+	let reloads = 0;
+
 	const results = [];
-	async function record(path, item, run) {
+	// The dev server reloads the page when any watched file changes (other work
+	// in the same tree does that, and an API edit restarts the whole server),
+	// which destroys the page mid-row. Re-open it and run that row again, up to
+	// twice, and say so in the results.
+	const navigated = (err) => /Execution context was destroyed|navigation|Target page, context or browser has been closed|Timeout .*exceeded/.test(String(err?.message || err));
+	async function attempt(run) {
 		await clearSlots(page);
+		await run();
+		return waitForOutcome(page, puts, toasts);
+	}
+	async function record(path, item, run) {
 		const putsBefore = puts.length;
 		const toastsBefore = toasts.length;
 		const errorsBefore = errors.length;
-		await run();
-		const outcome = await waitForOutcome(page, puts, toasts);
+		let outcome;
+		for (let tries = 0; !outcome; tries++) {
+			try {
+				outcome = await attempt(run);
+				if (tries) outcome.retriedAfterReload = true;
+			} catch (err) {
+				if (!navigated(err) || tries >= 2) throw err;
+				reloads++;
+				// A server mid-restart can miss this load too; the next attempt
+				// then fails the same way and counts against the same limit.
+				await openPage().catch(() => {});
+			}
+		}
 		const put = puts.length > putsBefore ? puts.at(-1) : null;
 		const row = {
 			path,
@@ -200,15 +233,17 @@ async function main() {
 			inputBytes: item.bytes?.length ?? null,
 			state: outcome.state,
 			message: outcome.message || '',
+			note: outcome.note || '',
 			toasts: [...new Set(toasts.slice(toastsBefore))],
 			ms: outcome.ms,
 			timeline: outcome.timeline,
+			...(outcome.retriedAfterReload ? { retriedAfterReload: true } : {}),
 			uploaded: put ? { type: put.type, size: put.size, ...(put.bytes ? await describeBytes(put.bytes) : {}) } : null,
 			errors: errors.slice(errorsBefore),
 		};
 		results.push(row);
 		const up = row.uploaded ? ` -> ${row.uploaded.type} ${row.uploaded.width}x${row.uploaded.height} ${Math.round(row.uploaded.size / 1024)} KB orient=${row.uploaded.orientation}` : '';
-		console.log(`[${LABEL}] ${path.padEnd(6)} ${item.id.padEnd(15)} ${row.state}${row.message ? ` "${row.message}"` : ''}${row.toasts.length ? ` toast="${row.toasts.at(-1)}"` : ''}${up}${row.errors.length ? ` ERRORS: ${row.errors.join(' | ').slice(0, 300)}` : ''}`);
+		console.log(`[${LABEL}] ${path.padEnd(6)} ${item.id.padEnd(15)} ${row.state}${row.message ? ` "${row.message}"` : ''}${row.note ? ` note="${row.note}"` : ''}${row.toasts.length ? ` toast="${row.toasts.at(-1)}"` : ''}${up}${row.errors.length ? ` ERRORS: ${row.errors.join(' | ').slice(0, 300)}` : ''}`);
 	}
 
 	// Files go through the picker from disk, as a person's would (CDP caps an
@@ -268,9 +303,9 @@ async function main() {
 	const file = resolve(OUT, `results-${LABEL}.json`);
 	await writeFile(
 		file,
-		JSON.stringify({ label: LABEL, base: BASE, page: PAGE, at: new Date().toISOString(), linkImportsAnsweredLocally, results }, null, 2),
+		JSON.stringify({ label: LABEL, base: BASE, page: PAGE, at: new Date().toISOString(), linkImportsAnsweredLocally, reloads, results }, null, 2),
 	);
-	console.log(`\nwrote ${file} (${results.length} rows; link imports answered by the local import code: ${linkImportsAnsweredLocally})`);
+	console.log(`\nwrote ${file} (${results.length} rows; link imports answered by the local import code: ${linkImportsAnsweredLocally}; page reloads survived: ${reloads})`);
 }
 
 main().catch((err) => {
