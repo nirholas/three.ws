@@ -95,12 +95,28 @@
 			<description>The Hunyuan3D model licence excludes the EU, the UK and South Korea. Forge now shows a plain note under the engine picker saying which engines are off and why, worded differently when we could not confirm your location, so you are never told you are somewhere you may not be. Behind it, no route (default, fallback, a named engine, the paid API, the 3D Studio tools, photo avatars) can reach a Hunyuan lane for an excluded or unknown country, and you still get a model from another engine. A Hugging Face lane that has run out of free GPU time now rests for half an hour instead of failing every request.</description>
 		</item>
 		<item>
+			<title>Signing in from Forge no longer loses your prompt</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Signing in from Forge no longer loses your prompt</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Making a model on Forge needs a free account, and the page now says so right under Generate, with why: every model is saved to its owner, unlisted, so you can find, download or delete it later. If you type a prompt and pick a quality, engine or aspect before signing in or creating an account, all of it comes back with you and Generate is ready for one click. Photos are not carried over, so they never sit in browser storage on a shared computer: the page tells you before you leave and reminds you to add them again. If your session ends mid-visit, Forge now says your session ended and offers to sign you in again instead of showing a confusing error, and a model that was already building keeps going and is picked up when you come back. Sign-in links from Forge can only return to a page on three.ws.</description>
+		</item>
+		<item>
 			<title>Sketch to 3D now tells you when a drawing is blank, a dot or scribbled edge to edge, and no longer ends in a dead end</title>
 			<link>https://three.ws/forge-studio</link>
 			<guid isPermaLink="false">2026-11-27:Sketch to 3D now tells you when a drawing is blank, a dot or scribbled edge to edge, and no longer ends in a dead end</guid>
 			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>A blank canvas, a single dot or a drawing smeared over the whole frame is now refused on your device with a message that says what to draw, before anything is uploaded or a generation slot is spent. The drawing canvas lines strokes up under your finger on a phone, keeps Use sketch available after you undo a Clear, keeps keyboard focus inside the dialog and fits any screen height with Use sketch always reachable. The Forge page gets a Draw here instead button for the same canvas. If the sketch engine cannot take or finish a drawing, Forge now continues the job on the standard image engine and tells you, instead of ending in an error, and a drawing the engine could not read no longer takes a healthy engine out of rotation.</description>
+		</item>
+		<item>
+			<title>The Forge wait now tells the truth the whole way through</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:The Forge wait now tells the truth the whole way through</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>While a model builds, the Elapsed clock on Forge only ever moves forward. Before, it could jump back (from 0:40 to 0:05, for example) once the engine picked up the job. The time it quotes now comes from what the engine serving your job actually took on recent runs, counted from when your job reached that engine, so the art direction and reference image steps no longer make a normal run look slow. Before the engine has your job, the page says the build starts after these first steps. A GPU worker that is booting gets its own line, with the boot time the server gives, and the page says so plainly if the boot runs long. The build after a boot is never called slow because of the boot. Screen readers hear when a boot runs long, and the Studio page now follows the same rules, including stopping the turntable for people who asked for reduced motion. A slow 3D viewer download no longer prints an error either.</description>
 		</item>
 		<item>
 			<title>The NVIDIA-hosted 3D lane now rejects bad results and backs off when NVIDIA says wait</title>

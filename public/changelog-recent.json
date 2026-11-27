@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-27T05:21:54.425Z",
+	"generated_at": "2026-11-27T05:37:52.589Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4777,
+	"total": 4779,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -132,12 +132,35 @@
 		{
 			"date": "2026-11-27",
 			"type": "update",
+			"title": "Signing in from Forge no longer loses your prompt",
+			"summary": "Making a model on Forge needs a free account, and the page now says so right under Generate, with why: every model is saved to its owner, unlisted, so you can find, download or delete it later. If you type a prompt and pick a quality, engine or aspect before signing in or creating an account, all of it comes back with you and Generate is ready for one click. Photos are not carried over, so they never sit in browser storage on a shared computer: the page tells you before you leave and reminds you to add them again. If your session ends mid-visit, Forge now says your session ended and offers to sign you in again instead of showing a confusing error, and a model that was already building keeps going and is picked up when you come back. Sign-in links from Forge can only return to a page on three.ws.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
 			"title": "Sketch to 3D now tells you when a drawing is blank, a dot or scribbled edge to edge, and no longer ends in a dead end",
 			"summary": "A blank canvas, a single dot or a drawing smeared over the whole frame is now refused on your device with a message that says what to draw, before anything is uploaded or a generation slot is spent. The drawing canvas lines strokes up under your finger on a phone, keeps Use sketch available after you undo a Clear, keeps keyboard focus inside the dialog and fits any screen height with Use sketch always reachable. The Forge page gets a Draw here instead button for the same canvas. If the sketch engine cannot take or finish a drawing, Forge now continues the job on the standard image engine and tells you, instead of ending in an error, and a drawing the engine could not read no longer takes a healthy engine out of rotation.",
 			"link": "/forge-studio",
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "The Forge wait now tells the truth the whole way through",
+			"summary": "While a model builds, the Elapsed clock on Forge only ever moves forward. Before, it could jump back (from 0:40 to 0:05, for example) once the engine picked up the job. The time it quotes now comes from what the engine serving your job actually took on recent runs, counted from when your job reached that engine, so the art direction and reference image steps no longer make a normal run look slow. Before the engine has your job, the page says the build starts after these first steps. A GPU worker that is booting gets its own line, with the boot time the server gives, and the page says so plainly if the boot runs long. The build after a boot is never called slow because of the boot. Screen readers hear when a boot runs long, and the Studio page now follows the same rules, including stopping the turntable for people who asked for reduced motion. A slow 3D viewer download no longer prints an error either.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -1541,26 +1564,6 @@
 			"title": "Docs · Phi brain lane (self-hosted Phi-4-mini)",
 			"summary": "Microsoft Phi-4-mini self-hosted on a Cloud Run L4: the vLLM worker, tool calling, fallback, measured cold start, latency, throughput and cost, and the 91-task evaluation that sets its routing.",
 			"link": "/docs/phi-brain-lane",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "launch",
-			"title": "Docs · Sharing and link previews",
-			"summary": "Share creations and agents to Teams and LinkedIn, the link-preview rules both enforce, and how to refresh a stale LinkedIn card.",
-			"link": "/docs/sharing",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "launch",
-			"title": "Docs · Talking-avatar clips (Make a clip)",
-			"summary": "Turn an avatar and a line of text, or an uploaded recording, into a shareable MP4 of that avatar saying it: NVIDIA Magpie voice, Audio2Face-3D lip sync, rendered and encoded in your browser.",
-			"link": "/docs/talking-avatar-clips",
 			"tags": [
 				"launch"
 			]

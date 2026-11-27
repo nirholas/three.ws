@@ -6,7 +6,7 @@ Page: [/forge](https://three.ws/forge) and the feature landing [/features/forge]
 
 ## Why it exists
 
-Every other text-to-3D tool makes you choose a vendor, buy credits, and hope the one model they wired up is the right one for your prompt. Forge inverts that. It treats generation as a routing problem over many engines, picks the best free lane for the input you gave it, degrades gracefully when an upstream is down, and only ever charges for higher quality, never to recover a vendor bill. The result is a single surface where a first-time visitor can make a real 3D model in seconds with no account, no key, and no cost, while a power user can pin a specific engine, bring their own key, or push a High-tier generation through multi-view fusion.
+Every other text-to-3D tool makes you choose a vendor, buy credits, and hope the one model they wired up is the right one for your prompt. Forge inverts that. It treats generation as a routing problem over many engines, picks the best free lane for the input you gave it, degrades gracefully when an upstream is down, and only ever charges for higher quality, never to recover a vendor bill. The result is a single surface where a first-time visitor can make a real 3D model in seconds with a free account, no key, and no cost, while a power user can pin a specific engine, bring their own key, or push a High-tier generation through multi-view fusion.
 
 Forge is the public, auth-free twin of the 3D Studio MCP server (`api/mcp-3d.js`), so anything the page can do, an agent can do over MCP or a plain HTTP call.
 
@@ -264,7 +264,7 @@ stills; it never reports a recording that did not happen.
 
 ## Walkthrough
 
-1. Open [/forge](https://three.ws/forge). No login, no wallet, no key required.
+1. Open [/forge](https://three.ws/forge). Making a model needs a free account (no wallet, no key, no card): each model is saved to its owner, unlisted, so it can be found, downloaded or deleted later. A note under **Generate** says so before you start, and if you follow a sign-in or registration link from the page your prompt and settings (input mode, quality, engine, aspect) come back with you, ready for one click. Photos are not carried over: they stay on your device, and the page asks you to add them again. If your session ends mid-visit, Forge says so in plain words instead of failing silently, and a job already running keeps going and is picked up again when you return.
 2. Pick an input mode: **Describe it** (text), **From photos**, or **From a sketch** (the sketch tab appears only when the TripoSG worker is configured).
 3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to four images of the same object from different angles (front, back, left, right); each uploads straight to object storage via a presigned URL. Engines that fuse several views use all of them; engines that read one use the front view and say so (see [Several photos and generated views](#several-photos-and-generated-views)).
 4. Optionally open the quality controls and pick a tier (Draft, Standard, High) and an engine. The default engine carries a **FREE** pill. Down lanes are disabled with the reason shown.
