@@ -126,4 +126,18 @@ note     THREE_WS_API_KEY is not set: catalog search works, but making a model n
 error    xAI answered 400 invalid-argument: Incorrect API key provided. You can obtain an API key from https://console.x.ai.
 ```
 
-A free generation, the path `forge_free` takes when the catalog has no match, was captured on 2026-11-20 through the three.ws [curl example](https://github.com/nirholas/three.ws/blob/main/examples/grok-curl/README.md): "a low-poly wooden chair" became `https://three.ws/cdn/forge/anon/efefc9dc-5ed9-445f-8e87-fdc608826f39.glb` in 180 seconds.
+`XAI_API_KEY=... THREE_WS_API_KEY=... npm start -- "make a brass desk lamp with a green glass shade"`, captured 2026-11-27 against production. The catalog has no such lamp, so Grok made one: `forge_free` started the job, the server answered pending, and the script asked Grok to collect it twice more before the GLB was ready, 298 seconds in all. Grok sent `forge_free` more than once before it began polling (four calls, trimmed to one here), and the job ids are shortened:
+
+```text
+tool     three-ws___forge_free {"prompt":"a brass desk lamp with a green glass shade","tier":"standard"}
+tool     three-ws___check_job {"job_id":"f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6..."}
+round 1: no GLB yet, asking Grok to collect the job again in 20s
+tool     three-ws___check_job {"job_id":"f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6..."}
+round 2: no GLB yet, asking Grok to collect the job again in 20s
+tool     three-ws___check_job {"job_id":"f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6..."}
+
+GLB: https://three.ws/cdn/forge/anon/ca7693f7-b230-4388-b0e1-8b0ddcfadc4a.glb
+
+glb      https://three.ws/cdn/forge/anon/ca7693f7-b230-4388-b0e1-8b0ddcfadc4a.glb
+viewer   https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Fca7693f7-b230-4388-b0e1-8b0ddcfadc4a.glb
+```
