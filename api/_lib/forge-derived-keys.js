@@ -41,7 +41,9 @@ function urlFormsOfKey(key) {
 	return out;
 }
 
-function meshUrlForms(row) {
+// Every URL this model's mesh is known by. Also how a copy made FROM the model
+// (an avatar saved through /api/avatars/from-forge) is traced back to it.
+export function meshUrlForms(row) {
 	const urls = new Set();
 	for (const [url, key] of [
 		[row.glb_url, row.glb_key],
