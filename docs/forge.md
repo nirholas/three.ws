@@ -695,6 +695,7 @@ dashboard at [/quality-bench](https://three.ws/quality-bench) (internal).
 ## Related
 
 - [The Forge pipeline](./forge-pipeline.md) is the architecture deep dive: the engine grid, routing, failover, job lifecycle, workers, and payments, end to end. [How the Forge works](./how-forge-works.md) is the same story in plain language.
+- [Forge input security](./forge-input-security.md) lists every address, upload and model file a stranger can send to Forge, the guard in front of each, and what is still open.
 - [Image to 3D](./image-to-3d.md) is the photo lane opened directly at [/image-to-3d](https://three.ws/image-to-3d).
 - [/forge-max](https://three.ws/forge-max) is the maximum-quality lane opened directly: the same Forge with the High tier pinned on arrival (200k-poly target, 4K PBR and HD textures, subject-aware engine routing). `?tier=draft|standard|high` presets the quality selector on any Forge URL the same way. The High tier's $THREE hold-or-pay gate applies unchanged; BYOK engines (your own Meshy, Tripo, or Rodin key) are exempt as always. For DamagedHelmet-class artist benchmarks, remember the ceiling is the current state of generative 3D, not the routing: this lane maxes every budget the engines expose, and [Measuring realism](#measuring-realism) is how we track that ceiling moving.
 - [Diorama](./diorama.md) forges a whole scene of Forge objects into one explorable world.

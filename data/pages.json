@@ -4250,6 +4250,14 @@
 					"added": "2026-11-13"
 				},
 				{
+					"path": "/docs/forge-input-security",
+					"title": "Docs · Forge input security",
+					"description": "Every address, uploaded photo and model file a stranger can send to Forge, the guard in front of each (SSRF checks, DNS pinning, streaming size caps, type from bytes, pixel limits), and the one gap still open.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-27"
+				},
+				{
 					"path": "/docs/transaction-landing-race",
 					"title": "Docs · Transaction landing race",
 					"description": "How every signed Solana trade is sent through several landing providers at once: the provider table, first-confirmation-wins racing, per-provider landed and latency stats, failure-streak skipping with health probes, and the per-trade tip ceiling.",

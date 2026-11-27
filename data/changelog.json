@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "Forge now refuses photos and links that point inside our network or are not really images",
+			"summary": "A reference photo or link sent to Forge could be aimed at an address inside our own network, and an uploaded file was only checked by the name it claimed. Forge now checks where every reference address really goes before a model starts, refuses anything private, and reads the first bytes of each uploaded photo to confirm it is a PNG, JPEG or WebP of a sane size and canvas. Remote images are cut off while they download instead of after, and a malformed 3D file can no longer crash the check that reads it.",
+			"tags": ["fix", "security"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "A takedown now removes every copy of a Forge model, and repeat offenders get a human check",
 			"summary": "Removing a Forge model used to leave copies behind: its display thumbnail, its game-ready exports, any avatar saved from it and its Sketchfab listing. The takedown now finds and removes all of them, clears every cached page and feed that showed it, and says plainly what it could not remove instead of reporting success. A model that is private, held or blocked is also no longer picked for the Sketchfab showcase or shown on its social preview card. An account that keeps having models blocked now alerts an operator, and its later models wait for a manual look before they can go public.",
 			"tags": ["fix", "security"],
