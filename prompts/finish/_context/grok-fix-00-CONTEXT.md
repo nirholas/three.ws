@@ -26,7 +26,7 @@ Run 451, 454, 456, 457 and 458 at once; each is independent. Run 452 last, becau
 - [456](../456-grok-fix-06-llm-eval-grok-columns.md) Run the Grok 4.7 columns of the LLM eval.
 - [457](../457-grok-fix-07-ref-image-eval-grok-column.md) Run the Grok Imagine column of the reference-image eval.
 - [458](../458-grok-fix-08-examples-and-grok-build-live.md) Make all six Grok examples and a Grok Build model turn pass live, against a tunnel to a local server if production is not fixed yet.
-- [452](../452-grok-fix-02-repost-thread-honest.md) **Last.** Assemble [the repost thread](../../../docs/x-posts/2026-11-27-grok-for-startups-repost.md): refresh its numbers, fill the eval post, check every surface and link, print the final text. Running it is approval to commit the funding source its post 15 names.
+- [452](../452-grok-fix-02-repost-thread-honest.md) **Last.** Assemble [the repost thread](../../../docs/x-posts/2026-11-27-grok-for-startups-repost.md): refresh its numbers, fill the eval post, check every surface and link, print the final text. Running it is approval to commit the funding source its post 18 names.
 
 Withdrawn 2026-11-27: 453 (overclaim sweep) and 455 (numbers that exclude our own traffic). The owner decided the original thread is true apart from the co-marketing clause: keep "the first crypto-native company approved", the marketplace line and the original framing, remove only the co-marketing, and add the new Grok work. Do not re-litigate those lines. Order 452's first run (`ed86dc046`) rewrote `docs/x-posts/2026-11-25-grok-for-startups-announcement.md` more strictly than the owner chose; that file is not the one to post.
 
