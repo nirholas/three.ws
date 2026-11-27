@@ -31,6 +31,7 @@ import { RESUME_WINDOW_MS, createRunGate, newIdempotencyKey } from '../forge-inf
 import { createHiddenClock, waitUntilVisible, fetchJobStatus, nextBackoff } from '../shared/resilient-poll.js';
 import { byokUseNote, mountByokKeyField } from '../shared/byok-key-ui.js';
 import { createLaneTimings, describeRange, describeWait, announceFor, formatClock } from '../forge-eta.js';
+import { createWaitClock } from '../forge-wait-clock.js';
 import { createTabTitle } from '../forge-tab-title.js';
 import { announcePolite } from '../forge-sr.js';
 ensureStateKitStyles();
@@ -371,9 +372,32 @@ function setIndeterminate(on) {
 
 // What the wait meter last told a screen reader, so only a change is spoken.
 let waitPhase;
+// Time since the click and time on the GPU lane (src/forge-wait-clock.js). The
+// measured range is created_at to completed_at of the job row, which exists only
+// once the lane accepted the job, so the range is judged on the lane clock.
+const waitClock = createWaitClock();
+// The lane actually serving the job (a failover can move it) and whether its
+// worker is booting, as the submit response and the polls state them.
+let waitLane = { backend: null, cold: false, coldS: null, wasCold: false, bootS: 0 };
+
+// Fold a submit response or a poll frame into waitLane. True when the job moved
+// to another lane, which is a new, younger job row.
+function noteWaitLane(data, { submit = false } = {}) {
+	const before = waitLane.backend;
+	if (data?.backend) waitLane.backend = data.backend;
+	if (submit || data?.status === 'queued') {
+		waitLane.cold = Boolean(data?.cold_start);
+		const stated = Number(data?.cold_start_seconds);
+		if (waitLane.cold && stated > 0) waitLane.coldS = Math.round(stated);
+	} else if (data?.status === 'running') {
+		waitLane.cold = false;
+	}
+	return waitLane.backend !== before;
+}
 
 function startElapsed() {
-	const started = performance.now();
+	waitClock.start();
+	waitLane = { backend: selectedEngine.backend, cold: false, coldS: null, wasCold: false, bootS: 0 };
 	stopElapsed();
 	waitPhase = undefined;
 	laneTimings.load();
@@ -384,15 +408,21 @@ function startElapsed() {
 	}
 	setIndeterminate(true);
 	const tick = () => {
-		const s = Math.floor((performance.now() - started) / 1000);
+		const s = waitClock.totalS();
 		tabTitle.running(s);
-		// The range comes from what the lane actually did (measured p50 and p95);
-		// with no measurement it is the catalog estimate, worded as an estimate.
-		// Nothing here moves the bar: it only travels.
+		const lane = waitClock.laneS();
+		if (waitLane.cold) waitLane.wasCold = true;
+		else if (waitLane.wasCold && !waitLane.bootS && lane !== null) waitLane.bootS = lane;
+		// The range comes from what the serving lane actually did (measured p50 and
+		// p95); with no measurement it is the catalog estimate, worded as an
+		// estimate. Nothing here moves the bar: it only travels.
 		const wait = describeWait({
-			elapsedS: s,
-			timing: laneTimings.timing(selectedEngine.backend),
+			elapsedS: lane,
+			timing: laneTimings.timing(waitLane.backend),
 			catalogEtaS: currentEtaSeconds(),
+			cold: waitLane.cold,
+			coldAllowanceS: waitLane.cold ? waitLane.coldS : null,
+			bootS: waitLane.bootS,
 		});
 		if (els.genProgress) els.genProgress.dataset.over = String(wait.over);
 		const say = announceFor(wait.phase, waitPhase);
@@ -1640,6 +1670,9 @@ async function runPollLoop(jobId, runNow, hidden) {
 			e.kind = 'unconfigured';
 			throw e;
 		}
+		// The job row's age anchors the lane clock; a lane change is the one case
+		// where it may go back.
+		waitClock.anchor(data.elapsed_seconds, { laneChanged: noteWaitLane(data) });
 		if (data.status === 'done' && data.glb_url) return data;
 		if (data.status === 'failed') {
 			// The server names the configured lanes that can still serve a fresh
@@ -2396,6 +2429,10 @@ async function run(cfg, { handoff = false } = {}) {
 
 	try {
 		const job = await startJob(cfg);
+		// The job row exists from here: the lane clock starts now, and the first
+		// poll's job age corrects it.
+		waitClock.accepted();
+		noteWaitLane(job, { submit: true });
 		rememberFromResponse(job);
 		if (job.creation_id) currentCreationId = job.creation_id;
 
