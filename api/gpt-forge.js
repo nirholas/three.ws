@@ -207,6 +207,7 @@ import { decideStalledPoll } from './_lib/forge-job-deadline.js';
 import { directPrompt } from './_mcp-studio/gpt-forge-client.js';
 import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
 import { markSubmitStage, noteSubmitError } from './_lib/forge-events.js';
+import { forgeFailureBody } from './_lib/forge-public-error.js';
 import { observeForgeSubmit } from './_lib/forge-prejob.js';
 
 // Circuit-breaker key + window for the free NVIDIA NIM TRELLIS text→3D lane. The
@@ -1656,7 +1657,7 @@ async function startJob(req, res) {
 						available_usd: err.available_usd,
 						required_usd: err.required_usd,
 						top_up_url: '/credits',
-						message: err.message,
+						message: `Generating a High model costs ${Number(err.required_usd || 0).toFixed(2)} in credits, your balance is ${Number(err.available_usd || 0).toFixed(2)}. Top up to continue.`,
 					});
 				}
 				throw err;
@@ -2747,19 +2748,13 @@ async function startJob(req, res) {
 			}
 		}
 		if (err?.code === 'invalid_key') {
-			return json(res, 401, {
-				error: 'invalid_key',
-				message: err.message || 'The provider rejected this API key.',
-			});
+			return json(res, 401, forgeFailureBody('invalid_key', err, 'gpt-forge'));
 		}
 		if (err?.code === 'insufficient_credits' && BACKENDS[backendId]?.byok) {
 			// BYOK lane: the message names the CALLER'S own provider account, which
 			// they can act on: surface it. The platform's own paid lane falls through
 			// to the sanitized "temporarily unavailable" state below.
-			return json(res, 402, {
-				error: 'insufficient_credits',
-				message: err.message || 'The provider account is out of credits.',
-			});
+			return json(res, 402, forgeFailureBody('insufficient_credits', err, 'gpt-forge'));
 		}
 		// Last-resort free fallback: when the paid image-intermediate TRELLIS lane
 		// (Replicate) is throttled, over-quota, unreachable, OR out of credit, a text
@@ -2860,10 +2855,7 @@ async function startJob(req, res) {
 				retry_after: 60,
 			});
 		}
-		return json(res, 502, {
-			error: 'generation_failed',
-			message: err?.message || 'The generator could not start this job.',
-		});
+		return json(res, 502, forgeFailureBody('generation_failed', err, 'gpt-forge'));
 	} finally {
 		// A claimed pay-per-use payment that did NOT deliver a model, any non-2xx
 		// exit (validation 4xx, unconfigured 5xx, provider failure), is released so
@@ -2997,10 +2989,7 @@ async function startRigJob(req, res) {
 				retry_after: 10,
 			});
 		}
-		return json(res, 502, {
-			error: 'rig_failed',
-			message: err?.message || 'The rigger could not start this job.',
-		});
+		return json(res, 502, forgeFailureBody('rig_failed', err, 'gpt-forge'));
 	}
 }
 

@@ -304,6 +304,18 @@ enforces:
   reference: the server's `ref` correlation id when there is one, otherwise
   `code/status at HH:MM UTC`. Ask a person who reports a failure for that
   reference, then match it in the logs (`npm run logs`) or the ledger above.
+- **The server keeps provider text out of the body too.** When a provider
+  fails while starting a job, `api/forge.js` and `api/gpt-forge.js` answer
+  `invalid_key`, `insufficient_credits` (own key), `generation_failed` and
+  `rig_failed` through `forgeFailureBody()`
+  ([api/_lib/forge-public-error.js](../../api/_lib/forge-public-error.js)):
+  fixed copy plus a 12-character `ref`, with the raw provider error logged once
+  (credential shapes scrubbed) as `[forge] <code> ref=<ref>: <raw>`. A user's
+  quoted reference finds that line with a `textPayload:"ref=<ref>"` filter on
+  the `three-ws-api` service, using the log commands in
+  [production-log-triage.md](production-log-triage.md).
+  `tests/api/forge-public-error.test.js` fails if either handler relays
+  `err.message` for those codes again.
 - **The prompt and settings are always kept**, and every failure is announced
   through one visually hidden `role="alert"` region (`announceForgeError`),
   since the error panel is revealed by toggling a class.
