@@ -7,7 +7,7 @@ required; runs on CPU like the remesh worker. It:
   - applies the minima rule inside each shell (cut at concave creases) to find
     natural part seams (limb↔torso, handle↔body, …),
   - merges shards and caps the part count to a meaningful handful,
-  - tints each part a distinct colour, and
+  - keeps each part's texture (untextured meshes get a distinct tint), and
   - emits a GLB whose nodes are the parts (node name = part id) plus a parts
     manifest (id, name, region, bbox, centroid, face/vertex counts, colour).
 
@@ -26,7 +26,8 @@ API contract:
   GET /tasks/:id → {
     task_id, status,
     result_url?, manifest_url?,
-    parts?, part_count?, source_faces?, method?,
+    parts?, part_count?, source_faces?, method?, warnings?,
+    single_part?, note?,                     # single_part: nothing to split
     error?, error_kind?                      # error_kind: "input" | "internal"
   }
 
@@ -336,6 +337,8 @@ async def _process(
                 "source_faces": manifest["source_faces"],
                 "method": manifest["method"],
                 "warnings": manifest.get("warnings", []),
+                "single_part": bool(manifest.get("single_part", False)),
+                "note": manifest.get("note"),
                 "bytes": len(glb_bytes),
                 "elapsed_ms": int(elapsed * 1000),
                 "finished_at": time.time(),

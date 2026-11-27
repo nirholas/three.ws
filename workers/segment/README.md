@@ -26,10 +26,20 @@ convex decomposition here):
    neighbour, so the output is a handful of meaningful parts, not a thousand
    crease fragments.
 
-Each part is named by its spatial region (`top`, `lower-left`, `core`, …),
-tinted a distinct golden-ratio-stepped hue so segmentation is visible even on an
-untextured mesh, and emitted as a separate named GLB node (`part_01`, `part_02`,
-…). `only_part` exports a single part on its own.
+All topology runs on a copy of the mesh welded by position. A textured GLB
+splits every vertex on a UV seam, so without the weld each UV chart read as its
+own "shell" (a 25 710-face TRELLIS go-kart produced 1 056 of them). Parts are
+then cut from the original mesh, so every part keeps its UVs and material, and
+the part faces always add up to the source exactly once. Fragments below the
+floor fold into the nearest region, and the cap folds neighbours together, never
+into a catch-all lump.
+
+Each part is named by its spatial region (`top`, `lower-left`, `core`, …) and
+emitted as a separate named GLB node (`part_01`, `part_02`, …). An untextured
+mesh is tinted a distinct golden-ratio-stepped hue per part; a textured one
+keeps its look and carries the hue in the manifest only. A model with nothing to
+split returns one part with `single_part: true` and a plain-language `note`.
+`only_part` exports a single part on its own.
 
 Supported input formats: `.glb`, `.gltf`, `.obj`, `.stl`, `.ply`, `.off`,
 `.dae` (DAE through `pycollada`, which `trimesh[easy]` installs). Input is
@@ -103,6 +113,7 @@ implementation.
 | `worker_security.py` | Shared bearer-auth + SSRF-hardened fetch + opaque error helper. Byte-identical copy across all workers, so keep it in sync when editing. |
 | `gltf_meshopt.py` | Shared `EXT_meshopt_compression` decode (via the pinned `gltfpack` binary) applied to every fetched mesh. Byte-identical copy across the workers that load caller meshes; `npm run check:vendored` enforces that. |
 | `test_gltf_meshopt.py` | Tests for the decode, run as a Docker build gate alongside the core suite. |
+| `test_segment_parts_quality.py` | Part-quality tests on textured meshes round-tripped through a real GLB: UV seams are not part seams, every source face appears in exactly one part, each part keeps its texture, fragments fold into the part beside them, the cap never builds a catch-all lump, and `single_part` is reported. A Docker build gate. |
 | `test_segment_input.py` | Service-level input tests: the accepted formats, the FBX refusal (URL 422 and byte sniff), and the `error_kind` on failed tasks. No GCS, no network. A Docker build gate. |
 | `Dockerfile` | `python:3.11-slim` + native libs (`libgl1`, `libgomp1`, `libopenblas`) and the pinned `gltfpack`; runs the test gate, then serves via `uvicorn` on port 8080. No assimp: nothing in the worker loads it. |
 | `cloudbuild.yaml` | Cloud Build to Artifact Registry to Cloud Run deploy. |
@@ -295,7 +306,13 @@ is named after a fresh uuid, so replaying the write is safe.
 python3 workers/segment/test_segment_core.py
 python3 workers/segment/test_gltf_meshopt.py
 python3 workers/segment/test_segment_input.py
+python3 workers/segment/test_segment_parts_quality.py
 ```
+
+`test_segment_parts_quality.py` builds atlas-mapped boxes whose vertices are
+split at every UV seam (the layout a generator GLB has), round-trips them
+through a real GLB and the worker's own loader, and checks the part faces
+reproduce the source triangle for triangle with none missing or doubled.
 
 `test_segment_input.py` imports the FastAPI app (with throwaway `API_KEY` and
 `GCS_BUCKET` values it sets itself) and checks that every advertised input

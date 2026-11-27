@@ -28,9 +28,16 @@ any topology:
      largest neighbour — so the output is a handful of meaningful parts, not a
      thousand crease fragments.
 
+All topology runs on a copy welded by position, so the vertex splits a texture
+atlas puts on every UV seam never read as part seams. Parts are then cut from
+the original mesh, so each part keeps its UVs and material. Fragments fold
+into the nearest region, never into a catch-all lump.
+
 Parts are named by their spatial region (top / lower-left / core …) so the
-labels read meaningfully in the viewer, and each part is tinted a distinct hue
-so segmentation is visible even on an untextured mesh.
+labels read meaningfully in the viewer. An untextured mesh is tinted a
+distinct hue per part so the split is visible; a textured one keeps its look
+and carries the hue in the manifest only. A model with nothing to split is
+flagged `single_part` with a plain-language `note`.
 """
 
 from __future__ import annotations
@@ -123,6 +130,8 @@ class SegmentationResult:
     source_faces: int
     method: str
     warnings: list[str] = field(default_factory=list)
+    single_part: bool = False
+    note: Optional[str] = None
 
 
 # ── mesh loading / normalisation ──────────────────────────────────────────────
@@ -221,8 +230,21 @@ def _merge_small_and_cap(
     min_part_faces: int,
     max_parts: int,
     deadline: Optional[float] = None,
+    *,
+    island_floor: Optional[int] = None,
+    nearest=None,
+    stats: Optional[dict] = None,
 ) -> np.ndarray:
     """Merge sub-threshold parts into their largest neighbour, then cap count.
+
+    Islands (regions that share no edge with any other region, e.g. a loose
+    fragment or a separate shell) cannot have a "largest neighbour". When a
+    `nearest(root, alive_roots, sizes, find)` callback is supplied, an island
+    below `island_floor` faces is folded into the spatially nearest region, and
+    the cap pass folds islands the same way, so a capped run joins pieces that
+    sit side by side instead of piling unrelated ones together. Without the
+    callback the original policy holds (islands parked, then folded into the
+    largest region). `stats["cap_merges"]` counts merges the cap forced.
 
     Both passes preserve the same policy the segmenter has always applied:
     always dissolve the SMALLEST offending region first, always into its
@@ -343,6 +365,11 @@ def _merge_small_and_cap(
             break
         neighbours = live_neighbours(label)
         if not neighbours:
+            if nearest is not None and island_floor is not None and size < island_floor:
+                target = nearest(label, alive, sizes, find)
+                if target is not None:
+                    merge(label, target)
+                    continue
             park(entry)
             continue
         merge(label, largest(neighbours))
@@ -354,6 +381,7 @@ def _merge_small_and_cap(
     stuck.clear()
 
     # Pass 2: cap the part count, again smallest into largest neighbour.
+    cap_merges = 0
     while len(alive) > max_parts:
         _check_deadline(deadline, "part-count cap")
         entry = pop_smallest_live()
@@ -363,13 +391,19 @@ def _merge_small_and_cap(
         neighbours = live_neighbours(label)
         if neighbours:
             merge(label, largest(neighbours))
+            cap_merges += 1
             continue
-        # An island with no shared edge (faces meeting only at a vertex): fold
-        # it into the largest region overall so the cap still converges.
         others = alive - {label}
         if not others:
             break
-        merge(label, largest(others))
+        # An island with no shared edge: fold it into the region beside it
+        # when we can measure that, else the largest region overall, so the
+        # cap still converges.
+        target = nearest(label, alive, sizes, find) if nearest is not None else None
+        merge(label, target if target is not None else largest(others))
+        cap_merges += 1
+    if stats is not None:
+        stats["cap_merges"] = cap_merges
 
     roots = np.fromiter((find(i) for i in range(k)), dtype=np.int64, count=k)
     return roots[compact]
@@ -426,6 +460,93 @@ def _unique_names(regions: list[str]) -> list[str]:
     return out
 
 
+# A single part is an honest answer, not an error: say why in words the user
+# can act on.
+SINGLE_PART_NOTE = (
+    "This model is one continuous surface with no separate pieces and no deep "
+    "creases between regions, so there is nothing meaningful to split it into. "
+    "Try the Crease method with a finer angle, or keep it as one piece."
+)
+
+
+def _welded(mesh: "trimesh.Trimesh") -> "trimesh.Trimesh":
+    """A copy whose vertices are merged by POSITION ONLY, for topology.
+
+    A textured GLB duplicates every vertex on a UV chart border (and every
+    vertex with split normals), so in the mesh as loaded two faces on either
+    side of a seam share no vertex index and look disconnected. A TRELLIS go-kart
+    measured 1 056 "connected components" that way against 5 real shells. Parts
+    are found on this welded copy; the face order is unchanged, so its face
+    labels index the original textured mesh directly.
+    """
+    welded = trimesh.Trimesh(
+        vertices=np.asarray(mesh.vertices).copy(),
+        faces=np.asarray(mesh.faces).copy(),
+        process=False,
+    )
+    welded.merge_vertices(merge_tex=True, merge_norm=True)
+    return welded
+
+
+def _nearest_region_fn(welded: "trimesh.Trimesh", compact: np.ndarray, k: int):
+    """Build the merge pass's `nearest` callback over face centres.
+
+    Returns the live region closest to `root` (by face-centre distance). Among
+    regions that are equally near, the smaller one wins (then the lower label),
+    so a capped run pairs neighbours evenly instead of growing one long chain.
+    """
+    from scipy.spatial import cKDTree
+
+    centers = np.asarray(welded.triangles_center)
+    n_faces = len(centers)
+    tree = cKDTree(centers)
+    order = np.argsort(compact, kind="stable")
+    bounds = np.searchsorted(compact[order], np.arange(k + 1))
+    faces_of = [order[bounds[i]: bounds[i + 1]] for i in range(k)]
+    scale = float(np.linalg.norm(welded.bounds[1] - welded.bounds[0])) or 1.0
+
+    def nearest(root, alive, sizes, find):
+        roots = np.fromiter((find(i) for i in range(k)), dtype=np.int64, count=k)
+        members = np.nonzero(roots == root)[0]
+        face_idx = np.concatenate([faces_of[m] for m in members])
+        if len(face_idx) > 512:
+            face_idx = face_idx[np.linspace(0, len(face_idx) - 1, 512).astype(np.int64)]
+        pts = centers[face_idx]
+        kq = 8
+        while True:
+            kk = min(kq, n_faces)
+            dist, idx = tree.query(pts, k=kk)
+            dist = np.asarray(dist).reshape(-1)
+            idx = np.asarray(idx).reshape(-1)
+            owners = roots[compact[idx]]
+            mask = owners != root
+            if mask.any():
+                d = dist[mask]
+                o = owners[mask]
+                dmin = float(d.min())
+                near = np.unique(o[d <= dmin + 1e-6 * scale])
+                return int(min(near, key=lambda c: (int(sizes[c]), int(c))))
+            if kk >= n_faces:
+                return None
+            if kq >= 2048:
+                # Far from everything: compare region centres instead of
+                # widening the neighbour search further.
+                here = pts.mean(axis=0)
+                best = None
+                for other in alive:
+                    if other == root:
+                        continue
+                    sel = np.concatenate([faces_of[m] for m in np.nonzero(roots == other)[0]])
+                    dd = float(np.linalg.norm(centers[sel].mean(axis=0) - here))
+                    key = (dd, int(sizes[other]), int(other))
+                    if best is None or key < best[0]:
+                        best = (key, int(other))
+                return None if best is None else best[1]
+            kq *= 4
+
+    return nearest
+
+
 def segment(
     mesh: "trimesh.Trimesh",
     *,
@@ -443,71 +564,85 @@ def segment(
       - "auto":      connected components, then crease-split any component large
                      enough to plausibly contain multiple parts. Best default.
 
-    `time_budget_s` bounds the whole run; exceeding it raises `SegmentTimeout`.
+    Guarantees: the parts partition the input (every face lands in exactly one
+    part, none invented), each part keeps the source's texture and material,
+    loose fragments are folded into the part beside them, and the count never
+    exceeds `max_parts`. `time_budget_s` bounds the whole run; exceeding it
+    raises `SegmentTimeout`.
     """
     source_faces = int(len(mesh.faces))
     warnings: list[str] = []
     crease_rad = math.radians(max(5.0, min(170.0, crease_angle_deg)))
     deadline = None if time_budget_s is None else time.monotonic() + time_budget_s
 
-    # Step 1 — connected components are always honoured; they are unambiguous parts.
-    # repair=False matters: trimesh's default patches holes in each component as
-    # it splits, so the parts stop being a partition of the input. A real forge
-    # model measured 17031 faces in and 17050 across its parts, which makes the
-    # manifest disagree with itself. Segmentation divides geometry; it never
-    # invents any.
-    components = mesh.split(only_watertight=False, repair=False)
-    if len(components) == 0:
-        components = [mesh]
+    welded = _welded(mesh)
+    _check_deadline(deadline, "welding")
 
-    region_meshes: list["trimesh.Trimesh"] = []
+    # Step 1: connected components of the welded surface are always honoured;
+    # they are unambiguous parts (wheels, eyes, a loose prop).
+    comp = trimesh.graph.connected_component_labels(
+        welded.face_adjacency, node_count=source_faces
+    ).astype(np.int64)
 
-    for comp in components:
-        _check_deadline(deadline, "component split")
-        if method == "connected":
-            region_meshes.append(comp)
-            continue
+    if method == "connected":
+        labels = comp
+    else:
+        # Step 2: the minima rule. Crease regions never cross a component
+        # boundary (no shared edge), so they refine the component labels.
+        crease = _crease_labels(welded, crease_rad).astype(np.int64)
+        _check_deadline(deadline, "crease labelling")
+        if method == "auto":
+            # Small shells are obviously one part already: keep them whole.
+            sizes = np.bincount(comp)
+            small = sizes[comp] < max(min_part_faces * 2, 200)
+            crease = np.where(small, -1 - comp, crease)
+        _, labels = np.unique(np.stack([comp, crease], axis=1), axis=0, return_inverse=True)
+        labels = labels.reshape(-1).astype(np.int64)
 
-        # crease / auto: grow regions inside this component.
-        # In auto mode, skip the (expensive, pointless) crease pass on tiny
-        # components that are obviously a single part already.
-        if method == "auto" and len(comp.faces) < max(min_part_faces * 2, 200):
-            region_meshes.append(comp)
-            continue
+    _, compact = np.unique(labels, return_inverse=True)
+    compact = compact.reshape(-1).astype(np.int64)
+    k = int(compact.max()) + 1 if len(compact) else 0
 
-        labels = _crease_labels(comp, crease_rad)
-        labels = _merge_small_and_cap(
-            comp, labels, min_part_faces, max_parts, deadline=deadline
+    # Step 3: cleanup. Crease shards fold into their largest neighbour; loose
+    # fragments (below a floor scaled to the mesh, so a low-poly model keeps its
+    # small but real pieces) fold into the region beside them; then the cap.
+    island_floor = min(min_part_faces, max(8, int(math.ceil(0.002 * source_faces))))
+    stats: dict = {}
+    if k > 1:
+        compact = _merge_small_and_cap(
+            welded,
+            compact,
+            min_part_faces,
+            max_parts,
+            deadline=deadline,
+            island_floor=island_floor,
+            nearest=_nearest_region_fn(welded, compact, k),
+            stats=stats,
         )
-        for lbl in np.unique(labels):
-            face_idx = np.where(labels == lbl)[0]
-            sub = comp.submesh([face_idx], append=True, repair=False)
-            if isinstance(sub, list):
-                sub = sub[0] if sub else None
-            if sub is not None and len(sub.faces) > 0:
-                region_meshes.append(sub)
-
-    # Global cap across all components combined.
-    if len(region_meshes) > max_parts:
-        region_meshes.sort(key=lambda m: len(m.faces), reverse=True)
-        head = region_meshes[: max_parts - 1]
-        tail = region_meshes[max_parts - 1:]
-        merged = trimesh.util.concatenate(tail)
-        region_meshes = head + [merged]
+    if stats.get("cap_merges"):
         warnings.append(
-            f"capped to {max_parts} parts; {len(tail)} smaller fragments were combined"
+            f"capped to {max_parts} parts; {stats['cap_merges']} smaller pieces were "
+            "merged into the part beside them"
         )
+
+    textured = bool(getattr(mesh.visual, "defined", False))
+    region_meshes: list["trimesh.Trimesh"] = []
+    for lbl in np.unique(compact):
+        _check_deadline(deadline, "part extraction")
+        face_idx = np.nonzero(compact == lbl)[0]
+        # Cut from the ORIGINAL mesh so each part keeps its UVs and material.
+        sub = mesh.submesh([face_idx], append=True, repair=False)
+        if isinstance(sub, list):
+            sub = sub[0] if sub else None
+        if sub is not None and len(sub.faces) > 0:
+            region_meshes.append(sub)
 
     if not region_meshes:
         region_meshes = [mesh]
 
-    # Order parts top→bottom, then larger→smaller, so the list reads naturally.
+    # Order parts top to bottom, then larger to smaller, so the list reads naturally.
     overall_bounds = mesh.bounds
-
-    def sort_key(m: "trimesh.Trimesh"):
-        return (-(m.centroid[1]), -len(m.faces))
-
-    region_meshes.sort(key=sort_key)
+    region_meshes.sort(key=lambda m: (-(m.centroid[1]), -len(m.faces)))
 
     regions = [_region_name(m.centroid, overall_bounds) for m in region_meshes]
     names = _unique_names(regions)
@@ -515,15 +650,22 @@ def segment(
 
     parts: list[Part] = []
     for i, (m, name, region, color) in enumerate(zip(region_meshes, names, regions, colors)):
-        # Tint each part so segmentation is visible without textures, and so a
-        # downstream viewer/exporter has a stable per-part colour to fall back on.
-        m.visual = trimesh.visual.ColorVisuals(
-            mesh=m, face_colors=np.tile([*color, 255], (len(m.faces), 1))
-        )
+        if not textured:
+            # An untextured mesh is tinted so the split is visible; a textured
+            # one keeps its look and carries the tint in the manifest only.
+            m.visual = trimesh.visual.ColorVisuals(
+                mesh=m, face_colors=np.tile([*color, 255], (len(m.faces), 1))
+            )
         parts.append(Part(index=i + 1, name=name, mesh=m, color=color, region=region))
 
+    single = len(parts) == 1
     return SegmentationResult(
-        parts=parts, source_faces=source_faces, method=method, warnings=warnings
+        parts=parts,
+        source_faces=source_faces,
+        method=method,
+        warnings=warnings,
+        single_part=single,
+        note=SINGLE_PART_NOTE if single else None,
     )
 
 
@@ -544,4 +686,6 @@ def manifest(result: SegmentationResult) -> dict:
         "part_count": len(result.parts),
         "parts": [p.manifest() for p in result.parts],
         "warnings": result.warnings,
+        "single_part": result.single_part,
+        "note": result.note,
     }
