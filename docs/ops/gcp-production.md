@@ -1045,9 +1045,17 @@ Tencent-model lanes (`hunyuan3d`, `huggingface`, `modly_hunyuan`). The composer
 disables them via `GET /api/forge?territory` and hops a stale pick to an
 allowed engine, but they stay unusable for everyone until the header is set.
 Verify after the change: `curl https://three.ws/api/forge?territory=1` from a
-non-restricted country returns `"country_resolved":true`. Note the LB does not strip an inbound copy of these
-headers, so a client can forge one; `clientCountry` validates every value down
-to two ASCII letters so the worst case is a visitor mislabeling its own row.
+non-restricted country returns `"country_resolved":true`. The Forge gate trusts
+only these two load balancer headers (`x-client-geo-location`,
+`x-client-region`) and ignores `cf-ipcountry` and `x-vercel-ip-country`, which
+nothing on Cloud Run sets and any client can forge. The same must hold for the
+two it does trust: after setting the header, prove a client cannot override it
+with `curl -H 'X-Client-Region: US' https://three.ws/api/forge?territory=1` from
+an excluded country, which must still answer `"country_resolved":true` with the
+Tencent lanes restricted. If an inbound copy survives, the Forge gate would be
+forgeable and the header must be fixed before relying on it. For analytics
+alone `clientCountry` validates every value down to two ASCII letters, so the
+worst case there is a visitor mislabeling its own row.
 
 ---
 
