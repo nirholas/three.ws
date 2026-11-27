@@ -5,7 +5,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 	<title>three.ws Forge for desktop · Image to 3D on your own GPU · three.ws</title>
-	<meta name="description" content="Download three.ws Forge, the desktop 3D studio for Windows, Linux and Apple silicon Macs. Turn images into 3D models with open-source generators on your own GPU or the three.ws cloud, chain mesh tools in node workflows, import free CC0 models and publish to your three.ws account." />
+	<meta name="description" content="Download three.ws Forge, the desktop 3D studio, for Windows and Linux, or run it from source on an Apple silicon Mac. Turn images into 3D models with open-source generators on your own GPU or the three.ws cloud, chain mesh tools in node workflows, import free CC0 models and publish to your three.ws account." />
 	<link rel="canonical" href="https://three.ws/forge-desktop" />
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="three.ws Forge for desktop" />
@@ -30,7 +30,7 @@
 	<link rel="stylesheet" href="/mobile.css" />
 	<link rel="stylesheet" href="/footer.css" />
 	<link rel="stylesheet" href="/src/forge-desktop.css" />
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"three.ws Forge","applicationCategory":"DesignApplication","operatingSystem":"Windows 10+, macOS 12+ (Apple silicon), Linux","description":"Desktop 3D studio: image to 3D on your own GPU or the three.ws cloud, node-based mesh workflows, a CC0 object library and publishing to three.ws.","url":"https://three.ws/forge-desktop","license":"https://opensource.org/licenses/MIT","isBasedOn":"https://github.com/lightningpixel/modly","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"three.ws Forge","applicationCategory":"DesignApplication","operatingSystem":"Windows 10+, Linux","description":"Desktop 3D studio: image to 3D on your own GPU or the three.ws cloud, node-based mesh workflows, a CC0 object library and publishing to three.ws.","url":"https://three.ws/forge-desktop","license":"https://opensource.org/licenses/MIT","isBasedOn":"https://github.com/lightningpixel/modly","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}]}</script>
 </head>
 <body class="fd-body">
 	<header class="site-header"><div id="nav-container"></div></header>
@@ -99,6 +99,7 @@
 				<h2 id="fdDlTitle" class="fd-h2">All downloads</h2>
 				<p id="fdDlMeta" class="fd-muted"></p>
 			</div>
+			<p id="fdSigning" class="fd-signing"></p>
 			<div class="fd-table-wrap">
 				<table class="fd-table">
 					<thead><tr><th scope="col">Platform</th><th scope="col">File</th><th scope="col">Size</th><th scope="col">SHA-256</th></tr></thead>
@@ -131,11 +132,12 @@ npm run dev</code></pre>
 		<section class="fd-section" aria-labelledby="fdReqTitle">
 			<h2 id="fdReqTitle" class="fd-h2">System requirements</h2>
 			<dl class="fd-reqs">
-				<div><dt>Windows</dt><dd>Windows 10 or 11, 64-bit</dd></div>
-				<div><dt>macOS</dt><dd>macOS 12 Monterey or later on Apple silicon (M1 and newer)</dd></div>
-				<div><dt>Linux</dt><dd>64-bit Ubuntu 20.04+, Debian 11+, Fedora 39+ or another current glibc distribution</dd></div>
-				<div><dt>Local generation</dt><dd>An NVIDIA GPU (CUDA), an AMD Radeon GPU (ROCm, on Windows and Linux) or Apple silicon. Each model in the Extensions tab lists its VRAM needs.</dd></div>
-				<div><dt>Cloud generation</dt><dd>Any of the above, no GPU needed. Uses your three.ws plan.</dd></div>
+				<div><dt>Windows</dt><dd>Windows 10 or 11, 64-bit (x64). Installer or portable build.</dd></div>
+				<div><dt>Linux</dt><dd>64-bit (x64) Ubuntu 20.04+, Debian 11+, Fedora 39+ or another current glibc distribution. AppImage or .deb.</dd></div>
+				<div><dt>macOS</dt><dd id="fdReqMac">No macOS build is published yet. On an Apple silicon Mac (M1 or later) with macOS 12 Monterey or later, run Forge from source.</dd></div>
+				<div><dt>Disk</dt><dd>About 1 GB for the app and its core Python environment. Each local generator adds its own PyTorch install and model weights, several GB per model, so leave 20 GB or more free to generate locally.</dd></div>
+				<div><dt>Local generation</dt><dd>An NVIDIA GPU (CUDA), an AMD Radeon GPU (ROCm, on Windows and Linux), or Apple silicon when running from source. Graphics memory sets which models run: Hunyuan3D-2 needs about 6 GB for shape alone and 16 GB with texture, TripoSG at least 8 GB, and TRELLIS at least 16 GB on an NVIDIA card. Figures are from each model's own documentation.</dd></div>
+				<div><dt>Cloud generation</dt><dd>No GPU needed. Generation runs on three.ws servers and uses your three.ws plan.</dd></div>
 			</dl>
 		</section>
 

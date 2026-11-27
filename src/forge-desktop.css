@@ -193,9 +193,9 @@ html[data-theme='light'] .fd-body {
 
 .fd-alert {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--space-md);
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--space-2xs);
 	padding: var(--space-sm) var(--space-md);
 	border: 1px solid color-mix(in srgb, var(--fd-danger) 35%, transparent);
 	border-radius: var(--radius-md);
@@ -205,6 +205,20 @@ html[data-theme='light'] .fd-body {
 
 .fd-alert p {
 	margin: 0;
+}
+
+.fd-alert__title {
+	font-weight: var(--weight-semibold);
+}
+
+.fd-alert .fd-get__actions {
+	margin-top: var(--space-xs);
+}
+
+.fd-follow {
+	margin: var(--space-xs) 0 0;
+	font-size: var(--text-sm);
+	color: var(--ink-dim);
 }
 
 .fd-pill {
@@ -490,26 +504,64 @@ html[data-theme='light'] .fd-body {
 }
 
 .fd-hash {
-	padding: 2px 8px;
-	border: 1px solid var(--stroke);
-	border-radius: var(--radius-sm);
-	background: transparent;
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-xs);
+	min-width: 0;
+}
+
+/* The full digest, wrapped, so it can be compared by eye with sha256sum. */
+.fd-hash__value {
+	flex: 1 1 auto;
+	min-width: 17ch;
+	max-width: 34ch;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	font-size: var(--text-xs);
+	line-height: 1.5;
 	color: var(--ink-dim);
-	cursor: copy;
-	transition:
-		color var(--duration-fast) var(--ease-standard),
-		border-color var(--duration-fast) var(--ease-standard),
-		background-color var(--duration-fast) var(--ease-standard);
+	user-select: all;
 }
 
-.fd-hash:hover {
+.fd-hash__copy {
+	flex: none;
+	min-height: 26px;
+}
+
+.fd-table td:last-child {
+	white-space: normal;
+}
+
+.fd-file {
+	display: block;
+	margin-top: 2px;
+}
+
+.fd-pill--ok {
+	margin: 0 0 0 var(--space-xs);
+	background: color-mix(in srgb, var(--success, #34d399) 14%, transparent);
+	color: var(--success, #34d399);
+}
+
+.fd-signing {
+	margin: 0 0 var(--space-sm);
+	padding: var(--space-xs) var(--space-md);
+	border-left: 3px solid var(--fd-warn);
+	border-radius: var(--radius-sm);
+	background: color-mix(in srgb, var(--fd-warn) 8%, transparent);
+	font-size: var(--text-sm);
+	line-height: 1.6;
 	color: var(--ink);
-	border-color: var(--stroke-strong);
-	background: var(--surface-2);
+	max-width: 80ch;
 }
 
-.fd-hash:active {
-	transform: translateY(1px);
+.fd-signing:empty {
+	display: none;
+}
+
+.fd-signing[data-state='all'] {
+	border-left-color: var(--success, #34d399);
+	background: color-mix(in srgb, var(--success, #34d399) 8%, transparent);
 }
 
 .fd-notes {
@@ -722,9 +774,41 @@ html[data-theme='light'] .fd-body {
 		margin: 0 var(--space-sm) var(--space-sm) 0;
 	}
 
-	.fd-table th,
+	/* A four-column table with a 64-character digest does not fit a phone:
+	   each download becomes a card, the digest wrapping across its full width. */
+	.fd-table thead {
+		display: none;
+	}
+
+	.fd-table,
+	.fd-table tbody,
+	.fd-table tr,
 	.fd-table td {
-		padding: var(--space-xs) var(--space-sm);
+		display: block;
+	}
+
+	.fd-table tbody tr {
+		padding: var(--space-sm);
+		border-bottom: 1px solid var(--stroke);
+	}
+
+	.fd-table tbody tr:last-child {
+		border-bottom: 0;
+	}
+
+	.fd-table td {
+		padding: 2px 0;
+		border-bottom: 0;
+		white-space: normal;
+	}
+
+	.fd-table td.fd-num {
+		color: var(--ink-dim);
+		font-size: var(--text-sm);
+	}
+
+	.fd-hash__value {
+		max-width: none;
 	}
 }
 

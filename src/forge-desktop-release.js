@@ -71,3 +71,92 @@ export function isUsableRelease(release) {
 			/^[0-9a-f]{64}$/i.test(f.sha256),
 	);
 }
+
+const PLATFORM_ORDER = ['win', 'mac', 'linux'];
+
+/** "Windows", "Windows and Linux", "Windows, macOS and Linux". */
+function listLabels(platforms) {
+	const labels = platforms.map((p) => PLATFORM_LABEL[p]);
+	if (labels.length <= 1) return labels.join('');
+	return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+}
+
+/**
+ * Fetch and classify release.json. Never throws.
+ *  - { status: 'ok', release }   a usable release
+ *  - { status: 'unpublished' }   no release yet: a 404, the SPA's HTML fallback,
+ *                                or a feed with nothing the page can render
+ *  - { status: 'error', message } the source could not be read; message is
+ *                                written for the visitor
+ */
+export async function readReleaseFeed(fetchImpl = globalThis.fetch, url = '/releases/forge/release.json') {
+	let res;
+	try {
+		res = await fetchImpl(url, { headers: { accept: 'application/json' }, cache: 'no-cache' });
+	} catch {
+		return { status: 'error', message: 'Could not reach three.ws. Check your connection and try again.' };
+	}
+	if (res.status === 404) return { status: 'unpublished' };
+	if (!res.ok) {
+		return { status: 'error', message: `The release feed answered ${res.status}. Try again in a minute.` };
+	}
+	const type = res.headers.get('content-type') || '';
+	if (!/json/i.test(type)) return { status: 'unpublished' };
+	let release;
+	try {
+		release = await res.json();
+	} catch {
+		return { status: 'error', message: 'The release feed could not be read. Try again in a minute.' };
+	}
+	return isUsableRelease(release) ? { status: 'ok', release } : { status: 'unpublished' };
+}
+
+/**
+ * What the download hero offers this visitor.
+ *  primary            the file for the big button, or null
+ *  missingForVisitor  true when the visitor's desktop OS has no build in this release
+ *  available          platforms with at least one file, in a stable order
+ *  note               one honest sentence under the button
+ */
+export function planDownloads(release, platform) {
+	const files = Array.isArray(release?.files) ? release.files : [];
+	const available = PLATFORM_ORDER.filter((p) => files.some((f) => f.platform === p));
+	const primary = pickPrimary(files, platform);
+	const desktop = platform === 'mac' || platform === 'win' || platform === 'linux';
+	const missingForVisitor = desktop && !primary;
+	const others = listLabels(available);
+	let note;
+	if (primary && platform === 'mac') {
+		note = 'For Apple silicon Macs (M1 or later).';
+	} else if (primary) {
+		note = available.length > 1 ? `Also available for ${listLabels(available.filter((p) => p !== platform))}.` : '';
+	} else if (missingForVisitor) {
+		note = `There is no ${PLATFORM_LABEL[platform]} build in this release yet. Builds are available for ${others}, or you can run Forge from source.`;
+	} else {
+		note = `Forge is a desktop app. Builds are available for ${others} computers.`;
+	}
+	return { primary, missingForVisitor, available, note };
+}
+
+/**
+ * One line on code signing across the release, so the page never implies a
+ * signature the files do not carry.
+ */
+export function signingSummary(files) {
+	const list = Array.isArray(files) ? files : [];
+	const platforms = PLATFORM_ORDER.filter((p) => list.some((f) => f.platform === p));
+	const unsigned = platforms.filter((p) => list.some((f) => f.platform === p && !f.signed));
+	if (unsigned.length === 0) {
+		return { state: 'all', text: 'Every build in this release is code-signed.' };
+	}
+	if (unsigned.length === platforms.length) {
+		return {
+			state: 'none',
+			text: 'These builds are not code-signed yet, so your system will warn you the first time you open one. Check the SHA-256 below before you run it.',
+		};
+	}
+	return {
+		state: 'mixed',
+		text: `The ${listLabels(unsigned)} builds are not code-signed yet, so your system will warn you the first time you open one. Check the SHA-256 below before you run it.`,
+	};
+}

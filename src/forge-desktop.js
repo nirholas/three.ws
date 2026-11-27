@@ -1,10 +1,12 @@
 // /forge-desktop: the three.ws Forge download page. Reads the release feed the
 // Forge release pipeline publishes (apps/forge-desktop/cloudbuild.yaml and
 // scripts/release-mac.sh) and offers the build for the visitor's OS, every
-// other build with its size and SHA-256, and the release notes. Until the first
-// release is published the feed 404s and the page leads with running from source.
+// other build with its size, full SHA-256 and signing state, and the release
+// notes. A platform the release has no build for is said plainly, with running
+// from source as the way in. Until a release is published the feed 404s and
+// the page leads with running from source.
 
-import { pickPrimary, detectPlatform, formatBytes, isUsableRelease, PLATFORM_LABEL } from './forge-desktop-release.js';
+import { detectPlatform, formatBytes, pickPrimary, planDownloads, readReleaseFeed, signingSummary, PLATFORM_LABEL } from './forge-desktop-release.js';
 
 const FEED_URL = '/releases/forge/release.json';
 
@@ -69,25 +71,15 @@ async function copyText(text, label = 'Copied') {
 
 // ── Release feed ────────────────────────────────────────────────────────────
 
-/** @returns {Promise<{ status: 'ok', release: object } | { status: 'unpublished' } | { status: 'error', message: string }>} */
-async function loadRelease() {
-	let res;
-	try {
-		res = await fetch(FEED_URL, { headers: { accept: 'application/json' }, cache: 'no-cache' });
-	} catch {
-		return { status: 'error', message: 'Could not reach three.ws. Check your connection and try again.' };
-	}
-	if (res.status === 404) return { status: 'unpublished' };
-	if (!res.ok) return { status: 'error', message: `The release feed answered ${res.status}. Try again in a moment.` };
-	const type = res.headers.get('content-type') || '';
-	if (!type.includes('json')) return { status: 'unpublished' };
-	try {
-		const release = await res.json();
-		if (!isUsableRelease(release)) return { status: 'unpublished' };
-		return { status: 'ok', release };
-	} catch {
-		return { status: 'error', message: 'The release feed was not valid JSON. Try again in a moment.' };
-	}
+/** Where new builds are announced: every release gets a changelog entry. */
+function followLine() {
+	return el('p', { class: 'fd-follow' }, [
+		'New builds are announced on the ',
+		el('a', { href: '/changelog', text: 'changelog' }),
+		' and its ',
+		el('a', { href: '/changelog.xml', type: 'application/rss+xml', text: 'RSS feed' }),
+		'.',
+	]);
 }
 
 function renderLoading(root) {
@@ -101,8 +93,13 @@ function renderError(root, message) {
 	root.dataset.state = 'error';
 	const retry = el('button', { type: 'button', class: 'fd-btn', text: 'Try again' });
 	retry.addEventListener('click', () => void init());
+	const src = el('a', { class: 'fd-btn', href: '#fd-source', text: 'Run it from source' });
 	root.replaceChildren(
-		el('div', { class: 'fd-alert', role: 'alert' }, [el('p', { text: message }), retry]),
+		el('div', { class: 'fd-alert', role: 'alert' }, [
+			el('p', { class: 'fd-alert__title', text: 'The download list did not load.' }),
+			el('p', { text: message }),
+			el('div', { class: 'fd-get__actions' }, [retry, src]),
+		]),
 	);
 }
 
@@ -119,32 +116,50 @@ function renderUnpublished(root) {
 	root.replaceChildren(
 		el('div', { class: 'fd-get__actions' }, [src, repo]),
 		el('p', { class: 'fd-get__hint' }, [
-			el('span', { class: 'fd-pill', text: 'Installers coming soon' }),
-			' Signed installers for Windows, macOS and Linux will be listed here when the first release ships. Until then, Forge runs from source in five commands.',
+			el('span', { class: 'fd-pill', text: 'Not released yet' }),
+			' No installer has been published yet. Forge runs from source today, in five commands.',
 		]),
+		followLine(),
 	);
+}
+
+function downloadButton(file, { big = false } = {}) {
+	return el('a', { class: `fd-btn${big ? ' fd-btn--primary fd-btn--lg' : ''}`, href: file.url, download: file.name }, [
+		el('span', { text: `Download for ${PLATFORM_LABEL[file.platform]}` }),
+		el('span', { class: 'fd-btn__meta', text: `${file.label}, ${formatBytes(file.size)}` }),
+	]);
 }
 
 function renderReady(root, release) {
 	root.dataset.state = 'ready';
 	const platform = detectPlatform(navigator);
-	const primary = pickPrimary(release.files, platform);
+	const plan = planDownloads(release, platform);
 	const actions = el('div', { class: 'fd-get__actions' });
 
-	if (primary) {
-		actions.append(
-			el('a', { class: 'fd-btn fd-btn--primary fd-btn--lg', href: primary.url, download: primary.name }, [
-				el('span', { text: `Download for ${PLATFORM_LABEL[primary.platform]}` }),
-				el('span', { class: 'fd-btn__meta', text: `${primary.label}, ${formatBytes(primary.size)}` }),
-			]),
-		);
+	if (plan.primary) {
+		actions.append(downloadButton(plan.primary, { big: true }));
+		actions.append(el('a', { class: 'fd-btn', href: '#fd-downloads', text: 'All downloads' }));
+	} else if (plan.missingForVisitor) {
+		root.dataset.state = 'missing';
+		actions.append(el('a', { class: 'fd-btn fd-btn--primary fd-btn--lg', href: '#fd-source', text: `Run it from source on ${PLATFORM_LABEL[platform]}` }));
+		for (const p of plan.available) actions.append(downloadButton(pickPrimary(release.files, p)));
+	} else {
+		actions.append(el('a', { class: 'fd-btn fd-btn--primary', href: '#fd-downloads', text: 'See the downloads' }));
 	}
-	actions.append(el('a', { class: 'fd-btn', href: '#fd-downloads', text: primary ? 'Other platforms' : 'Choose a download' }));
 
-	const hint = el('p', { class: 'fd-get__hint' }, [`Version ${release.version}`, release.date ? `, released ${formatDate(release.date)}` : '', '.']);
-	if (platform === 'mac') hint.append(' Apple silicon Macs only.');
-	if (!primary && platform === 'other') hint.append(' Forge runs on Windows, macOS and Linux computers.');
-	root.replaceChildren(actions, hint);
+	const hint = el('p', { class: 'fd-get__hint' }, [`Version ${release.version}`, release.date ? `, released ${formatDate(release.date)}` : '', '. ', plan.note]);
+	const signing = signingSummary(release.files);
+	if (signing.state !== 'all') {
+		const how = el('a', { href: '#fdUnsigned', text: 'How to open an unsigned build' });
+		how.addEventListener('click', () => {
+			$('#fdUnsigned').open = true;
+		});
+		hint.append(' ', el('span', { class: 'fd-pill fd-pill--warn', text: 'Not code-signed' }), ' ', how, '.');
+	}
+	root.replaceChildren(actions, hint, followLine());
+	if (plan.available.includes('mac')) {
+		$('#fdReqMac').textContent = 'macOS 12 Monterey or later on an Apple silicon Mac (M1 or later).';
+	}
 	renderDownloads(release);
 }
 
@@ -159,10 +174,9 @@ function renderDownloads(release) {
 	const rows = $('#fdDlRows');
 	rows.replaceChildren();
 	for (const f of release.files) {
-		const hash = el('button', { type: 'button', class: 'fd-hash', title: 'Copy the full SHA-256', 'aria-label': `Copy the SHA-256 of ${f.name}` }, [
-			el('code', { text: `${f.sha256.slice(0, 12)}…` }),
-		]);
-		hash.addEventListener('click', () => void copyText(f.sha256, 'SHA-256 copied'));
+		const copy = el('button', { type: 'button', class: 'fd-btn fd-btn--sm fd-hash__copy', 'aria-label': `Copy the SHA-256 of ${f.name}`, text: 'Copy' });
+		copy.addEventListener('click', () => void copyText(f.sha256, 'SHA-256 copied'));
+		const hash = el('div', { class: 'fd-hash' }, [el('code', { class: 'fd-hash__value', text: f.sha256.toLowerCase() }), copy]);
 		rows.append(
 			el('tr', {}, [
 				el('td', {}, [
@@ -171,7 +185,8 @@ function renderDownloads(release) {
 				]),
 				el('td', {}, [
 					el('a', { href: f.url, download: f.name, text: f.label }),
-					f.signed ? null : el('span', { class: 'fd-pill fd-pill--warn', text: 'unsigned' }),
+					el('span', { class: `fd-pill${f.signed ? ' fd-pill--ok' : ' fd-pill--warn'}`, text: f.signed ? 'signed' : 'unsigned' }),
+					el('span', { class: 'fd-muted fd-small fd-file', text: f.name }),
 				]),
 				el('td', { class: 'fd-num', text: formatBytes(f.size) }),
 				el('td', {}, [hash]),
@@ -179,6 +194,10 @@ function renderDownloads(release) {
 		);
 	}
 	$('#fdDlMeta').textContent = `three.ws Forge ${release.version}${release.date ? `, ${formatDate(release.date)}` : ''}`;
+	const signing = signingSummary(release.files);
+	const signingEl = $('#fdSigning');
+	signingEl.textContent = signing.text;
+	signingEl.dataset.state = signing.state;
 
 	const notes = $('#fdNotes');
 	notes.replaceChildren();
@@ -210,7 +229,8 @@ function renderUnsignedHelp(files) {
 	if (unsigned.has('linux')) {
 		body.append(
 			el('h3', { class: 'fd-h3', text: 'Linux' }),
-			el('p', { text: 'Make the AppImage executable with chmod +x and run it, or install the .deb with sudo apt install ./<file>.deb. Check the download first with sha256sum.' }),
+			el('p', { text: 'Check the download first with sha256sum <file> and compare it with the SHA-256 on this page. Then make the AppImage executable with chmod +x and run it, or install the .deb with sudo apt install ./<file>.deb.' }),
+			el('p', { text: 'If the AppImage does not start on Ubuntu 22.04 or later, install FUSE 2 first: sudo apt install libfuse2 (libfuse2t64 on Ubuntu 24.04), or use the .deb instead.' }),
 		);
 	}
 	details.hidden = unsigned.size === 0;
@@ -275,7 +295,7 @@ function initCopy() {
 async function init() {
 	const root = $('#fdGet');
 	renderLoading(root);
-	const result = await loadRelease();
+	const result = await readReleaseFeed(fetch, FEED_URL);
 	if (result.status === 'ok') renderReady(root, result.release);
 	else if (result.status === 'unpublished') renderUnpublished(root);
 	else renderError(root, result.message);

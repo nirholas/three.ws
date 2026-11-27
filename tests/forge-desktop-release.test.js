@@ -1,5 +1,13 @@
-import { describe, expect, it } from 'vitest';
-import { detectPlatform, formatBytes, isUsableRelease, pickPrimary } from '../src/forge-desktop-release.js';
+import { describe, expect, it, vi } from 'vitest';
+import {
+	detectPlatform,
+	formatBytes,
+	isUsableRelease,
+	pickPrimary,
+	planDownloads,
+	readReleaseFeed,
+	signingSummary,
+} from '../src/forge-desktop-release.js';
 
 const SHA = 'a'.repeat(64);
 const file = (platform, kind, primary = false) => ({
@@ -76,5 +84,93 @@ describe('isUsableRelease', () => {
 		expect(isUsableRelease({ version: '0.5.0', files: [{ ...FILES[0], sha256: 'abc' }] })).toBe(false);
 		expect(isUsableRelease({ version: '0.5.0', files: [{ ...FILES[0], url: 'javascript:alert(1)' }] })).toBe(false);
 		expect(isUsableRelease({ version: '0.5.0', files: [{ ...FILES[0], platform: 'beos' }] })).toBe(false);
+	});
+});
+
+// The shape the release pipeline publishes today (0.5.0 on 2026-11-27): Windows
+// and Linux builds, no macOS build.
+const LIVE_LIKE = { schema: 1, version: '0.5.0', date: '2026-10-09', platforms: ['win', 'linux'], files: FILES.filter((f) => f.platform !== 'mac') };
+const ALL = { schema: 1, version: '0.5.0', date: '2026-10-09', platforms: ['mac', 'win', 'linux'], files: FILES };
+
+function feedResponse(body, { status = 200, type = 'application/json' } = {}) {
+	return new Response(typeof body === 'string' ? body : JSON.stringify(body), { status, headers: { 'content-type': type } });
+}
+
+describe('readReleaseFeed', () => {
+	it('returns a release that lists every platform', async () => {
+		const fetchImpl = vi.fn(async () => feedResponse(ALL));
+		const r = await readReleaseFeed(fetchImpl, '/releases/forge/release.json');
+		expect(r.status).toBe('ok');
+		expect(r.release.files).toHaveLength(6);
+		expect(fetchImpl).toHaveBeenCalledWith('/releases/forge/release.json', expect.objectContaining({ cache: 'no-cache' }));
+	});
+
+	it('returns a release that is missing a platform', async () => {
+		const r = await readReleaseFeed(async () => feedResponse(LIVE_LIKE));
+		expect(r.status).toBe('ok');
+		expect(new Set(r.release.files.map((f) => f.platform))).toEqual(new Set(['win', 'linux']));
+	});
+
+	it('reads a 404, an HTML fallback page or an unusable feed as "not released yet"', async () => {
+		expect((await readReleaseFeed(async () => feedResponse('not found', { status: 404, type: 'text/plain' }))).status).toBe('unpublished');
+		expect((await readReleaseFeed(async () => feedResponse('<!doctype html>', { type: 'text/html' }))).status).toBe('unpublished');
+		expect((await readReleaseFeed(async () => feedResponse({ version: '0.5.0', files: [] }))).status).toBe('unpublished');
+	});
+
+	it('reports an unreachable source with a message the page can show', async () => {
+		const offline = await readReleaseFeed(async () => {
+			throw new TypeError('Failed to fetch');
+		});
+		expect(offline).toEqual({ status: 'error', message: expect.stringMatching(/could not reach three\.ws/i) });
+		const down = await readReleaseFeed(async () => feedResponse('upstream', { status: 503, type: 'text/plain' }));
+		expect(down.status).toBe('error');
+		expect(down.message).toMatch(/503/);
+		const garbled = await readReleaseFeed(async () => feedResponse('{"version":', { type: 'application/json' }));
+		expect(garbled.status).toBe('error');
+	});
+});
+
+describe('planDownloads', () => {
+	it('offers each platform its own build when the release has all three', () => {
+		for (const p of ['mac', 'win', 'linux']) {
+			const plan = planDownloads(ALL, p);
+			expect(plan.primary.platform).toBe(p);
+			expect(plan.missingForVisitor).toBe(false);
+		}
+		expect(planDownloads(ALL, 'mac').note).toMatch(/Apple silicon/);
+	});
+
+	it('tells a Mac visitor there is no macOS build instead of claiming one', () => {
+		const plan = planDownloads(LIVE_LIKE, 'mac');
+		expect(plan.primary).toBeNull();
+		expect(plan.missingForVisitor).toBe(true);
+		expect(plan.available).toEqual(['win', 'linux']);
+		expect(plan.note).toMatch(/no macOS build/i);
+		expect(plan.note).not.toMatch(/Apple silicon Macs only/);
+	});
+
+	it('names only the platforms the release really has for a phone or tablet', () => {
+		const plan = planDownloads(LIVE_LIKE, 'other');
+		expect(plan.primary).toBeNull();
+		expect(plan.missingForVisitor).toBe(false);
+		expect(plan.note).toMatch(/Windows and Linux/);
+		expect(plan.note).not.toMatch(/macOS/);
+		expect(planDownloads(ALL, 'other').note).toMatch(/Windows, macOS and Linux/);
+	});
+
+	it('still offers Windows and Linux visitors their build when macOS is missing', () => {
+		expect(planDownloads(LIVE_LIKE, 'win').primary.kind).toBe('nsis');
+		expect(planDownloads(LIVE_LIKE, 'linux').primary.kind).toBe('appimage');
+	});
+});
+
+describe('signingSummary', () => {
+	it('says plainly whether the builds are code-signed', () => {
+		expect(signingSummary(FILES).state).toBe('none');
+		expect(signingSummary(FILES).text).toMatch(/not code-signed/i);
+		expect(signingSummary(FILES.map((f) => ({ ...f, signed: true }))).state).toBe('all');
+		const mixed = signingSummary(FILES.map((f) => ({ ...f, signed: f.platform === 'win' })));
+		expect(mixed.state).toBe('mixed');
+		expect(mixed.text).toMatch(/macOS and Linux/);
 	});
 });
