@@ -17,11 +17,23 @@
 //   npm run grok:examples-smoke
 //   npm run grok:examples-smoke -- --only grok-curl,grok-agent-avatar
 //   npm run grok:examples-smoke -- --no-generate
+//   npm run grok:examples-smoke -- --mcp-url https://<public host>/api/mcp-studio
+//   npm run grok:examples-smoke -- --save-output <dir>
+//
+// --mcp-url points the three examples where xAI's cloud calls the MCP server
+// (grok-python-mcp, grok-node-responses, grok-curl) at a development server,
+// which has to be reachable from the internet: xAI cannot call localhost. Those
+// runs send no three.ws key, because a key belongs to a production account and
+// catalog search needs none. The other three examples keep their defaults.
+//
+// --save-output writes one <example>.txt per example: every command it ran and
+// what that command printed, with the xAI key and the three.ws key replaced by
+// <XAI_API_KEY> and <THREE_WS_API_KEY>. The README captures come from these.
 //
 // Prints one PASS or FAIL line per example and exits non-zero on any FAIL.
 
 import { spawn } from 'node:child_process';
-import { cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -46,6 +58,15 @@ export function childEnv(base, extra = {}) {
 	return env;
 }
 
+// The examples that hand the three.ws MCP server to xAI as a remote tool.
+const REMOTE_MCP_EXAMPLES = new Set(['grok-python-mcp', 'grok-node-responses', 'grok-curl']);
+
+/** The environment and three.ws key one example runs with, given an optional --mcp-url. */
+export function legContext({ name, base, threeWsKey, mcpUrl }) {
+	if (!mcpUrl || !REMOTE_MCP_EXAMPLES.has(name)) return { base, threeWsKey };
+	return { base: { ...base, THREE_WS_MCP_URL: mcpUrl }, threeWsKey: null };
+}
+
 /** Did a run fail the way xAI fails a bad key, and not some other way? */
 export function isDocumentedRejection({ code, output }) {
 	return code !== 0 && XAI_REJECTION.test(output);
@@ -56,13 +77,37 @@ export function firstGlb(output) {
 	return output.match(/https:\/\/\S+?\.glb\b/)?.[0] ?? null;
 }
 
+/** The GLB a run ended on: its last `glb` line, else the first GLB it printed. */
+export function answerGlb(output) {
+	const own = output.match(/^glb\s+.*$/gm)?.at(-1);
+	return firstGlb(own ?? output);
+}
+
 export function resultLine({ name, ok, legs, error }) {
 	const head = `${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(22)}`;
 	const body = legs.map((l) => `${l.leg}: ${l.note}`).join(' | ');
 	return error ? `${head} ${body}${body ? ' | ' : ''}error: ${error}` : `${head} ${body}`;
 }
 
-function run(cmd, args, { cwd, env, timeoutMs = 180_000 }) {
+/** Replace each secret value in `text` with its label. */
+export function redact(text, secrets) {
+	let out = text;
+	for (const [label, value] of Object.entries(secrets)) if (value) out = out.split(value).join(label);
+	return out;
+}
+
+// Everything the current example printed, kept only under --save-output.
+let transcript = null;
+const record = (text) => transcript?.push(text);
+
+function run(cmd, args, opts) {
+	return spawnAndCollect(cmd, args, opts).then((r) => {
+		record(`$ ${cmd} ${args.join(' ')}\n${r.output.trimEnd()}\n[exit ${r.code}]`);
+		return r;
+	});
+}
+
+function spawnAndCollect(cmd, args, { cwd, env, timeoutMs = 180_000 }) {
 	return new Promise((done) => {
 		const child = spawn(cmd, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
 		let output = '';
@@ -115,7 +160,8 @@ async function xaiLeg(cmd, args, { cwd, base, threeWsKey }) {
 	const r = await run(cmd, args, { cwd, env, timeoutMs: 15 * 60_000 });
 	if (real) {
 		if (r.code !== 0) throw new Error(`the Grok run exited ${r.code}: ${tail(r.output)}`);
-		return { leg: 'xAI', note: `live run ok${firstGlb(r.output) ? `, ${firstGlb(r.output)}` : ''}` };
+		const glb = answerGlb(r.output);
+		return { leg: 'xAI', note: `live run ok${glb ? `, ${glb}` : ''}` };
 	}
 	if (!isDocumentedRejection(r)) throw new Error(`expected xAI's invalid-key answer, got exit ${r.code}: ${tail(r.output)}`);
 	return { leg: 'xAI', note: 'no key: api.x.ai answered the documented 400 "Incorrect API key"' };
@@ -205,6 +251,8 @@ const EXAMPLES = [
 				await new Promise((ready, fail) => {
 					const timer = setTimeout(() => fail(new Error('server.mjs did not start in 10s')), 10_000);
 					server.stdout.on('data', (d) => /localhost/.test(String(d)) && (clearTimeout(timer), ready()));
+					server.stdout.on('data', (d) => record(`$ node server.mjs\n${String(d).trimEnd()}`));
+					server.stderr.on('data', (d) => record(String(d).trimEnd()));
 					server.on('exit', (code) => fail(new Error(`server.mjs exited ${code}`)));
 				});
 				const origin = `http://127.0.0.1:${port}`;
@@ -220,6 +268,7 @@ const EXAMPLES = [
 					body: JSON.stringify({ messages: [{ role: 'user', content: 'Say hello in five words.' }] }),
 				});
 				const body = await chat.json();
+				record(`$ POST /api/chat {"messages":[{"role":"user","content":"Say hello in five words."}]}\nHTTP ${chat.status} ${JSON.stringify(body)}`);
 				let xai;
 				if (real) {
 					if (!chat.ok || !body.reply) throw new Error(`chat answered ${chat.status}: ${JSON.stringify(body).slice(0, 200)}`);
@@ -261,8 +310,18 @@ const STARTER_DEFAULT_GLB = 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev
 
 async function main() {
 	const { values } = parseArgs({
-		options: { only: { type: 'string' }, 'no-generate': { type: 'boolean', default: false }, keep: { type: 'boolean', default: false } },
+		options: {
+			only: { type: 'string' },
+			'no-generate': { type: 'boolean', default: false },
+			keep: { type: 'boolean', default: false },
+			'mcp-url': { type: 'string' },
+			'save-output': { type: 'string' },
+		},
 	});
+	const mcpUrl = values['mcp-url'] || null;
+	const saveDir = values['save-output'] ? resolve(values['save-output']) : null;
+	if (saveDir) mkdirSync(saveDir, { recursive: true });
+	if (mcpUrl && !/^https:\/\//.test(mcpUrl)) throw new Error('--mcp-url must be an https URL that xAI can reach from the internet');
 	const only = values.only ? new Set(values.only.split(',').map((s) => s.trim())) : null;
 	const selected = EXAMPLES.filter((e) => !only || only.has(e.name));
 	if (!selected.length) throw new Error(`--only matched nothing; examples: ${EXAMPLES.map((e) => e.name).join(', ')}`);
@@ -277,15 +336,17 @@ async function main() {
 	const base = childEnv(process.env, { npm_config_update_notifier: 'false' });
 
 	console.log(`grok examples smoke: ${selected.length} example(s), xAI key ${process.env.XAI_API_KEY || process.env.GROK_API_KEY ? 'set (full runs)' : 'not set (invalid-key proof)'}, three.ws key ${threeWsKey ? (minted ? 'minted for this run' : 'set') : 'not set'}`);
+	if (mcpUrl) console.log(`remote MCP examples (${[...REMOTE_MCP_EXAMPLES].join(', ')}) use ${mcpUrl} and send no three.ws key`);
 	const results = [];
 	try {
 		for (const example of selected) {
 			const started = Date.now();
 			const timing = { copiedAt: started };
 			const cwd = workspace(example.name);
+			transcript = saveDir ? [] : null;
 			let result;
 			try {
-				const legs = await example.run({ cwd, base, threeWsKey, generate, timing });
+				const legs = await example.run({ cwd, ...legContext({ name: example.name, base, threeWsKey, mcpUrl }), generate, timing });
 				result = { name: example.name, ok: true, legs };
 			} catch (err) {
 				result = { name: example.name, ok: false, legs: [], error: err?.message || String(err) };
@@ -294,7 +355,12 @@ async function main() {
 			}
 			result.seconds = (Date.now() - started) / 1000;
 			results.push(result);
-			console.log(`${resultLine(result)}  (${result.seconds.toFixed(1)}s)`);
+			const line = `${resultLine(result)}  (${result.seconds.toFixed(1)}s)`;
+			console.log(line);
+			if (saveDir) {
+				const secrets = { '<XAI_API_KEY>': process.env.XAI_API_KEY || process.env.GROK_API_KEY, '<THREE_WS_API_KEY>': threeWsKey };
+				writeFileSync(join(saveDir, `${example.name}.txt`), `${redact([...transcript, line].join('\n\n'), secrets)}\n`);
+			}
 		}
 	} finally {
 		if (minted) console.log(`three.ws key ${(await revokeQaKey(minted)) ? 'revoked' : 'NOT revoked: delete "grok examples smoke" at https://three.ws/dashboard/api-keys'}`);
