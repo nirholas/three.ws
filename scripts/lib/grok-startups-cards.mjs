@@ -55,10 +55,17 @@ export async function renderAnnounceModels(shot, models, angles = {}) {
  * the error count as the usage card's third figure; without it that slot shows
  * the distinct prompts from people and agents we have never met instead.
  * `usage` replaces USAGE when a thread carries refreshed figures.
+ * `lookView` (optional) shows the render check's frames as the reader sees
+ * them: `order` lists the views to show, `label` names each by the side of
+ * the subject it shows (a generated model can face away from the tool's
+ * "front" camera), and `zoom` maps a view to how far to scale its subject up
+ * inside the tile (a car seen nose-on fills less of the frame than side-on).
  */
-export function announceCards({ renders, models, srcDir, total, num = (n) => n, smokePassed, showErrors = true, usage = USAGE }) {
+export function announceCards({ renders, models, srcDir, total, num = (n) => n, smokePassed, showErrors = true, usage = USAGE, lookView = null }) {
 	const look = models.look || { frames: [], views: [] };
-	const lookFrames = look.frames.map((f, i) => ({ src: dataUrl(join(srcDir, f), 'image/png'), view: (look.views[i] || '').replace('-', ' ') }));
+	const allFrames = look.frames.map((f, i) => ({ src: dataUrl(join(srcDir, f), 'image/png'), key: look.views[i] || '', view: (look.views[i] || '').replace('-', ' ') }));
+	const lookFrames = lookView ? lookView.order.map((k) => allFrames.find((fr) => fr.key === k)).filter(Boolean).map((fr) => ({ ...fr, view: lookView.label?.[fr.key] || fr.view })) : allFrames;
+	const zoomOf = (fr) => lookView?.zoom?.[fr.key] || 1;
 	const geo = look.geometry || {};
 	const geoLine = [geo.triangles != null && `${Number(geo.triangles).toLocaleString('en-US')} triangles`, geo.materials != null && `${geo.materials} material${geo.materials === 1 ? '' : 's'}`, geo.textures != null && `${geo.textures} texture${geo.textures === 1 ? '' : 's'}`].filter(Boolean).join(' · ');
 	const maxWeek = Math.max(...usage.weeks.map((w) => w[1]));
@@ -89,7 +96,7 @@ export function announceCards({ renders, models, srcDir, total, num = (n) => n, 
 		3: f(
 			3,
 			`<div class="head"><h1>Grok checks its own work.</h1><div class="sub">Before it answers, it renders the model from every side and looks.</div></div>
-			<div class="row">${lookFrames.map((fr) => `<figure><div class="tile"><img src="${fr.src}"></div><div class="label">${esc(fr.view)}</div></figure>`).join('')}</div>
+			<div class="row">${lookFrames.map((fr) => `<figure><div class="tile"><img src="${fr.src}" style="transform: scale(${zoomOf(fr)})"></div><div class="label">${esc(fr.view)}</div></figure>`).join('')}</div>
 			<div class="stat"><span class="big">${usage.renders}</span><span class="label">render checks so far</span>${geoLine ? `<span class="cap">${esc(geoLine)}</span>` : ''}</div>`,
 			`.row { position: absolute; left: 72px; right: 72px; top: 200px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
 			figure { margin: 0; }

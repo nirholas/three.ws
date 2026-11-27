@@ -1,14 +1,14 @@
 {
 	"uptime": {
-		"fetchedAt": "2026-11-27T22:39:06.782Z",
+		"fetchedAt": "2026-11-27T23:15:25.749Z",
 		"intervalSeconds": 300,
-		"probes": 1660,
-		"passed": 1652,
-		"successRate": 0.9951807228915662,
+		"probes": 1668,
+		"passed": 1659,
+		"successRate": 0.9946043165467626,
 		"handshakeP50Ms": 159,
-		"handshakeP95Ms": 2745,
+		"handshakeP95Ms": 2720,
 		"toolCallP50Ms": 42,
-		"toolCallP95Ms": 240
+		"toolCallP95Ms": 241
 	},
 	"source": "https://three.ws/api/status/mcp, server /api/mcp-grok, window 7d"
 }

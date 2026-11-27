@@ -299,7 +299,14 @@ try {
 	const starterRenders = { first: await renderer.shot(starter.first.glb_url), second: await renderer.shot(starter.second.glb_url) };
 	await renderer.close();
 
-	const old = announceCards({ renders, models, srcDir, total: TOTAL, num: (k) => RENUMBER[k], smokePassed, showErrors: false, usage });
+	// The car came out of the generator facing away from look_at_model's "front" camera,
+	// so its frames are shown front first and labeled by the side of the car each one shows.
+	const lookView = {
+		order: ['back', 'side', 'three-quarter', 'front'],
+		label: { back: 'front', side: 'side', 'three-quarter': 'rear three quarter', front: 'rear' },
+		zoom: { back: 1.9, front: 1.9, 'three-quarter': 1.38, side: 1.3 },
+	};
+	const old = announceCards({ renders, models, srcDir, total: TOTAL, num: (k) => RENUMBER[k], smokePassed, showErrors: false, usage, lookView });
 	const cards = {
 		...Object.fromEntries(Object.entries(old).map(([k, html]) => [`post-${String(RENUMBER[k]).padStart(2, '0')}.png`, html])),
 		...newCards({ uptime, starterRenders, askRender }),
