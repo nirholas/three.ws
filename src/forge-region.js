@@ -38,13 +38,83 @@ export function parseTerritory(body) {
 	return new Set(list.filter((id) => typeof id === 'string' && id));
 }
 
-/** Fetch this visitor's restricted engines. An unreachable answer restricts nothing client side; the server still enforces. */
-export async function fetchRestrictedEngines(headers) {
+/**
+ * The restricted set plus whether the server resolved this visitor's country.
+ * `resolved` is null when the answer did not say (an old server, or no answer),
+ * and is treated like false: the visitor's region is never asserted.
+ */
+export function parseTerritoryState(body) {
+	return {
+		restricted: parseTerritory(body),
+		resolved: typeof body?.country_resolved === 'boolean' ? body.country_resolved : null,
+	};
+}
+
+/** Fetch this visitor's territory answer. An unreachable answer restricts nothing client side; the server still enforces. */
+export async function fetchTerritory(headers) {
 	try {
 		const res = await fetch('/api/forge?territory=1', { headers, cache: 'no-store' });
-		if (!res.ok) return new Set();
-		return parseTerritory(await res.json().catch(() => null));
+		if (!res.ok) return parseTerritoryState(null);
+		return parseTerritoryState(await res.json().catch(() => null));
 	} catch {
-		return new Set();
+		return parseTerritoryState(null);
 	}
+}
+
+/** Fetch this visitor's restricted engines. */
+export async function fetchRestrictedEngines(headers) {
+	return (await fetchTerritory(headers)).restricted;
+}
+
+function joinLabels(labels) {
+	if (labels.length < 2) return labels.join('');
+	return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+}
+
+/**
+ * The reason shown under the engine picker. Without a resolved country it says
+ * so instead of naming a region, because the visitor may well be somewhere the
+ * licence allows and the fault is ours (no location signal), not theirs.
+ */
+export function regionNoteText(labels, resolved) {
+	const many = labels.length > 1;
+	const list = joinLabels(labels);
+	if (resolved === true) {
+		return `${list} ${many ? 'are' : 'is'} not offered in your region: the model licence behind ${many ? 'them' : 'it'} excludes some regions. Every other engine works the same here.`;
+	}
+	return `${list} ${many ? 'are' : 'is'} off because we could not confirm your location, and the model licence behind ${many ? 'them' : 'it'} excludes some regions. The other engines are not affected.`;
+}
+
+/** The tooltip on a region-disabled engine button. */
+export function regionButtonTitle(label, resolved) {
+	return resolved === true
+		? `${label}: not offered in your region because its model licence excludes it.`
+		: `${label}: off because we could not confirm your location, and its model licence excludes some regions.`;
+}
+
+const NOTE_ID = 'engine-region-note';
+
+/**
+ * Paint the visible reason under the picker and point each restricted button at
+ * it with aria-describedby. A disabled button has no hover on touch and is not
+ * announced with its title, so the reason has to be page text.
+ */
+export function applyRegionNote({ note, picker, restricted, resolved, labelOf }) {
+	if (!picker) return;
+	const shown = [];
+	for (const btn of picker.querySelectorAll('button[data-backend]')) {
+		if (restricted.has(btn.dataset.backend)) {
+			// The label printed on the button is what the visitor sees; two lanes
+			// can share one (both Hunyuan engines), so each is listed once.
+			const label =
+				btn.querySelector('.eng-label')?.textContent.trim() || labelOf?.(btn.dataset.backend) || btn.dataset.backend;
+			if (!shown.includes(label)) shown.push(label);
+			btn.setAttribute('aria-describedby', NOTE_ID);
+		} else if (btn.getAttribute('aria-describedby') === NOTE_ID) {
+			btn.removeAttribute('aria-describedby');
+		}
+	}
+	if (!note) return;
+	note.textContent = shown.length ? regionNoteText(shown, resolved) : '';
+	note.hidden = shown.length === 0;
 }

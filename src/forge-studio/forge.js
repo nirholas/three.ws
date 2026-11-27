@@ -22,7 +22,7 @@ import { uploadForgePhoto } from '../shared/forge-upload-client.js';
 import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
 import { coldStartLabel } from '../shared/forge-frames.js';
 import { initForgeDestinationPicker, storedForgeDestination } from '../shared/forge-destination-picker.js';
-import { regionRestrictedError, fetchRestrictedEngines } from '../forge-region.js';
+import { regionRestrictedError, fetchTerritory, applyRegionNote, regionButtonTitle } from '../forge-region.js';
 import { rememberFromResponse } from '../shared/forge-manage-tokens.js';
 import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, uploadSignInUrl, UPLOAD_SIGN_IN_SHORT } from '../shared/upload-sign-in.js';
 import { classifyThrottle, createThrottlePanel } from '../forge-throttle.js';
@@ -194,6 +194,10 @@ let health = null;
 // plus any lane a region_restricted 403 named). Disabled in the picker.
 let restrictedEngines = new Set();
 let selectedTier = 'standard';
+// Whether the server resolved this visitor's country: true, false, or null when
+// it did not say. Decides how the region note is worded (never asserts a region
+// it did not resolve).
+let territoryResolved = null;
 let selectedEngine = {
 	id: 'trellis',
 	path: 'image',
@@ -480,9 +484,10 @@ async function loadCatalog() {
 // Ask which engines this visitor's region excludes, so the picker disables them
 // up front instead of letting a Generate click end in a 403.
 async function loadTerritory() {
-	const restricted = await fetchRestrictedEngines(CLIENT_HEADERS);
+	const { restricted, resolved } = await fetchTerritory(CLIENT_HEADERS);
 	for (const id of restricted) restrictedEngines.add(id);
 	if (restrictedEngines.size) updateEngineAvailability();
+	territoryResolved = resolved;
 }
 
 // Render the retryable notice that replaces the quality/engine controls when the
@@ -612,7 +617,7 @@ function updateEngineAvailability() {
 		btn.setAttribute('aria-disabled', String(blocked));
 		btn.dataset.health = lane ? lane.status : '';
 		if (regionBlocked) {
-			btn.title = `${b?.label || btn.dataset.backend}: not available in your region because its model licence excludes it.`;
+			btn.title = regionButtonTitle(b?.label || btn.dataset.backend, territoryResolved);
 		} else if (laneDown) {
 			btn.title = `${b?.label || btn.dataset.backend} — temporarily unavailable: ${lane.message}`;
 		} else if (blocked) {
@@ -626,6 +631,12 @@ function updateEngineAvailability() {
 		if (blocked && btn.dataset.backend === selectedEngine.backend) bounceTo = true;
 	}
 	const defaultId =
+	applyRegionNote({
+		note: document.getElementById('engine-region-note'),
+		picker: els.engine,
+		restricted: restrictedEngines,
+		resolved: territoryResolved,
+	});
 		catalog.default_backend_for_tier?.[selectedTier]?.[selectedEngine.path] ?? null;
 	if (bounceTo) {
 		// Forced move: the selected engine can't serve photos. Prefer the standing

@@ -368,6 +368,20 @@
 				background: var(--danger, #e05a5a);
 				opacity: 0.7;
 			}
+			/* Why an engine is off for this visitor's region (or an unresolved
+			   location). Page text, not a tooltip: a disabled button shows no hover on
+			   touch and is not announced with its title. */
+			.engine-region-note {
+				margin: var(--space-xs) 0 0;
+				padding: var(--space-2xs) var(--space-sm);
+				border-left: 2px solid var(--warning, #e0a93e);
+				font-size: var(--text-xs);
+				line-height: 1.45;
+				color: var(--ink-dim);
+			}
+			.engine-region-note[hidden] {
+				display: none;
+			}
 			.aspect button:focus-visible,
 			.chip:focus-visible {
 				outline: 2px solid var(--accent);
@@ -4281,6 +4295,7 @@
 						<span class="el-item"><span class="el-dot el-dot-busy"></span> busy</span>
 						<span class="el-item"><span class="el-dot el-dot-down"></span> unavailable</span>
 					</p>
+					<p class="engine-region-note" id="engine-region-note" role="note" hidden></p>
 					<div class="byok-row is-hidden" id="byok-row">
 						<label class="fq-label" for="provider-key" id="byok-label" data-i18n="forge.api_key">API key</label>
 						<input

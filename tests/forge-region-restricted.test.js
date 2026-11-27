@@ -109,7 +109,8 @@ describe('client handling of region_restricted', () => {
 		for (const file of ['../src/forge.js', '../src/forge-studio/forge.js']) {
 			const src = readFileSync(new URL(file, import.meta.url), 'utf8');
 			expect(src).toContain('regionRestrictedError(data)');
-			expect(src).toContain('fetchRestrictedEngines(CLIENT_HEADERS)');
+			expect(src).toContain('fetchTerritory(CLIENT_HEADERS)');
+			expect(src).toContain('applyRegionNote({');
 			expect(src).toContain('restrictedEngines.has(btn.dataset.backend)');
 		}
 		const helper = readFileSync(new URL('../src/forge-region.js', import.meta.url), 'utf8');
