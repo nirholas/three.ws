@@ -104,4 +104,30 @@ describe('PATCH /api/user/provider-keys', () => {
 		expect(JSON.stringify({ ...audits[0], req: undefined })).not.toContain('sk-secret-value');
 		expect(audits[0].meta).toEqual({ set: ['openai'], cleared: ['meshy'] });
 	});
+
+	it('refuses a geometry-provider key that cannot be that provider key, and never echoes it', async () => {
+		const pasted = 'sk-ant-api03-wrong-vendor-0123456789';
+		const res = await call('PATCH', { meshy: pasted });
+		expect(res.statusCode).toBe(400);
+		expect(res._b).not.toContain(pasted);
+		expect(res.json().message || res.json().error_description || '').toMatch(/Meshy/);
+		expect(sqlCalls).toHaveLength(0);
+	});
+
+	it('refuses a geometry-provider key with an embedded line break', async () => {
+		const res = await call('PATCH', { tripo: 'tsk_0123456789abcdef\r\nx-injected: 1' });
+		expect(res.statusCode).toBe(400);
+		expect(sqlCalls).toHaveLength(0);
+	});
+
+	it('stores a well-formed geometry-provider key', async () => {
+		const res = await call('PATCH', { meshy: 'msy_0123456789abcdefghij' });
+		expect(res.statusCode).toBe(200);
+		expect(sqlCalls.filter((c) => /UPDATE users/i.test(c.query))).toHaveLength(1);
+	});
+
+	it('still lets a geometry-provider key be removed', async () => {
+		const res = await call('PATCH', { meshy: null });
+		expect(res.statusCode).toBe(200);
+	});
 });
