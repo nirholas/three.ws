@@ -13,6 +13,13 @@
 // server/creation-head.mjs it runs for every User-Agent, so the head a crawler
 // reads is the head a visitor gets.
 //
+// It also gives the page the explanation itself in a form that needs no
+// script: the guided tour and the named parts go into the LearningResource
+// node (hasPart, about) and into one <noscript> outline at the top of <main>.
+// The @grok bot browses a link it is asked about, and "how does it work, step
+// by step?" cannot be answered from a part count. A browser that runs the page
+// script never renders the outline; it draws the same tour in 3D.
+//
 // Safety rules: never fail a page (any miss or error returns null and the
 // caller serves the untouched shell), never block on a slow lookup (one short
 // timeout), bounded memory (small TTL cache, oldest evicted).
@@ -52,6 +59,23 @@ function clip(s, max) {
 	return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:.]+$/, '')}…`;
 }
 
+// Bounds on the script-free outline, so one oversized design cannot bloat the page.
+const OUTLINE_MAX_STEPS = 24;
+const OUTLINE_MAX_PARTS = 60;
+
+/** The tour and parts a reader without scripts gets: clipped text, empty entries dropped. */
+export function anatomyOutline(design) {
+	const spec = design.spec || {};
+	const list = (v, max) => (Array.isArray(v) ? v.slice(0, max) : []);
+	const steps = list(spec.steps, OUTLINE_MAX_STEPS)
+		.map((s) => ({ title: clip(s?.title, 120), body: clip(s?.body, 600) }))
+		.filter((s) => s.title);
+	const parts = list(spec.parts, OUTLINE_MAX_PARTS)
+		.map((p) => ({ name: clip(p?.name, 80), description: clip(p?.description, 280) }))
+		.filter((p) => p.name);
+	return { summary: clip(spec.summary, 600), steps, parts };
+}
+
 /** Everything the head needs, from one public design (GET /api/anatomy?id= shape). */
 export function anatomyMeta(design, origin = ORIGIN) {
 	const id = String(design.id).toLowerCase();
@@ -65,6 +89,7 @@ export function anatomyMeta(design, origin = ORIGIN) {
 	const description = `${lead}How a ${name} works, as an interactive 3D cutaway${counts ? ` with ${counts}` : ''}: rotate it, cut it open and explode it on three.ws.${by}`;
 	// Featured designs ship a card rendered from the live cutaway itself.
 	const image = design.ogImage ? `${origin}${design.ogImage}` : anatomyOgImageUrl(id, origin);
+	const outline = anatomyOutline(design);
 	const imageAlt = design.ogImage ? `Rendered 3D cutaway of the ${name}, on three.ws Anatomy` : `Isometric line drawing of the ${name}, on three.ws Anatomy`;
 	const jsonLd = {
 		'@type': 'LearningResource',
@@ -82,8 +107,15 @@ export function anatomyMeta(design, origin = ORIGIN) {
 			? { creator: { '@type': 'Person', name: design.creatorUsername, url: `${origin}/u/${encodeURIComponent(design.creatorUsername)}` } }
 			: {}),
 		isPartOf: { '@type': 'WebApplication', name: 'Anatomy', url: `${origin}/anatomy` },
+		...(outline.summary ? { abstract: outline.summary } : {}),
+		...(outline.steps.length
+			? { hasPart: outline.steps.map((s, i) => ({ '@type': 'CreativeWork', position: i + 1, name: s.title, ...(s.body ? { text: s.body } : {}) })) }
+			: {}),
+		...(outline.parts.length
+			? { about: outline.parts.map((p) => ({ '@type': 'Thing', name: p.name, ...(p.description ? { description: p.description } : {}) })) }
+			: {}),
 	};
-	return { pageUrl, name, title: `${name} · How it works · three.ws Anatomy`, description, image, imageAlt, jsonLd };
+	return { pageUrl, name, title: `${name} · How it works · three.ws Anatomy`, description, image, imageAlt, jsonLd, outline };
 }
 
 function setTag(head, re, tag, missing) {
@@ -92,10 +124,31 @@ function setTag(head, re, tag, missing) {
 	return head;
 }
 
+/** The outline as plain HTML for the <noscript> block, or '' when there is nothing to read. */
+function outlineHtml(m) {
+	const { summary, steps, parts } = m.outline;
+	if (!steps.length && !parts.length) return '';
+	const stepItems = steps.map((s) => `<li><strong>${htmlEscape(s.title)}.</strong>${s.body ? ` ${htmlEscape(s.body)}` : ''}</li>`);
+	const partItems = parts.map((p) =>
+		p.description ? `<li><strong>${htmlEscape(p.name)}:</strong> ${htmlEscape(p.description)}</li>` : `<li><strong>${htmlEscape(p.name)}</strong></li>`,
+	);
+	return [
+		'<noscript>',
+		'<article class="anp-outline">',
+		`<h2>How a ${htmlEscape(m.name)} works</h2>`,
+		`<p>${htmlEscape(summary || m.description)}</p>`,
+		...(stepItems.length ? ['<h3>Guided tour</h3>', '<ol>', ...stepItems, '</ol>'] : []),
+		...(partItems.length ? ['<h3>Parts</h3>', '<ul>', ...partItems, '</ul>'] : []),
+		'</article>',
+		'</noscript>',
+	].join('\n');
+}
+
 const metaRe = (attr, key) => new RegExp(`<meta\\b[^>]*\\b${attr}=["']${key}["'][^>]*>`, 'i');
 
 /**
- * Rewrite the anatomy shell's head for one design. Pure.
+ * Rewrite the anatomy shell for one design: its head, plus the script-free
+ * outline at the top of <main>. Pure.
  *
  * @param {string} html     the anatomy.html shell
  * @param {object} design   public design record
@@ -136,7 +189,10 @@ export function rewriteAnatomyHead(html, design, origin = ORIGIN) {
 	missing.push(`<script type="application/ld+json">${scriptJson({ '@context': 'https://schema.org', '@graph': [m.jsonLd] })}</script>`);
 	head = head.replace(/<\/head>/i, () => `\t${missing.join('\n\t')}\n</head>`);
 
-	return html.slice(0, headMatch.index) + head + html.slice(headMatch.index + headMatch[0].length);
+	const outline = outlineHtml(m);
+	const rest = html.slice(headMatch.index + headMatch[0].length);
+	const body = outline ? rest.replace(/<main\b[^>]*>/i, (open) => `${open}\n${outline}`) : rest;
+	return html.slice(0, headMatch.index) + head + body;
 }
 
 /**

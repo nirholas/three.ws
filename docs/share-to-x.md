@@ -73,6 +73,21 @@ What backstory would fit a character that looks like this? @grok
 - **Token-free:** the text never names a coin. Cashtags (`$XYZ`) are stripped from titles and prompts before anything is composed. That rule is pinned in `tests/grok-ask.test.js`.
 - **Readiness:** `grokAskState(entity)` returns `{ ready, reason }`. It is ready only with an id and a prompt, caption or title to ask about. `reason` is the disabled tooltip.
 
+### What Grok reads when it answers
+
+xAI publishes the @grok bot's system prompt in [xai-org/grok-prompts](https://github.com/xai-org/grok-prompts). As read on 2026-11-27 (commit `a7c186f`), it tells the bot to keep a reply under 550 characters with no markdown, to look at the images in the thread, and to browse a linked page when it needs to check something. Two things follow for this feature:
+
+- **One question per post.** A 550 character reply has room for one clear answer, so every template asks one thing. Do not add a second question to a template.
+- **The page has to hold the answer without running a script.** `server/anatomy-head.mjs` writes the design's guided tour and named parts into the HTML of `/anatomy/:id` twice: in the `LearningResource` node (`abstract`, `hasPart` for the tour steps, `about` for the parts) and in one `<noscript>` outline at the top of `<main>`. A reader that runs no JavaScript gets the same explanation a visitor gets in 3D. Before this, the page gave such a reader only the part and step counts. The outline is capped at 24 steps and 60 parts and is pinned in `tests/share-cards.test.js`.
+
+Check what a script-free reader gets from a live page:
+
+```bash
+curl -s https://three.ws/anatomy/<id> | grep -c 'class="anp-outline"'
+```
+
+It prints 1 when the outline is in the page and 0 when the page served the generic shell (an unknown id, or a lookup that timed out).
+
 ## Attribution: UTM
 
 The link in each post is tagged by `withShareUtm(url, campaign)`, so a visit from X is attributable in analytics:

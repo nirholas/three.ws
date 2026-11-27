@@ -200,6 +200,48 @@ describe('anatomy page head (/anatomy/:id)', () => {
 		expect(html).toContain('"@type":"LearningResource"');
 	});
 
+	it('gives a reader that runs no scripts the tour and the parts, not only their counts', () => {
+		// The @grok bot browses a link it is asked about. A question such as "how
+		// does it work, step by step?" needs the steps themselves in the HTML.
+		const design = {
+			...DESIGN,
+			spec: {
+				...DESIGN.spec,
+				summary: 'A slide carburetor meters fuel into the air stream by venturi suction.',
+				parts: [{ ...DESIGN.spec.parts[0], description: 'Cast housing with the <venturi> bore.' }, DESIGN.spec.parts[1]],
+				steps: [{ title: 'Air enters the bore', body: 'The piston draws air through the venturi, which speeds it up.' }, { title: 'Fuel rises through the jet' }],
+			},
+		};
+		const html = rewriteAnatomyHead(shell, design);
+		const ld = JSON.parse(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html)[1])['@graph'][0];
+		expect(ld.abstract).toBe('A slide carburetor meters fuel into the air stream by venturi suction.');
+		expect(ld.hasPart).toEqual([
+			{ '@type': 'CreativeWork', position: 1, name: 'Air enters the bore', text: 'The piston draws air through the venturi, which speeds it up.' },
+			{ '@type': 'CreativeWork', position: 2, name: 'Fuel rises through the jet' },
+		]);
+		expect(ld.about).toEqual([
+			{ '@type': 'Thing', name: 'Carburetor body', description: 'Cast housing with the <venturi> bore.' },
+			{ '@type': 'Thing', name: 'Throttle slide' },
+		]);
+
+		const outline = /<main[^>]*>\s*<noscript>([\s\S]*?)<\/noscript>/.exec(html)?.[1];
+		expect(outline).toBeTruthy();
+		expect(outline).toContain('How a Honda CD70 carburetor works');
+		expect(outline).toContain('A slide carburetor meters fuel into the air stream by venturi suction.');
+		expect(outline).toMatch(/<ol>\s*<li><strong>Air enters the bore\.<\/strong> The piston draws air through the venturi, which speeds it up\.<\/li>\s*<li><strong>Fuel rises through the jet\.<\/strong><\/li>/);
+		expect(outline).toContain('<li><strong>Carburetor body:</strong> Cast housing with the &lt;venturi&gt; bore.</li>');
+		expect(outline).toContain('<li><strong>Throttle slide</strong></li>');
+		expect(html.match(/<noscript>/g)).toHaveLength(1);
+	});
+
+	it('adds no outline when the design has no steps or parts to read', () => {
+		const html = rewriteAnatomyHead(shell, { ...DESIGN, spec: { title: DESIGN.title } });
+		expect(html).not.toContain('<noscript>');
+		const ld = JSON.parse(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html)[1])['@graph'][0];
+		expect(ld).not.toHaveProperty('hasPart');
+		expect(ld).not.toHaveProperty('about');
+	});
+
 	it('escapes the design text and never fails the page', async () => {
 		const html = rewriteAnatomyHead(shell, { ...DESIGN, title: 'A <b>"pump"</b>' });
 		expect(html).not.toContain('<b>"pump"</b>');

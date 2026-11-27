@@ -884,3 +884,39 @@
 		transform: none;
 	}
 }
+
+/* The script-free outline of one design (server/anatomy-head.mjs). Only a
+   reader with scripts off sees it; the page script draws the same tour in 3D. */
+.anp-outline {
+	max-width: 760px;
+	margin: 0 auto var(--space-xl, 40px);
+	padding: var(--space-lg, 28px) var(--space-md, 16px);
+	font-size: 16px;
+	line-height: 1.6;
+	color: var(--ink-dim);
+	text-align: left;
+}
+
+.anp-outline h2 {
+	font-family: var(--font-display);
+	font-size: clamp(24px, 3.6vw, 34px);
+	line-height: 1.15;
+	color: var(--ink-bright, var(--ink));
+	margin: 0 0 var(--space-md, 16px);
+}
+
+.anp-outline h3 {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	margin: var(--space-lg, 28px) 0 var(--space-sm, 12px);
+}
+
+.anp-outline li {
+	margin: 0 0 var(--space-sm, 12px);
+}
+
+.anp-outline strong {
+	color: var(--ink);
+}
