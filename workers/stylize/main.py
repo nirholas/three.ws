@@ -537,6 +537,110 @@ STYLES: dict[str, Callable] = {
 # ── export + pipeline ───────────────────────────────────────────────────────────────
 
 
+# The surface every stylized GLB carries. The filters paint color per vertex, so
+# the material is white (vertex color times white is the vertex color), a plain
+# non-metal, and moderately rough like painted plastic or clay.
+STYLIZED_MATERIAL = {
+    "name": "stylized",
+    "pbrMetallicRoughness": {
+        "baseColorFactor": [1.0, 1.0, 1.0, 1.0],
+        "metallicFactor": 0.0,
+        "roughnessFactor": 0.8,
+    },
+}
+
+GL_UNSIGNED_BYTE = 5121
+GL_UNSIGNED_SHORT = 5123
+
+
+def _srgb_to_linear(values):
+    import numpy as np
+
+    return np.where(values <= 0.04045, values / 12.92, ((values + 0.055) / 1.055) ** 2.4)
+
+
+def _finish_glb(data: bytes) -> bytes:
+    """Give trimesh's GLB a real material and linear vertex colors.
+
+    trimesh writes no material for a vertex-colored mesh, so glTF viewers fall
+    back to the spec default (metallic 1, roughness 1) and the model renders as
+    dark bare metal. It also writes COLOR_0 as the sRGB bytes it holds, while
+    glTF defines vertex colors as linear, which washes every color out. This
+    adds STYLIZED_MATERIAL to every primitive without one and rewrites 8-bit
+    COLOR_0 as linear 16-bit (8-bit linear would band the dark tones). Geometry
+    bytes are copied unchanged.
+    """
+    import json
+    import struct
+
+    import numpy as np
+
+    json_len = struct.unpack_from("<I", data, 12)[0]
+    doc = json.loads(data[20:20 + json_len])
+    bin_at = 20 + json_len
+    bin_len = struct.unpack_from("<I", data, bin_at)[0]
+    old_bin = data[bin_at + 8:bin_at + 8 + bin_len]
+
+    prims = [p for m in doc.get("meshes", []) for p in m.get("primitives", [])]
+    color_accessors = {
+        p["attributes"]["COLOR_0"]
+        for p in prims
+        if "COLOR_0" in p.get("attributes", {})
+    }
+    accessors = doc.get("accessors", [])
+    convert_views = {}
+    for index in color_accessors:
+        acc = accessors[index]
+        view_index = acc.get("bufferView")
+        if acc.get("componentType") != GL_UNSIGNED_BYTE or view_index is None:
+            continue
+        view = doc["bufferViews"][view_index]
+        if view.get("byteStride") or acc.get("byteOffset", 0):
+            continue
+        sharers = [a for a in accessors if a.get("bufferView") == view_index]
+        if len(sharers) == 1:
+            convert_views[view_index] = acc
+
+    new_bin = bytearray()
+    for view_index, view in enumerate(doc.get("bufferViews", [])):
+        start = view.get("byteOffset", 0)
+        chunk = old_bin[start:start + view["byteLength"]]
+        acc = convert_views.get(view_index)
+        if acc is not None:
+            width = {"VEC3": 3, "VEC4": 4}[acc["type"]]
+            srgb = np.frombuffer(chunk, dtype=np.uint8).reshape(-1, width).astype(np.float64) / 255.0
+            linear = srgb.copy()
+            linear[:, :3] = _srgb_to_linear(srgb[:, :3])
+            packed = np.round(linear * 65535.0).astype("<u2")
+            chunk = packed.tobytes()
+            acc["componentType"] = GL_UNSIGNED_SHORT
+            acc["min"] = packed.min(axis=0).tolist()
+            acc["max"] = packed.max(axis=0).tolist()
+        new_bin.extend(b"\0" * (-len(new_bin) % 4))
+        view["byteOffset"] = len(new_bin)
+        view["byteLength"] = len(chunk)
+        new_bin.extend(chunk)
+    new_bin.extend(b"\0" * (-len(new_bin) % 4))
+
+    if any("material" not in p for p in prims):
+        materials = doc.setdefault("materials", [])
+        material_index = len(materials)
+        materials.append(json.loads(json.dumps(STYLIZED_MATERIAL)))
+        for p in prims:
+            p.setdefault("material", material_index)
+
+    if doc.get("buffers"):
+        doc["buffers"][0]["byteLength"] = len(new_bin)
+    json_bytes = json.dumps(doc, separators=(",", ":")).encode("utf-8")
+    json_bytes += b" " * (-len(json_bytes) % 4)
+    total = 12 + 8 + len(json_bytes) + 8 + len(new_bin)
+    return b"".join([
+        struct.pack("<III", 0x46546C67, 2, total),
+        struct.pack("<I", len(json_bytes)), b"JSON", json_bytes,
+        struct.pack("<I", len(new_bin)), b"BIN\0", bytes(new_bin),
+    ])
+
+
 def _export_mesh(mesh, output_format: str) -> tuple[bytes, str]:
     import trimesh
 
@@ -549,6 +653,8 @@ def _export_mesh(mesh, output_format: str) -> tuple[bytes, str]:
         else:
             mesh.export(str(out_path))
         data = out_path.read_bytes()
+    if fmt == "glb":
+        data = _finish_glb(data)
     return data, ("model/gltf-binary" if fmt == "glb" else "application/octet-stream")
 
 

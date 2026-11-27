@@ -516,6 +516,64 @@ for fmt in sorted(main.SUPPORTED_OUTPUT_FORMATS):
         f"{len(reloaded.faces)} vs {len(low.faces)}",
     )
 
+# ── GLB surface: a sane material and linear vertex colors ───────────────────────
+# Reproduced 2026-11-27 on a live voxel job (c22471f6): trimesh wrote no
+# material, so every glTF viewer fell back to the spec default of metallic 1,
+# roughness 1 and the stylized model rendered as dark bare metal. It also wrote
+# COLOR_0 as the sRGB bytes it holds, while glTF reads vertex colors as linear,
+# so every color came out washed out. A GLB from any filter must carry a
+# non-metal material and linear vertex colors.
+
+
+def glb_parts(data: bytes) -> tuple[dict, bytes]:
+    import json
+    import struct
+
+    json_len = struct.unpack_from("<I", data, 12)[0]
+    doc = json.loads(data[20:20 + json_len])
+    bin_at = 20 + json_len
+    bin_len = struct.unpack_from("<I", data, bin_at)[0]
+    return doc, data[bin_at + 8:bin_at + 8 + bin_len]
+
+
+def srgb_to_linear(c: float) -> float:
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+for style in sorted(main.STYLES):
+    styled_out = main.STYLES[style](source_mesh(), 12)
+    glb, _ = main._export_mesh(styled_out, "glb")
+    doc, bin_chunk = glb_parts(glb)
+    prims = [p for m in doc.get("meshes", []) for p in m["primitives"]]
+    materials = doc.get("materials") or []
+    check(f"{style} GLB gives every primitive a material", bool(prims) and all("material" in p for p in prims))
+    pbr = [materials[p["material"]].get("pbrMetallicRoughness", {}) for p in prims if "material" in p]
+    check(
+        f"{style} GLB material is a non-metal",
+        bool(pbr) and all(m.get("metallicFactor") == 0 for m in pbr),
+        str(pbr),
+    )
+    check(
+        f"{style} GLB material roughness is sane",
+        bool(pbr) and all(0.4 <= m.get("roughnessFactor", 1) <= 0.95 for m in pbr),
+        str(pbr),
+    )
+    color_acc = doc["accessors"][prims[0]["attributes"]["COLOR_0"]]
+    view = doc["bufferViews"][color_acc["bufferView"]]
+    start = view.get("byteOffset", 0) + color_acc.get("byteOffset", 0)
+    dtype = {5121: np.uint8, 5123: np.uint16, 5126: np.float32}[color_acc["componentType"]]
+    raw = np.frombuffer(bin_chunk, dtype=dtype, count=color_acc["count"] * 4, offset=start).reshape(-1, 4)
+    scale = 1.0 if dtype is np.float32 else float(np.iinfo(dtype).max)
+    red = float(raw[0, 0]) / scale
+    check(
+        f"{style} GLB vertex colors are linear",
+        abs(red - srgb_to_linear(220 / 255)) < 0.002,
+        f"red={red:.4f} expected {srgb_to_linear(220 / 255):.4f}",
+    )
+    check(f"{style} GLB keeps vertex alpha opaque", abs(float(raw[0, 3]) / scale - 1.0) < 1e-6)
+    reloaded = main._load_single_mesh(glb, ".glb")
+    check(f"{style} GLB still round-trips its faces", len(reloaded.faces) == len(styled_out.faces))
+
 # ── SSRF gate ───────────────────────────────────────────────────────────────────
 
 for hostile in ("https://127.0.0.1/model.glb", "https://169.254.169.254/model.glb",
