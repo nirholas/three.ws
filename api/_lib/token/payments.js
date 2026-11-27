@@ -7,6 +7,12 @@
 //   4. settlePayment() — record with UNIQUE(nonce) + UNIQUE(tx_signature); a
 //                        duplicate insert is a replay/double-submit, surfaced
 //                        as already_settled rather than crediting twice.
+//
+// Money that left the wallet must stay recordable. A quote that expired before
+// its settle call arrived is still settled when the transaction's block time
+// shows it was paid while the quote was valid, and a caller that opts in
+// (resumeSameTx) gets the recorded payment back when the same user resends the
+// same transaction, instead of a 409 that strands what they paid for.
 
 import { solanaConnection } from '../solana/connection.js';
 import { sql } from '../db.js';
@@ -14,6 +20,10 @@ import { env } from '../env.js';
 import { verifyQuote } from './quote.js';
 
 const MEMO_PROGRAM = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
+
+// Clock skew allowed between our quote clock and the cluster's block time when
+// a late settle proves the transfer landed before the quote expired.
+const LATE_SETTLE_SKEW_S = 30;
 
 function rpcUrl(network) {
 	return network === 'devnet'
@@ -93,7 +103,7 @@ export async function verifyOnChain({ quote, txSignature, network = 'mainnet' })
 		}
 	}
 
-	return { confirmedAt: new Date().toISOString(), slot: tx.slot ?? null, credited };
+	return { confirmedAt: new Date().toISOString(), slot: tx.slot ?? null, blockTime: tx.blockTime ?? null, credited };
 }
 
 function isUniqueViolation(err) {
@@ -167,7 +177,7 @@ export async function settlePayment({
 	} catch (err) {
 		if (isUniqueViolation(err)) {
 			const [existing] = await sql`
-				select id, created_at from token_payments
+				select id, created_at, tx_signature, user_id from token_payments
 				where nonce = ${quote.nonce} or tx_signature = ${txSignature}
 				limit 1
 			`;
@@ -175,6 +185,8 @@ export async function settlePayment({
 				id: existing?.id ?? null,
 				replay: true,
 				created_at: existing?.created_at ?? null,
+				tx_signature: existing?.tx_signature ?? null,
+				user_id: existing?.user_id ?? null,
 			};
 		}
 		throw err;
@@ -193,21 +205,37 @@ export async function verifyAndSettlePayment({
 	payerWallet = null,
 	userId = null,
 	network,
+	resumeSameTx = false,
 }) {
-	const quote = verifyQuote(quoteToken);
+	const quote = verifyQuote(quoteToken, { allowExpired: true });
+	const expired = quote.exp < Math.floor(Date.now() / 1000);
 	const net = network || quote.network || 'mainnet';
+
+	// The same user resending the same transaction is a lost response, not a
+	// replay: hand back the payment it already recorded. Only for callers that
+	// opt in, because they own a single-use redemption downstream of the id.
+	const resumed = (row) =>
+		resumeSameTx && row?.id && row.tx_signature === txSignature && userId && String(row.user_id) === String(userId)
+			? { ok: true, replay: true, payment_id: row.id, quote, confirmation: { slot: null, blockTime: null, credited: null } }
+			: null;
 
 	// Fast pre-check (the UNIQUE constraint in settlePayment is the source of
 	// truth, but this avoids an RPC round-trip on an obvious replay).
 	const [used] =
-		await sql`select id, tx_signature from token_payments where nonce = ${quote.nonce} limit 1`;
+		await sql`select id, tx_signature, user_id from token_payments where nonce = ${quote.nonce} limit 1`;
 	if (used) {
+		const again = resumed(used);
+		if (again) return again;
 		throw verifyError('quote already settled', 409, 'already_settled', {
 			tx_signature: used.tx_signature,
 		});
 	}
 
 	const confirmation = await verifyOnChain({ quote, txSignature, network: net });
+	// An expired quote settles only when the chain shows it was paid in time.
+	if (expired && !(Number(confirmation.blockTime) > 0 && confirmation.blockTime <= quote.exp + LATE_SETTLE_SKEW_S)) {
+		throw verifyError('quote expired', 410, 'quote_expired');
+	}
 	const settled = await settlePayment({
 		quote,
 		txSignature,
@@ -217,6 +245,8 @@ export async function verifyAndSettlePayment({
 		confirmation,
 	});
 	if (settled.replay) {
+		const again = resumed({ id: settled.id, tx_signature: settled.tx_signature, user_id: settled.user_id });
+		if (again) return again;
 		throw verifyError('payment already settled', 409, 'already_settled');
 	}
 
