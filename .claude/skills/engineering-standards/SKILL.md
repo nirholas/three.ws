@@ -1,6 +1,6 @@
 ---
 name: engineering-standards
-description: three.ws engineering excellence checklist: architecture, open-source-first search order, UI/UX standards, innovation standard.
+description: "three.ws engineering excellence checklist: architecture, open-source-first search order, UI/UX standards, innovation standard."
 when_to_use: When designing or building any non-trivial feature or UI, before writing code.
 ---
 
