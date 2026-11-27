@@ -50,6 +50,7 @@ process.env.DATABASE_URL ||= 'postgres://pglite.test/db';
 process.env.CRON_SECRET = 'coverage-secret';
 process.env.SKETCHFAB_UPLOADS_PER_RUN = '5';
 process.env.S3_PUBLIC_DOMAIN = 'https://bucket.coverage.test';
+process.env.SKETCHFAB_API_TOKEN = 'sketchfab-coverage-token';
 
 let pg;
 let n = 0;
@@ -105,6 +106,7 @@ beforeEach(async () => {
 	alerts.length = 0;
 	bucket.objects.clear();
 	bucket.down = false;
+	await holder.db.sql`delete from avatars`;
 	await holder.db.sql`delete from sketchfab_uploads`;
 	await holder.db.sql`delete from content_safety_reviews`;
 	await holder.db.sql`delete from forge_removal_requests`;
@@ -228,5 +230,110 @@ describe('a takedown reaches every stored copy of the model', () => {
 		const queued = (await holder.db.sql`select target from forge_storage_purges where creation_id = ${id}`).map((r) => r.target);
 		expect(queued.some((t) => t.startsWith('forge/gameready/'))).toBe(true);
 		expect(queued).toContain(`forge/thumb/${id}.webp`);
+	});
+});
+
+describe('a takedown also reaches what was made from the model', () => {
+	// A model is copied out of the Forge in three ways: saved as an avatar (a new
+	// bucket object under the saver's account), pushed to the official Sketchfab
+	// account (a third-party copy), and remixed (a new creation that points back).
+	// Deleting only the original left the avatar copy public and the Sketchfab
+	// listing live.
+	let userId;
+	beforeEach(async () => {
+		const rows = await holder.db.sql`select id from users limit 1`;
+		userId = rows[0]?.id;
+		if (!userId) {
+			userId = crypto.randomUUID();
+			await holder.db.sql`insert into users (id, email, display_name) values (${userId}, ${`takedown-${userId}@coverage.test`}, 'saver')`;
+		}
+	});
+
+	const seedAvatar = async (meshUrl, over = {}) => {
+		const id = crypto.randomUUID();
+		const key = `u/${userId}/avatars/${id}.glb`;
+		bucket.objects.set(key, Buffer.from('avatar'));
+		await holder.db.sql`
+			insert into avatars (id, owner_id, slug, name, storage_key, size_bytes, source, source_meta, visibility)
+			values (${id}, ${userId}, ${`s-${id.slice(0, 8)}`}, 'Saved forge model', ${key}, 6, 'upload',
+				${JSON.stringify({ source_glb_url: meshUrl, generator: 'chat-forge-avatar', ...over })}::jsonb, 'public')
+		`;
+		return { id, key };
+	};
+
+	it('lists the avatar copies, the Sketchfab listing and the remixes before anything is removed', async () => {
+		const { id } = await seedWithFiles();
+		const [row] = await holder.db.sql`select * from forge_creations where id = ${id}`;
+		const avatar = await seedAvatar(row.glb_url);
+		await seedAvatar('https://elsewhere.test/other.glb');
+		const remix = await seed({ parent: id });
+		await holder.db.sql`insert into sketchfab_uploads (creation_id, status, sketchfab_uid, sketchfab_url) values (${id}, 'live', 'uid123', 'https://sketchfab.com/models/uid123')`;
+		const { findDerivedItems } = await import('../../api/_lib/forge-takedown.js');
+		const items = await findDerivedItems(row);
+		expect(items.avatars.map((a) => a.id)).toEqual([avatar.id]);
+		expect(items.sketchfab.map((u) => u.sketchfab_uid)).toEqual(['uid123']);
+		expect(items.remixes.map((r) => r.id)).toEqual([remix]);
+	});
+
+	it('removes the avatar copies and deletes the Sketchfab model, and a rerun is safe', async () => {
+		const { id } = await seedWithFiles();
+		const [row] = await holder.db.sql`select * from forge_creations where id = ${id}`;
+		const avatar = await seedAvatar(row.glb_url);
+		await holder.db.sql`insert into sketchfab_uploads (creation_id, status, sketchfab_uid) values (${id}, 'live', 'uid123')`;
+		const calls = [];
+		vi.stubGlobal('fetch', async (url, init) => {
+			calls.push([String(url), init?.method, init?.headers?.authorization]);
+			return new Response(null, { status: calls.length === 1 ? 204 : 404 });
+		});
+		try {
+			const { findDerivedItems, removeDerivedItems } = await import('../../api/_lib/forge-takedown.js');
+			const items = await findDerivedItems(row);
+			const out = await removeDerivedItems(items);
+			expect(out.failed).toEqual([]);
+			expect(calls[0]).toEqual(['https://api.sketchfab.com/v3/models/uid123', 'DELETE', 'Token sketchfab-coverage-token']);
+			const [a] = await holder.db.sql`select deleted_at from avatars where id = ${avatar.id}`;
+			expect(a.deleted_at).not.toBeNull();
+			expect(bucket.objects.has(avatar.key)).toBe(false);
+			// The row is gone after deleteCreation, and a model Sketchfab already
+			// dropped answers 404: neither is a failure on the second pass.
+			const again = await removeDerivedItems(items);
+			expect(again.failed).toEqual([]);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it('reports what it could not remove instead of claiming a clean takedown', async () => {
+		const { id } = await seedWithFiles();
+		const [row] = await holder.db.sql`select * from forge_creations where id = ${id}`;
+		const avatar = await seedAvatar(row.glb_url);
+		await holder.db.sql`insert into sketchfab_uploads (creation_id, status, sketchfab_uid) values (${id}, 'live', 'uid123')`;
+		vi.stubGlobal('fetch', async () => new Response('{}', { status: 500 }));
+		bucket.down = true;
+		try {
+			const { findDerivedItems, removeDerivedItems } = await import('../../api/_lib/forge-takedown.js');
+			const out = await removeDerivedItems(await findDerivedItems(row));
+			expect(out.failed.map((f) => f.kind).sort()).toEqual(['avatar_object', 'sketchfab']);
+			const [a] = await holder.db.sql`select deleted_at from avatars where id = ${avatar.id}`;
+			expect(a.deleted_at).not.toBeNull();
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+});
+
+describe('takedownCdnPaths names every cached surface of the model', () => {
+	it('covers the page, the share page, the social card, the API reads, the feeds and every stored file with its variants', async () => {
+		const { takedownCdnPaths } = await import('../../api/_lib/forge-takedown.js');
+		const id = '11111111-2222-4333-8444-555555555555';
+		const paths = takedownCdnPaths({ id, keys: [`forge/abc/${id}.glb`, `forge/abc/${id}.png`] });
+		for (const p of [
+			`/m/${id}`, `/m/${id}/*`, `/forge/share/${id}`, `/api/forge/${id}/og`, '/api/forge-creation',
+			'/api/forge-gallery', '/api/creations', '/api/explore', '/api/render/glb',
+			`/cdn/forge/abc/${id}.glb`, `/cdn/forge/abc/${id}.png`,
+			`/cdn/_v/128/forge/abc/${id}.png`, `/cdn/_v/256/forge/abc/${id}.png`, `/cdn/_v/512/forge/abc/${id}.png`,
+		]) expect(paths, p).toContain(p);
+		expect(paths.some((p) => p.includes(`${id}.glb`) && p.includes('/_v/'))).toBe(false);
+		expect(new Set(paths).size).toBe(paths.length);
 	});
 });
