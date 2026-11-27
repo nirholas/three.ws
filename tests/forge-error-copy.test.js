@@ -232,6 +232,7 @@ describe('page wiring', () => {
 		'src/forge-studio/forge.js',
 		'src/forge-rig.js',
 		'src/forge-stylize.js',
+		'src/forge-studio/forge-stylize.js',
 		'src/forge-segment.js',
 		'src/forge-optimize.js',
 		'src/forge-gameready.js',
