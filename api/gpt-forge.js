@@ -101,7 +101,8 @@ import {
 	hfLaneCooling,
 	HF_LANE_COOLDOWN_SECONDS,
 } from './_lib/forge-lane-health.js';
-import { resolveProviderKey } from './_lib/forge-provider-key.js';
+import { resolveProviderKey, resolveCallerProviderKey } from './_lib/forge-provider-key.js';
+import { KEY_SHAPES, byokFailureResponse, byokPollFailure, rejectedKeyBody } from './_lib/forge-byok-guard.js';
 import { validateForgeImage } from './_lib/forge-image-validate.js';
 import { findUnsafeUrl, verifyUploadedReferences } from './_lib/forge-input-guard.js';
 import {
@@ -192,8 +193,8 @@ import {
 	laneAllowedInTerritory,
 	requestTerritory,
 	isTencentLane,
-} from './_lib/forge-territory.js';
 	regionRestrictedMessage,
+} from './_lib/forge-territory.js';
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
 import { decideStalledPoll } from './_lib/forge-job-deadline.js';
 import { directPrompt } from './_mcp-studio/gpt-forge-client.js';
@@ -1799,7 +1800,9 @@ async function startJob(req, res) {
 		const byokProvider = BACKENDS[backendId].byok;
 		const byokFactory = BYOK_PROVIDER_FACTORIES[byokProvider];
 		if (byokFactory) {
-			const key = await resolveProviderKey(req, body, byokProvider);
+			const found = await resolveCallerProviderKey(req, body, byokProvider);
+			if (found.rejected) return json(res, 401, rejectedKeyBody(KEY_SHAPES[byokProvider]?.label, found.rejected));
+			const key = found.key;
 			if (!key) return needsKey(res, backendId);
 
 			let gp;
@@ -2675,6 +2678,16 @@ async function startJob(req, res) {
 	} catch (err) {
 		noteSubmitError(err);
 		if (err?.code === 'unconfigured') return unconfigured(res);
+		// A request that ran on the caller's own provider key is answered by that
+		// provider's failure class and never handed to a platform-paid engine.
+		const byokUserKey = Boolean(BACKENDS[backendId]?.byok);
+		if (byokUserKey) {
+			const failure = byokFailureResponse(err, KEY_SHAPES[BACKENDS[backendId].byok]?.label);
+			if (failure) {
+				if (failure.retryAfter) res.setHeader('retry-after', String(failure.retryAfter));
+				return json(res, failure.status, failure.body);
+			}
+		}
 		if (err?.code === 'invalid_key') {
 			return json(res, 401, {
 				error: 'invalid_key',
@@ -2707,6 +2720,7 @@ async function startJob(req, res) {
 		// request (the draft nvidia→trellis→nvidia loop).
 		if (
 			(isUpstreamUnavailable(err) || isPaidCreditFailure(err)) &&
+			!byokUserKey &&
 			!isImageMode &&
 			!nvidiaTried &&
 			prompt
@@ -3145,9 +3159,20 @@ async function pollJob(req, res, jobId) {
 	// Poll the provider that owns this job. BYOK providers re-resolve the key per
 	// poll (the client resends it, or it loads from the session store).
 	let result;
+	let byokPoll = null;
 	try {
 		if (BYOK_PROVIDER_FACTORIES[provider]) {
-			const key = await resolveProviderKey(req, null, provider);
+			const found = await resolveCallerProviderKey(req, null, provider);
+			if (found.rejected) {
+				return json(res, 200, {
+					job_id: jobId,
+					status: 'failed',
+					error_code: 'invalid_key',
+					error: found.rejected.message,
+					...metaFields,
+				});
+			}
+			const key = found.key;
 			if (!key) {
 				return json(res, 200, {
 					job_id: jobId,
@@ -3156,6 +3181,7 @@ async function pollJob(req, res, jobId) {
 					...metaFields,
 				});
 			}
+			byokPoll = { key, label: KEY_SHAPES[provider]?.label };
 			const gp = BYOK_PROVIDER_FACTORIES[provider](key);
 			result = await gp.status({ kind: liveToken.kind, taskId: upstreamId });
 		} else if (provider === 'replicate_byok') {
@@ -3398,13 +3424,18 @@ async function pollJob(req, res, jobId) {
 			meta?.path === 'sketch'
 				? []
 				: retryBackendSuggestions({ attempted, hasImage: Boolean(meta?.preview_image_url), country: requestTerritory(req) });
+		// A job that ran on the caller's own provider account is explained in terms
+		// of that account, not the platform's generic "temporarily unavailable" copy.
+		const ownKeyFailure = byokPoll ? byokPollFailure(result, byokPoll.label, byokPoll.key) : null;
 		return json(res, 200, {
 			job_id: jobId,
 			status: 'failed',
-			error:
-				sketchFallback && inputUnusable
+			error: ownKeyFailure
+				? ownKeyFailure.error
+				: sketchFallback && inputUnusable
 					? SKETCH_UNREADABLE_MESSAGE
 					: sanitizeJobError(result.error) || '3D generation hit a snag, please try again.',
+			...(ownKeyFailure ? { error_code: ownKeyFailure.error_code } : {}),
 			...metaFields,
 			...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),
 		});

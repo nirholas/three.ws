@@ -20,6 +20,7 @@
 // v3.1 and is overridable via TRIPO_MODEL_VERSION.
 
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { bodyRefusesContent, classifyFailureText, contentRefusedError } from '../_lib/forge-byok-guard.js';
 
 const TRIPO_BASE = 'https://openapi.tripo3d.com/v3';
 const DEFAULT_MODEL_VERSION = 'v3.1-20260211';
@@ -86,6 +87,9 @@ function parseImageDataUri(s) {
 // disambiguate credits-vs-permission on 403 using the error code, since Tripo
 // overloads 403 for both "no permission" and "insufficient credits".
 function classify(res, data) {
+	// A moderation refusal is an HTTP 403 too, so it is checked before the
+	// permission branch below or it would be reported as a rejected key.
+	if (res.status !== 401 && bodyRefusesContent(data)) throw contentRefusedError('Tripo', res.status);
 	if (res.status === 401) {
 		throw Object.assign(new Error(data?.message || 'Tripo rejected the API key.'), {
 			code: 'invalid_key',
@@ -218,6 +222,10 @@ export function createTripoProvider(apiKey) {
 		}
 		const data = await res.json().catch(() => ({}));
 		if (res.status === 404) return { status: 'failed', error: 'tripo task not found' };
+		// A key revoked mid-job must end the job, not read as "still running".
+		if (res.status === 401 || res.status === 403) {
+			return { status: 'failed', errorCode: 'invalid_key', error: 'tripo rejected the API key' };
+		}
 		if (!res.ok || data?.code !== 0) {
 			return { status: 'running', error: `tripo returned ${res.status}` };
 		}
@@ -240,6 +248,8 @@ export function createTripoProvider(apiKey) {
 		}
 		if (taskStatus === 'failed') {
 			result.error = d.error_message || `tripo task ${d.status || 'failed'}`;
+			const failureCode = classifyFailureText(result.error);
+			if (failureCode) result.errorCode = failureCode;
 		}
 		return result;
 	}

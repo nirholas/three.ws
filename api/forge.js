@@ -105,6 +105,12 @@ import {
 } from './_lib/forge-lane-health.js';
 import { isInlineImageRef } from './_lib/image-persist.js';
 import { resolveProviderKey, resolveProviderKeyWithSource } from './_lib/forge-provider-key.js';
+import {
+	KEY_SHAPES,
+	byokFailureResponse,
+	byokPollFailure,
+	rejectedKeyBody,
+} from './_lib/forge-byok-guard.js';
 import { validateForgeImage } from './_lib/forge-image-validate.js';
 import { findUnsafeUrl, verifyUploadedReferences } from './_lib/forge-input-guard.js';
 import {
@@ -1298,7 +1304,8 @@ async function startJobWithBody(req, res, body) {
 	if (path === 'geometry' && !backendExplicit) {
 		const defaultByok = BACKENDS[backendId]?.byok;
 		if (defaultByok) {
-			const { key } = await resolveProviderKeyWithSource(req, body, defaultByok);
+			const { key, rejected } = await resolveProviderKeyWithSource(req, body, defaultByok);
+			if (rejected) return json(res, 401, rejectedKeyBody(KEY_SHAPES[defaultByok]?.label, rejected));
 			if (!key) {
 				path = 'image';
 				backendId = resolveBackendId({ path, tier, userImages: isImageMode, subjectClass, country });
@@ -1347,6 +1354,9 @@ async function startJobWithBody(req, res, body) {
 	let resolvedTripoKey = null;
 	if (BACKENDS[backendId]?.byok === 'tripo' && BACKENDS[backendId]?.houseKeyEnv) {
 		resolvedTripoKey = await resolveProviderKeyWithSource(req, body, 'tripo');
+		if (resolvedTripoKey.rejected) {
+			return json(res, 401, rejectedKeyBody(KEY_SHAPES.tripo.label, resolvedTripoKey.rejected));
+		}
 		usingTripoHouseKey = resolvedTripoKey.source === 'house';
 	}
 
@@ -1917,10 +1927,16 @@ async function startJobWithBody(req, res, body) {
 		const byokProvider = BACKENDS[backendId].byok;
 		const byokFactory = BYOK_PROVIDER_FACTORIES[byokProvider];
 		if (byokFactory) {
-			const key =
-				byokProvider === 'tripo' && resolvedTripoKey
-					? resolvedTripoKey.key
-					: await resolveProviderKey(req, body, byokProvider);
+			let key;
+			if (byokProvider === 'tripo' && resolvedTripoKey) {
+				key = resolvedTripoKey.key;
+			} else {
+				const found = await resolveProviderKeyWithSource(req, body, byokProvider);
+				if (found.rejected) {
+					return json(res, 401, rejectedKeyBody(KEY_SHAPES[byokProvider]?.label, found.rejected));
+				}
+				key = found.key;
+			}
 			if (!key) return needsKey(res, backendId);
 
 			let gp;
@@ -2971,6 +2987,19 @@ async function startJobWithBody(req, res, body) {
 	} catch (err) {
 		noteSubmitError(err);
 		if (err?.code === 'unconfigured') return unconfigured(res);
+		// A request that ran on the caller's OWN provider key is answered by that
+		// provider's failure class (rejected key, out of credits, throttled,
+		// refused content, provider down) and is never handed to a platform-paid
+		// engine: the user chose their account, so an outage there is reported as
+		// theirs to act on, not silently re-run on the free NIM lane.
+		const byokUserKey = Boolean(BACKENDS[backendId]?.byok) && !usingTripoHouseKey;
+		if (byokUserKey) {
+			const failure = byokFailureResponse(err, KEY_SHAPES[BACKENDS[backendId].byok]?.label);
+			if (failure) {
+				if (failure.retryAfter) res.setHeader('retry-after', String(failure.retryAfter));
+				return json(res, failure.status, failure.body);
+			}
+		}
 		if (err?.code === 'invalid_key') {
 			return json(res, 401, {
 				error: 'invalid_key',
@@ -3005,6 +3034,7 @@ async function startJobWithBody(req, res, body) {
 		// request (the draft nvidia→trellis→nvidia loop).
 		if (
 			(isUpstreamUnavailable(err) || isPaidCreditFailure(err)) &&
+			!byokUserKey &&
 			!isImageMode &&
 			!nvidiaTried &&
 			prompt
@@ -3462,9 +3492,22 @@ async function pollJob(req, res, jobId) {
 	// Poll the provider that owns this job. BYOK providers re-resolve the key per
 	// poll (the client resends it, or it loads from the session store).
 	let result;
+	let byokPoll = null;
 	try {
 		if (BYOK_PROVIDER_FACTORIES[provider]) {
-			const key = await resolveProviderKey(req, null, provider);
+			// Same priority as submit, house key included: a job started on the
+			// platform's Tripo key is polled with it, since the client never held a key.
+			const found = await resolveProviderKeyWithSource(req, null, provider);
+			if (found.rejected) {
+				return json(res, 200, {
+					job_id: jobId,
+					status: 'failed',
+					error_code: 'invalid_key',
+					error: found.rejected.message,
+					...metaFields,
+				});
+			}
+			const key = found.key;
 			if (!key) {
 				return json(res, 200, {
 					job_id: jobId,
@@ -3473,6 +3516,7 @@ async function pollJob(req, res, jobId) {
 					...metaFields,
 				});
 			}
+			byokPoll = { key, source: found.source, label: KEY_SHAPES[provider]?.label };
 			const gp = BYOK_PROVIDER_FACTORIES[provider](key);
 			result = await gp.status({ kind: liveToken.kind, taskId: upstreamId });
 		} else if (provider === 'replicate_byok') {
@@ -3740,13 +3784,21 @@ async function pollJob(req, res, jobId) {
 			meta?.path === 'sketch'
 				? []
 				: retryBackendSuggestions({ attempted, hasImage: Boolean(meta?.preview_image_url), country: requestTerritory(req) });
+		// A job that ran on the caller's own provider account is explained in terms
+		// of that account (rejected key, out of credits, refused content), not the
+		// platform's generic "temporarily unavailable" copy. A house-key job stays on
+		// the neutral copy: the account in question is ours, not the caller's.
+		const ownKeyFailure =
+			byokPoll && byokPoll.source !== 'house' ? byokPollFailure(result, byokPoll.label, byokPoll.key) : null;
 		return json(res, 200, {
 			job_id: jobId,
 			status: 'failed',
-			error:
-				sketchFallback && inputUnusable
+			error: ownKeyFailure
+				? ownKeyFailure.error
+				: sketchFallback && inputUnusable
 					? SKETCH_UNREADABLE_MESSAGE
 					: sanitizeJobError(result.error) || '3D generation hit a snag, please try again.',
+			...(ownKeyFailure ? { error_code: ownKeyFailure.error_code } : {}),
 			...metaFields,
 			...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),
 		});

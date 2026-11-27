@@ -40,7 +40,8 @@ import {
 } from '../../_lib/forge-tiers.js';
 import { laneHealthSnapshot } from '../../_lib/forge-lane-health.js';
 import { laneAllowedInTerritory, requestTerritory } from '../../_lib/forge-territory.js';
-import { resolveProviderKey } from '../../_lib/forge-provider-key.js';
+import { resolveCallerProviderKey } from '../../_lib/forge-provider-key.js';
+import { KEY_SHAPES, byokFailureResponse, byokPollFailure, rejectedKeyBody } from '../../_lib/forge-byok-guard.js';
 import { encodeJobToken, decodeJobToken } from '../../_lib/forge-job-token.js';
 import { watsonxConfig, watsonxChatComplete } from '../../_lib/watsonx.js';
 import { llmComplete } from '../../_lib/llm.js';
@@ -398,6 +399,17 @@ async function coldStartFor(backendId) {
 	}
 }
 
+// A key the caller sent (or saved) that cannot be a real key: refused before any
+// billed call, with a message that never repeats the key.
+function rejectedKeyResult(backendId, rejected) {
+	const body = rejectedKeyBody(KEY_SHAPES[BACKENDS[backendId]?.byok]?.label, rejected);
+	return {
+		content: [{ type: 'text', text: body.message }],
+		structuredContent: { status: 'invalid_key', engine: engineIdFor(backendId), reason: body.reason },
+		isError: true,
+	};
+}
+
 function needsKeyResult(backendId) {
 	const meta = BACKENDS[backendId];
 	// The bring-your-own-key path is the one place a credential provider name must
@@ -437,7 +449,9 @@ async function submitGeometryJob({
 	path,
 }) {
 	const providerName = BACKENDS[backendId].byok; // 'meshy' | 'tripo' | 'rodin' | 'stability'
-	const key = await resolveProviderKey(req, args, providerName);
+	const found = await resolveCallerProviderKey(req, args, providerName);
+	if (found.rejected) return rejectedKeyResult(backendId, found.rejected);
+	const key = found.key;
 	if (!key) return needsKeyResult(backendId);
 
 	let gp;
@@ -448,10 +462,22 @@ async function submitGeometryJob({
 	}
 
 	let submitted;
-	if (isImageMode) {
-		submitted = await gp.imageTo3d({ imageUrl: primaryImage, prompt: prompt || undefined, tier });
-	} else if (typeof gp.textToGeometry === 'function') {
-		submitted = await gp.textToGeometry({ prompt, tier });
+	if (isImageMode || typeof gp.textToGeometry === 'function') {
+		try {
+			submitted = isImageMode
+				? await gp.imageTo3d({ imageUrl: primaryImage, prompt: prompt || undefined, tier })
+				: await gp.textToGeometry({ prompt, tier });
+		} catch (err) {
+			// The caller's own provider account failed: say which way, and never
+			// start anything on a platform-paid engine in its place.
+			const failure = byokFailureResponse(err, KEY_SHAPES[providerName]?.label);
+			if (!failure) throw err;
+			return {
+				content: [{ type: 'text', text: failure.body.message }],
+				structuredContent: { status: 'failed', error: failure.body.error, engine: engineIdFor(backendId) },
+				isError: true,
+			};
+		}
 	} else {
 		// Image-only engine asked to run text→3D.
 		return {
@@ -538,7 +564,9 @@ async function pollAnyProvider(req, jobId) {
 	const token = decodeJobToken(jobId);
 	if (token) {
 		if (BYOK_PROVIDER_FACTORIES[token.provider]) {
-			const key = await resolveProviderKey(req, null, token.provider);
+			const found = await resolveCallerProviderKey(req, null, token.provider);
+			if (found.rejected) return { status: 'failed', error: found.rejected.message };
+			const key = found.key;
 			if (!key) {
 				return {
 					status: 'failed',
@@ -546,7 +574,10 @@ async function pollAnyProvider(req, jobId) {
 				};
 			}
 			const gp = BYOK_PROVIDER_FACTORIES[token.provider](key);
-			return gp.status({ kind: token.kind, taskId: token.taskId });
+			const polled = await gp.status({ kind: token.kind, taskId: token.taskId });
+			if (polled?.status !== 'failed') return polled;
+			// Explain the failure in terms of the caller's own provider account.
+			return { ...polled, error: byokPollFailure(polled, KEY_SHAPES[token.provider]?.label, key).error };
 		}
 		if (token.provider === 'gcp') {
 			let gcp;

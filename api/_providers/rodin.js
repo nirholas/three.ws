@@ -20,6 +20,7 @@
 // absent, the forge endpoint never reaches this module.
 
 import { fetchUpstream, fetchUpstreamPublic } from '../_lib/upstream-fetch.js';
+import { bodyRefusesContent, classifyFailureText, contentRefusedError } from '../_lib/forge-byok-guard.js';
 
 const RODIN_BASE = 'https://api.hyper3d.com/api/v2';
 
@@ -69,6 +70,7 @@ export function createRodinProvider(apiKey) {
 	const authHeader = { authorization: `Bearer ${apiKey}` };
 
 	function normalizeError(res, data) {
+		if (res.status !== 401 && bodyRefusesContent(data)) return contentRefusedError('Rodin', res.status);
 		if (res.status === 401 || res.status === 403) {
 			return Object.assign(new Error('Rodin rejected the API key.'), {
 				code: 'invalid_key',
@@ -183,12 +185,19 @@ export function createRodinProvider(apiKey) {
 			}
 			const data = await res.json().catch(() => ({}));
 			if (res.status === 404) return { status: 'failed', error: 'rodin task not found' };
+			// A key revoked mid-job must end the job, not read as "still running".
+			if (res.status === 401 || res.status === 403) {
+				return { status: 'failed', errorCode: 'invalid_key', error: 'rodin rejected the API key' };
+			}
 			if (!res.ok) return { status: 'running', error: `rodin returned ${res.status}` };
 
 			const status = mapStatus(data.jobs);
 			const result = { status };
 			if (status === 'failed') {
-				result.error = data?.error || 'rodin task failed';
+				const reason = data?.error || data?.message;
+				result.error = typeof reason === 'string' && reason ? reason : 'rodin task failed';
+				const failureCode = classifyFailureText(result.error);
+				if (failureCode) result.errorCode = failureCode;
 				return result;
 			}
 			if (status !== 'done') return result;
