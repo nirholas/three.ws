@@ -24,9 +24,11 @@
 //      (bell + push + email via api/_lib/forge-notify). The attended path
 //      never notifies: the result is already on screen.
 //
-// Idempotent + swarm-safe: materializeCreation short-circuits on already-done
-// rows, markFailed is guarded by status != 'done', and the batch is bounded so
-// overlapping ticks just split the work.
+// Bounded and swarm-safe: one tick at a time (a Redis lock), at most
+// BATCH_LIMIT rows, shared fairly across lanes so one sick lane cannot hold the
+// batch, and no new row is started past SOFT_DEADLINE_MS. A row is re-read
+// right before it is completed, so a job the creator's open tab already
+// finished is never materialized or announced a second time.
 //
 // Auth: the shared, fail-closed cron gate (api/_lib/cron-auth.js), same as every
 // other cron in /api/cron/.
@@ -53,8 +55,13 @@ import {
 } from '../_lib/forge-failover.js';
 import { markLaneUnhealthy } from '../_lib/forge-lane-health.js';
 import { markProviderCooldown } from '../_lib/provider-health.js';
-import { resolveTier } from '../_lib/forge-tiers.js';
-import { acquireLock, cacheGet, cacheSet } from '../_lib/cache.js';
+import { resolveTier, BACKENDS } from '../_lib/forge-tiers.js';
+import { acquireLock, releaseLock, cacheGet, cacheSet } from '../_lib/cache.js';
+import { optionsForJob } from '../_lib/forge-job-options.js';
+import { cacheKeyForJob, putCachedForgeResult } from '../_lib/forge-cache.js';
+import { resolveStoredProviderKey } from '../_lib/forge-provider-key.js';
+import { createRegenProvider as createReplicateProvider } from '../_providers/replicate.js';
+import { BYOK_PROVIDER_FACTORIES } from '../_providers/byok-registry.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { getRedis } from '../_lib/redis.js';
 import { NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds } from '../forge.js';
@@ -75,15 +82,93 @@ const BATCH_LIMIT = Number(process.env.FORGE_FINALIZE_BATCH) || 25;
 export const ROW_CONCURRENCY = Number(process.env.FORGE_FINALIZE_CONCURRENCY) || 8;
 // Leave fresh rows to the attended browser poll path.
 const GRACE_MINUTES = 2;
-// Past this age a non-terminal generation is declared dead. The slowest real
-// lane (self-host TRELLIS high tier behind a full queue) finishes well inside
-// 30 minutes; beyond it the worker task has been evicted or lost.
+// The ceiling for a lane with no measured limit of its own (below).
 const HARD_TTL_MINUTES = 45;
 // Browser clients poll attended for up to 12 minutes (src/forge.js MAX_POLL_MS)
 // and run their own poll-time lane failover. The cron defers acting on a failed
 // self-host poll until that window has passed, so it can never race a live
 // browser into a duplicate redispatch of the same generation.
 const ATTENDED_POLL_BUDGET_MINUTES = 13;
+// One tick at a time. Rows are independent, but two overlapping ticks would
+// poll and complete the same rows twice. The lock outlives the 60 s budget so a
+// tick that wrapCron cut off (Cloud Run withdraws CPU, the release never runs)
+// still blocks the next minute's tick only until it expires.
+const TICK_LOCK_KEY = 'forge-finalize:tick';
+const TICK_LOCK_TTL_S = maxDuration + 5;
+// No new row starts past this point of the tick. A row in flight keeps going;
+// the rows not reached stay 'generating' and lead the next tick's batch.
+const SOFT_DEADLINE_MS = 40_000;
+
+// How long each lane may stay 'generating' before the reap declares it dead.
+// Measured 2026-11-27 over 30 days of finished jobs (the table is in
+// docs/forge-background-generation.md): each limit is the lane's slowest real
+// finish plus room for a cold start, raised where a recovery step must still
+// get its turn first.
+//
+// The GCP workers declare a lost task "orphaned" at 30 minutes, and that
+// verdict is what lets this cron redispatch the job to another lane, so their
+// limit sits 5 minutes past it (slowest finished pixal3d job: 16.4 min,
+// triposg: 10.3, rerig: 17.0, a scale-from-zero L4 start included).
+const WORKER_ORPHAN_MINUTES = 30;
+// three-ws-api's Cloud Run request timeout is 900 s. A synchronous lane's row
+// belongs to one request, so once that request is over the row can never finish.
+const REQUEST_CEILING_MINUTES = 15;
+
+function timeLimit(minutes, reason) {
+	return Object.freeze({ minutes, reason });
+}
+
+const WORKER_LIMIT = timeLimit(
+	WORKER_ORPHAN_MINUTES + 5,
+	'the GPU worker sent no result inside the 35-minute limit',
+);
+const SYNC_LIMIT = timeLimit(
+	REQUEST_CEILING_MINUTES + 5,
+	'the request generating it ended before the model was saved',
+);
+// No finished job on these lanes in the last 30 days, so nothing to measure:
+// they keep the ceiling they always had.
+const KEYED_LIMIT = timeLimit(HARD_TTL_MINUTES, 'the provider sent no result inside the 45-minute limit');
+
+export const DEFAULT_TIME_LIMIT = timeLimit(HARD_TTL_MINUTES, 'no result arrived inside the 45-minute limit');
+
+export const LANE_TIME_LIMITS = Object.freeze({
+	// Protected lane (docs/ops/forge-protected-lanes.md): its 45-minute ceiling
+	// and its exact timed-out message are part of how its job is finalized, so
+	// both stay as they were (an empty reason adds nothing to the message).
+	trellis_selfhost: timeLimit(HARD_TTL_MINUTES, ''),
+	...Object.fromEntries(
+		Object.entries(BACKENDS)
+			.filter(([id, b]) => b.provider === 'gcp' && id !== 'trellis_selfhost')
+			.map(([id]) => [id, WORKER_LIMIT]),
+	),
+	// Reconstruct rows, and rerig rows, which carry no backend at all, only a
+	// worker envelope (see laneKeyFor).
+	gcp: WORKER_LIMIT,
+	rig: WORKER_LIMIT,
+	// The unattended resubmit fires at the 13-minute attended window and the
+	// slowest finished NIM job took 14.7 minutes, so 13 + 15 + 7 of margin.
+	nvidia: timeLimit(35, 'NVIDIA NIM sent no model inside the 35-minute limit, one automatic retry included'),
+	huggingface: SYNC_LIMIT,
+	stability: SYNC_LIMIT,
+	trellis: KEYED_LIMIT,
+	replicate_byok: KEYED_LIMIT,
+	meshy: KEYED_LIMIT,
+	tripo: KEYED_LIMIT,
+	// Rodin's status call needs the per-job subscription key, which only the
+	// submitting page holds, so nothing server-side can ever finish one.
+	rodin: timeLimit(HARD_TTL_MINUTES, 'Rodin jobs can only finish while /forge stays open'),
+});
+
+// The lane a row belongs to for the limits above. Mirrored in SQL by the reap.
+export function laneKeyFor(row) {
+	if (row?.backend) return row.backend;
+	return decodeWorkerEnvelope(row?.replicate_job_id) ? 'rig' : '';
+}
+
+export function laneTimeLimit(row) {
+	return LANE_TIME_LIMITS[laneKeyFor(row)] || DEFAULT_TIME_LIMIT;
+}
 // Hop/attempted memory for cron-built failover chains, keyed by the successor's
 // worker envelope. Same lifetime as the poll path's successor bindings.
 const CRON_HOP_PREFIX = 'fr:cron-hop:';
@@ -300,17 +385,43 @@ async function tryCronRedispatch(row, ageMinutes) {
 // Message/column shape matches forge-store.js's markFailed exactly (error,
 // completed_at, updated_at) so no downstream matcher (forge-error-report.mjs's
 // `error ilike '%timed out%'`) sees a different error string.
+//
+// Each row is held to its own lane's limit (LANE_TIME_LIMITS), passed in as
+// parallel arrays so the table above stays the single source; the SQL lane key
+// mirrors laneKeyFor. The message keeps its 'generation timed out after N
+// minutes' prefix for those matchers and appends the lane's reason.
 export async function reapExpiredRows() {
+	const lanes = Object.keys(LANE_TIME_LIMITS);
+	const minutes = lanes.map((lane) => LANE_TIME_LIMITS[lane].minutes);
+	const reasons = lanes.map((lane) => LANE_TIME_LIMITS[lane].reason);
+	const floor = Math.min(DEFAULT_TIME_LIMIT.minutes, ...minutes);
 	const rows = await sql`
-		update forge_creations
+		with lanes as (
+			select * from unnest(${lanes}::text[], ${minutes}::int[], ${reasons}::text[]) as l(lane, minutes, reason)
+		), due as (
+			select fc.id,
+				coalesce(l.minutes, ${DEFAULT_TIME_LIMIT.minutes}) as minutes,
+				coalesce(l.reason, ${DEFAULT_TIME_LIMIT.reason}) as reason
+			from forge_creations fc
+			left join lanes l on l.lane = case
+				when fc.backend is not null then fc.backend
+				when fc.replicate_job_id like 'eyJ%' then 'rig'
+				else '' end
+			where fc.status = 'generating'
+				and fc.replicate_job_id is not null
+				and fc.created_at < now() - (${floor} * interval '1 minute')
+		)
+		update forge_creations fc
 		set status = 'failed',
-			error = 'generation timed out after ' || round(extract(epoch from (now() - created_at)) / 60) || ' minutes',
-			completed_at = coalesce(completed_at, now()),
+			error = 'generation timed out after ' || round(extract(epoch from (now() - fc.created_at)) / 60) || ' minutes'
+				|| case when due.reason = '' then '' else ': ' || due.reason end,
+			completed_at = coalesce(fc.completed_at, now()),
 			updated_at = now()
-		where status = 'generating'
-			and replicate_job_id is not null
-			and created_at < now() - (${HARD_TTL_MINUTES} * interval '1 minute')
-		returning id, user_id, prompt, backend, tier, path
+		from due
+		where fc.id = due.id
+			and fc.status = 'generating'
+			and fc.created_at < now() - (due.minutes * interval '1 minute')
+		returning fc.id, fc.user_id, fc.prompt, fc.backend, fc.tier, fc.path, fc.error
 	`;
 	for (const row of rows) {
 		if (row.backend === 'nvidia') {
@@ -325,13 +436,228 @@ export async function reapExpiredRows() {
 				userId: row.user_id,
 				creationId: row.id,
 				prompt: row.prompt,
-				error: 'generation timed out',
+				error: row.error || 'generation timed out',
 				backend: row.backend,
 				tier: row.tier,
 			});
 		}
 	}
 	return rows.length;
+}
+
+// The handle the creator's browser polled for this row. Submit-time choices
+// (compression, PBR, LODs, bbox) and the result-cache binding are keyed by it
+// (_lib/forge-job-options.js, _lib/forge-cache.js), and tokens are an HMAC over
+// the same payload, so re-encoding reproduces the exact string. null when the
+// lane bound nothing to a handle (synchronous rows finish inside their request).
+export function jobHandleFor(row) {
+	const id = row?.replicate_job_id;
+	if (!id) return null;
+	if (decodeWorkerEnvelope(id)) return encodeJobToken({ provider: 'gcp', kind: null, taskId: id });
+	if (decodeJobToken(id)) return id;
+	if (row.backend === 'nvidia' && UUID_RE.test(id)) {
+		return encodeJobToken({ provider: 'nvidia', kind: 'text-to-3d', taskId: id });
+	}
+	if (row.backend === 'trellis') return id;
+	return null;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function readRowStatus(id) {
+	try {
+		const [row] = await sql`select status from forge_creations where id = ${id}`;
+		return row?.status ?? null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Complete a finished job exactly as the creator's own poll would have
+ * (api/forge.js pollJob): the same writer, the options they chose at submit,
+ * quality scoring, the worker's own timings for the lane stats, the result
+ * cache, and then the one unattended notification.
+ *
+ * The row is re-read first. An open tab may have finished it while this tick's
+ * poll was in flight, and completing it again would repeat every side effect
+ * and announce a model the creator is already looking at.
+ *
+ * @returns {Promise<{ outcome: 'done'|'settled'|'retry', durable?: object }>}
+ *   settled: someone else already finished or failed it; retry: the durable
+ *   copy did not land (storage blip), so the next tick tries again.
+ */
+export async function completeRow(row, { glbUrl, workerStats = null, handle = jobHandleFor(row) } = {}) {
+	const current = await readRowStatus(row.id);
+	if (current && current !== 'generating') return { outcome: 'settled' };
+	const bound = handle ? await optionsForJob(handle).catch(() => null) : null;
+	const durable = await materializeCreation({
+		replicateJobId: row.replicate_job_id,
+		clientKey: row.client_key,
+		glbUrl,
+		quality: true,
+		compress: bound?.compression || null,
+		derivePbr: bound?.derivePbr !== false,
+		bbox: bound?.bbox ?? null,
+		lods: bound?.lods === true,
+		workerStats: workerStats ?? null,
+	});
+	if (!durable) return { outcome: 'retry' };
+	const cacheKey = handle ? await cacheKeyForJob(handle).catch(() => null) : null;
+	if (cacheKey && durable.glbUrl) {
+		await putCachedForgeResult(cacheKey, {
+			glb_url: durable.glbUrl,
+			backend: row.backend || null,
+			tier: row.tier || null,
+			path: row.path || null,
+			quality: durable.quality || null,
+		}).catch(() => {});
+	}
+	if (row.user_id) {
+		notifyForgeComplete({
+			userId: row.user_id,
+			creationId: durable.id,
+			prompt: row.prompt,
+			previewImageUrl: durable.previewImageUrl ?? row.preview_image_url ?? null,
+		});
+	}
+	return { outcome: 'done', durable };
+}
+
+// Fold a completeRow outcome into a row's counters.
+function countCompletion(out, result) {
+	if (result.outcome === 'done') out.done++;
+	else if (result.outcome === 'settled') out.already_final++;
+	else out.still_running++;
+	return out;
+}
+
+// Meshy's poll endpoint differs by task kind and the row does not keep the
+// kind, so both are tried, the likelier first (only an image job stores the
+// photo it reconstructs from, api/forge.js). Tripo polls one endpoint. Rodin's
+// poll key is a per-job subscription key that only the submitting page held,
+// and Stability answers synchronously, so neither has anything to poll.
+export function byokKindsFor(provider, row) {
+	if (provider === 'meshy') return row.preview_image_url ? ['image-to-3d', 'text-to-3d'] : ['text-to-3d', 'image-to-3d'];
+	if (provider === 'tripo') return ['task'];
+	return [];
+}
+
+/**
+ * How to poll a third-party or key-bound lane unattended: the Replicate-hosted
+ * TRELLIS lane on the platform token, and Replicate, Meshy and Tripo jobs on
+ * the creator's saved key (or Tripo's house key). A key typed into the page for
+ * one request is never stored, so such a job can only finish while the page is
+ * open, and this returns null for it, as it does for an unconfigured lane.
+ *
+ * @returns {Promise<null | { poll: () => Promise<object>, handle: string }>}
+ */
+export async function thirdPartyPoller(row, { replicate = null, makeReplicate, byokFactories = {}, keyFor } = {}) {
+	const taskId = row.replicate_job_id;
+	if (row.backend === 'trellis') {
+		return replicate ? { poll: () => replicate.status(taskId), handle: taskId } : null;
+	}
+	const provider = BACKENDS[row.backend]?.byok;
+	if (!provider || !keyFor) return null;
+	const kinds = byokKindsFor(provider, row);
+	if (provider !== 'replicate' && (!kinds.length || !byokFactories[provider])) return null;
+	const key = await keyFor({ userId: row.user_id ?? null, provider }).catch(() => null);
+	if (!key) return null;
+	if (provider === 'replicate') {
+		const rep = makeReplicate(key);
+		return {
+			poll: () => rep.status(taskId),
+			handle: encodeJobToken({ provider: 'replicate_byok', kind: null, taskId }),
+		};
+	}
+	const adapter = byokFactories[provider](key);
+	const poller = {
+		handle: encodeJobToken({ provider, kind: kinds[0], taskId }),
+		// The first kind that knows the task wins, and its token becomes the
+		// handle (submit-time options were bound to exactly that token). A kind
+		// that throws is a wrong endpoint or a blip; only when every kind fails
+		// is the job reported failed.
+		async poll() {
+			let failed = null;
+			for (const kind of kinds) {
+				const status = await adapter.status({ kind, taskId }).catch(() => null);
+				if (status && status.status !== 'failed') {
+					poller.handle = encodeJobToken({ provider, kind, taskId });
+					return status;
+				}
+				if (status) failed ??= status;
+			}
+			return failed;
+		},
+	};
+	return poller;
+}
+
+// The live-poll batch. Oldest first within each lane, but lanes take turns
+// (every lane's oldest row before any lane's second), so a sick lane with a
+// deep backlog cannot hold every slot while another lane's finished jobs wait.
+async function selectBatch() {
+	return sql`
+		select id, replicate_job_id, client_key, user_id, prompt, preview_image_url,
+			backend, tier, path, created_at, destination, internal, visibility
+		from (
+			select id, replicate_job_id, client_key, user_id, prompt, preview_image_url,
+				backend, tier, path, created_at, destination, internal, visibility,
+				row_number() over (partition by coalesce(backend, '') order by created_at) as lane_rank
+			from forge_creations
+			where status = 'generating'
+				and replicate_job_id is not null
+				and created_at < now() - (${GRACE_MINUTES} * interval '1 minute')
+		) q
+		order by lane_rank, created_at
+		limit ${BATCH_LIMIT}
+	`;
+}
+
+function emptyCounters() {
+	return {
+		done: 0,
+		failed: 0,
+		failed_over: 0,
+		resubmitted: 0,
+		timed_out: 0,
+		still_running: 0,
+		unpollable: 0,
+		already_final: 0,
+		deferred: 0,
+	};
+}
+
+/**
+ * One finalizer tick: reap, select, sweep. Bounded three ways so a bad minute
+ * never becomes a bad hour: one tick at a time (TICK_LOCK_KEY), at most
+ * BATCH_LIMIT rows shared fairly across lanes, and no new row started past
+ * SOFT_DEADLINE_MS. A row that throws is counted and the rest carry on.
+ */
+export async function runFinalizeTick({ gcp = null, nvidia = null, thirdParty = null, now = Date.now } = {}) {
+	const t0 = now();
+	if (!(await acquireLock(TICK_LOCK_KEY, TICK_LOCK_TTL_S))) {
+		return { enabled: true, skipped: 'overlap', elapsed_ms: now() - t0 };
+	}
+	try {
+		const reaped = await reapExpiredRows();
+		const rows = await selectBatch();
+		const results = await mapPoolSettled(rows, ROW_CONCURRENCY, (row) =>
+			now() - t0 > SOFT_DEADLINE_MS ? { deferred: 1 } : sweepRow(row, { gcp, nvidia, thirdParty }),
+		);
+		const out = { ...emptyCounters(), timed_out: reaped };
+		for (const result of results) {
+			if (result.ok) {
+				for (const key of Object.keys(out)) out[key] += result.value[key] || 0;
+			} else {
+				console.warn(`[forge-finalize] row sweep threw: ${result.error?.message || result.error}`);
+				out.unpollable++;
+			}
+		}
+		return { enabled: true, reaped, swept: rows.length, ...out, elapsed_ms: now() - t0 };
+	} finally {
+		await releaseLock(TICK_LOCK_KEY).catch(() => {});
+	}
 }
 
 export default wrapCron(async (req, res) => {
@@ -342,53 +668,33 @@ export default wrapCron(async (req, res) => {
 		return json(res, 200, { enabled: false, swept: 0 });
 	}
 
-	const t0 = Date.now();
-
-	const reaped = await reapExpiredRows();
-
-	const rows = await sql`
-		select id, replicate_job_id, client_key, user_id, prompt, preview_image_url,
-			backend, tier, path, created_at, destination, internal, visibility
-		from forge_creations
-		where status = 'generating'
-			and replicate_job_id is not null
-			and created_at < now() - (${GRACE_MINUTES} * interval '1 minute')
-		order by created_at asc
-		limit ${BATCH_LIMIT}
-	`;
-
 	let gcp = null;
 	try {
 		gcp = createGcpProvider();
 	} catch {
 		// No GCP_RECONSTRUCTION_KEY on this deployment: envelope rows can't be
-		// polled here; the hard TTL below still reaps them.
+		// polled here; the lane time limit still reaps them.
 	}
 	let nvidia = null;
 	try {
 		nvidia = createNvidiaProvider();
 	} catch {
-		// NIM unconfigured: forge-token rows can't be polled here; hard TTL reaps.
+		// NIM unconfigured: forge-token rows can't be polled here; the reap still ends them.
 	}
-
-	const results = await mapPoolSettled(rows, ROW_CONCURRENCY, (row) => sweepRow(row, { gcp, nvidia }));
-	const out = { done: 0, failed: 0, failed_over: 0, resubmitted: 0, timed_out: reaped, still_running: 0, unpollable: 0 };
-	for (const result of results) {
-		if (result.ok) {
-			for (const key of Object.keys(out)) out[key] += result.value[key] || 0;
-		} else {
-			console.warn(`[forge-finalize] row sweep threw: ${result.error?.message || result.error}`);
-			out.unpollable++;
-		}
+	let replicate = null;
+	try {
+		replicate = createReplicateProvider();
+	} catch {
+		// No platform Replicate token: Replicate-hosted TRELLIS rows wait for the reap.
 	}
+	const thirdParty = {
+		replicate,
+		makeReplicate: (apiToken) => createReplicateProvider({ apiToken }),
+		byokFactories: BYOK_PROVIDER_FACTORIES,
+		keyFor: resolveStoredProviderKey,
+	};
 
-	return json(res, 200, {
-		enabled: true,
-		reaped,
-		swept: rows.length,
-		...out,
-		elapsed_ms: Date.now() - t0,
-	});
+	return json(res, 200, await runFinalizeTick({ gcp, nvidia, thirdParty }));
 }, { maxDurationMs: maxDuration * 1000 });
 
 // One row's worth of the sweep above, factored out so it can run concurrently
@@ -397,8 +703,8 @@ export default wrapCron(async (req, res) => {
 // into the tick's aggregate counters; never throws (mapPoolSettled would catch
 // it anyway, but a thrown row loses its counters, so every awaited call here
 // already carries its own `.catch`).
-export async function sweepRow(row, { gcp, nvidia }) {
-	const out = { done: 0, failed: 0, failed_over: 0, resubmitted: 0, timed_out: 0, still_running: 0, unpollable: 0 };
+export async function sweepRow(row, { gcp, nvidia, thirdParty = null }) {
+	const out = emptyCounters();
 	const ageMinutes = (Date.now() - Date.parse(row.created_at)) / 60_000;
 	const envelope = decodeWorkerEnvelope(row.replicate_job_id);
 
@@ -406,27 +712,12 @@ export async function sweepRow(row, { gcp, nvidia }) {
 		const status = await gcp.status(row.replicate_job_id).catch(() => null);
 
 		if (status?.status === 'done' && status.resultGlbUrl) {
-			const durable = await materializeCreation({
-				replicateJobId: row.replicate_job_id,
-				clientKey: row.client_key,
-				glbUrl: status.resultGlbUrl,
-			});
-			if (durable) {
-				out.done++;
-				if (row.user_id) {
-					notifyForgeComplete({
-						userId: row.user_id,
-						creationId: durable.id,
-						prompt: row.prompt,
-						previewImageUrl: durable.previewImageUrl ?? row.preview_image_url ?? null,
-					});
-				}
-				return out;
-			}
-			// Copy-to-durable failed (transient storage/network): leave the row
+			// A failed copy-to-durable (transient storage/network) leaves the row
 			// for the next tick rather than failing a finished model.
-			out.still_running++;
-			return out;
+			return countCompletion(
+				out,
+				await completeRow(row, { glbUrl: status.resultGlbUrl, workerStats: status.workerStats }),
+			);
 		}
 
 		if (status?.status === 'failed') {
@@ -486,17 +777,10 @@ export async function sweepRow(row, { gcp, nvidia }) {
 				.status({ kind: forgeToken.kind, taskId: forgeToken.taskId })
 				.catch(() => null);
 			if (status?.status === 'done' && status.resultGlbUrl) {
-				const durable = await materializeCreation({
-					replicateJobId: row.replicate_job_id,
-					clientKey: row.client_key,
-					glbUrl: status.resultGlbUrl,
-				});
-				if (durable) {
-					out.done++;
-					return out;
-				}
-				out.still_running++;
-				return out;
+				return countCompletion(
+					out,
+					await completeRow(row, { glbUrl: status.resultGlbUrl, workerStats: status.workerStats }),
+				);
 			}
 			if (status?.status === 'failed') {
 				await markFailed({
@@ -518,25 +802,10 @@ export async function sweepRow(row, { gcp, nvidia }) {
 			const taskId = typeof alias === 'string' && alias ? alias : row.replicate_job_id;
 			const status = await nvidia.status({ taskId }).catch(() => null);
 			if (status?.status === 'done' && status.resultGlbUrl) {
-				const durable = await materializeCreation({
-					replicateJobId: row.replicate_job_id,
-					clientKey: row.client_key,
-					glbUrl: status.resultGlbUrl,
-				});
-				if (durable) {
-					out.done++;
-					if (row.user_id) {
-						notifyForgeComplete({
-							userId: row.user_id,
-							creationId: durable.id,
-							prompt: row.prompt,
-							previewImageUrl: durable.previewImageUrl ?? row.preview_image_url ?? null,
-						});
-					}
-					return out;
-				}
-				out.still_running++;
-				return out;
+				return countCompletion(
+					out,
+					await completeRow(row, { glbUrl: status.resultGlbUrl, workerStats: status.workerStats }),
+				);
 			}
 			if ((!status || status.status === 'running' || status.status === 'queued') && row.prompt) {
 				// Still running/queued, or the poll itself errored (status null): no
@@ -546,6 +815,7 @@ export async function sweepRow(row, { gcp, nvidia }) {
 				// nvcf_expired recovery.
 				const stallDecision = decideNvidiaStall({
 					ageMinutes,
+					hardTtlMinutes: LANE_TIME_LIMITS.nvidia.minutes,
 					alreadyResubmitted: Boolean(
 						await cacheGet(`nvcf:stall-resub:${row.replicate_job_id}`).catch(() => null),
 					),
@@ -568,15 +838,8 @@ export async function sweepRow(row, { gcp, nvidia }) {
 							return out;
 						}
 						if (resub.resultGlbUrl) {
-							const durable = await materializeCreation({
-								replicateJobId: row.replicate_job_id,
-								clientKey: row.client_key,
-								glbUrl: resub.resultGlbUrl,
-							});
-							if (durable) {
-								out.done++;
-								return out;
-							}
+							const completed = await completeRow(row, { glbUrl: resub.resultGlbUrl });
+							if (completed.outcome !== 'retry') return countCompletion(out, completed);
 						}
 					} catch (err) {
 						console.warn(`[forge-finalize] NVCF stall resubmit failed: ${err?.message || err}`);
@@ -606,15 +869,8 @@ export async function sweepRow(row, { gcp, nvidia }) {
 							return out;
 						}
 						if (resub.resultGlbUrl) {
-							const durable = await materializeCreation({
-								replicateJobId: row.replicate_job_id,
-								clientKey: row.client_key,
-								glbUrl: resub.resultGlbUrl,
-							});
-							if (durable) {
-								out.done++;
-								return out;
-							}
+							const completed = await completeRow(row, { glbUrl: resub.resultGlbUrl });
+							if (completed.outcome !== 'retry') return countCompletion(out, completed);
 						}
 					} catch (err) {
 						console.warn(`[forge-finalize] NVCF resubmit failed: ${err?.message || err}`);
@@ -641,17 +897,51 @@ export async function sweepRow(row, { gcp, nvidia }) {
 			}
 			// queued / running / poll blip: fall through to the TTL check.
 		} else {
-			out.unpollable++;
+			const poller = thirdParty ? await thirdPartyPoller(row, thirdParty).catch(() => null) : null;
+			if (!poller) {
+				out.unpollable++;
+				return out;
+			}
+			return sweepThirdParty(row, poller, ageMinutes, out);
 		}
 	}
 
-	// reapExpiredRows runs a poll-free, BATCH_LIMIT-free hard-TTL sweep ahead of
-	// the live-poll query that selects `rows` for this batch (see the handler
-	// above), so any row that reaches this point is, by construction, already
-	// inside HARD_TTL_MINUTES: there is no second TTL branch to duplicate here.
-	if (envelope) {
-		out.still_running++;
-	}
+	// reapExpiredRows runs a poll-free, BATCH_LIMIT-free sweep ahead of the
+	// live-poll batch (runFinalizeTick), so any row that reaches this point is,
+	// by construction, still inside its lane's time limit: there is no second
+	// TTL branch to duplicate here. Whatever lane it is, it is still running.
+	out.still_running++;
+	return out;
+}
 
+// A third-party or key-bound lane's row (thirdPartyPoller). Done completes it
+// like any other lane; a failure inside the attended window is left to the
+// open page, as for the worker lanes; after it the row is failed and the
+// creator told why.
+async function sweepThirdParty(row, poller, ageMinutes, out) {
+	const status = await poller.poll().catch(() => null);
+	if (status?.status === 'done' && status.resultGlbUrl) {
+		return countCompletion(
+			out,
+			await completeRow(row, {
+				glbUrl: status.resultGlbUrl,
+				workerStats: status.workerStats,
+				handle: poller.handle,
+			}),
+		);
+	}
+	if (status?.status === 'failed' && !(ageMinutes < ATTENDED_POLL_BUDGET_MINUTES)) {
+		await markFailed({
+			replicateJobId: row.replicate_job_id,
+			clientKey: row.client_key,
+			error: status.error || 'generation failed',
+		});
+		out.failed++;
+		if (row.user_id) {
+			notifyForgeFailed({ userId: row.user_id, creationId: row.id, prompt: row.prompt, error: status.error, backend: row.backend, tier: row.tier });
+		}
+		return out;
+	}
+	out.still_running++;
 	return out;
 }

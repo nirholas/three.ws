@@ -63,3 +63,22 @@ export async function resolveProviderKey(req, body, providerName) {
 	const { key } = await resolveInlineOrUserKey(req, body, providerName);
 	return key;
 }
+
+// The unattended twin of resolveProviderKeyWithSource, for a job whose page is
+// gone (api/cron/forge-finalize.js). There is no request, so no inline key: an
+// inline key is used for one request and never stored, so a job submitted with
+// one can only finish while its page is open. What remains is the owner's
+// stored key, then the provider's house key, in that order.
+export async function resolveStoredProviderKey({ userId, provider }) {
+	if (userId) {
+		try {
+			const [row] = await sql`SELECT provider_keys FROM users WHERE id = ${userId}`;
+			const keys = await loadUserProviderKeys(row?.provider_keys);
+			if (keys[provider]) return keys[provider];
+		} catch {
+			// No DB or an undecryptable store: fall through to the house key.
+		}
+	}
+	const envVar = HOUSE_KEY_ENV[provider];
+	return (envVar && process.env[envVar]) || null;
+}
