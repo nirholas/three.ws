@@ -107,7 +107,7 @@ const ONE_INPUT_APART = [
 	['target_polycount', request({}, { target_polycount: 20000 })],
 	['resolution', request({}, { resolution: 512 })],
 	['view_labels', request({}, { view_labels: ['front'] })],
-	['fill_other_sides', request({}, { fill_other_sides: true })],
+	['fill_other_sides', request({}, { fill_other_sides: true, backend: 'pixal3d' })],
 	['num_parts', request({}, { num_parts: 4 })],
 	['derive_pbr off', request({}, { derive_pbr: false })],
 	['lods on', request({}, { lods: true })],
