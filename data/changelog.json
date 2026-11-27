@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "Forge photo sets: extra views never delay or break a model, and the page says which photos were used",
+			"summary": "Generating extra side and back views is now optional and time-limited: if it fails, is throttled or takes too long, your model carries on from the image you gave. Generated views are checked before they are used, and a photo in a set that is plainly a different object, or empty, is left out and named. Engines that read a single photo now get your front view and the page tells you, instead of implying every photo counted. You can reorder photos with Alt and the arrow keys and remove one with Delete, and an upload that is refused says which photo it was.",
+			"tags": ["improvement", "fix"]
+		},
+		{
+			"date": "2026-11-27",
 			"title": "Your own Meshy, Tripo, Rodin and Stability key is checked before use, never leaks, and failures say what happened",
 			"summary": "A key you bring to Forge is now checked locally before any billed call (spaces, line breaks and the wrong vendor prefix are refused without repeating the key), scrubbed from every error and log line even if a provider echoes it back, and sent only to the provider's own address. When your provider account is out of credits, throttling you, down, or refuses the prompt, Forge says which, instead of quietly running on a free engine. A key revoked mid-job now says so instead of spinning. A captured Tripo callback can no longer be replayed under a new delivery id. The key field no longer invites browser autofill, has a Clear button, and says exactly how the key is used.",
 			"tags": ["fix", "improvement"],

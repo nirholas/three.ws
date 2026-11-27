@@ -2149,6 +2149,22 @@ POST /api/forge-upload  { "source_url": "https://example.com/photos/mug.jpg" }
 
 The fetch runs through the SSRF guard with a pinned address, reads at most 25 MB, and judges the result by its bytes, not the content type the site claims. A link to a web page follows its `og:image` preview once. Refusals carry a sentence for the visitor in `message`: `400 url_blocked` (not http(s), or a private, loopback or metadata address), `415 url_not_image` (names what it found, such as a PDF or a page with no preview image), `413 url_too_large`, `422 url_unreachable` (the site answered with an error status, named in the message) and `502 url_unreachable` (no answer in time, or the connection dropped). The bytes come back as an attachment with `nosniff` and are never rendered by the server; the page then prepares and uploads them like a dropped photo. Code: [`api/_lib/forge-image-import.js`](../api/_lib/forge-image-import.js).
 
+### Forge photo sets: view counts and notices
+
+A `POST /api/forge` (and `/api/gpt-forge`) image request reports how its photos
+were used, on the submit response and, for the counts, on every poll:
+
+- `views_requested`: photos you supplied, or views the job was built from for a text prompt.
+- `views_used`: views the engine actually reads. A one-image engine reports `1` however many photos you sent, and is given your `front` view (the first when `view_labels` is absent).
+- `multiview`: whether more than one view was fused.
+- `views_note`: one sentence for a person, present only when something was left out (a one-image engine, or photos the checks removed). Omitted otherwise.
+- `views_dropped`: `[{ position, reason }]`, present only when photos were removed. `position` is the photo's place in your `image_urls` starting at 1; `reason` is `different_subject`, `blank`, `too_small`, `wrong_shape` or `unusable`.
+
+Painting extra views is bounded by `FORGE_VIEWS_BUDGET_MS` and fails open: the
+job continues with the single image, never fails because a view could not be
+made. An uploaded file that is rejected names its place when you sent several
+(`Photo 2 of 3: ...`). Details: [forge.md](./forge.md#several-photos-and-generated-views).
+
 ### Forge in a world: the `world` field
 
 `POST /api/forge` accepts an optional `world` string (letters, digits, `: _ . -`, up

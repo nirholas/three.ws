@@ -82,6 +82,54 @@ Health is real. The UI fetches `/api/forge?health=1` after load and disables any
 
 Generation is a job. `POST /api/forge` returns a `job_id`; the client polls `GET /api/forge?job=<id>` until the status is `done` or `failed`. The lanes that complete inline within one request (free NVIDIA NIM, HuggingFace Spaces, BYOK-sync) can instead answer the POST directly with `status:'done'`, the `glb_url`, and a null `job_id`, and they retry once automatically on a failed result. Because the in-flight job id is written to `localStorage`, closing the tab or navigating away does not lose the generation: returning to Forge within a 30-minute window resumes polling the same job. Finished models for your browser are surfaced from a gallery on load, and a share link always wins over a resume.
 
+### Several photos and generated views
+
+Image-to-3D takes up to four photos of one object (the page's slots: front,
+back, left, right; the API accepts up to six). What each engine does with them:
+
+- **Reads every view:** the self-host TRELLIS lane (`trellis_selfhost`, up to
+  six) and Match my photo (`pixal3d`, up to four, with optional `view_labels`).
+  The hosted Replicate TRELLIS chain fuses as many as its model takes.
+- **Reads one view:** `trellis2`, `hunyuan3d`, `modly`, `modly_hunyuan`,
+  `anigen`, `partcrafter` and the free Hugging Face chain. They are sent one
+  image, the one labelled `front` (otherwise the first), and the response says
+  so in `views_note`. The page shows that note and the generating timeline
+  counts the views the engine used, not the photos supplied.
+- **Paints extra views:** only `trellis_selfhost`, at Standard and High, when it
+  was given a single image (a photo, or the reference image a text prompt
+  produced). The Vertex Gemini edit lane rotates it into side and back views.
+  Draft, a set of two or more photos, and every other lane never paint.
+
+Both the painting step and the photo checks are optional improvements on a job
+that already works from one image, so they fail open and are bounded:
+
+- The painter is given `FORGE_VIEWS_BUDGET_MS` (default 30000, minimum 1000).
+  If it throws, is throttled, returns nothing or does not answer in time, the
+  job continues at once with the image it has. A late answer is discarded.
+- A painted view is fused only if it is a real picture of the same subject:
+  not blank (flat, or under 1.5% foreground), at least 128 px on a side, the
+  same canvas shape as the primary (aspect drift at most 1.6), and a foreground
+  palette that overlaps the primary's (histogram intersection at least 0.15).
+  A view that cannot be read back is dropped too.
+- The same palette check runs on a set of your photos (unless
+  `skip_validation` is true). A photo that is plainly a different object or an
+  empty frame is left out, the job runs from the others, and the response names
+  it: `views_dropped: [{ "position": 3, "reason": "different_subject" }]` and
+  `views_note: "Left out of the set: photo 3 did not look like the same object
+  as the first view. Building from the other 2 photos."`. The first photo is
+  never dropped by the palette check, and a photo that cannot be read is kept
+  (only positive evidence removes one). Photos the vision check flags are left
+  out the same way, with reason `unusable`.
+- An uploaded file that is not a PNG, JPEG or WebP, is too large or has too
+  many pixels is refused before any engine is reached. With more than one
+  photo the message names it: `Photo 2 of 3: That file is not a PNG, JPEG or
+  WebP image...`.
+
+The submit response always reports `views_requested` (photos supplied),
+`views_used` (views the engine reads) and `multiview`. In the page, drag a photo
+to reorder it, or focus it and press Alt with an arrow key; Delete removes it.
+The first place is the front view a one-image engine reads.
+
 ### Watching a generation happen
 
 `POST /api/forge` is one long request, and most of the wait lives inside it: the
@@ -218,7 +266,7 @@ stills; it never reports a recording that did not happen.
 
 1. Open [/forge](https://three.ws/forge). No login, no wallet, no key required.
 2. Pick an input mode: **Describe it** (text), **From photos**, or **From a sketch** (the sketch tab appears only when the TripoSG worker is configured).
-3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to six images of the same object from different angles (front, back, left, right, top, three-quarter); each uploads straight to object storage via a presigned URL and the public URLs are fused with multi-view conditioning.
+3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to four images of the same object from different angles (front, back, left, right); each uploads straight to object storage via a presigned URL. Engines that fuse several views use all of them; engines that read one use the front view and say so (see [Several photos and generated views](#several-photos-and-generated-views)).
 4. Optionally open the quality controls and pick a tier (Draft, Standard, High) and an engine. The default engine carries a **FREE** pill. Down lanes are disabled with the reason shown.
 5. Click Generate. A real elapsed-driven progress line runs against the catalog's ETA estimate for the chosen path, tier, and engine.
 6. When the model lands, orbit it in the viewer, view it in AR, download it in any of seven formats (see [Download formats](#download-formats)), or run the post-generation tools (stylize, optimize with in-browser repair, smoothing and decimation (see [Mesh tools](#mesh-tools-repair-smooth-decimate)), Game-Ready retopology, split). Send it to a 3D printer from the format menu's slicer rows (see [Open in a slicer](#open-in-a-3d-printing-slicer)). Press `R` (or click **Reel**) to render a shareable video and stills of it without leaving the page.
