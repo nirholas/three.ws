@@ -22,7 +22,14 @@ import { log } from '../shared/log.js';
 import { loadForgeTools, toolUnavailable } from '../forge-tool-availability.js';
 
 const TEX = 1024; // mask + preview working resolution (UV space)
-const POLL_MS = 2500;
+export const POLL_MS = 2500;
+// Polls that may fail in a row (network blip, a 5xx from a cold instance)
+// before the job is reported lost. One dropped poll never abandons an edit.
+export const MAX_TRANSIENT_POLL_ERRORS = 3;
+// The worker fails its own task at 540 s (workers/texture JOB_TIMEOUT_S) and a
+// cold GPU start adds model load on top. Past this the job is treated as lost.
+export const MAX_WAIT_MS = 15 * 60 * 1000;
+const UNCHANGED = 'Your model is unchanged. Press Apply to try again.';
 const HIGHLIGHT = '#ff2da6';
 
 let _styleInjected = false;
@@ -79,6 +86,14 @@ function injectStyles() {
 @keyframes mb-spin{to{transform:rotate(360deg)}}
 .mb-empty{padding:18px 16px;text-align:center;color:#a8a8b4}
 .mb-empty strong{display:block;color:#e8e8ec;margin-bottom:6px;font-size:13px}
+.mb-empty .mb-btn{display:inline-block;flex:none;margin-top:12px;padding:8px 16px}
+.mb-skel{padding:14px;display:flex;flex-direction:column;gap:10px}
+.mb-skel span{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,.05),rgba(255,255,255,.12),rgba(255,255,255,.05));background-size:200% 100%;animation:mb-shimmer 1.2s ease-in-out infinite}
+.mb-skel span:nth-child(2){width:70%}
+.mb-skel span:nth-child(3){height:34px}
+@keyframes mb-shimmer{to{background-position:-200% 0}}
+@media (max-width:480px){.mb-panel{left:12px;right:12px;bottom:12px;width:auto}}
+@media (prefers-reduced-motion:reduce){.mb-spin,.mb-skel span{animation:none}}
 `;
 	const el = document.createElement('style');
 	el.id = 'mb-styles';
@@ -112,6 +127,10 @@ export class MagicBrush {
 		this.unavailable = false;
 		this.jobToken = null;
 		this._pollTimer = null;
+		// Whether the texture worker can serve: 'unknown' | 'checking' |
+		// 'available' | 'unavailable'. Asked on open (GET ?health=1).
+		this.availability = 'unknown';
+		this.availabilityMessage = '';
 
 		// Target mesh + its material/map we paint against.
 		this.targetMesh = null;
@@ -209,6 +228,28 @@ export class MagicBrush {
 			if (this.targetMesh) canvas.style.cursor = 'crosshair';
 		}
 		this._mountPanel();
+		this.render();
+		if (this.availability !== 'available') this._checkAvailability();
+	}
+
+	async _checkAvailability() {
+		this.availability = 'checking';
+		this.render();
+		try {
+			const resp = await fetch('/api/studio/retexture-region?health=1', { credentials: 'include' });
+			const body = await resp.json().catch(() => ({}));
+			if (resp.ok && body.available === false) {
+				this.availability = 'unavailable';
+				this.availabilityMessage = body.message || '';
+			} else {
+				this.availability = 'available';
+			}
+		} catch (err) {
+			// The health probe itself failed (offline, blocked). Let the user try:
+			// Apply reports exactly what went wrong.
+			log.warn('[magic-brush] availability check failed:', err?.message);
+			this.availability = 'available';
+		}
 		this.render();
 	}
 
@@ -555,7 +596,9 @@ export class MagicBrush {
 			if (!resp.ok) {
 				if (resp.status === 401) throw new Error('Sign in to use Magic Brush.');
 				if (resp.status === 501) {
-					throw new Error('Region retexture is not configured on this deployment yet.');
+					this.availability = 'unavailable';
+					this.availabilityMessage = '';
+					throw new Error('Magic Brush is not available on this deployment right now.');
 				}
 				throw new Error(body.error_description || `Request failed (${resp.status})`);
 			}
@@ -567,34 +610,76 @@ export class MagicBrush {
 			return;
 		}
 
-		this._setStatus('busy', 'Painting the region… this usually takes ~1 minute.');
+		this._setStatus('busy', 'Painting the region…');
 		this._poll(token);
+	}
+
+	_fail(message) {
+		this._stopPolling();
+		this.busy = false;
+		const text = String(message || 'Region edit failed.');
+		this._setStatus('err', /unchanged/i.test(text) ? text : `${text} ${UNCHANGED}`);
+	}
+
+	// Keeps the elapsed time current without re-rendering the panel (which
+	// would steal focus from the prompt box every tick).
+	_showElapsed(startedAt) {
+		const secs = Math.round((Date.now() - startedAt) / 1000);
+		const text = `Painting the region… ${secs}s`;
+		this.status = { kind: 'busy', text };
+		const el = this.panel?.querySelector('.mb-status-text');
+		if (el) el.textContent = text;
 	}
 
 	_poll(token) {
 		this._stopPolling();
+		const startedAt = Date.now();
+		let errors = 0;
+		let inFlight = false;
 		this._pollTimer = setInterval(async () => {
+			if (inFlight) return;
+			if (Date.now() - startedAt > MAX_WAIT_MS) {
+				this._fail(`The edit did not finish within ${Math.round(MAX_WAIT_MS / 60000)} minutes.`);
+				return;
+			}
+			inFlight = true;
+			let resp;
+			let body;
 			try {
-				const resp = await fetch(
-					`/api/studio/retexture-region?job=${encodeURIComponent(token)}`,
-					{ credentials: 'include' },
-				);
-				const body = await resp.json().catch(() => ({}));
-				if (!resp.ok) throw new Error(body.error_description || `Status failed (${resp.status})`);
-
-				if (body.status === 'done' && body.result_url) {
-					this._stopPolling();
-					await this._loadResult(body.result_url);
-				} else if (body.status === 'failed') {
-					this._stopPolling();
-					this.busy = false;
-					this._setStatus('err', body.error || 'Region edit failed.');
-				}
-				// queued / running → keep waiting.
+				resp = await fetch(`/api/studio/retexture-region?job=${encodeURIComponent(token)}`, {
+					credentials: 'include',
+				});
+				body = await resp.json().catch(() => ({}));
 			} catch (err) {
+				resp = null;
+				body = { error_description: err.message };
+			}
+			inFlight = false;
+			if (!this._pollTimer) return; // closed or replaced while in flight
+
+			// 4xx other than 429 will not get better by asking again.
+			const permanent = resp && resp.status >= 400 && resp.status < 500 && resp.status !== 429;
+			if (!resp || !resp.ok) {
+				if (resp?.status === 401) return this._fail('Your session ended. Sign in again to use Magic Brush.');
+				if (resp?.status === 501) {
+					this.availability = 'unavailable';
+					return this._fail('Magic Brush stopped being available on this deployment.');
+				}
+				if (permanent || ++errors > MAX_TRANSIENT_POLL_ERRORS) {
+					return this._fail(
+						`Lost track of the edit (${body.error_description || `status ${resp?.status ?? 'unreachable'}`}).`,
+					);
+				}
+				return;
+			}
+			errors = 0;
+			if (body.status === 'done' && body.result_url) {
 				this._stopPolling();
-				this.busy = false;
-				this._setStatus('err', err.message);
+				await this._loadResult(body.result_url);
+			} else if (body.status === 'failed') {
+				this._fail(body.error || 'Region edit failed.');
+			} else {
+				this._showElapsed(startedAt);
 			}
 		}, POLL_MS);
 	}
@@ -611,18 +696,28 @@ export class MagicBrush {
 		// Restore the real material before swapping content so we don't leave the
 		// preview texture dangling, then reload + re-point the editor.
 		this._teardownPreview();
+		const original = this.session?.sourceURL;
 		try {
 			await this.viewer.load(url, '', new Map());
-			const name = url.split('/').pop().split('?')[0] || 'model';
-			// Re-points session.sourceURL to the result so the NEXT pass chains on
-			// it, and rebuilds every editor panel (including this brush).
-			this.editor.onContentChanged({ url, name });
-			this.busy = false;
-			this._setStatus('ok', 'Region updated. Paint again to keep editing.');
 		} catch (err) {
-			this.busy = false;
-			this._setStatus('err', `Loaded edit but failed to display it: ${err.message}`);
+			// The viewer may have dropped the old content before failing; put the
+			// model the user had back so a bad result never leaves them with less.
+			if (typeof original === 'string' && original) {
+				try {
+					await this.viewer.load(original, '', new Map());
+				} catch (restoreErr) {
+					log.warn('[magic-brush] could not restore the original model:', restoreErr?.message);
+				}
+			}
+			if (this.enabled) this._installPreview();
+			return this._fail(`The edited model could not be displayed (${err.message}).`);
 		}
+		const name = url.split('/').pop().split('?')[0] || 'model';
+		// Re-points session.sourceURL to the result so the NEXT pass chains on
+		// it, and rebuilds every editor panel (including this brush).
+		this.editor.onContentChanged({ url, name });
+		this.busy = false;
+		this._setStatus('ok', 'Region updated. Paint again to keep editing.');
 	}
 
 	// ── panel UI ──────────────────────────────────────────────────────────────────
@@ -679,6 +774,36 @@ export class MagicBrush {
 		x.addEventListener('click', () => this.disable());
 		head.appendChild(x);
 		this.panel.appendChild(head);
+
+		if (this.availability === 'checking') {
+			const skel = document.createElement('div');
+			skel.className = 'mb-skel';
+			skel.setAttribute('aria-busy', 'true');
+			skel.setAttribute('aria-label', 'Checking whether Magic Brush is available');
+			skel.innerHTML = '<span></span><span></span><span></span>';
+			this.panel.appendChild(skel);
+			return;
+		}
+
+		if (this.availability === 'unavailable') {
+			const down = document.createElement('div');
+			down.className = 'mb-empty';
+			down.setAttribute('role', 'status');
+			const title = document.createElement('strong');
+			title.textContent = 'Magic Brush is not available right now';
+			const msg = document.createElement('div');
+			msg.textContent =
+				(this.availabilityMessage || 'The texture worker is not running on this deployment.') +
+				' Your model is not affected. You can still edit materials and colours with the other tools.';
+			const again = document.createElement('button');
+			again.className = 'mb-btn mb-ghost mb-recheck';
+			again.type = 'button';
+			again.textContent = 'Check again';
+			again.addEventListener('click', () => this._checkAvailability());
+			down.append(title, msg, again);
+			this.panel.appendChild(down);
+			return;
+		}
 
 		// Empty state: no paintable mesh.
 		if (!this.targetMesh) {
@@ -797,7 +922,9 @@ export class MagicBrush {
 				sp.className = 'mb-spin';
 				s.appendChild(sp);
 			}
+			s.setAttribute('role', this.status.kind === 'err' ? 'alert' : 'status');
 			const t = document.createElement('span');
+			t.className = 'mb-status-text';
 			t.textContent = this.status.text;
 			s.appendChild(t);
 			body.appendChild(s);
