@@ -1,5 +1,5 @@
 {
-  "$comment": "Non-Mixamo CC0 characters merged into the character library manifest by build-mixamo-avatar-library.mjs. Each is a canonicalized, animation-ready GLB on R2.",
+  "$comment": "Non-Mixamo CC0 characters merged into the character library manifest by scripts/build-character-library.mjs. Each is a canonicalized, animation-ready GLB on R2.",
   "characters": [
     {
       "name": "quaternius-base",

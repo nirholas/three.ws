@@ -5,8 +5,8 @@
 // search, the sort and the three deep links a card offers can be tested without
 // a browser. Rows look like:
 //
-//   { name: 'aj', label: 'Aj', url: '/r2-proxy/.../aj.glb',
-//     thumb: '/r2-proxy/.../aj.png', bytes: 5918024, source: 'mixamo' }
+//   { name: 'base', label: 'Base', url: '/r2-proxy/.../base.glb',
+//     thumb: '/r2-proxy/.../base.png', bytes: 5918024, source: 'quaternius' }
 
 /** Display name for a row: the curated label, else the manifest key. */
 export function characterName(a) {
@@ -22,11 +22,11 @@ export function formatBytes(n) {
 
 /**
  * The line under a card's name. A row with no `bytes` used to render as
- * "Mixamo · " with a separator dangling off the end; the separator now only
+ * "Library · " with a separator dangling off the end; the separator now only
  * appears when there is a size to separate it from.
  */
 export function cardMeta(a) {
-	const source = a?.source === 'mixamo' || !a?.source ? 'Mixamo' : String(a.source);
+	const source = a?.source ? String(a.source) : 'Library';
 	const size = formatBytes(a?.bytes);
 	return size ? `${source} · ${size}` : source;
 }

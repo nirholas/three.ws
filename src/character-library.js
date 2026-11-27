@@ -1,4 +1,4 @@
-// /character-library — the Mixamo character library gallery.
+// /character-library: the rigged character library gallery (CC0 characters only).
 //
 // Browses the professionally rigged humanoid characters served by
 // GET /api/avatars/library (manifest on R2, mirroring the /animations gallery).
