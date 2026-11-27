@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "Forge takes iPhone photos, big photos and sideways photos, and tells you plainly when a file is not a photo",
+			"summary": "Photo to 3D on Forge and Forge Studio now reads each file by its contents instead of its name. iPhone HEIC photos, AVIF, GIF and SVG images are converted on your device, photos over 8 MB or wider than 8192 pixels are shrunk instead of refused, and a photo taken sideways is turned upright before it is sent. A PDF or web page renamed to .jpg, an empty file or a tiny icon is refused with a sentence saying what it is and which formats work. Picking a file, dropping it, pasting an image and pasting or dragging an image link all work the same way, and a link is fetched for you safely. If an upload drops, times out or your session expires, the photo stays on the tile and Retry sends it again. Photos that already worked are sent exactly as before.",
+			"tags": ["improvement", "fix"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "Sketch to 3D now tells you when a drawing is blank, a dot or scribbled edge to edge, and no longer ends in a dead end",
 			"summary": "A blank canvas, a single dot or a drawing smeared over the whole frame is now refused on your device with a message that says what to draw, before anything is uploaded or a generation slot is spent. The drawing canvas lines strokes up under your finger on a phone, keeps Use sketch available after you undo a Clear, keeps keyboard focus inside the dialog and fits any screen height with Use sketch always reachable. The Forge page gets a Draw here instead button for the same canvas. If the sketch engine cannot take or finish a drawing, Forge now continues the job on the standard image engine and tells you, instead of ending in an error, and a drawing the engine could not read no longer takes a healthy engine out of rotation.",
 			"tags": [
