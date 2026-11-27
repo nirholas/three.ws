@@ -163,7 +163,9 @@ export class MagicBrush {
 		loadForgeTools().then((tools) => {
 			if (!toolUnavailable(tools, 'texture')) return;
 			this.unavailable = true;
-			this._guiCtrl?.hide();
+			// dat.gui controllers have no hide(); hide the row element instead.
+			const row = this._guiCtrl?.__li || this._guiCtrl?.domElement;
+			if (row) row.style.display = 'none';
 			this.disable();
 		});
 	}

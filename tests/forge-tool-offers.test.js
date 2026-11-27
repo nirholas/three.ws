@@ -129,8 +129,12 @@ describe('Game-Ready export: Artist mesh topology', () => {
 });
 
 describe('Editor Magic Brush', () => {
+	// Shaped like a dat.gui controller (the viewer's GUI, src/viewer.js): a
+	// `__li` row element and no hide()/show(), which lil-gui has but dat.gui lacks.
 	function fakeGui() {
-		const ctrl = { hidden: false, name: vi.fn(() => ctrl), hide: vi.fn(() => { ctrl.hidden = true; return ctrl; }), show: vi.fn(() => ctrl) };
+		const li = document.createElement('li');
+		document.body.appendChild(li);
+		const ctrl = { __li: li, domElement: document.createElement('div'), name: vi.fn(() => ctrl) };
 		return { ctrl, gui: { __folders: {}, add: vi.fn(() => ctrl) } };
 	}
 
@@ -146,7 +150,7 @@ describe('Editor Magic Brush', () => {
 
 	it('hides its entry and never submits when the texture worker is unavailable', async () => {
 		const { brush, ctrl } = await attachBrush({ texture: { available: false } });
-		expect(ctrl.hide).toHaveBeenCalled();
+		expect(ctrl.__li.style.display).toBe('none');
 
 		// Even if reached (keyboard shortcut), Apply refuses with an honest note
 		// instead of sending the visitor's work to an endpoint that cannot run it.
@@ -163,7 +167,7 @@ describe('Editor Magic Brush', () => {
 
 	it('keeps its entry when the texture worker is available', async () => {
 		const { brush, ctrl } = await attachBrush({ texture: { available: true } });
-		expect(ctrl.hide).not.toHaveBeenCalled();
+		expect(ctrl.__li.style.display).toBe('');
 		expect(brush.unavailable).toBe(false);
 	});
 });
