@@ -14,6 +14,7 @@ import { renderLock, lockStateFromAccess } from '../three-lock.js';
 import { payForHighGeneration } from './forge-pay.js';
 import { initWalletButton, getConnectedWalletAddress } from '../wallet.js';
 import { openSketchCanvas } from './sketch-canvas.js';
+import { guardSketchFile } from './sketch-guard.js';
 import { mountPromptDictation } from '../voice/prompt-dictation.js';
 import { showToast } from '../ui-helpers.js';
 import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
@@ -1347,10 +1348,23 @@ async function uploadSketch(file) {
 		renderSketchSlot();
 		return;
 	}
+	// A blank page, a dot or a scribble over the whole frame gives the sketch
+	// model nothing to build from. Say so here, before the file reaches storage
+	// and before a generation slot is spent on it.
+	const out = await guardSketchFile(file, sendSketch);
+	if (out && out.ok === false && out.code) {
+		if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
+		Object.assign(sketch, { state: 'error', url: null, objectUrl: null, errorMsg: 'Draw a clearer outline' });
+		renderSketchSlot();
+		showToast(out.message, { type: 'warning', duration: 9000 });
+	}
+}
+
+async function sendSketch(file) {
 	if (!(await requireUploadAccount())) {
 		Object.assign(sketch, { state: 'error', url: null, errorMsg: UPLOAD_SIGN_IN_SHORT });
 		renderSketchSlot();
-		return;
+		return { ok: true };
 	}
 	if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
 	Object.assign(sketch, {
@@ -1365,6 +1379,7 @@ async function uploadSketch(file) {
 	if (up.ok) Object.assign(sketch, { state: 'uploaded', url: up.url, errorMsg: '' });
 	else Object.assign(sketch, { state: 'error', url: null, errorMsg: up.message });
 	renderSketchSlot();
+	return { ok: true };
 }
 
 function firstPreviewUrl() {
