@@ -66,7 +66,7 @@ class CancellablePopupApplication extends PublicClientApplication {
 /**
  * MSAL settings for the OneDrive session. Tokens live in sessionStorage: scoped
  * to the three.ws origin and to this tab, gone when the tab closes, and never
- * written to localStorage or a cookie that outlives the session.
+ * written to localStorage, IndexedDB or a cookie that outlives the session.
  * tests/onedrive-token-storage.test.js runs real MSAL with this config.
  */
 export function msalConfig(clientId, origin) {

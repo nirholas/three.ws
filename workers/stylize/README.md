@@ -32,6 +32,10 @@ default when the mesh carries no color of its own. (That fallback is gated on
 trimesh's `visual.defined`, because trimesh otherwise hands back a stock flat
 gray for an uncolored mesh, which reads as a real color and is not one.) A mesh
 with no size at all is refused rather than stylized into invisible geometry.
+A `glb` result carries a white non-metal material (metallic 0, roughness 0.8)
+on every primitive and stores its vertex colors as linear 16-bit `COLOR_0`, as
+glTF requires. Without the material every viewer falls back to the glTF default
+of metallic 1, and the result renders as dark bare metal.
 Hard safety caps (`MAX_VOXELS = 60_000`,
 `MAX_LATTICE_EDGES = 6_000`, `MAX_MESH_BYTES = 128 MiB`) mean a hostile or huge
 input can never exhaust memory — resolution backs off automatically.
