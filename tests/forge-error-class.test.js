@@ -71,6 +71,36 @@ describe('classifyForgeError', () => {
 		expect(idOf('upload failed to bucket three-ws-assets')).toBe('storage');
 	});
 
+	// Measured on production 2026-11-27: of 63 unrecovered failures in 7 days, 30
+	// were one cause (the caller's own input image could not be fetched or
+	// decoded) spread over four classes, and a host's 403 read as "lane rejected
+	// our credentials", which would send a triager to rotate a key that is fine.
+	it('groups every input-image fetch or decode failure as bad_input_image', () => {
+		const real = [
+			'input image unusable: image is not a decodable PNG, JPEG or WEBP file',
+			'image source tmpfiles.org is not a decodable image (UnidentifiedImageError: cannot identify image file)',
+			'image source files.catbox.moe is not a decodable image (UnidentifiedImageError)',
+			'image source drive.google.com is not a decodable image (UnidentifiedImageError)',
+			'image source webhook.site returned HTTP 404',
+			'image source storage.googleapis.com returned HTTP 400',
+			'input image unusable: image host answered HTTP 403',
+			'input image unusable: image host answered HTTP 429',
+		];
+		for (const m of real) expect(idOf(m), m).toBe('bad_input_image');
+	});
+
+	it('still reads a lane-side 403 or 429 as a lane problem', () => {
+		expect(idOf('NVCF answered HTTP 403: forbidden')).toBe('unauthorized');
+		expect(idOf('Replicate answered 429 Too Many Requests')).toBe('rate_limited');
+	});
+
+	it('collapses internal error references into one group', () => {
+		const a = classifyForgeError('internal error (ref 44752d5686c4)');
+		const b = classifyForgeError('internal error (ref 0ea45160ac99)');
+		expect(a.normalized).toBe(b.normalized);
+		expect(a.normalized).not.toMatch(/[0-9a-f]{12}/);
+	});
+
 	it('keeps the say-nothing messages as their own class', () => {
 		expect(idOf('generation failed')).toBe('generic_failure');
 		expect(idOf('unknown error')).toBe('generic_failure');

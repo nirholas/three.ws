@@ -34,6 +34,9 @@ function cleanForgeError(raw) {
 	return text
 		.toLowerCase()
 		.replace(/https?:\/\/\S+/g, ' <url> ')
+		// The handler's own `internal error (ref 44752d5686c4)`: the ref is a
+		// per-occurrence log correlation id, shorter than the generic hex rule.
+		.replace(/\bref [0-9a-f]{6,}\b/g, 'ref <id>')
 		.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '<id>')
 		.replace(/\b[0-9a-f]{16,}\b/g, '<id>')
 		.replace(/\b[a-z0-9]{20,}\b/g, '<id>')
@@ -65,6 +68,13 @@ export function normalizeForgeError(raw) {
 /** @type {Array<{ id: string, label: string, test: RegExp }>} */
 const CLASSES = [
 	{ id: 'timeout', label: 'timed out before the lane returned', test: /\btimed out\b|\btimeout\b|deadline exceeded|etimedout/ },
+	// The caller's own image could not be fetched or decoded. Matched before the
+	// status-code classes on purpose: `image host answered HTTP 403` is the
+	// caller's host refusing us, not a lane rejecting our credentials, and
+	// `image source webhook.site returned HTTP 404` is a dead link, not a lane
+	// 404. Measured 2026-11-27, these were 30 of 63 unrecovered failures in a
+	// week, spread over four classes before this entry existed.
+	{ id: 'bad_input_image', label: 'input image could not be fetched or decoded', test: /^input image unusable\b|^image source \S+ (is not a decodable image|returned http|answered http)|image (is )?(too large|invalid|unusable|not usable)|invalid image|unsupported image|no face|cannot decode image/ },
 	// The two dominant real shapes both mean "the lane lost the job", and both
 	// used to land elsewhere: the self-host workers' own orphan reaper wording
 	// (workers/model-*/main.py) fell through to `other`, and NVIDIA's
@@ -79,7 +89,6 @@ const CLASSES = [
 	{ id: 'upstream_5xx', label: 'lane returned a server error', test: /\b5\d\d\b|internal server error|bad gateway|service unavailable|gateway timeout/ },
 	{ id: 'not_found_4xx', label: 'lane returned not found', test: /\b404\b|\b410\b|not found|gone/ },
 	{ id: 'network', label: 'network failure reaching the lane', test: /econnreset|econnrefused|enotfound|socket hang up|network error|fetch failed|dns/ },
-	{ id: 'bad_input_image', label: 'reference image rejected', test: /image (is )?(too large|invalid|unusable|not usable)|invalid image|unsupported image|no face|cannot decode image/ },
 	{ id: 'bad_output_mesh', label: 'produced mesh was unusable', test: /invalid glb|empty mesh|no mesh|mesh (is )?(invalid|empty)|glb (is )?(invalid|empty|too large)|zero bytes/ },
 	{ id: 'content_filtered', label: 'prompt or image blocked by a content filter', test: /content (policy|filter)|nsfw|safety (system|filter)|flagged/ },
 	{ id: 'storage', label: 'could not persist the artifact', test: /\bs3\b|object storage|upload failed|bucket|access ?denied .*key/ },
