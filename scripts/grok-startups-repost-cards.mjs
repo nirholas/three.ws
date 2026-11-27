@@ -4,32 +4,35 @@
 // thread's look: near-black ground, Inter, thin white line art, footer marks.
 //
 //   node scripts/grok-startups-post-models.mjs --set repost   # once: the repost's own models
-//   node scripts/grok-startups-repost-cards.mjs [--only post-07.png,post-16.png]
+//   node scripts/grok-startups-repost-cards.mjs [--only post-07.png,article-uptime.png]
 //
-// Media per post (19 posts):
+// Media per post (13 posts):
 //   1   public/x-media/grok-startups-announce/head.mp4 (head.png still), unchanged
-//   2, 3, 6, 8, 15, 18, 19   the original layouts, counter "NN / 19" (scripts/lib/grok-startups-cards.mjs),
-//         with this thread's own models (src/models.json: a red electric sports car, its
+//   2, 3, 6, 8, 10, 11, 13   the original layouts, counter "NN / 13" (scripts/lib/grok-startups-cards.mjs),
+//         with this thread's own models (src/models.json: a white electric sports car, its
 //         "make it chrome" refine, a rigged humanoid robot, the render check on the car)
-//         and no error count on the usage card (15)
+//         and no error count on the usage card (10)
 //   4   public/x-media/grok-startups-announce/ffsc-engine.mp4, unchanged
 //   5   post-05-launch-stack.mp4, a real render of the launch stack cutaway:
 //         node scripts/anatomy-cutaway-video.mjs --id d72da3e9-8aae-47cd-a96c-45ccd33bf1a0 \
 //           --out public/x-media/grok-startups-repost/post-05-launch-stack.mp4
-//   7, 9, 10, 11, 12, 13, 16, 17   new cards drawn here
-//   14  filled by order 452 once the Grok eval has every row
+//   7, 9   new cards drawn here
+//   12  quotes the companion X Article, whose own cover is the media
+//
+// The other new work moved to the companion article; its images are drawn here
+// too, without a counter, as article-<topic>.png.
 //
 // Every figure on a new card is real:
 //   7   the Grok Build plugin in integrations/grok/three-ws (commands, agent)
-//   9   a live run of satellites/grok-3d-starter on grok-4.7 asking for a rocket (src/starter.json)
-//   10  the four task templates and their measured runtimes on /grok
-//   11  the event names, signature and retry schedule in api/_lib/webhook-dispatch.js
-//   12  the five pano tools in api/_mcp-studio/pano-tools.js
-//   13  the Grok 4.7 prices in api/_lib/chat-models.js
-//   16  /api/status/mcp, fetched when this script runs (written to src/live.json)
-//   17  the Ask @grok text that src/shared/grok-ask.js builds for a real model (the pickup in src/models.json)
+//   9   the Ask @grok text that src/shared/grok-ask.js builds for a real model (the pickup in src/models.json)
+//   article-starter    a live run of satellites/grok-3d-starter on grok-4.7 asking for a rocket (src/starter.json)
+//   article-templates  the four task templates and their measured runtimes on /grok
+//   article-wake       the event names, signature and retry schedule in api/_lib/webhook-dispatch.js
+//   article-360        the five pano tools in api/_mcp-studio/pano-tools.js
+//   article-brain      the Grok 4.7 prices in api/_lib/chat-models.js
+//   article-uptime     /api/status/mcp, fetched when this script runs (written to src/live.json)
 //
-// Output: public/x-media/grok-startups-repost/post-NN.png, 1200x675 at 2x.
+// Output: public/x-media/grok-startups-repost/post-NN.png and article-<topic>.png, 1200x675 at 2x.
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -38,7 +41,9 @@ import { USAGE, announceCards, hasAnnounceModels, renderAnnounceModels } from '.
 import { GROK_MODELS } from '../api/_lib/chat-models.js';
 import { grokAskText } from '../src/shared/grok-ask.js';
 
-const TOTAL = 19;
+const TOTAL = 13;
+// The two new cards that stay in the thread; the rest illustrate the companion article.
+const THREAD = { build: 7, ask: 9 };
 const outDir = resolve('public/x-media/grok-startups-repost');
 const srcDir = join(outDir, 'src');
 const modelsPath = join(srcDir, 'models.json');
@@ -48,7 +53,7 @@ const starterPath = join(srcDir, 'starter.json');
 if (!existsSync(starterPath)) throw new Error('src/starter.json is missing: run satellites/grok-3d-starter scripts/live-xai.mjs and record its two GLBs there');
 const starter = JSON.parse(readFileSync(starterPath, 'utf8'));
 // Old post number (2026-11-25 thread) to its number in the repost.
-const RENUMBER = { 2: 2, 3: 3, 5: 6, 6: 8, 7: 15, 8: 18, 9: 19 };
+const RENUMBER = { 2: 2, 3: 3, 5: 6, 6: 8, 7: 10, 8: 11, 9: 13 };
 // Refreshed usage figures (posts 3 and 15), when a numbers run has written
 // src/usage.json; the 2026-11-25 window otherwise.
 const usagePath = join(srcDir, 'usage.json');
@@ -103,7 +108,7 @@ function newCards({ uptime, starterRenders, askRender }) {
 
 	return {
 		'post-07.png': card(
-			7,
+			THREAD.build,
 			`<div class="head"><h1>three.ws in Grok Build.</h1><div class="sub">xAI's coding agent. One plugin, nothing to execute.</div></div>
 			<div class="list">${[
 				['/make-3d', 'a textured GLB from a sentence, catalog first'],
@@ -122,8 +127,8 @@ function newCards({ uptime, starterRenders, askRender }) {
 			.foot { position: absolute; left: 72px; top: 486px; font-size: 14px; color: #7a7a84; }`,
 		),
 
-		'post-09.png': card(
-			9,
+		'article-starter.png': card(
+			null,
 			`<div class="head"><h1>Grok and 3D in your own app.</h1><div class="sub">Fork the Grok 3D starter. Chat on the left, a lit stage on the right.</div></div>
 			<div class="calls"><div class="label">${esc(starter.model)}, live run</div>${[
 				[`"${starter.ask}"`, ['search_catalog', 'forge_free', 'check_job']],
@@ -152,8 +157,8 @@ function newCards({ uptime, starterRenders, askRender }) {
 			.row .cap { margin-top: 6px; }`,
 		),
 
-		'post-10.png': card(
-			10,
+		'article-templates.png': card(
+			null,
 			`<div class="head"><h1>Four Grok Bot tasks.</h1><div class="sub">Paste one as it stands. Each was timed on production.</div></div>
 			<div class="term"><span class="p">$</span> npx three-ws setup --client grok-bot<br><span class="p">connector fields, URL copied, live check</span></div>
 			<div class="grid">${[
@@ -173,8 +178,8 @@ function newCards({ uptime, starterRenders, askRender }) {
 			.t .cap { position: absolute; left: 18px; bottom: 16px; font-size: 12px; }`,
 		),
 
-		'post-11.png': card(
-			11,
+		'article-wake.png': card(
+			null,
 			`<div class="head"><h1>three.ws can wake your Grok Bot.</h1></div>
 			<svg class="wires" width="1200" height="675" viewBox="0 0 1200 675" fill="none" stroke="rgba(255,255,255,0.32)" stroke-width="1.2">
 				${[0, 1, 2].map((i) => `<path d="M330 ${262 + i * 76} C 380 ${262 + i * 76}, 380 338, 430 338"/>`).join('')}
@@ -197,8 +202,8 @@ function newCards({ uptime, starterRenders, askRender }) {
 			.foot { position: absolute; left: 72px; top: 470px; font-size: 14px; color: #7a7a84; }`,
 		),
 
-		'post-12.png': card(
-			12,
+		'article-360.png': card(
+			null,
 			`<div class="head"><h1>360 in. A 3D scene out.</h1><div class="sub">Five tools on the Grok connector, free with an account.</div></div>
 			<div class="globe">${globe(250)}</div>
 			<div class="rows">${[
@@ -220,8 +225,8 @@ function newCards({ uptime, starterRenders, askRender }) {
 			.foot { position: absolute; left: 72px; top: 470px; font-size: 13.5px; color: #7a7a84; }`,
 		),
 
-		'post-13.png': card(
-			13,
+		'article-brain.png': card(
+			null,
 			`<div class="head"><h1>Your agents can think with Grok.</h1><div class="sub">Add your own xAI key once. Billed to your key, not ours.</div></div>
 			<div class="stats">
 				<div><div class="big">${esc(grok47.label)}</div><div class="label">every agent you own</div></div>
@@ -239,8 +244,8 @@ function newCards({ uptime, starterRenders, askRender }) {
 			.foot { position: absolute; left: 72px; top: 476px; font-size: 13.5px; color: #7a7a84; }`,
 		),
 
-		'post-16.png': card(
-			16,
+		'article-uptime.png': card(
+			null,
 			`<div class="head"><div class="label">Grok connector, probed the way Grok connects, last 7 days</div></div>
 			<div class="stats">
 				<div><div class="big">${n(uptime.passed)}<span class="of"> / ${n(uptime.probes)}</span></div><div class="label">checks passed</div></div>
@@ -260,8 +265,8 @@ function newCards({ uptime, starterRenders, askRender }) {
 			.foot { position: absolute; left: 72px; top: 446px; font-size: 14px; color: #7a7a84; }`,
 		),
 
-		'post-17.png': card(
-			17,
+		'post-09.png': card(
+			THREAD.ask,
 			`<div class="head"><h1>Ask @grok, beside Share on X.</h1><div class="sub">On every model, avatar and cutaway. Nothing posts until you press post.</div></div>
 			<div class="left"><div class="tile"><img src="${askRender.png}"></div><div class="btns"><span class="b">Share on X</span><span class="b on">Ask @grok</span></div></div>
 			<div class="draft"><div class="label">Opens the composer on X, unsent</div><div class="text">${esc(askText).replace(/\n/g, '<br>')}</div><div class="cap">The link unfurls as a card that shows the model itself.</div></div>`,

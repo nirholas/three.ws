@@ -1,6 +1,6 @@
 // The seven drawn cards of the 2026-11-25 Grok for Startups thread, shared by
 // scripts/grok-startups-post-cards.mjs (that thread, "NN / 09") and
-// scripts/grok-startups-repost-cards.mjs (the 2026-11-27 repost, "NN / 19"),
+// scripts/grok-startups-repost-cards.mjs (the 2026-11-27 repost, "NN / 13"),
 // so both threads draw them identically and only the counter changes.
 //
 // Every figure is real:

@@ -41,9 +41,9 @@ export const BASE = `
 	.rule { height: 1px; background: rgba(255,255,255,0.12); }
 `;
 
-/** One card: body markup plus the shared footer and an "NN / TT" counter. */
+/** One card: body markup plus the shared footer and an "NN / TT" counter (none when n is null, for an image outside a thread). */
 export const frame = (n, total, body, css = '') =>
-	`<!doctype html><meta charset="utf-8"><style>${BASE}${css}</style>${body}<div class="marks"><img class="ours" src="${lockup}" alt="three.ws"><i></i><img class="grok" src="${grokMark}" alt="Grok"><i></i><img class="sxsi" src="${spacexsiMark}" alt="SpaceXSI"></div><div class="count">${String(n).padStart(2, '0')} / ${String(total).padStart(2, '0')}</div>`;
+	`<!doctype html><meta charset="utf-8"><style>${BASE}${css}</style>${body}<div class="marks"><img class="ours" src="${lockup}" alt="three.ws"><i></i><img class="grok" src="${grokMark}" alt="Grok"><i></i><img class="sxsi" src="${spacexsiMark}" alt="SpaceXSI"></div>${n == null ? '' : `<div class="count">${String(n).padStart(2, '0')} / ${String(total).padStart(2, '0')}</div>`}`;
 
 // ---------------------------------------------------------------------------
 // Line art: an original torus knot tube drawn as rings, the same technique as
