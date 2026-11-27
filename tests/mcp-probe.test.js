@@ -125,6 +125,23 @@ describe('probeServer against the real handlers', () => {
 		expect(r.error).toMatch(/answered HTTP 200, expected 401/);
 	}, 120_000);
 
+	// xAI refuses every tool on a server when one tool's root schema is a union
+	// (HTTP 400 invalid_client_tool_schema). Production served such a tool from
+	// 2026-11-21 while this probe stayed green, so tools/list now fails on it.
+	it('names tools/list when a tool schema has a root that xAI rejects', async () => {
+		const withUnionTool = async (url, init) => {
+			const res = await fetch(url, init);
+			if (JSON.parse(init?.body || '{}').method !== 'tools/list') return res;
+			const msg = probe.parseRpcBody(await res.text(), res.headers.get('content-type'));
+			msg.result.tools.push({ name: 'union_root', inputSchema: { type: 'object', properties: { a: { type: 'string' } }, anyOf: [{ required: ['a'] }] } });
+			return new Response(JSON.stringify(msg), { status: 200, headers: { 'content-type': 'application/json' } });
+		};
+		const r = await probe.probeServer({ server: `${origin}/api/mcp-grok`, path: '/api/mcp-grok', signIn: null }, { fetchImpl: withUnionTool, stepTimeoutMs: 60_000 });
+		expect(r.ok).toBe(false);
+		expect(r.failedStep).toBe('tools/list');
+		expect(r.error).toMatch(/union_root/);
+	}, 120_000);
+
 	it('bounds a step that never answers', async () => {
 		const r = await probe.probeServer({ server: `${origin}/api/hang`, signIn: null }, { stepTimeoutMs: 300 });
 		expect(r.failedStep).toBe('initialize');

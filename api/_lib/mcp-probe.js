@@ -180,6 +180,16 @@ export function chooseProbeCall(path, tools) {
 	return candidates.find((c) => listed.has(c.name)) || null;
 }
 
+// xAI's Responses API answers HTTP 400 invalid_client_tool_schema for the whole
+// request when one tool's input schema root is not a plain object: "tool
+// parameter root must be an object type (root schema is an anyOf/oneOf union
+// with a non-object branch)". The handshake still passes, so check it here.
+const ROOT_COMBINATORS = ['anyOf', 'oneOf', 'allOf', 'not', 'if', 'then', 'else', 'enum', 'const'];
+export function clientAcceptsRootSchema(schema) {
+	if (!schema || typeof schema !== 'object' || schema.type !== 'object') return false;
+	return !ROOT_COMBINATORS.some((k) => Object.hasOwn(schema, k));
+}
+
 // ---------------------------------------------------------------------------
 // Probe
 // ---------------------------------------------------------------------------
@@ -286,6 +296,8 @@ export async function probeServer(target, { fetchImpl = fetch, stepTimeoutMs = S
 			const result = expectResult('tools/list', await rpc(target.server, 'tools/list', {}));
 			if (!Array.isArray(result.tools) || result.tools.length === 0) throw new StepError('tools/list returned no tools');
 			detail.toolCount = result.tools.length;
+			const rejected = result.tools.filter((t) => !clientAcceptsRootSchema(t?.inputSchema)).map((t) => t?.name);
+			if (rejected.length) throw new StepError(`xAI refuses every tool on this server while one has a non-object or union root schema: ${rejected.join(', ')}`);
 			return result.tools;
 		});
 
