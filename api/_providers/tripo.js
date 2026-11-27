@@ -36,6 +36,14 @@ function clampFaces(n) {
 	return Math.max(FACE_MIN, Math.min(FACE_MAX, v));
 }
 
+// The caller's seed (forge-seed.js range) as Tripo's model_seed, plus
+// texture_seed when the build paints textures, so the same seed repeats both
+// the shape and the paint. No seed asked for, nothing sent: Tripo picks one.
+function seedFields(seed, { textured }) {
+	if (!Number.isInteger(seed) || seed < 0) return {};
+	return textured ? { model_seed: seed, texture_seed: seed } : { model_seed: seed };
+}
+
 function modelVersion() {
 	if (typeof process !== 'undefined' && process.env?.TRIPO_MODEL_VERSION) {
 		return process.env.TRIPO_MODEL_VERSION;
@@ -257,18 +265,19 @@ export function createTripoProvider(apiKey) {
 	return {
 		// targetFaces overrides the tier's poly budget when the caller sent an
 		// explicit target_polycount/target_faces (forge-options.js).
-		async textToGeometry({ prompt, tier, targetPolycount: targetFaces }) {
+		async textToGeometry({ prompt, tier, targetPolycount: targetFaces, seed }) {
 			const taskId = await createTask('/generation/text-to-model', {
 				prompt: String(prompt).slice(0, 1024),
 				model: modelVersion(),
 				face_limit: clampFaces(targetFaces ?? tier.polycount),
 				texture: false,
 				pbr: false,
+				...seedFields(seed, { textured: false }),
 			});
 			return { kind: 'task', taskId };
 		},
 
-		async imageTo3d({ imageUrl, tier, targetPolycount: targetFaces }) {
+		async imageTo3d({ imageUrl, tier, targetPolycount: targetFaces, seed }) {
 			const input = await resolveInput(imageUrl);
 			const taskId = await createTask('/generation/image-to-model', {
 				input,
@@ -276,6 +285,7 @@ export function createTripoProvider(apiKey) {
 				face_limit: clampFaces(targetFaces ?? tier.polycount),
 				texture: true,
 				pbr: Boolean(tier.pbr),
+				...seedFields(seed, { textured: true }),
 			});
 			return { kind: 'task', taskId };
 		},

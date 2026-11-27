@@ -176,20 +176,22 @@ function invokeRetryDelayMs(attempt, retryAfterSeconds) {
 // gateway (it neither finishes inline nor hands back a pollable NVCF-REQID before
 // our submit timeout), so the whole free lane aborts and silently degrades to the
 // PAID Replicate fallback — exactly the "standard tier doesn't work like draft"
-// failure. So the free hosted lane is pinned to the proven 15-step budget for both
-// draft and standard; the tiers still differ in polycount/price (the catalog) and
-// in the higher-fidelity PAID lanes a user can select. High routes to HuggingFace,
-// not here, by default; its 40 stays for a self-hosted NIM (which serves the full
-// window) if one is ever pointed at this provider.
+// failure. So standard is pinned to the proven 15-step budget, and draft runs at
+// TRELLIS's 10-step floor: faster still, and a different build from standard, so
+// the Draft button changes what this engine makes (it used to share standard's
+// 15, which charged the Draft price for the Standard model). High routes to
+// HuggingFace, not here, by default; its 40 stays for a self-hosted NIM (which
+// serves the full window) if one is ever pointed at this provider.
 function trellisSteps(tier) {
 	const id = tier?.id || tier || 'draft';
 	switch (id) {
 		case 'high':
 			return { ss: 40, slat: 40 };
 		case 'standard':
+			return { ss: 15, slat: 15 };
 		case 'draft':
 		default:
-			return { ss: 15, slat: 15 };
+			return { ss: 10, slat: 10 };
 	}
 }
 

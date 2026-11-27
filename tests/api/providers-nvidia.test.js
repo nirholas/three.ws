@@ -97,8 +97,8 @@ describe('nvidia provider — text→3D submit', () => {
 		// the prompt carries none — keeps draft renders from coming out flat/unlit.
 		expect(body.prompt).toBe('a tiny brass teapot, studio lighting');
 		expect(body.output_format).toBe('glb');
-		expect(body.ss_sampling_steps).toBe(15); // draft tier
-		expect(body.slat_sampling_steps).toBe(15);
+		expect(body.ss_sampling_steps).toBe(10); // draft tier: TRELLIS's floor
+		expect(body.slat_sampling_steps).toBe(10);
 		expect(body.seed).toBe(7);
 
 		expect(job).toEqual({ kind: 'text-to-3d', taskId: 'req-text-1' });
@@ -128,6 +128,20 @@ describe('nvidia provider — text→3D submit', () => {
 
 		expect(calls[0].body.ss_sampling_steps).toBe(15);
 		expect(calls[0].body.slat_sampling_steps).toBe(15);
+	});
+
+	it('sends Draft a smaller step budget than Standard, so the Draft button changes the build', async () => {
+		// Draft and Standard used to share 15/15 here, so picking Draft on this
+		// engine charged the Draft price for the Standard model (forge-controls.js
+		// records every tier as applied on this lane).
+		const calls = stubAccept();
+		const provider = createNvidiaProvider();
+		await provider.textTo3d({ prompt: 'a small red teapot', tier: 'draft' });
+		await provider.textTo3d({ prompt: 'a small red teapot', tier: 'standard' });
+
+		expect(calls[0].body.ss_sampling_steps).toBe(10);
+		expect(calls[1].body.ss_sampling_steps).toBe(15);
+		expect(calls[0].body.ss_sampling_steps).toBeLessThan(calls[1].body.ss_sampling_steps);
 	});
 
 	it('errors cleanly when NVCF accepts the job but omits the NVCF-REQID', async () => {

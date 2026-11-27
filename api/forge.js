@@ -1855,6 +1855,7 @@ async function startJobWithBody(req, res, body) {
 					prompt: prompt || undefined,
 					tier,
 					targetPolycount: opts.targetPolycount ?? undefined,
+					seed: opts.seed ?? undefined,
 				});
 			} else if (typeof gp.textToGeometry === 'function') {
 				const poseText = opts.pose && poseControlFor(backendId) ? poseDirective(opts.pose) : null;
@@ -1863,6 +1864,7 @@ async function startJobWithBody(req, res, body) {
 					prompt: poseText ? `${prompt}, ${poseText}` : prompt,
 					tier,
 					targetPolycount: opts.targetPolycount ?? undefined,
+					seed: opts.seed ?? undefined,
 				});
 			} else {
 				// Image-only backend (e.g. Stable Fast 3D) asked to run text→3D.

@@ -34,6 +34,15 @@ function clampPoly(n) {
 	return Math.max(POLY_MIN, Math.min(POLY_MAX, v));
 }
 
+// Rodin takes a seed in 0..65535. Forge seeds run to 2^32-1 (forge-seed.js), so
+// fold the caller's seed into Rodin's range: the same Forge seed always lands on
+// the same Rodin seed, which is what makes a model repeatable.
+const RODIN_SEED_SPAN = 65_536;
+
+function setSeed(form, seed) {
+	if (Number.isInteger(seed) && seed >= 0) form.set('seed', String(seed % RODIN_SEED_SPAN));
+}
+
 // Map the forge tier to Rodin's named quality rung (quality_override still
 // carries the exact poly target; this is the coarse speed/detail knob).
 function qualityForTier(tier) {
@@ -126,7 +135,7 @@ export function createRodinProvider(apiKey) {
 		// Native geometry-first: text → untextured quad mesh, no intermediate
 		// image. targetPolycount overrides the tier default when the caller sent
 		// an explicit target_polycount/target_faces (forge-options.js).
-		async textToGeometry({ prompt, tier, targetPolycount }) {
+		async textToGeometry({ prompt, tier, targetPolycount, seed }) {
 			const form = new FormData();
 			form.set('tier', 'Gen-2');
 			form.set('prompt', String(prompt).slice(0, 1024));
@@ -135,12 +144,13 @@ export function createRodinProvider(apiKey) {
 			form.set('quality', qualityForTier(tier));
 			form.set('quality_override', String(clampPoly(targetPolycount ?? tier.polycount)));
 			form.set('geometry_file_format', 'glb');
+			setSeed(form, seed);
 			return submit(form);
 		},
 
 		// Single image → native geometry + PBR textures, poly target from the
 		// tier unless the caller overrides it explicitly.
-		async imageTo3d({ imageUrl, prompt, tier, targetPolycount }) {
+		async imageTo3d({ imageUrl, prompt, tier, targetPolycount, seed }) {
 			let imgRes;
 			try {
 				// The reference image URL is caller-supplied: every hop is SSRF-checked.
@@ -167,6 +177,7 @@ export function createRodinProvider(apiKey) {
 			form.set('quality', qualityForTier(tier));
 			form.set('quality_override', String(clampPoly(targetPolycount ?? tier.polycount)));
 			form.set('geometry_file_format', 'glb');
+			setSeed(form, seed);
 			return submit(form);
 		},
 

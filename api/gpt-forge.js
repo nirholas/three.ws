@@ -1718,9 +1718,10 @@ async function startJobUnguarded(req, res) {
 					imageUrl: previewImageUrl,
 					prompt: prompt || undefined,
 					tier,
+					seed: opts.seed ?? undefined,
 				});
 			} else if (typeof gp.textToGeometry === 'function') {
-				submitted = await gp.textToGeometry({ prompt, tier });
+				submitted = await gp.textToGeometry({ prompt, tier, seed: opts.seed ?? undefined });
 			} else {
 				// Image-only backend (e.g. Stable Fast 3D) asked to run text→3D.
 				return json(res, 422, {
