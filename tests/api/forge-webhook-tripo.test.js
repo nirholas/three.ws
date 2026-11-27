@@ -42,7 +42,12 @@ vi.mock('../../api/_lib/forge-store.js', () => ({
 	forgeStoreEnabled: () => true,
 }));
 
-const ROW = { id: 'creation-1', status: 'pending', client_key: 'client-1' };
+const assertSafePublicUrl = vi.fn(async () => {});
+vi.mock('../../api/_lib/ssrf-guard.js', () => ({
+	assertSafePublicUrl: (...a) => assertSafePublicUrl(...a),
+}));
+
+const ROW = { id: 'creation-1', status: 'pending', client_key: 'client-1', backend: 'tripo' };
 
 const handler = (await import('../../api/forge/webhook/tripo.js')).default;
 
@@ -199,6 +204,69 @@ describe('a verified delivery completes the job the way polling does', () => {
 		expect(res.json).toMatchObject({ ok: true, applied: false });
 		expect(materializeCreation).not.toHaveBeenCalled();
 		expect(markFailed).not.toHaveBeenCalled();
+	});
+});
+
+describe('a signed delivery can only act on a Tripo job, and only fetch a public https file', () => {
+	const withModelUrl = (model_url) => ({
+		...COMPLETED,
+		data: { ...COMPLETED.data, output: { model_url } },
+	});
+
+	it('does not complete or fail a job that another provider owns, even when the task id matches', async () => {
+		findByJobAnyClient.mockResolvedValue({ ...ROW, backend: 'meshy' });
+		const done = await deliver(COMPLETED, { deliveryId: 'dlv-foreign-1' });
+		const failed = await deliver(FAILED, { deliveryId: 'dlv-foreign-2' });
+		for (const res of [done, failed]) {
+			expect(res.statusCode).toBe(200);
+			expect(res.json).toMatchObject({ ok: true, applied: false });
+		}
+		expect(materializeCreation).not.toHaveBeenCalled();
+		expect(markFailed).not.toHaveBeenCalled();
+	});
+
+	it('refuses to fetch a model_url that points at an internal host, a plain-http host or a userinfo trick', async () => {
+		const hostile = [
+			'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token',
+			'https://metadata.google.internal/computeMetadata/v1/',
+			'https://127.0.0.1/admin.glb',
+			'https://localhost:8080/x.glb',
+			'https://10.0.0.5/x.glb',
+			'http://tripo.example/task-42.glb',
+			'https://tripo.example@evil.example/task-42.glb',
+			'https://user:pass@tripo.example/task-42.glb',
+			'file:///etc/passwd',
+			'ftp://tripo.example/x.glb',
+			'not a url',
+		];
+		for (const [i, url] of hostile.entries()) {
+			const res = await deliver(withModelUrl(url), { deliveryId: `dlv-ssrf-${i}` });
+			expect(res.statusCode).toBe(200);
+			expect(res.json).toMatchObject({ ok: true, applied: false });
+		}
+		expect(materializeCreation).not.toHaveBeenCalled();
+	});
+
+	it('refuses a model_url that is not a string', async () => {
+		for (const [i, url] of [{ href: 'https://tripo.example/a.glb' }, ['https://tripo.example/a.glb'], 42].entries()) {
+			const res = await deliver(withModelUrl(url), { deliveryId: `dlv-type-${i}` });
+			expect(res.json).toMatchObject({ applied: false });
+		}
+		expect(materializeCreation).not.toHaveBeenCalled();
+	});
+
+	it('refuses a public-looking host whose DNS answer is an internal address', async () => {
+		assertSafePublicUrl.mockRejectedValueOnce(new Error('resolves to a private address'));
+		const res = await deliver(withModelUrl('https://rebind.example/task-42.glb'), { deliveryId: 'dlv-rebind' });
+		expect(res.json).toMatchObject({ ok: true, applied: false });
+		expect(materializeCreation).not.toHaveBeenCalled();
+	});
+
+	it('still fetches the provider\'s real https CDN file', async () => {
+		const url = 'https://tripo-data.rg1.data.tripo3d.com/tcli_abc/20260101/task-42/model.glb?Policy=x&Signature=y';
+		const res = await deliver(withModelUrl(url), { deliveryId: 'dlv-real-cdn' });
+		expect(res.json).toMatchObject({ applied: true });
+		expect(materializeCreation).toHaveBeenCalledWith({ replicateJobId: 'task-42', clientKey: 'client-1', glbUrl: url });
 	});
 });
 

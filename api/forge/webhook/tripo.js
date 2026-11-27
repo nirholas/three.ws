@@ -36,10 +36,41 @@ import {
 	materializeCreation,
 	releaseForgeWebhookDelivery,
 } from '../../_lib/forge-store.js';
+import { isPrivateHostname } from '../../_lib/crawl.js';
+import { assertSafePublicUrl } from '../../_lib/ssrf-guard.js';
 
 const PROVIDER = 'tripo';
 const MAX_BODY_BYTES = 256 * 1024;
 const REPLAY_WINDOW_SECONDS = 300;
+
+/**
+ * The file a signed delivery asks us to copy into our public bucket. The
+ * signature proves the sender, not that the URL it carries is safe to fetch, so
+ * the URL is screened as if it were hostile: https only, no userinfo (the
+ * `https://good.example@evil.example` trick), no internal or metadata host, and
+ * a DNS answer that is a public address. A refused URL leaves the job pending,
+ * so the poll path (which has its own provider-returned URL) still finishes it.
+ *
+ * @param {unknown} value
+ * @returns {Promise<string | null>} the URL when safe to fetch, else null
+ */
+export async function screenModelUrl(value) {
+	if (typeof value !== 'string' || value.length > 4096) return null;
+	let url;
+	try {
+		url = new URL(value);
+	} catch {
+		return null;
+	}
+	if (url.protocol !== 'https:' || url.username || url.password) return null;
+	if (isPrivateHostname(url.hostname)) return null;
+	try {
+		await assertSafePublicUrl(url.toString());
+	} catch {
+		return null;
+	}
+	return url.toString();
+}
 
 /**
  * @param {string} rawBody
@@ -137,9 +168,15 @@ export default wrap(async (req, res) => {
 			// retrying.
 			return json(res, 200, { ok: true, applied: false, reason: 'no matching job' });
 		}
+		// A verified Tripo event may only act on a Tripo job. A task id that happens
+		// to match another provider's row (Replicate, Meshy, GCP) is not ours to
+		// complete or fail.
+		if (existing.backend !== PROVIDER) {
+			return json(res, 200, { ok: true, applied: false, reason: 'job is not a tripo job' });
+		}
 		status = existing.status;
 		if (eventType === 'task.completed') {
-			const modelUrl = data?.output?.model_url;
+			const modelUrl = await screenModelUrl(data?.output?.model_url);
 			if (!modelUrl) {
 				applied = false;
 			} else {
