@@ -153,6 +153,26 @@ describe('describeForgeError', () => {
 		expect(notAllowed.todo).not.toContain('two cats');
 	});
 
+	it('names which photo of a set the upload check refused, and never relays a BYOK provider refusal', () => {
+		const dims = describeForgeError({
+			status: 422,
+			body: { error: 'invalid_image_dimensions', message: 'Photo 2 of 3: That photo is 9000 x 6000 pixels. Forge reads images up to 4096 pixels on a side; shrink it and try again.' },
+		});
+		expect(dims.known).toBe(true);
+		expect(dims.todo).toContain('Photo 2 of 3');
+		expect(dims.action).toBe('edit_input');
+		const type = describeForgeError({ status: 415, body: { error: 'invalid_image_type', message: HOSTILE } });
+		expect(type.known).toBe(true);
+		expectNoLeak(type.message);
+		const refused = describeForgeError({ status: 422, body: { error: 'content_refused', message: HOSTILE } });
+		expect(refused.known).toBe(true);
+		expect(refused.action).toBe('edit_input');
+		expectNoLeak(refused.message);
+		const down = describeForgeError({ status: 503, body: { error: 'provider_unavailable', retry_after: 30 } });
+		expect(down.known).toBe(true);
+		expect(down.todo).toContain('about 30 seconds');
+	});
+
 	it('forgeErrorFromResponse carries the descriptor on the Error', () => {
 		const e = forgeErrorFromResponse(502, { error: 'generation_failed', message: HOSTILE });
 		expect(e).toBeInstanceOf(Error);

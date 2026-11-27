@@ -170,6 +170,14 @@ export const FORGE_ERROR_COPY = Object.freeze({
 		...PAYMENT_RETRY,
 		what: 'That $THREE payment was already used for another generation.',
 	},
+	payment_settling: {
+		title: 'Your payment is safe',
+		what: 'The $THREE payment is still tied to a High generation that is running or just failed.',
+		todo: 'Keep this page open and try again in {wait}. If that generation failed, the retry is free.',
+		retry: 'wait',
+		wait: 30,
+		action: 'retry',
+	},
 	needs_key: {
 		title: 'This engine needs your API key',
 		what: 'The engine you picked runs on your own account with its provider.',
@@ -183,6 +191,21 @@ export const FORGE_ERROR_COPY = Object.freeze({
 		todo: 'Check the key, paste it again, or switch to a free engine.',
 		retry: 'never',
 		action: 'add_key',
+	},
+	content_refused: {
+		title: 'The provider refused this request',
+		what: 'The provider behind the engine you picked declined this prompt or image on content grounds. Nothing was charged by Forge.',
+		todo: 'Reword the prompt or use a different image, then try again.',
+		retry: 'never',
+		action: 'edit_input',
+	},
+	provider_unavailable: {
+		title: 'Your provider is not responding',
+		what: 'The provider for the engine you picked did not answer, so nothing was started. Your key is fine.',
+		todo: 'Try again in {wait}, or switch to another engine now.',
+		retry: 'wait',
+		wait: 30,
+		action: 'switch_engine',
 	},
 	billing: {
 		title: 'Generation is paused',
@@ -443,6 +466,16 @@ export const FORGE_ERROR_COPY = Object.freeze({
 	no_image: badInput('Add a photo', 'This engine needs a photo to work from.', 'Add a photo, then try again.'),
 	invalid_content_type: badInput('That file type is not supported', 'Forge accepts PNG, JPEG and WebP images.', 'Save the image in one of those formats and add it again.'),
 	invalid_size: badInput('That file is too large', 'The photo is bigger than Forge accepts.', 'Use a photo under 8 MB and add it again.'),
+	// The server names which photo of a set failed and its pixel size; that
+	// text is our own validation copy, so it may be shown once screened.
+	invalid_image_type: {
+		...badInput('That file is not an image Forge can read', 'Forge reads PNG, JPEG and WebP photos.', 'Replace that photo and generate again. Your prompt and other photos are kept.'),
+		serverDetail: true,
+	},
+	invalid_image_dimensions: {
+		...badInput('That photo has too many pixels', 'The photo is larger on one side than Forge can read.', 'Resize it, add it again, and generate. Your prompt and other photos are kept.'),
+		serverDetail: true,
+	},
 	payload_too_large: badInput('That file is too large', 'The upload is bigger than Forge accepts.', 'Use a smaller file and try again.'),
 	// A photo pasted as a link (POST /api/forge-upload { source_url }).
 	url_blocked: badInput('That link cannot be opened', 'Forge only fetches public http or https addresses.', 'Save the image to your device and add it from there.'),
@@ -521,6 +554,13 @@ export const FORGE_ERROR_COPY = Object.freeze({
 
 	// Jobs, batches and handles
 	invalid_job: LOST_JOB,
+	model_removed: {
+		title: 'This model was removed',
+		what: 'The model this job made has been removed, so it can no longer be opened.',
+		todo: 'Generate it again to get a new one. Your prompt and settings are kept.',
+		retry: 'now',
+		action: 'retry',
+	},
 	missing_job: LOST_JOB,
 	batch_not_found: { ...LOST_JOB, title: 'This batch is no longer available', what: 'Forge no longer has a record of this batch.' },
 	missing_batch: PAGE_OUT_OF_DATE,

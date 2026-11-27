@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "Forge API errors carry a support reference instead of provider text",
+			"summary": "When an engine fails while starting a model or a rig, the Forge API now answers with a plain message and a short reference you can quote to support, instead of passing the provider's own error text along. The Forge page also explains four more errors in plain words: a photo that is not an image, a photo with too many pixels (naming which photo of a set), a provider that refused the request, and a provider that is not responding.",
+			"tags": ["improvement", "security"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "Forge photo sets: extra views never delay or break a model, and the page says which photos were used",
 			"summary": "Generating extra side and back views is now optional and time-limited: if it fails, is throttled or takes too long, your model carries on from the image you gave. Generated views are checked before they are used, and a photo in a set that is plainly a different object, or empty, is left out and named. Engines that read a single photo now get your front view and the page tells you, instead of implying every photo counted. You can reorder photos with Alt and the arrow keys and remove one with Delete, and an upload that is refused says which photo it was.",
 			"tags": ["improvement", "fix"]
