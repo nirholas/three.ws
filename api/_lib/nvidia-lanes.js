@@ -34,6 +34,7 @@ import { animateNvidiaA2F } from './a2f-nvidia.js';
 import { probeForgeLane } from './forge-health.js';
 import { readSubmitOutcomes } from './forge-events.js';
 import { BACKENDS } from './forge-tiers.js';
+import { NIM_FLUX_MODEL, NIM_FLUX_URL, NIM_FLUX_TIMEOUT_MS, nimFluxBody } from './nim-flux.js';
 import { backendWorkerHost, regionFromHost } from './gpu-worker-host.js';
 
 const NIM_BASE = 'https://integrate.api.nvidia.com/v1';
@@ -42,7 +43,7 @@ const DETAIL_MAX = 200;
 
 // Cadence per lane, in minutes. The NVIDIA free developer tier allows about 40
 // requests per minute per key (docs/free-llm-providers.md); the whole hourly
-// tick sends at most nine hosted requests, so probes never meaningfully compete
+// tick sends at most ten hosted requests, so probes never meaningfully compete
 // with user traffic. The slow reasoning VLM and the two-call Audio2Face probe
 // run every three hours, the GPU workers every six (they already answer the
 // forge's own lane-health checks many times an hour).
@@ -100,6 +101,18 @@ export const NVIDIA_LANES = Object.freeze([
 		everyMinutes: 180,
 		model: () => 'audio2face-3d',
 		probe: probeAudio2Face,
+	},
+	{
+		// The Forge reference-image rung (api/_mcp3d/text-to-image.js). It timed
+		// out on every request for weeks in 2026-11 with nothing measuring it, so
+		// it gets the rung's exact request against the pinned model, hourly.
+		id: 'nim_flux',
+		label: 'Text to image, Forge reference rung',
+		technology: 'NVIDIA NIM (FLUX.2 klein)',
+		kind: 'hosted',
+		everyMinutes: 60,
+		model: () => NIM_FLUX_MODEL,
+		probe: probeNimFlux,
 	},
 	{
 		id: 'trellis_nvcf',
@@ -280,6 +293,38 @@ async function probeNemoGuard() {
 	return { status: 'degraded', http_status: 200, latency_ms: out.latencyMs, model: cfg.model, detail: 'Answered without a readable verdict.' };
 }
 
+// One 512x512 generation with the rung's own body, URL and 30s cap (the
+// genai route is sync; no NVCF poll header, which turns a slow answer into a
+// 504). Only an image NVIDIA reports as finished counts as ok.
+async function probeNimFlux() {
+	if (!env.NVIDIA_API_KEY) return noKey();
+	const started = Date.now();
+	const controller = new AbortController();
+	const timer = setTimeout(() => controller.abort(), NIM_FLUX_TIMEOUT_MS);
+	let res;
+	let data = null;
+	try {
+		res = await fetch(NIM_FLUX_URL, {
+			method: 'POST',
+			headers: { authorization: `Bearer ${env.NVIDIA_API_KEY}`, 'content-type': 'application/json', accept: 'application/json' },
+			body: JSON.stringify(nimFluxBody('a small red ceramic teapot on a white background', 512, 512)),
+			signal: controller.signal,
+		});
+		if (res.ok) data = await res.json().catch(() => null);
+	} catch (err) {
+		return fromNim({ res: null, data: null, latency: Date.now() - started, err }, NIM_FLUX_MODEL, () => false);
+	} finally {
+		clearTimeout(timer);
+	}
+	const latency = Date.now() - started;
+	const artifact = data?.artifacts?.[0];
+	const finish = artifact?.finishReason ?? artifact?.finish_reason;
+	if (res.ok && artifact?.base64 && finish && finish !== 'SUCCESS') {
+		return { status: 'degraded', http_status: res.status, latency_ms: latency, model: NIM_FLUX_MODEL, detail: `Answered 200 but withheld the image (${finish}).` };
+	}
+	return fromNim({ res, data, latency }, NIM_FLUX_MODEL, (d) => typeof d?.artifacts?.[0]?.base64 === 'string' && d.artifacts[0].base64.length > 0);
+}
+
 const GRPC_CODE_STATUS = Object.freeze({
 	invalid_key: { status: 'down', detail: 'The API key was rejected.' },
 	rate_limited: { status: 'degraded', detail: 'Rate limited by the free tier.' },
@@ -368,7 +413,7 @@ export async function dueLanes({ sql = defaultSql, now = Date.now(), lanes = NVI
 export async function runLaneProbes({ sql = defaultSql, force = false, only = null, now = Date.now(), budgetMs = 230_000 } = {}) {
 	let lanes = only ? NVIDIA_LANES.filter((l) => only.includes(l.id)) : NVIDIA_LANES;
 	if (!force) lanes = await dueLanes({ sql, now, lanes });
-	// Sequential on purpose: nine requests an hour need no parallelism, and one
+	// Sequential on purpose: ten requests an hour need no parallelism, and one
 	// at a time keeps each latency number free of our own contention. A lane not
 	// reached inside the budget stays due and runs on the next tick.
 	const startedAt = Date.now();
@@ -488,8 +533,8 @@ function jobWindow(row, days) {
 }
 
 export const METHODOLOGY = Object.freeze({
-	probes: 'An hourly cron sends the smallest valid real request to each hosted lane, using the exact model id the product pins: a four-token chat completion, a one-word description of a 32x32 image, a one-word embedding, a one-sentence safety classification, the word "Hi." synthesized to speech, and one spoken phrase animated by Audio2Face-3D (only the Audio2Face call is timed). Hosted TRELLIS is checked with an authenticated NVCF status lookup so the probe never consumes a generation. GPU workers are checked on their /health route, which reports the GPU they run on.',
-	cadence: 'Chat, embeddings, content safety, speech and hosted TRELLIS every hour; vision and Audio2Face every three hours; GPU workers every six hours. At most nine hosted requests an hour, against a free tier of about 40 requests per minute.',
+	probes: 'An hourly cron sends the smallest valid real request to each hosted lane, using the exact model id the product pins: a four-token chat completion, a one-word description of a 32x32 image, a one-word embedding, a one-sentence safety classification, one 512x512 FLUX.2 klein image with the exact request the Forge reference-image rung sends, the word "Hi." synthesized to speech, and one spoken phrase animated by Audio2Face-3D (only the Audio2Face call is timed). Hosted TRELLIS is checked with an authenticated NVCF status lookup so the probe never consumes a generation. GPU workers are checked on their /health route, which reports the GPU they run on.',
+	cadence: 'Chat, embeddings, content safety, text to image, speech and hosted TRELLIS every hour; vision and Audio2Face every three hours; GPU workers every six hours. At most ten hosted requests an hour, against a free tier of about 40 requests per minute.',
 	latency: 'Probe latency is wall-clock time from our server in us-central1 to the full response, including network. Percentiles are nearest-rank over successful probes in the window.',
 	jobs: 'Job latency is end-to-end wall-clock time of real generations (created to completed), nearest-rank p50 and p95 over completed jobs. GPU time is the worker-measured gpu_ms, shown only where the worker reported it.',
 	gpu_split: 'A completed job is attributed to a GPU only when its serving worker host was recorded and that host reported its GPU on /health. Jobs from before attribution started are counted in the lane totals but never assigned a GPU.',
