@@ -1,11 +1,15 @@
-// GET /api/avatars/library — the curated Mixamo character library.
+// GET /api/avatars/library: the curated, openly licensed character library.
 //
-// 106 professionally rigged humanoid characters (Y Bot, X Bot, Warrok, Remy,
-// Vanguard, zombies, knights, …) staged by scripts/fetch-mixamo-avatars.mjs →
-// convert-mixamo-avatars.mjs → build-mixamo-avatar-library.mjs. Each GLB carries
-// a skeleton + skin weights + textures, so it drops straight into the pose
-// studio / widget studio / embed viewer and drives the whole canonical clip
-// library (idle/walk/run/wave/dance…) via animation retargeting.
+// Rigged humanoid characters (currently CC0 packs such as Quaternius) staged by
+// scripts/build-character-library.mjs from public/avatars/extra/characters.json.
+// Each GLB carries a skeleton + skin weights, so it drops straight into the pose
+// studio / widget studio / embed viewer and drives the canonical clip library via
+// animation retargeting.
+//
+// Adobe Mixamo characters are never served here. Mixamo's terms allow using an
+// exported character inside a product, not redistributing the files as
+// standalone downloads, so any manifest row that is Mixamo-sourced (an older
+// manifest on R2 may still list them) is dropped before the response is built.
 //
 // Mirrors api/animations/library.js exactly: the GLBs (~3 GB) are far too large
 // for the deploy bundle, so they live on the R2 CDN and this endpoint proxies a
@@ -32,6 +36,15 @@ import { getPublicObjectBuffer } from '../_lib/r2.js';
 const MANIFEST_KEY = 'avatars/library/manifest.json';
 const MAX_PAGE = 1000;
 
+/** True for a manifest row that traces to Adobe Mixamo, by source, license or CDN key. */
+export function isMixamoRow(row) {
+	if (!row || typeof row !== 'object') return false;
+	const hay = [row.source, row.license, row.url, row.thumb, row.name]
+		.map((v) => String(v || '').toLowerCase())
+		.join(' ');
+	return hay.includes('mixamo');
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -41,7 +54,9 @@ export default wrap(async (req, res) => {
 	try {
 		const buf = await getPublicObjectBuffer(MANIFEST_KEY);
 		const parsed = JSON.parse(buf.toString('utf8'));
-		avatars = Array.isArray(parsed) ? parsed : Array.isArray(parsed.avatars) ? parsed.avatars : [];
+		avatars = (Array.isArray(parsed) ? parsed : Array.isArray(parsed.avatars) ? parsed.avatars : []).filter(
+			(row) => !isMixamoRow(row),
+		);
 		generatedAt = parsed.generated_at || null;
 	} catch (err) {
 		// Not uploaded yet (NoSuchKey/404) is the expected pre-launch state;

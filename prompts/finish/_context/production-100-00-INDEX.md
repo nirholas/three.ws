@@ -68,7 +68,7 @@ run in parallel, H waits on owner gates, I is anytime, J is the parallel swarm.
 
 | Order | State |
 |---|---|
-| [../backlog/01-x402-settle-runway.md](../902-backlog-01-x402-settle-runway.md) | Code complete; outcome still false. Re-measured 2026-09-03: settle 10.0% (6 of 60 paid attempts) with 1,126 failures on `fee_wallet_below_floor`. Capital is OWNER-ACTIONS row 2; the ring cannot self-fund it. |
+| [../backlog/01-x402-settle-runway.md](../../awaiting-owner/902-backlog-01-x402-settle-runway.md) | Code complete; outcome still false. Re-measured 2026-09-03: settle 10.0% (6 of 60 paid attempts) with 1,126 failures on `fee_wallet_below_floor`. Capital is OWNER-ACTIONS row 2; the ring cannot self-fund it. |
 | Agent index lag (retired 2026-09-03) | Shipped and verified in production: `agent_index` is `ok` (5 of 1,604 Solana agents erroring, 0.3%; 70-minute sweep at 240 per tick; 0 stale and 0 behind EVM chains of 22), `docs/ops/agent-index.md` is live and `tests/agent-index.test.js` passes 78 assertions. |
 
 ### C. Repo and product defects

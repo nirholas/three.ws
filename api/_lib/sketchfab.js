@@ -199,3 +199,21 @@ export async function getProcessingStatus(uid) {
 	const processing = body?.status?.processing;
 	return typeof processing === 'string' ? processing.toUpperCase() : null;
 }
+
+// Remove a model from the showcase account (takedown of a model that was
+// pushed there). 204 is a delete; 404 means Sketchfab already dropped it, which
+// is the state the caller wanted. Anything else throws so a takedown never
+// reports a third-party copy as gone while it is still live.
+export async function deleteModel(uid) {
+	const token = env.SKETCHFAB_API_TOKEN;
+	if (!token) throw new Error('SKETCHFAB_API_TOKEN unset');
+	const res = await fetch(`${API_BASE}/models/${encodeURIComponent(uid)}`, {
+		method: 'DELETE',
+		headers: { authorization: `Token ${token}` },
+		signal: AbortSignal.timeout(30_000),
+	});
+	await res.body?.cancel().catch(() => {});
+	if (res.status === 204 || res.status === 200) return 'deleted';
+	if (res.status === 404) return 'gone';
+	throw new Error(`sketchfab delete failed: ${res.status}`);
+}

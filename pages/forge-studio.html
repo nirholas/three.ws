@@ -283,6 +283,20 @@
 				background: var(--danger, #e05a5a);
 				opacity: 0.7;
 			}
+			/* Why an engine is off for this visitor's region (or an unresolved
+			   location). Page text, not a tooltip: a disabled button shows no hover on
+			   touch and is not announced with its title. */
+			.engine-region-note {
+				margin: var(--space-xs) 0 0;
+				padding: var(--space-2xs) var(--space-sm);
+				border-left: 2px solid var(--warning, #e0a93e);
+				font-size: var(--text-xs);
+				line-height: 1.45;
+				color: var(--ink-dim);
+			}
+			.engine-region-note[hidden] {
+				display: none;
+			}
 			.aspect button:focus-visible,
 			.chip:focus-visible,
 			.btn:focus-visible {
@@ -782,7 +796,7 @@
 				color: var(--ink);
 			}
 			.byok-input {
-				flex: 1 1 16rem;
+				flex: 1 1 11rem;
 				min-width: 0;
 				background: var(--bg);
 				border: 1px solid var(--stroke);
@@ -1490,11 +1504,13 @@
 				font-weight: 600;
 			}
 
-			/* Honest elapsed-vs-typical meter. The fill maps real elapsed time
-			   against the engine's real catalog ETA on an asymptotic curve that
-			   never reaches 100% on its own — only a real finished GLB snaps it to
-			   full. Past the typical time it holds near the cap and recolours to
-			   amber ("longer than usual"), so the bar is informative, never faked. */
+			/* The wait indicator. The workers report queued and running and nothing
+			   between, so there is no percentage to show: while a job runs this is
+			   an indeterminate band (a progressbar with no aria-valuenow). Only a
+			   real finished GLB gives it a width. Once the job passes the typical
+			   time measured for its lane it recolours to amber, which is a
+			   statement about elapsed time and claims nothing about how much is
+			   left. */
 			.gen-progress {
 				position: relative;
 				height: 5px;
@@ -1548,8 +1564,8 @@
 			.gen-progress[data-indeterminate='true'] .gen-progress-fill::after {
 				animation-play-state: running;
 			}
-			/* No catalog ETA (unknown duration) — a slim travelling band instead of
-			   a measured fill, so we never imply a finish time we don't have. */
+			/* A slim travelling band instead of a measured fill, so the bar never
+			   implies progress or a finish time nobody knows. */
 			.gen-progress[data-indeterminate='true'] .gen-progress-fill {
 				width: 38% !important;
 				animation: gen-indeterminate 1.5s ease-in-out infinite;
@@ -3397,7 +3413,7 @@
 					<input
 						type="file"
 						id="view-file-input"
-						accept="image/png,image/jpeg,image/webp"
+						accept="image/*,.heic,.heif,.avif"
 						aria-label="Choose up to 4 photos of the same object"
 						multiple
 						hidden
@@ -3436,7 +3452,7 @@
 					<input
 						type="file"
 						id="sketch-file-input"
-						accept="image/png,image/jpeg,image/webp"
+						accept="image/*,.heic,.heif,.avif"
 						aria-label="Choose a sketch image to reconstruct"
 						hidden
 					/>
@@ -3512,16 +3528,17 @@
 						<span class="el-item"><span class="el-dot el-dot-busy"></span> busy</span>
 						<span class="el-item"><span class="el-dot el-dot-down"></span> unavailable</span>
 					</p>
+					<p class="engine-region-note" id="engine-region-note" role="note" hidden></p>
 					<div class="byok-row is-hidden" id="byok-row">
 						<label class="fq-label" for="provider-key" id="byok-label" data-i18n="forge_studio.api_key">API key</label>
 						<input
 							class="byok-input"
 							id="provider-key"
 							type="password"
-							autocomplete="off"
+							autocomplete="new-password"
 							autocapitalize="off"
 							spellcheck="false"
-							placeholder="Your provider API key (kept in this browser)"
+							placeholder="Your provider API key"
 							aria-describedby="byok-hint"
 						/>
 						<span class="byok-hint" id="byok-hint"></span>
@@ -3625,14 +3642,13 @@
 							class="gen-progress"
 							id="gen-progress"
 							role="progressbar"
-							aria-label="Generation progress"
+							aria-label="Generation in progress"
 							aria-valuemin="0"
 							aria-valuemax="100"
-							aria-valuenow="0"
 						>
 							<div class="gen-progress-fill" id="gen-progress-fill"></div>
 						</div>
-						<div class="gen-meta" id="gen-meta">Elapsed 0s</div>
+						<div class="gen-meta" id="gen-meta" aria-live="off">Elapsed 0:00</div>
 						<div style="margin-top: var(--space-sm)">
 							<button class="btn btn-ghost" type="button" id="cancel" data-i18n="forge_studio.cancel">Cancel</button>
 						</div>

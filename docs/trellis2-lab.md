@@ -83,6 +83,8 @@ These runs went from the lab on a local dev server against a scale-to-zero copy 
 
 The worker's step-down only catches CUDA out-of-memory, so a host-RAM kill fails the job outright. The fix belongs in `workers/model-trellis2`: either lower the resident host footprint (the models are held on the CPU between stages under `low_vram`) or bound the postprocess memory. Until then, use Fast draft for real runs.
 
+Since 2026-11-26 the worker enforces this itself: on a host with 32 GiB or less it runs every preset at 512 and `GET /health` advertises only 512, so a Balanced or Maximum detail request finishes at 512 (reported in `resolution_served`) instead of being killed. Production has never set `MODEL_TRELLIS2_URL`, so the lab's runs need that decision first: [docs/ops/trellis2-lane-decision.md](./ops/trellis2-lane-decision.md).
+
 ## Credit
 
 TRELLIS.2 is by Microsoft Research and released under the MIT license. The lab page carries the citation, a license link, the repository link and the run details above.

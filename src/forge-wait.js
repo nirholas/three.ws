@@ -6,6 +6,9 @@
 // there is no "generation started" event, so it watches the panel's own
 // is-hidden class and starts/stops the rotation from that. It never touches the
 // progress UI and never fakes progress: it only rotates real, curated content.
+// Its one timer rotates that text on a cadence. It does not measure, imply or
+// advance progress: removing it would change what is written, never what is
+// reported about the job.
 //
 // Motion-safe: under prefers-reduced-motion it shows a single static tip with no
 // timer and no crossfade.
@@ -38,10 +41,13 @@ if (panel && FORGE_TIPS.length) {
 
 	const card = document.createElement('div');
 	card.className = 'forge-wait';
-	// Deliberately NOT an aria-live region: the tip rotates every few seconds and
-	// a live region would announce each one, interrupting a screen-reader user who
-	// is just waiting. It stays normal, readable content; the panel's #gen-note
-	// (role="status") already voices the real progress.
+	// Explicitly NOT announced: the tip rotates every few seconds and a live
+	// region would read out each one, interrupting a screen-reader user who is
+	// just waiting. The stage panel that contains this card is a polite live
+	// region, so the opt-out has to be stated here (aria-live off) or the tips
+	// are announced anyway. It stays normal, readable content; the stage list
+	// and the polite status announcer voice the real progress.
+	card.setAttribute('aria-live', 'off');
 	card.innerHTML =
 		'<span class="forge-wait-eyebrow">// while it forges</span>' +
 		'<div class="forge-wait-body"><p class="forge-wait-tip"></p>' +

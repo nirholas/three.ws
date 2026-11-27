@@ -73,16 +73,16 @@ Rows `robinhood/robinhood-chain-examples/examples/03-portfolio-valuation/README.
 | `solana-mobile/android-overlay/README.md` | no-open-work | reference doc, no outstanding work found |
 | `solana-mobile/docs/ANDROID-AUTO.md` | no-open-work | reference doc, no outstanding work found |
 | `solana-mobile/docs/ASSETS.md` | no-open-work | reference doc, no outstanding work found |
-| `solana-mobile/docs/CHECKLIST.md` | order | [979](../979-plan-mobile-seeker-v1-1-widget-release-prep.md). 29 unticked items; agent-verifiable ones walked by the order, device and portal items stay with owner |
+| `solana-mobile/docs/CHECKLIST.md` | order | [979](../../awaiting-owner/979-plan-mobile-seeker-v1-1-widget-release-prep.md). 29 unticked items; agent-verifiable ones walked by the order, device and portal items stay with owner |
 | `solana-mobile/docs/INTEGRATION.md` | no-open-work | reference doc, no outstanding work found |
 | `solana-mobile/publish-play/account-experience.md` | owner-only | Play account and device verification steps are owner actions |
 | `solana-mobile/publish-play/listing/content-rating.md` | owner-only | questionnaire answers the owner submits in Play Console |
-| `solana-mobile/publish-play/listing/data-safety.md` | order | [979](../979-plan-mobile-seeker-v1-1-widget-release-prep.md). needs widget token and card fetch disclosure check |
+| `solana-mobile/publish-play/listing/data-safety.md` | order | [979](../../awaiting-owner/979-plan-mobile-seeker-v1-1-widget-release-prep.md). needs widget token and card fetch disclosure check |
 | `solana-mobile/publish-play/listing/financial-features.md` | owner-only | declaration the owner submits in Play Console |
-| `solana-mobile/publish-play/README.md` | order | [979](../979-plan-mobile-seeker-v1-1-widget-release-prep.md). Play Console steps feed the owner release runbook; account choice is owner action |
+| `solana-mobile/publish-play/README.md` | order | [979](../../awaiting-owner/979-plan-mobile-seeker-v1-1-widget-release-prep.md). Play Console steps feed the owner release runbook; account choice is owner action |
 | `solana-mobile/publish/listing/description.md` | no-open-work | reference doc, no outstanding work found |
 | `solana-mobile/publish/listing/saga-features.md` | no-open-work | reference doc, no outstanding work found |
-| `solana-mobile/README.md` | order | [979](../979-plan-mobile-seeker-v1-1-widget-release-prep.md). line 5 says widget ships once API lane deployed; lane is live |
+| `solana-mobile/README.md` | order | [979](../../awaiting-owner/979-plan-mobile-seeker-v1-1-widget-release-prep.md). line 5 says widget ships once API lane deployed; lane is live |
 | `specs/3D_AGENT_CARD.md` | no-open-work | shipped spec reference, no open markers |
 | `specs/AGENT_MANIFEST.md` | no-open-work | shipped spec reference, no open markers |
 | `specs/AVATAR_PARAMETERS.md` | no-open-work | status partial but only reserved keys (layers, animation, base) with no committed plan |
@@ -142,7 +142,7 @@ Rows `robinhood/robinhood-chain-examples/examples/03-portfolio-valuation/README.
 | `src/scene-studio/vendor/README.md` | no-open-work | reference doc, no outstanding work found |
 | `src/solana/vanity/wasm/README.md` | no-open-work | reference doc, no outstanding work found |
 | `src/voice/README.md` | no-open-work | reference doc, no outstanding work found |
-| `STRUCTURE.md` | order | [283](../283-plan-capture-video2scene-worker-live.md), [742](../742-plan-agent-screen-pool-deploy-and-verify.md), [271](../271-plan-ops-world-health-retired-state.md), [977](../977-plan-avatar-longcat-gpu-host-bringup.md). status rows show undeployed workers and retired world |
+| `STRUCTURE.md` | order | [283](../../awaiting-owner/283-plan-capture-video2scene-worker-live.md), [742](../../awaiting-owner/742-plan-agent-screen-pool-deploy-and-verify.md), [271](../../awaiting-owner/271-plan-ops-world-health-retired-state.md), [977](../977-plan-avatar-longcat-gpu-host-bringup.md). status rows show undeployed workers and retired world |
 | `SUPPORT.md` | no-open-work | reference doc, verified against code, no outstanding items |
 | `tests/e2e/README.md` | no-open-work | reference doc, no outstanding work found |
 | `tests/fixtures/skill-import/hostile/SKILL.md` | not-a-plan | hostile test fixture, intentionally adversarial text |

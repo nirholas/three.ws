@@ -145,6 +145,11 @@ const SKIP = [
 	// record the archive exists to preserve. The rule applies to prose we
 	// write, not to prose we transcribe.
 	/^data\/x-archive\//,
+	// The X research store (data/x-research/, written by
+	// scripts/x-user-timeline.mjs), for the same reason: other accounts' posts
+	// and X Article bodies, paid for once and kept exactly as the API returned
+	// them.
+	/^data\/x-research\//,
 	// The store-submission evidence captures, for the same reason. Each of these
 	// is a verbatim JSON-RPC wire payload pulled from the LIVE production server
 	// and kept so an OpenAI or MCP-directory reviewer can diff what we claim

@@ -4,13 +4,8 @@
  * /club entrance journey loads (src/club-entrance.js):
  *
  *   alleyway.glb                          → public/club/venue/alleyway.glb
- *   space_smugglers_club_house_-_dark…glb → public/club/venue/space-smugglers-clubhouse.glb
- *   environment_ally_with_barstrip_club.glb → public/club/venue/back-alley.glb
- *     (the /stripclub entrance, src/club-variant.js; CC BY 4.0, credited in
- *     public/club/venue/LICENSES.md and on screen. Download the GLB from the
- *     Sketchfab page listed there and drop it in the repo root.)
  *
- * Both raw exports are ~17–21 MB — far too heavy to stream while a visitor
+ * The raw exports are ~17-21 MB, far too heavy to stream while a visitor
  * stands at the door — so we run each through the same GLB → Meshopt + WebP
  * pipeline the rest of the venue assets use:
  *
@@ -40,15 +35,11 @@ const OUT_DIR = resolve(ROOT, 'public/club/venue');
 const MAX_TEXTURE = 2048;
 
 // Source export → runtime filename. The outside alley you land in, then the
-// interior you walk through after paying the cover.
+// gallery you walk through after paying the cover.
 const TARGETS = [
 	{ src: 'alleyway.glb', out: 'alleyway.glb' },
-	{ src: 'space_smugglers_club_house_-_dark_version.glb', out: 'space-smugglers-clubhouse.glb' },
 	// Gallery corridor you walk through before reaching the club door.
 	{ src: 'tour.glb', out: 'tour.glb' },
-	// The brick back alley behind /stripclub. Sketchfab names the download after
-	// the model's slug, and a browser may have saved it under the short name.
-	{ src: ['environment_ally_with_barstrip_club.glb', 'back-alley-source.glb'], out: 'back-alley.glb' },
 ];
 
 const mb = (n) => (n / 1024 / 1024).toFixed(2);

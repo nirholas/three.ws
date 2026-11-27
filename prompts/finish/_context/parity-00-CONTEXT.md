@@ -54,12 +54,12 @@ Verify in a real browser: `npm run dev` (port 3000; reuse it if another agent is
 | [020](../020-parity-06-success-stories.md) | `/stories`: opt-in case studies with verifiable on-chain metrics | none |
 | [021](../021-parity-07-three-fee-flow.md) | "Where every $100 goes" on `/three-token`, from the live split policies | none |
 | 022 (retired 2026-10-08) | MCP docs as tool-call sequences; `retry_safe` on every post-payment failure | none |
-| [919](../919-parity-09-ship-and-publish.md) | Push, deploy, publish the `three-ws` CLI to npm | owner: push, deploy, npm publish |
+| [919](../../awaiting-owner/919-parity-09-ship-and-publish.md) | Push, deploy, publish the `three-ws` CLI to npm | owner: push, deploy, npm publish |
 | [920](../920-parity-10-community-skill-registry.md) | Pull community skills from external GitHub registries | owner: the source list names other projects |
-| [921](../921-parity-11-directory-listings.md) | List `skill.md` in the Solana Foundation's awesome-solana-ai | owner: external PR |
-| [922](../922-parity-12-why-three-ws.md) | "Why three.ws" comparison page | owner: names other projects |
-| [923](../923-parity-13-builder-competition.md) | A tokenized builder competition page | owner: prize money |
-| [924](../924-parity-14-pricing-levers.md) | API key tiers with enforced limits; a $THREE deposit bonus | owner: pricing |
-| [925](../925-parity-15-mention-to-launch.md) | Launch a coin by mentioning @trythreews on X | owner: design sign-off, posting |
+| [921](../../awaiting-owner/921-parity-11-directory-listings.md) | List `skill.md` in the Solana Foundation's awesome-solana-ai | owner: external PR |
+| [922](../../awaiting-owner/922-parity-12-why-three-ws.md) | "Why three.ws" comparison page | owner: names other projects |
+| [923](../../awaiting-owner/923-parity-13-builder-competition.md) | A tokenized builder competition page | owner: prize money |
+| [924](../../awaiting-owner/924-parity-14-pricing-levers.md) | API key tiers with enforced limits; a $THREE deposit bonus | owner: pricing |
+| [925](../../awaiting-owner/925-parity-15-mention-to-launch.md) | Launch a coin by mentioning @trythreews on X | owner: design sign-off, posting |
 
 Progress log: [parity-PROGRESS.md](parity-PROGRESS.md). Append one dated entry per session.

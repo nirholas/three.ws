@@ -80,8 +80,8 @@ a demo far more often than to a proposal.
 
 Engine bridges (Unity, Unreal, Godot) shipped; see [the engine bridges doc](../engine-bridges.md).
 Store publishing (Fab, Unity Asset Store, itch) is still planned in best3d order
-[935](../../prompts/finish/935-best3d-08-engine-store-publishing.md). The orphaned avatar
-campaign is [934](../../prompts/finish/934-best3d-07-orphaned-avatar-campaign.md); the three-vrm
+[935](../../prompts/awaiting-owner/935-best3d-08-engine-store-publishing.md). The orphaned avatar
+campaign is [934](../../prompts/awaiting-owner/934-best3d-07-orphaned-avatar-campaign.md); the three-vrm
 work and VRM 0.x export shipped and is now live, see [the avatar engines doc](../avatar-engines.md).
 This plan does not duplicate them.
 

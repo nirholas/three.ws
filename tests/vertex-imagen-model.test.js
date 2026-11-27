@@ -6,6 +6,8 @@
  * served (404 / model not found), never on a 429 or a 403.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { REAL_PNG_B64 } from './_helpers/real-image.js';
+import { resetVertexBreaker } from '../api/_lib/vertex-image-breaker.js';
 
 vi.mock('../api/_lib/gcp-auth.js', () => ({
 	getGcpAccessToken: async () => 'tok',
@@ -19,13 +21,15 @@ const { IMAGE_MODEL_PRIMARY, IMAGE_MODEL_FALLBACK, imageModelChain, isModelNotFo
 );
 
 const IMAGE_OK = {
-	candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: 'aGVsbG8=' } }] } }],
+	candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: REAL_PNG_B64 } }] } }],
 };
 const NOT_FOUND = [404, { error: { code: 404, message: 'Publisher Model was not found or your project does not have access to it.' } }];
 
 let answers;
 let calls;
-beforeEach(() => {
+beforeEach(async () => {
+	// A failure in one case parks the shared Vertex breaker; start each closed.
+	await resetVertexBreaker();
 	process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 	delete process.env.VERTEX_IMAGEN_MODEL;
 	delete process.env.VERTEX_IMAGEN_EDIT_MODEL;

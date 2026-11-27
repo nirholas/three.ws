@@ -1,7 +1,8 @@
 // Analytics — PostHog identity + a typed, documented event taxonomy.
 //
 // The snippet injected by vite.config.js auto-captures pageviews, clicks and
-// session replays anonymously. This module adds:
+// session replays, but only after the visitor accepts analytics in the cookie
+// banner (src/shared/cookie-consent.js); before that nothing is collected. This module adds:
 //   1. Identity      — identifyUser() / resetIdentity() (call after auth resolves).
 //   2. Event catalog  — ANALYTICS_EVENTS: the single source of truth for every
 //                       product-meaningful event name + its documented props.
@@ -188,7 +189,7 @@ let _lastDistinctId = null;
 
 /**
  * Tie subsequent events to a stable user.
- * @param {{ id: string, username?: string, email?: string, display_name?: string, created_at?: string }} user
+ * @param {{ id: string, username?: string, display_name?: string, created_at?: string }} user
  */
 export function identifyUser(user) {
 	if (!user?.id) return;
@@ -198,10 +199,12 @@ export function identifyUser(user) {
 	if (_lastDistinctId === user.id) return;
 	_lastDistinctId = user.id;
 	try {
+		// Opaque user id only. Never send an email address, and never use a
+		// username or display name that is itself an email.
+		const safe = (v) => (typeof v === 'string' && v && !v.includes('@') ? v : undefined);
 		p.identify(String(user.id), {
-			username: user.username || undefined,
-			email: user.email || undefined,
-			name: user.display_name || user.username || undefined,
+			username: safe(user.username),
+			name: safe(user.display_name) || safe(user.username),
 			created_at: user.created_at || undefined,
 		});
 	} catch {

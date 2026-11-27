@@ -1,6 +1,6 @@
 # /club audio — provenance and licensing
 
-All seven loops in this directory were synthesised from scratch with
+All the loops in this directory were synthesised from scratch with
 ffmpeg's `lavfi` filtergraph (sine + noise primitives, no third-party
 samples). The source recipe lives at
 [`/scripts/build-club-audio.mjs`](../../../scripts/build-club-audio.mjs)
@@ -13,10 +13,6 @@ under **Creative Commons CC0 1.0 Universal**
 (https://creativecommons.org/publicdomain/zero/1.0/). You can use them
 for any purpose, with or without attribution.
 
-The exceptions are the supplied third-party tracks that are **not** CC0:
-the walk-in anthem `entrance.mp3` and the two full-length music-bed tracks
-`club.mp3` + `im-in-love-wit-a-stripper-fast.mp3`. See their rows below.
-
 | File                 | Source                                                        | License | Length                | Notes                                                                 |
 | -------------------- | ------------------------------------------------------------- | ------- | --------------------- | --------------------------------------------------------------------- |
 | `ambience.{ogg,mp3}` | Authored — pink noise bed + slow LFO + low rumble             | CC0 1.0 | ~60 s loop            | Crowd / room ambience. Constant level, no rhythmic content.           |
@@ -26,9 +22,15 @@ the walk-in anthem `entrance.mp3` and the two full-length music-bed tracks
 | `capoeira.{ogg,mp3}` | Authored — 110 BPM berimbau ostinato + atabaque approximation | CC0 1.0 | ~8.7 s loop (4 bars)  | Brazilian roda rhythm for the Capoeira clip.                          |
 | `silly.{ogg,mp3}`    | Authored — 130 BPM major-key bounce + woodblock + cartoon arp | CC0 1.0 | ~7.4 s loop (4 bars)  | Playful bed for the Silly clip.                                       |
 | `pole.{ogg,mp3}`     | Authored — 105 BPM neutral groove + sine pad                  | CC0 1.0 | ~9.1 s loop (4 bars)  | Generic backing track for pole choreography clips (spin/climb/combo). |
-| `entrance.mp3`       | Supplied third-party track                                    | © original artist — **not** CC0 | full track, one-shot | Walk-in anthem played once on `club:admitted` via `ClubAudio.playEntrance()`. Not synthesised — confirm the artist's license before any redistribution beyond three.ws. |
-| `club.mp3`           | Supplied third-party track                                    | © original artist — **not** CC0 | full track, looped  | First track of the music bed (`ClubAudio.startMusic()`). Streamed via `createMediaElementSource`, never decoded to a buffer. Confirm the artist's license before any redistribution beyond three.ws. |
-| `im-in-love-wit-a-stripper-fast.mp3` | Supplied third-party track                    | © original artist — **not** CC0 | full track, looped  | Second track of the music bed, played after `club.mp3` then loops back. Streamed, not decoded. Confirm the artist's license before any redistribution beyond three.ws. |
+
+## Removed tracks
+
+Three supplied third-party tracks (a walk-in anthem, a long music bed, and a
+sped-up commercial song) were removed on 2026-11-26 because their rights could
+not be established. The music bed now streams the CC0 `hiphop` and `pole`
+loops, and the walk-in sting is the CC0 `rumba` loop played once. Do not add
+tracks here without a row above that names the source and a licence that permits
+commercial redistribution.
 
 ## Mastering notes
 

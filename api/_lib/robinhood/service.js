@@ -20,6 +20,8 @@ import { sql } from '../db.js';
 import { runLocked } from '../locked-sql.js';
 import { decryptSecret, encryptSecret } from '../secret-box.js';
 import { RobinhoodApiError, createCryptoClient, isCryptoSymbol, privateKeyFromBase64, publicKeyBase64 } from './crypto-client.js';
+import { RISK_ACK_REQUIRED_ERROR } from '../../../public/risk-ack.js';
+import { agreementRequirement, hasCurrentAgreement, isSanctionedRequest } from '../real-funds-agreement.js';
 import { checkOrder, parseCaps } from './spend-caps.js';
 import { SizingError, notionalUsd, sizeOrder } from './order-sizing.js';
 
@@ -102,6 +104,32 @@ async function guard(fn) {
 		const mapped = toConnectorError(e);
 		if (mapped) throw mapped;
 		throw e;
+	}
+}
+
+/**
+ * Real-funds gate for the two actions that let an account trade: placing an
+ * order and switching trading on. Same agreement the HTTP money paths demand.
+ * `req` is passed when the caller is an HTTP request, so region screening runs
+ * too. A database failure fails closed.
+ */
+async function requireRealFunds(userId, req) {
+	if (req && isSanctionedRequest(req)) {
+		throw new ConnectorError(451, 'region_not_supported', 'Real-funds features are not available in your region because of sanctions law. Nothing was sent.');
+	}
+	let signed;
+	try {
+		signed = await hasCurrentAgreement(userId);
+	} catch {
+		throw new ConnectorError(503, 'agreement_check_unavailable', 'We could not verify your signed real-funds agreements, so nothing was sent. Try again in a moment.');
+	}
+	if (!signed) {
+		throw new ConnectorError(
+			403,
+			RISK_ACK_REQUIRED_ERROR,
+			'Sign the real-funds agreements (Terms of Service, Risk Disclosure, and Agent Wallet Agreement) before using real funds. Nothing was sent.',
+			{ context: 'robinhood-order', ...agreementRequirement() },
+		);
 	}
 }
 
@@ -197,7 +225,8 @@ export async function saveCredentials({ userId, apiKey, privateKey, perOrderCapU
 }
 
 /** Change caps or pause trading without re-pasting the key. */
-export async function updateSettings({ userId, perOrderCapUsd, dailyCapUsd, tradingEnabled }) {
+export async function updateSettings({ userId, perOrderCapUsd, dailyCapUsd, tradingEnabled, req = null }) {
+	if (tradingEnabled === true) await requireRealFunds(userId, req);
 	const row = await requireConnection(userId);
 	const caps = parseCaps({
 		per_order_cap_usd: perOrderCapUsd ?? num(row.per_order_cap_usd),
@@ -361,8 +390,9 @@ async function explainRefusal(userId, row) {
  * Place a previewed order. Needs the preview_id and confirm_order: true, which
  * a caller may only send after the owner approved the preview's confirm table.
  */
-export async function placeOrder({ userId, previewId, confirmOrder }) {
+export async function placeOrder({ userId, previewId, confirmOrder, req = null }) {
 	return guard(async () => {
+		await requireRealFunds(userId, req);
 		if (confirmOrder !== true) {
 			throw new ConnectorError(400, 'confirm_required', 'Placing an order needs confirm_order: true, sent only after the owner approved the preview.', { preview_tool: 'robinhood_preview_order' });
 		}

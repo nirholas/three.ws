@@ -28,7 +28,7 @@ import { headObject, getObjectBuffer, objectStorageConfigured, putObject, public
 import { AnatomyError } from './service.js';
 
 export const NARRATION_CLIENT_ID = 'xai-anatomy';
-export const NARRATION_VOICE = 'en-US-AndrewMultilingualNeural';
+export const NARRATION_VOICE = 'Charon';
 // Bump when the prompt or guard changes so cached narrations are rewritten.
 const PROMPT_VERSION = 'v1';
 const MAX_WORDS = 110;
@@ -169,7 +169,7 @@ async function readCached(keys) {
 
 async function synthesize(text) {
 	try {
-		return await synthesizeVoice({ provider: 'edge', voiceId: NARRATION_VOICE, text });
+		return await synthesizeVoice({ provider: 'gemini', voiceId: NARRATION_VOICE, text });
 	} catch (err) {
 		throw new AnatomyError('narration_audio_failed', 'The voice lane did not answer. The narration text is shown instead; try again in a minute.', 502, String(err?.message || '').slice(0, 200));
 	}

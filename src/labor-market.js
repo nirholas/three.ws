@@ -12,6 +12,9 @@
 
 import { apiFetch } from './api.js';
 import { updateValue, setLiveDot, sparkline, enterStagger, rippleOnce } from './ui-juice.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];

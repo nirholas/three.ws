@@ -151,7 +151,7 @@ describe.each([
 		const res = makeRes();
 		// The Tencent lanes fail closed on an unknown territory, so the edge
 		// country header is what admits this request.
-		await handler(makeReq(url, photoBody('modly_hunyuan', 'draft'), { 'cf-ipcountry': 'US' }), res);
+		await handler(makeReq(url, photoBody('modly_hunyuan', 'draft'), { 'x-client-region': 'US' }), res);
 
 		expect(res.statusCode).toBe(200);
 		expect(res.body.backend).toBe('modly_hunyuan');
@@ -177,7 +177,7 @@ describe.each([
 
 	it('refuses modly_hunyuan where the Tencent licence excludes the territory', async () => {
 		const res = makeRes();
-		await handler(makeReq(url, photoBody('modly_hunyuan'), { 'cf-ipcountry': 'DE' }), res);
+		await handler(makeReq(url, photoBody('modly_hunyuan'), { 'x-client-region': 'DE' }), res);
 
 		expect(res.statusCode).toBe(403);
 		expect(res.body.error).toBe('region_restricted');
@@ -188,7 +188,7 @@ describe.each([
 
 	it('serves the TripoSG lane in the same territory', async () => {
 		const res = makeRes();
-		await handler(makeReq(url, photoBody('modly'), { 'cf-ipcountry': 'DE' }), res);
+		await handler(makeReq(url, photoBody('modly'), { 'x-client-region': 'DE' }), res);
 
 		expect(res.statusCode).toBe(200);
 		expect(res.body.backend).toBe('modly');

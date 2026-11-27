@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D + AI + Web3 Just Converged: three.ws Shipped the Whole Stack</title>
-    <meta name="description" content="A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and live on Anthropic's MCP Registry.">
-    <meta name="keywords" content="three.ws, 3D agents, AI agents, web3, crypto, convergence, spatial AI, x402, ERC-8004, Solana, MCP, Anthropic MCP Registry, agent payments, three.js, npm">
+    <meta name="description" content="A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is a crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, published to npm, and listed in the official MCP Registry.">
+    <meta name="keywords" content="three.ws, 3D agents, AI agents, web3, crypto, convergence, spatial AI, x402, ERC-8004, Solana, MCP, official MCP Registry, agent payments, three.js, npm">
     <link rel="canonical" href="https://three.ws/blog/3d-ai-crypto-convergence">
 
     <meta property="og:title" content="3D + AI + Web3 Just Converged: three.ws Shipped the Whole Stack">
-    <meta property="og:description" content="A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets. Open source, on npm, live on Anthropic's MCP Registry.">
+    <meta property="og:description" content="A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets. Open source, on npm, listed in the official MCP Registry.">
     <meta property="og:url" content="https://three.ws/blog/3d-ai-crypto-convergence">
     <meta property="og:type" content="article">
     <meta property="og:image" content="https://three.ws/og-image.png">
@@ -50,7 +50,7 @@
         "@context": "https://schema.org",
         "@type": "BlogPosting",
         "headline": "3D + AI + Web3 Just Converged: three.ws Shipped the Whole Stack",
-        "description": "A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is the only crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, on npm, and live on Anthropic's MCP Registry.",
+        "description": "A web2 unicorn just raised ~$200M to build 3D AI agents. three.ws is a crypto-native team that already shipped the full stack: browser 3D, a multi-provider MCP runtime, and on-chain agent wallets that pay each other in USDC. Open source on GitHub, on npm, and listed in the official MCP Registry.",
         "image": "https://three.ws/og-image.png",
         "datePublished": "2026-06-08T16:00:00.000Z",
         "dateModified": "2026-06-08T16:00:00.000Z",
@@ -62,7 +62,7 @@
             "logo": { "@type": "ImageObject", "url": "https://three.ws/og-image.png" }
         },
         "mainEntityOfPage": { "@type": "WebPage", "@id": "https://three.ws/blog/3d-ai-crypto-convergence" },
-        "keywords": "three.ws, 3D agents, AI agents, web3, crypto, convergence, spatial AI, x402, ERC-8004, Solana, MCP, Anthropic MCP Registry, npm"
+        "keywords": "three.ws, 3D agents, AI agents, web3, crypto, convergence, spatial AI, x402, ERC-8004, Solana, MCP, official MCP Registry, npm"
     }
     </script>
     <meta name="twitter:image" content="https://three.ws/og-image.png">
@@ -83,7 +83,7 @@
 
         <p>Three of the biggest technology waves of the decade, <strong>spatial / 3D</strong>, <strong>AI agents</strong>, and <strong>web3</strong>, are colliding into a single product category: the autonomous, embodied agent. An AI that thinks, has a body you can see, and a wallet it controls.</p>
 
-        <p>The market is already pricing this in. A web2 unicorn recently closed a <strong>~$200M round</strong> to build 3D AI characters and agents. That is the loud signal that the thesis is real and the demand is here. But here is the part nobody noticed: <strong>there is exactly one crypto-native team that has already shipped the entire stack in production, three.ws.</strong> Not a pitch deck. A platform you can deploy in one line of HTML today, with the packages on npm, the source on GitHub, and the server live on Anthropic's official registry.</p>
+        <p>The market is already pricing this in. A web2 unicorn recently closed a <strong>~$200M round</strong> to build 3D AI characters and agents. That is the loud signal that the thesis is real and the demand is here. But here is the part nobody noticed: <strong>there is a crypto-native team that has already shipped the entire stack in production, three.ws.</strong> Not a pitch deck. A platform you can deploy in one line of HTML today, with the packages on npm, the source on GitHub, and the server listed in the official MCP Registry.</p>
 
         <h2>Why these three waves belong together</h2>
         <p>An AI agent without a body is a chat box. An agent without money is a demo. The convergence only matters because each layer fixes the other two's missing piece:</p>
@@ -113,12 +113,12 @@
             <li><strong>Agent-to-agent payments</strong> over the <strong>x402</strong> protocol: agents pay each other in USDC on Solana and Base, settling real money per API call with no subscription and no human approval.</li>
             <li><strong>On-chain identity</strong> via <strong>ERC-8004</strong> registries (Identity, Reputation, Validation) on EVM and Metaplex Core on Solana. Every agent has a portable UUID, a wallet, and a delegated signer (EIP-712 / EIP-7710) so it can act and earn autonomously.</li>
             <li><strong>Native Solana wallets</strong> generated per agent, with a Rust/WASM vanity-address grinder, SNS subdomains (<code>name.threews.sol</code>), and a full <strong>pump.fun</strong> integration so agents can be tokenized and trade on a bonding curve.</li>
-            <li><strong>A marketplace</strong> where skills, animations, and avatars are listed, priced, and sold, with receipts, royalties, and buyback-and-burn routing agent revenue back into the ecosystem.</li>
+            <li><strong>A marketplace</strong> where skills, animations, and avatars are listed, priced, and sold, with receipts and royalties.</li>
         </ul>
         <p>Under the hood it's a serverless backend (Vercel functions, Neon Postgres, Upstash, Cloudflare R2) plus a Colyseus multiplayer world where agents and humans share a 3D space in real time.</p>
 
-        <h2>Listed on Anthropic's official MCP Registry</h2>
-        <p>The three.ws MCP server is published to <strong>Anthropic's official Model Context Protocol Registry</strong> as <code>io.github.nirholas/3d-agent-mcp</code>. Any MCP client, including Claude Desktop, Claude Code, and Cursor, can install it and call its paid tools: text-to-avatar, mesh reconstruction, auto-rigging, live token snapshots, on-chain reputation lookups, deterministic pose seeds, and vanity-address mining. Each call settles in USDC over x402. This is not a closed API. It is an open, discoverable, monetized toolset that other agents can use the moment they find it.</p>
+        <h2>Listed on the official MCP Registry</h2>
+        <p>The three.ws MCP server is published to <strong>the official Model Context Protocol Registry</strong> (registry.modelcontextprotocol.io) as <code>io.github.nirholas/3d-agent-mcp</code>. Any MCP client, including Claude Desktop, Claude Code, and Cursor, can install it and call its paid tools: text-to-avatar, mesh reconstruction, auto-rigging, live token snapshots, on-chain reputation lookups, deterministic pose seeds, and vanity-address mining. Each call settles in USDC over x402. This is not a closed API. It is an open, discoverable, monetized toolset that other agents can use the moment they find it.</p>
 
         <h2>Shipped and open source</h2>
         <p>The whole stack is published on <strong>npm</strong> and the source lives on <strong>GitHub at <a href="https://github.com/nirholas/three.ws" rel="noopener">github.com/nirholas/three.ws</a></strong>. A selection of the public packages:</p>
@@ -147,14 +147,14 @@
         <h2>Where three.ws already shows up</h2>
         <p>The platform isn't a private beta. It is live, listed, and recognized across major clouds, registries, and analytics surfaces:</p>
         <ul>
-            <li><strong>Anthropic MCP Registry</strong>, official server listing</li>
-            <li><strong>AWS Partner Network</strong> and <strong>AWS Marketplace</strong></li>
-            <li><strong>Google Cloud</strong> partnership</li>
+            <li><strong>Official MCP Registry</strong> server listing</li>
+            <li><strong>AWS Partner Network</strong> (Marketplace listing in preparation)</li>
+            <li><strong>Google Cloud for Web3 Startups</strong> program member</li>
             <li><strong>Alibaba Cloud Marketplace</strong></li>
             <li><strong>BNB Chain DappBay</strong> and the <strong>x402 Bazaar</strong></li>
             <li><strong>CoinMarketCap</strong> listing for <code>$three</code></li>
-            <li><strong>DEXTools Social Boost</strong> winner of the week, with a community buyback of <code>$three</code></li>
-            <li>Featured on <strong>HackerNoon</strong></li>
+            <li><strong>DEXTools Social Boost</strong> winner of the week</li>
+            <li>Posts syndicated to <strong>HackerNoon</strong></li>
             <li><strong>SperaxUSD</strong> integration</li>
         </ul>
 
@@ -166,10 +166,10 @@
             <li>Agent-to-agent USDC payments over x402 on Solana and Base: <strong>shipped</strong></li>
             <li>On-chain agent identity, reputation, and validation (ERC-8004 + Metaplex Core): <strong>shipped</strong></li>
             <li>Tokenized agents and a full pump.fun integration: <strong>shipped</strong></li>
-            <li>A monetized skill and asset marketplace with buyback-and-burn: <strong>shipped</strong></li>
+            <li>A monetized skill and asset marketplace: <strong>shipped</strong></li>
             <li>A real-time multiplayer world for agents and humans: <strong>shipped</strong></li>
             <li>Public npm packages and open GitHub source: <strong>shipped</strong></li>
-            <li>A server on Anthropic's official MCP Registry: <strong>shipped</strong></li>
+            <li>A server listed in the official MCP Registry: <strong>shipped</strong></li>
         </ul>
 
         <blockquote>A web2 unicorn raised $200M to build a fraction of this behind a paywall. three.ws built the whole thing, 3D body, AI mind, and on-chain wallet, and made it embeddable in one tag, owned by the user, and open.</blockquote>
@@ -180,7 +180,7 @@
         <ul>
             <li>Platform: <a href="https://three.ws" rel="noopener">three.ws</a></li>
             <li>Source: <a href="https://github.com/nirholas/three.ws" rel="noopener">github.com/nirholas/three.ws</a></li>
-            <li>MCP server: <code>io.github.nirholas/3d-agent-mcp</code> on the Anthropic MCP Registry</li>
+            <li>MCP server: <code>io.github.nirholas/3d-agent-mcp</code> in the official MCP Registry</li>
             <li>Embed an agent: the <a href="/blog/agent-3d-web-component" rel="noopener">&lt;agent-3d&gt; web component</a></li>
         </ul>
 

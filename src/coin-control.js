@@ -22,6 +22,9 @@ import './coin-control.css';
 import { apiFetch } from './api.js';
 import { esc, relTime } from './agent-commerce-format.js';
 import { usd } from './earnings-chart.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('launch');
 
 const CC = '/api/coin-control';
 const REV = '/api/revenue';

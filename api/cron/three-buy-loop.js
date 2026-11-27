@@ -1,18 +1,17 @@
 // GET /api/cron/three-buy-loop
 //
-// The per-minute $THREE micro-buy driver: many tiny, real x402-settled buys per
-// minute so the platform shows continuous, verifiable buy pressure on $THREE.
+// Treasury-acquisition driver: small, real x402-settled USDC to $THREE market
+// buys on Jupiter, funded by the micro-buy wallet. DISABLED BY DEFAULT: it does
+// nothing unless THREE_BUY_LOOP_ENABLED=1 is set, and it is not scheduled by the
+// economy tick. Counsel must review the program before it is enabled.
 //
 // Each call pays the small x402 toll to /api/x402/three-buy (ring treasury,
-// X402_PAY_TO_SOLANA) exactly like the ring tick; the endpoint delivers the paid
-// good by executing ONE small, real USDC→$THREE market buy on Jupiter (buy-only)
-// funded by the micro-buy wallet. So this loop is "buy $THREE, paid through the
-// x402 loop": the x402 payment is the trigger, the on-chain buy is the good.
+// X402_PAY_TO_SOLANA); the endpoint delivers the paid good by executing ONE small
+// USDC to $THREE buy (buy-only) funded by the micro-buy wallet.
 //
-// CADENCE. Fires THREE_MICROBUY_PER_TICK buys per minute (default 10, hard-capped
-// at 60) across THREE_MICROBUY_CONCURRENCY concurrent workers (default 8), so a
-// full tick finishes inside the economy-tick 60s call budget. Set PER_TICK=60 for
-// the "~60 buys/min" target.
+// CADENCE (when enabled). THREE_MICROBUY_PER_TICK buys per call (default 10,
+// hard-capped at 60) across THREE_MICROBUY_CONCURRENCY concurrent workers
+// (default 8), so a call finishes inside a 60s budget.
 //
 // SAFETY (defense in depth — the endpoint self-guards too):
 //   • Kill switches: X402_AUTONOMOUS_ENABLED=false (global) OR THREE_MICROBUY_ENABLED
@@ -105,6 +104,11 @@ async function nextTickSeq() {
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
+
+	// ── Explicit opt-in. Off unless THREE_BUY_LOOP_ENABLED is exactly "1". ──
+	if (process.env.THREE_BUY_LOOP_ENABLED !== '1') {
+		return json(res, 200, { ok: true, skipped: true, reason: 'THREE_BUY_LOOP_ENABLED not set' });
+	}
 
 	// ── Kill switches ───────────────────────────────────────────────────────
 	if (process.env.X402_AUTONOMOUS_ENABLED === 'false') {

@@ -79,12 +79,16 @@ vi.mock('../../api/_lib/rate-limit.js', async (importActual) => {
 		limits: {
 			...actual.limits,
 			mcp3dGenerate: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })),
+			mcp3dGenerateFree: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })),
+			mcp3dGenerateFreeRefund: vi.fn(async () => undefined),
 			mcp3dStatus: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })),
 		},
 	};
 });
 
 const { default: handler } = await import('../../api/forge-motion.js');
+const { limits } = await import('../../api/_lib/rate-limit.js');
+const { EventEmitter } = await import('node:events');
 
 function makeRes() {
 	return {
@@ -99,6 +103,18 @@ function makeRes() {
 		},
 	};
 }
+
+// A response that fires 'finish' like Node's does, so a refund hooked on it
+// (refundOnServerFailure in api/_lib/rate-limit.js) runs as it does live.
+function makeEmittingRes() {
+	const res = Object.assign(new EventEmitter(), makeRes());
+	res.end = function end(b) {
+		this.body = b ?? null;
+		this.emit('finish');
+	};
+	return res;
+}
+const settle = () => new Promise((r) => setImmediate(r));
 
 function makeReq({ method = 'POST', url = '/api/forge-motion', headers = {}, body = null } = {}) {
 	const payload = body == null ? '' : typeof body === 'string' ? body : JSON.stringify(body);
@@ -137,6 +153,64 @@ describe('POST /api/forge-motion', () => {
 		await handler(makeReq({ body: { prompt: 'x' } }), res);
 		expect(res.statusCode).toBe(400);
 		expect(JSON.parse(res.body).error).toBe('invalid_prompt');
+	});
+
+	it('refuses an empty or nonsense prompt in plain words without spending the allowance', async () => {
+		for (const prompt of ['', '   ', '!!!!!!', '12345', 'aaaaaaa', '?? ??']) {
+			limits.mcp3dGenerateFree.mockClear();
+			submit.mockClear();
+			const res = makeRes();
+			await handler(makeReq({ body: { prompt } }), res);
+			expect(res.statusCode, `prompt ${JSON.stringify(prompt)}`).toBe(400);
+			const body = JSON.parse(res.body);
+			expect(body.error).toBe('invalid_prompt');
+			expect(body.message).toMatch(/describe|motion|movement/i);
+			expect(limits.mcp3dGenerateFree).not.toHaveBeenCalled();
+			expect(submit).not.toHaveBeenCalled();
+		}
+	});
+
+	it('hands the allowance back when the motion job cannot start', async () => {
+		limits.mcp3dGenerateFreeRefund.mockClear();
+		submit.mockRejectedValueOnce(new Error('worker 500'));
+		const res = makeEmittingRes();
+		await handler(makeReq({ body: { prompt: 'a person jumps for joy' } }), res);
+		await settle();
+		expect(res.statusCode).toBe(502);
+		expect(limits.mcp3dGenerateFreeRefund).toHaveBeenCalledWith('user:creator-test-user');
+	});
+
+	it('hands the allowance back when the worker is not configured', async () => {
+		limits.mcp3dGenerateFreeRefund.mockClear();
+		supportsText2Motion = false;
+		try {
+			const res = makeEmittingRes();
+			await handler(makeReq({ body: { prompt: 'a graceful bow' } }), res);
+			await settle();
+			expect(res.statusCode).toBe(503);
+			expect(limits.mcp3dGenerateFreeRefund).toHaveBeenCalledWith('user:creator-test-user');
+		} finally {
+			supportsText2Motion = true;
+		}
+	});
+
+	it('keeps the charge for a job that started', async () => {
+		limits.mcp3dGenerateFreeRefund.mockClear();
+		const res = makeEmittingRes();
+		await handler(makeReq({ body: { prompt: 'a person bows' } }), res);
+		await settle();
+		expect(res.statusCode).toBe(202);
+		expect(limits.mcp3dGenerateFreeRefund).not.toHaveBeenCalled();
+	});
+
+	it('says plainly that a non-human subject plays as a person', async () => {
+		const res = makeRes();
+		await handler(makeReq({ body: { prompt: 'a dog wagging its tail' } }), res);
+		expect(res.statusCode).toBe(202);
+		expect(JSON.parse(res.body).note).toMatch(/human/i);
+		const plain = makeRes();
+		await handler(makeReq({ body: { prompt: 'a person waves hello' } }), plain);
+		expect(JSON.parse(plain.body).note ?? null).toBeNull();
 	});
 
 	it('503s when the worker is not configured', async () => {

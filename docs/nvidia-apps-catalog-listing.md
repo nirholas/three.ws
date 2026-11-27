@@ -33,6 +33,15 @@ names the product in its first words. Two steps remain before replying: deploy, 
 rename the portal record. The reply text and the send steps are in
 [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md#app-publishing-reply-2026-11-25).
 
+**2026-11-27 verification:** every claim in this kit was re-checked against production and
+the false or shaky ones were corrected in place: "in seconds" (median is 150 seconds), "no
+account required" (a free account is required), "every lane runs on NVIDIA" and "TRELLIS on
+NVCF is the default" (self-hosted TRELLIS serves text prompts; the hosted lane finished no jobs
+in 7 days), stale model names, and TripoSR and UniRig in Technical Details (not shown serving).
+The portal still holds the 2026-10-25 Technical Details, so re-paste the 803-character block
+below. Evidence, the reviewer walkthrough, the ranked blockers and the draft reply with a
+pre-send checklist are in [nvidia-reply-2026-11-jiyeon.md](./nvidia-reply-2026-11-jiyeon.md).
+
 **Catalog checks since the save:**
 
 - 2026-11-02: the Inception startup catalog search for `three` returns 4 items (Deepwave
@@ -123,12 +132,12 @@ version saved on 2026-10-25 began "three.ws turns text prompts".
 > through APIs and MCP. Production generation and voice workloads are accelerated by NVIDIA
 > GPUs, CUDA, Riva, NIM, and Audio2Face-3D.
 
-### Technical details, 820 characters
+### Technical details, 803 characters
 
 > three.ws uses NVIDIA acceleration at runtime in two production layers. Self-hosted PyTorch
 > microservices run on NVIDIA L4 GPUs in Google Cloud Run, with an RTX PRO 6000 Blackwell
-> lane compiled for sm_120. Hunyuan3D, TRELLIS, TripoSG, TripoSR, Make-It-Animatable, and
-> UniRig provide image-to-3D, text-to-3D, sketch-to-3D, and automatic humanoid rigging.
+> lane compiled for sm_120. Hunyuan3D, TRELLIS, TripoSG, and Make-It-Animatable provide
+> image-to-3D, text-to-3D, sketch-to-3D, and automatic humanoid rigging.
 > Containers use NVIDIA CUDA Toolkit 12.1-12.8, cuDNN, cuBLAS, CUDA Python, Kaolin,
 > nvdiffrast, and custom CUDA kernels. NVIDIA-hosted NIM/NVCF services provide Nemotron
 > reasoning, embeddings, content safety, Riva ASR and Magpie TTS, and Audio2Face-3D facial
@@ -235,17 +244,17 @@ no further catalog email to send unless NVIDIA answers or requests information.
 
 ### Short description (about 130 characters)
 
-> three.ws turns a sentence into a rigged, animated 3D AI agent. Every generation lane runs on NVIDIA GPUs and NVIDIA-hosted models.
+> Forge turns a sentence, photo, or sketch into a textured 3D model. The default engine is Microsoft TRELLIS on NVIDIA L4 GPUs.
 
 ### Medium description (about 500 characters)
 
-> three.ws is a browser-native platform for generating 3D avatars, worlds, and AI agents from a prompt. Text, image, and sketch inputs become textured, auto-rigged GLB models in seconds, generated on a self-hosted fleet of NVIDIA L4 GPUs (Hunyuan3D, TRELLIS, TripoSG, TripoSR) and NVIDIA-hosted models via NIM. Agents get an LLM brain (Nemotron), a voice (Riva TTS and ASR), a face (Audio2Face-3D), on-chain identity, and pay-per-call x402 monetization, then embed on any website with one script tag.
+> three.ws is a browser-native platform for generating 3D avatars, worlds, and AI agents from a prompt. Text, image, and sketch inputs become textured, auto-rigged GLB models in a few minutes, generated on a self-hosted fleet of NVIDIA L4 GPUs (TRELLIS, TripoSG) and an RTX PRO 6000 Blackwell worker (Hunyuan3D). Agents get an LLM brain (Nemotron), a voice (Riva TTS and ASR), a face (Audio2Face-3D), on-chain identity, and pay-per-call x402 monetization, then embed on any website with one script tag.
 
 ### Long description (about 1,900 characters)
 
-> three.ws is the AI-agent layer for the open web: a browser-native platform where anyone can build, embed, and monetize autonomous agents with real 3D bodies. Type a prompt at three.ws/forge and a textured 3D model appears in seconds; upload a photo or a sketch and it becomes a mesh; one more click auto-rigs it with a full skeleton and ARKit-52 blendshapes, ready to talk, walk, and be embedded anywhere with a single script tag. No plugins, no installs, no account required for the free lane.
+> three.ws is the AI-agent layer for the open web: a browser-native platform where anyone can build, embed, and monetize autonomous agents with real 3D bodies. Type a prompt at three.ws/forge and a textured 3D model appears in about three minutes; upload a photo or a sketch and it becomes a mesh; one more click auto-rigs it with a full skeleton and ARKit-52 blendshapes, ready to talk, walk, and be embedded anywhere with a single script tag. No plugins and no installs; the free lane needs a free account.
 >
-> The entire generation stack runs on NVIDIA accelerated computing, in two layers. The self-hosted layer is a fleet of NVIDIA L4 GPU workers on Google Cloud Run running PyTorch with custom-compiled CUDA extensions and NVIDIA Kaolin: Hunyuan3D 2.1 and Microsoft TRELLIS for image-to-3D, TripoSG for sketch-to-3D, TripoSR for fast drafts, Make-It-Animatable for auto-rigging, and Motion Diffusion Model for text-to-animation. The Blackwell-generation RTX PRO 6000 path is validated with sm_120 kernel builds. The hosted layer is one NVIDIA API key wide: TRELLIS text-to-3D on NVCF, Nemotron LLMs for agent brains, NV-EmbedQA embeddings and Mistral reranking for agent memory, NemoGuard content safety on every public publish, Riva Magpie multilingual TTS and Riva ASR for voice, and Audio2Face-3D driving real-time facial animation in the browser.
+> The core 3D generation runs on NVIDIA accelerated computing, in two layers. The self-hosted layer is a fleet of NVIDIA L4 GPU workers on Google Cloud Run running PyTorch with custom-compiled CUDA extensions and NVIDIA Kaolin: Hunyuan3D 2.1 and Microsoft TRELLIS for image-to-3D, TripoSG for sketch-to-3D, Make-It-Animatable for auto-rigging, and Motion Diffusion Model for text-to-animation. The Blackwell-generation RTX PRO 6000 path is validated with sm_120 kernel builds. The hosted layer is one NVIDIA API key wide: Nemotron LLMs for agent brains, Nemotron embeddings for agent memory, NemoGuard content safety screening public publishes (it fails open, so it never blocks on an outage), hosted TRELLIS on NVCF as an optional engine, Riva Magpie multilingual TTS and Riva ASR for voice, and Audio2Face-3D driving real-time facial animation in the browser.
 >
 > Around the bodies sits a full agent economy: on-chain identity (ERC-8004 on EVM, Metaplex Core on Solana), x402 pay-per-call so agents can charge for and pay for services autonomously, an MCP server exposing free text-to-3D to any AI assistant, and 60+ open npm SDKs. three.ws is an NVIDIA Inception member; the engineering field notes on running image-to-3D on L4 and Blackwell are published on the three.ws blog and the NVIDIA Developer Forums.
 
@@ -263,19 +272,19 @@ Every item below is live in production unless marked otherwise. Do not claim Ten
 
 Also do not claim the **video-to-scene world scanner** or the **texture worker**, and do not re-add **FlashInfer** on their behalf. Both have a GPU `cloudbuild.yaml` in the tree but neither is deployed in any region (verified 2026-08-17 and re-verified 2026-09-02 with the recount command below), so they are built code, not a running lane. The long description above used to carry the world-scanner claim in defiance of this rule; it was removed on 2026-09-02, because a submission is exactly where an unbacked claim costs the most. Deploy them and they belong here; until then a curator who checks would find nothing behind the claim.
 
-- **NVIDIA L4 GPUs** (Google Cloud Run GPU) running the entire self-hosted 3D generation fleet: image-to-3D, sketch-to-3D, auto-rigging, text-to-motion. Eight GPU workers, twelve deployments across `us-central1` and `us-east4` (eleven L4, one RTX PRO 6000). Recount before submitting: `gcloud run services list --project aerial-vehicle-466722-p5 --format="csv[no-heading](metadata.name,region,spec.template.spec.nodeSelector)" | grep -i accelerator` Re-counted 2026-09-02: unchanged, and every public link in the [Links for the form](#links-for-the-form) section answered 200 the same day.
+- **NVIDIA L4 GPUs** (Google Cloud Run GPU) running the entire self-hosted 3D generation fleet: image-to-3D, sketch-to-3D, auto-rigging, text-to-motion. Eight GPU workers, twelve deployments across `us-central1` and `us-east4` (eleven L4, one RTX PRO 6000), as counted on 2026-09-02 and not re-verifiable on 2026-11-27 (the old project needs `gcloud auth login` for `nich@sperax.io`); the lanes confirmed live that day were TRELLIS, TripoSG and Pixal3D on L4 and Hunyuan3D on RTX PRO 6000 Blackwell. Recount before submitting: `gcloud run services list --project aerial-vehicle-466722-p5 --format="csv[no-heading](metadata.name,region,spec.template.spec.nodeSelector)" | grep -i accelerator` Re-counted 2026-09-02: unchanged, and every public link in the [Links for the form](#links-for-the-form) section answered 200 the same day.
 - **CUDA** with custom-compiled extensions (nvdiffrast, diffoctreerast, diff-gaussian-rasterization, torchmcubes)
 - **NVIDIA Kaolin** (TRELLIS worker)
-- **NIM APIs** (integrate.api.nvidia.com): Nemotron Super and Nano LLMs, Nemotron Nano VL vision, NV-EmbedQA-E5-v5 embeddings, Mistral 4B reranking, NemoGuard 8B content safety
-- **NVCF**: microsoft/trellis text-to-3D (the free default forge lane) and FLUX.1-dev text-to-image (the hosted FLUX.1-schnell preview was retired, so do not claim schnell)
+- **NIM APIs** (integrate.api.nvidia.com): Nemotron 3 Super and Ultra LLMs, Nemotron 3.5 Super VL vision, Nemotron 3.5 embed 8b embeddings, NemoGuard (Nemotron safety guard 8b v3) content safety. Reranking (Nemotron 3.5 rerank 8b) is opt-in and under evaluation. Pinned ids: [nvidia-models.md](./nvidia-models.md)
+- **NVCF**: microsoft/trellis text-to-3D, reachable but an optional engine (it finished 0 jobs in the 7 days to 2026-11-27; text prompts are served by the self-hosted TRELLIS worker), and FLUX.2 klein 4B text-to-image in the code (FLUX.1-dev and schnell hang on the hosted gateway, so claim neither)
 - **NVIDIA Riva**: Magpie multilingual TTS and Riva ASR over NVCF gRPC
-- **NVIDIA Audio2Face-3D**: audio-driven ARKit blendshape facial animation, live at three.ws/demos/audio2face
+- **NVIDIA Audio2Face-3D**: audio-driven ARKit blendshape facial animation, live at three.ws/demos/audio2face. Availability caveat: the hosted function answered 6 of 55 probes in the 7 days to 2026-11-27, so check the demo before pointing a reviewer at it
 - **RTX PRO 6000 Blackwell**: validated (sm_120 builds) for the heavy image-to-3D lane; not the default production GPU
 
 ## Links for the form
 
 - Product: https://three.ws
-- Live demo, no signup: https://three.ws/forge (text-to-3D) and https://three.ws/ar (one-tap AR)
+- Live product (free account to generate): https://three.ws/forge (text-to-3D) and https://three.ws/ar (one-tap AR)
 - Audio2Face demo: https://three.ws/demos/audio2face
 - Docs: https://three.ws/docs
 - NVIDIA integration map: https://three.ws/docs/nvidia-models

@@ -1,3 +1,7 @@
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
+
 // Oracle Lab: the conviction model, rendered honestly.
 //
 // The page has one job that everything else follows from: make it impossible to

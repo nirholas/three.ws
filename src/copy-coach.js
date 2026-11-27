@@ -19,6 +19,9 @@
 import { apiFetch } from './api.js';
 import { receiptHTML, receiptSkeletonHTML, RECEIPT_CSS } from './shared/trade-receipt-view.js';
 import { shortAddress as short } from './shared/address.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const STORE_KEY = 'twx_copy_coach_v1';
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;

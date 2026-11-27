@@ -8,7 +8,7 @@ The app needs no code changes. It already talks to Redis through the `@upstash/r
 
 ```
 three-ws-api (Cloud Run)
-  └─ VPC connector three-ws-vpc (10.8.0.0/28), egress private-ranges-only
+  └─ Direct VPC egress on subnet default (10.128.0.0/20), egress private-ranges-only
        └─ UPSTASH_REDIS_REST_URL = http://10.128.0.50
           UPSTASH_REDIS_REST_TOKEN = secret:srh-proxy-token
              │
@@ -21,11 +21,11 @@ VM three-ws-redis (e2-small, Container-Optimized OS, no public IP)
 
 Other pieces:
 
-- **Firewall rule `three-ws-allow-connector-to-redis`:** only the connector range (10.8.0.0/28) can reach port 80 on VMs tagged `three-ws-redis`.
+- **Firewall:** the default `default-allow-internal` rule (10.128.0.0/9) admits the API's Direct VPC egress addresses. The older `three-ws-allow-connector-to-redis` rule (connector range 10.8.0.0/28 to port 80 on VMs tagged `three-ws-redis`) only matters while the `three-ws-vpc` connector exists.
 - **Cloud NAT `three-ws-nat` on router `three-ws-router`:** gives the VM outbound access to pull images without a public IP.
 - **Service account `three-ws-redis-vm@`:** has `secretAccessor` on `srh-proxy-token` only. [startup.sh](startup.sh) reads the token at boot.
 
-Approximate cost: VM about $13/month, connector about $9-12, NAT about $1.
+Approximate cost: VM about $13/month, NAT about $1. Direct VPC egress adds nothing. (Until 2026-11-26 the API used the `three-ws-vpc` Serverless VPC Access connector, which billed about $9-12 a month for two always-on e2-micro instances.)
 
 ## Create or recreate
 
@@ -58,4 +58,4 @@ In production, `/api/healthz` reports the cache backend as `upstash healthy`. Th
 
 ## Retire
 
-Point `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` somewhere else. Then delete the VM, the `three-ws-redis-ip` address, the firewall rule, the NAT and router, and the connector. Before deleting the connector, remove `--vpc-connector` from `server/cloudbuild.yaml`, or the next deploy fails.
+Point `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` somewhere else. Then delete the VM, the `three-ws-redis-ip` address, the firewall rule, the NAT and router, and the connector if it still exists. `server/cloudbuild.yaml` no longer references the connector, so deleting it cannot break a deploy.

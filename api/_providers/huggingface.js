@@ -33,6 +33,8 @@
 //   HF_RECONSTRUCT_API_NAME       — legacy single-API alias.
 
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { foldSeed, HUNYUAN_SPACE_SEED_MAX } from '../_lib/forge-seed.js';
+import { markLaneUnhealthy, HF_QUOTA_COOLDOWN_SECONDS } from '../_lib/forge-lane-health.js';
 
 const HF_INFERENCE_TIMEOUT_MS = 280_000; // leave headroom for response framing
 // Per-call deadlines. The SSE read is bounded by HF_INFERENCE_TIMEOUT_MS in
@@ -189,6 +191,12 @@ function extractFirstGlbCandidates(data, spaceUrl) {
 // result; selfie callers can override via params.steps / params.seed / etc.
 function buildHunyuanPayload({ photos, params }) {
 	const [frontal, left, right] = photos;
+	// The Space's seed slider runs 0..1e7 (gradio_app.py MAX_SEED) and
+	// randomize_seed defaults on, which replaces the seed with a random one. A
+	// caller seed is therefore folded into the slider range (fixed mapping, see
+	// api/_lib/forge-seed.js) and randomize is turned off so the seed is used.
+	const callerSeed = Number(params?.seed);
+	const hasSeed = params?.seed !== undefined && params?.seed !== null && Number.isInteger(callerSeed) && callerSeed >= 0;
 	return [
 		params?.caption ?? '',
 		toFileData(params?.image || frontal),
@@ -198,11 +206,11 @@ function buildHunyuanPayload({ photos, params }) {
 		toFileData(right),
 		Number(params?.steps ?? 30),
 		Number(params?.guidance_scale ?? 5.0),
-		Number(params?.seed ?? 1234),
+		hasSeed ? foldSeed(callerSeed, HUNYUAN_SPACE_SEED_MAX) : 1234,
 		Number(params?.octree_resolution ?? 256),
 		params?.check_box_rembg !== false,
 		Number(params?.num_chunks ?? 8000),
-		params?.randomize_seed !== false,
+		hasSeed ? params?.randomize_seed === true : params?.randomize_seed !== false,
 	];
 }
 
@@ -483,7 +491,15 @@ async function attemptOnSpace({ token, target, photos, params }) {
 		const body = await queueRes.text().catch(() => '');
 		throw tag(Object.assign(
 			new Error(`enqueue ${queueRes.status}: ${body.slice(0, 200)}`),
-			{ code: 'provider_error', status: 502, providerStatus: queueRes.status },
+			{
+				code: 'provider_error',
+				status: 502,
+				providerStatus: queueRes.status,
+				// 402 is credits used up and 429 a drained ZeroGPU quota or a rate
+				// limit. Neither recovers within minutes, and the anonymous retry in
+				// runOnSpace can still succeed on per-IP quota.
+				quotaLike: queueRes.status === 402 || queueRes.status === 429,
+			},
 		));
 	}
 	const queueBody = await queueRes.json().catch(() => ({}));
@@ -595,6 +611,7 @@ export function createRegenProvider() {
 						api: err.apiName || target.api,
 						message: err.message || 'unknown error',
 						status: err.status,
+						quotaLike: Boolean(err.quotaLike),
 					});
 					// Continue to next Space.
 				}
@@ -603,9 +620,14 @@ export function createRegenProvider() {
 			const summary = failures
 				.map((f) => `${f.space} → ${f.message}`)
 				.join(' | ');
+			// Every Space out of GPU quota is a long outage, not a blip: pause the
+			// shared lane for the quota window so no other caller pays the same
+			// round trips (the handler's own shorter pause cannot shorten it).
+			const quotaExhausted = failures.length > 0 && failures.every((f) => f.quotaLike);
+			if (quotaExhausted) await markLaneUnhealthy('huggingface', HF_QUOTA_COOLDOWN_SECONDS);
 			throw Object.assign(
 				new Error(`all ${chain.length} huggingface Space(s) failed: ${summary}`),
-				{ code: 'all_providers_failed', status: 502, failures },
+				{ code: 'all_providers_failed', status: 502, failures, quotaExhausted },
 			);
 		},
 

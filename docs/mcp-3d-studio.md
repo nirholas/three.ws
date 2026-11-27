@@ -182,7 +182,11 @@ your own via the `x-forge-provider-key` request header (or a key stored on your
 three.ws account). Without one, the geometry path returns a designed `needs_key`
 result and the **image path still works keyless**. The job handle for a geometry
 job is an opaque forge token; `generation_status` decodes it and re-resolves the
-key per poll.
+key per poll. A key that cannot be a real key is refused with an `invalid_key`
+result before any provider call, and a provider failure on your account (out of
+credits, throttled, unreachable, content refused) comes back as its own error
+instead of running on a platform engine. See
+[Bring your own provider key](./forge.md#bring-your-own-provider-key).
 
 ## Access & pricing
 

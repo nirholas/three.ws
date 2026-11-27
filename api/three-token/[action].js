@@ -2,11 +2,10 @@
  * $THREE Token Protocol API
  * -------------------------
  * GET /api/three-token/stats          — protocol-level metrics (public)
- * GET /api/three-token/revenue-share  — authenticated user's revenue share position
  * GET /api/three-token/burns: platform burn ledger (always empty: no platform burns)
  * GET /api/three-token/activity       — protocol activity feed
  * GET /api/three-token/leaderboard    — ranked $THREE holders (public, paginated)
- * GET /api/three-token/wallets: treasury + rewards wallet addresses and live balances (public)
+ * GET /api/three-token/wallets: treasury + reserve wallet addresses and live balances (public)
  *
  * Market data (price, market cap, supply, holders) comes from the shared market
  * module — Birdeye → DexScreener → GeckoTerminal failover with a stale cache —
@@ -17,7 +16,6 @@
  */
 
 import { sql } from '../_lib/db.js';
-import { getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, wrap } from '../_lib/http.js';
 import { TOKEN_MINT as THREE_MINT } from '../_lib/token/config.js';
 import { fetchTokenMarketData } from '../_lib/market/token-market.js';
@@ -32,10 +30,6 @@ function shortWallet(addr) {
 	const s = String(addr || '');
 	return s.length > 10 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s;
 }
-
-// Protocol tokenomics (fixed parameters of the $THREE protocol).
-// REVENUE_SHARE_POOL_PCT: share of platform revenue distributed to holders.
-const REVENUE_SHARE_POOL_PCT = 10;
 
 // Degrade a failed panel query without hiding WHY it failed. A silent
 // `.catch(() => [])` is how the deploy-burn ledger shipped permanently empty:
@@ -139,9 +133,8 @@ export default wrap(async (req, res) => {
 					total_agents: platform.total_agents,
 					total_revenue_usd: platform.total_revenue_gross / 1_000_000,
 					total_payments: platform.total_payments,
-					revenue_share_pool_pct: REVENUE_SHARE_POOL_PCT,
 				},
-				// Revenue converted to onchain buy pressure — programmatic, no burn.
+				// Treasury purchases of $THREE: discretionary, no burn.
 				// Commitment fields mirror buybackStats() so the page renders the
 				// published promise even on a transient stats failure.
 				buyback: buyback ?? {
@@ -158,7 +151,7 @@ export default wrap(async (req, res) => {
 					recent_runs: [],
 					last_run: null,
 				},
-				// Continuous micro-buy pressure (many tiny x402-settled buys → treasury).
+				// Optional treasury micro-purchases (disabled unless THREE_BUY_LOOP_ENABLED=1).
 				// Sibling of buyback; same resilient default before the first buy.
 				microbuy: microbuy ?? {
 					enabled: false,
@@ -180,36 +173,6 @@ export default wrap(async (req, res) => {
 		// balance the RPC chain could not read comes back `ok: false` (never zero).
 		const snapshot = await publicWalletBalances();
 		return json(res, 200, snapshot, { 'cache-control': 'public, s-maxage=30, stale-while-revalidate=60' });
-	}
-
-	if (action === 'revenue-share') {
-		const user = await getSessionUser(req, res);
-		if (!user) return error(res, 401, 'unauthorized', 'sign in required');
-
-		const [platform, market, holderCount] = await Promise.all([
-			fetchPlatformMetrics(),
-			fetchTokenMarketData(THREE_MINT).catch(() => null),
-			// Same snapshot fallback /stats uses: the keyless market sources carry no
-			// holder count, and the two actions must not disagree about how many holders
-			// exist just because the price came from DexScreener on this request.
-			threeHolderCount().catch(() => null),
-		]);
-
-		const totalSupply = market?.supply ?? null;
-		const totalRevenue = platform.total_revenue_gross / 1_000_000;
-		const poolPct = REVENUE_SHARE_POOL_PCT;
-		const revenuePool = totalRevenue * (poolPct / 100);
-
-		return json(res, 200, {
-			user_id: user.id,
-			token_price: market?.price_usd ?? null,
-			total_supply: totalSupply,
-			total_holders: market?.holders ?? holderCount ?? null,
-			platform_revenue_usd: totalRevenue,
-			revenue_share_pool_pct: poolPct,
-			revenue_share_pool_usd: revenuePool,
-			...(totalSupply > 0 ? { per_token_yield: revenuePool / totalSupply } : {}),
-		});
 	}
 
 	if (action === 'burns') {

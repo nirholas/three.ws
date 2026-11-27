@@ -248,6 +248,7 @@ function renderMethodology(root, stats) {
 		['Jobs', m.jobs],
 		['GPU split', m.gpu_split],
 		['Empty windows', m.empty],
+		['End to end', m.end_to_end],
 	].filter(([, v]) => v);
 	node.replaceChildren(el('dl', { class: 'nvl-method' }, items.map(([k, v]) => el('div', {}, el('dt', { text: k }), el('dd', { text: v })))));
 }
@@ -295,6 +296,18 @@ function jobRows(stats) {
 	});
 }
 
+// Job success only covers requests that became a job. The end-to-end rate
+// (every accepted Forge request, all lanes, last 24h) sits right under it so
+// the lane rate is never read as the user's success rate.
+function endToEndNote(stats) {
+	const e = stats.end_to_end;
+	if (!e) return null;
+	const text = e.end_to_end_success_pct == null
+		? `End to end, all Forge lanes: ${e.note || 'not enough requests in the last 24 hours to compute it'}.`
+		: `End to end, all Forge lanes, last 24h: ${pct(e.end_to_end_success_pct)} of ${e.accepted} accepted requests became a model (job success ${pct(e.job_success_pct)}; ${e.failed_before_job} ended before a job existed).`;
+	return el('p', { class: 'nvl-muted nvl-e2e', text });
+}
+
 function fleetRows(stats) {
 	if (!Array.isArray(stats.fleet) || !stats.fleet.length) return [el('tr', {}, el('td', { colspan: 6, class: 'nvl-muted', text: stats.fleet?.note || 'no GPU-attributed jobs yet' }))];
 	return stats.fleet.map((r) => el('tr', {},
@@ -311,7 +324,7 @@ function renderTables(root, stats) {
 	const probes = root.querySelector('[data-nvl="probe-table"]');
 	if (probes) probes.replaceChildren(table('Probe results per lane', ['Lane and model', 'Now', 'Last', '7d up', '7d p50 / p95', '30d up', '30d p50 / p95'], probeRows(stats)));
 	const jobs = root.querySelector('[data-nvl="job-table"]');
-	if (jobs) jobs.replaceChildren(table('Real job telemetry per lane', ['Lane', '7d jobs', '7d p50 / p95', '7d GPU time', '30d jobs', '30d p50 / p95', '30d GPU time'], jobRows(stats)));
+	if (jobs) jobs.replaceChildren(table('Real job telemetry per lane', ['Lane', '7d jobs', '7d p50 / p95', '7d GPU time', '30d jobs', '30d p50 / p95', '30d GPU time'], jobRows(stats)), ...[endToEndNote(stats)].filter(Boolean));
 	const fleet = root.querySelector('[data-nvl="fleet-table"]');
 	if (fleet) fleet.replaceChildren(table('Jobs by GPU', ['Lane', 'GPU', 'Region', 'Jobs (30d)', 'p50', 'p95'], fleetRows(stats)));
 	for (const a of root.querySelectorAll('[data-nvl="csv"]')) a.setAttribute('href', CSV_URL);

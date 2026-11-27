@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Take a Forge model down completely: the row, the mesh, the preview, every
-// delivery variant under the creation's storage prefix, the source uploads, the
-// edge-cached copies, and an audit row in forge_removal_requests.
+// delivery variant under the creation's storage prefix, the display thumbnail,
+// the game-ready exports, the source uploads, the avatar copies saved from it,
+// its Sketchfab showcase listing, the edge-cached copies (model page, share page,
+// social card, API reads, feeds), and an audit row in forge_removal_requests.
 //
 // For any takedown: one filed through "Request removal" on the model page
 // (listed by `npm run forge:removals`), a GitHub issue, or an email. Every open
@@ -26,7 +28,10 @@
 //             owner has filed the legal report and retention is met
 //             (docs/ops/content-safety.md); the reference is recorded.
 //
-// The dry run prints the row and every object the delete will remove. --apply
+// The dry run prints the row, every object the delete will remove, the avatar
+// copies and Sketchfab listing it will take down, and the remixes it will NOT
+// touch (other people's creations: judge them separately, then run this script
+// on them). --apply
 // deletes (forgeStore.deleteCreation with the moderator grant), records the
 // takedown, invalidates the CDN for each removed path and the model page, then
 // fetches each public URL.
@@ -38,6 +43,10 @@
 // delete once storage accepts writes again. If listing is refused too, the dry
 // run probes the public bucket domain for the creation's usual file names so
 // those keys are queued as well.
+//
+// A derived copy that could not be removed (Sketchfab refused, the bucket refused
+// an avatar object) is printed and exits 1; rerun once it answers, the script
+// finds the same items again.
 //
 // Exit codes: 0 every URL is gone; 1 a three.ws URL still serves the model;
 // 2 usage error; 4 refused: CSAM evidence hold; 3 three.ws is clean but copies on the public bucket domain
@@ -87,10 +96,6 @@ function loadProdEnv() {
 	console.log(`loaded ${n} production env vars from ${SERVICE} (in memory only)`);
 }
 
-function cdnPath(key) {
-	return `/cdn/${key.split('/').map(encodeURIComponent).join('/')}`;
-}
-
 async function stillServed(url) {
 	try {
 		const r = await fetch(url, { method: 'GET', redirect: 'manual', headers: { 'cache-control': 'no-cache' } });
@@ -110,7 +115,8 @@ const { deleteCreation, forgeStoreEnabled } = await import('../api/_lib/forge-st
 const { listObjectsPage, deleteObject, cdnUrl, keyFromPublicUrl, isStorageInfrastructureError } = await import('../api/_lib/r2.js');
 const { recordTakedown, REMOVAL_REASONS } = await import('../api/_lib/forge-removal-requests.js');
 const { queueStoragePurges } = await import('../api/_lib/forge-storage-purges.js');
-const { VARIANT_WIDTHS } = await import('../src/shared/cdn-variant.js');
+const { findDerivedItems, removeDerivedItems, takedownCdnPaths } = await import('../api/_lib/forge-takedown.js');
+const { thumbKeysFor, gameReadyPrefixesFor } = await import('../api/_lib/forge-derived-keys.js');
 const { hasEvidenceHold } = await import('../api/_lib/content-safety-store.js');
 
 if (!REMOVAL_REASONS.includes(opts.reason)) usage(`--reason must be one of ${REMOVAL_REASONS.join(', ')}`);
@@ -158,6 +164,16 @@ if (row) {
 		const k = keyFromPublicUrl(u);
 		if (k?.startsWith('forge/')) planned.add(k);
 	}
+	for (const k of thumbKeysFor(row.id)) planned.add(k);
+	for (const prefix of gameReadyPrefixesFor(row)) {
+		try {
+			const page = await listObjectsPage({ prefix, maxKeys: 1000 });
+			for (const o of page.objects) planned.add(o.key);
+		} catch (err) {
+			if (!isStorageInfrastructureError(err)) throw err;
+			storageDown = true;
+		}
+	}
 	if (row.client_key) {
 		const prefix = `forge/${row.client_key.slice(0, 12)}/${row.id}`;
 		try {
@@ -180,6 +196,13 @@ if (row) {
 } else {
 	console.log(`\nno forge_creations row for ${opts.id} (already deleted?)`);
 }
+const derivedItems = row ? await findDerivedItems(row) : { avatars: [], sketchfab: [], remixes: [] };
+console.log(`\navatar copies saved from this model (${derivedItems.avatars.length}), removed with it`);
+for (const a of derivedItems.avatars) console.log(`  ${a.id}  ${a.visibility}${a.deleted_at ? ', already deleted (objects still swept)' : ''}  owner ${a.owner_id}`);
+console.log(`Sketchfab showcase listings (${derivedItems.sketchfab.length}), deleted with it`);
+for (const u of derivedItems.sketchfab) console.log(`  ${u.sketchfab_url || u.sketchfab_uid}  ${u.status}`);
+console.log(`remixes pointing at this model (${derivedItems.remixes.length}), NOT touched: other people's creations`);
+for (const r of derivedItems.remixes) console.log(`  ${r.id}  ${r.visibility ?? 'public'}  rerun this script on it if it must go too`);
 console.log(`\nbucket objects (${planned.size})${storageDown ? ', found by probing the public domain: storage refused the listing' : ''}`);
 for (const k of [...planned].sort()) console.log(`  ${k}`);
 if (storageDown) {
@@ -225,6 +248,12 @@ for (const k of opts.extraKeys) {
 // Probed keys were never listed, so deleteCreation could not name them: queue
 // them by name too (the queued prefix already covers them; this keeps the
 // purge exact even if the prefix sweep is ever narrowed).
+let derivedOutcome = { removed: [], failed: [] };
+if (row) {
+	derivedOutcome = await removeDerivedItems(derivedItems);
+	for (const r of derivedOutcome.removed) console.log(`removed ${r.kind} ${r.ref}`);
+	for (const f of derivedOutcome.failed) console.error(`COULD NOT REMOVE ${f.kind} ${f.ref}: ${f.error}`);
+}
 const unlisted = [...planned].filter((k) => !removed.includes(k) && !opts.extraKeys.includes(k));
 if (storageDown && unlisted.length) {
 	await queueStoragePurges({ creationId: opts.id, entries: unlisted.map((target) => ({ target, kind: 'object' })) });
@@ -241,9 +270,7 @@ const ids = await recordTakedown({
 });
 console.log(`recorded in forge_removal_requests: ${ids.join(', ') || '(none)'}`);
 
-const RASTER = /\.(png|jpe?g|webp)$/i;
-const variantPaths = allKeys.filter((k) => RASTER.test(k) && !k.startsWith('variants/')).flatMap((k) => VARIANT_WIDTHS.map((w) => `/cdn/_v/${w}${cdnPath(k).slice(4)}`));
-const paths = [`/m/${opts.id}`, `/m/${opts.id}/*`, ...allKeys.map(cdnPath), ...variantPaths];
+const paths = takedownCdnPaths({ id: opts.id, keys: allKeys });
 console.log(`\ninvalidating ${paths.length} CDN path(s) on ${URL_MAP}`);
 for (const p of paths) {
 	try {
@@ -265,6 +292,10 @@ for (const c of siteChecks) console.log(`  ${c.gone ? 'gone   ' : 'LIVE   '} ${c
 for (const c of bucketChecks) console.log(`  ${c.gone ? 'gone   ' : 'pending'} ${c.status}  ${c.url}`);
 const siteLive = siteChecks.filter((c) => !c.gone);
 const bucketLive = bucketChecks.filter((c) => !c.gone);
+if (derivedOutcome.failed.length) {
+	console.error(`\n${derivedOutcome.failed.length} derived copy(ies) are still live (listed above). Fix the cause and rerun: the script finds them again.`);
+	process.exit(1);
+}
 if (siteLive.length) {
 	console.error(`\n${siteLive.length} three.ws URL(s) still answer. The CDN purge is async (a few minutes), and /cdn/`);
 	console.error('only refuses queued objects on a build that includes forge-storage-purges. Rerun to recheck.');

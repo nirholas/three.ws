@@ -267,7 +267,10 @@ describe('POST /api/x402/forge — paid generation', () => {
 		try {
 			const res = makeRes();
 			await handler(
-				makeReq({ headers: { 'x-payment': 'pay-free-hf' }, body: { prompt: 'a brass owl', tier: 'standard' } }),
+				makeReq({
+					headers: { 'x-payment': 'pay-free-hf', 'x-client-region': 'US' },
+					body: { prompt: 'a brass owl', tier: 'standard' },
+				}),
 				res,
 			);
 			expect(res.statusCode).toBe(200);
@@ -283,6 +286,53 @@ describe('POST /api/x402/forge — paid generation', () => {
 			fetchSpy.mockRestore();
 		}
 	});
+
+	// The Hugging Face lane runs Tencent Hunyuan3D Spaces, whose licence excludes the
+	// EU, the UK and South Korea. A paid caller there (or one we cannot place) must be
+	// served by the next lane, and the Space must never be contacted.
+	for (const [label, headers] of [
+		['Germany', { 'x-client-region': 'DE' }],
+		['the United Kingdom', { 'x-client-geo-location': 'GB,London' }],
+		['South Korea', { 'x-client-region': 'KR' }],
+		['an unknown country', {}],
+		['a forged Cloudflare country header', { 'cf-ipcountry': 'US' }],
+	]) {
+		it(`never reaches the Hugging Face (Hunyuan) lane for ${label}, and the paid call still gets a model`, async () => {
+			hfMock.createRegenProvider.mockClear();
+			hfMock.createRegenProvider.mockImplementationOnce(() => ({
+				submit: vi.fn(async () => ({ extJobId: 'hf-should-not-run' })),
+				status: vi.fn(async () => ({ status: 'done', resultGlbUrl: 'https://hf.example/out.glb' })),
+			}));
+			replicateMock.submit.mockClear();
+			const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('no network in test'));
+			try {
+				const res = makeRes();
+				await handler(
+					makeReq({
+						headers: { 'x-payment': `pay-restricted-hf-${label}`, ...headers },
+						body: { prompt: 'a brass owl', tier: 'standard' },
+					}),
+					res,
+				);
+				expect(res.statusCode).toBe(200);
+				const body = JSON.parse(res.body);
+				expect(body.backend).not.toBe('huggingface');
+				expect(hfMock.createRegenProvider).not.toHaveBeenCalled();
+				expect(replicateMock.submit).toHaveBeenCalled();
+				expect(res.headers['x-payment-response']).toBe('stub-payment-response');
+			} finally {
+				fetchSpy.mockRestore();
+				// Drop an unconsumed once-implementation so later tests see the default.
+				hfMock.createRegenProvider.mockReset();
+				hfMock.createRegenProvider.mockImplementation(() => {
+					throw Object.assign(new Error('HF_TOKEN env var is required for the huggingface provider'), {
+						code: 'provider_unconfigured',
+						status: 501,
+					});
+				});
+			}
+		});
+	}
 
 	it('sanitizes a paid-lane "insufficient credit" failure into a clean unavailable state (no leak, no settle)', async () => {
 		// NVIDIA unavailable, HF unavailable (default), Replicate out of credit: the

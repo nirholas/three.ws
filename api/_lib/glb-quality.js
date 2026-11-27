@@ -50,6 +50,13 @@ export const QUALITY_THRESHOLDS = Object.freeze({
 	// legitimately narrow front-to-back (a standing figure runs about 0.19), so this
 	// bar is far stricter: only a sliver no solid object could be.
 	sliverFlatness: ratioEnv('FORGE_QUALITY_SLIVER_FLATNESS', 0.05),
+	// A bounding-box diagonal beyond this (a thousand kilometres, in metres) is not
+	// a model a viewer can frame: a broken reconstruction, not a big scene.
+	maxBboxDiagonal: intEnv('FORGE_QUALITY_MAX_EXTENT', 1_000_000),
+	// Informational only. Above either of these the file is legal and delivered,
+	// but heavy enough that a phone will struggle; it is noted, never failed.
+	heavyTriangles: intEnv('FORGE_QUALITY_HEAVY_TRIS', 2_000_000),
+	heavyBytes: intEnv('FORGE_QUALITY_HEAVY_BYTES', 80 * 1024 * 1024),
 });
 
 // Largest representable value per integer component type, used to undo
@@ -150,6 +157,7 @@ function summarizeGeometry(gltf) {
 	let min = [Infinity, Infinity, Infinity];
 	let max = [-Infinity, -Infinity, -Infinity];
 	let haveBounds = false;
+	let nonFiniteBounds = false;
 	const meshLocal = new Map();
 
 	for (const mesh of meshes) {
@@ -166,6 +174,7 @@ function summarizeGeometry(gltf) {
 				vertexCount += pos.count;
 				const range = positionRange(pos);
 				if (range) {
+					if (!range.min.every(Number.isFinite) || !range.max.every(Number.isFinite)) nonFiniteBounds = true;
 					const local = meshLocal.get(mesh) || { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
 					for (let i = 0; i < 3; i++) {
 						if (Number.isFinite(range.min[i])) {
@@ -228,10 +237,35 @@ function summarizeGeometry(gltf) {
 		indexedPrimitives,
 		texturedPrimitives,
 		bbox: haveBounds ? { min, max, size } : null,
+		nonFiniteBounds,
 		bboxDiagonal: Number.isFinite(bboxDiagonal) ? bboxDiagonal : 0,
 		flatness: Number.isFinite(flatness) ? flatness : null,
 		thinAxis,
 	};
+}
+
+// Is the geometry the JSON promises actually in the file? A GLB keeps its
+// vertex and index data in the BIN chunk. When the JSON declares a buffer with no
+// uri (the embedded one) but the chunk is absent or shorter than the buffer views
+// reach, every accessor reads past the end: the viewer shows nothing or garbage
+// while the JSON-only counts above still look healthy. Returns a reason or null.
+// Buffers with a uri (an external .bin or a data: URL) are not in the BIN chunk
+// and are not judged here.
+function binChunkProblem(gltf, base) {
+	const buffers = Array.isArray(gltf.buffers) ? gltf.buffers : [];
+	const embedded = buffers[0];
+	if (!embedded || typeof embedded !== 'object' || embedded.uri) return null;
+	const views = Array.isArray(gltf.bufferViews) ? gltf.bufferViews : [];
+	let reach = Number.isFinite(embedded.byteLength) ? embedded.byteLength : 0;
+	for (const v of views) {
+		if (!v || (v.buffer ?? 0) !== 0) continue;
+		const end = (Number.isFinite(v.byteOffset) ? v.byteOffset : 0) + (Number.isFinite(v.byteLength) ? v.byteLength : 0);
+		if (end > reach) reach = end;
+	}
+	if (reach <= 0) return null;
+	if (!base.hasBinChunk) return 'missing_bin';
+	// The chunk may be padded up to 3 bytes past the declared buffer; never short of it.
+	return base.binChunkBytes < reach ? 'truncated_bin' : null;
 }
 
 // Does the asset carry any actual texture data? A textured 3D output should have
@@ -374,6 +408,23 @@ export function scoreGlbQuality(buf, { allowPartial = false } = {}) {
 		degenerate = true;
 		reasons.push('zero_volume');
 	}
+	// Bounds that are not finite numbers (1e999 is valid JSON and parses to
+	// Infinity) cannot be framed or measured. Checked on the raw accessor ranges
+	// because the measured box above silently drops a non-finite bound.
+	if (geo.nonFiniteBounds) {
+		degenerate = true;
+		reasons.push('non_finite_extent');
+	} else if (geo.bboxDiagonal > t.maxBboxDiagonal) {
+		degenerate = true;
+		reasons.push('absurd_extent');
+	}
+	const binProblem = gltf ? binChunkProblem(gltf, base) : null;
+	if (binProblem) {
+		degenerate = true;
+		reasons.push(binProblem);
+	}
+	const veryHeavy = geo.triangleCount > t.heavyTriangles || base.sizeBytes > t.heavyBytes;
+	if (veryHeavy) reasons.push('very_heavy');
 
 	// A slab-shaped result: large and dense enough to pass every check above, but
 	// with no depth. An image-to-3D reconstruction that loses its conditioning
@@ -429,6 +480,7 @@ export function scoreGlbQuality(buf, { allowPartial = false } = {}) {
 			flatness: geo.flatness == null ? null : Math.round(geo.flatness * 1e6) / 1e6,
 			thinAxis: geo.thinAxis ?? null,
 			planar,
+			veryHeavy,
 			hasMaterials: mat.hasMaterials,
 			hasTextures: mat.hasTextures,
 			materialCount: mat.materialCount,

@@ -9,6 +9,8 @@
  * The real xai-image.js runs here; only the network is doubled.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { REAL_PNG_B64 } from './_helpers/real-image.js';
+import { resetVertexBreaker } from '../api/_lib/vertex-image-breaker.js';
 import sharp from 'sharp';
 
 process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
@@ -59,7 +61,7 @@ const PNG_1PX = Buffer.from(
 	'base64',
 );
 const VERTEX_IMAGE_OK = {
-	candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: 'aGVsbG8=' } }] } }],
+	candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: REAL_PNG_B64 } }] } }],
 };
 
 let xaiAnswer;
@@ -89,7 +91,9 @@ function installFetch() {
 	});
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+	// A failure in one case parks the shared Vertex breaker; start each closed.
+	await resetVertexBreaker();
 	ladder.calls = 0;
 	persisted.b64 = [];
 	cooldowns.marked = [];

@@ -202,6 +202,22 @@ export async function payWithToken({
 
 	// 4. Settle (server verifies on-chain and records the payment)
 	onStatus('settling');
+	return settleTokenPayment({ quoteToken: quote.quote_token, txSignature: signature, network });
+}
+
+/**
+ * Ask the server to verify and record a transaction that was already signed,
+ * broadcast and confirmed. Safe to call again for the same transaction: the
+ * server answers with the payment it already recorded, and a quote that expired
+ * while the transfer was confirming still settles when the chain shows it was
+ * paid in time. Never moves funds.
+ *
+ * Every failure here is thrown with `paid: true` plus the quote token and the
+ * signature, so a caller can re-check the SAME transaction instead of starting a
+ * second payment.
+ */
+export async function settleTokenPayment({ quoteToken, txSignature, network = 'mainnet' }) {
+	const paidContext = { paid: true, tx_signature: txSignature, quote_token: quoteToken, network };
 	// The transaction is already signed, broadcast and confirmed by this point, so
 	// a settle call that dies at the transport layer must never surface as a bare
 	// unhandled rejection: the payer needs the signature in hand to reconcile.
@@ -211,24 +227,23 @@ export async function payWithToken({
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			credentials: 'include',
-			body: JSON.stringify({ quote_token: quote.quote_token, tx_signature: signature, network }),
+			body: JSON.stringify({ quote_token: quoteToken, tx_signature: txSignature, network }),
 			signal: AbortSignal.timeout(30_000),
 		});
 	} catch (err) {
 		throw Object.assign(
-			new Error(`Payment sent (transaction ${signature}) but confirmation could not be reached: ${err?.message || err}. It will be reconciled; keep this signature.`),
-			{ code: 'settle_unreachable', tx_signature: signature, paid: true },
+			new Error(`Payment sent (transaction ${txSignature}) but confirmation could not be reached: ${err?.message || err}.`),
+			{ code: 'settle_unreachable', ...paidContext },
 		);
 	}
 	// A gateway 502 answers with an HTML body, so parsing is allowed to fail
 	// without turning a real payment into "Unexpected token <".
 	const settled = await settleResp.json().catch(() => ({}));
 	if (!settleResp.ok) {
-		throw Object.assign(new Error(settled.error_description || `settlement failed (HTTP ${settleResp.status}); payment ${signature} will be reconciled`), {
+		throw Object.assign(new Error(settled.error_description || `settlement failed (HTTP ${settleResp.status}) for payment ${txSignature}`), {
 			code: settled.error || 'settle_failed',
-			paid: true,
-			tx_signature: signature,
+			...paidContext,
 		});
 	}
-	return { ...settled, tx_signature: signature };
+	return { ...settled, tx_signature: txSignature };
 }

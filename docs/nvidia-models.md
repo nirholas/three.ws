@@ -17,7 +17,7 @@ NVIDIA exposes its catalog over a few distinct surfaces. three.ws uses four:
 | Surface | Base URL | Shape | What runs here |
 | --- | --- | --- | --- |
 | **NIM (OpenAI-compatible)** | `https://integrate.api.nvidia.com/v1` | `chat/completions`, `embeddings` | LLM chat, vision (VLM), embeddings, content-safety |
-| **GenAI invoke** | `https://ai.api.nvidia.com/v1/genai/…` | Async (202 + poll) or sync | TRELLIS text→3D, FLUX text→image |
+| **GenAI invoke** | `https://ai.api.nvidia.com/v1/genai/…` | Async (202 + poll) for TRELLIS, sync for FLUX | TRELLIS text→3D, FLUX text→image |
 | **Retrieval** | `https://ai.api.nvidia.com/v1/retrieval/<publisher>/<model>/reranking` (one URL per model) | Sync rerank | Cross-encoder reranking |
 | **CV inference** | `https://ai.api.nvidia.com/v1/cv/nvidia/<model>` | Sync, one page image per call | PDF page layout, table structure, chart elements, OCR |
 | **NVCF gRPC** | `grpc.nvcf.nvidia.com:443` | Riva gRPC | Magpie text-to-speech |
@@ -32,7 +32,7 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 | Capability | NVIDIA model(s) | Wired in | Free? |
 | --- | --- | --- | --- |
 | **Text → 3D** | `microsoft/trellis` | `api/_providers/nvidia.js`, `api/_lib/forge-tiers.js` | ✅ |
-| **Text → image** | `black-forest-labs/flux.1-dev` | `api/_mcp3d/text-to-image.js` | ✅ |
+| **Text → image** | `black-forest-labs/flux.2-klein-4b` | `api/_mcp3d/text-to-image.js` | ✅ |
 | **LLM (default lane)** | `nvidia/nemotron-3-super-120b-a12b`, then `nvidia/nemotron-3-ultra-550b-a55b` (step-down rung: `nvidia/nemotron-3.5-lightning-30b-a3b`) | `api/_lib/llm.js`, `api/_lib/chat-models.js` | ✅ |
 | **LLM (model garden)** | Three Nemotron picks (Ultra 550B and 3.5 Lightning 30B behind them), plus DeepSeek V4.1 Flash on the NIM lane via the open-model roster | `api/brain/chat.js`, `api/_lib/model-roster.js` | ✅ |
 | **Vision / VLM** | `nvidia/nemotron-3.5-super-vl-120b-a12b`, then `nemotron-3.5-bolt-e4b` and `nemotron-3-nano-omni-30b-a3b-reasoning` (per-task leads), then free OpenRouter `:free` VLM rungs | `api/_lib/vision.js` | ✅ |
@@ -63,24 +63,45 @@ This is the headline free model. **Microsoft TRELLIS hosted on NVIDIA NVCF gives
 - Async by default. Submit returns `202 + NVCF-REQID`; the forge polls the NVCF status endpoint until the GLB is ready (or the job completes synchronously within a 30 s window).
 - **Sampling steps are pinned to the proven budget.** TRELLIS accepts 10 to 50 steps, but the hosted preview only returns inside the gateway's synchronous window at the low end, so the free lane runs `15/15` (`ss_sampling_steps` / `slat_sampling_steps`) for both draft and standard tiers. The `40/40` budget is reserved for a self-hosted TRELLIS NIM; the high tier defaults to the self-hosted `trellis2` lane (`FREE_DEFAULT_FOR_TIERS`), not this one.
 - Prompts are clamped to **77 characters** (TRELLIS truncates server-side) and get a `, studio lighting` suffix unless the caller already supplied lighting/color cues — without it TRELLIS defaults to dark, gritty output.
-- Output GLBs arrive in several shapes over time (inline base64, bare string, CDN URL, numeric-keyed object, raw bytes); the extractor normalizes all of them, then **persists the bytes to R2** so three.ws owns a durable public URL.
+- Output GLBs arrive in several shapes over time (inline base64, bare string, CDN URL, numeric-keyed object, raw bytes, a 302 handoff to a presigned URL, a zip); the extractor normalizes all of them, **validates the bytes as a real model** (valid GLB header, declared length, JSON chunk, at least one mesh), then **persists them to R2** so three.ws owns a durable public URL. An HTML error page, a truncated file or an empty scene fails the job with `nvcf_bad_artifact` instead of becoming a finished creation.
+- Downloads of a result URL go through the SSRF guard (every redirect hop re-checked) with a 128 MB cap, and the NVIDIA key is never sent to the download host.
+
+**Poll protocol, and how it differs from NVIDIA's documentation.** The poll sends `nvcf-poll-seconds: 10` and reads redirects manually. 200 is fulfilled, 202 is pending, 302 is a large result at `Location`, 402 means credits are exhausted (terminal), 403 is a missing scope (terminal), 400 and 422 are terminal rejections, 429 keeps the job running and carries the stated `Retry-After`, and 5xx or a network error keeps it running (the forge layer owns the overall deadline). What the docs do not say, and what we rely on from observation: a fulfilled result is consume-once (a second GET returns 404 or 410, mapped to `nvcf_expired`, which triggers the store re-check and one resubmit), and retention is short. Zip delivery for TRELLIS is an inference from the generic large-result rules, not something observed live, so the extractor accepts it but nothing depends on it.
+
+**Throttle and breaker.** The rules live in [api/_lib/nvcf-lane-health.js](../api/_lib/nvcf-lane-health.js), shared by `/api/forge` and `/api/gpt-forge`, and the state is in the shared cache so every instance sees it.
+- A 429 cools the lane for the stated `Retry-After` (floored at 30 s, capped at 15 minutes), not a fixed window. No stated wait falls back to 30 s for a prompt gateway 5xx and 120 s for a timeout or unreachable host.
+- A 401, 402 or 403 (dead key or empty account) cools the lane for the 5 minute auth window, tagged `auth`, so it is probed about once per window instead of by every request.
+- A 4xx the caller caused (a prompt NVIDIA rejects with 400 or 422) never cools the lane.
+- A throttled poll is backed off for its stated wait through the cache (`nvcf:poll-backoff:{id}`), so waiting clients stop polling a gateway that said not yet, and the lane is cooled for new submits meanwhile. A poll that reports exhausted credits cools the lane for the auth window.
+- While the lane is cooled, a request never reaches NVIDIA: it goes straight to the reconstruct lane.
+- Not covered: the `forge-finalize` cron polls NVCF directly and does not consult the poll backoff or the poll lock.
+
+**Position.** The lane stays where it is in `forge-tiers.js`. Using it more would need the 7-day figures from `docs/ops/forge-protected-lanes.md` (the `npm run` command it names) to show at least 20 finished jobs at 85% or better success after this change deploys; before that, the numbers say it is a fallback, not a default to widen.
 
 **Key constraint: text only.** NVIDIA's *hosted preview* rejects every user-image input form (verified live 2026-06-11). So **photo to 3D never routes here**: it falls to the free reconstruct chain in `FREE_FALLBACK_FOR_PATH` (the self-hosted TRELLIS GPU worker first, then the self-hosted Hunyuan3D worker, then the free Hugging Face Spaces lane). A self-deployed TRELLIS NIM accepts real images; this is a hosted-preview limitation, not a model one.
 
 ---
 
-## 2. Text → image: FLUX.1-dev
+## 2. Text → image: FLUX.2 klein 4B
 
-**Model:** `black-forest-labs/flux.1-dev` · **Endpoint:** `ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev`
+**Model:** `black-forest-labs/flux.2-klein-4b` · **Endpoint:** `ai.api.nvidia.com/v1/genai/black-forest-labs/flux.2-klein-4b`
 **Source:** [api/_mcp3d/text-to-image.js](../api/_mcp3d/text-to-image.js).
 
-FLUX.1-dev is the **free NVIDIA text-to-image lane** (the hosted FLUX.1-schnell preview was retired, so the lane moved to the dev checkpoint at 20 steps, CFG 3.5). It is a synchronous invoke: the image returns inline as base64, no poll.
+FLUX.2 klein 4B is the **free NVIDIA text-to-image lane**. Probed live on 2026-11-26: `flux.1-dev` and `flux.1-schnell` accept a request on the hosted gateway and then never answer (70 s and 90 s probes hung), so the lane moved to klein-4b, which served a 1024x1024 JPEG in 6.5 s warm and 14 s cold. Request: 4 steps, CFG 1, no `mode` field (the endpoint rejects steps above 4, CFG above 1 and extra fields). The rung runs under its own 30 s cap. It is a synchronous invoke: the image returns inline as base64, no poll. The gateway offers no pollable 202 for FLUX: a short `NVCF-POLL-SECONDS` header turns a slow answer into `504 nvcf-status: errored`, so none is sent. The model id, route, body and cap live in one module, [api/_lib/nim-flux.js](../api/_lib/nim-flux.js), shared by the rung, its health check and its hourly probe, so a re-pin moves all three together.
+
+**Why the FLUX.1 rung timed out (2026-11-27).** Re-measured with the production key: `flux.1-dev` sent no response headers in 150 s and did not answer even an invalid body in 20 s, so no container was picking up its requests. The route still exists (a GET answers 405; a retired or unknown id answers 404), so this was a dead function on NVIDIA's side, not a renamed model or a bad request. NVIDIA request ids for a support ticket: `c3292a84-2b81-4b7a-b9eb-d1bcaaf3119d` (flux.1-dev, 504 errored), `d4fa20da-f1bf-4d6f-ad9a-206af5ef6e4e` (flux.1-schnell, 504), `0b315825-ab0f-4c06-a767-223eb21ac92f` (klein with a 2 s poll header, 504), `c66e69a7-fb89-4f00-a285-cdaac1745aa2` (klein, 200). klein answered 200 in 16.8 s to 20.9 s the same day.
+
+**Fail fast.** A rung failure records a breaker cooldown (`image-rung:forge-nim-flux`). Timeouts, unreachable hosts and 5xx answers in a row double it, 60 s, 120 s, 240 s, 480 s, then a 900 s ceiling, so a dead function stops costing every Forge submit 30 s; one served half-open probe resets it. Auth and credit failures keep their flat 300 s. A cooling rung shows as `degraded` in `/api/v1/ai/image?health=1` without a call.
+
+**Honest health.** The health check sends a free GET to the pinned route: 405 means served, 404 or 410 means NVIDIA no longer serves the model (down), 401 or 403 names the key, 429 is degraded, 5xx is down. Until 2026-11-27 it hit `/v1/models`, a path the genai host does not have, and read that 404 as ok.
+
+**Hourly probe.** `/nvidia` and `/api/nvidia/stats` carry a `nim_flux` lane that sends the rung's exact request (512x512) under the 30 s cap; only an image NVIDIA marks `SUCCESS` counts as ok. Run it by hand: `NVIDIA_API_KEY=... node scripts/nvidia-lane-probes-check.mjs nim_flux`.
 
 **Where it's used:**
 - **The reference-image step of the image-intermediate 3D path.** When a prompt is reconstructed to a mesh, FLUX paints the reference view first, which the free reconstruction lanes (TRELLIS / Hunyuan3D) then turn into geometry. A photo-quality reference reconstructs into a far better mesh than a busy scene, so the lane steers FLUX toward a clean, centered subject.
 - General text→image wherever the platform needs a synthesized image.
 
-**Ladder order.** When `GOOGLE_CLOUD_PROJECT` is set, Vertex Imagen leads by default because it outdraws distilled FLUX for photoreal reference images and spends the GCP credit pool the platform is funded to burn (`VERTEX_IMAGEN_FIRST=0` restores the NIM-first order). After that: NVIDIA FLUX.1-dev (free) → the Hugging Face router (`HF_TOKEN`; fal-ai, then WaveSpeed, both serving FLUX.1-schnell in a few seconds; `/api/v1/ai/image?health=1` probes each rung for credit and route) → the Livepeer federation lane (behind `LIVEPEER_FEDERATION_ENABLED`) → Pollinations (keyless, so a fallback always exists past every keyed rung) → Replicate `flux-schnell` ($0.003/image, the paid backstop). The whole ladder shares one budget, `TEXT_TO_IMAGE_BUDGET_MS` (default 60 s): each lane gets a bounded slice of what remains so a stalled provider cannot hold a Forge submit for minutes, and exhausting the budget returns a retryable `rate_limited` error (`retryAfter: 15`) rather than a hung request.
+**Ladder order.** When `GOOGLE_CLOUD_PROJECT` is set, Vertex Imagen leads by default because it outdraws distilled FLUX for photoreal reference images and spends the GCP credit pool the platform is funded to burn (`VERTEX_IMAGEN_FIRST=0` restores the NIM-first order). After that: NVIDIA FLUX.2 klein 4B (free) → the Hugging Face router (`HF_TOKEN`; fal-ai, then WaveSpeed, both serving FLUX.1-schnell in a few seconds; `/api/v1/ai/image?health=1` probes each rung for credit and route) → the Livepeer federation lane (behind `LIVEPEER_FEDERATION_ENABLED`) → Pollinations (keyless, so a fallback always exists past every keyed rung) → Replicate `flux-schnell` ($0.003/image, the paid backstop). The whole ladder shares one budget, `TEXT_TO_IMAGE_BUDGET_MS` (default 60 s): each lane gets a bounded slice of what remains so a stalled provider cannot hold a Forge submit for minutes, and exhausting the budget returns a retryable `rate_limited` error (`retryAfter: 15`) rather than a hung request.
 
 ---
 

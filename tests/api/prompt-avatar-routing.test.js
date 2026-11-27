@@ -20,6 +20,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
+	planPhotoAvatarLanes,
 	planPromptAvatarLanes,
 	promptAvatarImagePrompt,
 	PROMPT_AVATAR_FRAMING,
@@ -28,7 +29,7 @@ import {
 vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () => {} }));
 vi.mock('../../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 
-const state = { inserts: [], health: {}, gcpSubmit: null, referenceCalls: [] };
+const state = { inserts: [], health: {}, gcpSubmit: null, referenceCalls: [], extraPlatform: [] };
 
 const sqlMock = vi.fn(async (strings, ...values) => {
 	const text = (Array.isArray(strings) ? strings.join('?') : String(strings)).toLowerCase();
@@ -68,7 +69,7 @@ vi.mock('../../api/_lib/regen-provider.js', () => ({
 	getRegenProviderForMode: async () => ({ name: 'gcp', instance: gcpInstance }),
 	getRegenProviderForJob: async () => ({ name: 'gcp', instance: gcpInstance }),
 	getRegenProviderByName: () => ({ name: 'meshy', instance: null }),
-	getRegenProviderCandidates: async () => [{ name: 'gcp', instance: gcpInstance }],
+	getRegenProviderCandidates: async () => [{ name: 'gcp', instance: gcpInstance }, ...state.extraPlatform],
 	BYOK_REGEN_PROVIDERS: ['meshy', 'tripo'],
 }));
 vi.mock('../../api/_lib/forge-provider-key.js', () => ({ resolveProviderKey: async () => null }));
@@ -96,14 +97,14 @@ function makeRes() {
 	};
 }
 
-async function reconstruct(body) {
+async function reconstruct(body, geo = { 'x-client-geo-location': 'US,California' }) {
 	const req = {
 		method: 'POST',
 		url: '/api/avatars/reconstruct',
 		headers: {
 			'content-type': 'application/json',
 			origin: 'https://three.ws',
-			'x-client-geo-location': 'US,California',
+			...geo,
 		},
 		body,
 	};
@@ -234,5 +235,46 @@ describe('POST /api/avatars/reconstruct with a prompt', () => {
 		expect(state.referenceCalls).toHaveLength(0);
 		expect(gcpInstance.submit.mock.calls[0][0].mode).toBe('reconstruct');
 		expect(state.inserts[0].params.source).toBeUndefined();
+	});
+
+	it('never fails a photo avatar over to the Hugging Face Hunyuan lane for an excluded or unknown country', async () => {
+		state.gcpSubmit = async () => {
+			throw Object.assign(new Error('down'), { code: 'provider_unreachable', status: 502 });
+		};
+		for (const geo of [{ 'x-client-geo-location': 'DE,Berlin' }, { 'x-client-region': 'KR' }, {}]) {
+			const hf = stub('huggingface');
+			state.extraPlatform = [hf];
+			await reconstruct({ name: 'Me', photos: ['https://cdn.example.com/selfie.jpg'] }, geo);
+			expect(hf.instance.submit).not.toHaveBeenCalled();
+		}
+		state.extraPlatform = [];
+	});
+
+	it('still fails a photo avatar over to the Hugging Face lane for an allowed country', async () => {
+		state.gcpSubmit = async () => {
+			throw Object.assign(new Error('down'), { code: 'provider_unreachable', status: 502 });
+		};
+		const hf = stub('huggingface');
+		hf.instance.submit.mockResolvedValue({ extJobId: 'hf-1', eta: 60 });
+		state.extraPlatform = [hf];
+		await reconstruct({ name: 'Me', photos: ['https://cdn.example.com/selfie.jpg'] }, { 'x-client-region': 'JP' });
+		expect(hf.instance.submit).toHaveBeenCalled();
+		state.extraPlatform = [];
+	});
+});
+
+describe('planPhotoAvatarLanes', () => {
+	const candidates = [stub('gcp'), stub('huggingface'), stub('replicate'), stub('meshy')];
+
+	it('drops the Hugging Face Hunyuan lane for the EU, the UK, South Korea and an unknown country', () => {
+		for (const country of ['DE', 'GB', 'KR', 'GP', null, undefined]) {
+			expect(planPhotoAvatarLanes(candidates, country).map((c) => c.lane)).toEqual(['gcp', 'replicate', 'meshy']);
+		}
+	});
+
+	it('keeps every lane, in order, for an allowed country', () => {
+		const plan = planPhotoAvatarLanes(candidates, 'US');
+		expect(plan.map((c) => c.lane)).toEqual(['gcp', 'huggingface', 'replicate', 'meshy']);
+		expect(plan.every((c) => c.mode === 'reconstruct')).toBe(true);
 	});
 });

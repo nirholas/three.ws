@@ -157,7 +157,7 @@ describe('AniGen happy path', () => {
 		expect(gcpSubmit.mock.calls[0][0].params.seed).toBe(123);
 	});
 
-	it('extra views beyond the first are still forwarded (the worker reads only the first)', async () => {
+	it('sends only the front view, since the worker reads one image, and tells the page so', async () => {
 		const req = makeReq({
 			image_urls: ['https://cdn.example/front.png', 'https://cdn.example/back.png'],
 			tier: 'standard',
@@ -169,7 +169,10 @@ describe('AniGen happy path', () => {
 		await handler(req, res);
 
 		expect(res.statusCode).toBe(200);
-		expect(gcpSubmit.mock.calls[0][0].params.images).toHaveLength(2);
+		expect(gcpSubmit.mock.calls[0][0].params.images).toEqual(['https://cdn.example/front.png']);
+		expect(res.body.views_requested).toBe(2);
+		expect(res.body.views_used).toBe(1);
+		expect(res.body.views_note).toMatch(/single photo/);
 	});
 });
 

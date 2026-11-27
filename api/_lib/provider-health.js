@@ -64,6 +64,20 @@ export async function clearProviderCooldown(provider) {
 }
 
 /**
+ * When `provider`'s cooldown ends (epoch ms), or null when it is not cooling.
+ * For read-only surfaces (health) that report when a cooled lane is tried
+ * again. Never throws.
+ */
+export async function providerCooldownUntil(provider) {
+	try {
+		const hit = await cacheGet(`${COOLDOWN_PREFIX}${provider}`);
+		return Number.isFinite(hit?.until) ? hit.until : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
  * Given a list of provider names, return a Map of those currently in a cooldown
  * window to the reason they were cooled ('auth' for a 401/403/402 key/billing
  * failure, 'health' for a 429/5xx/network blip). `Map.has(name)` answers "is it

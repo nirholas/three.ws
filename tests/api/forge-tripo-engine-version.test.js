@@ -66,7 +66,7 @@ describe('POST /api/forge: Tripo submit response names the engine version', () =
 			await forge(
 				mockReq({
 					body: { prompt: 'a brass telescope', tier: 'high', backend: 'tripo' },
-					headers: { 'x-forge-provider-key': 'caller-own-key' },
+					headers: { 'x-forge-provider-key': 'tsk_caller_own_key_0123456789' },
 				}),
 				r,
 			);
@@ -86,7 +86,7 @@ describe('POST /api/forge: Tripo submit response names the engine version', () =
 			await forge(
 				mockReq({
 					body: { prompt: 'a brass telescope', tier: 'high', backend: 'tripo' },
-					headers: { 'x-forge-provider-key': 'caller-own-key' },
+					headers: { 'x-forge-provider-key': 'tsk_caller_own_key_0123456789' },
 				}),
 				r,
 			);
@@ -106,7 +106,7 @@ describe('POST /api/forge: Tripo submit response names the engine version', () =
 			await forge(
 				mockReq({
 					body: { prompt: 'a brass telescope', tier: 'high', backend: 'meshy' },
-					headers: { 'x-forge-provider-key': 'caller-own-key' },
+					headers: { 'x-forge-provider-key': 'msy_caller_own_key_0123456789' },
 				}),
 				r,
 			);

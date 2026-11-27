@@ -597,7 +597,7 @@ banner was re-verified live before deleting it, and one of them had rotted:
   `approvalDisplayStatus: 5`, `approvalLabel: "Listing rejected"`, `status: 2` ("not listed"),
   `soldCount: 2`, carrying the same rejection #3 remark (the four Forge rows plus the internal
   note about the x402 quotation). So the resubmission is still open, it just belongs to
-  [`911-okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md).
+  [`911-okx-ai-08-forge-relisting.md`](../../awaiting-owner/911-okx-ai-08-forge-relisting.md).
 
 ### The 2026-09-07 deploy blocker is gone: the fix is live
 

@@ -93,17 +93,17 @@ Read that table again and notice the trend line, because it's the whole argument
 
 And here's the nuance that makes the story stronger, not weaker: **two incumbents have started adopting x402.** Messari now sells keyless pay-per-request API calls at $0.10–$1.00 each. CoinMarketCap exposes five endpoints at $0.01 per call. The giants of this industry just validated the exact rail we bet on. They're dipping a toe — thin premium slices, at 10x to 1,000x our per-call price, with no free lane and no archive. We're standing in the water. Free is our funnel, $0.001 is our meter, and the archive is our moat. When the incumbents arrive properly, they'll find us already here, already integrated into the agent toolchains, already the default.
 
-## Every paid call feeds $THREE
+## Every paid call funds the platform
 
-Now the part that makes this a flywheel instead of a feature: **the data business is wired directly into the $THREE economy.** Not "aligned with." Wired into, in code, in three ways:
+Now the part that makes this a flywheel instead of a feature: **the data business is wired into $THREE as a payment option.** In code, in three ways:
 
 1. **$THREE is money here.** Every x402 challenge our endpoints issue can quote a $THREE accept right alongside USDC — an agent can pay for data in the platform's own token. Plans take USDC, SOL, or $THREE, with the 20% $THREE discount.
 
-2. **Revenue buys $THREE.** The platform runs a programmatic buyback engine: accumulated USDC revenue from paid endpoints is converted into market buys of $THREE routed to the treasury. No burn, no gimmick — recurring, protocol-level demand created by real usage. Every agent that pays a tenth of a cent for a token screen is, at the end of the loop, a buyer of $THREE.
+2. **Treasury policy.** The platform never burns $THREE. The treasury may acquire $THREE at its discretion for platform use, which is not a promise of price support, and paid calls carry no right to any share of revenue.
 
-3. **$THREE holders get the platform.** Hold-to-access tiers unlock fee discounts, higher free quotas, premium capabilities, and gated experiences across three.ws — the boutique in our 3D world takes $THREE, the labor market settles in $THREE, token-gated embeds default to $THREE.
+3. **$THREE pays for the platform.** Token-gated tiers can unlock fee discounts, higher free quotas, premium capabilities, and gated experiences across three.ws: the boutique in our 3D world takes $THREE, the labor market settles in $THREE, token-gated embeds default to $THREE.
 
-Follow the loop: agents need data → data is cheapest and easiest here → paid calls generate USDC → USDC market-buys $THREE → the treasury and the holder base strengthen → the platform ships more capabilities → more agents come for the capabilities → they need data. Any project can sell an API. The flywheel is what makes it an economy.
+Follow the loop: agents need data → data is cheapest and easiest here → paid calls generate USDC → revenue funds the platform → the platform ships more capabilities → more agents come for the capabilities → they need data. Any project can sell an API. The loop is what makes it an economy.
 
 ## The agents are already listening
 

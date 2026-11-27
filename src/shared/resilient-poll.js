@@ -82,26 +82,54 @@ export function sleepUntilVisibleOrElapsed(ms) {
  * to get foreground-only elapsed time, so backgrounding a generation can never
  * expire its run budget.
  *
+ * `hiddenStreakMs()` is the length of the CURRENT hidden stretch (0 while the
+ * tab is in the foreground), which is what a poll loop needs to decide that a
+ * tab nobody is looking at should stop asking the server for a while.
+ *
  * Call `stop()` when the poll finishes; the clock holds a document listener.
  *
- * @returns {{ hiddenMs: () => number, stop: () => void }}
+ * @param {{ now?: () => number }} [opts]  clock source, `performance.now` by default
+ * @returns {{ hiddenMs: () => number, hiddenStreakMs: () => number, stop: () => void }}
  */
-export function createHiddenClock() {
+export function createHiddenClock({ now = () => performance.now() } = {}) {
 	let hiddenTotal = 0;
-	let hiddenSince = document.visibilityState === 'hidden' ? performance.now() : 0;
+	// null, not 0, marks "visible": an injected clock can legitimately read 0.
+	let hiddenSince = document.visibilityState === 'hidden' ? now() : null;
 	const onVisibility = () => {
 		if (document.visibilityState === 'hidden') {
-			if (!hiddenSince) hiddenSince = performance.now();
-		} else if (hiddenSince) {
-			hiddenTotal += performance.now() - hiddenSince;
-			hiddenSince = 0;
+			if (hiddenSince === null) hiddenSince = now();
+		} else if (hiddenSince !== null) {
+			hiddenTotal += now() - hiddenSince;
+			hiddenSince = null;
 		}
 	};
 	document.addEventListener('visibilitychange', onVisibility);
+	const streak = () => (hiddenSince === null ? 0 : now() - hiddenSince);
 	return {
-		hiddenMs: () => hiddenTotal + (hiddenSince ? performance.now() - hiddenSince : 0),
+		hiddenMs: () => hiddenTotal + streak(),
+		hiddenStreakMs: streak,
 		stop: () => document.removeEventListener('visibilitychange', onVisibility),
 	};
+}
+
+/**
+ * Resolve once the tab is in the foreground: immediately when it already is,
+ * otherwise on the `visibilitychange` that shows it. No timer runs while it
+ * waits, so a backgrounded tab parked here costs nothing at all, and the next
+ * poll fires the moment the user looks at the page again.
+ *
+ * @returns {Promise<void>}
+ */
+export function waitUntilVisible() {
+	if (document.visibilityState !== 'hidden') return Promise.resolve();
+	return new Promise((resolve) => {
+		const onVisibility = () => {
+			if (document.visibilityState === 'hidden') return;
+			document.removeEventListener('visibilitychange', onVisibility);
+			resolve();
+		};
+		document.addEventListener('visibilitychange', onVisibility);
+	});
 }
 
 /**

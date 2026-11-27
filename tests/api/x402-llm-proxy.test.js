@@ -169,6 +169,16 @@ describe('POST /api/x402/llm-proxy', () => {
 		}
 	});
 
+	it('serves every paid completion from commercially licensed providers only', async () => {
+		const { llmComplete } = await import('../../api/_lib/llm.js');
+		for (const model of ['fast', 'smart', 'claude-haiku-4-5-20251001']) {
+			llmComplete.mockClear();
+			const res = await call(jsonReq({ model, prompt: 'hi' }, internalKey()));
+			expect(res.statusCode).toBe(200);
+			expect(llmComplete.mock.calls[0][0].commercialOnly).toBe(true);
+		}
+	});
+
 	it('rejects a missing prompt with 400 and never calls the provider', async () => {
 		const { llmComplete } = await import('../../api/_lib/llm.js');
 		llmComplete.mockClear();

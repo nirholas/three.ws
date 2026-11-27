@@ -12,6 +12,7 @@
 //     Imagen PNG's size, so forwarding the data URI breaks reconstruction).
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { resetImageRungBreakers } from '../../api/_lib/image-rung-breaker.js';
 import { cacheDel } from '../../api/_lib/cache.js';
 
 const vertexState = { configured: false, generate: null };
@@ -95,6 +96,9 @@ function stubFluxSuccess() {
 }
 
 beforeEach(async () => {
+	// Every rung starts with a closed breaker: the breaker keeps its state in
+	// the shared cache, which outlives a single test.
+	await resetImageRungBreakers();
 	vertexState.configured = false;
 	vertexState.generate = null;
 	r2State.puts.length = 0;
@@ -148,7 +152,7 @@ describe('textToImage: Vertex quality lane leads by default', () => {
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot');
 
-		expect(result.model).toBe('black-forest-labs/flux.1-dev');
+		expect(result.model).toBe('black-forest-labs/flux.2-klein-4b');
 		expect(vertexState.generate).toHaveBeenCalledOnce();
 		expect(calls).toHaveLength(1);
 	});
@@ -164,7 +168,7 @@ describe('textToImage: Vertex quality lane leads by default', () => {
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot');
 
-		expect(result.model).toBe('black-forest-labs/flux.1-dev');
+		expect(result.model).toBe('black-forest-labs/flux.2-klein-4b');
 		expect(vertexState.generate).not.toHaveBeenCalled();
 		expect(calls).toHaveLength(1);
 	});
@@ -188,7 +192,7 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 		const textToImage = await freshTextToImage();
 		const result = await textToImage('a red teapot');
 
-		expect(result.model).toBe('black-forest-labs/flux.1-dev');
+		expect(result.model).toBe('black-forest-labs/flux.2-klein-4b');
 		// NIM output is JPEG, persisted bytes, key extension, and Content-Type
 		// must all say jpeg, not png (regression cover for the probe finding).
 		expect(result.imageUrl).toMatch(/^https:\/\/three\.ws\/cdn\/forge\/refs\/.+\.jpg$/);
@@ -199,11 +203,12 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 		expect(Buffer.compare(r2State.puts[0].body, NIM_JPEG_BYTES)).toBe(0);
 		expect(vertexState.generate).not.toHaveBeenCalled();
 		expect(calls).toHaveLength(1);
-		expect(calls[0].url).toContain('flux.1-dev');
+		expect(calls[0].url).toContain('flux.2-klein-4b');
 		expect(calls[0].body.prompt).toMatch(/^a red teapot/);
-		expect(calls[0].body).toMatchObject({ steps: 20, cfg_scale: 3.5 });
-		// schnell is guidance-distilled: the endpoint 422s on cfg_scale > 0
-		// (verified live), so the request must not send it at all.
+		// Verified live 2026-11-26: klein-4b is 4-step, cfg_scale <= 1, and 422s on a
+		// `mode` field (extra_forbidden). flux.1-dev and flux.1-schnell hang there.
+		expect(calls[0].body).toMatchObject({ steps: 4, cfg_scale: 1 });
+		expect(calls[0].body).not.toHaveProperty('mode');
 	});
 
 	it('maps aspect ratio to FLUX pixel dimensions', async () => {
@@ -283,7 +288,7 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 			const p = textToImage('a red teapot');
 			await vi.advanceTimersByTimeAsync(2_000); // let the retry backoff elapse
 			const result = await p;
-			expect(result.model).toBe('black-forest-labs/flux.1-dev');
+			expect(result.model).toBe('black-forest-labs/flux.2-klein-4b');
 			expect(calls.filter((c) => c.url.includes('ai.api.nvidia.com'))).toHaveLength(2);
 		} finally {
 			vi.useRealTimers();
@@ -313,6 +318,41 @@ describe('textToImage: NIM FLUX free lane (legacy NIM-first order)', () => {
 		expect(result.imageUrl).toBe('https://replicate.delivery/out.png');
 		// NIM attempted exactly once, a timeout already burned the full window.
 		expect(calls.filter((c) => c.url.includes('ai.api.nvidia.com'))).toHaveLength(1);
+	});
+
+	// 2026-11-26: flux.1-dev and flux.1-schnell accepted the request on NVIDIA's
+	// gateway and then never answered (70s and 90s probes both hung). The rung
+	// must give up on its own 30s cap (klein-4b needs 6-14s) so the ladder behind
+	// it keeps the rest of the request's time.
+	it('gives up on a hung NIM request after its own 30s cap and hands off to the next rung', async () => {
+		process.env.NVIDIA_API_KEY = 'nvapi-test';
+		process.env.REPLICATE_API_TOKEN = 'r8_test_token';
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+		try {
+			let nimAborted = false;
+			const calls = stubFetch([['api.replicate.com', () => replicateSuccessResponse()]]);
+			const routed = globalThis.fetch;
+			globalThis.fetch = vi.fn((url, init = {}) => {
+				if (!String(url).includes('ai.api.nvidia.com')) return routed(url, init);
+				calls.push({ url: String(url), body: null });
+				return new Promise((_, reject) => {
+					init.signal.addEventListener('abort', () => {
+						nimAborted = true;
+						reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+					});
+				});
+			});
+			vi.spyOn(console, 'warn').mockImplementation(() => {});
+			const textToImage = await freshTextToImage();
+			const pending = textToImage('a red teapot', { budgetMs: 120_000 });
+			await vi.advanceTimersByTimeAsync(30_500);
+			expect(nimAborted).toBe(true);
+			const result = await pending;
+			expect(result.imageUrl).toBe('https://replicate.delivery/out.png');
+			expect(calls.filter((c) => c.url.includes('ai.api.nvidia.com'))).toHaveLength(1);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	// There is no "only configured lane" any more: keyless Pollinations always
@@ -495,15 +535,20 @@ describe('textToImage: Vertex → Replicate fallback', () => {
 		expect(calls.some((c) => c.url.includes('flux-schnell'))).toBe(true);
 	});
 
-	it('rethrows the Vertex error when no Replicate token exists to fall back to', async () => {
+	it('hands a Vertex failure to the keyless rung when no Replicate token exists (2026-11-26: it was thrown as the terminal error)', async () => {
 		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
 		vertexState.configured = true;
 		vertexState.generate = async () => {
-			throw Object.assign(new Error('vertex broke'), { code: 'unconfigured' });
+			throw Object.assign(new Error('vertex broke'), { providerStatus: 403 });
 		};
+		const calls = stubFetch([
+			['image.pollinations.ai', () => new Response(new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0]), { status: 200, headers: { 'content-type': 'image/jpeg' } })],
+		]);
 
 		const textToImage = await freshTextToImage();
-		await expect(textToImage('a red teapot')).rejects.toThrow('vertex broke');
+		const result = await textToImage('a red teapot');
+		expect(result.model).toBe('pollinations/flux');
+		expect(calls.map((c) => new URL(c.url).host)).toEqual(['image.pollinations.ai']);
 	});
 
 	it('classifies a Replicate 429 as rate_limited without leaking the account credit balance', async () => {

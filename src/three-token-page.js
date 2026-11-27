@@ -15,6 +15,7 @@ import { paintVerifiedBadge } from './pump/verified-badge.js';
 import { chartEmbedUrls } from './shared/chart-embeds.js';
 import { watchEmbed, embedFallbackNode } from './shared/embed-guard.js';
 import { mountFeeFlow, FEE_FLOW_CSS } from './three-token-fee-flow.js';
+import { riskNoteHTML } from './shared/risk-note.js';
 import { mountDueDiligence, DD_PANEL_CSS } from './token-dd-panel.js';
 import {
 	THREE_DEXTOOLS_PAIR,
@@ -247,20 +248,16 @@ function renderHeaderStats(token) {
 	}).join('');
 }
 
-// ── why hold $THREE — the four real utility pillars ──────────────────────────
-// Each line maps to a live mechanism in the codebase (buyback engine, reflections
-// split leg, hold-to-access tiers, deploy/spend sinks) — concrete, not marketing.
-// The buyback % is wired to the live commitment so the headline is always current.
-function renderWhyHold(commitPct) {
-	const pct = Number.isFinite(Number(commitPct)) ? Number(commitPct) : 50;
-	const pctLabel = `${pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)}%`;
+// ── what $THREE does ──────────────────────────
+// Each line maps to a live mechanism in the codebase (treasury purchases,
+// hold-to-access tiers, deploy/spend sinks).
+function renderWhyHold() {
 	const pillars = [
-		{ ico: '🔄', t: 'Revenue buybacks', d: `<b>${pctLabel}</b> of all platform revenue buys $THREE on the open market and routes it to the treasury — on-chain, verifiable.`, link: { href: '#tk-bb-proof', label: 'See the proof ↓' } },
-		{ ico: '💸', t: 'Holder rewards', d: 'Every paid action reflects $THREE back to holders pro-rata — deflation-free yield, no burn.' },
-		{ ico: '🎟️', t: 'Hold to access', d: 'Hold $THREE to unlock fee discounts, higher quotas, and pro perks across the platform.', link: { href: '/dashboard/three-token', label: 'View tiers →' } },
-		{ ico: '⚙️', t: 'Powers the economy', d: '$THREE is spent to deploy agents, forge avatars, and trade the marketplace — real usage, real demand.' },
+		{ ico: '🔄', t: 'Treasury purchases', d: 'The treasury may use part of platform revenue to acquire $THREE for platform use. This is discretionary, can change or stop at any time, and is not a promise of price support.', link: { href: '#tk-bb-proof', label: 'See the record ↓' } },
+		{ ico: '🎟️', t: 'Hold to access', d: 'Holding $THREE can unlock fee discounts and higher quotas on the platform. Tiers can change at any time.', link: { href: '/dashboard/three-token', label: 'View tiers →' } },
+		{ ico: '⚙️', t: 'Powers the economy', d: '$THREE is spent to deploy agents, forge avatars, and trade the marketplace, a way to pay for features.' },
 	];
-	return `<h2>Why hold $THREE</h2><div class="tk-why-grid">${pillars
+	return `<h2>What $THREE does</h2><div class="tk-why-grid">${pillars
 		.map(
 			(p) => `<div class="tk-why-card">
 				<div class="tk-why-ico" aria-hidden="true">${p.ico}</div>
@@ -276,7 +273,7 @@ function renderWhyHold(commitPct) {
 const fmtRunDate = (at) => (at ? new Date(at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '');
 
 // The verifiable receipt list: each confirmed buy, clickable to its Solscan tx.
-// Proof, not a claim — this is what answers "why hold $THREE".
+// A record of treasury purchases.
 function renderBuybackRuns(runs) {
 	if (!Array.isArray(runs) || !runs.length) return '';
 	const rows = runs
@@ -291,14 +288,14 @@ function renderBuybackRuns(runs) {
 		})
 		.join('');
 	if (!rows) return '';
-	return `<div class="tk-bb-runs-h">Verifiable buybacks — every buy, on-chain</div><div class="tk-bb-runs">${rows}</div>`;
+	return `<div class="tk-bb-runs-h">Treasury purchases, recorded on-chain</div><div class="tk-bb-runs">${rows}</div>`;
 }
 
 function renderBuyback(bb) {
 	if (!bb) {
 		return errorStateHTML({
 			title: 'Buyback data is unavailable',
-			body: 'The protocol stats feed didn’t respond. Every buyback is on-chain, so you can verify the treasury directly while this reconnects.',
+			body: 'The protocol stats feed didn’t respond. Every purchase is on-chain, so you can verify the treasury directly while this reconnects.',
 			actions: [
 				{ label: 'Retry', id: 'bb-retry', primary: true },
 				{ label: 'Verify on Solscan', id: 'bb-solscan' },
@@ -306,19 +303,13 @@ function renderBuyback(bb) {
 		});
 	}
 	const revenue = fmtUsd(bb.revenue_usd);
-	// The published promise — the headline a holder repeats. Defaults guard a
-	// partial payload so the commitment always renders.
-	const commitPct = Number.isFinite(Number(bb.commit_pct)) ? Number(bb.commit_pct) : 50;
-	const commitLabel = `${commitPct % 1 === 0 ? commitPct.toFixed(0) : commitPct.toFixed(1)}%`;
-	const commit = `<div class="tk-bb-commit"><b>${commitLabel}</b><em>of all platform revenue → $THREE buybacks</em></div>`;
-	const lead = `The $THREE protocol commits a fixed share of platform revenue to buying $THREE on the open market and routing it to the treasury — on-chain, on a schedule, every buy verifiable below. No burn: supply is never destroyed.`;
+	const lead = `The treasury may use part of platform revenue to acquire $THREE for platform use. This is discretionary, can change or stop at any time, and is not a promise of price support. Any purchase is recorded on-chain below.`;
 
 	if (!bb.runs) {
 		return `
-			${commit}
 			<p class="tk-bb-lead">${lead}</p>
 			<div class="tk-bb-empty">
-				<strong>${revenue}</strong> in platform revenue earned so far · <strong>${fmtUsd(bb.committed_usd)}</strong> committed to buybacks at ${commitLabel}.
+				<strong>${revenue}</strong> in platform revenue earned so far · <strong>${fmtUsd(bb.committed_usd)}</strong> set aside for treasury purchases.
 				<span>Buys begin as the treasury deploys revenue on-chain — each one appears here with its Solscan receipt.</span>
 			</div>`;
 	}
@@ -327,19 +318,18 @@ function renderBuyback(bb) {
 	// promise), distinct from the raw deployed/revenue ratio.
 	const pct = Math.max(0, Math.min(100, Number(bb.commitment_progress_pct) || 0));
 	return `
-		${commit}
 		<p class="tk-bb-lead">${lead}</p>
 		<div class="tk-bb-head">
 			<div><div class="tk-bb-k">Revenue earned</div><div class="tk-bb-v">${revenue}</div></div>
-			<div><div class="tk-bb-k">Committed (${commitLabel})</div><div class="tk-bb-v">${fmtUsd(bb.committed_usd)}</div></div>
+			<div><div class="tk-bb-k">Set aside</div><div class="tk-bb-v">${fmtUsd(bb.committed_usd)}</div></div>
 			<div><div class="tk-bb-k">Deployed on-chain</div><div class="tk-bb-v">${fmtUsd(bb.deployed_usd)}</div></div>
 			<div><div class="tk-bb-k">$THREE bought back</div><div class="tk-bb-v">${fmtNum(bb.three_bought)}</div></div>
 		</div>
-		<div class="tk-bb-bar" role="progressbar" aria-valuenow="${pct.toFixed(0)}" aria-valuemin="0" aria-valuemax="100" aria-label="Share of the buyback commitment deployed on-chain">
+		<div class="tk-bb-bar" role="progressbar" aria-valuenow="${pct.toFixed(0)}" aria-valuemin="0" aria-valuemax="100" aria-label="Share of the amount set aside that has been used">
 			<span style="width:${pct}%"></span>
 		</div>
 		<div class="tk-bb-foot">
-			<span>${pct.toFixed(1)}% of the ${commitLabel} commitment deployed · ${fmtNum(bb.runs)} buyback${bb.runs === 1 ? '' : 's'}</span>
+			<span>${pct.toFixed(1)}% of the amount set aside has been used · ${fmtNum(bb.runs)} purchase${bb.runs === 1 ? '' : 's'}</span>
 		</div>
 		${renderBuybackRuns(bb.recent_runs)}`;
 }
@@ -571,10 +561,11 @@ function boot() {
 			</div>
 			<button class="tk-ca" data-ca title="Copy contract address: ${esc(THREE_MINT)}">${esc(shortAddr(THREE_MINT))} · copy</button>
 		</div>
+		${riskNoteHTML('token')}
 		<div class="tk-stats" data-stats>
 			${Array.from({ length: 4 }, () => `<div class="tk-stat"><div class="tk-skel" style="height:48px"></div></div>`).join('')}
 		</div>
-		<div class="tk-why" data-why>${renderWhyHold(50)}</div>
+		<div class="tk-why" data-why>${renderWhyHold()}</div>
 		<div class="tk-card tk-chart">
 			<h2 class="tk-chart-h">Live chart <a href="${DEXTOOLS_PAIR_URL}" target="_blank" rel="noopener">Chart by DEXTools ↗</a></h2>
 			<div class="tk-chart-host" data-chart></div>
@@ -584,6 +575,7 @@ function boot() {
 				<h2>Bonding curve</h2>
 				<div data-curve></div>
 				<div class="tk-buy">
+					<p class="tk-sub" style="flex-basis:100%;margin:0">Not financial advice. $THREE can lose all of its value. <a href="/legal/risk">Risk Disclosure</a></p>
 					<button class="tk-btn primary" data-buy>Buy $THREE</button>
 					<a class="tk-btn" href="${PUMP_URL}" target="_blank" rel="noopener">View on pump.fun ↗</a>
 				</div>
@@ -601,7 +593,7 @@ function boot() {
 			<div data-dd></div>
 		</section>
 		<div class="tk-card tk-bb" id="tk-bb-proof">
-			<h2>Programmatic buybacks</h2>
+			<h2>Treasury purchases</h2>
 			<div data-buyback><div class="tk-skel" style="height:96px"></div></div>
 		</div>
 		<div class="tk-card tk-bb" id="tk-social-boost">
@@ -694,7 +686,7 @@ function boot() {
 			.then((d) => {
 				bbEl.innerHTML = renderBuyback(d.buyback);
 				feeFlow.setBuyback(d.buyback);
-				if (d.buyback?.commit_pct != null) whyEl.innerHTML = renderWhyHold(d.buyback.commit_pct);
+				whyEl.innerHTML = renderWhyHold();
 			})
 			.catch(() => { bbEl.innerHTML = renderBuyback(null); });
 	};

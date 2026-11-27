@@ -11,6 +11,9 @@
 // "updated Xs ago" timestamp — no fake spinner, no fake progress.
 
 import { formatUsd, formatPrice, formatPercent, escapeHtml as esc } from './shared/coin-format.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const $ = (id) => document.getElementById(id);
 const REFRESH_MS = 120_000;

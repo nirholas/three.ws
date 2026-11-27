@@ -58,9 +58,21 @@ vi.mock('../api/_lib/rate-limit.js', async (importActual) => {
 });
 
 const daily = vi.hoisted(() => ({ ok: true }));
+// The rig handler now downloads the model and checks it before any worker
+// call (api/_lib/rig-preflight.js); the test URL serves a standing figure.
+vi.mock('../api/_lib/fetch-model.js', async (importActual) => {
+	const actual = await importActual();
+	const { figureFetchResult } = await import('./helpers/rig-box-glb.js');
+	return {
+		...actual,
+		fetchModel: async (url, opts) => (url === 'https://cdn.example/model.glb' ? figureFetchResult(url) : actual.fetchModel(url, opts)),
+	};
+});
+
 vi.mock('../api/_lib/forge-scale.js', async (importActual) => {
 	const actual = await importActual();
-	return { ...actual, dailyPaidAllowed: vi.fn(async () => ({ ok: daily.ok })) };
+	// Same shape the real dailyPaidAllowed answers, reset time included (the 429 states it).
+	return { ...actual, dailyPaidAllowed: vi.fn(async () => ({ ok: daily.ok, used: daily.ok ? 1 : 31, limit: 30, resetAt: Date.now() + 3_600_000 })) };
 });
 
 const { default: handler } = await import('../api/forge.js');

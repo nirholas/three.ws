@@ -17,6 +17,9 @@
 //     race-safe: exactly one caller can claim a given payment.
 //   • releaseForgePayment() — undo the claim when dispatch fails, so the settled
 //     payment is reusable on retry. Never called after a successful dispatch.
+//   • A dispatched job that fails later is made whole lazily: assertForgePayment
+//     releases a claim whose bound generation terminally failed, so the same
+//     proof buys the retry (forge-paid-generation.js).
 //
 // Security model: forge has no login, so authorization rests on the (payment_id,
 // ref_id) pair. payment_id is a server-minted UUID returned only to the settling
@@ -26,6 +29,7 @@
 import { sql } from './db.js';
 import { priceForAction } from './pricing/catalog.js';
 import { isUuid } from './validate.js';
+import { paidJobOutcome, RELEASE_GRACE_MS } from './forge-paid-generation.js';
 
 // How long after settlement a payment may be redeemed. Generous — a paid
 // generation is normally redeemed seconds after settling, but a failed dispatch
@@ -58,11 +62,51 @@ async function lookupPayment(paymentId) {
 	return row || null;
 }
 
-async function isRedeemed(paymentId) {
+async function redemptionOf(paymentId) {
 	const [row] = await sql`
-		select payment_id from forge_high_redemptions where payment_id = ${paymentId} limit 1
+		select payment_id, job_id from forge_high_redemptions where payment_id = ${paymentId} limit 1
 	`;
-	return Boolean(row);
+	return row || null;
+}
+
+const alreadyUsed = () =>
+	payErr('This payment has already been used for a generation.', 409, 'payment_already_used');
+
+// A claimed payment is only "used" if the generation it paid for delivered or
+// may still deliver. The submit binds the claim to its creation row
+// (forge-paid-generation.js), so a claim whose last attempt failed is released
+// here and the proof buys the retry it was owed. While the failure is fresh (a
+// failover may still link a successor) or the job is still running, the answer
+// is payment_settling, which tells the client to keep the proof and retry.
+async function assertClaimSpent(paymentId, claim) {
+	if (!claim.job_id) throw alreadyUsed();
+	const outcome = await paidJobOutcome(claim.job_id);
+	if (outcome.state === 'pending') {
+		throw payErr(
+			'This payment is attached to a High generation that is still running. If it fails, retrying is free.',
+			409,
+			'payment_settling',
+			{ retryAfter: 30 },
+		);
+	}
+	if (outcome.state !== 'failed') throw alreadyUsed();
+	const waitMs = RELEASE_GRACE_MS - (Date.now() - outcome.failedAt.getTime());
+	if (waitMs > 0) {
+		throw payErr(
+			'The generation this payment paid for failed. Your payment is safe: retry in a moment and it is free.',
+			409,
+			'payment_settling',
+			{ retryAfter: Math.max(1, Math.ceil(waitMs / 1000)) },
+		);
+	}
+	// Conditional on the job it was bound to, so a concurrent retry that already
+	// re-claimed (and rebound) the payment is never undone.
+	const released = await sql`
+		delete from forge_high_redemptions
+		where payment_id = ${paymentId} and job_id = ${claim.job_id}
+		returning payment_id
+	`;
+	if (!released.length) throw alreadyUsed();
 }
 
 /**
@@ -76,7 +120,8 @@ async function isRedeemed(paymentId) {
  *                                     also rides along, so the expected price
  *                                     matches what the client was quoted
  * @returns {Promise<{ ok: true, payment: { id, usd, settledAt } }>}
- * @throws  402 payment_invalid | 409 payment_already_used | 400 bad_request
+ * @throws  402 payment_invalid | 409 payment_already_used | 409 payment_settling
+ *          (with retryAfter seconds) | 400 bad_request
  */
 export async function assertForgePayment({ paymentId, refId, discountBps = 0 }) {
 	if (!paymentId || !refId) {
@@ -121,13 +166,8 @@ export async function assertForgePayment({ paymentId, refId, discountBps = 0 }) 
 		throw payErr('This payment has expired — pay again to generate.', 402, 'payment_expired');
 	}
 
-	if (await isRedeemed(paymentId)) {
-		throw payErr(
-			'This payment has already been used for a generation.',
-			409,
-			'payment_already_used',
-		);
-	}
+	const claim = await redemptionOf(paymentId);
+	if (claim) await assertClaimSpent(paymentId, claim);
 
 	return { ok: true, payment: { id: payment.id, usd: paidUsd, settledAt } };
 }

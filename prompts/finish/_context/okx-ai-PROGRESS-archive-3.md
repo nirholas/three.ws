@@ -530,7 +530,7 @@ balances are 0**. That gates a real settlement, which gates the resubmission.
 
 ### Next
 
-`prompts/finish/911-okx-ai-08-forge-relisting.md` is the executable work order for the resubmission.
+`prompts/awaiting-owner/911-okx-ai-08-forge-relisting.md` is the executable work order for the resubmission.
 It needs two owner interactions and nothing else: the email OTP for `claude@three.ws`, and
 the diff-card confirmation before the on-chain update.
 

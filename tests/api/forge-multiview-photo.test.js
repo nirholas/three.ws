@@ -13,6 +13,7 @@
  */
 
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import sharp from 'sharp';
 
 // POST /api/forge needs an account (api/_lib/creator-account.js). These tests
 // exercise what happens past that gate, so the caller is a signed-in account.
@@ -21,7 +22,35 @@ vi.mock('../../api/_lib/auth.js', async (orig) => ({
 	getRequestUser: async () => ({ id: 'forge-test-user' }),
 }));
 
-beforeAll(() => {
+// The painted views are checked before the worker is asked to fuse them, so the
+// byte fetch of a view URL is served real pictures: one subject (a red shoe)
+// photographed from the front, side and back on a plain background.
+const served = new Map();
+vi.mock('../../api/_lib/ssrf-guard.js', async (orig) => ({
+	...(await orig()),
+	fetchSafePublicUrl: vi.fn(async (url) => {
+		const bytes = served.get(String(url));
+		if (!bytes) return new Response('not found', { status: 404 });
+		return new Response(bytes, { status: 200, headers: { 'content-type': 'image/png' } });
+	}),
+}));
+
+async function shoePicture(background) {
+	const svg = Buffer.from(
+		'<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">' +
+			'<ellipse cx="256" cy="256" rx="128" ry="150" fill="#c0392b"/>' +
+			'<rect x="205" y="180" width="102" height="150" fill="#f1c40f"/></svg>',
+	);
+	return sharp({ create: { width: 512, height: 512, channels: 3, background } })
+		.composite([{ input: svg }])
+		.png()
+		.toBuffer();
+}
+
+beforeAll(async () => {
+	served.set('https://cdn.example/photo.png', await shoePicture('#ffffff'));
+	served.set('https://cdn.example/photo-side.png', await shoePicture('#e8e8e8'));
+	served.set('https://cdn.example/photo-back.png', await shoePicture('#f4f4f4'));
 	Object.assign(process.env, {
 		APP_ORIGIN: 'https://three.ws',
 		// Self-hosted TRELLIS worker wired → photos route to the fusing lane.

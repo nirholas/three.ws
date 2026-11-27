@@ -1,3 +1,7 @@
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
+
 /**
  * Coin Autopilot: control surface + live narration for the autonomous coin agent.
  *

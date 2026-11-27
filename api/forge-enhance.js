@@ -16,17 +16,42 @@
 // unknown params are unaffected.
 //
 // Runs on the same free-first LLM chain as every other text feature on the site
-// (Groq / OpenRouter / NVIDIA lead; host's paid keys are last resort). When no
-// provider is configured at all it returns 503 and the page quietly keeps the
-// original prompt — enhancement is a boost, never a gate.
+// (Groq / OpenRouter / NVIDIA lead; host's paid keys are last resort). The whole
+// rewrite shares one short budget (FORGE_ENHANCE_BUDGET_MS, 10 s by default), a
+// provider that refused for credits or billing is not asked again until its
+// cooldown ends, and when nothing can answer it returns 503 llm_unavailable with
+// the user's prompt unchanged (`prompt`, `enhanced: false`, `retry_after` when
+// known). A rewrite that is empty, far too long, a refusal, a provider notice or
+// about a different subject comes back as 200 with the user's own prompt,
+// `enhanced: false` and the `reason`. Enhancement is a boost, never a gate.
 
 import { cors, method, wrap, error, readJson, json, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { llmComplete, LlmUnavailableError } from './_lib/llm.js';
+import { llmComplete, LlmUnavailableError, noteLaneRefusal, laneCoolingSeconds, llmCooldownSnapshot } from './_lib/llm.js';
 import { getGcpAccessToken } from './_lib/gcp-auth.js';
+import { isRefusal, isOffTopic } from './_lib/prompt-rewrite-guards.js';
 
 const MAX_IN = 1000;
 const MAX_OUT = 240;
+
+// One bound for the whole rewrite, the direct Vertex lane and the chain
+// together. The button is a nicety in front of Generate: it used to wait 8 s on
+// Vertex and then up to the chain's default 30 s before saying anything.
+export const ENHANCE_BUDGET_MS = 10_000;
+const VERTEX_SHARE_MS = 4_000;
+const MIN_CHAIN_MS = 1_000;
+
+export function enhanceBudgetMs(source = process.env) {
+	const n = Number(source.FORGE_ENHANCE_BUDGET_MS);
+	return Number.isFinite(n) && n >= 1_000 && n <= 30_000 ? n : ENHANCE_BUDGET_MS;
+}
+
+export const ENHANCE_UNAVAILABLE_MESSAGE = 'The prompt helper is unavailable right now, so your prompt is unchanged.';
+
+// The direct Vertex lane shares its cooldown memory with the chain's own
+// vertex-gemini rung (same name and model), see noteLaneRefusal in llm.js.
+const VERTEX_LANE = 'vertex-gemini';
+const vertexModel = () => process.env.VERTEX_GEMINI_MODEL || 'google/gemini-2.5-flash';
 
 // Negative prompts that apply to every 3D generation regardless of subject.
 // These are the failure modes the TRELLIS / Hunyuan3D family most reliably
@@ -304,7 +329,7 @@ function vertexDirectorEnabled() {
 async function vertexDirect({ system, user, maxTokens = 200, timeoutMs = 8_000 }) {
 	const project = process.env.GOOGLE_CLOUD_PROJECT;
 	const location = process.env.GOOGLE_CLOUD_LOCATION_GEMINI || 'global';
-	const model = process.env.VERTEX_GEMINI_MODEL || 'google/gemini-2.5-flash';
+	const model = vertexModel();
 	const host =
 		location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
 	const token = await getGcpAccessToken();
@@ -322,11 +347,35 @@ async function vertexDirect({ system, user, maxTokens = 200, timeoutMs = 8_000 }
 		}),
 		signal: AbortSignal.timeout(timeoutMs),
 	});
-	if (!res.ok) throw new Error(`vertex-gemini ${res.status}: ${(await res.text().catch(() => '')).slice(0, 160)}`);
+	if (!res.ok) {
+		noteLaneRefusal(VERTEX_LANE, model, res.status, res.headers.get('retry-after'));
+		throw new Error(`vertex-gemini ${res.status}: ${(await res.text().catch(() => '')).slice(0, 160)}`);
+	}
 	const data = await res.json();
 	const text = data?.choices?.[0]?.message?.content || '';
 	if (!text.trim()) throw new Error('vertex-gemini returned empty');
 	return { text: text.trim(), provider: 'vertex-gemini', model };
+}
+
+/**
+ * Why a cleaned rewrite must not replace the user's prompt, or null when it is
+ * usable. Each case is worse than the user's own words: nothing, a ramble the
+ * pipeline would truncate mid-thought, the model declining, a provider notice
+ * carrying a link, or a description of a different subject.
+ */
+export function enhanceRewriteProblem(cleaned, raw) {
+	if (cleaned.length < 3) return 'empty';
+	if (cleaned.length > MAX_IN) return 'too_long';
+	if (isRefusal(cleaned)) return 'refusal';
+	if (/https?:\/\//i.test(cleaned)) return 'link';
+	if (isOffTopic(cleaned, raw)) return 'off_topic';
+	return null;
+}
+
+// Seconds until the soonest cooled provider may be asked again, or null.
+function soonestRetrySeconds() {
+	const secs = llmCooldownSnapshot().map((c) => c.seconds);
+	return secs.length ? Math.min(...secs) : null;
 }
 
 export default wrap(async (req, res) => {
@@ -359,41 +408,56 @@ export default wrap(async (req, res) => {
 	const system = buildSystem(style, subject);
 	const userPrompt = raw.slice(0, MAX_IN);
 
+	const deadline = Date.now() + enhanceBudgetMs();
+	const remaining = () => deadline - Date.now();
+	// The chain is down: say so once, hand the prompt back untouched, and say
+	// when asking again could help.
+	const unavailable = (retryAfter) =>
+		error(res, 503, 'llm_unavailable', ENHANCE_UNAVAILABLE_MESSAGE, {
+			prompt: raw,
+			original: raw,
+			enhanced: false,
+			...(retryAfter ? { retry_after: retryAfter } : {}),
+		});
+
 	let result;
 	// Preferred lane: Vertex Gemini on GCP credits for a higher-quality rewrite,
-	// but only when the caller did not opt into the Nemotron lane, and always with
-	// automatic fallthrough to the free-first chain below. A Vertex failure here is
-	// swallowed so it can never regress the endpoint.
-	if (!preferNvidia && vertexDirectorEnabled()) {
+	// but only when the caller did not opt into the Nemotron lane and the lane is
+	// not cooling after a refusal, always with automatic fallthrough to the
+	// free-first chain below. A Vertex failure here is swallowed so it can never
+	// regress the endpoint.
+	if (!preferNvidia && vertexDirectorEnabled() && !laneCoolingSeconds(VERTEX_LANE, vertexModel())) {
 		try {
-			result = await vertexDirect({ system, user: userPrompt, maxTokens: 200 });
+			result = await vertexDirect({
+				system,
+				user: userPrompt,
+				maxTokens: 200,
+				timeoutMs: Math.min(VERTEX_SHARE_MS, remaining()),
+			});
 		} catch (err) {
 			console.warn('[forge-enhance] vertex director lane failed, using free chain:', err?.message);
 		}
 	}
 	if (!result) {
+		if (remaining() < MIN_CHAIN_MS) return unavailable(null);
 		try {
 			result = await llmComplete({
 				system,
 				user: userPrompt,
 				maxTokens: 200,
 				preferNvidia,
+				timeoutMs: remaining(),
+				// Every provider cooling: answer at once instead of asking them all.
+				strictCooldowns: true,
 				track: { tool: 'forge-enhance', clientId: clientIp(req) },
 			});
 		} catch (err) {
-			if (err instanceof LlmUnavailableError) {
-				return error(res, 503, 'llm_unavailable', 'Prompt enhancement is not available right now.');
-			}
+			if (err instanceof LlmUnavailableError) return unavailable(null);
+			if (err?.code === 'chain_cooling') return unavailable(err.retryAfterS);
 			console.error('[forge-enhance] LLM failed', err.status || '', err.message);
-			return error(res, 502, 'llm_failed', 'Could not enhance the prompt. Try again.');
+			return unavailable(soonestRetrySeconds());
 		}
 	}
-
-	let prompt = cleanPrompt(result.text);
-	if (prompt.length > MAX_OUT) prompt = prompt.slice(0, MAX_OUT).replace(/\s\S*$/, '').trim();
-
-	// A degenerate or empty rewrite is worse than the user's own words — fall back.
-	if (prompt.length < 3) prompt = raw;
 
 	const isRealistic = !style || style === 'photorealistic';
 	// Universal + photoreal (when realistic) + subject-specific failure modes,
@@ -401,9 +465,27 @@ export default wrap(async (req, res) => {
 	// reference-image module never disagree on what to steer away from.
 	const negativePrompt = subjectNegativePrompt(raw, { realistic: isRealistic });
 
+	let prompt = cleanPrompt(result.text);
+	const problem = enhanceRewriteProblem(prompt, raw);
+	if (problem) {
+		return json(res, 200, {
+			prompt: raw,
+			original: raw,
+			enhanced: false,
+			reason: problem,
+			negative_prompt: negativePrompt,
+			subject,
+			style_applied: style,
+			provider: result.provider,
+			model: result.model,
+		});
+	}
+	if (prompt.length > MAX_OUT) prompt = prompt.slice(0, MAX_OUT).replace(/\s\S*$/, '').trim();
+
 	return json(res, 200, {
 		prompt,
 		original: raw,
+		enhanced: true,
 		negative_prompt: negativePrompt,
 		subject,
 		style_applied: style,

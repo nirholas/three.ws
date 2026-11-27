@@ -12,6 +12,8 @@
 // composer without the page wiring it explicitly — the same pattern as
 // forge-stylize.js and forge-optimize.js.
 
+import { requestEnhance } from '../forge-enhance-request.js';
+
 const prompt = document.getElementById('prompt');
 const tools = document.getElementById('prompt-tools');
 const anchor = document.getElementById('surprise'); // insert right after "Surprise me"
@@ -117,45 +119,17 @@ if (prompt && tools) {
 		setBusy(true);
 		hideNote();
 		try {
-			const res = await fetch('/api/forge-enhance', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ prompt: raw }),
-			});
-
-			if (res.status === 429) {
-				const data = await res.json().catch(() => ({}));
-				const secs = Number(data.retry_after);
-				showNote(
-					Number.isFinite(secs) && secs > 0
-						? `Easy — try enhancing again in ${secs}s.`
-						: 'Slow down a moment, then try again.',
-					'error',
-				);
+			// requestEnhance always settles (it ends a stalled request at its own
+			// timeout) and hands back the user's words unless a usable rewrite landed.
+			const out = await requestEnhance(raw);
+			if (out.kind !== 'rewritten') {
+				showNote(out.message, out.kind === 'unchanged' ? 'tip' : 'error');
 				return;
 			}
-			if (res.status === 503) {
-				showNote('The enhancer is offline right now — your prompt is unchanged.', 'error');
-				return;
-			}
-			if (!res.ok) {
-				showNote("Couldn't enhance that one. Try again, or tweak the wording.", 'error');
-				return;
-			}
-
-			const data = await res.json();
-			const next = typeof data.prompt === 'string' ? data.prompt.trim() : '';
-			if (!next || next.toLowerCase() === raw.toLowerCase()) {
-				showNote('That prompt is already in good shape.', 'tip');
-				return;
-			}
-
 			prevPrompt = raw;
-			setPrompt(next, { flash: true });
+			setPrompt(out.prompt, { flash: true });
 			undo.classList.remove('is-hidden');
-			showNote('Rewritten for sharper geometry. Edit freely, or Undo.', 'strong');
-		} catch {
-			showNote('Network hiccup — your prompt is unchanged. Try again.', 'error');
+			showNote(out.message, 'strong');
 		} finally {
 			setBusy(false);
 		}

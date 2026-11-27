@@ -144,8 +144,13 @@ export async function issueQuote({
 /**
  * Verify a quote token's signature and expiry, returning the payload.
  * Throws (422 invalid_quote / 410 quote_expired) on any tamper or timeout.
+ *
+ * `allowExpired` is for settlement only: a transfer can confirm inside the quote
+ * window while its settle call arrives after it, and that payment must still be
+ * recordable. The signature and fields are checked exactly the same; the caller
+ * then proves from the transaction's block time that it was paid before `exp`.
  */
-export function verifyQuote(token) {
+export function verifyQuote(token, { allowExpired = false } = {}) {
 	if (typeof token !== 'string' || !token.includes('.'))
 		throw quoteError('malformed quote token');
 	const [body, sig] = token.split('.');
@@ -165,7 +170,8 @@ export function verifyQuote(token) {
 	}
 
 	const now = Math.floor(Date.now() / 1000);
-	if (!payload.exp || payload.exp < now) throw quoteError('quote expired', 410, 'quote_expired');
+	if (!payload.exp) throw quoteError('quote expired', 410, 'quote_expired');
+	if (payload.exp < now && !allowExpired) throw quoteError('quote expired', 410, 'quote_expired');
 	if (!payload.nonce || !Array.isArray(payload.legs) || payload.legs.length === 0) {
 		throw quoteError('quote missing required fields');
 	}

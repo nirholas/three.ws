@@ -11,8 +11,11 @@
 // A page with its own designed prompt for some endpoints (the Forge pages, via
 // src/shared/upload-sign-in.js) lists those API paths, space-separated, in
 // `data-sign-in-prompt` on <html>, and the banner stays out of their way for
-// those calls only. The response itself reaches the caller
-// untouched; only a clone is read, and only on a 401.
+// those calls only. A page that knew the visitor was signed in when it loaded
+// sets `data-session-signed-in="1"` on <html>, and the banner then says the
+// session ended rather than repeating that the action needs an account. The
+// response itself reaches the caller untouched; only a clone is read, and only
+// on a 401.
 (function watchSignInRequired() {
 	if (typeof window === 'undefined' || typeof window.fetch !== 'function' || window.__twsSignInWatch) return;
 	window.__twsSignInWatch = true;
@@ -74,7 +77,10 @@
 			banner.append(text, link, close);
 			document.body.appendChild(banner);
 		}
-		banner.querySelector('p').textContent = message || 'Sign in to do that. A three.ws account is free.';
+		const sessionEnded = document.documentElement.dataset.sessionSignedIn === '1';
+		banner.querySelector('p').textContent = sessionEnded
+			? 'Your session ended, so that did not go through. Sign in again and you come straight back here.'
+			: message || 'Sign in to do that. A three.ws account is free.';
 		banner.querySelector('a').href = '/login?next=' + encodeURIComponent(location.pathname + location.search + location.hash);
 	}
 

@@ -24488,7 +24488,7 @@
 		"t_well_known_chat_plugin_json": ".well-known/chat-plugin.json",
 		"t_well_known_mcp_json": ".well-known/mcp.json",
 		"t_well_known_oauth_authorization_server": ".well-known/oauth-authorization-server",
-		"t_well_known_skill_md": "",
+		"t_well_known_skill_md": ".well-known/skill.md",
 		"t_well_known_x402": ".well-known/x402",
 		"t_well_known_x402_json": ".well-known/x402.json",
 		"t_what_is": "Čo je three.ws?",

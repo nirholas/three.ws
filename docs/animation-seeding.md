@@ -26,9 +26,8 @@ Generated clips are named `gen-<prompt id>-<hash>`, so they are distinguishable 
 the other bulk-library clips everywhere: in the manifest, the gallery, and any report.
 Every generated entry carries its `source` and `license`, which the gallery shows
 on each card. The legacy `mx-` Mixamo import is no longer served: Adobe's terms
-allow in-project playback but not redistributing the raw clips, so the publish
-phase of `scripts/mixamo-all.mjs` is permanently disabled and the endpoint
-filters such entries out. Mixamo-era measurements below are kept as the record of
+allow in-project playback but not redistributing the raw clips, so the Mixamo
+bulk scripts were removed and the endpoint filters such entries out. Mixamo-era measurements below are kept as the record of
 how the gate was calibrated.
 
 ## Format: the names match, the basis did not

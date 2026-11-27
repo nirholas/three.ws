@@ -38,7 +38,8 @@ Environment variables (README.md carries the full table):
   WEIGHTS_GCS_URI       optional gs:// tree; each sub-model streams to local disk,
                         loads, and is deleted, so peak disk is one checkpoint
   WEIGHTS_LOCAL_DIR     scratch for that streaming (default: /tmp/trellis2-weights)
-  MAX_RESOLUTION        ceiling on the served resolution (default: 1536)
+  MAX_RESOLUTION        ceiling on the served resolution (default: 1536); the
+                        host memory limit can lower it (request_policy.HOST_RAM_KILLED_AT_GIB)
   MAX_CONCURRENT        max parallel inferences (default: 1)
   IMAGE_FETCH_TIMEOUT_S per-attempt image fetch timeout (default: 30)
   MODEL_LOAD_ATTEMPTS   model-load attempts before the error latches (default: 4)
@@ -94,6 +95,7 @@ from request_policy import (
     clamp_to_ceiling,
     resolve_resolution,
     sampler_params,
+    served_ceiling,
     step_down,
 )
 from tracing import install_tracing
@@ -284,6 +286,13 @@ def _load_pipeline():
     _memory_baseline = read_memory()
     if _memory_baseline is not None:
         log.info("memory after load: %s", _memory_baseline.describe())
+    ceiling = _resolution_ceiling()
+    if ceiling and ceiling < MAX_RESOLUTION:
+        log.warning(
+            "serving at most resolution %d: this host's memory limit is measured too small "
+            "for more (request_policy.HOST_RAM_KILLED_AT_GIB), so larger requests step down",
+            clamp_to_ceiling(max(RESOLUTIONS), ceiling),
+        )
     for method, phase in PIPELINE_PHASES.items():
         _probe.wrap(_pipeline, method, phase)
     _probe.start()
@@ -607,6 +616,21 @@ def _recycle_if_bloated(task_id: str) -> None:
 
 
 
+def _resolution_ceiling() -> int | None:
+    """MAX_RESOLUTION, tightened to what this instance's memory limit can finish.
+
+    Read per call: it is one cgroup file read, and it keeps the decision honest
+    if the service is redeployed onto a larger memory shape.
+    """
+    sample = read_memory()
+    return served_ceiling(MAX_RESOLUTION, sample.limit_bytes if sample else None)
+
+
+def _served_resolution(resolution: int | None, tier: str | None) -> int:
+    """The voxel resolution a job runs at on this instance."""
+    return clamp_to_ceiling(resolve_resolution(resolution, tier), _resolution_ceiling())
+
+
 async def _run_job(
     task_id: str,
     images: list[str],
@@ -635,7 +659,7 @@ async def _run_job(
         await _update_task(task_id, status="failed", error=f"pipeline unavailable: {_load_error}")
         return
 
-    requested = clamp_to_ceiling(resolve_resolution(resolution, tier), MAX_RESOLUTION)
+    requested = _served_resolution(resolution, tier)
     overrides = sampler_params(sampler)
     used_seed = seed if seed is not None else 42
 
@@ -949,6 +973,7 @@ async def health(response: Response) -> dict:
     dead = _load_error is not None
     if dead:
         response.status_code = 503
+    ceiling = _resolution_ceiling()
     return {
         "ok": not dead,
         "model": "trellis2-4b",
@@ -959,8 +984,8 @@ async def health(response: Response) -> dict:
         "load_error": _load_error,
         "load_attempts": _load_attempts,
         "draining": _draining,
-        "resolutions": [r for r in RESOLUTIONS if r <= MAX_RESOLUTION],
-        "default_resolution": DEFAULT_RESOLUTION,
+        "resolutions": [r for r in RESOLUTIONS if clamp_to_ceiling(r, ceiling) == r],
+        "default_resolution": clamp_to_ceiling(DEFAULT_RESOLUTION, ceiling),
         "features": WORKER_FEATURES,
         "sampler_defaults": SAMPLER_DEFAULTS,
         "output_backend": "gcs" if _using_gcs() else "local",

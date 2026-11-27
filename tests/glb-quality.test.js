@@ -261,3 +261,96 @@ describe('shouldEscalateToVisionQA', () => {
 		expect(shouldEscalateToVisionQA({})).toBe(true);
 	});
 });
+
+// The cheap checks run before any model is asked for an opinion, and they are
+// the only checks that can fail a model on structure alone. Each GLB below is
+// deliberately broken in one specific way, built here byte by byte.
+describe('deterministic structural checks (broken GLBs built in the test)', () => {
+	// A healthy mesh whose geometry lives in an embedded BIN chunk of `declared` bytes.
+	function embeddedGltf(declared) {
+		const gltf = healthyGltf();
+		gltf.buffers = [{ byteLength: declared }];
+		gltf.bufferViews = [{ buffer: 0, byteOffset: 0, byteLength: declared }];
+		gltf.accessors[0].bufferView = 0;
+		gltf.accessors[1].bufferView = 0;
+		gltf.images = [{ mimeType: 'image/png', uri: 'data:image/png;base64,AAAA' }];
+		return gltf;
+	}
+
+	it('control: a mesh whose BIN chunk matches its declared buffer is ok', () => {
+		const q = scoreGlbQuality(buildGlb(embeddedGltf(4096), { binBytes: 4096 }));
+		expect(q.flag).toBe('ok');
+		expect(q.reasons).toEqual([]);
+	});
+
+	it('flags a GLB whose declared embedded buffer has no BIN chunk at all', () => {
+		const q = scoreGlbQuality(buildGlb(embeddedGltf(4096)));
+		expect(q.valid).toBe(true);
+		expect(q.flag).toBe('degenerate');
+		expect(q.reasons).toContain('missing_bin');
+		expect(shouldRetryForQuality(q)).toBe(true);
+	});
+
+	it('flags a GLB whose BIN chunk is shorter than the buffer views need', () => {
+		const q = scoreGlbQuality(buildGlb(embeddedGltf(4096), { binBytes: 512 }));
+		expect(q.flag).toBe('degenerate');
+		expect(q.reasons).toContain('truncated_bin');
+		expect(shouldRetryForQuality(q)).toBe(true);
+	});
+
+	it('does not call an external-uri buffer missing just because there is no BIN chunk', () => {
+		const gltf = embeddedGltf(4096);
+		gltf.buffers = [{ byteLength: 4096, uri: 'model.bin' }];
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.flag).toBe('ok');
+	});
+
+	it('flags a bounding box so large no viewer could frame it', () => {
+		const gltf = healthyGltf();
+		gltf.accessors[0].min = [-1e9, -1e9, -1e9];
+		gltf.accessors[0].max = [1e9, 1e9, 1e9];
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.flag).toBe('degenerate');
+		expect(q.reasons).toContain('absurd_extent');
+	});
+
+	it('flags a bounding box whose bounds are not finite numbers', () => {
+		// 1e999 is valid JSON text that parses to Infinity.
+		const text = JSON.stringify(healthyGltf()).replace('"max":[1,1,1]', '"max":[1e999,1e999,1e999]');
+		const gltf = JSON.parse(text);
+		expect(gltf.accessors[0].max[0]).toBe(Infinity);
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.flag).toBe('degenerate');
+		expect(q.reasons.some((r) => r === 'non_finite_extent' || r === 'zero_volume')).toBe(true);
+		expect(q.reasons).toContain('non_finite_extent');
+	});
+
+	it('notes a very heavy mesh without failing it', () => {
+		const gltf = healthyGltf();
+		gltf.accessors[0].count = 3_000_000;
+		gltf.accessors[1].count = 6_000_000 * 3;
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.flag).toBe('ok');
+		expect(q.reasons).toContain('very_heavy');
+		expect(q.metrics.veryHeavy).toBe(true);
+		expect(shouldRetryForQuality(q)).toBe(false);
+	});
+
+	it('does not mark an ordinary mesh heavy', () => {
+		const q = scoreGlbQuality(buildGlb(healthyGltf()));
+		expect(q.metrics.veryHeavy).toBe(false);
+	});
+
+	it('a truncated file (declared length beyond the buffer) is invalid, not a crash', () => {
+		const whole = buildGlb(embeddedGltf(4096), { binBytes: 4096 });
+		const q = scoreGlbQuality(whole.subarray(0, whole.length - 1000));
+		expect(q.valid).toBe(false);
+		expect(q.flag).toBe('invalid');
+		expect(shouldRetryForQuality(q)).toBe(true);
+	});
+
+	it('random bytes and an empty buffer are invalid, not a crash', () => {
+		expect(scoreGlbQuality(Buffer.from('definitely not a glb at all, just text')).flag).toBe('invalid');
+		expect(scoreGlbQuality(Buffer.alloc(0)).flag).toBe('invalid');
+	});
+});

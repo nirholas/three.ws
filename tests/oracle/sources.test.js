@@ -73,7 +73,7 @@ describe('toCoinIntel', () => {
 
 describe('linked X account signal', () => {
 	it('carries xAccount onto intel.social, null when absent', () => {
-		const xAccount = { handle: 'synthproj', ageDays: 3, followers: 41, verified: false, source: 'x-guest' };
+		const xAccount = { handle: 'synthproj', ageDays: 3, followers: 41, verified: false, source: 'x-api' };
 		expect(toCoinIntel({ coin: coinRow, smart: null, narr: null, xAccount }).social.xAccount).toEqual(xAccount);
 		expect(toCoinIntel({ coin: coinRow, smart: null, narr: null }).social.xAccount).toBeNull();
 	});
@@ -96,7 +96,7 @@ describe('xHandleFromLink / xAccountSignal', () => {
 			now: () => now,
 			lookup: async () => ({ username: 'synthproj', joined: '2026-01-29T00:00:00.000Z', followers: 41, verified: false }),
 		});
-		expect(sig).toMatchObject({ handle: 'synthproj', ageDays: 3, followers: 41, source: 'x-guest' });
+		expect(sig).toMatchObject({ handle: 'synthproj', ageDays: 3, followers: 41, source: 'x-api' });
 	});
 
 	it('resolves null (unknown, not zero) when the reader fails', async () => {

@@ -274,6 +274,16 @@ function directorFallbackCause(fallback) {
 			return 'The director returned an empty reply.';
 		case 'no_reply':
 			return 'No reply from the director models within the time allowed.';
+		case 'refusal':
+			return 'The director model declined instead of writing a brief, so the original wording was kept.';
+		case 'off_topic':
+			return 'The director reply described a different subject from the prompt, so the original wording was kept.';
+		case 'chain_failed':
+			return 'Every director model refused or failed on this request, so the original wording was kept.';
+		case 'chain_cooling':
+			return 'Every director model is cooling down after recent refusals, so none was asked and the original wording was kept.';
+		case 'budget_spent':
+			return 'The director step used up its time allowed before a model could answer, so the original wording was kept.';
 		default:
 			return 'The director did not return a usable brief.';
 	}

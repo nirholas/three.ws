@@ -8,9 +8,14 @@
  * unsupported-device fallback paths and fails on any console error.
  *
  *   node scripts/forge-photo-prep-verify.mjs [--base=http://localhost:3109] [--out=<dir for screenshots and network log>]
+ *
+ * Forge asks for an account before it checks or uploads a photo, so the run
+ * presents the QA session from .auth/audit-state.json (refresh it with
+ * npm run audit:web:login). The dev server proxies /api to production, which
+ * accepts the same session from localhost.
  */
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const flags = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/, '').split('=')));
@@ -31,8 +36,16 @@ const check = (ok, msg) => {
 const carriesPhoto = (r) => r.method !== 'GET' && r.method !== 'HEAD' && r.method !== 'OPTIONS';
 const isUpload = (r) => /\/api\/forge-upload/.test(r.url) || (r.method === 'PUT' && !r.url.startsWith(base));
 
+const AUTH_STATE = resolve('.auth/audit-state.json');
+
 async function openForge(browser, { disableOffscreen = false } = {}) {
 	const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+	if (existsSync(AUTH_STATE)) {
+		const sid = JSON.parse(readFileSync(AUTH_STATE, 'utf8')).cookies?.find((c) => c.name === '__Host-sid');
+		if (sid) {
+			await context.addCookies([{ name: sid.name, value: sid.value, domain: new URL(base).hostname, path: '/', secure: true, httpOnly: true, sameSite: 'Lax' }]);
+		}
+	}
 	if (disableOffscreen) await context.addInitScript(() => delete globalThis.OffscreenCanvas);
 	const page = await context.newPage();
 	const log = [];

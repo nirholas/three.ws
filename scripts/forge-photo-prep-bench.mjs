@@ -118,6 +118,7 @@ async function prepareAll() {
 			provider: out.provider,
 			width: out.width,
 			height: out.height,
+			removal: out.removal,
 			warnings: out.warnings.map((w) => w.code),
 			metrics: out.metrics,
 			plan: out.plan || null,

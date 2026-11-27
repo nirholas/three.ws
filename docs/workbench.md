@@ -37,7 +37,7 @@ The **Batch** button in the tool strip (or <kbd>B</kbd>) opens a drawer where yo
 | Remove Background | image | image | GPU worker (`/api/forge-rembg`) | Cuts the subject out with BiRefNet, ISNet or U2-Net before reconstruction. Skipped automatically for a text prompt. |
 | Generate Mesh | image | mesh | Forge GPU lanes (`/api/forge`) | Reconstructs a textured GLB. Always present. |
 | Restyle Materials | mesh | mesh | `/api/material-studio` | Rewrites the PBR materials from a plain-language look such as "polished gold". The server refuses to save a restyle that changed topology, UVs, skeleton, skin or animation clips. |
-| Remesh | mesh | mesh | GPU worker (`/api/forge-remesh`) | Server-side retopology to triangles, quads or low poly at a target face count. |
+| Remesh | mesh | mesh | `/api/forge-remesh` | Server-side reduction to triangles (in-process for a GLB, keeping UVs, materials, textures and rig) or retopology to quads or low poly on the GPU worker, at a target face count. |
 | Decimate | mesh | mesh | Your browser | Edge-collapse simplification that keeps UV seams and borders. |
 | Smooth | mesh | mesh | Your browser | Taubin smoothing, which does not shrink the mesh. |
 | Auto-Rig | mesh | mesh | `/api/forge?action=rig` | Adds a skeleton and skin weights so the model can animate. |
@@ -108,7 +108,7 @@ curl -s https://three.ws/api/forge -H 'content-type: application/json' \
 curl -s "https://three.ws/api/forge?job=$JOB_ID"
 ```
 
-The other nodes are one call each: `POST /api/forge-rembg` with `{ "image_url", "model" }`, `POST /api/forge-remesh` with `{ "mesh_url", "remesh_mode", "target_faces" }` (both answer `{ job_id }`, polled with `?job=`), `POST /api/forge?action=rig` with `{ "glb_url" }`, and `POST /api/material-studio?action=restyle` with `{ "glb_url", "instruction" }`. Full request and response shapes are in the [3D API reference](./3d-api.md).
+The other nodes are one call each: `POST /api/forge-rembg` with `{ "image_url", "model" }`, `POST /api/forge-remesh` with `{ "mesh_url", "remesh_mode", "target_faces" }` (both answer `{ job_id }`, polled with `?job=`; a triangle GLB remesh already carries `status: "done"` and its `result_url` in that first answer, and polling its id returns the same record), `POST /api/forge?action=rig` with `{ "glb_url" }`, and `POST /api/material-studio?action=restyle` with `{ "glb_url", "instruction" }`. Full request and response shapes are in the [3D API reference](./3d-api.md).
 
 ## Where things live
 

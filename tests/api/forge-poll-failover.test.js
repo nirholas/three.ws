@@ -37,9 +37,16 @@ Object.assign(process.env, {
 // mints a DISTINCT upstream id, exactly as a real worker does, so successive
 // hops address different jobs instead of colliding on one id.
 let submitSeq = 0;
+// Worker modes whose submit is refused (the lane is unreachable or rejects the job).
+const rejectModes = new Set();
+const submitModes = [];
 vi.mock('../../api/_providers/gcp.js', () => ({
 	createRegenProvider: () => ({
-		submit: vi.fn(async () => ({ extJobId: `gcp-successor-${++submitSeq}` })),
+		submit: vi.fn(async ({ mode }) => {
+			submitModes.push(mode);
+			if (rejectModes.has(mode)) throw new Error(`${mode} worker unreachable`);
+			return { extJobId: `gcp-successor-${++submitSeq}` };
+		}),
 		status: vi.fn(async () => ({ status: 'failed', error: 'worker OOM on the reconstruct step' })),
 	}),
 }));
@@ -83,9 +90,10 @@ vi.mock('../../api/_lib/forge-store.js', () => ({
 }));
 
 // Lane health is up for everything: lane SELECTION is not what this file tests.
+const markLaneUnhealthy = vi.fn(async () => {});
 vi.mock('../../api/_lib/forge-lane-health.js', () => ({
 	laneHealthSnapshot: vi.fn(async () => ({ byId: {} })),
-	markLaneUnhealthy: vi.fn(async () => {}),
+	markLaneUnhealthy: (...a) => markLaneUnhealthy(...a),
 }));
 
 // The successor-chain store, in memory. bindJobSuccessor/resolveLiveJob keep
@@ -122,7 +130,7 @@ function makeReq(jobId) {
 	return {
 		method: 'GET',
 		url: `/api/forge?job=${encodeURIComponent(jobId)}`,
-		headers: { 'x-forge-client': 'tester', 'x-vercel-ip-country': 'US' },
+		headers: { 'x-forge-client': 'tester', 'x-client-region': 'US' },
 		on(event, cb) {
 			if (event === 'end') cb();
 		},
@@ -158,6 +166,9 @@ beforeEach(() => {
 	// The original job's own row: submitted on the self-hosted TRELLIS lane.
 	rows.set(ORIGINAL_TASK, { ...BASE_ROW, backend: 'trellis_selfhost' });
 	submitSeq = 0;
+	rejectModes.clear();
+	submitModes.length = 0;
+	markLaneUnhealthy.mockClear();
 	createCreation.mockClear();
 	markFailed.mockClear();
 	markSupersededBy.mockClear();
@@ -256,5 +267,30 @@ describe('poll-time failover: hop accumulation and exhaustion', () => {
 			expect(Array.isArray(res.body.retry_backends)).toBe(true);
 			expect(res.body.retry_backends).not.toContain('trellis_selfhost');
 		}
+	});
+});
+
+describe('poll-time failover: a successor lane that refuses the submit', () => {
+	it('moves on to the next lane instead of ending the job, and cools the refusing lane', async () => {
+		// Find which lane the chain would pick first, then make exactly that one refuse.
+		const probe = await poll(JOB);
+		const firstChoice = probe.body.backend;
+		expect(firstChoice).toBeTruthy();
+		chain.clear();
+		rows.clear();
+		rows.set(ORIGINAL_TASK, { ...BASE_ROW, backend: 'trellis_selfhost' });
+		submitModes.length = 0;
+		markLaneUnhealthy.mockClear();
+		const refusedMode = { hunyuan3d: 'hunyuan', trellis2: 'trellis2', trellis_selfhost: 'trellis' }[firstChoice];
+		if (refusedMode) rejectModes.add(refusedMode);
+
+		const res = await poll(JOB);
+
+		expect(res.body.status).toBe('running');
+		expect(res.body.backend).not.toBe(firstChoice);
+		expect(res.body.backend).not.toBe('trellis_selfhost');
+		expect(markLaneUnhealthy).toHaveBeenCalledWith(firstChoice);
+		// The refusing lane is on the attempted list, so it is never asked twice.
+		expect(chain.get(JOB).attempted).toContain(firstChoice);
 	});
 });

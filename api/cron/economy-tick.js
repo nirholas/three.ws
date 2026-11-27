@@ -96,8 +96,6 @@ const TARGETS = [
 	// ── $THREE buyback (revenue → buy → treasury) ──────────────────────────
 	{ label: 'buyback', path: '/api/cron/run-buyback', method: 'GET' },
 	{ label: 'three-buyback', path: '/api/cron/run-three-buyback', method: 'GET' },
-	// $THREE micro-buy loop — many tiny x402-settled buys/min (buy pressure).
-	{ label: 'three-buy-loop', path: '/api/cron/three-buy-loop', method: 'GET' },
 	// ── Funding root, treasury autopilot & reconciliation ──────────────────
 	{ label: 'treasury-topup', path: '/api/cron/treasury-topup', method: 'GET' },
 	{ label: 'economy-rebalance', path: '/api/cron/economy-rebalance', method: 'GET' },

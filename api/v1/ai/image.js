@@ -79,7 +79,7 @@ const INPUT_SCHEMA = {
 			type: 'integer',
 			minimum: 0,
 			maximum: MAX_SEED,
-			description: 'Optional deterministic seed (honored on the HF, Pollinations and Replicate flux lanes; ignored by NIM flux.1-dev and Vertex/Gemini, which have no seed input).',
+			description: 'Optional deterministic seed (honored on the HF, Pollinations and Replicate flux lanes; ignored by NIM FLUX.2 klein and Vertex/Gemini, which have no seed input).',
 		},
 	},
 };
@@ -87,7 +87,7 @@ const INPUT_SCHEMA = {
 const OUTPUT_EXAMPLE = {
 	url: 'https://three.ws/cdn/forge/refs/6f1c0c2e-2a4d-4b6e-9b1a-3c5d7e9f0a1b.jpg',
 	provider: 'nvidia-nim',
-	model: 'black-forest-labs/flux.1-schnell',
+	model: 'black-forest-labs/flux.2-klein-4b',
 	width: 1024,
 	height: 1024,
 	aspect_ratio: '1:1',

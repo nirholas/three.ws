@@ -114,6 +114,73 @@ describe('createHiddenClock', () => {
 	});
 });
 
+describe('createHiddenClock hiddenStreakMs', () => {
+	// The Forge poll stops asking the server once a tab has been in the
+	// background for a long stretch, so it needs the CURRENT hidden streak, not
+	// the lifetime total that hiddenMs() reports.
+	it('reports how long the tab has been hidden right now, and 0 once it is back', async () => {
+		const { createHiddenClock } = await import('../src/shared/resilient-poll.js');
+		let t = 1_000;
+		const clock = createHiddenClock({ now: () => t });
+		expect(clock.hiddenStreakMs()).toBe(0);
+		globalThis.document.visibilityState = 'hidden';
+		dom.doc.emit('visibilitychange');
+		t += 90_000;
+		expect(clock.hiddenStreakMs()).toBe(90_000);
+		expect(clock.hiddenMs()).toBe(90_000);
+		globalThis.document.visibilityState = 'visible';
+		dom.doc.emit('visibilitychange');
+		expect(clock.hiddenStreakMs()).toBe(0);
+		expect(clock.hiddenMs()).toBe(90_000);
+		// A second, shorter streak is measured on its own.
+		globalThis.document.visibilityState = 'hidden';
+		dom.doc.emit('visibilitychange');
+		t += 5_000;
+		expect(clock.hiddenStreakMs()).toBe(5_000);
+		expect(clock.hiddenMs()).toBe(95_000);
+		clock.stop();
+	});
+
+	it('counts a tab that was already hidden when the clock started', async () => {
+		dom = installDom('hidden');
+		const { createHiddenClock } = await import('../src/shared/resilient-poll.js');
+		let t = 0;
+		const clock = createHiddenClock({ now: () => t });
+		t = 70_000;
+		expect(clock.hiddenStreakMs()).toBe(70_000);
+		clock.stop();
+	});
+});
+
+describe('waitUntilVisible', () => {
+	it('resolves at once when the tab is already in the foreground', async () => {
+		const { waitUntilVisible } = await import('../src/shared/resilient-poll.js');
+		await expect(waitUntilVisible()).resolves.toBeUndefined();
+		expect(dom.doc.count('visibilitychange')).toBe(0);
+	});
+
+	it('holds a hidden tab, with no timer, until it is shown, then detaches', async () => {
+		dom = installDom('hidden');
+		const { waitUntilVisible } = await import('../src/shared/resilient-poll.js');
+		let done = false;
+		const p = waitUntilVisible().then(() => {
+			done = true;
+		});
+		await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+		expect(done).toBe(false);
+		expect(vi.getTimerCount()).toBe(0);
+		// A visibilitychange that leaves it hidden (prerender, another tab) is not a wake.
+		dom.doc.emit('visibilitychange');
+		await vi.advanceTimersByTimeAsync(0);
+		expect(done).toBe(false);
+		globalThis.document.visibilityState = 'visible';
+		dom.doc.emit('visibilitychange');
+		await p;
+		expect(done).toBe(true);
+		expect(dom.doc.count('visibilitychange')).toBe(0);
+	});
+});
+
 describe('fetchJobStatus', () => {
 	it('marks a dropped socket as transport so the caller can retry it', async () => {
 		const { fetchJobStatus } = await import('../src/shared/resilient-poll.js');

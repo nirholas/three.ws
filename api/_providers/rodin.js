@@ -20,6 +20,7 @@
 // absent, the forge endpoint never reaches this module.
 
 import { fetchUpstream, fetchUpstreamPublic } from '../_lib/upstream-fetch.js';
+import { bodyRefusesContent, classifyFailureText, contentRefusedError } from '../_lib/forge-byok-guard.js';
 
 const RODIN_BASE = 'https://api.hyper3d.com/api/v2';
 
@@ -31,6 +32,15 @@ const POLY_MAX = 200_000;
 function clampPoly(n) {
 	const v = Math.round(Number(n) || 0);
 	return Math.max(POLY_MIN, Math.min(POLY_MAX, v));
+}
+
+// Rodin takes a seed in 0..65535. Forge seeds run to 2^32-1 (forge-seed.js), so
+// fold the caller's seed into Rodin's range: the same Forge seed always lands on
+// the same Rodin seed, which is what makes a model repeatable.
+const RODIN_SEED_SPAN = 65_536;
+
+function setSeed(form, seed) {
+	if (Number.isInteger(seed) && seed >= 0) form.set('seed', String(seed % RODIN_SEED_SPAN));
 }
 
 // Map the forge tier to Rodin's named quality rung (quality_override still
@@ -69,6 +79,7 @@ export function createRodinProvider(apiKey) {
 	const authHeader = { authorization: `Bearer ${apiKey}` };
 
 	function normalizeError(res, data) {
+		if (res.status !== 401 && bodyRefusesContent(data)) return contentRefusedError('Rodin', res.status);
 		if (res.status === 401 || res.status === 403) {
 			return Object.assign(new Error('Rodin rejected the API key.'), {
 				code: 'invalid_key',
@@ -124,7 +135,7 @@ export function createRodinProvider(apiKey) {
 		// Native geometry-first: text → untextured quad mesh, no intermediate
 		// image. targetPolycount overrides the tier default when the caller sent
 		// an explicit target_polycount/target_faces (forge-options.js).
-		async textToGeometry({ prompt, tier, targetPolycount }) {
+		async textToGeometry({ prompt, tier, targetPolycount, seed }) {
 			const form = new FormData();
 			form.set('tier', 'Gen-2');
 			form.set('prompt', String(prompt).slice(0, 1024));
@@ -133,12 +144,13 @@ export function createRodinProvider(apiKey) {
 			form.set('quality', qualityForTier(tier));
 			form.set('quality_override', String(clampPoly(targetPolycount ?? tier.polycount)));
 			form.set('geometry_file_format', 'glb');
+			setSeed(form, seed);
 			return submit(form);
 		},
 
 		// Single image → native geometry + PBR textures, poly target from the
 		// tier unless the caller overrides it explicitly.
-		async imageTo3d({ imageUrl, prompt, tier, targetPolycount }) {
+		async imageTo3d({ imageUrl, prompt, tier, targetPolycount, seed }) {
 			let imgRes;
 			try {
 				// The reference image URL is caller-supplied: every hop is SSRF-checked.
@@ -165,6 +177,7 @@ export function createRodinProvider(apiKey) {
 			form.set('quality', qualityForTier(tier));
 			form.set('quality_override', String(clampPoly(targetPolycount ?? tier.polycount)));
 			form.set('geometry_file_format', 'glb');
+			setSeed(form, seed);
 			return submit(form);
 		},
 
@@ -183,12 +196,19 @@ export function createRodinProvider(apiKey) {
 			}
 			const data = await res.json().catch(() => ({}));
 			if (res.status === 404) return { status: 'failed', error: 'rodin task not found' };
+			// A key revoked mid-job must end the job, not read as "still running".
+			if (res.status === 401 || res.status === 403) {
+				return { status: 'failed', errorCode: 'invalid_key', error: 'rodin rejected the API key' };
+			}
 			if (!res.ok) return { status: 'running', error: `rodin returned ${res.status}` };
 
 			const status = mapStatus(data.jobs);
 			const result = { status };
 			if (status === 'failed') {
-				result.error = data?.error || 'rodin task failed';
+				const reason = data?.error || data?.message;
+				result.error = typeof reason === 'string' && reason ? reason : 'rodin task failed';
+				const failureCode = classifyFailureText(result.error);
+				if (failureCode) result.errorCode = failureCode;
 				return result;
 			}
 			if (status !== 'done') return result;

@@ -12,10 +12,16 @@
 //      the platform's own env-var key, billed through our credits like any
 //      other house lane. Checked last so a user's own key always wins.
 // resolveProviderKey returns the plaintext key or null when none is available.
+//
+// A key the caller supplied (inline, or one saved on their account) that cannot
+// be a real key, or a saved key that cannot be read, is REJECTED, never skipped:
+// resolution stops there and reports `rejected`, so the request is refused
+// instead of quietly running on the platform's house key at the platform's cost.
 
 import { getSessionUser } from './auth.js';
 import { sql } from './db.js';
 import { loadUserProviderKeys } from './provider-keys.js';
+import { keyShapeProblem } from './forge-byok-guard.js';
 
 // Providers with a platform (house) key lane, mapped to the env var that
 // carries it. Absent here, or unset in the environment, a provider behaves
@@ -24,23 +30,66 @@ const HOUSE_KEY_ENV = {
 	tripo: 'TRIPO_API_KEY',
 };
 
+// The caller's own key only (inline, then saved), never the house key, with
+// `rejected` set when what they supplied cannot be used. For surfaces that have
+// no house lane (the GPT clone, the 3D Studio tools).
+export async function resolveCallerProviderKey(req, body, providerName) {
+	return resolveInlineOrUserKey(req, body, providerName);
+}
+
 async function resolveInlineOrUserKey(req, body, providerName) {
 	const header = req.headers['x-forge-provider-key'];
 	const inline =
 		(typeof header === 'string' && header) ||
 		(Array.isArray(header) && header[0]) ||
 		(typeof body?.provider_key === 'string' ? body.provider_key : '');
-	if (inline && inline.trim()) return { key: inline.trim(), source: 'inline' };
+	if (inline && inline.trim()) {
+		const key = inline.trim();
+		const problem = keyShapeProblem(providerName, key);
+		if (problem) return { key: null, source: null, rejected: { ...problem, from: 'inline' } };
+		return { key, source: 'inline' };
+	}
 
+	let session = null;
 	try {
-		const session = await getSessionUser(req);
-		if (session?.id) {
-			const [row] = await sql`SELECT provider_keys FROM users WHERE id = ${session.id}`;
-			const keys = await loadUserProviderKeys(row?.provider_keys);
-			if (keys[providerName]) return { key: keys[providerName], source: 'user' };
-		}
+		session = await getSessionUser(req);
 	} catch {
-		// No DB / no session, fall through to "no key".
+		// No session cookie, nothing stored to read: "no key".
+	}
+	if (!session?.id) return { key: null, source: null };
+
+	let stored;
+	try {
+		const [row] = await sql`SELECT provider_keys FROM users WHERE id = ${session.id}`;
+		stored = row?.provider_keys;
+	} catch {
+		return {
+			key: null,
+			source: null,
+			rejected: {
+				reason: 'stored_unreadable',
+				from: 'user',
+				message: 'Your saved key could not be read just now. Try again in a moment, or paste the key for this request.',
+			},
+		};
+	}
+	if (stored && typeof stored === 'object' && typeof stored[providerName] === 'string' && stored[providerName]) {
+		const keys = await loadUserProviderKeys(stored);
+		const key = keys[providerName];
+		if (!key) {
+			return {
+				key: null,
+				source: null,
+				rejected: {
+					reason: 'stored_unreadable',
+					from: 'user',
+					message: 'Your saved key could not be read. Remove it on your Account page and paste it again.',
+				},
+			};
+		}
+		const problem = keyShapeProblem(providerName, key);
+		if (problem) return { key: null, source: null, rejected: { ...problem, from: 'user' } };
+		return { key, source: 'user' };
 	}
 	return { key: null, source: null };
 }
@@ -50,7 +99,7 @@ async function resolveInlineOrUserKey(req, body, providerName) {
 // tell a user's own key apart from the platform's.
 export async function resolveProviderKeyWithSource(req, body, providerName) {
 	const found = await resolveInlineOrUserKey(req, body, providerName);
-	if (found.key) return found;
+	if (found.key || found.rejected) return found;
 
 	const envVar = HOUSE_KEY_ENV[providerName];
 	const houseKey = envVar ? process.env[envVar] : null;

@@ -11,6 +11,12 @@ import {
 	exposureStats,
 	assessPhoto,
 	decideOnDevice,
+	alphaChannel,
+	detectCutout,
+	maskVerdict,
+	pickUpload,
+	removalNotice,
+	PREP_WAIT,
 } from '../src/forge-photo-prep/core.js';
 
 // A w x h mask with the given rectangles filled at 255.
@@ -187,5 +193,141 @@ describe('decideOnDevice', () => {
 	});
 	it('exposes the model input size the worker feeds', () => {
 		expect(MODEL_SIZE).toBe(320);
+	});
+});
+
+// An RGBA square where `alphaAt(x, y)` decides every pixel's alpha.
+function rgbaSquare(size, alphaAt) {
+	const px = new Uint8ClampedArray(size * size * 4);
+	for (let y = 0; y < size; y++) {
+		for (let x = 0; x < size; x++) {
+			const i = (y * size + x) * 4;
+			px[i] = 200;
+			px[i + 1] = 120;
+			px[i + 2] = 40;
+			px[i + 3] = alphaAt(x, y);
+		}
+	}
+	return px;
+}
+
+describe('detectCutout (a photo that already has its background removed)', () => {
+	const size = 40;
+	const inCentre = (x, y) => x >= 10 && x < 30 && y >= 10 && y < 30;
+
+	it('recognises an object floating in transparent space', () => {
+		const d = detectCutout(rgbaSquare(size, (x, y) => (inCentre(x, y) ? 255 : 0)), size);
+		expect(d.cutout).toBe(true);
+		expect(d.transparentShare).toBeCloseTo(0.75, 2);
+		expect(d.borderTransparentShare).toBe(1);
+	});
+	it('does not treat an opaque photo with an alpha channel as a cut-out', () => {
+		expect(detectCutout(rgbaSquare(size, () => 255), size).cutout).toBe(false);
+	});
+	it('does not treat a solid frame with see-through holes inside as a cut-out', () => {
+		const holes = (x, y) => (x >= 15 && x < 25 && y >= 15 && y < 25 ? 0 : 255);
+		const d = detectCutout(rgbaSquare(size, holes), size);
+		expect(d.transparentShare).toBeGreaterThan(THRESHOLDS.cutoutTransparentShare);
+		expect(d.cutout).toBe(false);
+	});
+	it('does not treat a faint soft shadow edge as a cut-out', () => {
+		expect(detectCutout(rgbaSquare(size, (x, y) => (x === 0 && y < 3 ? 0 : 255)), size).cutout).toBe(false);
+	});
+	it('reads the alpha channel as the mask', () => {
+		const a = alphaChannel(rgbaSquare(2, (x, y) => x * 100 + y * 50));
+		expect(Array.from(a)).toEqual([0, 100, 50, 150]);
+	});
+	it('rejects a buffer that does not match the size', () => {
+		expect(() => detectCutout(new Uint8ClampedArray(8), 2)).toThrow(/expected 16/);
+	});
+});
+
+describe('maskVerdict (empty and whole-frame masks are failed removals)', () => {
+	it('rejects a mask with no subject pixels at all', () => {
+		const v = maskVerdict(analyzeMask(new Uint8Array(100), 10, 10));
+		expect(v).toEqual({ ok: false, reason: 'empty' });
+	});
+	it('rejects a mask of a few stray specks, which the old flow still cropped and offered', () => {
+		const specks = maskWith(320, 320, [[5, 5, 7, 7], [100, 100, 102, 101], [200, 50, 201, 52]]);
+		const a = analyzeMask(specks, 320, 320);
+		expect(a.box).not.toBeNull();
+		expect(maskVerdict(a)).toEqual({ ok: false, reason: 'empty' });
+	});
+	it('rejects a mask that kept the whole frame', () => {
+		const v = maskVerdict(analyzeMask(maskWith(20, 20, [[0, 0, 20, 20]]), 20, 20));
+		expect(v).toEqual({ ok: false, reason: 'whole_frame' });
+	});
+	it('rejects a mask that kept all but a thin rim of the frame', () => {
+		const v = maskVerdict(analyzeMask(maskWith(100, 100, [[1, 1, 99, 99]]), 100, 100));
+		expect(v.reason).toBe('whole_frame');
+	});
+	it('accepts a subject that fills half the frame, the largest in the calibration bench', () => {
+		expect(maskVerdict(analyzeMask(maskWith(20, 20, [[0, 0, 20, 10]]), 20, 20))).toEqual({ ok: true, reason: null });
+	});
+	it('accepts the smallest real subject in the bench (4% of the frame)', () => {
+		expect(maskVerdict(analyzeMask(maskWith(100, 100, [[40, 40, 60, 50]]), 100, 100)).ok).toBe(true);
+	});
+	it('has assessPhoto say plainly that the background was kept', () => {
+		const a = analyzeMask(maskWith(20, 20, [[0, 0, 20, 20]]), 20, 20);
+		const w = assessPhoto({ ...a, subjectPx: 20, sharpness: 500, exposure: { mean: 120, clippedHigh: 0 } });
+		expect(w.map((x) => x.code)).toEqual(['background_kept']);
+		expect(w[0].message).toMatch(/background/i);
+	});
+});
+
+describe('pickUpload and removalNotice (what the review dialog sends and says)', () => {
+	const prepared = new Blob(['p'], { type: 'image/jpeg' });
+	const cutout = new Blob(['c'], { type: 'image/webp' });
+	it('sends the prepared crop after a normal removal', () => {
+		expect(pickUpload({ removal: { status: 'model' }, prepared, cutout }, 'prepared')).toBe(prepared);
+		expect(pickUpload({ removal: { status: 'model' }, prepared, cutout }, 'cutout')).toBe(cutout);
+	});
+	it('sends nothing prepared after a failed removal, so only the original remains', () => {
+		expect(pickUpload({ removal: { status: 'failed', reason: 'empty' }, prepared, cutout }, 'prepared')).toBeNull();
+		expect(pickUpload({ removal: { status: 'failed', reason: 'whole_frame' }, prepared: null, cutout: null }, 'cutout')).toBeNull();
+	});
+	it('sends the alpha crop of a photo that was already cut out, whatever the default', () => {
+		expect(pickUpload({ removal: { status: 'alpha' }, prepared: cutout, cutout }, 'prepared')).toBe(cutout);
+	});
+	it('says why in one sentence for each non-normal outcome and nothing for a normal one', () => {
+		expect(removalNotice({ removal: { status: 'model' } })).toBe('');
+		expect(removalNotice({ removal: { status: 'alpha' } })).toMatch(/already has a transparent background/);
+		expect(removalNotice({ removal: { status: 'failed', reason: 'whole_frame' } })).toMatch(/kept the whole picture/);
+		expect(removalNotice({ removal: { status: 'failed', reason: 'empty' } })).toMatch(/found no subject/);
+	});
+});
+
+describe('squareCropPlan for a cut-out', () => {
+	it('centres the subject exactly even beside the photo edge, padding with transparent space', () => {
+		const box = { x: 0, y: 0, w: 200, h: 100 };
+		const near = squareCropPlan(box, 1000, 800, { center: true });
+		expect(near.sx + near.side / 2).toBeCloseTo(100, 0);
+		expect(near.sy + near.side / 2).toBeCloseTo(50, 0);
+		expect(near.sx).toBeLessThan(0);
+		const shifted = squareCropPlan(box, 1000, 800);
+		expect(shifted.sx).toBe(0);
+	});
+	it('keeps sensible padding around the longer edge', () => {
+		const p = squareCropPlan({ x: 300, y: 300, w: 400, h: 200 }, 1000, 1000, { center: true });
+		expect(p.side).toBe(Math.round(400 * (1 + 2 * THRESHOLDS.cropPadding)));
+	});
+	it('never makes the output larger than the square it cuts, so nothing is upscaled past its source', () => {
+		for (const [w, h, bw, bh] of [[300, 300, 300, 300], [64, 64, 10, 10], [4000, 3000, 3900, 2900], [1000, 200, 990, 190], [5000, 5000, 100, 100]]) {
+			const box = { x: Math.floor((w - bw) / 2), y: Math.floor((h - bh) / 2), w: bw, h: bh };
+			for (const center of [false, true]) {
+				const p = squareCropPlan(box, w, h, { center });
+				expect(p.outSize).toBeLessThanOrEqual(p.side);
+				expect(p.outSize).toBeLessThanOrEqual(THRESHOLDS.maxSide);
+			}
+		}
+	});
+});
+
+describe('PREP_WAIT', () => {
+	it('is bounded, with the loading stage given less silence than the run stage and a cap above both', () => {
+		expect(PREP_WAIT.loadIdleMs).toBeGreaterThan(0);
+		expect(PREP_WAIT.loadIdleMs).toBeLessThanOrEqual(PREP_WAIT.runIdleMs);
+		expect(PREP_WAIT.totalMs).toBeGreaterThan(PREP_WAIT.runIdleMs);
+		expect(PREP_WAIT.totalMs).toBeLessThanOrEqual(5 * 60_000);
 	});
 });

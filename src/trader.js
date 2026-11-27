@@ -21,6 +21,9 @@ import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
 import { embedSnippet } from './shared/trader-embed.js';
 import { ring, playRings, countUp } from './ui-juice.js';
 import { receiptHTML, receiptSkeletonHTML, RECEIPT_CSS } from './shared/trade-receipt-view.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const WINDOWS = ['24h', '7d', '30d', 'all'];
 const WINDOW_LABEL = { '24h': '24h', '7d': '7d', '30d': '30d', all: 'All-time' };

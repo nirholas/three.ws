@@ -31,6 +31,9 @@ const stateOf = (id) => document.querySelector(`#stages .step[data-stage="${id}"
 const labelOf = (id) =>
 	document.querySelector(`#stages .step[data-stage="${id}"] .step-label`)?.textContent;
 
+const detailOf = (id) =>
+	document.querySelector(`#stages .step[data-stage="${id}"] .step-detail`)?.textContent;
+
 describe('forge timeline stages', () => {
 	let timeline;
 	beforeEach(() => {
@@ -91,6 +94,60 @@ describe('forge timeline stages', () => {
 		expect(stateOf('direct')).toBe('done');
 	});
 
+	// A one-image engine given three photos reads one of them; the row must say
+	// what the engine used, not what the person supplied.
+	it('counts the views the engine used, not the photos supplied', () => {
+		timeline.begin({ mode: 'image', backend: 'trellis2', viewCount: 3 });
+		expect(labelOf('input')).toBe('Conditioning on 3 reference views');
+		timeline.applySubmit({ status: 'queued', backend: 'trellis2', views_requested: 3, views_used: 1 });
+		expect(labelOf('input')).toBe('Conditioning on 1 reference view');
+		expect(detailOf('input')).toBe('Reconstructing straight from your photo');
+	});
+
+	it('counts painted turnaround views the engine fuses beyond the one photo', () => {
+		timeline.begin({ mode: 'image', backend: 'trellis_selfhost', viewCount: 1 });
+		timeline.applySubmit({ status: 'queued', backend: 'trellis_selfhost', views_requested: 3, views_used: 3 });
+		expect(labelOf('input')).toBe('Conditioning on 3 reference views');
+		expect(detailOf('input')).toBe('The engine fuses every view into one mesh');
+	});
+
+	// Since 2026-11-26 /api/forge reports a `direction` record. When the director
+	// was skipped (every chat model refusing or cooling down, or its rewrite was
+	// discarded) `directed_prompt` is null too, and the old label claimed "The
+	// director left it unchanged", a director that never answered.
+	it('says the prompt assistant was skipped, not that it left the prompt alone', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit({
+			status: 'queued',
+			directed_prompt: null,
+			direction: { status: 'skipped', reason: 'chain_cooling', ms: 4 },
+			preview_image_url: 'https://cdn.example/ref.png',
+		});
+		expect(stateOf('direct')).toBe('done');
+		expect(labelOf('direct')).toBe('Prompt used as you wrote it');
+		expect(detailOf('direct')).toMatch(/assistant was unavailable/i);
+		expect(detailOf('direct')).not.toMatch(/left it unchanged/i);
+	});
+
+	it('names a discarded rewrite as discarded', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit({ status: 'queued', directed_prompt: null, direction: { status: 'skipped', reason: 'off_topic', ms: 900 }, preview_image_url: 'https://cdn.example/ref.png' });
+		expect(detailOf('direct')).toMatch(/not usable/i);
+	});
+
+	it('says direction was off when the request turned it off', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit({ status: 'queued', directed_prompt: null, direction: { status: 'off' }, preview_image_url: 'https://cdn.example/ref.png' });
+		expect(labelOf('direct')).toBe('Prompt used as you wrote it');
+		expect(detailOf('direct')).toMatch(/turned off/i);
+	});
+
+	it('reads the direction record from the pre-submit crumb too', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applyProgress([{ stage: 'directed', at: 1, directed_prompt: null, direction: { status: 'skipped', reason: 'chain_failed', ms: 300 } }]);
+		expect(detailOf('direct')).toMatch(/assistant was unavailable/i);
+	});
+
 	it('reveals a reference view that only arrives on a later poll', () => {
 		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
 		// A coalesced job answers with a job id and nothing else.
@@ -144,10 +201,79 @@ describe('forge timeline cold start', () => {
 		);
 		expect(warming().classList.contains('is-hidden')).toBe(false);
 		timeline.tick(20);
-		// 110 - 60 = a 50s boot budget; 30s of it is left after 20s elapsed.
-		expect(warming().querySelector('.gen-warming-count').textContent).toContain('~30s');
+		// 110 - 60 = a 50s boot allowance. It is an allowance, not a promise, so
+		// the card states it as one instead of counting down to a finish.
+		const count = warming().querySelector('.gen-warming-count').textContent;
+		expect(count).toContain('up to about 50 s');
+		expect(count).not.toMatch(/left/);
 		timeline.tick(80);
 		expect(warming().dataset.phase).toBe('over');
+		expect(warming().querySelector('.gen-warming-count').textContent).toContain('Past the usual boot allowance');
+	});
+
+	it('says why the first request is slower and how long the boot may take', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit({
+			status: 'queued',
+			backend: 'trellis_selfhost',
+			cold_start: true,
+			cold_start_seconds: 510,
+			eta_seconds: 570,
+		});
+		const copy = warming().textContent;
+		expect(copy).toContain('scales to zero');
+		expect(copy).toContain('up to about 8 min 30 s');
+	});
+
+	it('stops claiming a boot once a poll reports the worker is no longer cold', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit(
+			{ status: 'queued', backend: 'trellis_selfhost', cold_start: true, cold_start_seconds: 510, eta_seconds: 570 },
+		);
+		expect(warming().classList.contains('is-hidden')).toBe(false);
+		// Still queued, but the liveness probe now answers: the boot is over and the
+		// job is only waiting for a free GPU, which is a different statement.
+		timeline.applyPoll({ status: 'queued', backend: 'trellis_selfhost' });
+		expect(timeline.isCold()).toBe(false);
+		expect(warming().classList.contains('is-hidden')).toBe(true);
+	});
+
+	it('keeps the boot card while polls keep reporting a cold worker', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit(
+			{ status: 'queued', backend: 'trellis_selfhost', cold_start: true, cold_start_seconds: 510, eta_seconds: 570 },
+		);
+		timeline.applyPoll({ status: 'queued', backend: 'trellis_selfhost', cold_start: true, cold_start_seconds: 510 });
+		expect(timeline.isCold()).toBe(true);
+		expect(warming().classList.contains('is-hidden')).toBe(false);
+	});
+
+	it('does not blame the old lane for a boot after the job fails over to another lane', () => {
+		timeline.begin({ mode: 'image', backend: 'trellis_selfhost', viewCount: 1 });
+		timeline.applySubmit(
+			{ status: 'queued', backend: 'trellis_selfhost', cold_start: true, cold_start_seconds: 510, eta_seconds: 570 },
+		);
+		timeline.applyPoll({ status: 'running', backend: 'hunyuan3d', failover_from: 'trellis_selfhost' });
+		expect(warming().classList.contains('is-hidden')).toBe(true);
+		expect(timeline.backend()).toBe('hunyuan3d');
+	});
+
+	it('names the new lane and its own allowance when the lane it fails over to is cold too', () => {
+		timeline.begin({ mode: 'image', backend: 'trellis_selfhost', viewCount: 1 });
+		timeline.applySubmit(
+			{ status: 'queued', backend: 'trellis_selfhost', cold_start: true, cold_start_seconds: 510, eta_seconds: 570 },
+		);
+		timeline.applyPoll({
+			status: 'queued',
+			backend: 'hunyuan3d',
+			failover_from: 'trellis_selfhost',
+			cold_start: true,
+			cold_start_seconds: 120,
+		});
+		const copy = warming().textContent;
+		expect(copy).toContain('hunyuan3d');
+		expect(copy).toContain('up to about 2 min');
+		expect(copy).not.toContain('8 min');
 	});
 
 	it('ends the warming state on the first running poll, never on the clock', () => {
@@ -202,8 +328,6 @@ describe('forge timeline pre-submit progress crumbs', () => {
 		timeline = mount();
 	});
 
-	const detailOf = (id) =>
-		document.querySelector(`#stages .step[data-stage="${id}"] .step-detail`)?.textContent;
 
 	it('retires the director stage on the crumb, before any submit response', () => {
 		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });

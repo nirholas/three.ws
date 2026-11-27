@@ -57,13 +57,22 @@ on every deploy, because that file's `--set-env-vars` replaces the whole env
 set; a value added by hand with `gcloud run services update` would be wiped by
 the next build. `GET /health` reports `nonhuman_worker_configured`.
 
+The silhouette test is a guess: a sword is tall and symmetric, and a T-posed
+human is wider than tall. So a request may name a `subject` (`humanoid` or
+`creature`), which the platform's rig preflight
+([`api/_lib/rig-preflight.js`](../../api/_lib/rig-preflight.js)) reads from the
+words the model was made from; when present it decides the branch instead of
+the silhouette ([`rig_route.py`](rig_route.py), tested by `test_rig_route.py`,
+which needs no numpy). Objects never reach this worker: the preflight refuses
+them before any call.
+
 ## API
 
 Identical to the previous rig worker so `api/_providers/gcp.js` needs no code
 change:
 
 ```
-POST /rig        { mesh_gcs_url, template?, blendshapes?, job_id? }
+POST /rig        { mesh_gcs_url, template?, blendshapes?, job_id?, subject? }
                  -> 202 { task_id, status: "queued" }        (Bearer API_KEY)
 GET  /tasks/:id  -> { task_id, status, rigged_gcs_url?, error?, elapsed_ms? }
 GET  /health     -> { ok, model, gpu_available, gpu_name, model_loaded, queued }
