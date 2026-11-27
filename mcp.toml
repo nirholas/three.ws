@@ -1,0 +1,8 @@
+# Happy Agent reads this file from the root of a session's folder.
+# The catalog, docs and render tools need no account. To make or rig a model,
+# see docs/grok-fleet-tools.md for the account-linked variants (API key or sign-in).
+[mcp_servers.three_ws]
+url = "https://three.ws/api/mcp-studio"
+enabled = true
+startup_timeout_sec = 20
+tool_timeout_sec = 120

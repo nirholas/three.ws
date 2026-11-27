@@ -186,6 +186,13 @@ three.ws and dated by the last source commit, so two exports of the same source 
 SHA. Exported on 2026-11-20 from main at plugin 1.2.0, twice:
 `179da58ef0ed3eceae141b77292e683a2224b3da` both times.
 
+Re-exported on 2026-11-27 after the plugin's README changed (still plugin 1.2.0, last source commit
+`93d0b71ba`), twice: `7e87201de71971e07e17bfe76219b2592da42c1c` both times, and `grok plugin validate` from
+Grok Build 1.0.92 answered "Plugin manifest is valid." That SHA is the one in the entry and the pull
+request text below. The same three marketplace commands were run again that day against the catalog
+at `ed02ed2` (36 plugins, none of them 3D) with the same three results and the same 13 and 66 line
+diff.
+
 On a fresh clone of the marketplace (at `65eef14`) with this entry appended and git's `insteadOf`
 pointing the proposed URL at the local export (the scripts themselves unmodified):
 
@@ -219,7 +226,7 @@ two-space style:
   "source": {
     "source": "url",
     "url": "https://github.com/three-ws/three-ws-grok.git",
-    "sha": "179da58ef0ed3eceae141b77292e683a2224b3da"
+    "sha": "7e87201de71971e07e17bfe76219b2592da42c1c"
   },
   "homepage": "https://three.ws/grok",
   "keywords": ["three.ws", "three-ws", "threews", "three.ws 3d", "three.ws avatar"],
@@ -232,7 +239,7 @@ Publish and pin (owner steps, in order):
 ```bash
 OUT=$(mktemp -d)/three-ws-grok
 node scripts/export-plugin-repo.mjs --src integrations/grok/three-ws --out "$OUT" --grok-bin "$(command -v grok)"
-git -C "$OUT" rev-parse HEAD     # 179da58ef0ed3eceae141b77292e683a2224b3da while the folder is unchanged
+git -C "$OUT" rev-parse HEAD     # 7e87201de71971e07e17bfe76219b2592da42c1c while the folder is unchanged
 gh repo create three-ws/three-ws-grok --public \
   --description "three.ws for Grok Build: text or photo to 3D models and rigged avatars, CC0 asset search, embed code" \
   --homepage https://three.ws/grok --source "$OUT" --push
@@ -253,7 +260,7 @@ PR title: `Add three.ws (text or photo to 3D models and rigged avatars, CC0 asse
 
 - Plugin name: three-ws
 - Type: remote source
-- Source URL + pinned SHA: https://github.com/three-ws/three-ws-grok.git @ 179da58ef0ed3eceae141b77292e683a2224b3da
+- Source URL + pinned SHA: https://github.com/three-ws/three-ws-grok.git @ 7e87201de71971e07e17bfe76219b2592da42c1c
 - Homepage: https://three.ws/grok
 
 Adds a 3D studio to Grok Build: text or a photo to a textured GLB or a rigged avatar,

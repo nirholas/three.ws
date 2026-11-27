@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stablyai/orca/main/docs/schemas/plugins/orca-plugin.v2.schema.json",
+  "manifestVersion": 2,
+  "execution": "declarative",
+  "id": "three-ws",
+  "name": "three.ws 3D Studio",
+  "version": "1.0.0",
+  "description": "Gives the agents Orca launches the three.ws 3D studio over MCP: search a catalog of ready-made 3D assets, check renders, and (with a free three.ws account) make, refine and rig a model.",
+  "author": { "name": "three.ws", "url": "https://three.ws" },
+  "repository": "https://github.com/nirholas/three.ws",
+  "license": "Apache-2.0",
+  "homepage": "https://three.ws/docs",
+  "engines": { "orca": ">=1.4.276" },
+  "contributes": {
+    "mcpServers": [{ "name": "three-ws", "url": "https://three.ws/api/mcp-studio" }]
+  },
+  "capabilities": []
+}
