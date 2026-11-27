@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-27T20:38:34.840Z",
+	"generated_at": "2026-11-27T20:46:15.151Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -277,6 +277,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "The six Grok examples show real runs, and the curl one reads xAI's answers",
+			"summary": "All six Grok examples were run live with a working xAI key, and each README now shows what came back: the tool call Grok made to three.ws, the model and viewer link, and the reply. The curl example used to stop on every answer from xAI, good or bad. It now prints the model on success and xAI's own message on an error. The Grok Build plugin page shows a real turn where Grok searched the three.ws catalog.",
+			"link": "/grok#build-examples",
+			"tags": [
+				"fix",
+				"docs"
 			]
 		},
 		{

@@ -207,6 +207,14 @@
 			<description>When Forge falls back to NVIDIA's hosted TRELLIS, a result is now checked to be a real 3D model before the job is marked done, so an error page or a half-downloaded file can no longer show up as a finished creation. Large results delivered by redirect or zip are fetched safely. When NVIDIA throttles the lane, Forge waits as long as NVIDIA asks, instead of a fixed two minutes, and stops polling a throttled job until the wait is over. A dead key or an empty account takes the lane out of rotation for five minutes instead of being retried by every request, and the same rules now apply to the ChatGPT Forge pipeline.</description>
 		</item>
 		<item>
+			<title>The six Grok examples show real runs, and the curl one reads xAI's answers</title>
+			<link>https://three.ws/grok#build-examples</link>
+			<guid isPermaLink="false">2026-11-27:The six Grok examples show real runs, and the curl one reads xAI's answers</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>All six Grok examples were run live with a working xAI key, and each README now shows what came back: the tool call Grok made to three.ws, the model and viewer link, and the reply. The curl example used to stop on every answer from xAI, good or bad. It now prints the model on success and xAI's own message on an error. The Grok Build plugin page shows a real turn where Grok searched the three.ws catalog.</description>
+		</item>
+		<item>
 			<title>Your own Meshy, Tripo, Rodin and Stability key is checked before use, never leaks, and failures say what happened</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-27:Your own Meshy, Tripo, Rodin and Stability key is checked before use, never leaks, and failures say what happened</guid>
