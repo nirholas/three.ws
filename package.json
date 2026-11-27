@@ -815,7 +815,7 @@
 		"@upstash/redis": "^1.40.0",
 		"@wallet-standard/app": "^1.1.1",
 		"@walletconnect/ethereum-provider": "^2.24.0",
-		"@x402/axios": "^2.31.0",
+		"@x402/axios": "^2.32.0",
 		"@x402/core": "^2.32.0",
 		"@x402/evm": "^2.31.0",
 		"@x402/extensions": "^2.31.0",
