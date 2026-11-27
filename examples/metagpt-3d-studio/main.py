@@ -133,6 +133,20 @@ def fetch_png(url: str) -> bytes:
     return body
 
 
+def xai_preflight(key: str) -> None:
+    """One authenticated read against xAI before the team starts. MetaGPT retries every failed
+    call six times with backoff, so a wrong key would otherwise burn a minute in retries."""
+    req = urllib.request.Request(f"{XAI_BASE_URL}/models", headers={"authorization": f"Bearer {key}", "user-agent": "metagpt-3d-studio-example/1.0"})
+    try:
+        urllib.request.urlopen(req, timeout=30).read()
+    except urllib.error.HTTPError as err:
+        try:
+            detail = json.loads(err.read().decode()).get("error", "")
+        except ValueError:
+            detail = ""
+        raise RuntimeError(f"xAI answered HTTP {err.code}: {detail}") from err
+
+
 def check() -> int:
     studio = Studio()
     server = studio.connect()
@@ -181,6 +195,7 @@ class Run:
         self.done = False
         self.rejected: list[str] = []
         self.final: dict | None = None
+        self.error: str | None = None
 
 
 RUN: Run | None = None
@@ -220,10 +235,14 @@ def build_team(brief: str):
 
     async def ask(action: Action, prompt: str, images: list[bytes] | None = None) -> str:
         RUN.llm_calls += 1
-        if not images:
-            return await action.llm.aask(prompt)
-        message = action.llm._user_msg_with_imgs(prompt, [base64.b64encode(i).decode() for i in images])
-        return await action.llm.acompletion_text([message])
+        try:
+            if not images:
+                return await action.llm.aask(prompt)
+            message = action.llm._user_msg_with_imgs(prompt, [base64.b64encode(i).decode() for i in images])
+            return await action.llm.acompletion_text([message])
+        except Exception as err:  # MetaGPT's Team swallows role errors: keep the first one to report it
+            RUN.error = RUN.error or f"xAI call failed: {getattr(err, 'message', err)}"
+            raise
 
     async def ask_json(action: Action, prompt: str, images: list[bytes] | None = None) -> dict:
         reply = await ask(action, prompt, images)
@@ -276,13 +295,16 @@ def build_team(brief: str):
                 )
                 verdict = await ask_json(
                     self,
-                    "You are the Modeler of a 3D studio. Pick the catalog asset that best fits this spec, judging from titles and tags. "
-                    "If none is a plausible match, pick none.\n\n"
+                    "You are the Modeler of a 3D studio. Pick the catalog asset closest to this spec, judging from titles and tags, "
+                    "and say whether it is close enough to ship.\n\n"
                     f"Spec: {json.dumps({k: spec[k] for k in ('subject', 'must_have', 'must_not')})}\n\nCandidates:\n{listing}\n\n"
-                    'Answer with one JSON object: {"pick": <number or null>, "why": "<one sentence>"}',
+                    'Answer with one JSON object: {"pick": <number>, "close_enough": true|false, "why": "<one sentence>"}',
                 )
                 if isinstance(verdict.get("pick"), int) and 1 <= verdict["pick"] <= len(items):
-                    chosen = {**items[verdict["pick"] - 1], "source": "catalog", "why": verdict.get("why", "")}
+                    closest = {**items[verdict["pick"] - 1], "source": "catalog", "why": verdict.get("why", "")}
+                    # Signed in, a poor fit is made instead; signed out, the closest goes to review as it is.
+                    if verdict.get("close_enough") or not studio.signed_in:
+                        chosen = closest
             if chosen is None and studio.signed_in:
                 made = studio.forge(spec["forge_prompt"])
                 data = made["data"]
@@ -297,7 +319,7 @@ def build_team(brief: str):
                 else:
                     return {"error": f"forge_free did not finish: {data.get('message') or data.get('status') or made['content'][:1]}"}
             if chosen is None:
-                return {"error": "nothing in the free catalog fits, and generation needs a free THREE_WS_API_KEY (https://three.ws/dashboard/api-keys)"}
+                return {"error": f"the free catalog has nothing for '{spec['query']}', and generation needs a free THREE_WS_API_KEY (https://three.ws/dashboard/api-keys)"}
             chosen["viewer_url"] = chosen.get("viewer_url") or viewer_url(chosen["url"], chosen["title"])
             return {"model": chosen, "spec": spec}
 
@@ -348,6 +370,14 @@ def build_team(brief: str):
             news = await super()._observe()
             return 0 if RUN.done else news
 
+        async def run(self, with_message=None):
+            try:
+                return await super().run(with_message)
+            except Exception as err:  # MetaGPT's Team would swallow this and report "out of rounds"
+                RUN.error = RUN.error or f"{self.profile} failed: {type(err).__name__}: {err}"
+                RUN.done = True
+                return None
+
     class ArtDirector(Guard):
         name: str = "Ada"
         profile: str = "ArtDirector"
@@ -365,7 +395,7 @@ def build_team(brief: str):
             print(f"role     {self.profile} writes the spec" if review is None else f"role     {self.profile} rewrites the spec after: {review['fault']}", flush=True)
             spec = await self.rc.todo.run(brief, review)
             print(f"spec     {spec['subject']} | query '{spec['query']}' | kind {spec.get('kind')}", flush=True)
-            return Message(content=json.dumps(spec), role=self.profile, cause_by=WriteSpec, send_to="Modeler")
+            return Message(content=json.dumps(spec), role=self.profile, cause_by=WriteSpec)
 
     class Modeler(Guard):
         name: str = "Milo"
@@ -387,9 +417,10 @@ def build_team(brief: str):
                 RUN.rejected.append(out["model"]["url"])
             else:
                 print(f"model    none: {out['error']}", flush=True)
+            out.setdefault("spec", spec)
             out.setdefault("model", None)
             out.setdefault("error", None)
-            return Message(content=json.dumps(out), role=self.profile, cause_by=Source, send_to="Reviewer")
+            return Message(content=json.dumps(out), role=self.profile, cause_by=Source)
 
     class Reviewer(Guard):
         name: str = "Rae"
@@ -409,7 +440,7 @@ def build_team(brief: str):
             print(f"review   {'PASS' if review['pass'] else 'FAIL'}{'' if review['pass'] else ': ' + str(review['fault'])}", flush=True)
             if review["pass"] or RUN.iteration >= MAX_ITERATIONS:
                 finish(review)
-            return Message(content=json.dumps(review), role=self.profile, cause_by=Review, send_to="ArtDirector")
+            return Message(content=json.dumps(review), role=self.profile, cause_by=Review)
 
     logger.remove()
     logger.add(sys.stderr, level="WARNING")
@@ -424,6 +455,7 @@ def run(brief: str) -> int:
     if not xai_key():
         print("error    set XAI_API_KEY (create one at https://console.x.ai), or run with --check", file=sys.stderr)
         return EXIT_NO_KEY
+    xai_preflight(xai_key())
     studio = Studio()
     studio.connect()
     RUN = Run(studio)
@@ -439,7 +471,7 @@ def run(brief: str) -> int:
     asyncio.run(team.run(n_round=MAX_ROUNDS, idea=brief))
     final = RUN.final
     if final is None or final.get("model") is None:
-        reason = (final or {}).get("fault") or "the team ran out of rounds before a review"
+        reason = RUN.error or (final or {}).get("fault") or "the team ran out of rounds before a review"
         print(f"error    no model delivered: {reason}", file=sys.stderr)
         return EXIT_FAILED
     model = final["model"]
