@@ -1,5 +1,7 @@
 # Forge hardening 19: Prove the Hunyuan3D and Hugging Face lanes work as fallbacks and obey their region rules
 
+**Status (2026-11-27):** code, tests and docs are done and committed locally. Remaining, all owner actions: set the load balancer custom request header `X-Client-Region:{client_region}` (docs/ops/gcp-production.md, "Client geo header"; until it exists every caller is an unknown country and the Hunyuan and Hugging Face lanes serve nobody), deploy to ship the region and quota fixes, and confirm the Replicate reconstruct model env.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/119-forge-hardening-19-hunyuan-hf-lanes-and-regions.md`.
 
 **Priority:** P1. **Area:** Hunyuan3D and Hugging Face lanes, region rules. **Dev port:** 4119. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
