@@ -132,6 +132,19 @@ import {
 	dailyPaidAllowed,
 	SCALE_LIMITS,
 } from './_lib/forge-scale.js';
+import {
+	REFERENCE_LINE,
+	coalesceOwnerFor,
+	gateReferenceRung,
+	lineIdentityFor,
+	lineLeave,
+	lineStatus,
+	lineStatusBody,
+	needsReferenceRung,
+	referenceServed,
+	referenceThrottled,
+	releaseLinePlace,
+} from './_lib/forge-line.js';
 import { env as _env } from './_lib/env.js';
 import { verifyTierPass, TIERS } from './_lib/three-tier.js';
 import { requireFeatureAccess } from './_lib/require-three.js';
@@ -1168,13 +1181,19 @@ async function runHfImageLane({
 // having to remember to pass it.
 async function startJob(req, res) {
 	const body = await readJson(req, 8_000).catch(() => null);
-	return runWithCreationContext(
-		{ destination: body?.destination, internal: isShowcaseSeedRequest(req), source: body?.source, visibility: body?.visibility },
-		() => startJobWithBody(req, res, body),
-	);
+	// This request's place in the waiting line, if it takes one (_lib/forge-line.js).
+	const line = { identity: null, inLine: false, prepaid: false, served: false, arrivedAt: Date.now() };
+	try {
+		return await runWithCreationContext(
+			{ destination: body?.destination, internal: isShowcaseSeedRequest(req), source: body?.source, visibility: body?.visibility },
+			() => startJobWithBody(req, res, body, line),
+		);
+	} finally {
+		await releaseLinePlace(line).catch(() => {});
+	}
 }
 
-async function startJobWithBody(req, res, body) {
+async function startJobWithBody(req, res, body, line) {
 	const ip = clientIp(req);
 
 	// Two reconstruction modes share this path:
@@ -1460,9 +1479,25 @@ async function startJobWithBody(req, res, body) {
 		}
 	}
 
+	// The waiting line: while the reference-image rung is saturated a text request
+	// gets a real place and wait instead of a race, before any allowance is spent,
+	// and a background job yields. A turn whose last attempt was already charged
+	// is not charged again.
+	line.identity = lineIdentityFor({
+		accountId: isInternalSeedRequest(req) ? null : await sessionUserIdFromReq(req),
+		onBehalf: isInternalSeedRequest(req) ? req.headers['x-forge-on-behalf'] : null,
+		clientKey: clientKeyFrom(req),
+		ipHash: hashIp(ip),
+	});
+	if (needsReferenceRung({ isImageMode, path, backendId, byok: Boolean(BYOK_PROVIDER_FACTORIES[BACKENDS[backendId]?.byok]) })) {
+		const gate = await gateReferenceRung(line.identity, { platformJob: isShowcaseSeedRequest(req) });
+		if (gate.answer) return json(res, gate.answer.status, gate.answer.body, gate.answer.headers);
+		Object.assign(line, { inLine: gate.inLine, prepaid: gate.prepaid });
+	}
+
 	const backendMeta = BACKENDS[backendId];
 	const isFreeLane = backendMeta?.free === true;
-	if (!isInternalSeedRequest(req)) {
+	if (!isInternalSeedRequest(req) && !line.prepaid) {
 		// Per account: a person keeps their allowance across networks, and a
 		// shared IP (an office, a campus, a mobile carrier) no longer pools
 		// strangers into one bucket.
@@ -2103,6 +2138,7 @@ async function startJobWithBody(req, res, body) {
 				prompt,
 				images: isImageMode ? imageUrls : null,
 				options: opts,
+				owner: coalesceOwnerFor({ visibility: body?.visibility, showcase: isShowcaseSeedRequest(req), identity: line.identity }),
 			});
 			const existing = forceRegenerate ? null : await coalesceInFlight(requestHash);
 			if (existing) {
@@ -2203,6 +2239,7 @@ async function startJobWithBody(req, res, body) {
 				skipNim: nimGatewayDegraded,
 				seed: opts.seed ?? undefined,
 			});
+			await referenceServed(line).catch(() => {});
 			referenceImageUrl = synthesized.imageUrl;
 			textToImageModel = synthesized.model;
 			views = [referenceImageUrl];
@@ -2931,6 +2968,13 @@ async function startJobWithBody(req, res, body) {
 		// such with a retry hint so the page can show a "busy, try again" state.
 		if (err?.code === 'rate_limited' || err?.providerStatus === 429) {
 			const retryAfter = typeof err?.retryAfter === 'number' ? err.retryAfter : 10;
+			// The reference rung refused with a stated wait: the person gets a real
+			// place in the waiting line (kept across attempts), not a race.
+			const byok = Boolean(BYOK_PROVIDER_FACTORIES[BACKENDS[backendId]?.byok]);
+			if (line.identity && !line.served && !isShowcaseSeedRequest(req) && needsReferenceRung({ isImageMode, path, backendId, byok })) {
+				const answer = await referenceThrottled(line, retryAfter).catch(() => null);
+				if (answer) return json(res, answer.status, answer.body, answer.headers);
+			}
 			res.setHeader('retry-after', String(retryAfter));
 			// A `queued` throttle is our own rate gate pacing the request to the
 			// upstream limit (not an upstream rejection): tell the user it's in line so
@@ -3627,10 +3671,29 @@ async function pollJob(req, res, jobId) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
-	if (!method(req, res, ['GET', 'POST'])) return;
+	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS' })) return;
+	if (!method(req, res, ['GET', 'POST', 'DELETE'])) return;
 
 	const url = new URL(req.url, 'http://localhost');
+
+	// ?line: the waiting line in front of the image step (_lib/forge-line.js). GET
+	// is a check-in that keeps the caller's place and says where they are; DELETE
+	// gives the place up (the page sends it when the person leaves).
+	if (url.searchParams.has('line')) {
+		const rl = await limits.mcp3dStatus(clientIp(req));
+		if (!rl.success) return rateLimited(res, rl);
+		const identity = lineIdentityFor({
+			accountId: await sessionUserIdFromReq(req),
+			clientKey: clientKeyFrom(req),
+			ipHash: hashIp(clientIp(req)),
+		});
+		if (req.method === 'DELETE') await lineLeave(REFERENCE_LINE, identity);
+		if (req.method === 'POST') return json(res, 405, { error: 'method_not_allowed', message: 'Use GET to check in or DELETE to leave.' });
+		return json(res, 200, lineStatusBody(await lineStatus(REFERENCE_LINE, identity)), { 'cache-control': 'private, no-store' });
+	}
+	if (req.method === 'DELETE') {
+		return json(res, 405, { error: 'method_not_allowed', message: 'DELETE is only for leaving the waiting line (?line=1).' });
+	}
 
 	if (req.method === 'POST') {
 		const isRig = (url.searchParams.get('action') || '').trim() === 'rig';

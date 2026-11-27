@@ -538,3 +538,78 @@ export function lineYieldAnswer(snapshot, { now = Date.now() } = {}) {
 		},
 	};
 }
+
+// ── Wiring helpers for the submit handler ───────────────────────────────────
+// Kept here so api/forge.js and api/gpt-forge.js carry one call per step instead
+// of the line's rules.
+
+// Who holds a place. A signed-in account first, so one person is one place on
+// every network and device; then a platform job acting for an outside person;
+// then the browser's forge client id; then the network.
+export function lineIdentityFor({ accountId = null, onBehalf = null, clientKey = null, ipHash = null } = {}) {
+	if (accountId) return `user:${accountId}`;
+	const behalf = Array.isArray(onBehalf) ? onBehalf[0] : onBehalf;
+	if (behalf) return `behalf:${String(behalf).slice(0, 200)}`;
+	if (clientKey) return `client:${clientKey}`;
+	return `ip:${ipHash || 'unknown'}`;
+}
+
+// Whether a request will paint its reference image on the shared text-to-image
+// ladder, the one step the line meters. Image-to-3D brings its own view; sketch,
+// native text-to-geometry, BYOK engines and the NIM draft lane never touch it.
+export function needsReferenceRung({ isImageMode, path, backendId, byok = false }) {
+	return !isImageMode && path !== 'sketch' && path !== 'geometry' && backendId !== 'nvidia' && !byok;
+}
+
+// Who may share an identical in-flight generation. A public model can be handed
+// to anyone who asks for the same thing; anything else is shared only with the
+// same person, so a private or unlisted result never reaches a stranger.
+export function coalesceOwnerFor({ visibility = null, showcase = false, identity }) {
+	return showcase || visibility === 'public' ? 'public' : identity;
+}
+
+// The gate a text request passes before it spends an allowance unit. Returns
+// { proceed: true, inLine, prepaid } or { answer: { status, headers, body } }.
+// A background (showcase) job never joins: it yields while anyone is waiting.
+export async function gateReferenceRung(identity, { platformJob = false, now = Date.now() } = {}) {
+	if (platformJob) {
+		const snap = await lineSnapshot(REFERENCE_LINE, { now });
+		return snap.active ? { answer: lineYieldAnswer(snap, { now }) } : { proceed: true, inLine: false, prepaid: false };
+	}
+	const d = await admitToLine(REFERENCE_LINE, identity, { now });
+	if (d.action === 'proceed') return { proceed: true, inLine: d.inLine, prepaid: Boolean(d.prepaid) };
+	return { answer: lineAnswer(d) };
+}
+
+// The reference step finished for a request (`line` is the handler's per-request
+// record). Frees the head place and records the serve the wait estimate is built
+// from. Later throttles in the same request (a reconstructor's own 429) are not
+// the line's to answer.
+export async function referenceServed(line) {
+	line.served = true;
+	if (line.inLine) {
+		line.inLine = false;
+		await lineServed(REFERENCE_LINE, line.identity);
+	}
+}
+
+// The reference rung refused this request with a stated wait. Keeps (or takes)
+// the person's place, marks the turn as paid, and returns the answer to send.
+export async function referenceThrottled(line, retryAfterSeconds) {
+	const decision = await lineThrottled(REFERENCE_LINE, line.identity, {
+		retryAfterSeconds,
+		joinedAt: line.arrivedAt,
+	});
+	line.inLine = false;
+	return lineAnswer(decision);
+}
+
+// The request ended without reaching the rung (refused earlier, or an error
+// before the reference step) while holding the head place: give it up so the
+// next person is not held behind a request that is gone.
+export async function releaseLinePlace(line) {
+	if (line.inLine && !line.served) {
+		line.inLine = false;
+		await lineLeave(REFERENCE_LINE, line.identity);
+	}
+}
