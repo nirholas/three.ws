@@ -4,6 +4,8 @@
 
 **Priority:** P0. **Area:** error handling, page copy. **Dev port:** 4113. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
 
+**Status (2026-11-27):** Built and committed (39d2098e9, 252820932, 77231c1c4): `npm run forge:error-codes` inventories 141 codes across the Forge endpoints, `src/forge-errors.js` gives each one copy, both pages and every result tool use it, and `tests/forge-error-copy.test.js` fails on any code without copy (shown failing with a made-up code, then removed). Six errors were checked in a real browser at 375px: each was announced, its action worked, nothing overflowed and a hostile provider message never reached the page. Remaining, owner: deploy (`npm run deploy:gcp:full`), then archive this order. Server-side, `api/forge.js` still puts raw provider text in `message` for generation_failed, rig_failed, invalid_key and insufficient_credits. The page no longer shows it, but any direct API caller does.
+
 ## Operating clause (binding)
 
 - Read `CLAUDE.md` at the repo root before anything else. It overrides this file wherever they disagree.
