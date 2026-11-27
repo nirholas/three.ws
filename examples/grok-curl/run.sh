@@ -13,6 +13,7 @@ set -euo pipefail
 
 MCP_URL="${THREE_WS_MCP_URL:-https://three.ws/api/mcp-studio}"
 API="${THREE_WS_API:-https://three.ws}"
+XAI_BASE_URL="${XAI_BASE_URL:-https://api.x.ai/v1}"
 MODEL="${XAI_MODEL:-grok-4.7}"
 OUT="${OUT:-model.png}"
 XAI_KEY="${XAI_API_KEY:-${GROK_API_KEY:-}}"
@@ -132,27 +133,37 @@ tool=$(jq -n --arg url "$MCP_URL" --arg auth "${THREE_WS_API_KEY:-}" '{
 ask="Use three-ws to find a chair in the free catalog, and if none fits, make $prop. A generation can come back pending with a job_id: collect it with check_job. When you have the model, reply with one line per field: 'GLB: <url>' and 'Viewer: <url>'."
 body=$(jq -n --arg model "$MODEL" --arg ask "$ask" --argjson tool "$tool" '{model: $model, input: [{role: "user", content: $ask}], tools: [$tool]}')
 
+# Sends one Responses API request and leaves xAI's answer in $response. Any
+# error answer (a status other than 200, or an "error" in the body) ends the
+# script with xAI's own message.
 grok() {
-	local payload="$1" res code
-	show "POST https://api.x.ai/v1/responses  authorization: Bearer <XAI_API_KEY>"
-	echo "$payload" | jq '(.tools[0].authorization |= if . then "<THREE_WS_API_KEY>" else . end)' >&2
-	res=$(curl -sS https://api.x.ai/v1/responses \
+	local payload="$1" res code message
+	show "POST $XAI_BASE_URL/responses  authorization: Bearer <XAI_API_KEY>"
+	echo "$payload" | jq 'if .tools[0].authorization then .tools[0].authorization = "<THREE_WS_API_KEY>" else . end' >&2
+	res=$(curl -sS "$XAI_BASE_URL/responses" \
 		-H 'content-type: application/json' \
 		-H "authorization: Bearer $XAI_KEY" \
-		-d "$payload" -w '\n%{http_code}')
+		-d "$payload" -w '\n%{http_code}') || { echo "error    could not reach xAI at $XAI_BASE_URL" >&2; exit 1; }
 	code="${res##*$'\n'}"
 	res="${res%$'\n'*}"
-	if [ "$code" != 200 ]; then
-		echo "error    xAI answered HTTP $code: $res" >&2
+	# xAI sends {"code", "error": "<message>"}; OpenAI-style bodies send {"error": {"message"}}.
+	message=$(printf '%s' "$res" | jq -r '.error // empty | if type == "object" then (.message // tojson) else tostring end' 2>/dev/null || true)
+	if [ "$code" != 200 ] || [ -n "$message" ]; then
+		[ -n "$message" ] || message=$(printf '%s' "$res" | tr -s '\r\n' '  ' | head -c 300)
+		echo "error    xAI answered HTTP $code: ${message:-an empty body}" >&2
 		exit 1
 	fi
-	printf '%s' "$res"
+	if ! printf '%s' "$res" | jq -e '.output | type == "array"' >/dev/null 2>&1; then
+		echo "error    xAI answered HTTP 200 without an output list: $(printf '%s' "$res" | tr -s '\r\n' '  ' | head -c 300)" >&2
+		exit 1
+	fi
+	response="$res"
 }
 
-response=$(grok "$body")
+grok "$body"
 for round in $(seq 1 "$MAX_ROUNDS"); do
-	echo "$response" | jq -r '.output[] | select(.type == "mcp_call") | "tool     \(.name) \(.arguments)"'
-	text=$(echo "$response" | jq -r '[.output[] | select(.type == "message") | .content[] | select(.type == "output_text") | .text] | join("\n")')
+	printf '%s' "$response" | jq -r '.output[] | select(.type == "mcp_call") | "tool     \(.name) \(.arguments)" + (if (.error // "") == "" then "" else "  failed: \(.error)" end)'
+	text=$(printf '%s' "$response" | jq -r '[.output[] | select(.type == "message") | .content[] | select(.type == "output_text") | .text] | join("\n")')
 	glb=$(printf '%s' "$text" | grep -oE 'https?://[^ )"]+\.glb(\?[^ )"]*)?' | head -1 || true)
 	if [ -n "$glb" ]; then
 		printf '\n%s\n\n' "$text"
@@ -162,10 +173,10 @@ for round in $(seq 1 "$MAX_ROUNDS"); do
 	fi
 	echo "round $round: no GLB yet, asking Grok to collect the job again in 20s"
 	sleep 20
-	id=$(echo "$response" | jq -r '.id')
+	id=$(printf '%s' "$response" | jq -r '.id')
 	next=$(jq -n --arg model "$MODEL" --arg id "$id" --argjson tool "$tool" \
 		'{model: $model, previous_response_id: $id, input: [{role: "user", content: "Call check_job on that job again. When it is done, reply with GLB: <url> and Viewer: <url>."}], tools: [$tool]}')
-	response=$(grok "$next")
+	grok "$next"
 done
 echo "error    no GLB after $MAX_ROUNDS rounds" >&2
 exit 1
