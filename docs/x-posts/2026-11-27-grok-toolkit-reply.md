@@ -65,5 +65,5 @@ All from [docs/grok-toolkit.md](../grok-toolkit.md), checked on 2026-11-27:
 
 - "Gave every repo 3D" and "covers all of them" mean a three.ws file, example or entry exists for each and was checked. Do not say "integrated with", "listed in", "merged" or "available in" for the marketplace, the cookbook or any directory until that listing is public.
 - Do not say any of these projects works with us, endorses us or partnered with us. Do not mention the Grok for Startups program in this reply.
-- Never tag @bot or @grok. No hashtags, no emoji, no dashes. Never name $THREE, a contract address, a price or trading.
+- Never tag @bot or @grok. No hashtags, no emoji, no dashes. Never mention any coin, contract address, price or trading.
 - Making, rigging or rendering views of a model needs a free three.ws account. "Free" is true; "no account" is true only for catalog search and the docs.

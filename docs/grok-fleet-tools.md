@@ -326,5 +326,5 @@ Already prepared, see `marketing/growth/submissions/agent-registries/openhands.m
 ## Existing three.ws surfaces to know about
 
 - `marketplace/plugins/three-ws-3d` (the Claude Code marketplace plugin) is not the right thing to hand to third-party tools. Its `mcp.json` also launches a second, payment-capable server and several of its skills describe paid lanes. Use the Grok Build plugin (`integrations/grok/three-ws`), the studio URL and the five skills above instead.
-- The top-level description in `.claude-plugin/marketplace.json` covers payments and trading as well as 3D, so it is not suitable as the description a third party sees.
+- The top-level description in `.claude-plugin/marketplace.json` covers more than 3D, so it is not suitable as the description a third party sees.
 - Two skill files fail YAML parsing in `npx skills` (named above).
