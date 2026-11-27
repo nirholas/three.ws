@@ -240,6 +240,18 @@ describe('restyleMaterialFromInstruction', () => {
 		expect(uploadedObjects).toHaveLength(0);
 	});
 
+	it('no_provider tells the caller what to do and never relays the provider’s own error text', async () => {
+		const { watsonxConfig } = await import('../../api/_lib/watsonx.js');
+		const { llmComplete } = await import('../../api/_lib/llm.js');
+		watsonxConfig.mockReturnValueOnce({ configured: false });
+		llmComplete.mockRejectedValueOnce(new Error('upstream 429 from provider-x: quota exceeded for org_abc123'));
+		const { restyleMaterialFromInstruction } = await import('../../api/_lib/material-studio-store.js');
+		const err = await restyleMaterialFromInstruction({ glbUrl: FIXTURE_URL, instruction: 'chrome' }).catch((e) => e);
+		expect(err.code).toBe('no_provider');
+		expect(err.message).not.toMatch(/provider-x|quota|org_abc123|429/);
+		expect(err.message).toMatch(/preset/i);
+	});
+
 	it('rejects a too-short instruction before any network call', async () => {
 		const { restyleMaterialFromInstruction } = await import('../../api/_lib/material-studio-store.js');
 		await expect(restyleMaterialFromInstruction({ glbUrl: FIXTURE_URL, instruction: 'x' })).rejects.toMatchObject({
