@@ -30,6 +30,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 
 MCP_URL = os.environ.get("THREE_WS_MCP_URL", "https://three.ws/api/mcp-studio")
 XAI_BASE_URL = os.environ.get("XAI_BASE_URL", "https://api.x.ai/v1")
@@ -38,7 +39,8 @@ REQUIRED_TOOLS = ["search_catalog", "look_at_model", "forge_free", "check_job"]
 DEFAULT_BRIEF = "a low-poly wooden chair for a cozy cabin scene"
 MAX_ITERATIONS = 2
 MAX_ROUNDS = 9  # Team.run cap: 3 roles x 2 iterations plus the Art Director's first pass
-FORGE_WAIT_S = 420
+FORGE_WAIT_S = 900  # one generation; a free-lane model took about five minutes on 2026-11-27
+FORGE_ATTEMPTS = 3  # generations started before giving up, when the server says to start again
 EXIT_OK, EXIT_FAILED, EXIT_NO_KEY, EXIT_REVIEW_FAILED = 0, 1, 2, 3
 
 
@@ -115,13 +117,42 @@ class Studio:
         return self.call("look_at_model", {"glb_url": glb, "views": views, "size": size})
 
     def forge(self, prompt: str) -> dict:
-        """forge_free, then check_job until the model is done. Needs a signed-in key."""
-        out = self.call("forge_free", {"prompt": prompt, "tier": "standard", "idempotency_key": f"metagpt-{int(time.time())}"})
+        """forge_free, then check_job until the model is done. Needs a signed-in key.
+
+        A busy generator answers `reason: generation_failed` and asks for a new
+        generation under a new idempotency_key (the same key replays the failed
+        job), so that is what happens, up to FORGE_ATTEMPTS generations inside one
+        FORGE_WAIT_S budget. Any other failure is returned as it is: starting again
+        does not fix a missing sign-in or a spent quota.
+        """
         deadline = time.time() + FORGE_WAIT_S
-        while out["data"].get("status") == "pending" and time.time() < deadline:
-            time.sleep(min(max(int(out["data"].get("eta_seconds") or 15), 5), 30))
-            out = self.call("check_job", {"job_id": out["data"]["job_id"]})
+        out: dict = {}
+        for attempt in range(1, FORGE_ATTEMPTS + 1):
+            out = self.call("forge_free", {"prompt": prompt, "tier": "standard", "idempotency_key": f"metagpt-{uuid.uuid4().hex}"})
+            while time.time() < deadline:
+                data = out["data"]
+                if data.get("status") == "pending" and data.get("job_id"):
+                    wait = data.get("eta_seconds") or 15
+                elif data.get("retryable") and data.get("job_id"):
+                    # Only this status check failed; the job itself is still running.
+                    wait = data.get("retry_after") or 10
+                else:
+                    break
+                time.sleep(min(max(int(wait), 5), 30))
+                out = self.call("check_job", {"job_id": data["job_id"]})
+            if out["data"].get("reason") != "generation_failed" or attempt == FORGE_ATTEMPTS or time.time() >= deadline:
+                break
+            time.sleep(5)
         return out
+
+
+def forge_fault(made: dict) -> str:
+    """Why a generation produced no model, in the server's words where it gave any."""
+    data = made["data"]
+    if data.get("status") == "pending":
+        return f"job {data.get('job_id')} was still rendering after {FORGE_WAIT_S}s (check_job collects it later)"
+    text = next((block.get("text") for block in made["content"] if block.get("text")), None)
+    return data.get("message") or text or data.get("status") or "the server gave no reason"
 
 
 def fetch_png(url: str) -> bytes:
@@ -317,7 +348,7 @@ def build_team(brief: str):
                         "why": "nothing in the catalog fit, so it was generated",
                     }
                 else:
-                    return {"error": f"forge_free did not finish: {data.get('message') or data.get('status') or made['content'][:1]}"}
+                    return {"error": f"forge_free did not finish: {forge_fault(made)}"}
             if chosen is None:
                 return {"error": f"the free catalog has nothing for '{spec['query']}', and generation needs a free THREE_WS_API_KEY (https://three.ws/dashboard/api-keys)"}
             chosen["viewer_url"] = chosen.get("viewer_url") or viewer_url(chosen["url"], chosen["title"])
