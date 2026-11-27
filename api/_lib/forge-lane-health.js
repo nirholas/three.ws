@@ -28,7 +28,7 @@
 // behaviour.
 
 import { BACKENDS, isSelfHostBackend } from './forge-tiers.js';
-import { providersInCooldown, markProviderCooldown } from './provider-health.js';
+import { providersInCooldown, markProviderCooldown, providerCooldownUntil } from './provider-health.js';
 
 // Self-host worker URLs are env-gated; the URL env is the lane's first requiresEnv
 // entry, the bearer is the shared GCP_RECONSTRUCTION_KEY (second entry).
@@ -46,9 +46,16 @@ export function laneCooldownKey(backendId) {
 // Record that a self-host lane just failed at submit, so subsequent requests on
 // any instance skip it until the window expires. Fire-and-forget; never throws.
 const LANE_COOLDOWN_SECONDS = 90;
+//
+// A failure never shortens a pause that is already standing: a quota pause of
+// half an hour must not be cut to ninety seconds by the next ordinary failure
+// landing on the same lane.
 export async function markLaneUnhealthy(backendId, seconds = LANE_COOLDOWN_SECONDS) {
 	if (!backendId) return;
-	await markProviderCooldown(laneCooldownKey(backendId), seconds).catch(() => {});
+	const key = laneCooldownKey(backendId);
+	const standing = await providerCooldownUntil(key);
+	if (standing && standing >= Date.now() + seconds * 1000) return;
+	await markProviderCooldown(key, seconds).catch(() => {});
 }
 
 // The free HuggingFace Spaces lane fails as a whole: every Space in its chain
@@ -61,6 +68,11 @@ export async function markLaneUnhealthy(backendId, seconds = LANE_COOLDOWN_SECON
 // the lane as down so the engine picker stops offering it, and the first
 // request after the window re-tests the Spaces for real.
 export const HF_LANE_COOLDOWN_SECONDS = 300;
+
+// When every Space in the chain failed on GPU quota, the cause is the quota, not
+// a blip: it stays exhausted for hours, so the lane is paused for much longer
+// and costs one caller a probe every half hour instead of every five minutes.
+export const HF_QUOTA_COOLDOWN_SECONDS = 1800;
 
 /** True while a recent chain-wide HuggingFace failure has the lane paused. */
 export async function hfLaneCooling() {

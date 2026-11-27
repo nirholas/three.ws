@@ -34,6 +34,7 @@
 
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
 import { foldSeed, HUNYUAN_SPACE_SEED_MAX } from '../_lib/forge-seed.js';
+import { markLaneUnhealthy, HF_QUOTA_COOLDOWN_SECONDS } from '../_lib/forge-lane-health.js';
 
 const HF_INFERENCE_TIMEOUT_MS = 280_000; // leave headroom for response framing
 // Per-call deadlines. The SSE read is bounded by HF_INFERENCE_TIMEOUT_MS in
@@ -602,6 +603,7 @@ export function createRegenProvider() {
 						api: err.apiName || target.api,
 						message: err.message || 'unknown error',
 						status: err.status,
+						quotaLike: Boolean(err.quotaLike),
 					});
 					// Continue to next Space.
 				}
@@ -610,9 +612,14 @@ export function createRegenProvider() {
 			const summary = failures
 				.map((f) => `${f.space} → ${f.message}`)
 				.join(' | ');
+			// Every Space out of GPU quota is a long outage, not a blip: pause the
+			// shared lane for the quota window so no other caller pays the same
+			// round trips (the handler's own shorter pause cannot shorten it).
+			const quotaExhausted = failures.length > 0 && failures.every((f) => f.quotaLike);
+			if (quotaExhausted) await markLaneUnhealthy('huggingface', HF_QUOTA_COOLDOWN_SECONDS);
 			throw Object.assign(
 				new Error(`all ${chain.length} huggingface Space(s) failed: ${summary}`),
-				{ code: 'all_providers_failed', status: 502, failures },
+				{ code: 'all_providers_failed', status: 502, failures, quotaExhausted },
 			);
 		},
 
