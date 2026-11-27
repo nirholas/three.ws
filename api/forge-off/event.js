@@ -25,6 +25,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { hashClient, forgeStoreEnabled } from '../_lib/forge-store.js';
 import {
 	activeDay,
+	boardWindow,
 	eventPhase,
 	getEvent,
 	isValidSlug,
@@ -43,7 +44,6 @@ import {
 	votedBy,
 } from '../_lib/forge-off-standings.js';
 
-const BOARD_RE = /^(?:day-(\d{1,2})|overall)$/;
 const FULL_BOARD = 24;
 
 function rulesPayload() {
@@ -91,17 +91,13 @@ export default wrap(async (req, res) => {
 	const boardParam = url.searchParams.get('board');
 	let board = null;
 	if (boardParam !== null) {
-		const m = BOARD_RE.exec(boardParam.trim());
-		const day = m && m[1] ? event?.days.find((d) => d.index === Number(m[1])) : null;
-		if (!event || !m || (m[1] && !day)) {
+		board = boardWindow(event, boardParam.trim());
+		if (!board) {
 			return json(res, 400, {
 				error: 'invalid_board',
 				message: event ? `board must be overall or day-1 to day-${event.days.length}.` : 'board needs an event slug.',
 			});
 		}
-		board = day
-			? { key: `day-${day.index}`, from: day.start, to: day.end }
-			: { key: 'overall', from: event.start, to: event.end };
 	}
 
 	if (!forgeStoreEnabled()) {

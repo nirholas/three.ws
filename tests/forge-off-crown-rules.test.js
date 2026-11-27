@@ -113,7 +113,7 @@ vi.mock('../api/_lib/db.js', () => ({
 	isDbUnavailableError: () => false,
 }));
 vi.mock('../api/_lib/rate-limit.js', () => ({
-	limits: { publicIp: vi.fn(async () => ({ success: true })) },
+	limits: { publicIp: vi.fn(async () => ({ success: true })), forgeVote: vi.fn(async () => ({ success: true })) },
 	clientIp: vi.fn(() => '127.0.0.1'),
 }));
 vi.mock('../api/_lib/cron-auth.js', () => ({ requireCron: () => true }));
@@ -141,6 +141,7 @@ const { castVote, hashClient } = await import('../api/_lib/forge-store.js');
 const eventCrown = (await import('../api/cron/forge-off-event-crown.js')).default;
 const weeklyCrown = (await import('../api/cron/forge-off-crown.js')).default;
 const eventApi = (await import('../api/forge-off/event.js')).default;
+const voteApi = (await import('../api/forge-vote.js')).default;
 
 const SLUG = 'ibm-forge-off-open';
 const EVENT = getEvent(SLUG);
@@ -393,5 +394,44 @@ describe('castVote eligibility', () => {
 		expect(await castVote({ creationId: blocked.id, voterKey })).toBeNull();
 		expect(await castVote({ creationId: unlisted.id, voterKey })).toBeNull();
 		expect(await castVote({ creationId: pub.id, voterKey })).toMatchObject({ voted: true, voteCount: 1 });
+	});
+});
+
+describe('POST /api/forge-vote from an event board', () => {
+	async function post(body, at) {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(new Date(at));
+		const res = mkRes();
+		const req = { method: 'POST', url: '/api/forge-vote', headers: { 'content-type': 'application/json', 'x-forge-client': 'browser-1' }, body, on() {}, destroy() {} };
+		await voteApi(req, res);
+		vi.useRealTimers();
+		return { status: res.statusCode, body: JSON.parse(res.body) };
+	}
+
+	it('accepts a vote one second before the board closes and refuses one at the close', async () => {
+		const a = creation();
+		const ok = await post({ creation_id: a.id, event: SLUG, board: 'day-1' }, ms(DAY1.end) - 1000);
+		expect(ok.status).toBe(200);
+		const late = await post({ creation_id: a.id, event: SLUG, board: 'day-1', vote: false }, ms(DAY1.end));
+		expect(late.status).toBe(409);
+		expect(late.body).toMatchObject({ error: 'voting_closed', closes_at: DAY1.end.toISOString() });
+		expect(rawCount(a.id)).toBe(1);
+	});
+
+	it('refuses a vote on a board that has not opened, and keeps the overall board open until the event ends', async () => {
+		const a = creation();
+		const early = await post({ creation_id: a.id, event: SLUG, board: 'day-2' }, ms(DAY1.end) - 1000);
+		expect(early.status).toBe(409);
+		expect(early.body.error).toBe('voting_not_open');
+		const overall = await post({ creation_id: a.id, event: SLUG, board: 'overall' }, ms(EVENT.end) - 1000);
+		expect(overall.status).toBe(200);
+		const after = await post({ creation_id: a.id, event: SLUG, board: 'overall' }, ms(EVENT.end));
+		expect(after.status).toBe(409);
+	});
+
+	it('rejects an unknown event or board', async () => {
+		const a = creation();
+		expect((await post({ creation_id: a.id, event: 'no-such-event', board: 'day-1' }, ms(DAY1.start))).status).toBe(404);
+		expect((await post({ creation_id: a.id, event: SLUG, board: 'day-9' }, ms(DAY1.start))).status).toBe(400);
 	});
 });

@@ -133,6 +133,17 @@ export function closedDays(event, ref = new Date()) {
 	return event.days.filter((d) => d.end.getTime() <= t);
 }
 
+// One board's [from, to) window: `day-<n>` (that UTC day) or `overall` (the
+// whole event). Votes for a board are accepted and counted only inside it.
+// Null for a key the event does not have.
+export function boardWindow(event, key) {
+	if (!event || typeof key !== 'string') return null;
+	if (key === 'overall') return { key, from: event.start, to: event.end };
+	const m = /^day-(\d{1,2})$/.exec(key);
+	const day = m ? event.days.find((d) => d.index === Number(m[1])) : null;
+	return day ? { key, from: day.start, to: day.end } : null;
+}
+
 // The event to show by default: the live one, else the next upcoming. Null
 // between events: an ended event is reached by its own slug (and is listed with
 // its winners on the "no event right now" view), never shown as if current.
