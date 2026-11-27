@@ -10,7 +10,7 @@ import { sql } from './db.js';
 /** The creation a keep applies to: a finished row with a durable file, or null. */
 export async function loadKeepableCreation(creationId) {
 	const [row] = await sql`
-		select id, tier, glb_url, status
+		select id, tier, glb_url, status, visibility
 		from forge_creations
 		where id = ${creationId} and status = 'done' and glb_url is not null
 		limit 1

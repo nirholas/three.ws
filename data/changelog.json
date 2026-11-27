@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "A private Forge model now stays private on every page, and old job links stop working",
+			"summary": "A model you set to private could still be liked, commented on, counted and downloaded by anyone who had its link. Now every one of those answers exactly like a model that does not exist, and only you can open, keep, comment on or download it. A job link from a generation expires after seven days, so one left in a log or a shared message stops being useful. A Tripo completion notice can no longer finish a job that belongs to a different provider, and the file it points at must be a public https address, so it cannot be aimed at an internal one.",
+			"tags": ["fix", "security"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "Every Forge error now says what happened and what to do next",
 			"summary": "When something goes wrong in Forge, the message now says in plain words what happened and what you can do about it, for every error Forge can return: making a model, uploading a photo, rigging, styling, remeshing and the other tools on a finished model. Your prompt and settings are always kept. A provider's raw error text, internal addresses and anything that looks like a key never reach the page. An error Forge does not recognise still gets an honest message with a short reference you can quote to support. Screen readers now hear every error, including the high demand, limit and storage notices.",
 			"tags": ["fix", "improvement"],

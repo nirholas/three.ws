@@ -650,6 +650,19 @@ with the Generate node's current engine, quality and controls.
 - Rate limits are per account on the shared 3D generation buckets (per client IP only for a caller without an account).
 - **Waits are told apart, never all called "the limit"**: both Forge pages classify every 429 and busy 503 with one shared module (`src/forge-throttle.js`). A **busy provider** (our own image-step pacing, a busy 3D engine, the free engines at capacity, a transient 503) says it is not a limit on your account, counts down the server's own `retry_after`, keeps your prompt and settings, and retries once by itself when the countdown ends (you can cancel it; a refused retry falls back to a manual countdown and never loops). The **account limit** (`ratelimit-*` headers) says when it resets, at your local time, and that nothing was charged. The **paid daily cap** (`daily_limit_reached`) says paid engines reset at midnight UTC and offers a free engine, since free engines stay open. A screen reader hears the state once at the start and once at the end, not every second.
 
+## Who can see, change or spend a creation
+
+A creation belongs to whoever made it, proven by one of three credentials: the hashed browser id (`x-forge-client`, never the shared anonymous bucket), the signed-in account, or the per-creation manage token (`x-forge-manage-token`). Every read of a private model, and every change, delete, keep, vote or comment, checks one of them against the row. A caller who is not the owner gets the same answer as for an id that does not exist, so nothing confirms that a private model is there.
+
+- **Private** models are invisible to everyone but the owner on `/api/forge-creation`, `/api/forge-keep`, `/api/forge-vote`, `/api/forge-comments`, `/api/forge-og` and `/api/forge-share`.
+- **Job handles** (`f1.` tokens) are HMAC-signed with `JWT_SECRET` and expire seven days after they are minted. Handles minted before expiry existed stay valid, so a deploy never strands a running job. The expiry is signed, so it cannot be extended.
+- **Manage tokens** (`fm1.`) are signed per creation and do not expire, by design: they are the only credential a browser without an account has to delete or hide its own model later.
+- **Your own provider key** (`x-forge-provider-key` or `provider_key`) is used for that request only. It is sent to the provider's own API host as a bearer header, and is never stored, logged, returned, or kept in the idempotency record (which holds a body hash and the response).
+- **Provider callbacks** (`/api/forge/webhook/tripo`) are verified by HMAC with a five minute replay window and a one-time delivery claim. A callback can act only on a job whose backend is Tripo, and the file it names must be a public https address (no userinfo, no internal host, no DNS answer that is an internal address).
+- **Cookie-authenticated writes** that change shared content (comments) require a CSRF token tied to the account.
+
+The two-account tests that pin all of this are in `tests/api/forge-ownership-security.test.js`.
+
 ## Cost preview and pay-to-keep
 
 `GET /api/forge-quote` is a public, no-spend preview of what a generation costs before you press Generate. Query: `path` (`image`, `geometry`, `sketch`; default `image`), `tier` (`draft`, `standard`, `high`), optional `backend`, `images`, `own_key`, `gameready`, or `table=1` for every tier at once. Every figure comes from the same tier and catalog code the generator charges from ([api/_lib/forge-tiers.js](../api/_lib/forge-tiers.js), [api/_lib/pricing/catalog.js](../api/_lib/pricing/catalog.js)), so the preview cannot drift from the bill. The `/forge` page shows it as a line under the estimate and refreshes it as you change tier, engine or options.

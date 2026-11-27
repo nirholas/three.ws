@@ -1943,13 +1943,15 @@ export function forgeOffWeekStart(ref = new Date()) {
 export async function castVote({ creationId, voterKey, ipHash = null }) {
 	if (!forgeStoreEnabled() || !creationId || !voterKey) return null;
 	try {
-		// Only public, finished, non-rejected creations are votable — the same
-		// bar the board and showcase render. Blocks votes on nonexistent or
-		// private/failed ids before any write.
+		// Only finished, non-rejected creations that are not private are votable.
+		// A private model must answer exactly like a missing id (no vote, no
+		// count), so its existence is not confirmed to a stranger holding the
+		// id. Blocks votes on nonexistent, private and failed ids before any write.
 		const eligible = await sql`
 			select id from forge_creations
 			where id = ${creationId} and status = 'done' and glb_url is not null
 				and (outcome is null or outcome != 'rejected')
+				and (visibility is null or visibility <> 'private')
 			limit 1
 		`;
 		if (eligible.length === 0) return null;
@@ -1982,10 +1984,12 @@ export async function removeVote({ creationId, voterKey }) {
 			delete from forge_votes
 			where creation_id = ${creationId} and voter_key = ${voterKey}
 		`;
+		// A private model's tally is never returned: the update skips it, so the
+		// answer matches a pruned or nonexistent id.
 		const rows = await sql`
 			update forge_creations
 			set vote_count = (select count(*) from forge_votes where creation_id = ${creationId})
-			where id = ${creationId}
+			where id = ${creationId} and (visibility is null or visibility <> 'private')
 			returning vote_count
 		`;
 		// No returned row → creation was pruned; report a zeroed, un-voted state.
