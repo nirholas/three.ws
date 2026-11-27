@@ -191,7 +191,10 @@
 		function changeBadge(change) {
 			if (!change) return '';
 			const tone = change === 'same' ? 'flat' : change.startsWith('-') ? 'better' : 'worse';
-			return `<span class="ff-delta ${tone}">${esc(change)}</span>`;
+			const said = change === 'new' ? 'none in the previous window'
+				: change === 'same' ? 'same as the previous window'
+				: `${change.slice(1)} ${change.startsWith('-') ? 'fewer' : 'more'} than the previous window`;
+			return ` <span class="ff-delta ${tone}" title="${esc(said)}" aria-label="${esc(said)}">${esc(change)}</span>`;
 		}
 
 		function topProblemsSection(d) {
