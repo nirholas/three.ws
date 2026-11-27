@@ -42,6 +42,13 @@ The portal still holds the 2026-10-25 Technical Details, so re-paste the 803-cha
 below. Evidence, the reviewer walkthrough, the ranked blockers and the draft reply with a
 pre-send checklist are in [nvidia-reply-2026-11-jiyeon.md](./nvidia-reply-2026-11-jiyeon.md).
 
+**2026-11-27: reply sent.** The owner answered App Publishing the same day: yes to the
+listing, product name "Forge: AI 3D Model Generator" at `https://three.ws/forge`. The reply
+says the portal record is renamed, so the portal must hold the values in section 1 below:
+the new name, the 489-character description, the 803-character Technical Details, and "Do
+not share" unchecked. The text as sent is in
+[nvidia-reply-2026-11-jiyeon.md](./nvidia-reply-2026-11-jiyeon.md#sent-reply-2026-11-27).
+
 **Catalog checks since the save:**
 
 - 2026-11-02: the Inception startup catalog search for `three` returns 4 items (Deepwave

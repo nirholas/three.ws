@@ -32,6 +32,12 @@ The Inception portal has no "publish to the catalog" control. A product record m
   with a page that uses it? The record said "three.ws 3D AI Studio", but /forge only said
   "Forge". Answer and send steps in
   [App Publishing reply, 2026-11-25](#app-publishing-reply-2026-11-25).
+- **App Publishing reply sent:** 2026-11-27, reply-all from support@three.ws on Jiyeon's
+  message (received 2026-11-25, 1:03 PM, from inceptionprogram@nvidia.com with
+  AppPublishingRequests copied; the 2026-11-24 date is Cassandra's forward to that team).
+  It answers yes to the listing and names the product "Forge: AI 3D Model Generator" at
+  https://three.ws/forge. The text as sent is under
+  [Sent, 2026-11-27](#sent-2026-11-27). No further email is due until NVIDIA answers.
 
 ## What the reply changed
 
@@ -422,6 +428,50 @@ Step 1 below is already satisfied: production serves the new name without anothe
 4. Record the send date in the header bullets at the top of this doc. Then, once a month,
    run `node scripts/nvidia-apps-catalog-pull.mjs --inception --find three.ws` to see
    whether the entry is live.
+
+### Sent, 2026-11-27
+
+The owner sent a shorter reply than the draft above: the two answers, a note that making a
+model needs a free account (the 2026-09-04 email in the same thread says "no signup"), and
+an offer of a test login. If NVIDIA takes up that offer, create the login the same day.
+
+```text
+Hi Jiyeon,
+
+Thank you for reviewing our record, and for the careful read of the page.
+
+1. Yes, we would be glad to be listed in the NVIDIA Accelerated Apps Catalog.
+
+2. The exact product name is "Forge: AI 3D Model Generator". You were right that the old
+portal name did not appear on the site. The name is now the heading and browser title of
+https://three.ws/forge, and I have renamed the portal record to match.
+
+One note for your reviewer: making a model on that page needs a free account. I am happy to
+set up a test login if that would help.
+
+Thank you again for your time. Please let me know if you need anything else from us.
+
+Best regards,
+
+Nicholas Resendez
+nich@three.ws
+three.ws
+```
+
+Two things the full thread showed that this record did not have before:
+
+- The thread lives in the support@three.ws mailbox, so replies go from there.
+- Cassandra's 2026-11-24 forward to App Publishing says "see the highlighted request below",
+  and the highlight is on the Inception Startup Showcase question from the 2026-10-25 reply,
+  not on the catalog. That is the likely reason Jiyeon first asked whether we want a catalog
+  listing at all. The Showcase question is still unanswered. It was left out of this reply on
+  purpose, to keep it on her two questions; raise it again only in answer to a later NVIDIA
+  message.
+
+The reply says the portal record is renamed. The portal edits (name, the 489-character
+description, the 803-character Technical Details, "Do not share" unchecked) are listed in
+[nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md#1-save-this-product-record).
+Next check: once a month, run the catalog pull above.
 
 ## After you send
 

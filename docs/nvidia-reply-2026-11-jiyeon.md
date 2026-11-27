@@ -9,8 +9,9 @@ It builds on the reply first drafted on 2026-11-25 in
 [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md#app-publishing-reply-2026-11-25)
 and the field copy in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md). That
 draft stands; this file re-checks it against production, corrects what drifted, and adds the
-checklist and a shorter variant. **Nothing here has been sent.** Sending, and editing the
-Inception portal, are the owner's actions.
+checklist and a shorter variant. **The reply was sent on 2026-11-27** (see
+[Sent reply, 2026-11-27](#sent-reply-2026-11-27)); the long and short drafts below are kept
+as the record of what was considered. Editing the Inception portal is the owner's action.
 
 Measured on production between 2026-11-26 23:40 UTC and 2026-11-27 00:05 UTC. Production ran
 commit `f0eed584f` (built 2026-11-26 06:57 UTC).
@@ -98,6 +99,45 @@ Nicholas Resendez, three.ws
 If the portal record has not been renamed yet, replace the second sentence with: "The product
 name is "Forge: AI 3D Model Generator", the heading of https://three.ws/forge. I am renaming
 the portal record to match today."
+
+## Sent reply, 2026-11-27
+
+Sent by the owner as a reply-all from support@three.ws (the mailbox the thread lives in) on
+Jiyeon's message of 2026-11-25. It is shorter than both drafts: she asked two questions, so
+the reply answers those, corrects the "no signup" line of the 2026-09-04 email with one
+sentence, and stops.
+
+```text
+Hi Jiyeon,
+
+Thank you for reviewing our record, and for the careful read of the page.
+
+1. Yes, we would be glad to be listed in the NVIDIA Accelerated Apps Catalog.
+
+2. The exact product name is "Forge: AI 3D Model Generator". You were right that the old
+portal name did not appear on the site. The name is now the heading and browser title of
+https://three.ws/forge, and I have renamed the portal record to match.
+
+One note for your reviewer: making a model on that page needs a free account. I am happy to
+set up a test login if that would help.
+
+Thank you again for your time. Please let me know if you need anything else from us.
+
+Best regards,
+
+Nicholas Resendez
+nich@three.ws
+three.ws
+```
+
+State of production at send time (2026-11-27, about 11:35 UTC, commit `f0eed584f`): the page
+title and heading carried the name, the catalog pull showed 0 matches for "three.ws" in 932
+entries, and `trellis_selfhost` stood at 95.2 percent over 7 days (856 done, 43 failed). Two
+runs of `npm run forge:walkthrough` at 11:16 and 11:20 UTC were both refused at the text
+prompt step with 429 "The 3D generator is busy right now", because the keyless image rung
+was throttled and every other image rung was down (blocker 2 below). The rung answered 200
+again by 11:35 UTC. Until a second image source serves, a reviewer who types a prompt at a
+busy moment will be asked to try again.
 
 ## What the reviewer sees (walkthrough, 2026-11-26)
 
