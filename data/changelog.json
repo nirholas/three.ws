@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "The Forge wait now tells the truth the whole way through",
+			"summary": "While a model builds, the Elapsed clock on Forge only ever moves forward. Before, it could jump back (from 0:40 to 0:05, for example) once the engine picked up the job. The time it quotes now comes from what the engine serving your job actually took on recent runs, counted from when your job reached that engine, so the art direction and reference image steps no longer make a normal run look slow. Before the engine has your job, the page says the build starts after these first steps. A GPU worker that is booting gets its own line, with the boot time the server gives, and the page says so plainly if the boot runs long. The build after a boot is never called slow because of the boot. Screen readers hear when a boot runs long, and the Studio page now follows the same rules, including stopping the turntable for people who asked for reduced motion. A slow 3D viewer download no longer prints an error either.",
+			"tags": ["fix", "improvement"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "Forge caching never hands back a wrong, failed, private or removed model",
 			"summary": "Forge answers a repeated prompt from its cache instead of generating again, and that cache is now strict about what it hands out. Every setting that changes the model (size, pose, aspect ratio, sampler settings, the prompt director and more) gives a separate entry, so you never get a model made with different settings. A failed, partial or rejected model is never cached. A model you did not make public is only ever served back to you. A model that is deleted or taken down stops being served at once, and a poll for it says it was removed. Two identical requests sent together, such as a double click or a second tab, now make one model instead of two. If the cache itself is down, Forge still generates, just without the shortcut.",
 			"tags": ["fix", "security"],
