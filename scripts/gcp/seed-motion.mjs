@@ -72,8 +72,7 @@ import {
 	flattenRootDrift,
 	gateMotionClip as gateRestBasis,
 	lockRootToContacts,
-	needsRebase,
-	rebaseToCanonicalRest,
+	toCanonicalBasis,
 	toLibraryClip,
 } from '../../api/_lib/motion-seed.js';
 
@@ -320,11 +319,12 @@ async function runPrompt(prompt) {
  */
 function deriveClip(worker, prompt) {
 	// The lane writes rotations against the HumanML3D skeleton's raw rest
-	// directions, not the library's canonical rest (see rebaseToCanonicalRest).
-	// Converted first, because every later step, and every viewer, reads the clip
-	// in the library's basis. A clip stamped with the legacy v1 basis is carried
-	// back to the source basis and forward again inside the same call.
-	const rebased = needsRebase(worker) ? rebaseToCanonicalRest(worker).clip : worker;
+	// directions, not the library's canonical rest (see rebaseToCanonicalRest),
+	// and leaves the twist of every single-child bone arbitrary per frame (see
+	// continuousBoneTwist). Converted first, because every later step, and every
+	// viewer, reads the clip in the library's basis. A clip stamped with the
+	// legacy v1 basis is carried back to the source basis and forward again.
+	const rebased = toCanonicalBasis(worker);
 
 	// The lane's foot rotation flips to its other Kabsch solution for a frame or
 	// two at a time, flicking the toe 8 cm and back (see FOOT_FLICK). Repaired

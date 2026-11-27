@@ -1071,6 +1071,124 @@ export function rebaseToCanonicalRest(clip) {
 	return { clip: { ...clip, tracks, ...(userData ? { userData } : {}) }, rebasedTracks };
 }
 
+// ── Twist continuity (added 2026-11-27) ─────────────────────────────────────
+//
+// The worker recovers each joint's rotation from the directions to its children.
+// A joint with ONE child has one direction to fit, which leaves the twist about
+// that direction free, and the batched SVD in motion_decode.py `_kabsch_quat`
+// settles a rank-one fit with whatever singular vectors it happens to return:
+// an arbitrary twist, picked again on every frame. Joint positions survive (the
+// child's own fit compensates), but everything the source never measured rides
+// on that twist: the hands, the head and the feet are leaves and carry identity
+// relative to their parent, so they spin. Measured on a live wave on 2026-11-27:
+// the right collar turned 179.9 degrees between frames 0 and 1, the neck and a
+// forearm flipped by up to 180 degrees later, and the fingertips jumped 0.20 to
+// 0.25 m per frame while the hand itself barely moved.
+//
+// The pass below re-chooses that free twist. For a single-child joint j with
+// source rest direction d to its child, q_j * twist(d, a) puts the child exactly
+// where q_j did for every a. Frame 0 takes the a nearest rest (the least twist);
+// every later frame takes the a nearest the previous frame's result. A non-leaf
+// child is compensated (c <- twist^-1 * c) so its world rotation, and so every
+// joint below it, is unchanged before its own twist is chosen. A leaf child keeps
+// its identity, so it follows the now-continuous parent: that is the point.
+
+function sourceChildren() {
+	const mapped = new Set(['Hips', ...Object.keys(HUMANML3D_REST_DIRECTION)]);
+	const out = {};
+	for (const bone of mapped) out[bone] = [];
+	for (const bone of mapped) {
+		const parent = CANONICAL_PARENT[bone];
+		if (parent && mapped.has(parent)) out[parent].push(bone);
+	}
+	return out;
+}
+
+const SOURCE_CHILDREN = Object.freeze(sourceChildren());
+
+/** The rotation about unit `axis` nearest to `q` (its twist component). */
+function twistAbout(q, axis) {
+	const p = dot([q[0], q[1], q[2]], axis);
+	const t = [axis[0] * p, axis[1] * p, axis[2] * p, q[3]];
+	const len = Math.hypot(...t);
+	// A half-turn swing has no twist component; any twist is equally near.
+	return len < 1e-9 ? [0, 0, 0, 1] : t.map((v) => v / len);
+}
+
+/**
+ * Make the free twist of every single-child bone continuous across a clip still
+ * in the generator's HumanML3D basis. Joint positions are unchanged; the hands,
+ * head and feet stop spinning. A clip carrying a basis stamp is returned
+ * untouched.
+ *
+ * @param {any} clip
+ * @returns {{ clip: any, adjusted: number }} adjusted counts frames whose twist changed by more than 1 degree
+ */
+export function continuousBoneTwist(clip) {
+	// Only the raw worker basis: a clip carrying any basis stamp (the library's,
+	// or the legacy v1) has had its rotations moved off the source axes.
+	if (clip?.userData?.basis || !Array.isArray(clip?.tracks)) return { clip, adjusted: 0 };
+	const byBone = new Map();
+	for (const track of clip.tracks) {
+		const name = String(track?.name || '');
+		if (!name.endsWith('.quaternion')) continue;
+		byBone.set(name.slice(0, name.lastIndexOf('.')), track);
+	}
+	const values = new Map();
+	for (const [bone, track] of byBone) values.set(bone, Array.from(track.values ?? []));
+	const frames = Math.min(...[...values.values()].map((v) => Math.floor(v.length / 4)));
+	if (!Number.isFinite(frames) || frames < 1) return { clip, adjusted: 0 };
+
+	const read = (bone, i) => values.get(bone).slice(i * 4, i * 4 + 4);
+	const write = (bone, i, q) => values.get(bone).splice(i * 4, 4, ...q);
+	const isLeaf = (bone) => (SOURCE_CHILDREN[bone] ?? []).length === 0;
+	const minTwistRad = (Math.PI / 180) * 1;
+	let adjusted = 0;
+
+	for (const bone of FK_ORDER) {
+		if (!values.has(bone)) continue;
+		const kids = (SOURCE_CHILDREN[bone] ?? []).filter((b) => values.has(b));
+		if (kids.length !== 1) continue;
+		const child = kids[0];
+		const axis = normalize(HUMANML3D_REST_DIRECTION[child]);
+		let prev = [0, 0, 0, 1];
+		for (let i = 0; i < frames; i += 1) {
+			const q = read(bone, i);
+			const twist = twistAbout(quatMul(quatConjugate(q), prev), axis);
+			let next = quatMul(q, twist);
+			if (dot([next[0], next[1], next[2]], [prev[0], prev[1], prev[2]]) + next[3] * prev[3] < 0) {
+				next = next.map((v) => -v);
+			}
+			write(bone, i, next);
+			if (2 * Math.acos(Math.min(1, Math.abs(twist[3]))) > minTwistRad) adjusted += 1;
+			if (!isLeaf(child)) write(child, i, quatMul(quatConjugate(twist), read(child, i)));
+			prev = next;
+		}
+	}
+
+	const tracks = clip.tracks.map((track) => {
+		const name = String(track?.name || '');
+		if (!name.endsWith('.quaternion')) return track;
+		const bone = name.slice(0, name.lastIndexOf('.'));
+		return values.has(bone) ? { ...track, values: values.get(bone) } : track;
+	});
+	return { clip: { ...clip, tracks }, adjusted };
+}
+
+/**
+ * Any generated clip into the library basis: the twist made continuous while
+ * the rotations are still on the source axes, then rebased. A clip already in
+ * the library basis is returned as it is. Every path that turns worker output
+ * into a playable or bakeable clip goes through here.
+ *
+ * @param {any} clip
+ * @returns {any}
+ */
+export function toCanonicalBasis(clip) {
+	if (!needsRebase(clip)) return clip;
+	return rebaseToCanonicalRest(continuousBoneTwist(clip).clip).clip;
+}
+
 /** True when a clip is not yet in the current library basis. */
 export function needsRebase(clip) {
 	return clip?.userData?.basis !== CLIP_BASIS;
@@ -1671,7 +1789,7 @@ function rebuildWithBlend(clip, keep, blendFrames, fps) {
  * @returns {any} a NEW clip stamped with CLIP_BASIS
  */
 export function libraryReadyClip(workerClip) {
-	const rebased = needsRebase(workerClip) ? rebaseToCanonicalRest(workerClip).clip : workerClip;
+	const rebased = toCanonicalBasis(workerClip);
 	const flattened = flattenRootDrift(despikeFootFlicks(rebased).clip).clip;
 	const clip = lockRootToContacts(flattened).clip;
 	// This is the exact shape the client's AnimationClip.parse() reads (it's
