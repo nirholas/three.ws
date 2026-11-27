@@ -251,6 +251,9 @@ export async function createCreation({
 	// 'public' | 'unlisted' | 'private'. Failover successors pass the
 	// original's value; a fresh submit takes the request's from the context.
 	visibility,
+	// False for the second attempt of a quality retry: the request is one
+	// generation, already counted by the first attempt's start event.
+	recordStart = true,
 }) {
 	if (!forgeStoreEnabled()) return null;
 	const id = randomUUID();
@@ -302,7 +305,7 @@ export async function createCreation({
 		`;
 		// Funnel start — counts attempts so the health rollup can show how many
 		// generations began vs. completed. Best-effort; never blocks the insert.
-		await recordGenerationEvent({ phase: 'start', backend, tier, path, source: 'create' });
+		if (recordStart) await recordGenerationEvent({ phase: 'start', backend, tier, path, source: 'create' });
 		return id;
 	} catch (err) {
 		if (isDbUnavailableError(err)) console.warn('[forge-store] createCreation skipped (db unavailable):', err?.message);
@@ -856,7 +859,9 @@ async function recordServingWorker(id, backend) {
 	}
 }
 
-export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true, bbox = null, lods = false, workerStats = null }) {
+// recordEvent:false is for the second attempt of a quality retry: the request is
+// one generation and the first attempt already added its 'done' to the counters.
+export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true, bbox = null, lods = false, workerStats = null, recordEvent = true }) {
 	if (!forgeStoreEnabled() || !replicateJobId || !glbUrl) return null;
 	const existing = await findByJob({ replicateJobId, clientKey });
 	if (!existing) return null;
@@ -933,14 +938,16 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 		// created_at; null if the timestamp is unreadable rather than a bogus number.
 		const startedAt = existing.created_at ? Date.parse(existing.created_at) : NaN;
 		const latencyMs = Number.isFinite(startedAt) ? Date.now() - startedAt : null;
-		await recordGenerationEvent({
-			phase: 'done',
-			backend: existing.backend,
-			tier: existing.tier,
-			path: existing.path,
-			latencyMs,
-			source: 'materialize',
-		});
+		if (recordEvent) {
+			await recordGenerationEvent({
+				phase: 'done',
+				backend: existing.backend,
+				tier: existing.tier,
+				path: existing.path,
+				latencyMs,
+				source: 'materialize',
+			});
+		}
 		// Every delivered mesh gets a physics grade, cached by content hash.
 		gradeDeliveredMesh({ buffer: glb.buffer, creationId: existing.id, sourceUrl: glb.publicUrl });
 		// ...and a free, signed content credential by default (work order 079), no
@@ -1281,6 +1288,18 @@ export async function deleteCreation({ id, clientKey = null, userId = null, mana
 		console.error('[forge-store] deleteCreation failed:', err?.message);
 		return 'error';
 	}
+}
+
+// Remove a generation attempt the quality stage made and then did not deliver.
+// A sync lane that retries writes two rows for one request; the one that loses the
+// better-of comparison was never shown to anyone, so it must not linger in the
+// library, the public count or the bucket beside the model that was. Platform
+// initiated, so it acts with the moderator grant. Best-effort: false on any
+// failure, never throws, and the delivered model is unaffected either way.
+export async function retireAttempt({ id }) {
+	if (!id) return false;
+	const outcome = await deleteCreation({ id, moderator: true });
+	return outcome === 'deleted';
 }
 
 // Change who a finished creation can be shown to. Same credentials as
