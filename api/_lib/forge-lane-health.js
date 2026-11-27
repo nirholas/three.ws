@@ -53,9 +53,22 @@ const LANE_COOLDOWN_SECONDS = 90;
 export async function markLaneUnhealthy(backendId, seconds = LANE_COOLDOWN_SECONDS) {
 	if (!backendId) return;
 	const key = laneCooldownKey(backendId);
+	// This instance's cached snapshot may still hold the `ok` it probed before the
+	// failure; it must read down now, not when the 20s window lapses, or the very
+	// next submit on this instance goes straight back to the lane that refused.
+	forgetCachedLane(backendId);
 	const standing = await providerCooldownUntil(key);
 	if (standing && standing >= Date.now() + seconds * 1000) return;
 	await markProviderCooldown(key, seconds).catch(() => {});
+}
+
+// Drop one lane from the per-instance snapshot so the next read re-checks the
+// shared cooldown (which short-circuits the probe) instead of a stale verdict.
+function forgetCachedLane(backendId) {
+	if (!snapshotCache || !(backendId in snapshotCache.byId)) return;
+	const byId = { ...snapshotCache.byId };
+	delete byId[backendId];
+	snapshotCache = { at: snapshotCache.at, byId };
 }
 
 // The free HuggingFace Spaces lane fails as a whole: every Space in its chain
