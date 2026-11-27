@@ -12,7 +12,10 @@ The `[NEW]` markers are notes for us, not post text. Strip them when pasting.
 
 ## What changed from the 2026-11-25 thread
 
-- **Post 1:** "Now we're working directly with the xAI, @SpaceXSI and Cursor teams on co-marketing" is gone, along with the @SpaceXSI tag that sat in it. Nothing else in the original nine (now posts 1 to 4, 6, 8, 15, 18 and 19) changed.
+- **Post 1:** "Now we're working directly with the xAI, @SpaceXSI and Cursor teams on co-marketing" is gone. @SpaceXSI stays as a plain company mention at the end of the opening line, with no relationship claim.
+- **Post 6:** the personal tag @ericzakariasson is gone. Tags are company accounts only, never individual staff (owner, 2026-11-27).
+- **Post 15:** "2 errors" is gone from the text, and the usage card shows the 718 distinct prompts in that slot instead (owner, 2026-11-27).
+- Nothing else in the original nine (now posts 1 to 4, 6, 8, 15, 18 and 19) changed.
 - **Links:** `utm_content=announce` became `utm_content=repost` (and `repost-<post>` on the new posts) so the repost's clicks count separately.
 - **Added:** posts 5 (launch stack cutaway), 7 (Grok Build and Cursor plugins), 9 (Grok 3D starter app), 10 (Grok Bot task templates and one-command setup), 11 (three.ws webhooks wake Grok Bot), 12 (360 capture), 13 (agents on Grok with your own key), 14 (measured evals), 16 (public connector uptime) and 17 (Ask @grok).
 
@@ -193,13 +196,14 @@ Post 14 is the measured result of Grok on three.ws, from [docs/evals/grok-4-7-on
 
 - **Post 5:** [api/_lib/anatomy/featured/launch-stack.js](../../api/_lib/anatomy/featured/launch-stack.js): 29 parts, 10 tour steps, 33 booster engines, 6 upper-stage engines, hot staging, boostback, the tower catch, heat shield and two forward plus two aft flaps. Sources page and audit: [docs/anatomy/rocket-engines-sources.md](../anatomy/rocket-engines-sources.md); `tests/anatomy-featured.test.js` fails if a number is unsourced. Live id `d72da3e9-8aae-47cd-a96c-45ccd33bf1a0` (200 on 2026-11-27). The post names no vehicle or company, matching the cutaway, which carries no logos or trade dress.
 - **Post 7:** [integrations/grok/three-ws/](../../integrations/grok/three-ws/README.md): commands `make-3d`, `rig`, `embed`, `three-ws-init`; agent `3d-art-director` (four-side render, two-round hard stop); one MCP server, no executables. "Installed in under a second" is from the 2026-11-20 changelog entry. A live Grok Build model turn is order 458's proof.
-- **Post 9:** [satellites/grok-3d-starter/README.md](../../satellites/grok-3d-starter/README.md) (one Node server, one page, one dependency `three`, keys held server side), public at `github.com/nirholas/three.ws/tree/main/satellites/grok-3d-starter`. Needs the reader's own xAI key and a free three.ws key.
+- **Post 9:** [satellites/grok-3d-starter/README.md](../../satellites/grok-3d-starter/README.md) (one Node server, one page, one dependency `three`, keys held server side), public at `github.com/nirholas/three.ws/tree/main/satellites/grok-3d-starter`. Needs the reader's own xAI key and a free three.ws key. The quoted ask and follow-up are a real run on grok-4.7 against production, recorded with both GLBs, the tool calls and timings in [public/x-media/grok-startups-repost/src/starter.json](../../public/x-media/grok-startups-repost/src/starter.json).
 - **Post 10:** [pages/grok.html](../../pages/grok.html) `#build`, the "Grok Bot task templates" cards: 3.0 s (catalog kit), 194.0 s (prop pack), 301.6 s (photo to 3D), 455.4 s (rigged mascot, under 8 minutes). Setup command from [packages/three-ws-cli](../../packages/three-ws-cli/README.md); `@three-ws/cli@0.1.1` on npm includes the `grok-bot` client (checked 2026-11-27).
 - **Post 11:** [pages/grok.html](../../pages/grok.html) "Let three.ws wake your Grok Bot" and [api/_lib/webhook-dispatch.js](../../api/_lib/webhook-dispatch.js) (encrypted bearer token on each delivery, signature headers, retries, delivery log); changelog 2026-11-04.
 - **Post 12:** [api/_mcp-studio/pano-tools.js](../../api/_mcp-studio/pano-tools.js): `pano_capture_start` (360 footage to a Gaussian splat), `pano_scene_create` (one 360 photo to a metric depth shell GLB with the camera at the origin, plus a PLY point cloud), and the `pano_capture_status`, `pano_capture_list`, `pano_scene_status` tools, on `/api/mcp-studio` and `/api/mcp-grok` for signed-in accounts. Through the xAI API these work only once the schema fix `a99f32c10` is deployed (order 451).
 - **Post 13:** [api/_lib/agent-grok-key.js](../../api/_lib/agent-grok-key.js) (an owner's saved xAI key bills that owner's agents), the provider keys panel on `/dashboard/account`, and the 2026-11-21 changelog entries "Grok conversations reuse xAI's prompt cache" and "Agents set to Grok Build 0.1 now answer on Grok 4.7". The post promises nothing on our key: production carries no platform xAI key by owner decision.
 - **Post 16:** `https://three.ws/api/status/mcp`, the Grok server's `windows.7d` (`passed`, `probes`, `handshakeP50Ms`); 1,628 of 1,636 and 158 ms on 2026-11-27. Refresh on posting day. Probe: [api/_lib/mcp-probe.js](../../api/_lib/mcp-probe.js), every 5 minutes from `api/cron/mcp-probe.js`.
 - **Post 17:** the 2026-11-20 changelog entry "Ask @grok about any model, avatar or machine, straight from its page" ([src/model-page.js](../../src/model-page.js), [src/avatar-page.js](../../src/avatar-page.js), [src/forge.js](../../src/forge.js)).
+- **Models on cards 2, 3 and 17:** made through `/api/mcp-grok` exactly as Grok calls it (`forge_free`, `refine_model` "make it chrome", `forge_avatar` plus `rig_mesh`, `look_at_model`), recorded in [public/x-media/grok-startups-repost/src/models.json](../../public/x-media/grok-startups-repost/src/models.json) by `node scripts/grok-startups-post-models.mjs --set repost`. The prompts describe the objects generically (an electric sports car, an electric pickup, a humanoid robot) and name no company or product.
 - **Posts 3 and 15 numbers:** the [co-marketing kit appendix](../partners/xai-comarketing-kit.md#appendix-where-every-number-comes-from), refreshed on posting day with `node scripts/grok-comarketing-numbers.mjs --from 2026-10-08 --to <the day before posting>`.
 
 ## Held back until the production xAI key is on
@@ -213,19 +217,31 @@ These are built and wired but run only on a platform xAI key, which the owner is
 
 Also left out on purpose: the read-only Solana market tools on the Grok Bot connector (graduations, token intel, the market brief), because this thread never touches trading or tokens; and the `threejs-craft` Grok Build skill pack, which has no README or public install path yet.
 
-## Media for the new posts
+## Media
 
-- **Post 5:** `public/anatomy/og/launch-stack.png` works as is. For motion matching post 4, render the live cutaway (about 25 minutes without a GPU; `--preview` writes one still per scene first):
+One file per post in [public/x-media/grok-startups-repost/](../../public/x-media/grok-startups-repost/), each post's file named in its header above. The cards are the original thread's look (near-black ground, Inter, thin line art, the three.ws, Grok and SpaceXSI marks, an "NN / 19" counter), drawn by Claude from real data. Video only where a real render exists:
+
+- **Post 1:** `public/x-media/grok-startups-announce/head.mp4`, the original head video (it never carried the co-marketing line).
+- **Post 4:** `public/x-media/grok-startups-announce/ffsc-engine.mp4`, the original engine cutaway video.
+- **Post 5:** `post-05-launch-stack.mp4`, an 18.5 second render of the live launch stack cutaway.
+- **Posts 2, 3, 6 to 13 and 15 to 19:** `post-NN.png`, 1200x675 at 2x. The 3D subjects are a rocket (post 9), a red electric sports car and its chrome refine (posts 2 and 3), a rigged humanoid robot (post 2) and a stainless electric pickup (post 17), every one a real model.
+- **Post 14:** order 452 adds its card once the eval has every row.
+
+Re-render (order 452 does this on posting day, so post 16 shows that day's uptime):
 
 ```bash
-node scripts/anatomy-cutaway-video.mjs --id d72da3e9-8aae-47cd-a96c-45ccd33bf1a0 --out public/x-media/grok-startups-announce/launch-stack.mp4
+node scripts/grok-startups-post-models.mjs --set repost      # once; skips models already in src/models.json
+node scripts/grok-startups-repost-cards.mjs                   # every card, plus src/live.json
+node scripts/grok-startups-repost-cards.mjs --smoke-passed    # only once order 458 proved all six examples live
+node scripts/anatomy-cutaway-video.mjs --id d72da3e9-8aae-47cd-a96c-45ccd33bf1a0 \
+  --out public/x-media/grok-startups-repost/post-05-launch-stack.mp4
 ```
 
-- **Posts 7 to 17:** text only, or a screenshot of the surface each one links to (the Grok Build tab of `/grok#install`, the starter's stage with a model on it, the template cards at `/grok#build`, the webhook form, a `/pano-scene` result, the provider keys panel, the `/status` connector row, the Ask @grok share menu). Never show an account token or key in a screenshot.
+Post 16's text must match `src/live.json` from the same render.
 
 ## Tags
 
-The tags left are the original thread's: `@cursor_ai` (post 1, on its marketplace), `@ericzakariasson` (post 6), `@XDevelopers` (post 8), `@pumpdotfun` (post 18, our funding source, owner decision 2026-11-25) and `@grok` (posts 17 and 19). The new posts add no tags. Never tag @bot: tagging it starts a task for each reader's own Grok Bot. Never name $THREE, a contract address, a price or trading.
+Company accounts only, never individual staff (owner, 2026-11-27): `@SpaceXSI` (post 1, a plain mention), `@cursor_ai` (posts 1 and 7, on its marketplace and plugin), `@XDevelopers` (post 8), `@X` (post 17), `@grok` (posts 17 and 19) and `@pumpdotfun` (post 18, our funding source, owner decision 2026-11-25). Never tag @bot: tagging it starts a task for each reader's own Grok Bot. Never name $THREE, a contract address, a price or trading.
 
 ## Wording rules
 

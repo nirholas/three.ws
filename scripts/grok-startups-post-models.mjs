@@ -42,10 +42,10 @@ const SETS = {
 	repost: {
 		dir: 'public/x-media/grok-startups-repost/src',
 		prompts: {
-			prop: 'a sleek red electric sports car with a low glass roof, smooth curved body panels and aero wheels',
+			prop: 'a sleek white electric sports car with a low glass roof, smooth curved body panels and aero wheels',
 			chrome: 'make it chrome',
 			character: 'a sleek humanoid robot with a white and black body, a glossy black face panel and slim jointed limbs, full body',
-			pickup: 'an angular electric pickup truck in brushed stainless steel with flat faceted panels and a sharp triangular roofline',
+			pickup: 'a futuristic wedge-shaped electric pickup truck built from flat unpainted stainless steel panels, one sharp triangular roofline from the hood to the tailgate, no grille, a thin full-width light bar',
 		},
 	},
 };
@@ -85,10 +85,23 @@ async function rpc(method, params) {
 	return body.result;
 }
 
+// The QA account's per-minute and per-hour generation limits answer with the
+// reset time ("in 747 s"); wait just past it and send the same call again.
 const call = async (name, args) => {
-	const result = await rpc('tools/call', { name, arguments: args });
-	if (result.isError) throw new Error(`${name} failed: ${JSON.stringify(result.structuredContent || result.content).slice(0, 400)}`);
-	return result;
+	for (let attempt = 1; ; attempt++) {
+		let result;
+		try {
+			result = await rpc('tools/call', { name, arguments: args });
+		} catch (err) {
+			if (attempt >= 4 || !/rate limited/i.test(err.message)) throw err;
+			const wait = Number(err.message.match(/in (\d+) s\b/)?.[1] || 60) + 5;
+			console.log(`  ${name}: rate limited, sending again in ${wait}s`);
+			await new Promise((r) => setTimeout(r, wait * 1000));
+			continue;
+		}
+		if (result.isError) throw new Error(`${name} failed: ${JSON.stringify(result.structuredContent || result.content).slice(0, 400)}`);
+		return result;
+	}
 };
 
 const glbOf = (sc) => sc?.glb_url || sc?.glbUrl || sc?.model?.glb_url || sc?.result?.glb_url || null;
@@ -108,15 +121,19 @@ async function pollJob(job) {
 	}
 }
 
-// A busy engine fails the job with "start a new generation"; the retry is
-// routed to a healthy engine, so start over up to three times.
+// A busy engine fails the job with "start a new generation" (or a slow stage
+// with "taking longer than expected, try again"); the retry is
+// routed to a healthy engine, so start over, waiting longer each time.
+const ATTEMPTS = 6;
 async function generate(name, args) {
 	for (let attempt = 1; ; attempt++) {
 		try {
 			return await generateOnce(name, args);
 		} catch (err) {
-			if (attempt >= 3 || !/start a new generation|generator is busy/i.test(err.message)) throw err;
-			console.log(`  ${name}: engine busy, starting a new generation (attempt ${attempt + 1} of 3)`);
+			if (attempt >= ATTEMPTS || !/start a new generation|generator is busy|taking longer than expected/i.test(err.message)) throw err;
+			const wait = 20 * attempt;
+			console.log(`  ${name}: engine busy, new generation in ${wait}s (attempt ${attempt + 1} of ${ATTEMPTS})`);
+			await new Promise((r) => setTimeout(r, wait * 1000));
 		}
 	}
 }

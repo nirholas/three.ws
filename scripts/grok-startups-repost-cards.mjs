@@ -138,7 +138,7 @@ function newCards({ uptime, starterRenders, askRender }) {
 				.map(([png, label, cap]) => `<figure><div class="tile"><img src="${png}"></div><div class="label">${esc(label)}</div><div class="cap">${esc(cap)}</div></figure>`)
 				.join('')}</div>`,
 			`${tile}
-			.calls { position: absolute; left: 72px; top: 214px; width: 330px; height: 262px; border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; background: #0b0b0e; padding: 18px 20px; }
+			.calls { position: absolute; left: 72px; top: 214px; width: 330px; height: 318px; border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; background: #0b0b0e; padding: 18px 20px; }
 			.turn { margin-top: 14px; }
 			.said { font-size: 17px; font-weight: 500; color: #f1f1f5; margin-bottom: 6px; letter-spacing: -0.01em; }
 			.tool { font: 400 13.5px/1.55 'JBMono', monospace; color: #8e8e98; padding-left: 14px; position: relative; }
@@ -147,7 +147,7 @@ function newCards({ uptime, starterRenders, askRender }) {
 			.row { position: absolute; left: 426px; right: 72px; top: 214px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 			figure { margin: 0; }
 			.tile { height: 262px; }
-			.tile img { height: 108%; width: auto; }
+			.tile img { height: 100%; width: auto; }
 			.row .label { margin-top: 16px; color: #e8e8ee; }
 			.row .cap { margin-top: 6px; }`,
 		),
@@ -288,7 +288,8 @@ try {
 	console.log(`uptime: ${uptime.passed} of ${uptime.probes} passed, handshake p50 ${uptime.handshakeP50Ms} ms (${uptime.fetchedAt})`);
 
 	const renderer = await openRenderer(browser);
-	const renders = await renderAnnounceModels(renderer.shot, models);
+	// The car models face away from the default camera: turn to their front three-quarter.
+	const renders = await renderAnnounceModels(renderer.shot, models, { prop: { yaw: 2.52 }, chrome: { yaw: 2.52 } });
 	const askRender = await renderer.shot(models.pickup.glb_url);
 	const starterRenders = { first: await renderer.shot(starter.first.glb_url), second: await renderer.shot(starter.second.glb_url) };
 	await renderer.close();

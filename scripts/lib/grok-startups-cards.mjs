@@ -34,12 +34,16 @@ export const USAGE = {
 /** True when models.json holds everything the model cards need. */
 export const hasAnnounceModels = (models) => ['prop', 'chrome', 'character', 'look'].every((k) => models[k]);
 
-/** Render the three model tiles with a renderer from openRenderer(). */
-export async function renderAnnounceModels(shot, models) {
+/**
+ * Render the three model tiles with a renderer from openRenderer(). `angles`
+ * overrides the camera per tile ({ prop: { yaw: -0.62 } }) for a set whose
+ * models read better from another side; the 2026-11-25 thread passes none.
+ */
+export async function renderAnnounceModels(shot, models, angles = {}) {
 	return {
-		prop: await shot(models.prop.glb_url),
-		chrome: await shot(models.chrome.glb_url),
-		character: await shot((models.character_rig || models.character).glb_url, { skeleton: true, yaw: 0.35, pitch: 0.08 }),
+		prop: await shot(models.prop.glb_url, angles.prop),
+		chrome: await shot(models.chrome.glb_url, angles.chrome),
+		character: await shot((models.character_rig || models.character).glb_url, { skeleton: true, yaw: 0.35, pitch: 0.08, ...angles.character }),
 	};
 }
 

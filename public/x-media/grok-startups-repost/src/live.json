@@ -1,12 +1,12 @@
 {
 	"uptime": {
-		"fetchedAt": "2026-11-27T21:06:08.955Z",
+		"fetchedAt": "2026-11-27T22:34:19.614Z",
 		"intervalSeconds": 300,
-		"probes": 1642,
-		"passed": 1634,
-		"successRate": 0.9951278928136419,
+		"probes": 1659,
+		"passed": 1651,
+		"successRate": 0.995177817962628,
 		"handshakeP50Ms": 159,
-		"handshakeP95Ms": 2738,
+		"handshakeP95Ms": 2749,
 		"toolCallP50Ms": 42,
 		"toolCallP95Ms": 240
 	},
