@@ -111,16 +111,20 @@ function neutralWorkerClip() {
 	};
 }
 
-// Play a retargeted clip's first frame on the scene and read joint heights.
-function poseAtStart(scene, clipJSON) {
+// Read joint positions at the rig's rest, then with a retargeted clip's first
+// frame applied. Bones resolve through the canonical map because the loader
+// sanitizes node names (mixamorig:Head is bound as mixamorigHead).
+function restAndFirstFrame(scene, clipJSON) {
 	const canon = canonicalNodeMapFromObject(scene);
-	const clip = THREE.AnimationClip.parse(clipJSON);
+	const at = (bone) => scene.getObjectByName(canon.get(bone)).getWorldPosition(new THREE.Vector3());
+	scene.updateMatrixWorld(true);
+	const rest = Object.fromEntries(NEUTRAL_BONES.map((b) => [b, at(b)]));
 	const mixer = new THREE.AnimationMixer(scene);
-	mixer.clipAction(clip).play();
+	mixer.clipAction(THREE.AnimationClip.parse(clipJSON)).play();
 	mixer.update(0);
 	scene.updateMatrixWorld(true);
-	const y = (bone) => scene.getObjectByName(canon.get(bone)).getWorldPosition(new THREE.Vector3()).y;
-	return { y };
+	const posed = Object.fromEntries(NEUTRAL_BONES.map((b) => [b, at(b)]));
+	return { rest, posed };
 }
 
 function expectPlayableTracks(clip, scene) {
@@ -223,11 +227,18 @@ describe('MCP text_to_animation', () => {
 			);
 			expect(out.structuredContent.ok).toBe(true);
 			const scene = await loadScene(file);
-			const { y } = poseAtStart(scene, out.structuredContent.clip);
-			expect(y('Head'), `${file}: head above neck`).toBeGreaterThan(y('Neck') + 0.02);
-			expect(y('Neck'), `${file}: neck above hips`).toBeGreaterThan(y('Hips') + 0.3);
+			const { rest, posed } = restAndFirstFrame(scene, out.structuredContent.clip);
+			// Standing on its feet: the hips stay at the rig's own standing height
+			// (a hip track in the wrong units sinks the body to the floor or flings it).
+			expect(Math.abs(posed.Hips.y - rest.Hips.y), `${file}: hips at standing height`).toBeLessThan(0.1);
+			// Upright: the torso keeps most of its rest height and the head is on top.
+			const torso = rest.Neck.y - rest.Hips.y;
+			expect(posed.Neck.y - posed.Hips.y, `${file}: neck above hips`).toBeGreaterThan(0.8 * torso);
+			expect(posed.Head.y, `${file}: head above neck`).toBeGreaterThan(posed.Neck.y + 0.02);
+			// Arms hang: each hand sits well below its shoulder joint.
 			for (const side of ['Left', 'Right']) {
-				expect(y(`${side}Hand`), `${file}: ${side} hand hangs below the shoulder`).toBeLessThan(y(`${side}Arm`) - 0.3);
+				const reach = rest[`${side}Arm`].distanceTo(rest[`${side}Hand`]);
+				expect(posed[`${side}Arm`].y - posed[`${side}Hand`].y, `${file}: ${side} hand hangs below the shoulder`).toBeGreaterThan(0.6 * reach);
 			}
 		}
 	}, 30000);
