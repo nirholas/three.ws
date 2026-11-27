@@ -134,7 +134,7 @@ describe('api/forge-iterate — handler', () => {
 		const res = mockRes();
 		await handler(
 			mockReq({
-				body: { glb_url: 'https://three.ws/cdn/creations/abc123/mesh.glb', instruction: 'make it metallic', parent_prompt: 'a round robot mascot' },
+				body: { glb_url: 'https://three.ws/cdn/creations/abc123/mesh.glb', instruction: 'add a cape', parent_prompt: 'a round robot mascot' },
 				headers: { 'x-forge-client': 'client-42', cookie: '__Host-sid=abc' },
 			}),
 			res,
@@ -147,18 +147,18 @@ describe('api/forge-iterate — handler', () => {
 		// sees the same person (and attributes the model to them).
 		expect(init.headers.cookie).toBe('__Host-sid=abc');
 		const payload = JSON.parse(init.body);
-		expect(payload.prompt).toBe('a round robot mascot, metallic');
+		expect(payload.prompt).toBe('a round robot mascot, add a cape');
 
 		const out = parsed(res);
 		expect(out.ok).toBe(true);
 		expect(out.glbUrl).toBe('https://three.ws/cdn/creations/def456/mesh.glb');
 		expect(out.creationId).toBe('def456');
-		expect(out.prompt).toBe('a round robot mascot, metallic');
+		expect(out.prompt).toBe('a round robot mascot, add a cape');
 		expect(out.durable).toBe(true);
 		// Fresh lineage: origin (the parent model) + this one refinement.
 		expect(out.lineage).toHaveLength(2);
 		expect(out.lineage[0]).toMatchObject({ index: 0, parentIndex: null, refKind: 'origin' });
-		expect(out.lineage[1]).toMatchObject({ index: 1, parentIndex: 0, instruction: 'make it metallic', refKind: 'text' });
+		expect(out.lineage[1]).toMatchObject({ index: 1, parentIndex: 0, instruction: 'add a cape', refKind: 'text' });
 		expect(out.activeIndex).toBe(1);
 	});
 

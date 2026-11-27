@@ -40,6 +40,107 @@ import {
 	buildLineageChain,
 	branchFrom,
 } from '../mcp-server/src/tools/_lineage.js';
+import { planIteration, mintSeed, parseSeed } from '../src/shared/iterate-plan.js';
+import { restyleMaterialFromInstruction, MaterialStudioError } from './_lib/material-studio-store.js';
+
+// auto: the server decides look vs shape from the words (src/shared/iterate-plan.js).
+// look / shape: the user overrode that decision. variation: "more like this".
+const MODES = new Set(['auto', 'look', 'shape', 'variation']);
+
+const INPUT_KEYS = ['mode', 'prompt', 'instruction', 'parentPrompt', 'seed', 'backend', 'creationId'];
+
+// Keep only the recorded-inputs fields we write, with their types, so a client
+// round trip can carry them forward but never smuggle anything else in.
+function sanitizeInputs(raw) {
+	if (!raw || typeof raw !== 'object') return null;
+	const out = {};
+	for (const k of INPUT_KEYS) {
+		const v = raw[k];
+		if (k === 'seed') out.seed = parseSeed(v);
+		else out[k] = typeof v === 'string' ? v.slice(0, 1000) : null;
+	}
+	return out;
+}
+
+function resolveLineage(rawLineage, glbUrl, parentPrompt) {
+	const fresh = () => seedLineage({ glbUrl, prompt: parentPrompt || null });
+	if (!Array.isArray(rawLineage) || rawLineage.length === 0) return fresh();
+	const rehydrated = rawLineage.slice(0, 200).map((v, i) => {
+		const inputs = sanitizeInputs(v?.inputs);
+		return {
+			index: Number.isInteger(v?.index) ? v.index : i,
+			parentIndex: v?.parentIndex ?? (i > 0 ? i - 1 : null),
+			glbUrl: typeof v?.glbUrl === 'string' ? v.glbUrl : null,
+			viewerUrl: v?.viewerUrl || null,
+			prompt: v?.prompt || null,
+			instruction: v?.instruction || null,
+			refKind: v?.refKind || (i === 0 ? 'origin' : 'text'),
+			...(inputs ? { inputs } : {}),
+		};
+	});
+	const valid = buildLineageChain(rehydrated).ok && rehydrated.every((v) => /^https?:\/\//i.test(v.glbUrl || ''));
+	return valid ? rehydrated : fresh();
+}
+
+// appendVersion (the core shared with the MCP refine_model tool) records the
+// graph; this adds what produced the version so "do that again" is possible.
+function appendRecorded(lineage, version, inputs) {
+	const next = appendVersion(lineage, version);
+	next[next.length - 1] = { ...next[next.length - 1], inputs };
+	return next;
+}
+
+// A look-only change restyles the materials of the parent version in-process.
+// No /api/forge call, so no geometry job: the shape stays byte-for-byte (the
+// restyle verifies that before it persists anything).
+async function iterateLook(res, { base, glbUrl, instruction, parentPrompt, baseLineage, parentIndex }) {
+	let result;
+	try {
+		result = await restyleMaterialFromInstruction({ glbUrl, instruction });
+	} catch (err) {
+		if (err instanceof MaterialStudioError) {
+			const unavailable = err.code === 'no_provider' || err.status >= 500;
+			return json(res, unavailable ? 503 : err.status, {
+				error: unavailable ? 'look_unavailable' : err.code,
+				kind: 'look',
+				fallback: 'materials',
+				message: unavailable
+					? 'Surface changes need a language model, and none is answering right now, so nothing was changed. The preset looks in Materials apply instantly, or rebuild the shape with this change instead.'
+					: err.message,
+			});
+		}
+		throw err;
+	}
+	const prompt = composeRefinement(parentPrompt, instruction);
+	const vUrl = viewerUrl(base, result.glbUrl);
+	const lineage = appendRecorded(
+		baseLineage,
+		{ glbUrl: result.glbUrl, viewerUrl: vUrl, prompt, instruction, refKind: 'restyle', parentIndex },
+		{
+			mode: 'look',
+			prompt,
+			instruction,
+			parentPrompt: parentPrompt || null,
+			seed: null,
+			backend: 'material-restyle',
+			creationId: null,
+		},
+	);
+	return json(res, 200, {
+		ok: true,
+		kind: 'look',
+		glbUrl: result.glbUrl,
+		viewerUrl: vUrl,
+		prompt,
+		instruction,
+		seed: null,
+		creationId: null,
+		durable: true,
+		look: { name: result.factors?.name || null, notes: result.factors?.notes || null },
+		lineage,
+		activeIndex: lineage.length - 1,
+	});
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -156,57 +257,69 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { error: 'invalid_json', message: 'Malformed JSON body.' });
 	}
 
-	const glbUrl = typeof body.glb_url === 'string' ? body.glb_url.trim() : '';
-	if (!/^https?:\/\//i.test(glbUrl)) {
+	const bodyGlbUrl = typeof body.glb_url === 'string' ? body.glb_url.trim() : '';
+	if (!/^https?:\/\//i.test(bodyGlbUrl)) {
 		return json(res, 400, { error: 'invalid_glb_url', message: 'Provide the http(s) glb_url of the model to iterate on.' });
 	}
-	const instruction = typeof body.instruction === 'string' ? body.instruction.trim() : '';
-	if (!instruction) {
-		return json(res, 400, { error: 'missing_instruction', message: 'Describe the change to make, e.g. "make it metallic".' });
-	}
-	if (instruction.length > 500) {
-		return json(res, 400, { error: 'instruction_too_long', message: 'Keep the instruction to 500 characters or fewer.' });
-	}
-	const parentPrompt = typeof body.parent_prompt === 'string' ? body.parent_prompt.trim() : '';
-
-	const composed = composeRefinement(parentPrompt, instruction);
+	const mode = MODES.has(body.mode) ? body.mode : 'auto';
+	const bodyParentPrompt = typeof body.parent_prompt === 'string' ? body.parent_prompt.trim() : '';
 
 	// Resolve the starting lineage exactly like refine_model does: extend a
 	// client-supplied one when it's structurally valid, otherwise seed fresh so
 	// a malformed/tampered array never corrupts history.
-	const freshLineage = () => seedLineage({ glbUrl, prompt: parentPrompt || null });
-	const clientLineage = Array.isArray(body.parent_lineage) ? body.parent_lineage : null;
-	let baseLineage;
-	if (clientLineage && clientLineage.length > 0) {
-		const rehydrated = clientLineage.map((v, i) => ({
-			index: Number.isInteger(v?.index) ? v.index : i,
-			parentIndex: v?.parentIndex ?? (i > 0 ? i - 1 : null),
-			glbUrl: v?.glbUrl,
-			viewerUrl: v?.viewerUrl || null,
-			prompt: v?.prompt || null,
-			instruction: v?.instruction || null,
-			refKind: v?.refKind || (i === 0 ? 'origin' : 'text'),
-		}));
-		baseLineage = buildLineageChain(rehydrated).ok ? rehydrated : freshLineage();
-	} else {
-		baseLineage = freshLineage();
-	}
-
-	let parentIndex;
+	const baseLineage = resolveLineage(body.parent_lineage, bodyGlbUrl, bodyParentPrompt);
+	let parentIndex = baseLineage.length - 1;
 	if (Number.isInteger(body.parent_index)) {
 		try {
 			parentIndex = branchFrom(baseLineage, body.parent_index);
 		} catch {
-			parentIndex = undefined;
+			parentIndex = baseLineage.length - 1;
 		}
 	}
+	// A refinement applies to the version it starts from: its model and the
+	// prompt that describes it (which already carries every earlier change).
+	// The page's parent_prompt is only the fallback for a fresh lineage.
+	const parent = baseLineage[parentIndex];
+	const glbUrl = parent.glbUrl || bodyGlbUrl;
+	const parentPrompt = parent.prompt || bodyParentPrompt;
 
+	const plan = planIteration({
+		instruction: body.instruction,
+		mode,
+		parentInstruction: parent.instruction,
+		parentPrompt,
+		allowNewSubject: body.allow_new_subject === true,
+	});
+	if (!plan.ok) {
+		return json(res, plan.status, {
+			error: plan.code,
+			message: plan.message,
+			...(plan.suggestedPrompt ? { suggested_prompt: plan.suggestedPrompt } : {}),
+		});
+	}
+	const instruction = plan.text;
 	const base = originFromReq(req);
-	const submitted = await submitForge(base, { prompt: composed }, clientId, auth);
+
+	if (plan.kind === 'look') {
+		return iterateLook(res, { base, glbUrl, instruction, parentPrompt, baseLineage, parentIndex });
+	}
+
+	// shape and variation both build a new model. A variation keeps the subject
+	// prompt and takes a different seed than its parent; a shape change folds the
+	// instruction into the parent's prompt. The seed is always explicit so the
+	// version records exactly what produced it.
+	const isVariation = plan.kind === 'variation';
+	const composed = isVariation ? parentPrompt : composeRefinement(parentPrompt, instruction);
+	const parentSeed = parseSeed(parent.inputs?.seed) ?? parseSeed(body.parent_seed);
+	let seed = isVariation ? null : parseSeed(body.seed);
+	while (seed === null || seed === parentSeed) seed = mintSeed();
+
+	const submitted = await submitForge(base, { prompt: composed, seed }, clientId, auth);
 	if (submitted.error) {
 		return json(res, submitted.status, {
 			error: submitted.error,
 			message: submitted.message,
+			kind: plan.kind,
 			...(submitted.retryAfter ? { retry_after: submitted.retryAfter } : {}),
 		});
 	}
@@ -218,7 +331,7 @@ export default wrap(async (req, res) => {
 		const intervalMs = Number(process.env.FORGE_ITERATE_POLL_MS) || 3000;
 		const polled = await pollForge(base, job.job_id, clientId, auth, { timeoutMs, intervalMs });
 		if (polled.error) {
-			return json(res, polled.status, { error: polled.error, message: polled.message });
+			return json(res, polled.status, { error: polled.error, message: polled.message, kind: plan.kind });
 		}
 		final = polled.data;
 	}
@@ -226,6 +339,7 @@ export default wrap(async (req, res) => {
 		return json(res, 504, {
 			error: 'timeout',
 			message: 'Iteration is taking longer than expected. Please try again.',
+			kind: plan.kind,
 			job_id: job.job_id || null,
 			creation_id: final.creation_id ?? job.creation_id ?? null,
 		});
@@ -233,25 +347,39 @@ export default wrap(async (req, res) => {
 
 	const newGlbUrl = final.glb_url;
 	const vUrl = viewerUrl(base, newGlbUrl);
-	const lineage = appendVersion(baseLineage, {
-		glbUrl: newGlbUrl,
-		viewerUrl: vUrl,
-		prompt: composed,
-		instruction,
-		refKind: 'text',
-		...(parentIndex !== undefined ? { parentIndex } : {}),
-	});
-	const activeIndex = lineage.length - 1;
+	const creationId = final.creation_id ?? job.creation_id ?? null;
+	const lineage = appendRecorded(
+		baseLineage,
+		{
+			glbUrl: newGlbUrl,
+			viewerUrl: vUrl,
+			prompt: composed,
+			instruction: isVariation ? null : instruction,
+			refKind: isVariation ? 'variation' : 'text',
+			parentIndex,
+		},
+		{
+			mode: plan.kind,
+			prompt: composed,
+			instruction: isVariation ? null : instruction,
+			parentPrompt: parentPrompt || null,
+			seed,
+			backend: final.backend || job.backend || null,
+			creationId,
+		},
+	);
 
 	return json(res, 200, {
 		ok: true,
+		kind: plan.kind,
 		glbUrl: newGlbUrl,
 		viewerUrl: vUrl,
 		prompt: composed,
-		instruction,
-		creationId: final.creation_id ?? job.creation_id ?? null,
+		instruction: isVariation ? null : instruction,
+		seed,
+		creationId,
 		durable: Boolean(final.durable),
 		lineage,
-		activeIndex,
+		activeIndex: lineage.length - 1,
 	});
 });
