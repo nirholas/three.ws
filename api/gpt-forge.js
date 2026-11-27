@@ -106,6 +106,13 @@ import { KEY_SHAPES, byokFailureResponse, byokPollFailure, rejectedKeyBody } fro
 import { validateForgeImage } from './_lib/forge-image-validate.js';
 import { findUnsafeUrl, verifyUploadedReferences } from './_lib/forge-input-guard.js';
 import {
+	extendWithTurnaroundViews,
+	droppedViewsNote,
+	narrowToSingleView,
+	pruneMismatchedPhotos,
+	viewsReport,
+} from './_lib/forge-views.js';
+import {
 	SKETCH_FALLBACK_NOTE,
 	SKETCH_UNREADABLE_MESSAGE,
 	isUnusableInputError,
@@ -1463,6 +1470,11 @@ async function startJob(req, res) {
 		}
 	}
 
+	// What the checks below left out of a set of photos, by position, and how many
+	// the person supplied: reported back so the page can say which photo and why.
+	const suppliedUrls = imageUrls;
+	const suppliedViewCount = imageUrls.length;
+	let droppedPhotos = [];
 	if (isImageMode) {
 		if (imageUrls.length > MAX_VIEWS) {
 			return json(res, 400, {
@@ -1514,6 +1526,13 @@ async function startJob(req, res) {
 			// a slot, it actively corrupts multi-view fusion by voting for geometry
 			// that isn't there.
 			const track = { meta: { forgeClient: clientKeyFrom(req) } };
+			// A photo of a different object, or of nothing, adds no coverage: it votes
+			// for geometry that is not there. Judged by colour once the background is
+			// out, on positive evidence only (an unreadable photo is kept).
+			const matched = await pruneMismatchedPhotos(imageUrls);
+			droppedPhotos = matched.dropped.map(({ position, reason }) => ({ position, reason }));
+			imageUrls = matched.urls;
+			const photoPositions = imageUrls.map((u) => suppliedUrls.indexOf(u) + 1);
 			const checks = await Promise.all(imageUrls.map((u) => validateForgeImage(u, { track })));
 			// The primary view is load-bearing: if it can't be reconstructed the whole
 			// job can't, so reject with the one-click override as before.
@@ -1531,6 +1550,9 @@ async function startJob(req, res) {
 			// rather than fail the job or feed a corrupting view into fusion. The
 			// primary always survives, so a single-photo upload is unaffected.
 			const usable = imageUrls.filter((_, i) => i === 0 || checks[i].ok);
+			imageUrls.forEach((_, i) => {
+				if (i > 0 && !checks[i].ok) droppedPhotos.push({ position: photoPositions[i], reason: 'unusable' });
+			});
 			if (usable.length < imageUrls.length) {
 				console.warn(
 					`[forge] pruned ${imageUrls.length - usable.length} unusable secondary view(s) before fusion; keeping ${usable.length}`,
@@ -2130,11 +2152,37 @@ async function startJob(req, res) {
 		// speed, and a caller who supplied multiple calibrated views keeps exactly
 		// those. Best-effort: a failed view just means fewer views, never a
 		// failed generation.
+		// A lane that reads one image is handed the one that shows the object best
+		// and the response says so. The painter is bounded and fail-open: whatever
+		// it does (throws, throttles, hangs, answers with a blank or foreign
+		// picture) the job carries on at once with the views it already holds.
+		const singleView = narrowToSingleView({
+			views,
+			labels: null,
+			backendId,
+			engineLabel: BACKENDS[backendId]?.label,
+		});
+		if (singleView.views !== views) {
+			views = singleView.views;
+			referenceImageUrl = views[0];
+		}
 		if (backendId === 'trellis_selfhost' && tier.id !== 'draft' && views.length === 1) {
 			markSubmitStage('views');
-			const turnaround = await synthesizeTurnaroundViews(referenceImageUrl).catch(() => []);
-			if (turnaround.length) views = [...views, ...turnaround];
 		}
+		const turnaround = await extendWithTurnaroundViews({
+			views,
+			referenceImageUrl,
+			backendId,
+			tierId: tier.id,
+			synthesize: (...args) => synthesizeTurnaroundViews(...args),
+		});
+		views = turnaround.views;
+		const viewsNote = [
+			singleView.note,
+			droppedViewsNote(droppedPhotos, { total: suppliedViewCount }),
+		]
+			.filter(Boolean)
+			.join(' ');
 		markSubmitStage('submit');
 
 		// Explicitly chosen free HuggingFace lane. Unlike the trellis free-first
@@ -2289,7 +2337,7 @@ async function startJob(req, res) {
 					previewImageUrl: referenceImageUrl,
 					replicateJobId: job.extJobId,
 					textToImageModel: isImageMode ? null : textToImageModel,
-					viewsRequested: views.length,
+					viewsRequested: Math.max(views.length, isImageMode ? suppliedViewCount : 0),
 					viewsUsed: job.viewsUsed ?? views.length,
 					multiview: views.length > 1,
 					sourceImageUrls: views,
@@ -2312,6 +2360,12 @@ async function startJob(req, res) {
 					prompt: prompt || null,
 					preview_image_url: referenceImageUrl,
 					reference_image_urls: views,
+					...viewsReport({
+						requested: Math.max(views.length, isImageMode ? suppliedViewCount : 0),
+						used: job.viewsUsed ?? views.length,
+						note: viewsNote,
+						dropped: droppedPhotos,
+					}),
 					text_to_image_model: isImageMode ? null : textToImageModel,
 					cold_start: cold,
 					options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
@@ -2602,8 +2656,8 @@ async function startJob(req, res) {
 		// backend handled it and how many views it fused: these can differ from
 		// what was requested when a single-view model is configured and we fall
 		// back to the primary view. Surfaced so a downgrade is never silent.
-		const viewsRequested = views.length;
-		const viewsUsed = typeof job.viewsUsed === 'number' ? job.viewsUsed : viewsRequested;
+		const viewsRequested = Math.max(views.length, isImageMode ? suppliedViewCount : 0);
+		const viewsUsed = typeof job.viewsUsed === 'number' ? job.viewsUsed : views.length;
 		const multiview = Boolean(job.multiview);
 
 		// TRELLIS returns a bare Replicate prediction id (kept as the job handle
@@ -2666,9 +2720,13 @@ async function startJob(req, res) {
 			prompt: prompt || null,
 			preview_image_url: referenceImageUrl,
 			reference_image_urls: views,
-			views_requested: viewsRequested,
-			views_used: viewsUsed,
-			multiview,
+			...viewsReport({
+				requested: viewsRequested,
+				used: viewsUsed,
+				note: viewsNote,
+				dropped: droppedPhotos,
+				multiview,
+			}),
 			text_to_image_model: textToImageModel,
 			cold_start: cold,
 			options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,

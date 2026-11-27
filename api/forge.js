@@ -114,6 +114,13 @@ import {
 import { validateForgeImage } from './_lib/forge-image-validate.js';
 import { findUnsafeUrl, verifyUploadedReferences } from './_lib/forge-input-guard.js';
 import {
+	extendWithTurnaroundViews,
+	droppedViewsNote,
+	narrowToSingleView,
+	pruneMismatchedPhotos,
+	viewsReport,
+} from './_lib/forge-views.js';
+import {
 	SKETCH_FALLBACK_NOTE,
 	SKETCH_UNREADABLE_MESSAGE,
 	isUnusableInputError,
@@ -1563,6 +1570,11 @@ async function startJobWithBody(req, res, body) {
 		}
 	}
 
+	// What the checks below left out of a set of photos, by position, and how many
+	// the person supplied: reported back so the page can say which photo and why.
+	const suppliedUrls = imageUrls;
+	const suppliedViewCount = imageUrls.length;
+	let droppedPhotos = [];
 	if (isImageMode) {
 		if (imageUrls.length > MAX_VIEWS) {
 			return json(res, 400, {
@@ -1637,6 +1649,14 @@ async function startJobWithBody(req, res, body) {
 			// a slot, it actively corrupts multi-view fusion by voting for geometry
 			// that isn't there.
 			const track = { meta: { forgeClient: clientKeyFrom(req) } };
+			// A photo of a different object, or of nothing, adds no coverage: it votes
+			// for geometry that is not there. Judged by colour once the background is
+			// out, on positive evidence only (an unreadable photo is kept). Positions
+			// are the person's own numbering, so the notice can name the photo.
+			const matched = await pruneMismatchedPhotos(imageUrls);
+			droppedPhotos = matched.dropped.map(({ position, reason }) => ({ position, reason }));
+			imageUrls = matched.urls;
+			const photoPositions = imageUrls.map((u) => suppliedUrls.indexOf(u) + 1);
 			const checks = await Promise.all(imageUrls.map((u) => validateForgeImage(u, { track })));
 			// The primary view is load-bearing: if it can't be reconstructed the whole
 			// job can't, so reject with the one-click override as before.
@@ -1654,11 +1674,19 @@ async function startJobWithBody(req, res, body) {
 			// rather than fail the job or feed a corrupting view into fusion. The
 			// primary always survives, so a single-photo upload is unaffected.
 			const usable = imageUrls.filter((_, i) => i === 0 || checks[i].ok);
+			imageUrls.forEach((_, i) => {
+				if (i > 0 && !checks[i].ok) droppedPhotos.push({ position: photoPositions[i], reason: 'unusable' });
+			});
 			if (usable.length < imageUrls.length) {
 				console.warn(
 					`[forge] pruned ${imageUrls.length - usable.length} unusable secondary view(s) before fusion; keeping ${usable.length}`,
 				);
 				imageUrls = usable;
+			}
+			// Per-image labels (view_labels) were checked against the full set above;
+			// keep each surviving photo's own label so none slides onto its neighbour.
+			if (opts.viewLabels && imageUrls.length !== suppliedUrls.length) {
+				opts.viewLabels = imageUrls.map((u) => opts.viewLabels[suppliedUrls.indexOf(u)]);
 			}
 		}
 	} else if (prompt.length < 3 || prompt.length > 1000) {
@@ -2347,16 +2375,40 @@ async function startJobWithBody(req, res, body) {
 		// turnaround lane edits an image it fetches by URL, so it can only fail, and
 		// paying a Vertex round trip to learn that would just slow the one path still
 		// able to deliver a mesh. Single-view reconstruction still runs.
-		if (
-			backendId === 'trellis_selfhost' &&
-			tier.id !== 'draft' &&
-			views.length === 1 &&
-			!isInlineImageRef(referenceImageUrl)
-		) {
-			markSubmitStage('views');
-			const turnaround = await synthesizeTurnaroundViews(referenceImageUrl).catch(() => []);
-			if (turnaround.length) views = [...views, ...turnaround];
+		// A lane that reads one image is handed the one that shows the object best
+		// (the front view) and the response says so, rather than shipping the rest
+		// along and letting the page claim coverage nobody used.
+		const singleView = narrowToSingleView({
+			views,
+			labels: opts.viewLabels,
+			backendId,
+			engineLabel: BACKENDS[backendId]?.label,
+		});
+		if (singleView.views !== views) {
+			views = singleView.views;
+			referenceImageUrl = views[0];
+			reportableRefUrl = referenceImageUrl;
 		}
+		// Bounded and fail-open: whatever the painter does (throws, throttles, hangs,
+		// answers with a blank or foreign picture) the job carries on at once with the
+		// views it already holds. Only the views that pass the checks are fused.
+		if (backendId === 'trellis_selfhost' && tier.id !== 'draft' && views.length === 1 && !isInlineImageRef(referenceImageUrl)) {
+			markSubmitStage('views');
+		}
+		const turnaround = await extendWithTurnaroundViews({
+			views,
+			referenceImageUrl,
+			backendId,
+			tierId: tier.id,
+			synthesize: (...args) => synthesizeTurnaroundViews(...args),
+		});
+		views = turnaround.views;
+		const viewsNote = [
+			singleView.note,
+			droppedViewsNote(droppedPhotos, { total: suppliedViewCount }),
+		]
+			.filter(Boolean)
+			.join(' ');
 		// Milestone 3: every view the reconstructor will fuse now exists, so the
 		// remaining wait is the GPU itself. Only crumbed when the lane actually
 		// painted extra views, so a single-view lane never shows a stage it skipped.
@@ -2582,7 +2634,7 @@ async function startJobWithBody(req, res, body) {
 					previewImageUrl: reportableRefUrl,
 					replicateJobId: job.extJobId,
 					textToImageModel: isImageMode ? null : textToImageModel,
-					viewsRequested: views.length,
+					viewsRequested: Math.max(views.length, isImageMode ? suppliedViewCount : 0),
 					viewsUsed: job.viewsUsed ?? views.length,
 					multiview: views.length > 1,
 					sourceImageUrls: views,
@@ -2608,6 +2660,12 @@ async function startJobWithBody(req, res, body) {
 					direction,
 					preview_image_url: reportableRefUrl,
 					reference_image_urls: views,
+					...viewsReport({
+						requested: Math.max(views.length, isImageMode ? suppliedViewCount : 0),
+						used: job.viewsUsed ?? views.length,
+						note: viewsNote,
+						dropped: droppedPhotos,
+					}),
 					text_to_image_model: isImageMode ? null : textToImageModel,
 					cold_start: cold,
 					cold_start_seconds: cold ? coldStartSecondsFor(backendId) : undefined,
@@ -2908,8 +2966,8 @@ async function startJobWithBody(req, res, body) {
 		// backend handled it and how many views it fused: these can differ from
 		// what was requested when a single-view model is configured and we fall
 		// back to the primary view. Surfaced so a downgrade is never silent.
-		const viewsRequested = views.length;
-		const viewsUsed = typeof job.viewsUsed === 'number' ? job.viewsUsed : viewsRequested;
+		const viewsRequested = Math.max(views.length, isImageMode ? suppliedViewCount : 0);
+		const viewsUsed = typeof job.viewsUsed === 'number' ? job.viewsUsed : views.length;
 		const multiview = Boolean(job.multiview);
 
 		// TRELLIS returns a bare Replicate prediction id (kept as the job handle
@@ -2974,9 +3032,13 @@ async function startJobWithBody(req, res, body) {
 			direction,
 			preview_image_url: reportableRefUrl,
 			reference_image_urls: views,
-			views_requested: viewsRequested,
-			views_used: viewsUsed,
-			multiview,
+			...viewsReport({
+				requested: viewsRequested,
+				used: viewsUsed,
+				note: viewsNote,
+				dropped: droppedPhotos,
+				multiview,
+			}),
 			text_to_image_model: textToImageModel,
 			cold_start: cold,
 			cold_start_seconds: cold ? coldStartSecondsFor(backendId) : undefined,
