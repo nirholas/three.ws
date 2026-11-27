@@ -9459,7 +9459,8 @@
 		"view_this_model_in_ar_place_title": "اعرض هذا النموذج في الواقع المعزز، موضوعاً في غرفتك",
 		"what_does_the_sketch_depict_required": "ماذا يصور الرسم التخطيطي؟ (مطلوب)",
 		"what_other_people_just_forged_open_one": "ما قام الآخرون بإنشائه للتو. افتح واحدًا في العارض، أو <strong>Remix</strong> موجهه واجعله خاصًا بك.",
-		"your_creations": "إبداعاتك"
+		"your_creations": "إبداعاتك",
+		"product_name": "Forge<span class=\"forge-h1-kw\">: AI 3D Model Generator</span>"
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge نموذجك ثلاثي الأبعاد الخاص بك على three.ws",

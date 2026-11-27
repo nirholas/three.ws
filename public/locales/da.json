@@ -9459,7 +9459,8 @@
 		"view_this_model_in_ar_place_title": "Se denne model i AR, placeret i dit rum",
 		"what_does_the_sketch_depict_required": "Hvad viser skitsen? (påkrævet)",
 		"what_other_people_just_forged_open_one": "Hvad andre lige har smedet. Åbn en i viseren, eller <strong>Remix</strong> dens prompt og gør den til din.",
-		"your_creations": "Dine kreationer"
+		"your_creations": "Dine kreationer",
+		"product_name": "Forge<span class=\"forge-h1-kw\">: AI 3D Model Generator</span>"
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge din egen 3D-model på three.ws",

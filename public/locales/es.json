@@ -9459,7 +9459,8 @@
 		"view_this_model_in_ar_place_title": "Ver este modelo en AR, colocado en tu habitación",
 		"what_does_the_sketch_depict_required": "¿Qué representa el boceto? (obligatorio)",
 		"what_other_people_just_forged_open_one": "Lo que otros acaban de forjar. Abre uno en el visor, o <strong>Remix</strong> su prompt y hazlo tuyo.",
-		"your_creations": "Tus creaciones"
+		"your_creations": "Tus creaciones",
+		"product_name": "Forge<span class=\"forge-h1-kw\">: AI 3D Model Generator</span>"
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge tu propio modelo 3D en three.ws",
