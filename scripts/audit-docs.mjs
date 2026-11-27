@@ -403,6 +403,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['oracle-trading-mcp-plan', 'internal: build order for the Oracle and trading-agent MCP servers, not a reader-facing product doc'],
 	['nvidia-apps-catalog-listing', 'internal: paste-ready listing copy and portal steps for the NVIDIA Inception catalog'],
 	['nvidia-apps-catalog-request', 'internal: outbound email asking NVIDIA to publish the catalog listing'],
+	['nvidia-reply-2026-11-jiyeon', 'internal: owner-gated draft reply to NVIDIA App Publishing with a pre-send checklist and claim verification'],
 	['nvidia-visibility-map', 'internal: outreach priorities and unclaimed program benefits across every NVIDIA surface'],
 	['nvidia-ngc-listing', 'internal: prerequisite audit and paste-ready listing copy for the NVIDIA NGC catalog submission'],
 	['nvidia-forum-browser-digital-human', 'internal: forum post drafted for the NVIDIA Developer Forums, owner-gated until posted'],
