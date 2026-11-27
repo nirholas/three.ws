@@ -50,6 +50,23 @@
       ],
       "rows": 3,
       "finishedAt": "2026-11-20T22:08:06.306Z"
+    },
+    {
+      "startedAt": "2026-11-27T20:29:57.644Z",
+      "commit": "70478517f",
+      "lanes": [
+        "grok",
+        "grok_budget"
+      ],
+      "tasks": [
+        "forge_director",
+        "agent_tools",
+        "agent_chat",
+        "x_reply",
+        "agent_spec"
+      ],
+      "rows": 50,
+      "finishedAt": "2026-11-27T20:32:45.371Z"
     }
   ],
   "keyProbe": {

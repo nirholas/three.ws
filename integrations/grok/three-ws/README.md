@@ -82,12 +82,106 @@ The single quotes matter: Grok Build expands `${THREE_WS_API_KEY}` when it loads
 
 The plugin ships no hooks, no LSP servers, no install scripts and no executables. Every command already checks a GLB URL by rendering it with `look_at_model` before it rigs or embeds it, so a hook would repeat that check.
 
+## Sample run
+
+Captured 2026-11-27 with Grok Build 1.0.92 on Linux, headless, with an xAI API key in the environment. xAI's [authentication table](https://docs.x.ai/build/enterprise#authentication) lists `XAI_API_KEY` as the sign-in for scripts and CI, so no browser is involved on the xAI side.
+
+**The plugin, against this repository's `main`.** The plugin was installed from this folder with its `.mcp.json` entry pointed at a tunnel to a three.ws server running `main`. The run used catalog search only, which needs no account. `<tunnel>` stands for the tunnel's host name, `<plugin>` for the folder Grok Build installed the plugin into, and the absolute path of the local copy is shortened to `./three-ws`:
+
+```text
+$ grok plugin install ./three-ws --trust
+Installed 1 plugin(s) from ./three-ws: three-ws
+
+$ grok mcp doctor
+
+MCP Doctor
+
+  Config sources
+    ~/.grok/config.toml                      0 servers
+    plugin: three-ws                         1 server
+    ~/.claude.json                           not found
+    .mcp.json                                not found
+
+  three-ws (http: https://<tunnel>/api/mcp-studio)
+    ✓ server started (4.3s)
+    ✓ handshake OK (protocol 2025-06-18)
+    ✓ 21 tools discovered
+
+Found 1 healthy, 0 failing.
+
+$ XAI_API_KEY=<XAI_API_KEY> grok --no-auto-update -m grok-4.7 \
+    -p "find a wooden chair in the three.ws catalog and show me its viewer link" \
+    --output-format streaming-json --permission-mode dontAsk --allow 'MCPTool' \
+    --disable-web-search --no-subagents --no-memory --no-plan --max-turns 6
+```
+
+The turn printed 186 streaming-json events. These are its three tool calls, the first three matches of the catalog answer, Grok's reply (166 text events joined) and the closing event with the session and request ids removed:
+
+```text
+{"type":"tool_call","toolName":"read_file","rawInput":{"target_file":"<plugin>/skills/find-3d-assets/SKILL.md"}}
+{"type":"tool_call","toolName":"search_tool","rawInput":{"query":"search_catalog three-ws","limit":3}}
+{"type":"tool_call","toolName":"use_tool","rawInput":{"tool_name":"three-ws__search_catalog","tool_input":{"q":"wooden chair","kind":"object","limit":5}}}
+
+10 matches for "wooden chair" (showing 5 from offset 0):
+- `object:painted_wooden_chair_01` | Painted Wooden Chair 01 | CC0 | chair, wood, painted, farmhouse
+- `object:painted_wooden_chair_02` | Painted Wooden Chair 02 | CC0 | old, wooden, vintage, antique
+- `object:WoodenChair_01` | Wooden Chair 01 | CC0 | wood, prop, vintage, furniture
+
+I found an existing CC0 chair in the three.ws catalog: **Wooden Chair 01** (`object:WoodenChair_01`).
+
+**Viewer:** https://<tunnel>/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FWoodenChair_01.glb&title=Wooden%20Chair%2001
+
+It is public domain (CC0). Tags: wood, prop, vintage, furniture, chair. The search matched 10 wooden chairs exactly; this is a plain wood chair rather than a painted or bar stool variant.
+
+{"type":"end","stopReason":"end_turn","usage":{"input_tokens":15667,"cache_read_input_tokens":55552,"cache_creation_input_tokens":0,"output_tokens":317,"reasoning_tokens":86,"total_tokens":71536},"num_turns":4,"total_cost_usd":0.061528,"modelUsage":{"grok-4.7":{"inputTokens":15667,"outputTokens":317,"cacheReadInputTokens":55552,"cacheCreationInputTokens":0,"modelCalls":4,"costUSD":0.061528}}}
+```
+
+Grok read the plugin's `find-3d-assets` skill, looked the tool up, called it through the plugin's MCP server, and answered with a link the server built.
+
+**Production, catalog search with no account.** The plugin's own entry asks for the OAuth sign-in, which needs a browser, so on this headless machine `grok mcp doctor` answered `handshake failed` with `Auth required`, as the troubleshooting table below says it will. A user-level entry that skips the sign-in connects, and catalog search works through it:
+
+```text
+$ grok mcp add --transport http three-ws https://three.ws/api/mcp-studio
+Added HTTP MCP server 'three-ws' with URL: https://three.ws/api/mcp-studio to user config
+File modified: ~/.grok/config.toml
+
+$ grok mcp doctor
+
+MCP Doctor
+
+  Config sources
+    ~/.grok/config.toml                      1 server
+    ~/.claude.json                           not found
+    .mcp.json                                not found
+
+  three-ws (http: https://three.ws/api/mcp-studio)
+    ✓ server started (0.1s)
+    ✓ handshake OK (protocol 2025-06-18)
+    ✓ 21 tools discovered
+
+Found 1 healthy, 0 failing.
+```
+
+The same prompt and flags then made two tool calls (`search_tool`, then `use_tool` with `{"tool_name":"three-ws__search_catalog","tool_input":{"q":"wooden chair","kind":"object","limit":12}}`) and ended after 3 model calls at `"total_cost_usd":0.049806`. Grok's reply, one sentence before the calls and the rest after:
+
+```text
+I'll look up the three.ws catalog search tool and find a wooden chair.
+
+**Wooden Chair 01** is already in the three.ws catalog (CC0, existing asset).
+
+Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2FWoodenChair_01.glb&title=Wooden%20Chair%2001
+
+Catalog id: `object:WoodenChair_01`. Tags include wood, vintage, and furniture.
+```
+
+Making or rigging a model was not part of either run: both were signed out of three.ws, and those tools need the account described under "Sign in".
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
 | A command answers `sign_in_required` | The `three-ws` server is connected but not signed in | `/mcps`, select `three-ws`, press `i`, finish the browser sign-in, run the command again. Or use the API key route above |
-| `grok mcp doctor three-ws` prints `handshake failed` with `Auth required` | Expected before the first sign-in: the OAuth entry asks the client to sign in | `/mcps`, select `three-ws`, press `i`. Or use the API key route above, after which the doctor reports `16 tools discovered` |
+| `grok mcp doctor three-ws` prints `handshake failed` with `Auth required` | Expected before the first sign-in: the OAuth entry asks the client to sign in | `/mcps`, select `three-ws`, press `i`. Or use the API key route above, after which the doctor reports the tools it discovered (21 on 2026-11-27) |
 | `three-ws` shows as `blocked` in `/mcps` or `/plugins` | The plugin was installed without trust | `grok plugin install three-ws --trust` again, or install it under `~/.grok/plugins/` (trusted automatically) |
 | The commands are missing from the `/` menu | The plugin is installed but disabled, or the session predates the install | `grok plugin enable three-ws`, then press `r` in the Plugins tab or start a new session |
 | `/rig` or `/embed` says it cannot load the URL | The GLB is not public, is a local path, or its host refuses cross-origin reads | Use a public `https://` URL ending in `.glb`. Files three.ws returns always work; for your own host, enable CORS for `.glb` |

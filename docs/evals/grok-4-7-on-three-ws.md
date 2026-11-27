@@ -1,14 +1,12 @@
 # Grok on three.ws: five production LLM tasks, measured
 
-Generated 2026-11-20 by `npm run grok:eval-llm` ([scripts/grok-eval-llm.mjs](../../scripts/grok-eval-llm.mjs)) from the raw results in [data/evals/llm-results/](../../data/evals/llm-results/). Regenerate this page with `npm run grok:eval-llm -- --report`.
+Generated 2026-11-27 by `npm run grok:eval-llm` ([scripts/grok-eval-llm.mjs](../../scripts/grok-eval-llm.mjs)) from the raw results in [data/evals/llm-results/](../../data/evals/llm-results/). Regenerate this page with `npm run grok:eval-llm -- --report`.
 
 three.ws is a member of xAI's Grok for Startups program. This page answers one question with data: on the LLM calls whose output a person reads, does Grok beat the model production uses today, by enough to route traffic to it? Credits are a reason to measure, not a reason to switch.
 
 ## Status
 
-Baseline only. The live Grok call (one real request to api.x.ai with no key, 2026-11-20) returned HTTP 401: "No credentials presented.". No xAI key is installed on the platform yet; installing GROK_API_KEY on the Cloud Run service is the owner step that unlocks the Grok columns.
-
-Every task set, grader, judge and the routing flags are in place, so the Grok columns fill in with the one command under "Reproduce" once the key is installed, and this page regenerates from the combined results.
+Lanes measured: Nemotron 3 Ultra (production today), Grok flagship (grok-4.7), Grok budget (grok-4.3, reasoning off).
 
 ## Method
 
@@ -41,7 +39,7 @@ Every task set, grader, judge and the routing flags are in place, so the Grok co
 - Agent spec: the reply must parse with production's `parseSpec` and every field must sit inside the bounds the prompt states, with skills, category and starter body from the real lists.
 - Reported, not required: dash characters in agent chat replies and agent specs. House style bans them in published copy, but neither prompt asks for it and only the X reply path removes them, so they appear as an advisory line instead of a fail.
 
-**Pairwise judge.** For open-ended quality, a third model that produced neither answer compares each pair blind and is asked twice with the answers swapped, so a position preference scores as a tie ([scripts/lib/llm-eval/judge.js](../../scripts/lib/llm-eval/judge.js)). No pairs judged yet: a pair needs the current lane and a Grok lane on the same input, so the judge runs with the Grok columns. The judge is the first configured of groq `openai/gpt-oss-120b`, then nvidia `nvidia/nemotron-3-ultra-550b-a55b`, then openrouter `google/gemma-4-31b-it:free`, skipping any model that produced either answer (so never Nemotron 3 Ultra against the current lane, and never Grok).
+**Pairwise judge.** For open-ended quality, a third model that produced neither answer compares each pair blind and is asked twice with the answers swapped, so a position preference scores as a tie ([scripts/lib/llm-eval/judge.js](../../scripts/lib/llm-eval/judge.js)). No pairs judged yet, so every comparison on this page is the objective score alone. 50 pairs are answered by both lanes and still waiting for the judge: the run that made the Grok calls had no judge key (GROQ_API_KEY, NVIDIA_API_KEY, OPENROUTER_API_KEY) in its environment. The second command under "Reproduce" judges them without calling xAI again. The judge is the first configured of groq `openai/gpt-oss-120b`, then nvidia `nvidia/nemotron-3-ultra-550b-a55b`, then openrouter `google/gemma-4-31b-it:free`, skipping any model that produced either answer (so never Nemotron 3 Ultra against the current lane, and never Grok).
 
 **Statistics.** A call that errors or times out scores as a fail for that lane. Intervals are 95% percentile bootstrap intervals (4,000 resamples, fixed seed). A Grok lane is recommended for a task only when its paired difference against the current lane, or its judge win rate, has an interval that excludes a tie, and its p95 latency stays inside the budget (twice the current lane's p95, at least 5 s). Cost per 1,000 calls uses the cost xAI reports per response, else the xAI price table ([api/_lib/xai-pricing.js](../../api/_lib/xai-pricing.js)); the NVIDIA NIM free tier costs the platform nothing.
 
@@ -52,12 +50,17 @@ Every task set, grader, judge and the routing flags are in place, so the Grok co
 | Lane | Pass rate (95% CI) | Answered | p50 ms | p95 ms | Cost per 1,000 calls |
 |---|---|---|---|---|---|
 | Nemotron 3 Ultra (production today) | 48% (34% to 62%) | 50/50 | 6,120 | 11,971 | $0 (free tier) |
+| Grok flagship (grok-4.7) | 100% (100% to 100%) | 5/50 | 45,792 | 59,621 | $28.39 |
+| Grok budget (grok-4.3, reasoning off) | 100% (100% to 100%) | 5/50 | 2,178 | 2,901 | $0.95 |
+
+- Grok flagship (grok-4.7): paired difference vs current +20 pts (+0 pts to +60 pts).
+- Grok budget (grok-4.3, reasoning off): paired difference vs current +20 pts (+0 pts to +60 pts).
 
 Checks the current lane fails most (rows passing out of rows the check applies to): `usable_rewrite` 24/50.
 
 Why the current lane fails: `too_long` 23, `unfinished` 3.
 
-**Recommendation:** Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce").
+**Recommendation:** Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane.
 
 <details><summary>Failure examples</summary>
 
@@ -74,22 +77,32 @@ Why the current lane fails: `too_long` 23, `unfinished` 3.
 | Lane | Pass rate (95% CI) | Answered | p50 ms | p95 ms | Cost per 1,000 calls |
 |---|---|---|---|---|---|
 | Nemotron 3 Ultra (production today) | 100% (100% to 100%) | 50/50 | 1,040 | 2,286 | $0 (free tier) |
+| Grok flagship (grok-4.7) | 100% (100% to 100%) | 5/50 | 1,034 | 1,738 | $2.62 |
+| Grok budget (grok-4.3, reasoning off) | 100% (100% to 100%) | 5/50 | 708 | 1,090 | $2.00 |
 
-**Recommendation:** Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce").
+- Grok flagship (grok-4.7): paired difference vs current +0 pts (+0 pts to +0 pts).
+- Grok budget (grok-4.3, reasoning off): paired difference vs current +0 pts (+0 pts to +0 pts).
+
+**Recommendation:** Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane.
 
 ### Agent chat: persona replies
 
 | Lane | Pass rate (95% CI) | Answered | p50 ms | p95 ms | Cost per 1,000 calls |
 |---|---|---|---|---|---|
 | Nemotron 3 Ultra (production today) | 96% (90% to 100%) | 50/50 | 1,831 | 5,400 | $0 (free tier) |
+| Grok flagship (grok-4.7) | 100% (100% to 100%) | 5/50 | 5,305 | 10,835 | $5.82 |
+| Grok budget (grok-4.3, reasoning off) | 100% (100% to 100%) | 5/50 | 1,676 | 4,142 | $1.85 |
+
+- Grok flagship (grok-4.7): paired difference vs current +0 pts (+0 pts to +0 pts).
+- Grok budget (grok-4.3, reasoning off): paired difference vs current +0 pts (+0 pts to +0 pts).
 
 Checks the current lane fails most (rows passing out of rows the check applies to): `persona_length` 9/10, `no_emoji` 49/50.
 
 Why the current lane fails: `no_emoji` 1, `persona_length` 1.
 
-Advisory, dash-free replies: Nemotron 3 Ultra (production today) 21/50.
+Advisory, dash-free replies: Nemotron 3 Ultra (production today) 21/50, Grok flagship (grok-4.7) 3/5, Grok budget (grok-4.3, reasoning off) 2/5.
 
-**Recommendation:** Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce").
+**Recommendation:** Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane.
 
 <details><summary>Failure examples</summary>
 
@@ -105,12 +118,17 @@ Advisory, dash-free replies: Nemotron 3 Ultra (production today) 21/50.
 | Lane | Pass rate (95% CI) | Answered | p50 ms | p95 ms | Cost per 1,000 calls |
 |---|---|---|---|---|---|
 | Nemotron 3 Ultra (production today) | 80% (68% to 90%) | 50/50 | 1,331 | 3,531 | $0 (free tier) |
+| Grok flagship (grok-4.7) | 100% (100% to 100%) | 5/50 | 9,016 | 10,773 | $6.04 |
+| Grok budget (grok-4.3, reasoning off) | 100% (100% to 100%) | 5/50 | 999 | 1,793 | $0.53 |
+
+- Grok flagship (grok-4.7): paired difference vs current +20 pts (+0 pts to +60 pts).
+- Grok budget (grok-4.3, reasoning off): paired difference vs current +20 pts (+0 pts to +60 pts).
 
 Checks the current lane fails most (rows passing out of rows the check applies to): `postable` 40/50.
 
 Why the current lane fails: `too_long` 8, `financial` 1, `handle` 1.
 
-**Recommendation:** Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce").
+**Recommendation:** Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane.
 
 <details><summary>Failure examples</summary>
 
@@ -127,14 +145,19 @@ Why the current lane fails: `too_long` 8, `financial` 1, `handle` 1.
 | Lane | Pass rate (95% CI) | Answered | p50 ms | p95 ms | Cost per 1,000 calls |
 |---|---|---|---|---|---|
 | Nemotron 3 Ultra (production today) | 76% (64% to 88%) | 50/50 | 5,674 | 10,058 | $0 (free tier) |
+| Grok flagship (grok-4.7) | 100% (100% to 100%) | 5/50 | 35,916 | 45,259 | $19.41 |
+| Grok budget (grok-4.3, reasoning off) | 100% (100% to 100%) | 5/50 | 4,229 | 5,777 | $0.96 |
+
+- Grok flagship (grok-4.7): paired difference vs current +20 pts (+0 pts to +60 pts).
+- Grok budget (grok-4.3, reasoning off): paired difference vs current +20 pts (+0 pts to +60 pts).
 
 Checks the current lane fails most (rows passing out of rows the check applies to): `greeting` 41/50, `name` 47/50.
 
 Why the current lane fails: `greeting` 9, `name` 3.
 
-Advisory, dash-free replies: Nemotron 3 Ultra (production today) 1/50.
+Advisory, dash-free replies: Nemotron 3 Ultra (production today) 1/50, Grok flagship (grok-4.7) 5/5, Grok budget (grok-4.3, reasoning off) 0/5.
 
-**Recommendation:** Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce").
+**Recommendation:** Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane.
 
 <details><summary>Failure examples</summary>
 
@@ -150,17 +173,17 @@ Advisory, dash-free replies: Nemotron 3 Ultra (production today) 1/50.
 
 | Task | Recommendation |
 |---|---|
-| Forge prompt director | Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce"). |
-| Agent chat: tool selection | Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce"). |
-| Agent chat: persona replies | Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce"). |
-| Public X replies | Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce"). |
-| Agent spec from a brief | Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce"). |
+| Forge prompt director | Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane. |
+| Agent chat: tool selection | Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane. |
+| Agent chat: persona replies | Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane. |
+| Public X replies | Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane. |
+| Agent spec from a brief | Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane. |
 
 ## Routing
 
 Routing is per task and off by default. `LLM_ROUTE_<TASK>` names a chat Grok id from `GROK_MODELS`, optionally with a reasoning effort (`<id>:<effort>`); unset, `off`, `default` or an invalid value leave the task on its current chain ([api/_lib/llm.js](../../api/_lib/llm.js) `llmRouteOverride`). The routed Grok rung leads the chain and every existing rung stays behind it, so an xAI error falls through instead of failing the call. `LLM_ROUTE_AGENT_CHAT` does the same for signed-in agent chat in [api/chat.js](../../api/chat.js) when the caller picked no provider, model or agent brain; anonymous chat stays on the free lanes. The flags take effect only where the server has `GROK_API_KEY`.
 
-No flag is recommended until the Grok columns exist.
+No task cleared the bar, so no flag is recommended and every default stays as it is.
 
 ## Reproduce
 
