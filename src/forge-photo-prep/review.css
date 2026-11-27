@@ -216,6 +216,18 @@
 	border-left-color: var(--danger);
 	background: color-mix(in srgb, var(--danger) 10%, transparent);
 }
+.pp-notice {
+	margin: 0;
+	padding: 0.5rem 0.75rem;
+	border-left: 3px solid var(--accent);
+	border-radius: var(--radius-sm);
+	background: var(--accent-soft);
+	font-size: var(--text-sm);
+}
+.pp-notice-failed {
+	border-left-color: var(--warn);
+	background: color-mix(in srgb, var(--warn) 10%, transparent);
+}
 .pp-ok {
 	margin: 0;
 	padding: 0.5rem 0.75rem;

@@ -32,6 +32,8 @@ What is NOT known and must be read from the repositories, not assumed: how NemoC
 
 ## Step 0: re-derive the current state
 
+A design doc for this build exists at `docs/nvidia/builds/874-nemoclaw-openshell.md`. It is a plan written on 2026-11-26, not a spec: this order is complete without it, and where the code or a license disagrees with it, the code and the license win.
+
     ls integrations integrations/nvidia integrations/hermes/three-ws
     sed -n 1,80p mcp-server/README.md
     sed -n 1,60p docs/mcp.md
@@ -75,6 +77,6 @@ Read one sibling integration (`integrations/hermes/three-ws/`) for the house lay
 
 1. Verify every Definition of done line with the command output in front of you.
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
-3. Append a dated entry to `prompts/finish/_context/nvidia-PROGRESS.md` (re-read it first, small anchored edit at the end): order number, commit hashes, what is live, the measured number, what waits on the owner.
+3. Append a dated entry to `prompts/finish/_context/nvidia-PROGRESS.md` (re-read it first, small anchored edit at the end): order number, commit hashes, what is live, the measured number, what waits on the owner. Then bring this build's design doc `docs/nvidia/builds/874-nemoclaw-openshell.md` and its row in `docs/nvidia/builds/README.md` up to date: the status, the measured numbers, anything the design got wrong, and the commit hash in place of the link to this order (the order is archived, so the link would break).
 4. All lines pass: `git mv` this file to `prompts/archive/` in its own closing commit and repoint inbound links. If an owner step is last, leave the file and put a dated status line under the title naming what remains.
 5. Report: what step 0 measured; files and commit hashes; evidence per Definition of done line; the measured numbers; the license clauses you relied on; the one batched owner message (`git push`, opening the pull request on `NVIDIA/nemoclaw-community`, any forum or social post, the Inception portal edit); one-line judgment calls. No trailing questions.

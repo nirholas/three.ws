@@ -2,7 +2,7 @@
 
 Research note, 2026-11-26. It studies @poteto (Lauren, on the Grok @bot team at xAI, 340k followers), named by the owner as the account that posts the best demos. Source: her latest 100 original posts (2026-10-18 to 2026-11-25), pulled from the X API with [scripts/x-user-timeline.mjs](../scripts/x-user-timeline.mjs), plus the full text of her article "Automate Anything with Grok Bot". Companion to [x-timeline-ideas.md](x-timeline-ideas.md) and [grok-showcase-and-tools.md](grok-showcase-and-tools.md).
 
-Re-pull at any time (about 101 paid reads): `GCP_PROJECT=three-ws node scripts/x-user-timeline.mjs poteto`. Raw output lands in `data/x-research/`, which is gitignored.
+Everything pulled is stored in [data/x-research/poteto.json](../data/x-research/poteto.json) (452 posts, five X Article bodies, media URLs, metrics with history, and a ledger of every paid read), so reading it again costs nothing: `node scripts/x-user-timeline.mjs poteto --top 25` ranks it offline. A later `GCP_PROJECT=three-ws node scripts/x-user-timeline.mjs poteto` pays only for posts newer than the newest one stored. See [data/x-research/README.md](../data/x-research/README.md).
 
 ## What the numbers say
 
@@ -15,7 +15,24 @@ Median post: 181k impressions. Her top posts, by impressions:
 5. **A bullet-list guide to building bots**, ending "ask @bot to read this post and help you improve your team!": 1.38M impressions, 19.6k bookmarks.
 6. **"Sharing my bot tibot today"**, a ready-to-install bot template: 1.02M.
 
-By format, photo posts (median 226k) and plain text (206k) beat video (162k, only 4 posts) and quote or link posts (163k). Video is not what carries her account. **Shipped things, guides people save, and installable templates are.**
+By format, photo posts (median 226k) and plain text (206k) beat video (162k, only 4 posts) and quote or link posts (163k) in that window. **Shipped things, guides people save, and installable templates carry her account.**
+
+### Most engaged, all time
+
+A second pull ranks by engagement (likes, reposts, replies, quotes and bookmarks) across 452 posts: every original post since 2026-08-23 from the timeline API (its 3,200-post window counts replies and reposts, so it reaches back no further), plus her all-time top posts from the syndication feed with metrics refreshed through `GET /2/tweets`. The median post earns 1.2k engagements. The top seven:
+
+1. **A native 38 minute video talk**, "here's how i shipped 2,500 PRs last month to production" (2026-09-21): 64k engagements, 4.7M impressions, 38k bookmarks. It was a conference talk she could not attend, so she uploaded it to X for free with "watch it on 2x speed".
+2. **X Article "Automate Anything with Grok Bot"** (2026-11-18): 56k.
+3. **The bullet guide to building bots**, "ask @bot to read this post" (2026-10-31): 34k.
+4. **X Article "A guide to pstack, part one"** (2026-08-31): 29k, with 19k bookmarks.
+5. **One prompt, quoted** (2026-09-29): "restate in your own words what you think my goals are and what the problem i'm trying to solve is". 27k engagements from a single sentence.
+6. **The AIE talk link** (2026-11-14): 23k.
+7. **"copy this post/link and give it to your @bot or agent!"**, a four-point checklist with a diagram (2026-10-16): 21k.
+
+What the format medians say:
+- **Articles**: 5 posts, median 18.6k engagements, 15 times her typical post.
+- **Posts written for a bot to run** ("give it to your @bot", "ask @bot to read this"): 4 posts, median 21.5k, the strongest format she has.
+- **Short clips**: 14 videos, median 1.35k, about the same as any post. One long native video, a full talk with real substance, is her single best post. Native long-form video works; short clips do not stand out.
 
 ## The patterns
 
@@ -39,9 +56,10 @@ Each item names the existing surface it builds on. Posting from our accounts sta
 4. **The proof post.** After each launch, post the build receipts the way her trivia post does: how many forge runs, which Grok steps, what the render-check loop caught. We already record that data (forge job stats, the x-content reel of filmed proof runs in `api/_lib/x-content/reel.js`).
 5. **Templates, not features.** Ship installable bot templates for Grok Bot users: an "avatar agent" (a persona plus a three.ws body plus voice), and a "3D product shot bot" for small shops. Each gets its own one-tap post, like tibot.
 6. **A weekly "what did you make" post** from @trythreews, quoting the best user creations with their rendered clip. It costs no rendering, and the replies supply next week's content.
-7. **Making-of clips through engine 1.** Every big creation gets a second post: the turntable, the cutaway tour, or the storyboard. That is the scene-to-clip engine from the showcase doc, and it costs nothing beyond the render.
+7. **One long native talk.** Record a 20 to 40 minute "how we built three.ws with agents" walkthrough (the forge pipeline, the render-check loop, the Grok steps) and upload it to X natively, not as a YouTube link. Her best post ever is exactly this.
+8. **Making-of clips through engine 1.** Every big creation gets a second post: the turntable, the cutaway tour, or the storyboard. That is the scene-to-clip engine from the showcase doc, and it costs nothing beyond the render.
 
 ## Not worth copying
 
 - The personal and confrontational posts (blocking trolls, "mogging"). They travel on her personality, not on the product.
-- Video as the main format. Her data says shipped artifacts and saved guides beat clips. Our video replies (idea 1 in x-timeline-ideas.md) still matter for the mention bot, where a summoned reply with media is the cheapest post X sells. For launches, lead with the playable link.
+- Short clips as the main format. Her data says shipped artifacts, saved guides and one long native talk beat clips. Our video replies (idea 1 in x-timeline-ideas.md) still matter for the mention bot, where a summoned reply with media is the cheapest post X sells. For launches, lead with the playable link, and for depth, upload the whole talk natively.

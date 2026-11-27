@@ -26,7 +26,7 @@ import { finalizeAutoRigStage } from '../_lib/auto-rig.js';
 import { isAllowedProviderResultUrl } from '../_lib/provider-result-url.js';
 import { generateReferenceImage } from '../_lib/forge-reference-image.js';
 import { requestTerritory } from '../_lib/forge-territory.js';
-import { planPromptAvatarLanes, promptAvatarImagePrompt } from '../_lib/prompt-avatar.js';
+import { planPhotoAvatarLanes, planPromptAvatarLanes, promptAvatarImagePrompt } from '../_lib/prompt-avatar.js';
 import { laneHealthSnapshot } from '../_lib/forge-lane-health.js';
 
 // ── provider error masking ──────────────────────────────────────────────────────
@@ -1091,7 +1091,7 @@ const handleReconstruct = wrap(async (req, res) => {
 			health: await promptLaneHealth(),
 			country: requestTerritory(req),
 		})
-		: reconstructCandidates.map((c) => ({ ...c, mode: 'reconstruct', lane: c.name, params: {} }));
+		: planPhotoAvatarLanes(reconstructCandidates, requestTerritory(req));
 
 	// Nothing configured anywhere — tell the client which BYOK providers are
 	// accepted (unchanged 402 contract the client branches on).

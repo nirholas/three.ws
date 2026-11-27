@@ -25,9 +25,27 @@ import { TICKET_HEADER, newTicket, ticketHandle } from '../_lib/forge-submit-tic
 // The rewrite guard and fallback-reason tail are shared with forge-client.js so
 // the two clients cannot drift apart again (this copy once had its own,
 // reason-less duplicate of isUsableDirectorRewrite).
-import { isUsableDirectorRewrite, directorRewriteProblem, finishDirectorReply } from './forge-client.js';
+import {
+	isUsableDirectorRewrite,
+	directorRewriteProblem,
+	finishDirectorReply,
+	directorBudgetMs,
+	directorChainFailureReason,
+	DIRECTOR_BUDGET_MS,
+	DIRECTOR_MAX_TOKENS,
+	DIRECTOR_WATSONX_SHARE_MS,
+} from './forge-client.js';
 // Re-exported so the clone stays a superset of forge-client's public API.
-export { isUsableDirectorRewrite, directorRewriteProblem, finishDirectorReply };
+export {
+	isUsableDirectorRewrite,
+	directorRewriteProblem,
+	finishDirectorReply,
+	directorBudgetMs,
+	directorChainFailureReason,
+	DIRECTOR_BUDGET_MS,
+	DIRECTOR_MAX_TOKENS,
+	DIRECTOR_WATSONX_SHARE_MS,
+};
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_POLL_MS = 3_000;
@@ -404,22 +422,15 @@ export async function rig(base, glbUrl, { timeoutEnv, deadline, ticket, onSubmit
 // providers), so the director silently never ran on any surface. Fail-soft:
 // returns null on any failure so the caller forwards the original prompt
 // unchanged, never faked.
-// A complete director spec (subject, construction, materials, lighting, framing,
-// negatives) measures ~800 characters, which is right at what 200 tokens buys.
-// With no headroom, any model even slightly more verbose than average had its
-// answer cut mid-clause, and the fragment was then forwarded as the brief:
-// observed on production 2026-08-07, "a red wooden rocking chair" directed to
-// "A classic wooden rocking chair with gracefully curved" and "a small ceramic
-// teapot with a bamboo handle" to "A small,", which reconstructed as a coffee
-// tamper. Budget for a whole spec instead of a clipped one.
-const DIRECTOR_MAX_TOKENS = 400;
+// DIRECTOR_MAX_TOKENS is shared with ./forge-client.js, which documents why a
+// whole spec needs that headroom.
 // ONE bound for the whole director step, watsonx and the fallback chain
-// together. Each leg used to carry its own 20 s, so a stalled watsonx followed
-// by a stalled chain cost 40 s before the paint step began; measured live on
-// 2026-08-27 as the gap between a 60 s paint budget and 110 s submits. The
-// director is a quality lever, not a requirement: past this it is skipped.
-const DIRECTOR_TIMEOUT_MS = 15_000;
-const DIRECTOR_WATSONX_SHARE_MS = 6_000;
+// together, shared with ./forge-client.js (directorBudgetMs) so the two
+// surfaces cannot drift. Each leg used to carry its own 20 s, so a stalled
+// watsonx followed by a stalled chain cost 40 s before the paint step began;
+// measured live on 2026-08-27 as the gap between a 60 s paint budget and 110 s
+// submits. The director is a quality lever, not a requirement: past the budget
+// it is skipped and the user's own prompt goes forward.
 
 export async function directPrompt(instruction, rawPrompt, { onFallback } = {}) {
 	const user = `Idea: ${rawPrompt}`;
@@ -429,7 +440,7 @@ export async function directPrompt(instruction, rawPrompt, { onFallback } = {}) 
 	// hung IAM or inference call must degrade to the free chain, not stall the
 	// whole generation submit.
 	const cfg = watsonxConfig();
-	const deadline = Date.now() + DIRECTOR_TIMEOUT_MS;
+	const deadline = Date.now() + directorBudgetMs();
 	const remaining = () => deadline - Date.now();
 	if (cfg.configured) {
 		let timer;
@@ -457,7 +468,11 @@ export async function directPrompt(instruction, rawPrompt, { onFallback } = {}) 
 		}
 	}
 
-	if (!text && remaining() > 2_000) {
+	if (!text) {
+		if (remaining() < 1_000) {
+			onFallback?.({ reason: 'budget_spent' });
+			return null;
+		}
 		try {
 			const result = await llmComplete({
 				system: instruction,
@@ -466,10 +481,13 @@ export async function directPrompt(instruction, rawPrompt, { onFallback } = {}) 
 				timeoutMs: remaining(),
 				task: 'forge_director',
 				track: { tool: 'forge-director' },
+				// Never re-ask a provider that refused moments ago (see forge-client.js).
+				strictCooldowns: true,
 			});
 			text = result?.text || null;
-		} catch {
-			text = null;
+		} catch (err) {
+			onFallback?.({ reason: directorChainFailureReason(err) });
+			return null;
 		}
 	}
 

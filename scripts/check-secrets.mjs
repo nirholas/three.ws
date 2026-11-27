@@ -196,8 +196,10 @@ const CONTENT_RULES = [
 		what: 'a live API key in a provider-issued format',
 		// Each alternative is a format one vendor issues and nothing else
 		// produces. Lengths are the vendor minimums, so a truncated docs sample
-		// ("sk-ant-...") does not match.
-		find: /(sk-ant-api[0-9]{2}-[A-Za-z0-9_-]{40,}|sk-proj-[A-Za-z0-9_-]{40,}|sk-[A-Za-z0-9]{48,}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{60,}|glpat-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[baprs]-[0-9A-Za-z-]{20,}|hf_[A-Za-z0-9]{34,}|nvapi-[A-Za-z0-9_-]{40,}|r8_[A-Za-z0-9]{37,}|gsk_[A-Za-z0-9]{50,}|sk-or-v1-[a-f0-9]{60,}|SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{30,}|npm_[A-Za-z0-9]{36}|dckr_pat_[A-Za-z0-9_-]{20,}|ya29\.[0-9A-Za-z_-]{60,}|cf(?:at|ut)_[A-Za-z0-9_-]{32,})/,
+		// ("sk-ant-...") does not match. An AWS key id also has to stand alone:
+		// its alphabet is a subset of base64, so a long enough blob (inlined
+		// wasm) contains the shape by chance.
+		find: /(sk-ant-api[0-9]{2}-[A-Za-z0-9_-]{40,}|sk-proj-[A-Za-z0-9_-]{40,}|sk-[A-Za-z0-9]{48,}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{60,}|glpat-[A-Za-z0-9_-]{20,}|(?<![A-Za-z0-9])AKIA[0-9A-Z]{16}(?![A-Za-z0-9])|AIza[0-9A-Za-z_-]{35}|xox[baprs]-[0-9A-Za-z-]{20,}|hf_[A-Za-z0-9]{34,}|nvapi-[A-Za-z0-9_-]{40,}|r8_[A-Za-z0-9]{37,}|gsk_[A-Za-z0-9]{50,}|sk-or-v1-[a-f0-9]{60,}|SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{30,}|npm_[A-Za-z0-9]{36}|dckr_pat_[A-Za-z0-9_-]{20,}|ya29\.[0-9A-Za-z_-]{60,}|cf(?:at|ut)_[A-Za-z0-9_-]{32,})/,
 		except: (value) => FAKE_VALUE.test(value),
 	},
 	{

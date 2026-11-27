@@ -20,10 +20,11 @@ describe('forge done-frame cache', () => {
 	});
 
 	it('remembers a done frame and returns it verbatim on recall', async () => {
-		const frame = { job_id: LONG_JOB, status: 'done', glb_url: 'https://cdn.test/a.glb', quality_gate: { score: 85 } };
-		expect(await recallDoneFrame(LONG_JOB)).toBeNull();
+		const frame = { job_id: LONG_JOB, creation_id: 'c1', status: 'done', glb_url: 'https://cdn.test/a.glb', durable: true, quality_gate: { score: 85 } };
+		const lookup = async (id) => ({ id, status: 'done', visibility: 'unlisted', safety_status: 'clear' });
+		expect(await recallDoneFrame(LONG_JOB, { lookup })).toBeNull();
 		expect(await rememberDoneFrame(LONG_JOB, frame)).toBe(true);
-		expect(await recallDoneFrame(LONG_JOB)).toEqual(frame);
+		expect(await recallDoneFrame(LONG_JOB, { lookup })).toEqual(frame);
 	});
 
 	it('refuses to remember anything that is not a finished frame with a model', async () => {

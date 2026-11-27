@@ -1,13 +1,12 @@
 // dashboard-next — $THREE Token Utility page.
 //
-// The command center for the $THREE protocol economy. Shows real token
-// data from Birdeye/Pump.fun, platform revenue metrics, and the four
-// utility pillars: agent-to-agent payments, revenue share, revenue buyback,
-// and index token exposure.
+// The command center for the $THREE token. Shows real token data from
+// Birdeye/Pump.fun, the holder's position, the spend allowance, what the
+// token is used for, and the treasury acquisition ledger. It never presents
+// the token as a source of yield or revenue share.
 //
 // Real endpoints:
 //   GET /api/three-token/stats          { token, protocol }
-//   GET /api/three-token/revenue-share  { user_id, ... }
 //   GET /api/three-token/activity       { events }
 
 import { mountShell } from '../shell.js';
@@ -20,6 +19,7 @@ import { paintVerifiedBadge } from '../../pump/verified-badge.js';
 import { errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
 import { addressHtml } from '../../shared/address.js';
+import { riskNoteHTML } from '../../shared/risk-note.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
 // THREE_MINT is fetched live from /api/token/config below. This fallback is
@@ -82,7 +82,7 @@ function pctColor(n) {
 		const host = main.querySelector('[data-slot="content"]');
 
 		// Single source of truth for all $THREE data — price, protocol metrics,
-		// revenue share, activity, buyback, and the signed-in holder's live position.
+		// activity, treasury ledger, and the signed-in holder's live position.
 		// The store wraps the same /api/three-token/* endpoints this page used to
 		// fetch inline; centralising them keeps every section (and the position
 		// widget) reading one consistent snapshot. It polls protocol + activity and
@@ -127,9 +127,6 @@ function pctColor(n) {
 			// pump.fun verification badge beside the page title. Same live flag and
 			// same badge the public /three-token page renders.
 			paintVerifiedBadge(main.querySelector('[data-verified]'), stats.token);
-			const revenueShare = snap.revenueShare.status === 'ok' && !snap.revenueShare.unauthenticated
-				? snap.revenueShare
-				: null;
 			const activity = snap.activity.status === 'ok' ? { events: snap.activity.events } : null;
 
 			// Canonical mint comes from the store's /stats payload (single source);
@@ -137,15 +134,13 @@ function pctColor(n) {
 			if (snap.protocol.token?.mint) THREE_MINT = snap.protocol.token.mint;
 			else if (tokenConfig?.mint) THREE_MINT = tokenConfig.mint;
 
-			host.innerHTML = '';
+			host.innerHTML = riskNoteHTML('token');
 
 			host.appendChild(renderHeroMetrics(stats));
 			host.appendChild(renderPositionWidget(store));
-			host.appendChild(renderAccruedRewards(store));
 			host.appendChild(renderSpendAllowance());
 			host.appendChild(renderUtilityPillars(stats));
 			host.appendChild(renderLiveConverter(tokenConfig));
-			host.appendChild(renderRevenueShare(stats, revenueShare));
 			host.appendChild(renderBuyback(stats));
 			host.appendChild(renderActivityFeed(activity));
 			host.appendChild(renderTokenInfo());
@@ -319,98 +314,6 @@ function positionEmpty(message, ctaLabel, href, external = false) {
 		<a class="dn-btn" href="${esc(href)}" ${external ? 'target="_blank" rel="noopener"' : ''} style="font-size:12.5px;white-space:nowrap">${esc(ctaLabel)}</a>
 	</div>`;
 }
-
-// ── Accrued revenue share (the holder's estimated slice) ────────────────────────
-
-// Reactive panel: the signed-in holder's ESTIMATED revenue-share accrual, driven
-// by their real position (from the store) × the protocol's per-token yield. This
-// is honest by construction — there is no on-chain claim program yet, so it shows
-// an accrual estimate and labels distribution as "coming". No claim button does
-// anything it can't back (that would violate the no-fake-actions rule).
-function renderAccruedRewards(store) {
-	const section = document.createElement('div');
-	section.className = 'dn-panel';
-	section.setAttribute('aria-label', 'Your revenue share');
-	section.innerHTML = `
-		<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:4px">
-			<div style="font-size:11.5px;color:var(--nxt-ink-fade);text-transform:uppercase;letter-spacing:0.06em">Your Revenue Share</div>
-			<span style="font-size:10.5px;color:var(--nxt-ink-fade);border:1px solid var(--nxt-line);border-radius:999px;padding:2px 8px">Estimated</span>
-		</div>
-		<p style="margin:0 0 12px;font-size:12px;color:var(--nxt-ink-fade)">Your pro-rata slice of the holder revenue-share pool, based on your live balance. On-chain distribution is coming — this is an accrual estimate, not a claimable balance.</p>
-		<div data-slot="rewards-body"></div>
-	`;
-	const body = section.querySelector('[data-slot="rewards-body"]');
-
-	const render = (state) => {
-		body.innerHTML = accruedBody(state.position, state.revenueShare, state.protocol.token || {});
-	};
-	const unsub = store.subscribe(render);
-	new MutationObserver((_m, obs) => {
-		if (!section.isConnected) { unsub(); obs.disconnect(); }
-	}).observe(document.body, { childList: true, subtree: true });
-
-	return section;
-}
-
-function accruedBody(pos, rev, token) {
-	if (pos.status === 'idle' || pos.status === 'loading' || rev.status === 'loading') {
-		return `<div class="dn-skeleton" style="height:64px;border-radius:10px" aria-busy="true"></div>`;
-	}
-	if (pos.status === 'unauthenticated') {
-		return positionEmpty('Sign in to see your accrued revenue share.', 'Sign in', `/login?return=${encodeURIComponent(location.pathname)}`);
-	}
-	if (pos.status === 'no_wallet') {
-		return positionEmpty('Link a Solana wallet to start accruing revenue share.', 'Link wallet', '/dashboard/account');
-	}
-	if (pos.status === 'zero') {
-		return positionEmpty('Hold $THREE to earn a share of protocol revenue.', 'Get $THREE', `https://pump.fun/coin/${esc(token.mint || '')}`, true);
-	}
-	if (pos.status === 'error' || rev.status === 'error') {
-		return `<span style="color:var(--nxt-ink-fade);font-size:13.5px">Couldn’t load your revenue share right now.</span>`;
-	}
-
-	// status ok. per_token_yield is USD/token from the revenue-share pool snapshot.
-	const perToken = Number(rev.per_token_yield);
-	const accrued = Number.isFinite(perToken) && pos.amount != null ? pos.amount * perToken : null;
-	const pool = rev.revenue_share_pool_usd != null ? Number(rev.revenue_share_pool_usd) : null;
-	const poolPct = rev.revenue_share_pool_pct != null ? Number(rev.revenue_share_pool_pct) : 10;
-
-	const cells = [
-		{ label: 'Your est. accrual', value: accrued != null ? fmtUsd(accrued) : '—', strong: true },
-		{ label: 'Holder pool', value: pool != null ? fmtUsd(pool) : '—' },
-		{ label: 'Pool share of revenue', value: `${poolPct}%` },
-	];
-	return `
-		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:12px">
-			${cells.map((c) => `<div>
-				<div style="font-size:11px;color:var(--nxt-ink-fade);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">${esc(c.label)}</div>
-				<div style="font-size:${c.strong ? '24px' : '19px'};font-weight:700;font-family:${MONO};color:${c.strong ? '#4ade80' : 'inherit'}">${c.value}</div>
-			</div>`).join('')}
-		</div>
-					<p style="font-size:12px;color:var(--nxt-ink-fade);margin:0;line-height:1.5">Revenue share is distributed on-chain to $THREE holders pro-rata — your accrual settles to the wallet holding the tokens. No manual claim required.</p>`;
-}
-
-// ── Spend allowance (frictionless pay-from-wallet) ──────────────────────────────
-
-// Lets a holder authorize a $THREE spend cap ONCE; afterwards paid actions
-// (forge, skills, names, cosmetics) debit the cap with no wallet popup. Built on
-// Solana's native, audited Subscriptions & Allowances program — NON-CUSTODIAL:
-// tokens stay in the wallet until a charge pulls them, capped at what the user
-// authorized. The panel self-loads its status and removes itself when the rail is
-// not configured (no dead UI). Every state is designed: loading, no-wallet,
-// not-yet-granted, active, and error.
-const PRESET_CAPS = [100, 1_000, 10_000];
-const EXPIRY_OPTIONS = [
-	{ label: '30 days', days: 30 },
-	{ label: '90 days', days: 90 },
-	{ label: 'No expiry', days: null },
-];
-
-// Reference unit prices (USD) from the pricing catalog, used only to translate a
-// $THREE cap into relatable "what this covers" estimates. Display-only.
-const FORGE_STD_USD = 0.1;
-const SKILL_TYPICAL_USD = 0.05;
-const LOW_BALANCE_USD = 1; // below this, nudge a top-up
 
 function expiryLabel(ts) {
 	if (!ts || ts <= 0) return 'No expiry';
@@ -613,7 +516,7 @@ function renderSpendAllowance() {
 	return section;
 }
 
-// ── Four utility pillars ──────────────────────────────────────────────────────
+// ── What the token does ──────────────────────────────────────────────────────
 
 function renderUtilityPillars(stats) {
 	const p = stats?.protocol || {};
@@ -623,34 +526,18 @@ function renderUtilityPillars(stats) {
 		{
 			icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
 			title: 'Agent Payment Rail',
-			desc: 'Every agent-to-agent transaction on three.ws settles in $THREE. More agents working = more $THREE moving.',
+			desc: 'Agents and people can pay for three.ws features and for each other\'s services in $THREE.',
 			metric: fmtCompact(p.total_payments || 0),
 			metricLabel: 'protocol payments',
 			color: '#4ade80',
 		},
 		{
-			icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>`,
-			title: 'Revenue Share',
-			desc: `${p.revenue_share_pool_pct || 10}% of all platform revenue distributes to $THREE holders pro rata. Hold tokens, earn yield from real usage.`,
-			metric: fmtUsd(p.total_revenue_usd || 0),
-			metricLabel: 'platform revenue',
-			color: '#60a5fa',
-		},
-		{
 			icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>`,
-			title: 'Revenue Buyback',
-			desc: `${stats?.buyback?.commit_pct ?? 50}% of platform revenue is committed to buying $THREE on the open market. The platform never sells and never burns.`,
+			title: 'Treasury acquisitions',
+			desc: `The treasury may use part of platform revenue to acquire $THREE for platform use. This is discretionary, can change or stop at any time, and is not a promise of price support.`,
 			metric: fmtCompact(stats?.buyback?.three_bought || 0),
 			metricLabel: '$THREE bought back',
 			color: '#f97316',
-		},
-		{
-			icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 6-6"/><circle cx="21" cy="10" r="1"/></svg>`,
-			title: 'Index Token',
-			desc: '$THREE is the index across the entire agent economy. Every agent token launched, every skill sold, every subscription created compounds into $THREE value.',
-			metric: t.market_cap ? fmtUsd(t.market_cap) : '—',
-			metricLabel: 'market cap',
-			color: '#888888',
 		},
 	];
 
@@ -659,8 +546,8 @@ function renderUtilityPillars(stats) {
 	const header = document.createElement('div');
 	header.style.cssText = 'margin-bottom:16px';
 	header.innerHTML = `
-		<h2 style="font-size:18px;font-weight:700;margin:0 0 4px">Four Utility Pillars</h2>
-		<p style="font-size:13.5px;color:var(--nxt-ink-dim);margin:0">Each mechanism creates real demand from real usage — not speculation.</p>
+		<h2 style="font-size:18px;font-weight:700;margin:0 0 4px">What $THREE does</h2>
+		<p style="font-size:13.5px;color:var(--nxt-ink-dim);margin:0">How the token is used on three.ws today.</p>
 	`;
 	section.appendChild(header);
 
@@ -851,148 +738,6 @@ function renderLiveConverter(tokenConfig) {
 	return section;
 }
 
-// ── Revenue share calculator ──────────────────────────────────────────────────
-
-function renderRevenueShare(stats, revenueData) {
-	const section = document.createElement('div');
-	section.className = 'dn-panel';
-	section.style.cssText = 'position:relative;overflow:hidden;';
-
-	const p = stats?.protocol || {};
-	const rd = revenueData || {};
-	const tokenPrice = rd.token_price || stats?.token?.price_usd || 0;
-	const totalRevenue = rd.platform_revenue_usd || p.total_revenue_usd || 0;
-	const poolPct = rd.revenue_share_pool_pct || p.revenue_share_pool_pct || 10;
-	const revenuePool = totalRevenue * (poolPct / 100);
-	const totalSupply = rd.total_supply || 1_000_000_000;
-	const perToken = totalSupply > 0 ? revenuePool / totalSupply : 0;
-
-	section.innerHTML = `
-		<div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#60a5fa,rgba(255,255,255,0.4));opacity:0.6;border-radius:2px 2px 0 0"></div>
-		<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px;margin-top:4px">
-			<div>
-				<h2 style="font-size:18px;font-weight:700;margin:0 0 4px">Revenue Share Calculator</h2>
-				<p style="font-size:13px;color:var(--nxt-ink-dim);margin:0">See what your $THREE position earns from real platform revenue</p>
-			</div>
-			<div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.15);border-radius:999px">
-				<div style="width:6px;height:6px;border-radius:50%;background:#60a5fa;animation:pulse-dot 2s ease-in-out infinite"></div>
-				<span style="font-size:12px;color:#60a5fa;font-weight:500">${poolPct}% of revenue → holders</span>
-			</div>
-		</div>
-
-		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;align-items:start" data-slot="calc-grid">
-			<div>
-				<label style="display:block;font-size:12.5px;color:var(--nxt-ink-dim);margin-bottom:8px">Your $THREE holdings</label>
-				<div style="position:relative">
-					<input type="text" data-input="holdings" value="10,000" aria-label="Your $THREE holdings" style="
-						width:100%;box-sizing:border-box;padding:12px 70px 12px 14px;
-						background:rgba(255,255,255,0.04);border:1px solid var(--nxt-stroke);
-						border-radius:var(--nxt-radius-sm);color:var(--nxt-ink);font-size:16px;
-						font-family:${MONO};font-weight:600;outline:none;transition:border-color .15s;
-					" />
-					<span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--nxt-ink-fade);pointer-events:none">$THREE</span>
-				</div>
-				<input type="range" data-input="slider" min="0" max="1000000" value="10000" aria-label="Your $THREE holdings slider" style="
-					width:100%;margin-top:12px;accent-color:#60a5fa;cursor:pointer;
-				" />
-				<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--nxt-ink-fade);margin-top:4px">
-					<span>0</span>
-					<span>250K</span>
-					<span>500K</span>
-					<span>750K</span>
-					<span>1M</span>
-				</div>
-			</div>
-
-			<div data-slot="calc-results" style="display:flex;flex-direction:column;gap:10px">
-				${calcResultCards(10000, perToken, tokenPrice, revenuePool, totalSupply)}
-			</div>
-		</div>
-
-		<div style="margin-top:20px;padding:14px 16px;background:rgba(255,255,255,0.02);border:1px solid var(--nxt-stroke);border-radius:var(--nxt-radius-sm)">
-			<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px">
-				<div>
-					<div style="font-size:11px;color:var(--nxt-ink-fade);margin-bottom:3px">Total Platform Revenue</div>
-					<div style="font-size:14px;font-weight:600;font-family:${MONO}">${fmtUsd(totalRevenue)}</div>
-				</div>
-				<div>
-					<div style="font-size:11px;color:var(--nxt-ink-fade);margin-bottom:3px">Revenue Share Pool</div>
-					<div style="font-size:14px;font-weight:600;font-family:${MONO};color:#60a5fa">${fmtUsd(revenuePool)}</div>
-				</div>
-				<div>
-					<div style="font-size:11px;color:var(--nxt-ink-fade);margin-bottom:3px">Yield Per Token</div>
-					<div style="font-size:14px;font-weight:600;font-family:${MONO}">${fmtUsd(perToken)}</div>
-				</div>
-				<div>
-					<div style="font-size:11px;color:var(--nxt-ink-fade);margin-bottom:3px">Total Supply</div>
-					<div style="font-size:14px;font-weight:600;font-family:${MONO}">${fmtCompact(totalSupply)}</div>
-				</div>
-			</div>
-		</div>
-	`;
-
-	const style = document.createElement('style');
-	style.textContent = `@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.4}}@media (prefers-reduced-motion:reduce){@keyframes pulse-dot{0%,100%{opacity:1}}}`;
-	section.appendChild(style);
-
-	const input = section.querySelector('[data-input="holdings"]');
-	const slider = section.querySelector('[data-input="slider"]');
-	const results = section.querySelector('[data-slot="calc-results"]');
-
-	function update(raw) {
-		const amount = Math.max(0, parseInt(String(raw).replace(/[^0-9]/g, ''), 10) || 0);
-		results.innerHTML = calcResultCards(amount, perToken, tokenPrice, revenuePool, totalSupply);
-	}
-
-	input.addEventListener('input', (e) => {
-		const raw = e.target.value.replace(/[^0-9]/g, '');
-		const num = parseInt(raw, 10) || 0;
-		e.target.value = num.toLocaleString();
-		slider.value = Math.min(num, 1_000_000);
-		update(num);
-	});
-
-	input.addEventListener('focus', () => {
-		input.style.borderColor = '#60a5fa';
-	});
-	input.addEventListener('blur', () => {
-		input.style.borderColor = '';
-	});
-
-	slider.addEventListener('input', (e) => {
-		const num = parseInt(e.target.value, 10) || 0;
-		input.value = num.toLocaleString();
-		update(num);
-	});
-
-	return section;
-}
-
-function calcResultCards(amount, perToken, tokenPrice, revenuePool, totalSupply) {
-	const shareOfSupply = totalSupply > 0 ? amount / totalSupply : 0;
-	const yourShare = revenuePool * shareOfSupply;
-	const holdingValue = amount * (tokenPrice || 0);
-	const apy = holdingValue > 0 ? (yourShare / holdingValue) * 100 : 0;
-
-	return `
-		<div style="padding:14px 16px;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.12);border-radius:var(--nxt-radius-sm)">
-			<div style="font-size:11.5px;color:var(--nxt-ink-dim);margin-bottom:4px">Your Revenue Share</div>
-			<div style="font-size:24px;font-weight:700;font-family:${MONO};color:#60a5fa;letter-spacing:-0.02em">${fmtUsd(yourShare)}</div>
-			<div style="font-size:11.5px;color:var(--nxt-ink-fade);margin-top:2px">${(shareOfSupply * 100).toFixed(6)}% of supply</div>
-		</div>
-		<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-			<div style="padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid var(--nxt-stroke);border-radius:8px">
-				<div style="font-size:11px;color:var(--nxt-ink-fade);margin-bottom:3px">Position Value</div>
-				<div style="font-size:15px;font-weight:600;font-family:${MONO}">${fmtUsd(holdingValue)}</div>
-			</div>
-			<div style="padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid var(--nxt-stroke);border-radius:8px">
-				<div style="font-size:11px;color:var(--nxt-ink-fade);margin-bottom:3px">Effective APY</div>
-				<div style="font-size:15px;font-weight:600;font-family:${MONO};color:${apy > 0 ? 'var(--nxt-success)' : 'var(--nxt-ink-dim)'}">${apy > 0 ? apy.toFixed(1) + '%' : '—'}</div>
-			</div>
-		</div>
-	`;
-}
-
 // ── Buyback section ───────────────────────────────────────────────────────────
 
 // The platform never burns $THREE. What it commits to is buying $THREE with a
@@ -1017,8 +762,8 @@ function renderBuyback(stats) {
 	section.innerHTML = `
 		<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:4px;margin-bottom:20px">
 			<div>
-				<h2 style="font-size:18px;font-weight:700;margin:0 0 4px">Revenue Buyback</h2>
-				<p style="font-size:13px;color:var(--nxt-ink-dim);margin:0">${bb.commit_pct ?? 50}% of platform revenue is committed to buying $THREE on the open market. No burn: supply is never destroyed.</p>
+				<h2 style="font-size:18px;font-weight:700;margin:0 0 4px">Treasury acquisitions</h2>
+				<p style="font-size:13px;color:var(--nxt-ink-dim);margin:0">The treasury may use part of platform revenue to acquire $THREE for platform use. This ledger reports what it has done. It is discretionary and not a promise of price support.</p>
 			</div>
 			<span style="font-size:11.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--nxt-stroke);color:${enabled ? 'var(--nxt-success)' : 'var(--nxt-ink-dim)'}">${enabled ? 'Engine on' : 'Engine off'}</span>
 		</div>
@@ -1136,7 +881,6 @@ function renderTokenInfo() {
 					<tbody>
 						${infoRow('Contract', shortAddr(THREE_MINT))}
 						${infoRow('Launched on', 'Pump.fun')}
-						${infoRow('Revenue share', '10% of platform revenue')}
 						${infoRow('Burn per deploy', '1,000 $THREE')}
 					</tbody>
 				</table>

@@ -68,6 +68,17 @@ vi.mock('../api/_lib/rate-limit.js', async (importActual) => {
 	};
 });
 
+// The rig handler now downloads the model and checks it before any worker
+// call (api/_lib/rig-preflight.js); the public test URL serves a standing figure.
+vi.mock('../api/_lib/fetch-model.js', async (importActual) => {
+	const actual = await importActual();
+	const { figureFetchResult } = await import('./helpers/rig-box-glb.js');
+	return {
+		...actual,
+		fetchModel: async (url, opts) => (url === 'https://cdn.example/model.glb' ? figureFetchResult(url) : actual.fetchModel(url, opts)),
+	};
+});
+
 vi.mock('../api/_lib/forge-scale.js', async (importActual) => {
 	const actual = await importActual();
 	return { ...actual, dailyPaidAllowed: vi.fn(async () => ({ ok: true })) };

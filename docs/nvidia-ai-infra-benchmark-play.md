@@ -17,7 +17,7 @@ This matches the 2026-10-29 Mistral pattern in the visibility map: NVIDIA reshar
 
 The three.ws equivalent is **text in, textured 3D model out, timed on NVIDIA GPUs, with a signed receipt.** We already have every part of this:
 
-- **Hardware worth naming.** Every self-hosted generation lane runs on an NVIDIA L4. The heaviest lane (TRELLIS.2) runs on an RTX PRO 6000 Blackwell. Fleet details: [nvidia-forum-gpu-fleet-post.md](./nvidia-forum-gpu-fleet-post.md).
+- **Hardware worth naming.** The self-hosted generation lanes run on NVIDIA L4s, and the Hunyuan3D 2.1 lane runs on an RTX PRO 6000 Blackwell. Fleet details: [nvidia-forum-gpu-fleet-post.md](./nvidia-forum-gpu-fleet-post.md).
 - **Per-stage GPU timing from the worker itself.** The TRELLIS.2 worker reports `queue_ms` and `gpu_ms`, and `npm run trellis2:benchmark` turns production rows into p50/p90/p99 per lane and per voxel-resolution preset ([scripts/trellis2-benchmark.mjs](../scripts/trellis2-benchmark.mjs)).
 - **Proof you don't have to take on trust.** Every 3D Studio run writes an ed25519-signed run receipt with per-stage timings. The Baseten post asks viewers to believe a number. Ours can include a receipt anyone can verify with `node scripts/run-receipt-verify.mjs`.
 - **A clip in the same format.** The terminal card maps one to one: prompt line, a bar filling per stage (brief, mesh, geometry check, rig), a footer showing GPU seconds, triangle count and total time, and then the model turning in the viewer.

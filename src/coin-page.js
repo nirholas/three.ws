@@ -27,6 +27,9 @@ import {
 } from './shared/coin-format.js';
 import { markNoindex } from './seo-meta.js';
 import { mountDomainSuggestions } from './domains/suggest-panel.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('launch');
 
 const TIME_RANGES = [
 	{ label: '24H', days: 1 },

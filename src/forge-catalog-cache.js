@@ -7,8 +7,18 @@
 const KEY = 'forge.catalog.v1';
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+// The composer reads catalog.backends AND catalog.tiers on its first frame, so a
+// snapshot missing either would paint a broken engine pill before the live
+// response arrives.
 function usable(c) {
-	return !!c && Array.isArray(c.backends) && c.backends.length > 0 && c.backends.every((b) => b && typeof b.id === 'string' && Array.isArray(b.paths));
+	return (
+		!!c &&
+		Array.isArray(c.backends) &&
+		c.backends.length > 0 &&
+		c.backends.every((b) => b && typeof b.id === 'string' && Array.isArray(b.paths)) &&
+		Array.isArray(c.tiers) &&
+		c.tiers.length > 0
+	);
 }
 
 export function readCachedCatalog(storage = globalThis.localStorage, now = Date.now()) {
@@ -16,7 +26,9 @@ export function readCachedCatalog(storage = globalThis.localStorage, now = Date.
 		const raw = storage?.getItem(KEY);
 		if (!raw) return null;
 		const { at, catalog } = JSON.parse(raw);
-		if (typeof at !== 'number' || now - at > MAX_AGE_MS || !usable(catalog)) return null;
+		// A stamp in the future (the clock was set back after it was written)
+		// would never age out, so it is treated as expired.
+		if (typeof at !== 'number' || at > now || now - at > MAX_AGE_MS || !usable(catalog)) return null;
 		return catalog;
 	} catch {
 		return null;

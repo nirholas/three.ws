@@ -14,6 +14,9 @@
 
 import { initFork, forkButton } from './fork-trade.js';
 import { apiFetch, noteSession } from './api.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const leadersEl = document.getElementById('gcLeaders');
 const resultEl = document.getElementById('gcResult');

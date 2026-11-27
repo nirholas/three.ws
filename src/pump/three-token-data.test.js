@@ -30,7 +30,7 @@ const WALLET = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'; // 44-char base58
 function statsOk() {
 	return {
 		token: { mint: THREE_MINT, symbol: '$THREE', price_usd: 2, supply: 1000, decimals: 6, source: 'birdeye' },
-		protocol: { total_agents: 5, revenue_share_pool_pct: 10 },
+		protocol: { total_agents: 5 },
 		buyback: { enabled: false, commit_pct: 50, three_bought: 0, runs: 0 },
 	};
 }
@@ -40,7 +40,6 @@ function routeGet(path) {
 	if (path === '/api/three-token/stats') return Promise.resolve(statsOk());
 	if (path === '/api/three-token/activity') return Promise.resolve({ events: [{ id: 'e1', type: 'payment' }] });
 	if (path === '/api/three-token/burns') return Promise.resolve({ policy: 'no_platform_burns', burns: [], total_burned: 0, burn_per_deploy: 0 });
-	if (path === '/api/three-token/revenue-share') return Promise.resolve({ user_id: 'u1', revenue_share_pool_usd: 50 });
 	return Promise.reject(new Error(`unexpected GET ${path}`));
 }
 
@@ -82,54 +81,13 @@ describe('createThreeTokenData — protocol/activity/burns', () => {
 	});
 });
 
-describe('createThreeTokenData — revenue share', () => {
-	it('skips the authed request for guests and marks unauthenticated', async () => {
-		h.mockGetMe.mockResolvedValue(null); // explicit: no session
-		const store = createThreeTokenData({ autoStart: false });
-		await store.refresh();
-		const s = store.getState();
-		expect(s.revenueShare.status).toBe('ok');
-		expect(s.revenueShare.unauthenticated).toBe(true);
-		// Guests must not trigger the guaranteed-401 network call.
-		expect(h.mockGet).not.toHaveBeenCalledWith('/api/three-token/revenue-share');
-		store.destroy();
-	});
-
-	it('treats a 401 on a stale session as unauthenticated, not an error', async () => {
-		h.mockGetMe.mockResolvedValue({ user_id: 'u1' }); // cached session looks live…
-		h.mockGet.mockImplementation((path) => {
-			// …but the server says it expired by the time the request lands.
-			if (path === '/api/three-token/revenue-share') return Promise.reject(new h.ApiError(401, 'unauthorized', 'sign in'));
-			return routeGet(path);
-		});
-		const store = createThreeTokenData({ autoStart: false });
-		await store.refresh();
-		const s = store.getState();
-		expect(s.revenueShare.status).toBe('ok');
-		expect(s.revenueShare.unauthenticated).toBe(true);
-		store.destroy();
-	});
-
-	it('still requests when the session lookup itself fails', async () => {
-		h.mockGetMe.mockRejectedValue(new Error('me lookup down'));
-		const store = createThreeTokenData({ autoStart: false });
-		await store.refresh();
-		const s = store.getState();
-		expect(s.revenueShare.status).toBe('ok');
-		expect(s.revenueShare.user_id).toBe('u1');
-		expect(h.mockGet).toHaveBeenCalledWith('/api/three-token/revenue-share');
-		store.destroy();
-	});
-
-	it('surfaces a non-401 failure as an error', async () => {
+describe('createThreeTokenData: no holder revenue share', () => {
+	it('never requests the removed revenue-share endpoint and keeps no revenueShare slice', async () => {
 		h.mockGetMe.mockResolvedValue({ user_id: 'u1' });
-		h.mockGet.mockImplementation((path) => {
-			if (path === '/api/three-token/revenue-share') return Promise.reject(new h.ApiError(500, 'server_error', 'down'));
-			return routeGet(path);
-		});
 		const store = createThreeTokenData({ autoStart: false });
 		await store.refresh();
-		expect(store.getState().revenueShare.status).toBe('error');
+		expect(h.mockGet).not.toHaveBeenCalledWith('/api/three-token/revenue-share');
+		expect(store.getState().revenueShare).toBeUndefined();
 		store.destroy();
 	});
 });

@@ -52,8 +52,16 @@ describe('paid forge reaches the self-hosted lane', () => {
 
 	it('moves on to the next lane when the worker refuses the job', async () => {
 		gcp.submit.mockRejectedValue(Object.assign(new Error('503'), { code: 'provider_unreachable' }));
-		await expect(submitGeneration(textCall)).rejects.toThrow();
+		await expect(submitGeneration({ ...textCall, country: 'US' })).rejects.toThrow();
 		expect(hf.submit).toHaveBeenCalled();
+	});
+
+	it('does not move on to the Hugging Face Hunyuan lane for an excluded or unknown country', async () => {
+		gcp.submit.mockRejectedValue(Object.assign(new Error('503'), { code: 'provider_unreachable' }));
+		for (const country of ['DE', 'GB', 'KR', null, undefined]) {
+			await expect(submitGeneration({ ...textCall, country })).rejects.toThrow();
+		}
+		expect(hf.submit).not.toHaveBeenCalled();
 	});
 
 	it('skips the worker while the lane is down', async () => {

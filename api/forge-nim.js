@@ -28,7 +28,8 @@ import { cors, method, wrap, error, readJson, json } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { requireCreator } from './_lib/creator-account.js';
 import { env } from './_lib/env.js';
-import { fetchSafePublicUrl, fetchSafePublicUrlPinned, SsrfBlockedError } from './_lib/ssrf-guard.js';
+import { fetchSafePublicUrl, fetchSafePublicUrlPinned, MaxBytesExceededError, SsrfBlockedError } from './_lib/ssrf-guard.js';
+import { sniffImage } from '../src/shared/forge-image-intake.js';
 
 const INFER_PATH = '/v1/infer';
 const READY_PATH = '/v1/health/ready'; // NIM containers expose this by convention
@@ -42,6 +43,22 @@ const MAX_BODY_BYTES = 16 * 1024 * 1024; // base64 inflates ~33%, plus JSON enve
 // Ceiling on a caller-pointed NIM's response, enforced while streaming. A GLB
 // inlined as base64 in JSON stays well under it.
 const MAX_CALLER_NIM_RESPONSE_BYTES = 96 * 1024 * 1024;
+// Ceiling on a GLB a NIM points at by URL, enforced while streaming.
+const MAX_ARTIFACT_BYTES = 128 * 1024 * 1024;
+const NIM_IMAGE_FORMATS = new Set(['png', 'jpeg', 'webp']);
+
+// The NIM is handed what the bytes prove they are, never what a header or a
+// data-URI prefix claimed. Anything else (HTML, a script, a PDF) stops here.
+function imageDataUriFromBytes(buf) {
+	const { format } = sniffImage(buf);
+	if (!NIM_IMAGE_FORMATS.has(format)) {
+		throw Object.assign(new Error('reference image must be a PNG, JPEG or WebP file'), {
+			status: 415,
+			code: 'bad_image',
+		});
+	}
+	return `data:image/${format};base64,${buf.toString('base64')}`;
+}
 
 function trellisSteps(tier) {
 	return tier === 'high' ? { ss: 50, slat: 50 } : { ss: 15, slat: 15 };
@@ -181,7 +198,10 @@ async function toImageDataUri(image) {
 		if (Buffer.byteLength(b64, 'utf8') * 0.75 > MAX_IMAGE_BYTES) {
 			throw Object.assign(new Error('reference image exceeds 10 MB'), { status: 413, code: 'image_too_large' });
 		}
-		return image;
+		if (!/^data:[^,]*;base64$/i.test(image.slice(0, comma))) {
+			throw Object.assign(new Error('image data URI must be base64 encoded'), { status: 400, code: 'bad_image' });
+		}
+		return imageDataUriFromBytes(Buffer.from(b64, 'base64'));
 	}
 	if (/^https?:\/\//i.test(image)) {
 		// SSRF guard: the caller is signed in but untrusted, and the fetched
@@ -190,8 +210,11 @@ async function toImageDataUri(image) {
 		// RFC1918 host — each redirect hop is re-validated and http:// is rejected.
 		let res;
 		try {
-			res = await fetchSafePublicUrl(image, { signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS * 3) });
+			res = await fetchSafePublicUrl(image, { signal: AbortSignal.timeout(HEALTH_TIMEOUT_MS * 3) }, { maxBytes: MAX_IMAGE_BYTES });
 		} catch (err) {
+			if (err instanceof MaxBytesExceededError) {
+				throw Object.assign(new Error('reference image exceeds 10 MB'), { status: 413, code: 'image_too_large' });
+			}
 			if (err instanceof SsrfBlockedError) {
 				throw Object.assign(new Error('reference image URL is not allowed (must be a public https URL)'), {
 					status: 400,
@@ -206,12 +229,19 @@ async function toImageDataUri(image) {
 				code: 'image_fetch_failed',
 			});
 		}
-		const ct = (res.headers.get('content-type') || 'image/png').split(';')[0].trim() || 'image/png';
-		const buf = Buffer.from(await res.arrayBuffer());
+		let buf;
+		try {
+			buf = Buffer.from(await res.arrayBuffer());
+		} catch (err) {
+			if (err instanceof MaxBytesExceededError) {
+				throw Object.assign(new Error('reference image exceeds 10 MB'), { status: 413, code: 'image_too_large' });
+			}
+			throw Object.assign(new Error('could not fetch reference image'), { status: 502, code: 'image_fetch_failed' });
+		}
 		if (buf.length > MAX_IMAGE_BYTES) {
 			throw Object.assign(new Error('reference image exceeds 10 MB'), { status: 413, code: 'image_too_large' });
 		}
-		return `data:${ct};base64,${buf.toString('base64')}`;
+		return imageDataUriFromBytes(buf);
 	}
 	throw Object.assign(new Error('image must be a data: or http(s) URL'), { status: 400, code: 'bad_image' });
 }
@@ -235,14 +265,28 @@ async function extractGlb(res) {
 			// (possibly caller-pointed) NIM can't redirect the second hop at an internal host.
 			let r;
 			try {
-				r = await fetchSafePublicUrl(url, { signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS) });
+				r = await fetchSafePublicUrl(url, { signal: AbortSignal.timeout(SUBMIT_TIMEOUT_MS) }, { maxBytes: MAX_ARTIFACT_BYTES });
 			} catch (err) {
-				if (err instanceof SsrfBlockedError) {
+				if (err instanceof SsrfBlockedError || err instanceof MaxBytesExceededError) {
 					throw Object.assign(new Error('artifact url is not allowed'), { status: 502, code: 'nim_bad_artifact' });
 				}
 				throw err;
 			}
-			if (r.ok) return Buffer.from(await r.arrayBuffer());
+			if (r.ok) {
+				let glb;
+				try {
+					glb = Buffer.from(await r.arrayBuffer());
+				} catch (err) {
+					if (err instanceof MaxBytesExceededError) {
+						throw Object.assign(new Error('artifact url is too large'), { status: 502, code: 'nim_bad_artifact' });
+					}
+					throw err;
+				}
+				if (glb.length < 12 || glb.toString('latin1', 0, 4) !== 'glTF') {
+					throw Object.assign(new Error('artifact url did not serve a GLB'), { status: 502, code: 'nim_bad_artifact' });
+				}
+				return glb;
+			}
 			throw Object.assign(new Error(`artifact url fetch ${r.status}`), { status: 502, code: 'nim_bad_artifact' });
 		}
 		// Object with numeric-string keys: { artifacts: { "0": {…} } }

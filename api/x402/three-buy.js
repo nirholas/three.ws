@@ -3,8 +3,9 @@
 // The x402 micro-buy service: one settled payment → one small, real on-chain buy
 // of $THREE. It is the high-frequency, small-ticket sibling of the daily buyback
 // (api/cron/run-three-buyback) — where that lane deploys revenue in a few large
-// buys per day, this lane fires many tiny buys per minute so the platform shows
-// continuous, verifiable buy pressure on $THREE. Driven by api/cron/three-buy-loop.
+// buys per day, this lane makes tiny buys for small
+// treasury purchases. Disabled by default; driven by api/cron/three-buy-loop
+// only when THREE_BUY_LOOP_ENABLED=1.
 //
 // HOW IT SETTLES. The caller pays the small x402 toll (X402_PRICE_THREE_BUY, default
 // $0.001) in USDC to the ring treasury (X402_PAY_TO_SOLANA), exactly like every
@@ -22,7 +23,7 @@
 // for a buy it didn't make. This also caps the amplification a direct payer could
 // force: they can trigger buys only up to the same daily ceiling the loop obeys.
 //
-// discoverable:false — internal buy-pressure machinery, not an organic third-party
+// discoverable:false: internal treasury-purchase machinery, not an organic third-party
 // service, so it is not advertised on the public x402 bazaar (same stance as
 // ring-settle).
 

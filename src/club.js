@@ -1779,7 +1779,7 @@ window.addEventListener('club:performance-end', () => {
 }
 
 // ── Club music bed ──────────────────────────────────────────────────────────
-// The two-track soundtrack — club anthem → the stripper cut → loop — is the
+// The two-track soundtrack, hip hop bed → pole bed → loop, is the
 // room's music, and it should start the moment the visitor lands. Browser
 // autoplay policy blocks sound until a gesture, so we latch onto the first
 // interaction anywhere on the page: walking up the alley, the cover-charge

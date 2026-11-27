@@ -34,6 +34,11 @@ vi.mock('../api/_lib/db.js', () => {
 	return { sql, isDbUnavailableError: () => false, isDbCapacityError: () => false };
 });
 
+vi.mock('../api/_lib/real-funds-agreement.js', async () => ({
+	...(await vi.importActual('../api/_lib/real-funds-agreement.js')),
+	hasCurrentAgreement: async () => true,
+}));
+
 await import('../api/_lib/db.js');
 const svc = await import('../api/_lib/robinhood/service.js');
 const { createCryptoClient } = await import('../api/_lib/robinhood/crypto-client.js');

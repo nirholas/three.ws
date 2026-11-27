@@ -15,6 +15,7 @@
 import { selfOrigin } from '../_lib/self-origin.js';
 import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
 import { llmComplete } from '../_lib/llm.js';
+import { isRefusal, isOffTopic } from '../_lib/prompt-rewrite-guards.js';
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_POLL_MS = 3_000;
@@ -266,7 +267,30 @@ export async function rig(base, glbUrl, { timeoutEnv, auth } = {}) {
 // teapot with a bamboo handle" to "A small,", which reconstructed as a coffee
 // tamper. Budget for a whole spec instead of a clipped one.
 export const DIRECTOR_MAX_TOKENS = 400;
-const DIRECTOR_TIMEOUT_MS = 20_000;
+
+// ONE short budget for the whole director step: watsonx and the fallback chain
+// together. Each leg used to carry its own 20 s, so a stalled watsonx followed
+// by a stalled chain could hold a generation 40 s before the paint step began,
+// for a rewrite the generation does not need. On 2026-11-26 every chat provider
+// refused at once; past this budget the user's own prompt goes forward. Read per
+// call (FORGE_DIRECTOR_BUDGET_MS) so it is tunable without a redeploy, clamped
+// so a bad value can neither disable the step nor reopen the long stall.
+export const DIRECTOR_BUDGET_MS = 8_000;
+export function directorBudgetMs(source = process.env) {
+	const n = Number(source.FORGE_DIRECTOR_BUDGET_MS);
+	if (!Number.isFinite(n) || n <= 0) return DIRECTOR_BUDGET_MS;
+	return Math.min(20_000, Math.max(1_000, Math.round(n)));
+}
+// The most of that budget watsonx may take before the chain gets its turn.
+export const DIRECTOR_WATSONX_SHARE_MS = 4_000;
+// Below this there is no point starting the chain: no rung can finish.
+const DIRECTOR_MIN_CHAIN_MS = 1_000;
+
+// Map a thrown chain error to the reason a caller reports. 'chain_cooling'
+// means no network call was made at all: every provider refused recently.
+export function directorChainFailureReason(err) {
+	return err?.code === 'chain_cooling' ? 'chain_cooling' : 'chain_failed';
+}
 
 // Longest brief we forward, and the longest prompt the forge itself accepts
 // (api/gpt-forge.js rejects anything over 1000). The director prompts ask for
@@ -297,13 +321,16 @@ const ENDS_ON_CLOSING_CONSTRAINT = /(?:\bno second (?:subject|character)s?|\bone
 // the raw prompt rather than shipping a fragment. Erring toward rejection is
 // cheap: the fallback is the caller's own wording, which is always a valid
 // brief. Pure: same inputs to same verdict. gpt-forge-client.js re-exports this.
-// Returns null when usable, else 'empty' | 'too_long' | 'unfinished' | 'link' |
-// 'not_enriched'.
+// Returns null when usable, else 'empty' | 'too_long' | 'refusal' | 'unfinished' |
+// 'link' | 'off_topic' | 'not_enriched'.
 export function directorRewriteProblem(refined, rawPrompt) {
 	if (typeof refined !== 'string') return 'empty';
 	const text = refined.trim();
 	if (text.length < 3) return 'empty';
 	if (text.length > DIRECTOR_MAX_CHARS) return 'too_long';
+	// The model declining ("I cannot help with that.") is a finished sentence,
+	// so it would pass every check below and be painted as the brief.
+	if (isRefusal(text)) return 'refusal';
 	if (!ENDS_COMPLETE.test(text) && !ENDS_ON_CLOSING_CONSTRAINT.test(text)) return 'unfinished';
 	// A brief describes an object; it never carries a link. A URL or a markdown
 	// link means the reply is a provider notice ("raise the key budget at
@@ -314,6 +341,9 @@ export function directorRewriteProblem(refined, rawPrompt) {
 	// result no longer than what the caller typed has added nothing, and is far
 	// more likely a clipped opening clause than a genuine tightening, so the
 	// user's own wording is the better brief.
+	// A brief that shares no subject word with the idea has wandered off it (a
+	// canned example, an answer to some other request). The user's words win.
+	if (isOffTopic(text, rawPrompt)) return 'off_topic';
 	const raw = String(rawPrompt ?? '').trim();
 	if (raw && text.length <= raw.length) return 'not_enriched';
 	return null;
@@ -343,9 +373,15 @@ export function finishDirectorReply(text, rawPrompt, onFallback) {
 	return null;
 }
 
+// Fail-open by contract: returns the rewrite, or null so the caller forwards the
+// user's own prompt. `onFallback` hears why: 'chain_cooling' (every provider
+// refused recently, no call made), 'chain_failed' (every provider refused or
+// stalled now), 'budget_spent', 'no_reply', or a directorRewriteProblem code.
 export async function directPrompt(instruction, rawPrompt, { onFallback } = {}) {
 	const user = `Idea: ${rawPrompt}`;
 	let text = null;
+	const deadline = Date.now() + directorBudgetMs();
+	const remaining = () => deadline - Date.now();
 
 	// watsonxChatComplete carries no abort signal of its own, so cap it here; a
 	// hung IAM or inference call must degrade to the free chain, not stall the
@@ -363,7 +399,10 @@ export async function directPrompt(instruction, rawPrompt, { onFallback } = {}) 
 					maxTokens: DIRECTOR_MAX_TOKENS,
 				}),
 				new Promise((_, reject) => {
-					timer = setTimeout(() => reject(new Error('watsonx director timed out')), DIRECTOR_TIMEOUT_MS);
+					timer = setTimeout(
+						() => reject(new Error('watsonx director timed out')),
+						Math.min(DIRECTOR_WATSONX_SHARE_MS, remaining()),
+					);
 				}),
 			]);
 			text = result?.text || null;
@@ -375,18 +414,26 @@ export async function directPrompt(instruction, rawPrompt, { onFallback } = {}) 
 	}
 
 	if (!text) {
+		if (remaining() < DIRECTOR_MIN_CHAIN_MS) {
+			onFallback?.({ reason: 'budget_spent' });
+			return null;
+		}
 		try {
 			const result = await llmComplete({
 				system: instruction,
 				user,
 				maxTokens: DIRECTOR_MAX_TOKENS,
-				timeoutMs: DIRECTOR_TIMEOUT_MS,
+				timeoutMs: remaining(),
 				task: 'forge_director',
 				track: { tool: 'forge-director' },
+				// Never re-ask a provider that refused moments ago: with the whole
+				// chain cooling this returns at once and the user's prompt goes on.
+				strictCooldowns: true,
 			});
 			text = result?.text || null;
-		} catch {
-			text = null;
+		} catch (err) {
+			onFallback?.({ reason: directorChainFailureReason(err) });
+			return null;
 		}
 	}
 

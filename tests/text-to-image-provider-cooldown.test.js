@@ -10,6 +10,7 @@
  * for AUTH_COOLDOWN_SECONDS so the next request skips straight past it.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resetImageRungBreakers } from '../api/_lib/image-rung-breaker.js';
 
 process.env.NVIDIA_API_KEY = 'nim-test-key';
 process.env.HF_TOKEN = 'hf-token';
@@ -70,6 +71,9 @@ globalThis.fetch = vi.fn(async (url) => {
 });
 
 beforeEach(async () => {
+	// Every rung starts with a closed breaker: the breaker keeps its state in
+	// the shared cache, which outlives a single test.
+	await resetImageRungBreakers();
 	hits.length = 0;
 	vertex.calls = 0;
 	persisted.calls = 0;

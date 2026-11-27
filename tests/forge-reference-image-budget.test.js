@@ -7,6 +7,8 @@
  * the ladder fix already deployed, because this step sits in front of it.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { REAL_PNG_B64 } from './_helpers/real-image.js';
+import { resetVertexBreaker } from '../api/_lib/vertex-image-breaker.js';
 
 process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 delete process.env.VERTEX_IMAGEN_ENABLED;
@@ -46,7 +48,9 @@ globalThis.fetch = vi.fn(
 		}),
 );
 
-beforeEach(() => {
+beforeEach(async () => {
+	// A failure in one case parks the shared Vertex breaker; start each closed.
+	await resetVertexBreaker();
 	ladder.calls.length = 0;
 	vertex.requests.length = 0;
 });

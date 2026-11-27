@@ -8,10 +8,18 @@ the job, saves the model to your gallery, and tells you when it's ready.
 
 - **Leave any time.** The generating panel says so explicitly. Navigating away
   or closing the tab does not lose the job.
-- **Come back, pick up where you left off.** Returning to `/forge` within 30
+- **Come back, pick up where you left off.** Returning to `/forge` within 50
   minutes resumes the live progress view for the in-flight job (honest elapsed
-  timer included). The finished model also appears in the on-page gallery on
-  any later visit.
+  timer included), even if you left while the request was still being sent. A
+  job that finished while you were away opens on the result with a "Finished
+  while you were away" chip. The finished model also appears in the on-page
+  gallery on any later visit.
+- **One click, one generation.** A double click, a held Enter, an Enter pressed
+  again mid-run, or a second tab submitting the same request all join the one
+  generation already running instead of starting (and charging) a second.
+- **A dropped connection is not a failure.** Going offline, a tunnel, or a
+  sleeping phone pauses the page with an "offline" note; it picks the same job
+  back up when the network returns.
 - **Get notified.** Signed-in creators receive a notification when a
   generation finishes unattended: the bell inbox and Web Push fire with a link
   straight to the model, and an email goes out with a preview image. Failures
@@ -28,18 +36,68 @@ platform does not also push, email, or badge you about it.
 
 Three cooperating pieces:
 
-1. **Client resume** ([src/forge.js](../src/forge.js)): after a job is
-   submitted, its signed job token persists in `localStorage`
-   (`forge:inflight`). On page load the forge resumes polling that token; all
-   real state lives server-side, so a reload costs nothing. The record clears
-   on completion, terminal failure, or cancel. The poll loop itself is built on
-   [src/shared/resilient-poll.js](../src/shared/resilient-poll.js) (retry,
-   visibility-wake, attempt-based budget), because a generation runs for minutes
-   and on a phone the tab is backgrounded, the radio drops, and the edge answers
-   the odd 502, none of which mean the job died. A connection we finally gave up
-   waiting on throws with `kind = 'transport_lost'`, and that one case
-   deliberately **keeps** the inflight record rather than clearing it, which is
-   what makes the error's own "reopen /forge to pick it back up" true.
+1. **Client resume and submit-once** ([src/forge.js](../src/forge.js),
+   [src/forge-inflight.js](../src/forge-inflight.js)): the `forge:inflight`
+   record in `localStorage` is written **before** the generation POST, holding
+   the request body and a fresh `Idempotency-Key`, then upgraded with the signed
+   job token once the POST answers. On page load:
+
+   - a record still in its submitting phase replays the same POST under the same
+     key. The server (`withForgeIdempotency`,
+     [api/_lib/forge-idempotency.js](../api/_lib/forge-idempotency.js)) answers
+     the stored job once the first call finished (`idempotent-replayed: true`),
+     or `409 idempotency_in_progress` with `retry_after` while it is still
+     running, which the page waits out and retries. A reload in the middle of
+     the request therefore never creates a second job.
+   - a record holding a job token resumes polling it.
+   - a record older than `RESUME_WINDOW_MS` (the 45-minute server deadline plus
+     a 5-minute margin, so 50 minutes) is dropped: by then the server has
+     settled the job either way and it is in the gallery.
+
+   A second tab reads the same record and sends the same key, so two tabs
+   submitting the same request get one job. Inside one tab a run gate
+   (`createRunGate`) is taken before the first `await`, so a second click or
+   key press while a run is starting finds the tab busy, a held key's
+   auto-repeat is ignored, and only the run holding the gate clears the busy
+   state. The automatic lane hop hands the gate over instead of racing it, and
+   Cancel frees it at once.
+
+   The poll loop is built on
+   [src/shared/resilient-poll.js](../src/shared/resilient-poll.js), because a
+   generation runs for minutes and on a phone the tab is backgrounded, the radio
+   drops, and the edge answers the odd 502, none of which mean the job died:
+
+   - its budget is foreground time and outlasts the server deadline
+     (`MAX_POLL_MS = RESUME_WINDOW_MS`), and a `queued` answer resets it.
+   - a tab hidden for 60 seconds stops polling entirely (`hiddenStreakMs`) and
+     parks on `waitUntilVisible()`, then polls at once when the tab is shown or
+     focused again. A hidden tab costs no requests.
+   - a lost connection keeps backing off (capped at 20 seconds on `/forge`, 30
+     in Studio) with no hard failure. The page first says the network is patchy;
+     after 90 seconds without a reply it says it is offline, and it clears the
+     note on the first answer.
+   - the loop stops at `done` or `failed`. The record clears on completion,
+     terminal failure, or Cancel, and is **kept** on anything else, so reopening
+     `/forge` always finds the job.
+
+   A job that becomes terminal while the user is away (the tab was hidden, or
+   the page resumed it on a later visit) shows the result with the "Finished
+   while you were away" chip rather than appearing silently.
+
+   A poll answers only for the signed job handle it was given: a wrong or
+   tampered token, or another account's job id, reveals nothing
+   (`tests/api/forge-poll-privacy.test.js`). A poll for a job past its
+   allowance answers `failed` with a reason instead of `running` forever
+   (`decideStalledPoll` in
+   [api/_lib/forge-job-deadline.js](../api/_lib/forge-job-deadline.js),
+   `tests/api/forge-poll-terminal.test.js`).
+
+   Forge Studio ([src/forge-studio/forge.js](../src/forge-studio/forge.js))
+   shares the run gate, the `Idempotency-Key`, the hidden-tab pause and the
+   transport-aware poll, and polls for the same 50 minutes. It does not resume
+   across a reload: the job still finishes server-side and lands in the gallery.
+   `tests/forge-submit-once-wiring.test.js` pins both pages to the shared
+   modules.
 
 2. **Server-side finalizer** ([api/cron/forge-finalize.js](../api/cron/forge-finalize.js),
    every minute via Cloud Scheduler): sweeps `forge_creations` rows still at
@@ -66,7 +124,8 @@ Three cooperating pieces:
    to try is marked failed, and the finalizer logs that it declined the
    failover (every alternative lane already attempted or cooling) rather than
    failing silently. Anything non-terminal after 45 minutes is marked failed
-   as timed out, so no row can be orphaned at `generating` again. That reap
+   as timed out (`FORGE_JOB_HARD_TTL_MINUTES`), so no row can be orphaned at
+   `generating` again, including jobs no browser ever polls. That reap
    (`reapExpiredRows`) is one bulk update that runs first on every tick,
    independent of the live-poll batch, so a batch filled by one unhealthy lane
    cannot keep other lanes' rows from being reaped. Reaping an NVIDIA row also

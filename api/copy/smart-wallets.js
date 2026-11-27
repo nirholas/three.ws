@@ -1,56 +1,113 @@
 /**
- * GET /api/copy/smart-wallets — the Smart Money directory for /dashboard/copy.
+ * GET /api/copy/smart-wallets - the Smart Money directory for /dashboard/copy.
  *
- *   ?chain=sol|bsc        filter by chain        (default: all)
- *   ?category=smart_money|launchpad|kol|sniper   (default: all)
- *   ?sort=profit|pnl|winrate|followers|score     (default: score)
- *   ?q=<text>             match address / name / twitter handle
+ *   ?category=smart_money|strong|fresh   filter by reputation label (default: all ranked)
+ *   ?sort=score|winrate|multiple|trades  (default: score)
+ *   ?q=<text>             match wallet address
  *   ?limit=1..100         page size              (default: 30)
  *   ?offset=0..           page offset            (default: 0)
  *
- * Serves the curated, deduplicated wallet directory distilled from gmgn.ai's
- * smart-money taxonomy (scripts/build-smart-wallets.mjs). Wallet identity +
- * 30-day performance only — never token mints. Public, IP rate-limited, cached
- * at the edge: the ranking shifts daily, not by the second.
+ * Ranked from the platform's own wallet reputation graph
+ * (smart_wallet_reputation, folded from observed pump.fun buys joined to real
+ * outcomes by workers/agent-sniper/recompute-wallet-graph.js). Solana only.
+ * Wallet address plus realized track record: no names, no social handles, no
+ * third-party data. Public, IP rate-limited, cached at the edge: the ranking
+ * shifts as the recompute job runs, not by the second.
  */
 
-import { readFileSync } from 'node:fs';
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
+import { sql } from '../_lib/db.js';
 
-let DIR = { meta: { total: 0, counts: {} }, wallets: [] };
-try {
-	DIR = JSON.parse(readFileSync(new URL('../_lib/copy/smart-wallets.json', import.meta.url), 'utf8'));
-} catch { /* directory absent — endpoint returns empty, never throws */ }
-
-const WALLETS = Array.isArray(DIR.wallets) ? DIR.wallets : [];
-const CHAINS = new Set(['sol', 'bsc']);
-const CATEGORIES = new Set(['smart_money', 'launchpad', 'kol', 'sniper']);
-
-const SORTERS = {
-	score: (a, b) => b.score - a.score,
-	profit: (a, b) => b.realized_profit_30d_usd - a.realized_profit_30d_usd,
-	pnl: (a, b) => (b.pnl_30d ?? -Infinity) - (a.pnl_30d ?? -Infinity),
-	winrate: (a, b) => (b.win_rate_30d ?? -Infinity) - (a.win_rate_30d ?? -Infinity),
-	followers: (a, b) => (b.follow_count ?? 0) - (a.follow_count ?? 0),
-};
-
-// The upstream taxonomy records an avatar URL on its own image host, and that
-// host answers 403 to every request that is not a session on its own site. In a
-// browser that lands as ERR_BLOCKED_BY_ORB, so no visitor has ever seen one of
-// these pictures: on 2026-09-04 the copy desk logged seven blocked requests per
-// load while the directory rendered the trader initial it was designed to fall
-// back to. Serving a URL that cannot load is a request every client pays for and
-// no client can use, so it does not go on the wire. The field stays in the
-// source directory, ready if the host ever allows off-site loads.
-function publicRow({ avatar, ...row }) {
-	return row;
-}
+const CATEGORIES = new Set(['smart_money', 'strong', 'fresh']);
+const SORTS = new Set(['score', 'winrate', 'multiple', 'trades']);
+// Labels that rank a wallet in the directory; sybil and rugger wallets are never listed.
+const RANKED = ['smart_money', 'strong', 'fresh'];
+const MIN_TRADES = 3;
 
 function clampInt(value, min, max, fallback) {
 	const n = Number.parseInt(value, 10);
 	if (!Number.isFinite(n)) return fallback;
 	return Math.min(Math.max(n, min), max);
+}
+
+const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+
+function publicRow(r) {
+	const labels = Array.isArray(r.labels) ? r.labels : [];
+	const categories = labels.filter((l) => CATEGORIES.has(l));
+	return {
+		address: r.address,
+		chain: 'sol',
+		category: categories[0] || 'smart_money',
+		categories: categories.length ? categories : ['smart_money'],
+		score: num(r.realized_score),
+		win_rate: num(r.win_rate),
+		avg_ath_multiple: num(r.avg_ath_multiple),
+		trades_seen: num(r.trades_seen),
+		winners: num(r.winners),
+		losers: num(r.losers),
+		last_seen: r.last_seen || null,
+	};
+}
+
+async function page({ category, sort, q, limit, offset }) {
+	const cat = category || null;
+	const like = q ? `%${q}%` : null;
+	// Whole statements per ranking: the sql tag does not compose fragments, and
+	// an ORDER BY must never be built from request text.
+	const total = (
+		await sql`
+			select count(*)::int as n from smart_wallet_reputation
+			where network = 'mainnet' and trades_seen >= ${MIN_TRADES}
+			  and labels && ${RANKED}::text[]
+			  and not (labels && array['sybil','rugger']::text[])
+			  and (${cat}::text is null or ${cat}::text = any(labels))
+			  and (${like}::text is null or address ilike ${like}::text)`
+	)[0]?.n ?? 0;
+	let rows;
+	if (sort === 'winrate') {
+		rows = await sql`
+			select address, realized_score, win_rate, avg_ath_multiple, trades_seen, winners, losers, labels, last_seen
+			from smart_wallet_reputation
+			where network = 'mainnet' and trades_seen >= ${MIN_TRADES}
+			  and labels && ${RANKED}::text[]
+			  and not (labels && array['sybil','rugger']::text[])
+			  and (${cat}::text is null or ${cat}::text = any(labels))
+			  and (${like}::text is null or address ilike ${like}::text)
+			order by win_rate desc, trades_seen desc limit ${limit} offset ${offset}`;
+	} else if (sort === 'multiple') {
+		rows = await sql`
+			select address, realized_score, win_rate, avg_ath_multiple, trades_seen, winners, losers, labels, last_seen
+			from smart_wallet_reputation
+			where network = 'mainnet' and trades_seen >= ${MIN_TRADES}
+			  and labels && ${RANKED}::text[]
+			  and not (labels && array['sybil','rugger']::text[])
+			  and (${cat}::text is null or ${cat}::text = any(labels))
+			  and (${like}::text is null or address ilike ${like}::text)
+			order by avg_ath_multiple desc, trades_seen desc limit ${limit} offset ${offset}`;
+	} else if (sort === 'trades') {
+		rows = await sql`
+			select address, realized_score, win_rate, avg_ath_multiple, trades_seen, winners, losers, labels, last_seen
+			from smart_wallet_reputation
+			where network = 'mainnet' and trades_seen >= ${MIN_TRADES}
+			  and labels && ${RANKED}::text[]
+			  and not (labels && array['sybil','rugger']::text[])
+			  and (${cat}::text is null or ${cat}::text = any(labels))
+			  and (${like}::text is null or address ilike ${like}::text)
+			order by trades_seen desc, realized_score desc limit ${limit} offset ${offset}`;
+	} else {
+		rows = await sql`
+			select address, realized_score, win_rate, avg_ath_multiple, trades_seen, winners, losers, labels, last_seen
+			from smart_wallet_reputation
+			where network = 'mainnet' and trades_seen >= ${MIN_TRADES}
+			  and labels && ${RANKED}::text[]
+			  and not (labels && array['sybil','rugger']::text[])
+			  and (${cat}::text is null or ${cat}::text = any(labels))
+			  and (${like}::text is null or address ilike ${like}::text)
+			order by realized_score desc, trades_seen desc limit ${limit} offset ${offset}`;
+	}
+	return { total, rows };
 }
 
 export default wrap(async (req, res) => {
@@ -61,38 +118,41 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const params = new URL(req.url, `http://${req.headers.host || 'x'}`).searchParams;
-	const chain = CHAINS.has(params.get('chain')) ? params.get('chain') : null;
 	const category = CATEGORIES.has(params.get('category')) ? params.get('category') : null;
-	// Own-property lookup only: a bare `SORTERS[value]` truthiness test resolves
-	// inherited keys, so ?sort=__proto__ / valueOf / hasOwnProperty would hand
-	// Array.sort a non-comparator and 500 the request.
+	// Set membership only: ?sort=__proto__ / valueOf must fall back to the score ranking.
 	const sortParam = params.get('sort') || '';
-	const sort = Object.hasOwn(SORTERS, sortParam) ? sortParam : 'score';
-	const q = (params.get('q') || '').trim().toLowerCase();
+	const sort = SORTS.has(sortParam) ? sortParam : 'score';
+	const q = (params.get('q') || '').trim().replace(/[^A-Za-z0-9]/g, '').slice(0, 44);
 	const limit = clampInt(params.get('limit'), 1, 100, 30);
 	const offset = clampInt(params.get('offset'), 0, 100000, 0);
 
-	let rows = WALLETS;
-	if (chain) rows = rows.filter((w) => w.chain === chain);
-	if (category) rows = rows.filter((w) => w.categories.includes(category));
-	if (q) {
-		rows = rows.filter((w) =>
-			w.address.toLowerCase().includes(q) ||
-			(w.name && w.name.toLowerCase().includes(q)) ||
-			(w.twitter_username && w.twitter_username.toLowerCase().includes(q)));
+	let result;
+	try {
+		result = await page({ category, sort, q, limit, offset });
+	} catch (err) {
+		console.warn('[copy/smart-wallets] reputation graph query failed:', err?.message || err);
+		return json(res, 200, {
+			wallets: [],
+			total: 0,
+			offset,
+			limit,
+			has_more: false,
+			facets: { byChain: {}, byCategory: {} },
+			source: 'three.ws wallet reputation graph',
+			generated_at: null,
+			unavailable: true,
+		});
 	}
 
-	const total = rows.length;
-	const page = [...rows].sort(SORTERS[sort]).slice(offset, offset + limit).map(publicRow);
-
+	const wallets = result.rows.map(publicRow);
 	return json(res, 200, {
-		wallets: page,
-		total,
+		wallets,
+		total: result.total,
 		offset,
 		limit,
-		has_more: offset + page.length < total,
-		facets: DIR.meta?.counts || { byChain: {}, byCategory: {} },
-		source: DIR.meta?.source || null,
-		generated_at: DIR.meta?.generated_at || null,
-	}, { 'cache-control': 'public, s-maxage=3600, stale-while-revalidate=86400' });
+		has_more: offset + wallets.length < result.total,
+		facets: { byChain: { sol: result.total }, byCategory: {} },
+		source: 'three.ws wallet reputation graph',
+		generated_at: new Date().toISOString(),
+	}, { 'cache-control': 'public, s-maxage=600, stale-while-revalidate=3600' });
 });

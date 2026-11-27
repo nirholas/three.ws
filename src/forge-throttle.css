@@ -1,0 +1,70 @@
+/* Throttle state of the Forge error panel (src/forge-throttle.js). A wait is not
+   a failure: the heading drops the danger colour and a meter shows the real
+   server-stated wait draining. */
+
+.notice.error[data-throttle] h3 {
+	color: var(--ink, inherit);
+}
+
+.forge-throttle {
+	max-width: 48ch;
+	margin: var(--space-sm, 12px) auto 0;
+}
+
+.forge-throttle__line {
+	margin: 0;
+	font-variant-numeric: tabular-nums;
+	color: var(--ink, inherit);
+	font-weight: 500;
+}
+
+.forge-throttle__meter {
+	position: relative;
+	height: 4px;
+	margin: var(--space-xs, 8px) auto 0;
+	max-width: 240px;
+	border-radius: 999px;
+	overflow: hidden;
+	background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.forge-throttle__meter > span {
+	position: absolute;
+	inset: 0;
+	transform-origin: left center;
+	transform: scaleX(0);
+	background: var(--accent, currentColor);
+	transition: transform 1s linear;
+	will-change: transform;
+}
+
+.forge-throttle[data-auto='false'] .forge-throttle__meter > span {
+	background: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.forge-throttle__meter > span {
+		transition: none;
+	}
+}
+
+.forge-throttle__sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* The extra actions reuse the page's button classes for hover/active; this only
+   guarantees a visible keyboard focus ring on both Forge pages. */
+.notice .actions .forge-throttle-cancel:focus-visible,
+.notice .actions a:focus-visible,
+.notice .actions button:focus-visible {
+	outline: 2px solid var(--accent, currentColor);
+	outline-offset: 2px;
+}

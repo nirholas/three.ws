@@ -30,6 +30,9 @@ import {
 	STATE_LABEL, ago, backoffMs, coinLabel, lastTradedText, mergeTrade, newSessionId,
 	roomIdFromLocation, roomState, signedPct, solAmount, toneOf, tradeLine,
 } from './model.js';
+import { mountRiskNoteOnMain } from '../shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const VIEW_PREF_KEY = 'tws-trade-room-view';

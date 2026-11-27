@@ -7,11 +7,22 @@
 // live <model-viewer> to the stylized GLB. A density slider re-applies the
 // active filter; "Revert" restores the original. Nothing fakes progress — the
 // only timer is an honest elapsed counter.
+//
+// The worker fetches the mesh by URL, so Stylize always works from the last
+// saved model. A `blob:` src in the viewer is a tab-local edit by another tool
+// (a Materials look, Refine, the Optimize mesh tools); the server cannot read
+// it, so the src observer ignores those, and a model that only exists in the
+// tab gets a note instead of a request that would fail.
 
 import { STYLIZE_FILTERS, STYLIZE_FILTER_BY_KEY } from './shared/stylize-filters.js';
+import { forgeCopyError, forgeErrorFromResponse, forgeErrorMessage, forgeJobFailedError } from './forge-errors.js';
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_MS = 3 * 60 * 1000;
+const LOCAL_ONLY_NOTE =
+	'Stylize works on a saved model, and this one only exists in this tab. Save it to your account or generate it on three.ws, then pick a filter.';
+
+const isTabLocal = (url) => typeof url === 'string' && url.startsWith('blob:');
 
 const panel = document.getElementById('stylize-panel');
 const viewer = document.getElementById('viewer');
@@ -33,6 +44,7 @@ if (panel && viewer) {
 	let runToken = 0; // bumped on each apply/revert to abort stale polls
 	let elapsedTimer = null;
 	let unconfigured = false;
+	let localOnly = false; // the current model has no URL the worker can fetch
 
 	const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -107,6 +119,10 @@ if (panel && viewer) {
 
 	function selectFilter(key, { apply }) {
 		if (unconfigured || !STYLIZE_FILTER_BY_KEY[key]) return;
+		if (localOnly) {
+			setStatus(LOCAL_ONLY_NOTE, 'error');
+			return;
+		}
 		markActive(key);
 		syncSlider(key);
 		if (apply) runStylize(key, Number(slider.value));
@@ -120,16 +136,15 @@ if (panel && viewer) {
 		});
 		const data = await res.json().catch(() => ({}));
 		if (res.status === 503 || data.error === 'unconfigured') {
-			const e = new Error(data.message || 'Stylization is not configured on this deployment.');
+			const e = forgeErrorFromResponse(res.status, { ...data, error: 'unconfigured' });
 			e.kind = 'unconfigured';
 			throw e;
 		}
 		if (res.status === 429 || data.error === 'rate_limited') {
-			const secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 10;
-			throw new Error(`The stylizer is busy. Try again in about ${secs}s.`);
+			throw forgeErrorFromResponse(429, data);
 		}
 		if (!res.ok || !data.job_id) {
-			throw new Error(data.message || `The stylizer returned ${res.status}.`);
+			throw forgeErrorFromResponse(res.status, res.ok ? { error: 'stylize_failed' } : data);
 		}
 		return data;
 	}
@@ -142,15 +157,15 @@ if (panel && viewer) {
 			const res = await fetch(`/api/forge-stylize?job=${encodeURIComponent(jobId)}`);
 			const data = await res.json().catch(() => ({}));
 			if (data.error === 'unconfigured') {
-				const e = new Error(data.message || 'unconfigured');
+				const e = forgeErrorFromResponse(503, { ...data, error: 'unconfigured' });
 				e.kind = 'unconfigured';
 				throw e;
 			}
 			if (data.status === 'done' && data.result_url) return data;
-			if (data.status === 'failed') throw new Error(data.error || 'Stylization failed.');
+			if (data.status === 'failed') throw forgeJobFailedError(data.error, 'stylize_failed');
 		}
 		if (token !== runToken) return null;
-		throw new Error('Stylization timed out. Try a lower resolution.');
+		throw forgeCopyError('Stylize is taking too long', 'Stylizing took too long and was stopped. Try again at a lower resolution.');
 	}
 
 	async function runStylize(style, resolution) {
@@ -194,7 +209,7 @@ if (panel && viewer) {
 				panel.dataset.busy = 'false';
 				return;
 			}
-			setStatus(err.message || 'Stylization failed. Try another filter or a lower resolution.', 'error');
+			setStatus(forgeErrorMessage(err, 'stylize_failed'), 'error');
 		} finally {
 			if (token === runToken && !unconfigured) setBusy(false);
 		}
@@ -218,7 +233,8 @@ if (panel && viewer) {
 	// observer below can both call it without double-resetting.
 	function onNewSource(glbUrl, label) {
 		if (!glbUrl || glbUrl === originalGlbUrl) return;
-		originalGlbUrl = glbUrl;
+		localOnly = isTabLocal(glbUrl);
+		originalGlbUrl = localOnly ? '' : glbUrl;
 		baseLabel = label || '';
 		runToken++; // abort polls tied to the previous model
 		stopElapsed();
@@ -226,7 +242,8 @@ if (panel && viewer) {
 		downloadBtn.hidden = true;
 		revertBtn.hidden = true;
 		markActive('');
-		setStatus(unconfigured ? '' : 'Pick a filter to restyle this model.', '');
+		if (localOnly) setStatus(LOCAL_ONLY_NOTE, '');
+		else setStatus(unconfigured ? '' : 'Pick a filter to restyle this model.', '');
 		if (!unconfigured) setBusy(false);
 		panel.hidden = false;
 	}
@@ -248,10 +265,11 @@ if (panel && viewer) {
 	// Resilient fallback: watch the live viewer's `src` directly so the panel
 	// reveals whenever a model loads, even if the explicit event isn't emitted.
 	// Our own stylize swaps (lastStylizedUrl) and reverts (== originalGlbUrl) are
-	// ignored so they don't get mistaken for a new source mesh.
+	// ignored so they don't get mistaken for a new source mesh, and so are other
+	// tools' tab-local edits: the worker could not fetch them.
 	const srcObserver = new MutationObserver(() => {
 		const url = viewer.getAttribute('src');
-		if (!url || url === originalGlbUrl || url === lastStylizedUrl) return;
+		if (!url || url === originalGlbUrl || url === lastStylizedUrl || isTabLocal(url)) return;
 		onNewSource(url, document.getElementById('result-label')?.textContent?.trim() || '');
 	});
 	srcObserver.observe(viewer, { attributes: true, attributeFilter: ['src'] });

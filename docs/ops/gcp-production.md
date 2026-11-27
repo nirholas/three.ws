@@ -777,9 +777,20 @@ sharing), so a *public* REST proxy is unreachable (its SRH bearer token collides
 with the Google auth token Cloud Run would demand). Fronting the proxy with a
 **regional internal LB** and reaching it over the VPC connector keeps the proxy
 off the public internet AND keeps the app's external egress on the fast direct
-path. The connector + Redis env are **pinned in `server/cloudbuild.yaml`** so a
+path. The VPC path + Redis env are **pinned in `server/cloudbuild.yaml`** so a
 full-config redeploy can never silently drop Redis back to the capped Upstash
 tier.
+
+**Superseded in project `three-ws` (2026-11-26):** Redis there is the
+`three-ws-redis` VM (`deploy/redis-vm/README.md`), and `three-ws-api` reaches it
+over **Direct VPC egress** on the `default` subnet instead of the connector
+(`--network default --subnet default --clear-vpc-connector`, pinned in
+`server/cloudbuild.yaml`). Direct egress has no always-on instances, so it bills
+nothing on top of the service; the connector billed about $12 a month. Verified on
+revision `three-ws-api-00003-tjr`: the VM's connection table showed the API's
+requests arriving from a `10.128.0.x` subnet address and none from the old
+connector range. The default `default-allow-internal` firewall rule already
+admits the subnet, so no new rule was needed.
 
 Verified 2026-07-10 on revision `three-ws-api-00052-kbg`: `/api/healthz`
 overall `ok`, cache backend healthy (the client self-labels "upstash" — it is
@@ -796,7 +807,7 @@ proxy + Memorystore + connector. The `upstash-redis-rest-token` secret and the
 
 | What | Vars | Impact | Recovery |
 |---|---|---|---|
-| OKX X Layer facilitator creds | `OKX_API_KEY`, `OKX_SECRET_KEY`, `OKX_PASSPHRASE` (or, as a no-OKX-account fallback, `X402_XLAYER_RELAYER_KEY`) | `xlayerSettleable()` (`api/_lib/x402-xlayer-okx.js`) is false without one of these, so **no 402 challenge on any endpoint advertises the `eip155:196` (X Layer) rail**, confirmed live 2026-07-08 via `/api/okx/3d/health` (`payment-rail.settleable:false, facilitator_configured:false`) and by inspecting the raw 402 `accepts[]` on `/api/okx/3d/identity-studio` and `/api/okx/3d/pose-seed` (Solana + Base only, no X Layer entry). `X402_PAY_TO_XLAYER` and `X402_ASSET_ADDRESS_XLAYER` **are** set in prod, so this is the only missing piece. This is the exact rail OKX's listing review requires (agent #2632 rejection reason). The credential has since been set: probed live 2026-09-09, all four paid Forge rows advertise `eip155:196` and OKX's own `agent x402-check` reads `valid: true` on each. Treat this row as the recovery path if that ever regresses; the relisting order is `prompts/finish/911-okx-ai-08-forge-relisting.md`. | OKX Web3 developer console (owner) for the three real creds, or generate `X402_XLAYER_RELAYER_KEY` as a fresh EVM keypair + fund it with OKB gas as a stopgap that needs no OKX account. |
+| OKX X Layer facilitator creds | `OKX_API_KEY`, `OKX_SECRET_KEY`, `OKX_PASSPHRASE` (or, as a no-OKX-account fallback, `X402_XLAYER_RELAYER_KEY`) | `xlayerSettleable()` (`api/_lib/x402-xlayer-okx.js`) is false without one of these, so **no 402 challenge on any endpoint advertises the `eip155:196` (X Layer) rail**, confirmed live 2026-07-08 via `/api/okx/3d/health` (`payment-rail.settleable:false, facilitator_configured:false`) and by inspecting the raw 402 `accepts[]` on `/api/okx/3d/identity-studio` and `/api/okx/3d/pose-seed` (Solana + Base only, no X Layer entry). `X402_PAY_TO_XLAYER` and `X402_ASSET_ADDRESS_XLAYER` **are** set in prod, so this is the only missing piece. This is the exact rail OKX's listing review requires (agent #2632 rejection reason). The credential has since been set: probed live 2026-09-09, all four paid Forge rows advertise `eip155:196` and OKX's own `agent x402-check` reads `valid: true` on each. Treat this row as the recovery path if that ever regresses; the relisting order is `prompts/awaiting-owner/911-okx-ai-08-forge-relisting.md`. | OKX Web3 developer console (owner) for the three real creds, or generate `X402_XLAYER_RELAYER_KEY` as a fresh EVM keypair + fund it with OKB gas as a stopgap that needs no OKX account. |
 
 ---
 
@@ -1034,9 +1045,17 @@ Tencent-model lanes (`hunyuan3d`, `huggingface`, `modly_hunyuan`). The composer
 disables them via `GET /api/forge?territory` and hops a stale pick to an
 allowed engine, but they stay unusable for everyone until the header is set.
 Verify after the change: `curl https://three.ws/api/forge?territory=1` from a
-non-restricted country returns `"country_resolved":true`. Note the LB does not strip an inbound copy of these
-headers, so a client can forge one; `clientCountry` validates every value down
-to two ASCII letters so the worst case is a visitor mislabeling its own row.
+non-restricted country returns `"country_resolved":true`. The Forge gate trusts
+only these two load balancer headers (`x-client-geo-location`,
+`x-client-region`) and ignores `cf-ipcountry` and `x-vercel-ip-country`, which
+nothing on Cloud Run sets and any client can forge. The same must hold for the
+two it does trust: after setting the header, prove a client cannot override it
+with `curl -H 'X-Client-Region: US' https://three.ws/api/forge?territory=1` from
+an excluded country, which must still answer `"country_resolved":true` with the
+Tencent lanes restricted. If an inbound copy survives, the Forge gate would be
+forgeable and the header must be fixed before relying on it. For analytics
+alone `clientCountry` validates every value down to two ASCII letters, so the
+worst case there is a visitor mislabeling its own row.
 
 ---
 

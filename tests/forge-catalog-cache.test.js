@@ -5,7 +5,7 @@ function memStore() {
 	const m = new Map();
 	return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, v) };
 }
-const catalog = { backends: [{ id: 'nvidia', paths: ['geometry'], configured: true }] };
+const catalog = { backends: [{ id: 'trellis_selfhost', paths: ['image'], configured: true }], tiers: [{ id: 'standard' }] };
 
 describe('forge catalog cache', () => {
 	it('round-trips a valid catalog', () => {

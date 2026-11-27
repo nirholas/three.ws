@@ -51,15 +51,18 @@ function registerMeshopt(ctor) {
 // NotSupportedError ("the name model-viewer has already been used with this
 // registry") onto the page console. Every source here serves the identical
 // library, so the first definition wins and a duplicate is a no-op. Scoped to
-// this one element name so a genuine double-define anywhere else still throws.
+// the elements the library itself defines (4.x registers <extra-model> as well
+// as <model-viewer>), so a genuine double-define anywhere else still throws.
+const LIBRARY_ELEMENTS = new Set(['model-viewer', 'extra-model']);
+
 function guardDuplicateDefine() {
 	if (_defineGuarded || typeof customElements === 'undefined') return;
 	_defineGuarded = true;
 	const nativeDefine = customElements.define;
 	customElements.define = function (name, ctor, options) {
-		if (name === 'model-viewer') {
+		if (LIBRARY_ELEMENTS.has(name)) {
 			if (customElements.get(name)) return undefined;
-			registerMeshopt(ctor);
+			if (name === 'model-viewer') registerMeshopt(ctor);
 		}
 		return nativeDefine.call(this, name, ctor, options);
 	};

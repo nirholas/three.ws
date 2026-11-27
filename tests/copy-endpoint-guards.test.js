@@ -18,6 +18,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 let sessionUser = { id: 'copier-1' };
 const sqlCalls = [];
 let ownedSubscription = [{ id: '11111111-1111-4111-8111-111111111111' }];
+const orderSeen = [];
+const reputationRows = [
+	{ address: 'SynthWalletA1111111111111111111111111111111', realized_score: 91, win_rate: 0.62, avg_ath_multiple: 4.2, trades_seen: 30, winners: 18, losers: 12, labels: ['smart_money'], last_seen: '2026-11-20T00:00:00Z' },
+	{ address: 'SynthWalletB1111111111111111111111111111111', realized_score: 70, win_rate: 0.5, avg_ath_multiple: 2.1, trades_seen: 10, winners: 5, losers: 5, labels: ['strong'], last_seen: null },
+];
 
 vi.mock('../api/_lib/http.js', () => ({
 	wrap: (fn) => fn,
@@ -46,6 +51,12 @@ vi.mock('../api/_lib/db.js', () => ({
 		const text = strings.join('?');
 		sqlCalls.push({ text, values });
 		if (text.includes('select id from copy_subscriptions')) return Promise.resolve(ownedSubscription);
+		if (text.includes('count(*)::int')) return Promise.resolve([{ n: reputationRows.length }]);
+		if (text.includes('from smart_wallet_reputation') && text.includes('order by')) {
+			const order = text.match(/order by (\w+)/)?.[1];
+			orderSeen.push(order);
+			return Promise.resolve(reputationRows);
+		}
 		if (text.includes('update copy_subscriptions set status')) {
 			return Promise.resolve([{ id: values[1], status: values[0] }]);
 		}
@@ -168,32 +179,34 @@ describe('POST /api/copy/subscriptions: status-only update', () => {
 	});
 });
 
-describe('GET /api/copy/smart-wallets: sort parameter', () => {
+describe('GET /api/copy/smart-wallets: own reputation graph', () => {
 	const wallets = async (query) => {
+		orderSeen.length = 0;
 		const r = res();
 		await smartWallets(get(`/api/copy/smart-wallets${query}`), r);
 		return r;
 	};
 
 	it.each(['__proto__', 'valueOf', 'hasOwnProperty', 'constructor', 'toString'])(
-		'answers 200 for the inherited key %s instead of throwing',
+		'answers 200 and the score ranking for the inherited key %s',
 		async (key) => {
 			const r = await wallets(`?sort=${key}&limit=3`);
 			expect(r._json.status).toBe(200);
-			expect(r._json.body.wallets).toHaveLength(3);
+			expect(r._json.body.wallets).toHaveLength(2);
+			expect(orderSeen).toEqual(['realized_score']);
 		},
 	);
 
-	it('falls back to the score ranking for an unknown sort', async () => {
-		const fallback = await wallets('?sort=__proto__&limit=5');
-		const scored = await wallets('?sort=score&limit=5');
-		expect(fallback._json.body.wallets.map((w) => w.address))
-			.toEqual(scored._json.body.wallets.map((w) => w.address));
+	it('honors a real sort key', async () => {
+		await wallets('?sort=winrate&limit=5');
+		expect(orderSeen).toEqual(['win_rate']);
 	});
 
-	it('still honors a real sort key', async () => {
-		const r = await wallets('?sort=profit&limit=5');
-		const profits = r._json.body.wallets.map((w) => w.realized_profit_30d_usd);
-		expect([...profits].sort((a, b) => b - a)).toEqual(profits);
+	it('serves wallet address and track record only: no names, handles or avatars', async () => {
+		const r = await wallets('?limit=5');
+		const row = r._json.body.wallets[0];
+		expect(row).toMatchObject({ chain: 'sol', score: 91, win_rate: 0.62, trades_seen: 30 });
+		for (const k of ['name', 'twitter_username', 'avatar']) expect(row).not.toHaveProperty(k);
+		expect(r._json.body.source).toBe('three.ws wallet reputation graph');
 	});
 });

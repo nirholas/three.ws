@@ -2,9 +2,8 @@
 // micro-buy loop.
 //
 // WHAT IT IS. A small, fixed-size market buy of $THREE on Jupiter (USDC → $THREE,
-// ExactIn), executed once per settled x402 call so the platform can run a high
-// cadence of tiny, continuous buys (target ~60/min) that show up as constant,
-// real on-chain buy pressure. It reuses the same Jupiter client (jupiter.js) and
+// ExactIn), executed once per settled x402 call so the treasury can make small on-chain purchases. Disabled by default (see
+// api/cron/three-buy-loop.js). It reuses the same Jupiter client (jupiter.js) and
 // treasury policy (config.js) as the daily buyback (buyback.js); it is the
 // high-frequency, small-ticket sibling of that low-frequency, large-ticket lane.
 //

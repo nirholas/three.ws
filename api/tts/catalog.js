@@ -7,12 +7,12 @@
  * actually render.
  *
  * Query:
- *   provider=edge|gemini|nvidia|openai|elevenlabs   restrict to one lane (400 on an unknown id)
+ *   provider=gemini|nvidia|openai|elevenlabs   restrict to one lane (400 on an unknown id)
  *   q=<text>                                        substring filter (name, locale, labels)
  *   language=<tag>                                  e.g. "en", "ja"
  *   limit=<n>                                       cap voices returned (default 400, max 2000)
  *
- * Auth: optional. Anonymous callers get the keyless lanes (Edge, Gemini,
+ * Auth: optional. anonymous callers get the keyless lanes (Gemini,
  * NVIDIA); the metered lanes (OpenAI, ElevenLabs) need a session, and
  * ElevenLabs additionally needs either the platform key or an `x-eleven-key`
  * BYOK header. A lane that cannot serve is reported in `providers` as false
@@ -35,6 +35,7 @@ import {
 	VOICE_PROVIDERS,
 	PROVIDER_IDS,
 	getProvider,
+	resolveProviderId,
 	providerAvailability,
 	providerModels,
 	providerDefaultVoice,
@@ -50,7 +51,7 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://localhost');
-	const only = (url.searchParams.get('provider') || '').trim();
+	const only = resolveProviderId(url.searchParams.get('provider') || '');
 	// An unrecognized provider used to answer 200 with an empty catalog, which the
 	// picker can only render as "no voices" with no way to tell a typo from a lane
 	// that is genuinely down. /api/tts/synthesize already rejects the same id.

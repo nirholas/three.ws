@@ -20,6 +20,7 @@ import { sql, isDbUnavailableError } from './db.js';
 import { databaseConfigured } from './env.js';
 import { putObject, cdnUrl, deleteObject, listObjectsPage, keyFromPublicUrl, normalizeStoredUrl, objectStorageConfigured, isStorageInfrastructureError } from './r2.js';
 import { queueStoragePurges } from './forge-storage-purges.js';
+import { thumbKeysFor, gameReadyPrefixesFor } from './forge-derived-keys.js';
 import { VARIANT_WIDTHS } from '../../src/shared/cdn-variant.js';
 import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
@@ -44,6 +45,7 @@ import { announceIndexNow } from './indexnow-queue.js';
 import { isIndexableCreation } from './seo-resources.js';
 import { verifyManageToken } from './forge-manage-token.js';
 import { gatePublish } from './content-safety-store.js';
+import { currentPaidGeneration, bindPaidGeneration } from './forge-paid-generation.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -250,6 +252,9 @@ export async function createCreation({
 	// 'public' | 'unlisted' | 'private'. Failover successors pass the
 	// original's value; a fresh submit takes the request's from the context.
 	visibility,
+	// False for the second attempt of a quality retry: the request is one
+	// generation, already counted by the first attempt's start event.
+	recordStart = true,
 }) {
 	if (!forgeStoreEnabled()) return null;
 	const id = randomUUID();
@@ -301,7 +306,11 @@ export async function createCreation({
 		`;
 		// Funnel start — counts attempts so the health rollup can show how many
 		// generations began vs. completed. Best-effort; never blocks the insert.
-		await recordGenerationEvent({ phase: 'start', backend, tier, path, source: 'create' });
+		if (recordStart) await recordGenerationEvent({ phase: 'start', backend, tier, path, source: 'create' });
+		// A paid submit's charge follows the row it paid for, so a job that fails
+		// after the 200 can still be made whole (forge-paid-generation.js).
+		const paid = currentPaidGeneration();
+		if (paid) await bindPaidGeneration(id, paid);
 		return id;
 	} catch (err) {
 		if (isDbUnavailableError(err)) console.warn('[forge-store] createCreation skipped (db unavailable):', err?.message);
@@ -381,7 +390,8 @@ export async function findByJob({ replicateJobId, clientKey }) {
 		const rows = await sql`
 			select id, status, glb_url, glb_key, prompt, preview_image_url,
 				views_requested, views_used, multiview, backend, tier, path, model_category,
-				user_id, created_at, destination, internal, visibility, outcome
+				user_id, created_at, destination, internal, visibility, outcome,
+				error, superseded_by
 			from forge_creations
 			where replicate_job_id = ${replicateJobId} and client_key = ${clientKey}
 			limit 1
@@ -854,7 +864,9 @@ async function recordServingWorker(id, backend) {
 	}
 }
 
-export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true, bbox = null, lods = false, workerStats = null }) {
+// recordEvent:false is for the second attempt of a quality retry: the request is
+// one generation and the first attempt already added its 'done' to the counters.
+export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true, derivePbr = true, bbox = null, lods = false, workerStats = null, recordEvent = true }) {
 	if (!forgeStoreEnabled() || !replicateJobId || !glbUrl) return null;
 	const existing = await findByJob({ replicateJobId, clientKey });
 	if (!existing) return null;
@@ -931,14 +943,16 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 		// created_at; null if the timestamp is unreadable rather than a bogus number.
 		const startedAt = existing.created_at ? Date.parse(existing.created_at) : NaN;
 		const latencyMs = Number.isFinite(startedAt) ? Date.now() - startedAt : null;
-		await recordGenerationEvent({
-			phase: 'done',
-			backend: existing.backend,
-			tier: existing.tier,
-			path: existing.path,
-			latencyMs,
-			source: 'materialize',
-		});
+		if (recordEvent) {
+			await recordGenerationEvent({
+				phase: 'done',
+				backend: existing.backend,
+				tier: existing.tier,
+				path: existing.path,
+				latencyMs,
+				source: 'materialize',
+			});
+		}
 		// Every delivered mesh gets a physics grade, cached by content hash.
 		gradeDeliveredMesh({ buffer: glb.buffer, creationId: existing.id, sourceUrl: glb.publicUrl });
 		// ...and a free, signed content credential by default (work order 079), no
@@ -1237,6 +1251,12 @@ export async function deleteCreation({ id, clientKey = null, userId = null, mana
 		};
 		const ownPrefix = creationPrefix(row);
 		if (ownPrefix) for (const k of await listOrQueue(ownPrefix)) if (k.startsWith('forge/')) keys.add(k);
+		// Copies outside the creation's own prefix that the row never records: the
+		// display thumbnail and the game-ready exports of each form of its mesh URL.
+		for (const k of thumbKeysFor(row.id)) keys.add(k);
+		for (const prefix of gameReadyPrefixesFor(row)) {
+			for (const k of await listOrQueue(prefix)) if (k.startsWith('forge/')) keys.add(k);
+		}
 		const derived = new Set();
 		for (const prefix of variantPrefixes([...keys])) {
 			for (const k of await listOrQueue(prefix)) derived.add(k);
@@ -1273,6 +1293,18 @@ export async function deleteCreation({ id, clientKey = null, userId = null, mana
 		console.error('[forge-store] deleteCreation failed:', err?.message);
 		return 'error';
 	}
+}
+
+// Remove a generation attempt the quality stage made and then did not deliver.
+// A sync lane that retries writes two rows for one request; the one that loses the
+// better-of comparison was never shown to anyone, so it must not linger in the
+// library, the public count or the bucket beside the model that was. Platform
+// initiated, so it acts with the moderator grant. Best-effort: false on any
+// failure, never throws, and the delivered model is unaffected either way.
+export async function retireAttempt({ id }) {
+	if (!id) return false;
+	const outcome = await deleteCreation({ id, moderator: true });
+	return outcome === 'deleted';
 }
 
 // Change who a finished creation can be shown to. Same credentials as
@@ -1978,10 +2010,12 @@ export async function removeVote({ creationId, voterKey }) {
 			delete from forge_votes
 			where creation_id = ${creationId} and voter_key = ${voterKey}
 		`;
+		// A private model's tally is never returned: the update skips it, so the
+		// answer matches a pruned or nonexistent id.
 		const rows = await sql`
 			update forge_creations
 			set vote_count = (select count(*) from forge_votes where creation_id = ${creationId})
-			where id = ${creationId}
+			where id = ${creationId} and (visibility is null or visibility <> 'private')
 			returning vote_count
 		`;
 		// No returned row → creation was pruned; report a zeroed, un-voted state.

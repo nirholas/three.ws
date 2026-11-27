@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-26T21:26:49.142Z",
+	"generated_at": "2026-11-27T05:50:04.453Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1516,18 +1516,6 @@
 					"title": "Splat Viewer: Photoreal Gaussian Avatars",
 					"description": "Render Gaussian-splat and radiance-field avatars in the browser: the photoreal output of engines like GaussianAvatars and HumanGaussian. Load a .ply / .splat / .ksplat by URL or upload; decoding runs entirely client-side.",
 					"added": "2026-06-26",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false,
-					"priority": 0.7,
-					"job": "make"
-				},
-				{
-					"path": "/x-video",
-					"title": "X Video Downloader",
-					"description": "Paste an X post link and download its video or GIF in every quality, with the post's likes, replies, reposts and views. Free, no account, no API key.",
-					"added": "2026-10-23",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6167,6 +6155,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/forge-input-security",
+					"title": "Docs · Forge input security",
+					"description": "Every address, uploaded photo and model file a stranger can send to Forge, the guard in front of each (SSRF checks, DNS pinning, streaming size caps, type from bytes, pixel limits), and the one gap still open.",
+					"added": "2026-11-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
 					"path": "/docs/transaction-landing-race",
 					"title": "Docs · Transaction landing race",
 					"description": "How every signed Solana trade is sent through several landing providers at once: the provider table, first-confirmation-wins racing, per-provider landed and latency stats, failure-streak skipping with health probes, and the per-trade tip ceiling.",
@@ -10080,8 +10080,8 @@
 				},
 				{
 					"path": "/docs/x-video",
-					"title": "Docs · X post reader and free video tool",
-					"description": "One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.",
+					"title": "Docs · X post reader",
+					"description": "One official X API v2 reader for public X posts, shared by the price-impact tools: how it authenticates, what it returns and where it is used.",
 					"added": "2026-10-23",
 					"auth": null,
 					"indexable": true,
@@ -10788,8 +10788,8 @@
 				},
 				{
 					"path": "/docs/three-thesis",
-					"title": "Docs · The $THREE thesis",
-					"description": "The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.",
+					"title": "Docs · How $THREE is used",
+					"description": "What the $THREE utility token pays for on three.ws, how the treasury handles it, and the risks. Not an investment, no revenue routed to holders, not financial advice.",
 					"added": "2026-08-25",
 					"auth": null,
 					"indexable": true,
@@ -13014,9 +13014,9 @@
 					"job": null
 				},
 				{
-					"path": "/blog/three-ws-on-anthropic-mcp-registry",
-					"title": "three.ws Listed on Anthropic's Official MCP Registry",
-					"description": "three.ws is now listed on Anthropic's official Model Context Protocol Registry, the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor, and more.",
+					"path": "/blog/three-ws-on-mcp-registry",
+					"title": "three.ws Listed on the Official MCP Registry",
+					"description": "three.ws is now listed on the official Model Context Protocol Registry (registry.modelcontextprotocol.io), a community-run directory of MCP servers that MCP clients can discover.",
 					"added": "2026-05-25",
 					"auth": null,
 					"indexable": true,

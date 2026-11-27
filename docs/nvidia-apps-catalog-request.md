@@ -371,6 +371,10 @@ share-image text match it. The browser title follows the site's `Name · three.w
 model generator from three.ws" (`pages/forge.html` plus the `forge.*` keys in
 `public/locales/en.json`). The desktop build keeps its own name, three.ws Forge for desktop.
 
+Update 2026-11-27: the verified pre-send checklist, a long and a short reply, and the claim
+check behind them are in [nvidia-reply-2026-11-jiyeon.md](./nvidia-reply-2026-11-jiyeon.md).
+Step 1 below is already satisfied: production serves the new name without another deploy.
+
 ### Send steps (in order)
 
 1. **Deploy** so the live `/forge` shows the new name (`npm run deploy:gcp:full`, owner

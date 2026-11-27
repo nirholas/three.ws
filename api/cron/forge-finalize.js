@@ -59,6 +59,7 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 import { getRedis } from '../_lib/redis.js';
 import { NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds } from '../forge.js';
 import { mapPoolSettled } from '../_lib/pool.js';
+import { FORGE_JOB_HARD_TTL_MINUTES } from '../_lib/forge-job-deadline.js';
 
 export const maxDuration = 60;
 
@@ -75,10 +76,10 @@ const BATCH_LIMIT = Number(process.env.FORGE_FINALIZE_BATCH) || 25;
 export const ROW_CONCURRENCY = Number(process.env.FORGE_FINALIZE_CONCURRENCY) || 8;
 // Leave fresh rows to the attended browser poll path.
 const GRACE_MINUTES = 2;
-// Past this age a non-terminal generation is declared dead. The slowest real
-// lane (self-host TRELLIS high tier behind a full queue) finishes well inside
-// 30 minutes; beyond it the worker task has been evicted or lost.
-const HARD_TTL_MINUTES = 45;
+// Past this age a non-terminal generation is declared dead. Shared with the
+// browser poll (api/forge.js answerStalledPoll) so the page and the reaper agree
+// on the moment a job ends.
+const HARD_TTL_MINUTES = FORGE_JOB_HARD_TTL_MINUTES;
 // Browser clients poll attended for up to 12 minutes (src/forge.js MAX_POLL_MS)
 // and run their own poll-time lane failover. The cron defers acting on a failed
 // self-host poll until that window has passed, so it can never race a live

@@ -5,6 +5,9 @@
 import { ensureRiskAck } from './shared/risk-ack.js';
 import { proxiedImageURL } from './ipfs.js';
 import { loadTelegramChat, telegramLoginUrl, TELEGRAM_LINK_URL } from './oracle-telegram.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const NETWORK = 'mainnet';
 const $ = (s, r = document) => r.querySelector(s);

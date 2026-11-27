@@ -87,12 +87,12 @@ describe('POST /api/forge-enhance, prompt cleanup', () => {
 	});
 
 	it('keeps a quote that is part of the prompt rather than wrapping it', async () => {
-		const body = await enhance('a sign reading "open" in painted enamel');
+		const body = await enhance('a sign reading "open" in painted enamel', 'an open sign');
 		expect(body.prompt).toBe('a sign reading "open" in painted enamel');
 	});
 
 	it('strips a Prompt: label, collapses whitespace, and drops the trailing period', async () => {
-		const body = await enhance('Enhanced prompt: a matte\n  ceramic teapot.');
+		const body = await enhance('Enhanced prompt: a matte\n  ceramic teapot.', 'a teapot');
 		expect(body.prompt).toBe('a matte ceramic teapot');
 	});
 

@@ -1,16 +1,15 @@
 /**
- * POST /api/tts/edge
+ * POST /api/tts/edge  (legacy route, kept so deployed clients keep working)
  *
- * Microsoft Edge TTS proxy. No API key required: the protocol and the voice
- * catalog live in api/_lib/tts-edge.js, shared with the unified router
- * (/api/tts/synthesize) so the handshake quirks are implemented once.
- * Caches synthesized clips in R2 by sha256(voice + text + rate + pitch) for 30 days.
+ * The Microsoft Edge Read Aloud lane was retired: it is a consumer browser
+ * feature, not a licensed API. This route now renders on the platform's
+ * licensed default lane (Google Gemini TTS, via api/_lib/voice-providers.js).
+ * A stored Edge-style voice id ("en-US-AriaNeural") is mapped to the closest
+ * Gemini voice instead of erroring.
+ * Caches synthesized clips in R2 by sha256(voice + text) for 30 days.
  *
- * Body: { voice: string, text: string, rate?: string, pitch?: string }
- *   voice — e.g. "en-US-AriaNeural". Defaults to "en-US-AriaNeural".
- *   rate  — prosody rate, e.g. "+0%", "-10%", "+20%". Defaults to "+0%".
- *   pitch — prosody pitch, e.g. "+0Hz", "-5Hz". Defaults to "+0Hz".
- * Response: audio/mpeg
+ * Body: { voice?: string, text: string }  (rate/pitch are accepted and ignored)
+ * Response: audio/wav
  */
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
@@ -18,13 +17,7 @@ import { cors, method, wrap, error, readJson, rateLimited } from '../_lib/http.j
 import { limits } from '../_lib/rate-limit.js';
 import { sha256 } from '../_lib/crypto.js';
 import { headObject, getObjectBuffer, putObject } from '../_lib/r2.js';
-import {
-	synthesizeEdge,
-	EDGE_VOICE_RE,
-	EDGE_RATE_RE,
-	EDGE_PITCH_RE,
-	EDGE_DEFAULT_VOICE,
-} from '../_lib/tts-edge.js';
+import { synthesizeVoice, DEFAULT_PROVIDER_ID, isKnownVoice } from '../_lib/voice-providers.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
@@ -43,30 +36,23 @@ export default wrap(async (req, res) => {
 	}
 
 	const body = await readJson(req);
-	const voice = String(body.voice || EDGE_DEFAULT_VOICE).trim();
+	const voice = String(body.voice || '').trim();
 	const text = String(body.text || '').trim();
-	const rate = String(body.rate || '+0%').trim();
-	const pitch = String(body.pitch || '+0Hz').trim();
 
-	if (!EDGE_VOICE_RE.test(voice))
-		return error(res, 400, 'validation_error', 'invalid voice name');
 	if (!text) return error(res, 400, 'validation_error', 'text is required');
 	if (text.length > 500)
 		return error(res, 400, 'validation_error', 'text exceeds 500 chars per request');
-	if (!EDGE_RATE_RE.test(rate))
-		return error(res, 400, 'validation_error', 'rate must be like +0% or -10%');
-	if (!EDGE_PITCH_RE.test(pitch))
-		return error(res, 400, 'validation_error', 'pitch must be like +0Hz or -5Hz');
+	if (!(await isKnownVoice(DEFAULT_PROVIDER_ID, voice)))
+		return error(res, 400, 'validation_error', 'invalid voice name');
 
-	// ── R2 cache lookup ───────────────────────────────────────────────────────
-	const cacheHash = await sha256(`${voice}\x00${text}\x00${rate}\x00${pitch}`);
-	const cacheKey = `tts/edge/${cacheHash}.mp3`;
+	const cacheHash = await sha256(`${voice}\x00${text}`);
+	const cacheKey = `tts/legacy-voice/${cacheHash}.wav`;
 
 	const cached = await headObject(cacheKey).catch(() => null);
 	if (cached) {
 		try {
 			const buf = await getObjectBuffer(cacheKey);
-			res.setHeader('content-type', 'audio/mpeg');
+			res.setHeader('content-type', 'audio/wav');
 			res.setHeader('content-length', String(buf.length));
 			res.setHeader('x-tts-cache', 'hit');
 			res.setHeader('cache-control', 'private, max-age=86400');
@@ -76,27 +62,25 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	// ── Synthesize via Microsoft Edge TTS ────────────────────────────────────
-	let audioBuffer;
+	let clip;
 	try {
-		audioBuffer = await synthesizeEdge(voice, text, rate, pitch);
+		clip = await synthesizeVoice({ provider: DEFAULT_PROVIDER_ID, voiceId: voice, text });
 	} catch (err) {
-		console.error('[tts/edge] synthesis failed after retry', err);
-		return error(res, 502, 'upstream_error', 'Edge TTS synthesis failed');
+		console.error('[tts/edge] synthesis failed', err?.code, err?.message);
+		return error(res, 502, 'upstream_error', 'TTS synthesis failed');
 	}
-
-	if (!audioBuffer.length) return error(res, 502, 'upstream_error', 'Edge TTS returned empty audio');
+	if (!clip.audio.length) return error(res, 502, 'upstream_error', 'TTS returned empty audio');
 
 	putObject({
 		key: cacheKey,
-		body: audioBuffer,
-		contentType: 'audio/mpeg',
+		body: clip.audio,
+		contentType: clip.contentType,
 		metadata: { 'created-at': new Date().toISOString() },
 	}).catch((e) => console.warn('[tts/edge] R2 cache write failed:', e.message));
 
-	res.setHeader('content-type', 'audio/mpeg');
-	res.setHeader('content-length', String(audioBuffer.length));
+	res.setHeader('content-type', clip.contentType);
+	res.setHeader('content-length', String(clip.audio.length));
 	res.setHeader('x-tts-cache', 'miss');
 	res.setHeader('cache-control', 'private, max-age=86400');
-	return res.end(audioBuffer);
+	res.end(clip.audio);
 });

@@ -108,6 +108,19 @@ def pipeline_settings(mode: str, *, prompt: str = "", scribble_confidence=None) 
     }
 
 
+# The sampler seed every request used before callers could pass one. A request
+# with no seed keeps it, so it builds exactly what it always built.
+DEFAULT_SEED = 0
+SEED_MAX = 4_294_967_295
+
+
+def resolve_seed(seed) -> int:
+    """The seed for the sampler's torch generator: the caller's seed (validated
+    0..SEED_MAX by InferRequest) so the same seed repeats a model, or the fixed
+    default when none was asked for."""
+    return DEFAULT_SEED if seed is None else int(seed)
+
+
 def should_decimate(face_count: int, target_faces) -> bool:
     """Decimation runs only when the caller asked for a budget AND the mesh is
     over it. Running a quadric collapse on an already-small mesh costs seconds

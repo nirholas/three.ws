@@ -466,7 +466,7 @@ gcloud run services list --project aerial-vehicle-466722-p5 \
 
 ## Related
 
-- [NVIDIA showcases and co-marketing research](./nvidia-showcase-research.md): what NVIDIA actually features, how other companies use its technology in 2026, and the nine builds that follow from it (work orders 871 to 879)
+- [NVIDIA showcases and co-marketing research](./nvidia-showcase-research.md): what NVIDIA actually features, how other companies use its technology in 2026, and the nine builds that follow from it (work orders 871 to 879; plan and design docs in [nvidia/builds/](./nvidia/builds/README.md))
 - [Big-tech recognition dispatch board](./big-tech-recognition-week.md): this map ranked against every other big-tech surface (OpenAI, Anthropic, AWS, IBM) by the odds of a published mention this week. Read that first if you are deciding where a week goes, and this one once NVIDIA is the answer.
 - [IBM visibility map](./ibm-visibility-map.md): the same surface-by-surface treatment for IBM
 - [NVIDIA Inception membership](./nvidia-inception.md): what membership is, and the rule that it is a program and not a partnership or an endorsement

@@ -25,7 +25,8 @@ import {
 	primeTierPass,
 } from './three-access.js';
 import { renderLock, lockStateFromAccess } from './three-lock.js';
-import { payForHighGeneration } from './forge-pay.js';
+import { payForHighGeneration, forgetPaidProof } from './forge-pay.js';
+import { byokUseNote, mountByokKeyField } from './shared/byok-key-ui.js';
 
 // Short engine labels for the picker, keyed by backend id — mirrors ENGINE_LABELS
 // in src/forge.js so the two pickers read identically. Free lanes carry a FREE
@@ -344,15 +345,15 @@ export function initForgeControls({ root, clientHeaders, onLane, onRerun, onBloc
 		const hint = KEY_HINTS[byok];
 		const name = hint?.label || byok;
 		if (els.byokLabel) els.byokLabel.textContent = `${name} key`;
-		if (els.byokKey) els.byokKey.placeholder = `Your ${name} API key (kept in this browser)`;
+		if (els.byokKey) els.byokKey.placeholder = `Your ${name} API key`;
 		if (els.byokHint) {
-			els.byokHint.innerHTML = hint
-				? `Runs on your own ${hint.label} key. <a href="${hint.url}" target="_blank" rel="noopener">Get a key →</a>`
-				: `Runs on your own ${name} key, kept in this browser.`;
+			els.byokHint.innerHTML =
+				`Runs on your own ${name} key${hint ? ` (<a href="${hint.url}" target="_blank" rel="noopener">get a key</a>)` : ''}. ${byokUseNote(name)}`;
 		}
 	}
 
 	if (els.byokKey) {
+		mountByokKeyField(els.byokKey);
 		els.byokKey.addEventListener('input', () => {
 			byokKey = els.byokKey.value.trim();
 		});
@@ -436,15 +437,20 @@ export function initForgeControls({ root, clientHeaders, onLane, onRerun, onBloc
 
 	// Pay $THREE for a single High generation, then re-run the current prompt with
 	// the settled proof attached. Mirrors payThenGenerate() in src/forge.js.
-	async function payThenRun(pay) {
+	// onRerun reports how the paid run ended: 'delivered' (the server redeemed the
+	// proof), 'refused' (the server would not take it), or nothing (a fault or a
+	// cancel, so the proof stays remembered and the next try is free). A refused
+	// proof the sheet had reused is replaced by one fresh payment, never more.
+	async function payThenRun(pay, allowFresh = true) {
 		const usd = Number(pay?.usd) || Number(highAccess?.pay_per_use?.usd) || 0;
 		if (!(usd > 0)) return;
 		if (selectedTier !== 'high') selectTier('high');
 		const result = await payForHighGeneration({ usd });
-		if (!result?.ok) return; // cancelled or failed — the modal explained why
-		if (typeof onRerun === 'function') {
-			onRerun({ payment_id: result.paymentId, ref_id: result.refId });
-		}
+		if (!result?.ok) return; // cancelled or failed: the modal explained why
+		if (typeof onRerun !== 'function') return;
+		const outcome = await onRerun({ payment_id: result.paymentId, ref_id: result.refId, reused: Boolean(result.reused) });
+		if (outcome === 'delivered' || outcome === 'refused') forgetPaidProof(result.paymentId);
+		if (outcome === 'refused' && result.reused && allowFresh) await payThenRun({ usd }, false);
 	}
 
 	// ── Holder perk line ───────────────────────────────────────────────

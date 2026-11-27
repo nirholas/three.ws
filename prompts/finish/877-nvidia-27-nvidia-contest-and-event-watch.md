@@ -30,6 +30,8 @@ Contests are the one NVIDIA surface that promises in advance to feature whoever 
 
 ## Step 0: re-derive the current state
 
+A design doc for this build exists at `docs/nvidia/builds/877-opportunity-watch.md`. It is a plan written on 2026-11-26, not a spec: this order is complete without it, and where the code or a license disagrees with it, the code and the license win.
+
     sed -n 1,60p api/cron/free-model-audit.js
     grep -n "sendOpsAlert" -r api/_lib/alerts.js | head
     grep -n "\"crons\"" vercel.json
@@ -74,6 +76,6 @@ Verify each feed by fetching it, and record status, content type and a sample it
 
 1. Verify every Definition of done line with the command output in front of you.
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
-3. Append a dated entry to `prompts/finish/_context/nvidia-PROGRESS.md` (re-read it first, small anchored edit at the end): order number, commit hashes, what is live, the measured number, what waits on the owner.
+3. Append a dated entry to `prompts/finish/_context/nvidia-PROGRESS.md` (re-read it first, small anchored edit at the end): order number, commit hashes, what is live, the measured number, what waits on the owner. Then bring this build's design doc `docs/nvidia/builds/877-opportunity-watch.md` and its row in `docs/nvidia/builds/README.md` up to date: the status, the measured numbers, anything the design got wrong, and the commit hash in place of the link to this order (the order is archived, so the link would break).
 4. All lines pass: `git mv` this file to `prompts/archive/` in its own closing commit and repoint inbound links. If an owner step is last, leave the file and put a dated status line under the title naming what remains.
 5. Report: what step 0 measured; files and commit hashes; evidence per Definition of done line; the measured numbers; the license clauses you relied on; the one batched owner message (`git push`, the `three-ws-api` deploy, registering for or entering any event); one-line judgment calls. No trailing questions.

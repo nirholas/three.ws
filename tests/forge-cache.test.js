@@ -78,13 +78,15 @@ describe('forge result cache get/put round-trip', () => {
 
 		const ok = await putCachedForgeResult(
 			key,
-			{ glb_url: 'https://cdn.example/forge/x.glb', backend: 'trellis', tier: 'standard', path: 'image', quality: { flag: 'ok', score: 0.8 } },
+			{ glb_url: 'https://cdn.example/forge/x.glb', creation_id: 'c1', backend: 'trellis', tier: 'standard', path: 'image', quality: { flag: 'ok', score: 0.8 } },
 			{ redis },
 		);
 		expect(ok).toBe(true);
 
-		const hit = await getCachedForgeResult(key, { redis });
+		const lookup = async (id) => ({ id, status: 'done', visibility: 'public', safety_status: 'clear' });
+		const hit = await getCachedForgeResult(key, { redis, lookup });
 		expect(hit).toBeTruthy();
+		expect(hit.creation_id).toBe('c1');
 		expect(hit.glb_url).toBe('https://cdn.example/forge/x.glb');
 		expect(hit.quality.flag).toBe('ok');
 		expect(hit.cached_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);

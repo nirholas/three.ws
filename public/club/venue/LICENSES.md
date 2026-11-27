@@ -1,6 +1,6 @@
 # /club/venue asset provenance
 
-Both files in this directory are synthesised at build time from procedural
+`club-venue.glb` and `club-hdri.hdr` in this directory are synthesised at build time from procedural
 geometry / sampled radiance functions:
 
 - [scripts/build-club-venue.mjs](../../../scripts/build-club-venue.mjs) →
@@ -48,44 +48,30 @@ npm run build:club-assets  # → both props + venue (in one shot)
 Output is deterministic — same input code produces byte-identical files —
 so committed files only change when a builder script changes.
 
-## Third-party entrance asset
+## Third-party entrance venues (CC BY 4.0)
 
-`space-smugglers-clubhouse.glb` is **not** authored by three.ws. It is the
-interior rendered live behind the cover-charge door (the backdrop in
-[src/club-entrance.js](../../../src/club-entrance.js)), compressed from a
-supplied "Space Smugglers Club House (dark version)" GLB export.
+`alleyway.glb` and `tour.glb` are **not** authored by three.ws. They are the two
+walk-in venues of the `/club` entrance (the first two venues in
+[src/club-variant.js](../../../src/club-variant.js)). Both are licensed
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) by their authors, which
+permits commercial use and modification with attribution.
 
-| File                            | Source                      | License                        | Modifications                                                                                                                                                              |
-| ------------------------------- | --------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `space-smugglers-clubhouse.glb` | Supplied third-party export | © original author — see source | weld + prune + dedup, textures resized ≤2048 → WebP q82, position/normal/UV quantization, Meshopt compression (~20 MB → ~1.6 MB) via [scripts/build-club-entrance-venue.mjs](../../../scripts/build-club-entrance-venue.mjs) |
-
-This file is **not** CC0 — confirm the original model's license before any
-redistribution beyond three.ws. Regenerate from the source export with:
-
-```sh
-npm run build:club-entrance-venue   # → space-smugglers-clubhouse.glb
-```
-
-## Third-party back alley (the `/stripclub` entrance)
-
-`back-alley.glb` is **not** authored by three.ws. It is the brick back alley the
-`/stripclub` entrance opens on (the first venue of the `stripclub` variant in
-[src/club-variant.js](../../../src/club-variant.js)).
-
-| File             | Source                                                                                                                                        | Author                                        | License                                                   | Modifications                                                                                                                                                                                  |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `back-alley.glb` | ["environment ally with bar/strip club"](https://sketchfab.com/3d-models/environment-ally-with-barstrip-club-a98c2e9748b24b7fb781d452814304ef) | [anthonydpc](https://sketchfab.com/tonydpc)   | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | weld + prune + dedup, textures resized to at most 2048 px and re-encoded as WebP q82, position/normal/UV quantization, Meshopt compression via [scripts/build-club-entrance-venue.mjs](../../../scripts/build-club-entrance-venue.mjs) |
+| File           | Source                                                                                                                                                | Author                                                  | License   | Modifications                                                                                                                                                                       |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alleyway.glb` | ["Armentrout Textured Game Environment - Alleyway"](https://sketchfab.com/3d-models/armentrout-textured-game-environment-alleyway-ad32afd3994643a1b68eb2f44d77c60c) | [dcarmentrout](https://sketchfab.com/dcarmentrout)      | CC BY 4.0 | weld + prune + dedup, textures resized to at most 2048 px and re-encoded as WebP q82, position/normal/UV quantization, Meshopt compression via [scripts/build-club-entrance-venue.mjs](../../../scripts/build-club-entrance-venue.mjs) |
+| `tour.glb`     | ["Richard's Art Gallery - Audio Tour"](https://sketchfab.com/3d-models/richards-art-gallery-audio-tour-0e3e19faa6474fd5974e6a7ed1b221d8)              | [shinymagic](https://sketchfab.com/shinymagic)          | CC BY 4.0 | same pipeline; the author's `xxx` / "DO NOT RENDER" ground disc is stripped                                                                                                         |
 
 CC BY requires credit wherever the work is shown, so the same title, author,
-source and license are rendered on screen for as long as the model is visible
+source and license are rendered on screen for as long as each model is visible
 (`setVenueCredit` in [src/club-entrance.js](../../../src/club-entrance.js), fed
 by the venue's `credit` block in `src/club-variant.js`). Keep the two in step:
-if this asset is replaced, update the `credit` block and this table together.
+if an asset is replaced, update the `credit` block and this table together.
 
-Rebuild from the source export: download the GLB from the Sketchfab page above
-(a free Sketchfab login is required), save it in the repo root as
-`environment_ally_with_barstrip_club.glb`, then:
+## Removed assets
 
-```sh
-npm run build:club-entrance-venue   # → back-alley.glb, and prints its bounds + door meshes
-```
+Two third-party models were removed on 2026-11-26 after a licence audit and must
+not be re-added: a "Space Smugglers Club House" model (Sketchfab, CC BY-NC-ND 4.0:
+non-commercial and no derivatives, incompatible with a paid club) and an
+unverified copy of it. The walk-in's last step is now the procedural, CC0
+`club-venue.glb`. The unused `/stripclub` back-alley variant (never shipped in
+the repo) was also retired; that path now resolves to the default entrance.

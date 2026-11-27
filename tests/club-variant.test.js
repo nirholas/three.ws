@@ -1,5 +1,5 @@
 // Tests for src/club-variant.js: the URL path → walk-in variant rule behind the
-// /club and /stripclub entrances. Pure data, so no renderer or DOM is needed.
+// /club entrance. Pure data, so no renderer or DOM is needed.
 
 import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
@@ -14,14 +14,12 @@ import {
 const publicDir = resolve(__dirname, '../public');
 
 describe('resolveClubVariant', () => {
-	it('maps each entrance path to its own variant', () => {
+	it('maps each entrance path to its own variant, and retired links to the default', () => {
 		expect(resolveClubVariant('/club').key).toBe('club');
-		expect(resolveClubVariant('/stripclub').key).toBe('stripclub');
+		expect(resolveClubVariant('/stripclub').key).toBe(DEFAULT_CLUB_VARIANT);
 	});
 
 	it('ignores trailing slashes and case', () => {
-		expect(resolveClubVariant('/stripclub/').key).toBe('stripclub');
-		expect(resolveClubVariant('/StripClub').key).toBe('stripclub');
 		expect(resolveClubVariant('/club/').key).toBe('club');
 	});
 
@@ -53,19 +51,31 @@ describe('CLUB_VARIANTS', () => {
 		}
 	});
 
-	it('backs a third-party alley with a fallback that ships in the repo', () => {
-		const first = CLUB_VARIANTS.stripclub.sequence[0];
-		expect(first.fallback).toBeTruthy();
-		expect(first.fallback.cover).toBe(true);
-		expect(existsSync(resolve(publicDir, `.${first.fallback.url}`))).toBe(true);
+	it('only mounts venues whose GLB ships in the repo', () => {
+		for (const variant of Object.values(CLUB_VARIANTS)) {
+			for (const venue of variant.sequence) {
+				expect(existsSync(resolve(publicDir, `.${venue.url}`)), venue.url).toBe(true);
+			}
+		}
 	});
 
-	it('carries a complete credit for the CC BY alley', () => {
-		const { credit } = CLUB_VARIANTS.stripclub.sequence[0];
-		for (const field of ['title', 'author', 'authorUrl', 'sourceUrl', 'license', 'licenseUrl']) {
-			expect(credit[field], field).toBeTruthy();
+	it('never mounts a venue whose licence forbids commercial use or derivatives', () => {
+		for (const variant of Object.values(CLUB_VARIANTS)) {
+			for (const venue of variant.sequence) {
+				expect(venue.url).not.toMatch(/clubhouse/);
+				if (venue.credit) expect(venue.credit.license).toBe('CC BY 4.0');
+			}
 		}
-		expect(credit.license).toBe('CC BY 4.0');
+	});
+
+	it('carries a complete credit for every CC BY venue', () => {
+		const credited = CLUB_VARIANTS.club.sequence.filter((v) => v.credit);
+		expect(credited.map((v) => v.name)).toEqual(['Alley', 'Gallery']);
+		for (const { credit } of credited) {
+			for (const field of ['title', 'author', 'authorUrl', 'sourceUrl', 'license', 'licenseUrl']) {
+				expect(credit[field], field).toBeTruthy();
+			}
+		}
 	});
 });
 

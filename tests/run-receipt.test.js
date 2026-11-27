@@ -156,6 +156,18 @@ describe('run receipt core', () => {
 		expect(briefStage({ kind: 'avatar', directed: false, fallback: { reason: 'too_long', chars: 1100 } }).cause).toMatch(/fixed brief/);
 	});
 
+	it('names each fail-open reason the director reports since 2026-11-26', () => {
+		const cause = (reason) => briefStage({ kind: 'mesh', directed: false, fallback: { reason } }).cause;
+		expect(cause('refusal')).toMatch(/declined/i);
+		expect(cause('off_topic')).toMatch(/different subject/i);
+		expect(cause('chain_failed')).toMatch(/every director model refused/i);
+		expect(cause('chain_cooling')).toMatch(/cooling down/i);
+		expect(cause('budget_spent')).toMatch(/time allowed/i);
+		for (const r of ['refusal', 'off_topic', 'chain_failed', 'chain_cooling', 'budget_spent']) {
+			expect(cause(r)).not.toMatch(/did not return a usable brief/);
+		}
+	});
+
 	it('turns away a non-humanoid avatar before spending GPU time, and says so', () => {
 		const s = subjectGateStage({ nonHumanoid: true });
 		expect(s.verdict).toBe('missed');

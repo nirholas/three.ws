@@ -130,7 +130,7 @@ describe('Pixal3D request boundary: image count', () => {
 		expect(gcpSubmit).not.toHaveBeenCalled();
 	});
 
-	it('a 5-image request on trellis2 (within the generic 6-image cap) is unaffected by the pixal3d-only check', async () => {
+	it('a 5-image request on trellis2 passes the generic 6-image cap and is narrowed to its one readable view', async () => {
 		const req = makeReq({
 			image_urls: [...PHOTOS, 'https://cdn.example/right.png', 'https://cdn.example/extra.png'],
 			tier: 'standard',
@@ -142,7 +142,9 @@ describe('Pixal3D request boundary: image count', () => {
 		await handler(req, res);
 		expect(res.statusCode).toBe(200);
 		expect(gcpSubmit).toHaveBeenCalledTimes(1);
-		expect(gcpSubmit.mock.calls[0][0].params.images).toHaveLength(5);
+		expect(gcpSubmit.mock.calls[0][0].params.images).toEqual([PHOTOS[0]]);
+		expect(res.body.views_requested).toBe(5);
+		expect(res.body.views_used).toBe(1);
 	});
 });
 

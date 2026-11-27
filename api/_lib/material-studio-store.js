@@ -442,8 +442,11 @@ export async function generateMaterialFactorsFromInstruction(instruction) {
 		}
 	}
 	if (!result?.text) {
+		// The provider's own error text (quota, org ids, upstream status) stays in
+		// the logs; the caller gets what happened and what still works.
+		console.warn('[material-studio] restyle author chain exhausted:', lastError?.message || 'no provider configured');
 		throw new MaterialStudioError(
-			`AI restyle could not reach a language model: ${lastError?.message || 'no provider is configured on this deployment'}`,
+			'AI restyle could not reach a language model right now. Try again in a minute, or apply a preset look, which needs no model.',
 			{ status: 503, code: 'no_provider' },
 		);
 	}

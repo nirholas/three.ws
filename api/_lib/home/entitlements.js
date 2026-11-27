@@ -144,7 +144,7 @@ export const HOME_DIMENSIONS = Object.freeze({
 		period: 'month',
 		scalesWithHolding: true,
 		costPerUnitUsd: 0,
-		costBasis: 'the default lanes are keyless: Edge Read Aloud TTS (api/_lib/tts-edge.js) and NVIDIA Riva ASR (api/_lib/asr-nvidia.js) both cost the platform nothing per utterance',
+		costBasis: 'the default lanes are keyless: Gemini TTS on platform Google Cloud credits (api/_lib/tts-gemini.js) and NVIDIA Riva ASR (api/_lib/asr-nvidia.js) both cost the platform nothing per utterance',
 		why: 'Metered because a paid speech lane can be selected and because an unbounded always-listening satellite is an abuse surface, not because the default lane costs money.',
 	}),
 	agentTurns: Object.freeze({

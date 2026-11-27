@@ -66,6 +66,16 @@ async function handleList(req, res) {
 
 	const auth = await resolveAuth(req).catch(() => null);
 
+	// A private model has no public thread. Its comments answer exactly like a
+	// model with none, so a stranger holding the id learns nothing; the signed-in
+	// owner still reads their own thread.
+	const [visible] = await sql`
+		SELECT user_id, visibility FROM forge_creations WHERE id = ${creationId}
+	`;
+	if (visible?.visibility === 'private' && !(auth && visible.user_id === auth.userId)) {
+		return json(res, 200, { comments: [], total: 0, next: null }, { 'cache-control': 'no-store' });
+	}
+
 	const rows = beforeTs
 		? await sql`
 			SELECT c.id, c.body, c.created_at, c.user_id, u.username, u.display_name, u.avatar_url
@@ -128,10 +138,14 @@ async function handleCreate(req, res) {
 	}
 
 	const [creation] = await sql`
-		SELECT id, user_id, prompt FROM forge_creations
+		SELECT id, user_id, prompt, visibility FROM forge_creations
 		WHERE id = ${parsed.data.creation_id} AND status = 'done' AND glb_url IS NOT NULL
 	`;
-	if (!creation) return error(res, 404, 'not_found', 'model not found');
+	// Private models are commentable only by their signed-in owner; anyone else
+	// gets the same 404 as an id that does not exist.
+	if (!creation || (creation.visibility === 'private' && creation.user_id !== auth.userId)) {
+		return error(res, 404, 'not_found', 'model not found');
+	}
 
 	const [author] = await sql`
 		SELECT username, display_name, avatar_url FROM users

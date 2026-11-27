@@ -91,6 +91,45 @@ def clamp_to_ceiling(resolution: int, ceiling: Optional[int]) -> int:
     return min(resolution, max(allowed)) if allowed else RESOLUTIONS[0]
 
 
+# Host memory ceilings each resolution has been measured to be killed at. Cloud
+# Run kills a container that crosses its memory limit with signal 9, which skips
+# the CUDA out-of-memory step-down below and leaves the caller waiting on a job
+# that is later recorded as orphaned. Measured 2026-11-11 and 2026-11-20 on the
+# production shape (8 vCPU, 32 GiB, one L4): 1024 and 1536 finish sampling and
+# die in decode and to_glb, while 512 finishes with a 27.1 GiB peak. A host whose
+# limit is at or below a listed value never starts that resolution. Larger hosts
+# are not capped: no run there has failed, and this table only records failures.
+HOST_RAM_KILLED_AT_GIB = {
+    1024: 32,
+    1536: 32,
+}
+
+_GIB = 1024 ** 3
+
+
+def host_memory_ceiling(limit_bytes: Optional[int]) -> Optional[int]:
+    """The largest resolution this host's memory limit is not known to be killed at.
+
+    None means no cap: the limit is unknown (unknown is not evidence of a small
+    host) or nothing is excluded at this size.
+    """
+    if not limit_bytes or limit_bytes <= 0:
+        return None
+    allowed = [
+        r for r in RESOLUTIONS
+        if limit_bytes > HOST_RAM_KILLED_AT_GIB.get(r, 0) * _GIB
+    ]
+    if len(allowed) == len(RESOLUTIONS):
+        return None
+    return max(allowed) if allowed else RESOLUTIONS[0]
+
+
+def served_ceiling(max_resolution: Optional[int], limit_bytes: Optional[int]) -> Optional[int]:
+    """The tighter of the deployment's MAX_RESOLUTION and the host-memory ceiling."""
+    caps = [c for c in (max_resolution, host_memory_ceiling(limit_bytes)) if c]
+    return min(caps) if caps else None
+
+
 def step_down(resolution: int) -> Optional[int]:
     """The next smaller resolution to retry at after an out-of-memory failure."""
     smaller = [r for r in RESOLUTIONS if r < resolution]

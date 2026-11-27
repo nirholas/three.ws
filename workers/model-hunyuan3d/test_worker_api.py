@@ -372,6 +372,56 @@ def test_inference_records_an_image_source_failure_verbatim():
         app21._tasks.clear()
 
 
+def _run_with_recorded_generate(seed):
+    """Run one inference with the GPU step replaced by a recorder, so the test
+    sees exactly what the shape stage is handed."""
+    bucket = RecordingBucket()
+    app21._bucket = bucket
+    app21._tasks.clear()
+    app21._sem = asyncio.Semaphore(1)
+    app21._ready = asyncio.Event()
+    app21._ready.set()
+    seen = {}
+    original_generate, original_decode = app21._generate, app21._decode_image
+
+    def recording_generate(img, q, seed=None):
+        seen["seed"] = seed
+        return b"glTF"
+
+    app21._generate = recording_generate
+    app21._decode_image = lambda src: Image.new("RGB", (8, 8))
+    try:
+        asyncio.run(app21._run_inference("task-seed", [_png_data_uri()], None, seed))
+        assert app21._tasks["task-seed"]["status"] == "done", app21._tasks["task-seed"]
+        return seen
+    finally:
+        app21._generate, app21._decode_image = original_generate, original_decode
+        app21._bucket = None
+        app21._sem = None
+        app21._ready = None
+        app21._tasks.clear()
+
+
+def test_the_seed_reaches_the_shape_stage():
+    # The API sends a seed so the same seed repeats a model. The worker used to
+    # drop it on the floor (no field on InferRequest), so every run drew fresh
+    # noise and a "repeat" made a different shape.
+    assert "seed" in app21.InferRequest.model_fields
+    assert _run_with_recorded_generate(7)["seed"] == 7
+    assert _run_with_recorded_generate(0)["seed"] == 0
+
+
+def test_no_seed_keeps_the_unseeded_shape_stage():
+    # A request without a seed builds exactly as it did before the field existed.
+    assert _run_with_recorded_generate(None)["seed"] is None
+
+
+def test_infer_rejects_a_seed_outside_uint32():
+    for bad in (-1, 4_294_967_296):
+        res = client.post("/infer", json={"images": [_png_data_uri()], "seed": bad}, headers=AUTH)
+        assert res.status_code == 422, (bad, res.text)
+
+
 def test_a_failed_model_load_fails_waiting_tasks_at_once():
     # A job that lands on a cold instance waits for the background model load.
     # When that load FAILED, the waiter used to sleep out its whole 900 s budget

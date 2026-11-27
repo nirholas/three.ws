@@ -99,6 +99,9 @@
 			.nf-resultmeta b { color: var(--accent, #7c9cff); }
 			.nf-download { border: 1px solid var(--stroke-strong, rgba(255,255,255,0.2)); background: var(--surface-3, rgba(255,255,255,0.08)); color: var(--ink, #eef0ff); padding: 9px 16px; border-radius: 10px; cursor: pointer; font: 600 13px var(--font-body, system-ui); text-decoration: none; }
 			.nf-download:hover { background: var(--surface-2, rgba(255,255,255,0.12)); }
+			.nf-download:active { transform: translateY(1px); }
+			.nf-download:focus-visible { outline: 2px solid var(--accent, #8b9cff); outline-offset: 2px; }
+			.nf-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 16px; }
 			.nf-err { color: #fca5a5; font: 500 13px/1.5 var(--font-mono, monospace); max-width: 50ch; word-break: break-word; }
 		</style>
 	

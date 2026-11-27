@@ -203,8 +203,8 @@ Rows `docs/x-posts/3d-ar-studio-launch.md` to `packages/clash-mcp/README.md` of 
 | `marketing/growth/kits/MKT-2026-11-GCP-AGENT.md` | order | [729](../729-plan-a2a-agent-card-compliance-marketplace.md). kit depends on the agent card being a valid A2A/Marketplace card |
 | `marketing/growth/kits/MKT-2026-11-HF-LOOP.md` | not-a-plan | campaign kit copy |
 | `marketing/growth/kits/MKT-2026-11-QUICKNODE.md` | order | [788](../788-plan-growth-kits-stale-claims-refresh.md). kit flags a stale sentence and quotes dated measurements |
-| `marketing/growth/measurement.md` | order | [765](../765-plan-growth-campaign-attribution-ledger.md). UTM/campaign conventions exist but no first-party attribution; PostHog is home-only |
-| `marketing/growth/opportunities.md` | order | [762](../762-plan-growth-zed-raycast-gradio-poe-listing-packages.md). registries needing a package first: Zed, n8n; rest is owner submission (938) |
+| `marketing/growth/measurement.md` | order | [765](../../awaiting-owner/765-plan-growth-campaign-attribution-ledger.md). UTM/campaign conventions exist but no first-party attribution; PostHog is home-only |
+| `marketing/growth/opportunities.md` | order | [762](../../awaiting-owner/762-plan-growth-zed-raycast-gradio-poe-listing-packages.md). registries needing a package first: Zed, n8n; rest is owner submission (938) |
 | `marketing/growth/proof/README.md` | not-a-plan | generated proof-asset regeneration notes |
 | `marketing/growth/README.md` | no-open-work | program index and rules, no outstanding engineering |
 | `marketing/growth/submissions/adobe-mixamo-permission.md` | covered-by-existing:085-partners-02-animation-library-license.md | permission request text for animation library licensing |
@@ -252,7 +252,7 @@ Rows `docs/x-posts/3d-ar-studio-launch.md` to `packages/clash-mcp/README.md` of 
 | `marketing/growth/submissions/slicer-trusted-hosts.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/tripo-launch-post.md` | covered-by-existing:936-partners-13-tripo-reply-and-house-key.md | Tripo launch post and reply |
 | `marketing/growth/submissions/vroid-hub-app.md` | covered-by-existing:production-100-OWNER-ACTIONS.md row 55 | VRoid Hub app submission |
-| `marketing/growth/sweep-2026-09-18.md` | order | [772](../../archive/772-plan-growth-credibility-files-translations-credits.md), [762](../762-plan-growth-zed-raycast-gradio-poe-listing-packages.md), [729](../729-plan-a2a-agent-card-compliance-marketplace.md). code-change rows X2/X3, credibility files, locale gaps, unbuilt store packages; OpenRouter attribution and CITATION.cff already shipped |
+| `marketing/growth/sweep-2026-09-18.md` | order | [772](../../archive/772-plan-growth-credibility-files-translations-credits.md), [762](../../awaiting-owner/762-plan-growth-zed-raycast-gradio-poe-listing-packages.md), [729](../729-plan-a2a-agent-card-compliance-marketplace.md). code-change rows X2/X3, credibility files, locale gaps, unbuilt store packages; OpenRouter attribution and CITATION.cff already shipped |
 | `marketing/growth/templates.md` | not-a-plan | outreach message templates |
 | `marketing/huggingface-article/post.md` | not-a-plan | published article copy |
 | `marketing/ibm-partner-plus/agent-connect-listing.md` | not-a-plan | campaign copy, press or asset notes |
@@ -276,7 +276,7 @@ Rows `docs/x-posts/3d-ar-studio-launch.md` to `packages/clash-mcp/README.md` of 
 | `marketing/openai-select-partner/README.md` | not-a-plan | campaign copy, press or asset notes |
 | `marketing/openai-select-partner/social-copy.md` | not-a-plan | campaign copy, press or asset notes |
 | `marketing/openai-select-partner/source-assets/README.md` | no-open-work | asset folder note |
-| `marketing/OPERATING-PLAN.md` | order | [765](../765-plan-growth-campaign-attribution-ledger.md). plan needs per-campaign measurement that does not exist; rest is cadence and copy |
+| `marketing/OPERATING-PLAN.md` | order | [765](../../awaiting-owner/765-plan-growth-campaign-attribution-ledger.md). plan needs per-campaign measurement that does not exist; rest is cadence and copy |
 | `marketing/partner-packets/anthropic.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | MCP registry, plugin marketplace and connectors directory dispatch (owner steps); see also 530 for registry cleanup |
 | `marketing/partner-packets/elevenlabs-startup-grants.md` | covered-by-existing:939-partners-16-program-applications.md | ElevenLabs startup grant application |
 | `marketing/partner-packets/google-cloud-ai-agents.md` | order | [729](../729-plan-a2a-agent-card-compliance-marketplace.md). card gaps are engineering; Vertex billing hold is a remaining owner item |
@@ -295,19 +295,19 @@ Rows `docs/x-posts/3d-ar-studio-launch.md` to `packages/clash-mcp/README.md` of 
 | `marketing/the-first-19-weeks/kit/IMAGE-ORDER.md` | not-a-plan | image order list for a campaign kit |
 | `marketing/the-first-19-weeks/kit/POSTING-CHECKLIST.md` | not-a-plan | campaign copy, press or asset notes |
 | `marketing/the-first-19-weeks/README.md` | not-a-plan | campaign copy, press or asset notes |
-| `marketing/three-utility-season/01-access-tiers.md` | order | [715](../715-plan-three-hold-activate-worlds-private.md), [728](../728-plan-three-hold-activate-early-drops-and-name-dibs.md). private worlds and early drops are PLANNED; enforced:false in api/_lib/three-access.js |
-| `marketing/three-utility-season/02-holder-free-quota.md` | order | [282](../282-plan-wallet-token2022-checkout-rails-honest-config.md). plan checkout returns 503 not_configured; pricing page must say so |
-| `marketing/three-utility-season/03-gated-embed-mcp.md` | order | [282](../282-plan-wallet-token2022-checkout-rails-honest-config.md). gasless purchase builder uses legacy token program for a Token-2022 mint |
+| `marketing/three-utility-season/01-access-tiers.md` | order | [715](../../awaiting-owner/715-plan-three-hold-activate-worlds-private.md), [728](../728-plan-three-hold-activate-early-drops-and-name-dibs.md). private worlds and early drops are PLANNED; enforced:false in api/_lib/three-access.js |
+| `marketing/three-utility-season/02-holder-free-quota.md` | order | [282](../../awaiting-owner/282-plan-wallet-token2022-checkout-rails-honest-config.md). plan checkout returns 503 not_configured; pricing page must say so |
+| `marketing/three-utility-season/03-gated-embed-mcp.md` | order | [282](../../awaiting-owner/282-plan-wallet-token2022-checkout-rails-honest-config.md). gasless purchase builder uses legacy token program for a Token-2022 mint |
 | `marketing/three-utility-season/04-forge-max-holder.md` | not-a-plan | substituted edition copy; original needs LABOR_ESCROW_SECRET_BASE58 (owner env var) |
 | `marketing/three-utility-season/05-gated-embed-create.md` | order | [753](../753-plan-embed-widget-studio-holder-gate-control.md). gate-create API and MCP live; no creation control in /studio |
 | `marketing/three-utility-season/06-deploy-fee-waiver.md` | owner-only | browser deployer charges no fee though a 2026-08-19 changelog line says it does; owner decides fee vs correcting copy |
 | `marketing/three-utility-season/07-holder-scene-unlock.md` | owner-only | needs GAME_TOKEN_TREASURY and PLAY_GATE_MINT set on three-ws-multiplayer |
-| `marketing/three-utility-season/08-tier-api-for-agents.md` | order | [282](../282-plan-wallet-token2022-checkout-rails-honest-config.md). x402 self-facilitator Token-2022 rejection is fixed; tier API live; remaining Token-2022 gaps are the purchase builders |
+| `marketing/three-utility-season/08-tier-api-for-agents.md` | order | [282](../../awaiting-owner/282-plan-wallet-token2022-checkout-rails-honest-config.md). x402 self-facilitator Token-2022 rejection is fixed; tier API live; remaining Token-2022 gaps are the purchase builders |
 | `marketing/three-utility-season/09-buyback-ledger.md` | not-a-plan | edition copy; buyback.enabled is false by owner config, reads zero |
-| `marketing/three-utility-season/10-gameready-holder.md` | order | [282](../282-plan-wallet-token2022-checkout-rails-honest-config.md). premium pass quote builder uses legacy token program |
+| `marketing/three-utility-season/10-gameready-holder.md` | order | [282](../../awaiting-owner/282-plan-wallet-token2022-checkout-rails-honest-config.md). premium pass quote builder uses legacy token program |
 | `marketing/three-utility-season/11-built-in-public.md` | not-a-plan | edition copy |
 | `marketing/three-utility-season/12-quarter-recap.md` | not-a-plan | edition copy, figures read on posting day |
-| `marketing/three-utility-season/README.md` | order | [282](../282-plan-wallet-token2022-checkout-rails-honest-config.md), [715](../715-plan-three-hold-activate-worlds-private.md), [728](../728-plan-three-hold-activate-early-drops-and-name-dibs.md). findings table is the source for the Token-2022 and perk-wiring orders |
+| `marketing/three-utility-season/README.md` | order | [282](../../awaiting-owner/282-plan-wallet-token2022-checkout-rails-honest-config.md), [715](../../awaiting-owner/715-plan-three-hold-activate-worlds-private.md), [728](../728-plan-three-hold-activate-early-drops-and-name-dibs.md). findings table is the source for the Token-2022 and perk-wiring orders |
 | `marketing/x402-milestone/README.md` | shipped | duplicate-signature fix landed 2026-07-29, see docs/x402-ring-economy.md; rest is video render notes |
 | `marketing/x402-three/coinmarketcap-article.md` | not-a-plan | campaign copy, press or asset notes |
 | `marketing/x402-three/x-article.md` | not-a-plan | campaign copy, press or asset notes |

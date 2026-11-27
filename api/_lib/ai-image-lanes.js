@@ -15,8 +15,11 @@
 
 import { getGcpAccessToken, gcpAuthConfigured } from './gcp-auth.js';
 import { providersInCooldown } from './provider-health.js';
+import { describeImageLadder } from './image-rung-breaker.js';
+import { vertexBreakerState } from './vertex-image-breaker.js';
 import { imageModelChain, isModelNotFound, resolveImageModel } from './image-model.js';
 import { HF_IMAGE_PROVIDERS } from '../_mcp3d/text-to-image.js';
+import { NIM_FLUX_MODEL, NIM_FLUX_URL } from './nim-flux.js';
 
 function readEnv(name) {
 	if (typeof process !== 'undefined' && process.env?.[name]) return process.env[name];
@@ -145,24 +148,37 @@ export function refusalReason(err) {
 
 const PROBE_TIMEOUT_MS = 3_000;
 
-// NIM: no free "account" endpoint, so reachability is a plain GET to the API host
-// (any answer <500 proves it is routable) folded with the shared FLUX cooldown
-// breaker so a recently-failed lane reads as degraded without a probe.
+// NIM: a GET on the pinned FLUX route, folded with the rung's breaker so a
+// cooling lane reads as degraded without a call. The genai gateway answers a
+// GET on a served model route with 405 and on a retired or unknown id with 404,
+// and never invokes the model for it, so the check is free and says whether the
+// model the rung calls is still served. (It used to GET /v1/models, which does
+// not exist on that host and always 404s, and read any status under 500 as ok.)
+function nimVerdict(status) {
+	if (status === 405 || status === 422 || (status >= 200 && status < 300)) return { status: 'ok' };
+	if (status === 404 || status === 410) return { status: 'down', detail: `NVIDIA no longer serves ${NIM_FLUX_MODEL}` };
+	if (status === 401 || status === 403) return { status: 'down', detail: 'NVIDIA rejected the API key' };
+	if (status === 429) return { status: 'degraded', detail: 'NVIDIA is throttling the key' };
+	if (status >= 500) return { status: 'down', detail: `NVIDIA gateway answered ${status}` };
+	return { status: 'down', detail: `unexpected answer ${status}` };
+}
+
 async function probeNim() {
 	if (!readEnv('NVIDIA_API_KEY')) return { configured: false, status: 'unconfigured' };
 	let cooled = false;
 	try {
 		cooled = (await providersInCooldown([NIM_FLUX_COOLDOWN_KEY])).has(NIM_FLUX_COOLDOWN_KEY);
 	} catch { /* cache miss → not cooling */ }
-	if (cooled) return { configured: true, status: 'degraded', detail: 'recent failure cooldown' };
+	if (cooled) return { configured: true, status: 'degraded', model: NIM_FLUX_MODEL, detail: 'recent failure cooldown' };
 	try {
-		const res = await fetch('https://ai.api.nvidia.com/v1/models', {
+		const res = await fetch(NIM_FLUX_URL, {
+			method: 'GET',
 			headers: { authorization: `Bearer ${readEnv('NVIDIA_API_KEY')}` },
 			signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
 		});
-		return { configured: true, status: res.status < 500 ? 'ok' : 'down', httpStatus: res.status };
+		return { configured: true, model: NIM_FLUX_MODEL, httpStatus: res.status, ...nimVerdict(res.status) };
 	} catch (err) {
-		return { configured: true, status: 'down', detail: err?.message?.slice(0, 120) };
+		return { configured: true, status: 'down', model: NIM_FLUX_MODEL, detail: err?.message?.slice(0, 120) };
 	}
 }
 
@@ -338,12 +354,21 @@ async function probePollinations() {
 }
 
 export async function imageLaneHealth() {
-	const [nim, vertex, replicate, hf, pollinations] = await Promise.all([
+	const [nim, vertex, replicate, hf, pollinations, ladder] = await Promise.all([
 		probeNim(),
-		probeVertex(),
+		// The Vertex lane's own classified breaker rides along: parked or not,
+		// the failure class that parked it and when the next probe goes out.
+		// Cache read only; it never calls Vertex.
+		probeVertex().then(async (v) =>
+			v.configured ? { ...v, breaker: await vertexBreakerState().catch(() => null) } : v,
+		),
 		probeReplicate(),
 		probeHf(),
 		probePollinations(),
+		// What the text-to-image ladder will actually do next: each rung in walk
+		// order, its breaker state, the last failure class and when it is tried
+		// again. Read from the shared cache only, never a provider call.
+		describeImageLadder().catch(() => null),
 	]);
 	const lanes = { nim, vertex, replicate, hf, pollinations };
 	const anyConfigured = Object.values(lanes).some((l) => l.configured);
@@ -353,6 +378,7 @@ export async function imageLaneHealth() {
 		configured: anyConfigured,
 		healthy: anyReachable,
 		lanes,
+		ladder,
 		// The keyless rung means `configured` is always true, so this names the
 		// KEYED lanes an operator has not brought up, not "nothing at all".
 		missing_env: [

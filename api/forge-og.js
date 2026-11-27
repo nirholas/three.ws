@@ -9,7 +9,9 @@
  * forge share link gets a real og:image.
  *
  * No client-key auth: if a creator has the ID they've chosen to share it.
- * UUIDs are unguessable by construction.
+ * UUIDs are unguessable by construction. A private model (which is what a
+ * content-safety block forces) answers the generic card, the same visibility
+ * rule as the share page (api/forge-share.js) and the public read.
  */
 
 import { sql } from './_lib/db.js';
@@ -33,6 +35,7 @@ export default wrap(async (req, res) => {
 			SELECT id, prompt, preview_image_url
 			FROM forge_creations
 			WHERE id = ${id}
+			  AND (visibility IS NULL OR visibility IN ('public', 'unlisted'))
 			LIMIT 1
 		`;
 	} catch {

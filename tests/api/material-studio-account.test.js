@@ -117,6 +117,31 @@ describe('POST /api/material-studio with an account', () => {
 		expect(recordRestyle).toHaveBeenCalledWith(expect.objectContaining({ userId: 'user-7', action: 'restyle' }));
 	});
 
+	// Same shape checks as a generation prompt (src/shared/restyle-instruction.js):
+	// cleaned, then 3 to 300 characters. Nothing screens what is asked for.
+	it('rejects a two-character instruction with instruction_too_short and restyles nothing', async () => {
+		const res = makeRes();
+		await handler(makeReq('restyle', { ...RESTYLE, instruction: ' ab ' }), res);
+		expect(res.statusCode).toBe(400);
+		expect(parse(res).error).toBe('instruction_too_short');
+		expect(restyle).not.toHaveBeenCalled();
+	});
+
+	it('rejects an instruction over 300 characters with instruction_too_long', async () => {
+		const res = makeRes();
+		await handler(makeReq('restyle', { ...RESTYLE, instruction: 'x'.repeat(301) }), res);
+		expect(res.statusCode).toBe(400);
+		expect(parse(res).error).toBe('instruction_too_long');
+		expect(restyle).not.toHaveBeenCalled();
+	});
+
+	it('passes the cleaned instruction on: control characters stripped, whitespace collapsed', async () => {
+		const res = makeRes();
+		await handler(makeReq('restyle', { ...RESTYLE, instruction: '  polished\u0000\n\n white   marble ' }), res);
+		expect(res.statusCode).toBe(200);
+		expect(restyle).toHaveBeenCalledWith(expect.objectContaining({ instruction: 'polished white marble' }));
+	});
+
 	it('records each colorway variant against the account', async () => {
 		const res = makeRes();
 		await handler(makeReq('variants', { glb_url: RESTYLE.glb_url, preset: 'metal' }), res);

@@ -276,7 +276,7 @@ Did (no code change was warranted; the code side of this order shipped in
   blob == `afd349790^` blob, disk blob == `HEAD` blob for each path), then
   unstaged path by path; no worktree content was altered.
 - Updated the status block at the top of
-  [01-x402-settle-runway.md](../902-backlog-01-x402-settle-runway.md) so the next
+  [01-x402-settle-runway.md](../../awaiting-owner/902-backlog-01-x402-settle-runway.md) so the next
   session opens on the 19:00 UTC numbers rather than the 05:19 ones.
 
 Left, all owner-owned, unchanged in kind and sharper in number:

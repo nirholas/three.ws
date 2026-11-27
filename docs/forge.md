@@ -6,7 +6,7 @@ Page: [/forge](https://three.ws/forge) and the feature landing [/features/forge]
 
 ## Why it exists
 
-Every other text-to-3D tool makes you choose a vendor, buy credits, and hope the one model they wired up is the right one for your prompt. Forge inverts that. It treats generation as a routing problem over many engines, picks the best free lane for the input you gave it, degrades gracefully when an upstream is down, and only ever charges for higher quality, never to recover a vendor bill. The result is a single surface where a first-time visitor can sign in with a free account and make a real 3D model with no key and no cost, while a power user can pin a specific engine, bring their own key, or push a High-tier generation through multi-view fusion.
+Every other text-to-3D tool makes you choose a vendor, buy credits, and hope the one model they wired up is the right one for your prompt. Forge inverts that. It treats generation as a routing problem over many engines, picks the best free lane for the input you gave it, degrades gracefully when an upstream is down, and only ever charges for higher quality, never to recover a vendor bill. The result is a single surface where a first-time visitor can make a real 3D model in seconds with a free account, no key, and no cost, while a power user can pin a specific engine, bring their own key, or push a High-tier generation through multi-view fusion.
 
 Forge is the public, auth-free twin of the 3D Studio MCP server (`api/mcp-3d.js`), so anything the page can do, an agent can do over MCP or a plain HTTP call.
 
@@ -34,9 +34,9 @@ Each backend declares which paths it serves, whether it needs a bring-your-own-k
 
 - **TRELLIS (free)** on NVIDIA NIM (Microsoft TRELLIS). Zero vendor cost, and the last free lane in the chain: it serves a text prompt when every self-host worker and Space is cold or down. Text-only, so it rejects user photos and photo submissions route elsewhere.
 - **Hunyuan3D / TRELLIS (free)** on Hugging Face Spaces. The free photo-to-3D lane and a High-tier engine, with automatic failover across Hunyuan3D 2.1, Hunyuan3D 2, TRELLIS, and TripoSR. Queue waits vary.
-- **TRELLIS (self-host)** and **Hunyuan3D (self-host)**, our own scale-to-zero Cloud Run GPU workers, which are our own GPU lanes. In code the named default at every tier is TRELLIS.2 (`trellis2`), then self-host TRELLIS v1 (`trellis_selfhost`), then Hunyuan3D (`FREE_DEFAULT_FOR_TIERS`, `FREE_FALLBACK_FOR_PATH` in `api/_lib/forge-tiers.js`). A lane whose worker URL is not set on the deployment is skipped, and on 2026-11-27 `trellis2` was unconfigured in production, so `trellis_selfhost` is the lane that actually served image-path jobs. Zero vendor cost, so free-first routing prefers them first. Self-host TRELLIS is a native single-hop image-to-3D lane; Hunyuan3D leads on people and organic subjects.
+- **TRELLIS (self-host)** and **Hunyuan3D (self-host)**, our own scale-to-zero Cloud Run GPU workers, which are our own GPU lanes. In code the named default at every tier is TRELLIS.2 (`trellis2`), then self-host TRELLIS v1 (`trellis_selfhost`), then Hunyuan3D (`FREE_DEFAULT_FOR_TIERS`, `FREE_FALLBACK_FOR_PATH` in `api/_lib/forge-tiers.js`). A lane whose worker URL is not set on the deployment is skipped, and on 2026-11-27 `trellis2` was unconfigured in production, so `trellis_selfhost` is the lane that actually served image-path jobs. Zero vendor cost, so free-first routing prefers them first. Self-host TRELLIS is a native single-hop image-to-3D lane; Hunyuan3D leads on people and organic subjects, is an explicit lane and a fallback, and is never offered to the EU, the UK, South Korea or an unconfirmed location (see the territory call in the API section).
 - **TripoSG (self-host)**, the sketch-only scribble worker. Untextured geometry from a drawing. It also serves photos as the last automatic failover rung: when every textured photo lane has failed mid-job, the job continues on TripoSG's photo pipeline and returns the shape without textures rather than failing.
-- **Pixal3D (self-host)**, the fidelity lane, labeled **"Match my photo"** in the UI. Built on [TencentARC Pixal3D](https://github.com/TencentARC/Pixal3D) (MIT), pixel-aligned image-to-3D on [Microsoft TRELLIS.2](https://github.com/microsoft/TRELLIS.2)'s backbone. Where the other photo lanes read one view and generate a plausible result, Pixal3D fuses every photo you give it (1 to 4), so the result matches your photos rather than guessing. Never a named default or a failover target (a down Pixal3D must not silently drop the 2nd/3rd photo on a lane that only reads the first view) and only selectable explicitly. With exactly one photo, the optional `fill_other_sides` flag first synthesizes the other three angles with [MV-Adapter](https://github.com/huanngzh/MV-Adapter) (Apache-2.0) before reconstructing.
+- **Pixal3D (self-host)**, the fidelity lane, labeled **"Match my photo"** in the UI. Built on [TencentARC Pixal3D](https://github.com/TencentARC/Pixal3D) (MIT), pixel-aligned image-to-3D on [Microsoft TRELLIS.2](https://github.com/microsoft/TRELLIS.2)'s backbone. Where the other photo lanes read one view and generate a plausible result, Pixal3D fuses every photo you give it (1 to 4), so the result matches your photos rather than guessing. Never a named default or a failover target (a down Pixal3D must not silently drop the 2nd/3rd photo on a lane that only reads the first view) and only selectable explicitly. With exactly one photo, the optional `fill_other_sides` flag first synthesizes the other three angles with [MV-Adapter](https://github.com/huanngzh/MV-Adapter) (Apache-2.0) before reconstructing. **Honesty guard** (`api/_lib/forge-pixal3d-guard.js`): a job still pending after 420 seconds continues on the standard photo lane from the original photo (the poll answers `running` with `failover_from: "pixal3d"`), and when the last 7 days show fewer than half of finished jobs succeeding (worker faults only, unfetchable reference URLs excluded, minimum 5 jobs) a new submit goes straight to the standard lane and the response carries `lane_fallback`. `GET /api/forge?catalog` adds `health` (`gated`, `success_pct`, `typical_seconds`, `allowance_seconds`) to the `pixal3d` entry.
 - **AniGen (self-host)**, the rig-on-generation lane, labeled **"Rig on generate"** in the UI. Built on [VAST-AI-Research/AniGen](https://github.com/VAST-AI-Research/AniGen) (MIT). Every other image lane hands back a bare mesh; AniGen predicts the mesh, its joint skeleton and its per-vertex skin weights together, so the GLB it returns is already animatable, no separate rerig call. Single reference image; never a named default or a failover target, only selectable explicitly. The catalog's `rigged:true` flag and the poll response's `rigged`/`joint_count` fields mark the result as pre-rigged.
 - **PartCrafter (self-host)**, the editable-parts lane, labeled **"Editable parts"** in the UI. Built on [PartCrafter](https://github.com/wgsxm/PartCrafter) (MIT). Every other image lane hands back one undivided mesh; PartCrafter decodes a reference photo straight into N individually named part meshes in a single diffusion-transformer pass, so the result opens directly in Restyle Studio's part picker: select a part, recolor, swap or regenerate it, and reassemble into one model without touching the rest. Single reference image; never a named default or a failover target, only selectable explicitly. The poll response's `parts`/`part_count`/`parts_manifest_url` fields carry the per-part manifest. The photo's background is removed first with [BiRefNet](https://github.com/ZhengPeng7/BiRefNet) (MIT) on the same GPU (a PNG that already has a transparent background keeps its own cut-out), and a photo with no detectable subject fails fast with a clear error instead of producing a mesh of the backdrop.
 - **TRELLIS** on Replicate, a paid platform lane. Selectable explicitly and used as the last-resort fallback only on deployments with no free engine configured.
@@ -74,13 +74,61 @@ self-hosted GCP workers instead; no live Tripo splat endpoint exists to wire).
 
 ### Free-first routing with live health
 
-Routing (`resolveBackendIdWithHealth`) walks an ordered list of every free lane that could serve the request on this deployment, most preferred first: the tier's named free engine, then the per-path fallback chain (our own GPU workers, then the free external Spaces, then the free NVIDIA lane as the final health-gated safety net). Draft and Standard name our self-host TRELLIS worker; High names our self-host Hunyuan3D worker. The free NVIDIA NIM lane is never a named default: reconstructing straight from a truncated prompt with no photoreal reference is the realism hole this ordering closes, so it trails as the final health-gated fallthrough (and stays explicitly selectable). A subject classifier reorders the two self-host PBR lanes for hard-surface versus organic prompts. Every entry is env-gated, so the list degrades cleanly on partial deployments.
+Routing (`resolveBackendIdWithHealth`) walks an ordered list of every free lane that could serve the request on this deployment, most preferred first: the tier's named free engine, then the per-path fallback chain (our own GPU workers, then the free external Spaces, then the free NVIDIA lane as the final health-gated safety net). Every image tier names the TRELLIS.2 worker; Hunyuan3D follows as a fallback outside the licence's excluded regions. The free NVIDIA NIM lane is never a named default: reconstructing straight from a truncated prompt with no photoreal reference is the realism hole this ordering closes, so it trails as the final health-gated fallthrough (and stays explicitly selectable). A subject classifier reorders the two self-host PBR lanes for hard-surface versus organic prompts. Every entry is env-gated, so the list degrades cleanly on partial deployments.
 
-Health is real. The UI fetches `/api/forge?health=1` after load and disables any lane whose upstream is down, with the actual reason, instead of failing after you have typed a prompt and clicked Generate. A short circuit-breaker cooldown sidelines a degraded lane (for example the free NIM lane after a gateway timeout) so subsequent requests skip it and go straight to a working engine; the cooldown expires on its own so a recovered lane is retried promptly. There are no mock paths: if a selected backend isn't configured the endpoint returns a clean `backend_unconfigured` error, never a fake result.
+Health is real. The UI fetches `/api/forge?health=1` after load and disables any lane whose upstream is down, with the actual reason, instead of failing after you have typed a prompt and clicked Generate. A short circuit-breaker cooldown sidelines a degraded lane (for example the free NIM lane after a gateway timeout) so subsequent requests skip it and go straight to a working engine; the cooldown expires on its own so a recovered lane is retried promptly. Each platform lane in the health payload carries `rotation` (`in_rotation`, `cooling` or `disabled`) and `rotation_reason`. A failed job is handed to the next lane at poll time, and a successor lane that refuses the submit is cooled and skipped in favor of the one after it, each lane at most once per job. There are no mock paths: if a selected backend isn't configured the endpoint returns a clean `backend_unconfigured` error, never a fake result.
 
 ### Background generation and resume
 
 Generation is a job. `POST /api/forge` returns a `job_id`; the client polls `GET /api/forge?job=<id>` until the status is `done` or `failed`. The lanes that complete inline within one request (free NVIDIA NIM, HuggingFace Spaces, BYOK-sync) can instead answer the POST directly with `status:'done'`, the `glb_url`, and a null `job_id`, and they retry once automatically on a failed result. Because the in-flight job id is written to `localStorage`, closing the tab or navigating away does not lose the generation: returning to Forge within a 30-minute window resumes polling the same job. Finished models for your browser are surfaced from a gallery on load, and a share link always wins over a resume.
+
+### Several photos and generated views
+
+Image-to-3D takes up to four photos of one object (the page's slots: front,
+back, left, right; the API accepts up to six). What each engine does with them:
+
+- **Reads every view:** the self-host TRELLIS lane (`trellis_selfhost`, up to
+  six) and Match my photo (`pixal3d`, up to four, with optional `view_labels`).
+  The hosted Replicate TRELLIS chain fuses as many as its model takes.
+- **Reads one view:** `trellis2`, `hunyuan3d`, `modly`, `modly_hunyuan`,
+  `anigen`, `partcrafter` and the free Hugging Face chain. They are sent one
+  image, the one labelled `front` (otherwise the first), and the response says
+  so in `views_note`. The page shows that note and the generating timeline
+  counts the views the engine used, not the photos supplied.
+- **Paints extra views:** only `trellis_selfhost`, at Standard and High, when it
+  was given a single image (a photo, or the reference image a text prompt
+  produced). The Vertex Gemini edit lane rotates it into side and back views.
+  Draft, a set of two or more photos, and every other lane never paint.
+
+Both the painting step and the photo checks are optional improvements on a job
+that already works from one image, so they fail open and are bounded:
+
+- The painter is given `FORGE_VIEWS_BUDGET_MS` (default 30000, minimum 1000).
+  If it throws, is throttled, returns nothing or does not answer in time, the
+  job continues at once with the image it has. A late answer is discarded.
+- A painted view is fused only if it is a real picture of the same subject:
+  not blank (flat, or under 1.5% foreground), at least 128 px on a side, the
+  same canvas shape as the primary (aspect drift at most 1.6), and a foreground
+  palette that overlaps the primary's (histogram intersection at least 0.15).
+  A view that cannot be read back is dropped too.
+- The same palette check runs on a set of your photos (unless
+  `skip_validation` is true). A photo that is plainly a different object or an
+  empty frame is left out, the job runs from the others, and the response names
+  it: `views_dropped: [{ "position": 3, "reason": "different_subject" }]` and
+  `views_note: "Left out of the set: photo 3 did not look like the same object
+  as the first view. Building from the other 2 photos."`. The first photo is
+  never dropped by the palette check, and a photo that cannot be read is kept
+  (only positive evidence removes one). Photos the vision check flags are left
+  out the same way, with reason `unusable`.
+- An uploaded file that is not a PNG, JPEG or WebP, is too large or has too
+  many pixels is refused before any engine is reached. With more than one
+  photo the message names it: `Photo 2 of 3: That file is not a PNG, JPEG or
+  WebP image...`.
+
+The submit response always reports `views_requested` (photos supplied),
+`views_used` (views the engine reads) and `multiview`. In the page, drag a photo
+to reorder it, or focus it and press Alt with an arrow key; Delete removes it.
+The first place is the front view a one-image engine reads.
 
 ### Watching a generation happen
 
@@ -112,8 +160,10 @@ curl -sS "https://three.ws/api/forge?progress=$TRACE"
 #    ]}
 ```
 
-The four stages are `directed` (the art-director pass is over, and
-`directed_prompt` is null when it left your words alone), `reference` (the view
+The four stages are `directed` (the art-director pass is over; `directed_prompt`
+holds the brief, and `direction` says whether it was `directed`, `skipped` with
+a reason, or `off`, see
+[Forge direction](ops/llm-lanes.md#forge-direction-the-chain-its-cooldowns-and-failing-open)), `reference` (the view
 the mesh is reconstructed from now exists), `views` (the turnaround views the
 fusing lane adds, only when the lane painted any), and `submitting` (every image
 is stored and the job is going to a GPU). Nothing here is predicted: a crumb is
@@ -214,11 +264,11 @@ stills; it never reports a recording that did not happen.
 
 ## Walkthrough
 
-1. Open [/forge](https://three.ws/forge) and sign in. Making a model needs a free three.ws account; no wallet and no key are needed. Signed out, the page shows a sign-in prompt instead of generating.
+1. Open [/forge](https://three.ws/forge). Making a model needs a free account (no wallet, no key, no card): each model is saved to its owner, unlisted, so it can be found, downloaded or deleted later. A note under **Generate** says so before you start, and if you follow a sign-in or registration link from the page your prompt and settings (input mode, quality, engine, aspect) come back with you, ready for one click. Photos are not carried over: they stay on your device, and the page asks you to add them again. If your session ends mid-visit, Forge says so in plain words instead of failing silently, and a job already running keeps going and is picked up again when you return.
 2. Pick an input mode: **Describe it** (text), **From photos**, or **From a sketch** (the sketch tab appears only when the TripoSG worker is configured).
-3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to six images of the same object from different angles (front, back, left, right, top, three-quarter); each uploads straight to object storage via a presigned URL and the public URLs are fused with multi-view conditioning.
+3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to four images of the same object from different angles (front, back, left, right); each uploads straight to object storage via a presigned URL. Engines that fuse several views use all of them; engines that read one use the front view and say so (see [Several photos and generated views](#several-photos-and-generated-views)).
 4. Optionally open the quality controls and pick a tier (Draft, Standard, High) and an engine. The default engine carries a **FREE** pill. Down lanes are disabled with the reason shown.
-5. Click Generate. A real elapsed-driven progress line runs against the catalog's ETA estimate for the chosen path, tier, and engine.
+5. Click Generate. The wait line shows the real elapsed time and what the engine that is serving your job usually takes (see [The wait](#states-and-limits) under States and limits).
 6. When the model lands, orbit it in the viewer, view it in AR, download it in any of seven formats (see [Download formats](#download-formats)), or run the post-generation tools (stylize, optimize with in-browser repair, smoothing and decimation (see [Mesh tools](#mesh-tools-repair-smooth-decimate)), Game-Ready retopology, split). Send it to a 3D printer from the format menu's slicer rows (see [Open in a slicer](#open-in-a-3d-printing-slicer)). Press `R` (or click **Reel**) to render a shareable video and stills of it without leaving the page.
 7. Keep going on the same result: **Rig for animation** adds a humanoid skeleton (POST `/api/forge?action=rig`) and hands off to Pose Studio or IRL placement; **Restyle materials** re-skins the surface with a free-text instruction or a preset chip (chrome, wood, gold, neon, marble, rust) via `/api/material-studio`, keeping the mesh untouched; **Iterate** makes a shape-changing edit from a plain-language instruction ("make the helmet red", "add a backpack") via `/api/forge-iterate` (the same conversational core the `refine_model` MCP tool uses) and keeps every version in a branchable lineage strip; **Place IRL** opens `/irl?avatar=<glb_url>` to anchor the model in AR at a real-world location.
 
@@ -367,6 +417,63 @@ Browser formats (GLB, OBJ, STL, PLY, USDZ) export the edited mesh. Server
 work (quad remesh, low-poly, FBX and 3MF conversion, and the slicer files
 below) starts from the saved model, because the edit only exists in your
 browser; the format menu says so instead of silently converting the original.
+
+## Optimize on the server: smaller, never worse
+
+Below the mesh tools, **Optimize on the server** makes a lighter copy of the
+saved model. It has three modes:
+
+- **Triangle** (the default) reduces triangles toward the target and caps
+  every texture at the chosen edge. It keeps the UVs, the materials, the
+  texture and any rig, skin or animation, so the result looks like the
+  original. A GLB answers in a few seconds, with no queue.
+- **Quad retopo** rebuilds the surface as clean quads for animation work.
+- **Low-poly** rebuilds a stylized low-poly surface and bakes the texture
+  back onto it.
+
+The result never replaces the original on its own. The panel shows size,
+triangles, textures and rig before and after, and **Original / Optimized**
+switches the viewer between the two. Only **Use optimized** points the
+Download button and later edits at the new file, and **Back to original**
+undoes that.
+
+The default download is a plain GLB that opens in every viewer and engine. Its
+textures are JPEG for colour, and PNG for normal maps and anything that needs
+alpha. **Compatibility** can add a smaller copy beside it: meshopt (with WebP
+textures) for the web, or Draco. Each compressed link names the glTF extensions
+a reader needs, so you know which one to ship where.
+
+The guards are there so a run can only help:
+
+- **Already light.** A model that would not get at least 5% smaller is kept as
+  it is. The panel says why, and nothing is charged against your limit.
+- **Too large.** A GLB over 64 MB or 3,000,000 triangles is refused, and the
+  message states the limit.
+- **Target out of range.** A target is clamped to between 1,000 and 500,000
+  faces, with a note. Quad retopo never asks for more than half the model's
+  triangles, so it cannot inflate a light model.
+- **Rigged models.** Quad retopo and Low-poly rebuild the surface and would
+  drop the skeleton, so they refuse a rigged model and point to Triangle.
+
+The same route serves agents. A triangle GLB optimize answers `200` with the
+finished result straight away, while quad, low-poly and non-GLB outputs answer
+`202` with a job to poll:
+
+```bash
+curl -sX POST https://three.ws/api/forge-remesh \
+  -H 'content-type: application/json' \
+  -d '{"mesh_url":"https://.../model.glb","remesh_mode":"triangle","target_faces":20000,"texture_size":1024,"compression":"meshopt"}'
+# → 200 { "job_id": "opt_...", "status": "done", "noop": false,
+#         "result_url": ".../universal.glb", "compressed_url": ".../meshopt.glb",
+#         "requires": ["EXT_meshopt_compression", "EXT_texture_webp", "KHR_mesh_quantization"],
+#         "before": { "bytes": 2503112, "triangles": 56246, ... },
+#         "after":  { "bytes": 738584,  "triangles": 19998, ... }, "notes": [] }
+```
+
+`compression` accepts `none` (the default), `meshopt` and `draco`. A result that
+is already light comes back with `noop: true`, a `reason`, and `result_url`
+pointing at the original. `GET /api/forge-remesh?job=opt_...` returns the same
+record again.
 
 ## Open in a 3D-printing slicer
 
@@ -541,7 +648,7 @@ before these existed.
 | `pose` | `"t"` \| `"a"` | Requested rest pose for a humanoid/character subject. Only backends without a caller-supplied reference image can honor this (`poseControl: true`); a photo-conditioned lane reports `pose_applied: false` rather than silently ignoring the field. |
 | `output_format` | `"glb"` \| `"glb-meshopt"` \| `"glb-draco"` | Compress the delivered GLB. |
 | `texture_size` | integer (px) | Bake textures at a specific resolution instead of the tier default. |
-| `seed` | integer | Reproducibility: the same seed, prompt and params reproduce the same mesh on backends that support it. |
+| `seed` | integer 0 to 4294967295, or a string of digits | Reproducibility: the same seed, prompt and params reproduce the same mesh on backends that support it. See [Seeds](#seeds) below. |
 
 ```bash
 # Target a 20k-triangle mesh, fit it into a 1.8m-tall box, and request a T-pose.
@@ -570,6 +677,44 @@ and, for `pose`, whether the chosen backend could honor it:
 
 An invalid value (e.g. `pose: "sitting"`, or a non-positive `bbox` entry)
 answers `400` naming the field rather than silently dropping it.
+
+### Seeds
+
+A seed is an unsigned 32-bit integer: a JSON number or a string of decimal
+digits from `0` to `4294967295`. Anything else that is present (a negative, a
+fraction, `4294967296`, letters) answers `400 invalid_options` with
+`seed must be a whole number from 0 to 4294967295.` Values are never clamped,
+because clamping turned different seeds into the same model and the same cache
+entry. Leave `seed` out for a random generation.
+
+The seed you send is the seed recorded and cached. An engine with a narrower
+range receives a fixed fold of it (`seed mod (max + 1)`), so replaying a seed
+always reproduces: the keyless Pollinations image rung takes `0` to
+`2147483647`, and the Hunyuan3D Hugging Face Space takes `0` to `10000000` (sent
+with its randomize switch off). The NVIDIA TRELLIS NIM reads `0` as "random", so
+a seed of `0` is sent to it as `4294967295`. Every other lane takes the full
+range unchanged. The per-engine ranges, with their sources, are listed in
+`api/_lib/forge-seed.js`. Two seeds that fold to the same engine value still
+get separate cache entries.
+
+On the Forge page the **Seed** field (under Engine) does the same check before
+anything is sent. Empty means a fresh random seed for every Generate. A typed or
+pasted seed (grouping such as `1,234,567` is accepted) locks every run to it and
+is remembered in this browser. After a run starts, the note under the field
+shows the seed that run used, with **Use this seed** to lock it.
+
+### Cached results
+
+A text prompt that someone already generated with the same settings is
+answered from the result cache at once: status `done`, a `glb_url`, `cached:
+true` and a null `job_id`. Every setting that changes the model is part of
+the cache key. Letter case and extra spaces in the prompt are ignored, but
+punctuation is not. A model that was not made public is only served back to
+the account that made it. Failed, partial and rejected models are never cached,
+and a deleted or taken-down model stops being served at once. Send
+`force_regenerate: true` to skip the cache. Every Forge cache, its key, its
+lifetime and what clears it is listed in
+[Forge caches](./ops/forge-caches.md).
 
 ## Batch generation
 
@@ -619,7 +764,7 @@ with the Generate node's current engine, quality and controls.
 
 ## States and limits
 
-- **Loading**: a real elapsed counter driven by the catalog ETA for the resolved path, tier, and engine. Cold self-host GPU workers add an honest spin-up estimate rather than a stalled bar.
+- **Loading (the wait)**: everything on the wait line comes from something measured. **Elapsed** counts from your click and only moves forward; the tab title shows the same clock (`Forging 1:23`), then `Model ready` or `Forge stopped`. Until the engine has accepted the job, the line says the build starts after the first steps (art direction, the reference image). From then on it quotes the serving engine's measured range from [`/api/nvidia/stats`](https://three.ws/api/nvidia/stats) (the typical run and the slow mark, p50 and p95 of the last 7 days, or 30 days when the week has fewer than 5 finished jobs), judged against the time the job has been on that engine, not the time since the click. It says so when a run passes the typical time and again past the slow mark ("nothing is lost"). With too little history it falls back to the catalog estimate and words it as an estimate. A cold self-host GPU worker gets its own line with the boot allowance the server states (`cold_start_seconds`), says plainly if the boot runs past it, and the build after a boot is judged on its own. A failover restarts the engine clock for the new engine without touching Elapsed. The bar is indeterminate because no worker reports a percentage; it fills only when the model exists. Phase changes and the finished model are announced politely to screen readers. Logic: `src/forge-wait-clock.js` (the two clocks) and `src/forge-eta.js` (the wording).
 - **Down lane**: disabled engine button with the real upstream reason; routing skips it via the circuit-breaker cooldown.
 - **Storage outage**: when object storage rejects us, no engine can finish a generation (every lane has to park a reference image or a finished mesh), so switching engines is not offered. The page says plainly that the fault is ours, that nothing was charged, and points at what still works: every model you already forged is served from the public CDN and still opens, downloads and refines. Retry re-enables itself on a live countdown, because a repaired credential recovers without a redeploy.
 - **Unconfigured backend**: a clean `backend_unconfigured` error, never a mock.
@@ -629,8 +774,33 @@ with the Generate node's current engine, quality and controls.
 - **BYOK engines** (Meshy, Tripo, Rodin, Stability, Replicate) require your own key; they are never billed to a platform account.
 - **Photo input** accepts up to six views of one object (front, back, left, right, top, three-quarter); text-only engines are filtered out of the photo modes automatically.
 - **Sign-in**: every generate, rig and upload call needs an account and answers `401 sign_in_required` otherwise (see [Examples](#examples)). Polling and the catalog stay open.
-- **Throttles**: limits are per account for the signed-in free draft API (`POST /api/v1/ai/text-to-3d`, 10 a day, then `429` with a reset time and `Retry-After`) and per client on the shared generation buckets. A `429` always states how long to wait. Wait that long once, then retry. The reference-image step on a text prompt can also be throttled upstream (the keyless image rung allows about one image per 45 seconds for the whole service), in which case the page says it is waiting for an image slot rather than failing.
 - **What is serving right now** changes with provider credits and health. Do not read it from this page: `GET /api/forge?health=1` gives each lane's live status, and `GET /api/nvidia/stats` gives per-lane success counts over 7 days. On 2026-11-26 and 2026-11-27 the self-hosted TRELLIS lane served about 72% of jobs at about 93-95% success; `trellis2`, NVIDIA NIM and Hunyuan3D saw no jobs, and the `triposg` sketch lane and the `pixal3d` photo-match lane succeeded well under half the time.
+- Rate limits are per account on the shared 3D generation buckets (per client IP only for an unauthenticated caller).
+- **Waits are told apart, never all called "the limit"**: both Forge pages classify every 429 and busy 503 with one shared module (`src/forge-throttle.js`). A **busy provider** (our own image-step pacing, a busy 3D engine, the free engines at capacity, a transient 503) says it is not a limit on your account, counts down the server's own `retry_after`, keeps your prompt and settings, and retries once by itself when the countdown ends (you can cancel it; a refused retry falls back to a manual countdown and never loops). The **account limit** (`ratelimit-*` headers) says when it resets, at your local time, and that nothing was charged. The **paid daily cap** (`daily_limit_reached`) says paid engines reset at midnight UTC and offers a free engine, since free engines stay open. A screen reader hears the state once at the start and once at the end, not every second.
+
+## Who can see, change or spend a creation
+
+A creation belongs to whoever made it, proven by one of three credentials: the hashed browser id (`x-forge-client`, never the shared anonymous bucket), the signed-in account, or the per-creation manage token (`x-forge-manage-token`). Every read of a private model, and every change, delete, keep, vote or comment, checks one of them against the row. A caller who is not the owner gets the same answer as for an id that does not exist, so nothing confirms that a private model is there.
+
+- **Private** models are invisible to everyone but the owner on `/api/forge-creation`, `/api/forge-keep`, `/api/forge-vote`, `/api/forge-comments`, `/api/forge-og` and `/api/forge-share`.
+- **Job handles** (`f1.` tokens) are HMAC-signed with `JWT_SECRET` and expire seven days after they are minted. Handles minted before expiry existed stay valid, so a deploy never strands a running job. The expiry is signed, so it cannot be extended.
+- **Manage tokens** (`fm1.`) are signed per creation and do not expire, by design: they are the only credential an anonymous browser has to delete or hide its own model later.
+- **Your own provider key** (`x-forge-provider-key` or `provider_key`, or one saved encrypted on the account) is covered in full under [Bring your own provider key](#bring-your-own-provider-key).
+- **Provider callbacks** (`/api/forge/webhook/tripo`) are verified by HMAC with a five minute replay window and a one-time delivery claim, keyed on both the delivery id and the signature itself, so a captured callback cannot be replayed under a fresh delivery id. A callback can act only on a job whose backend is Tripo, and the file it names must be a public https address (no userinfo, no internal host, no DNS answer that is an internal address).
+- **Cookie-authenticated writes** that change shared content (comments) require a CSRF token tied to the account.
+
+The two-account tests that pin all of this are in `tests/api/forge-ownership-security.test.js`.
+
+## Bring your own provider key
+
+Meshy, Tripo, Rodin, Stability and Replicate run on the caller's own account. The key is a credential that costs its owner money, so it is handled narrowly (`api/_lib/forge-byok-guard.js`, `api/_lib/forge-provider-key.js`, `api/_providers/byok-registry.js`).
+
+- **Where the key comes from**, in order: the `x-forge-provider-key` header (or body `provider_key`) for this request, then the key saved on the account (`PATCH /api/user/provider-keys`, AES-256-GCM at rest, removed with the same endpoint or the Remove button on Account), then, for Tripo only, the platform house key. A key that is present but unusable is never skipped past: a malformed or unreadable key is a `401 invalid_key`, not a quiet switch to a house or free lane.
+- **Shape check before any billed call.** A key with a space or line break, control characters, more than 512 characters, the wrong vendor prefix (`tsk_` Tripo, `msy_` Meshy, `sk-` Stability, `r8_` Replicate) or under 12 characters is refused locally with a message that never repeats it. This also stops a header-injection attempt from reaching an HTTP client. `PATCH /api/user/provider-keys` applies the same rule before encrypting.
+- **Where it goes.** Each adapter targets one hard-coded HTTPS host (api.meshy.ai, api.tripo3d.ai, hyperhuman.deemos.com, api.stability.ai) and sends the key only as a bearer header. No request parameter, body field or saved setting can change the host.
+- **Where it never appears.** Every provider adapter is wrapped so a thrown error or a returned `error` string has the key (and its URL-encoded, base64 and `Bearer ...` forms) replaced with `[redacted]` before it can reach a log line, analytics event, job row, idempotency record or response. The page holds the key in memory only and sends it per request; it never writes it to browser storage, and the field has a Clear button.
+- **Failures are told apart, and none falls to a platform-paid lane.** `401 invalid_key` (the provider rejected it, or revoked it mid-job), `402 insufficient_credits` (the user's provider account is empty), `429 rate_limited` with `Retry-After` (the provider is throttling the key), `503 provider_unavailable` (the provider is down or unreachable, nothing was started, the key is fine) and `422 content_refused` (the provider declined the prompt or image). A BYOK job that fails after it started reports the same classes through `error_code` on the poll (`invalid_key`, `insufficient_credits`, `content_refused`, `task_failed`) with copy that names the provider and the fix. A provider error that fits none of these classes is never relayed: the body carries fixed copy and a `ref` the user can quote to support, and the raw provider text goes only to the server log under that ref.
+- **Same rules everywhere.** `POST /api/forge`, `POST /api/gpt-forge` and the 3D Studio MCP tools all resolve keys and classify failures through the same helpers.
 
 ## Cost preview and pay-to-keep
 
@@ -664,6 +834,8 @@ dashboard at [/quality-bench](https://three.ws/quality-bench) (internal).
 ## Related
 
 - [The Forge pipeline](./forge-pipeline.md) is the architecture deep dive: the engine grid, routing, failover, job lifecycle, workers, and payments, end to end. [How the Forge works](./how-forge-works.md) is the same story in plain language.
+- [Forge caches](./ops/forge-caches.md) lists every cache Forge keeps, its key and lifetime, and the rules that stop it serving a wrong, failed, private or removed model.
+- [Forge input security](./forge-input-security.md) lists every address, upload and model file a stranger can send to Forge, the guard in front of each, and what is still open.
 - [Image to 3D](./image-to-3d.md) is the photo lane opened directly at [/image-to-3d](https://three.ws/image-to-3d).
 - [/forge-max](https://three.ws/forge-max) is the maximum-quality lane opened directly: the same Forge with the High tier pinned on arrival (200k-poly target, 4K PBR and HD textures, subject-aware engine routing). `?tier=draft|standard|high` presets the quality selector on any Forge URL the same way. The High tier's $THREE hold-or-pay gate applies unchanged; BYOK engines (your own Meshy, Tripo, or Rodin key) are exempt as always. For DamagedHelmet-class artist benchmarks, remember the ceiling is the current state of generative 3D, not the routing: this lane maxes every budget the engines expose, and [Measuring realism](#measuring-realism) is how we track that ceiling moving.
 - [Diorama](./diorama.md) forges a whole scene of Forge objects into one explorable world.

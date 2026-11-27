@@ -48,6 +48,7 @@ vi.mock('../src/three-access.js', () => ({
 
 vi.mock('../src/forge-pay.js', () => ({
 	payForConsumption: vi.fn(async () => ({ ok: true, paymentId: 'pay_1', refId: 'ref_1' })),
+	forgetPaidProof: vi.fn(),
 }));
 
 const GLB_URL = 'https://three.ws/cdn/models/knight.glb';

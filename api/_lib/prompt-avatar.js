@@ -103,3 +103,13 @@ export function planPromptAvatarLanes({ platform = [], byok = [], health = {}, c
 	};
 	return [...plan.filter((e) => !hardDown(e)), ...plan.filter(hardDown)];
 }
+
+// Ordered lane plan for a photo avatar: every configured provider runs the
+// face pipeline (`reconstruct`). The HuggingFace provider is a Tencent Hunyuan3D
+// Space chain, so it is dropped for the EU, the UK, South Korea and an unknown
+// country, the same rule planPromptAvatarLanes applies to a text avatar.
+export function planPhotoAvatarLanes(candidates, country = null) {
+	return candidates
+		.filter((c) => laneAllowedInTerritory(c.name, country))
+		.map((c) => ({ ...c, mode: 'reconstruct', lane: c.name, params: {} }));
+}

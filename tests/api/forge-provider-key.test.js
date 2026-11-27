@@ -38,23 +38,23 @@ afterEach(() => {
 describe('resolveProviderKeyWithSource', () => {
 	it('an inline header key wins over everything, source:inline', async () => {
 		process.env.TRIPO_API_KEY = 'house-key';
-		const got = await resolveProviderKeyWithSource(req({ 'x-forge-provider-key': ' inline-key ' }), null, 'tripo');
-		expect(got).toEqual({ key: 'inline-key', source: 'inline' });
+		const got = await resolveProviderKeyWithSource(req({ 'x-forge-provider-key': ' tsk_inline_key_0123456789 ' }), null, 'tripo');
+		expect(got).toEqual({ key: 'tsk_inline_key_0123456789', source: 'inline' });
 	});
 
 	it('an inline body key wins over the house key, source:inline', async () => {
 		process.env.TRIPO_API_KEY = 'house-key';
-		const got = await resolveProviderKeyWithSource(req(), { provider_key: 'body-key' }, 'tripo');
-		expect(got).toEqual({ key: 'body-key', source: 'inline' });
+		const got = await resolveProviderKeyWithSource(req(), { provider_key: 'tsk_body_key_0123456789' }, 'tripo');
+		expect(got).toEqual({ key: 'tsk_body_key_0123456789', source: 'inline' });
 	});
 
 	it('the signed-in user key wins over the house key, source:user', async () => {
 		process.env.TRIPO_API_KEY = 'house-key';
 		vi.mocked(getSessionUser).mockResolvedValue({ id: 'u1' });
-		vi.mocked(sql).mockResolvedValue([{ provider_keys: 'encrypted-blob' }]);
-		vi.mocked(loadUserProviderKeys).mockResolvedValue({ tripo: 'user-key' });
+		vi.mocked(sql).mockResolvedValue([{ provider_keys: { tripo: 'encrypted-blob' } }]);
+		vi.mocked(loadUserProviderKeys).mockResolvedValue({ tripo: 'tsk_user_key_0123456789' });
 		const got = await resolveProviderKeyWithSource(req(), null, 'tripo');
-		expect(got).toEqual({ key: 'user-key', source: 'user' });
+		expect(got).toEqual({ key: 'tsk_user_key_0123456789', source: 'user' });
 	});
 
 	it('falls back to the house env var only when no inline/user key exists, source:house', async () => {
@@ -85,7 +85,43 @@ describe('resolveProviderKey (unchanged callers)', () => {
 	});
 
 	it('still returns an inline/user key exactly as before', async () => {
-		const key = await resolveProviderKey(req({ 'x-forge-provider-key': 'abc' }), null, 'tripo');
-		expect(key).toBe('abc');
+		const key = await resolveProviderKey(req({ 'x-forge-provider-key': 'tsk_abc_0123456789' }), null, 'tripo');
+		expect(key).toBe('tsk_abc_0123456789');
+	});
+});
+
+describe('a key the caller supplied is never skipped for the house key', () => {
+	it('a malformed inline key is rejected, not replaced by the house key', async () => {
+		process.env.TRIPO_API_KEY = 'tsk_HOUSE_KEY_THE_PLATFORM_PAYS_WITH_0001';
+		const got = await resolveProviderKeyWithSource(req({ 'x-forge-provider-key': 'two words' }), null, 'tripo');
+		expect(got.key).toBeNull();
+		expect(got.rejected.reason).toBe('whitespace');
+	});
+
+	it('a saved key that cannot be decrypted is reported, not replaced by the house key', async () => {
+		process.env.TRIPO_API_KEY = 'tsk_HOUSE_KEY_THE_PLATFORM_PAYS_WITH_0001';
+		vi.mocked(getSessionUser).mockResolvedValue({ id: 'u1' });
+		vi.mocked(sql).mockResolvedValue([{ provider_keys: { tripo: 'corrupt-ciphertext' } }]);
+		vi.mocked(loadUserProviderKeys).mockResolvedValue({});
+		const got = await resolveProviderKeyWithSource(req(), null, 'tripo');
+		expect(got.key).toBeNull();
+		expect(got.rejected.reason).toBe('stored_unreadable');
+	});
+
+	it('a database error while reading a saved key is reported, not replaced by the house key', async () => {
+		process.env.TRIPO_API_KEY = 'tsk_HOUSE_KEY_THE_PLATFORM_PAYS_WITH_0001';
+		vi.mocked(getSessionUser).mockResolvedValue({ id: 'u1' });
+		vi.mocked(sql).mockRejectedValue(new Error('connection refused'));
+		const got = await resolveProviderKeyWithSource(req(), null, 'tripo');
+		expect(got.key).toBeNull();
+		expect(got.rejected.reason).toBe('stored_unreadable');
+	});
+
+	it('a signed-in user with no saved key for this provider still reaches the house key', async () => {
+		process.env.TRIPO_API_KEY = 'tsk_HOUSE_KEY_THE_PLATFORM_PAYS_WITH_0001';
+		vi.mocked(getSessionUser).mockResolvedValue({ id: 'u1' });
+		vi.mocked(sql).mockResolvedValue([{ provider_keys: { meshy: 'enc' } }]);
+		const got = await resolveProviderKeyWithSource(req(), null, 'tripo');
+		expect(got.source).toBe('house');
 	});
 });

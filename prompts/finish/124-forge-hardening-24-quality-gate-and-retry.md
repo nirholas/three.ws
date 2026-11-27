@@ -2,6 +2,8 @@
 
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/124-forge-hardening-24-quality-gate-and-retry.md`.
 
+**Status (2026-11-27):** Done in code on local main, not yet in production. Both synchronous lanes in api/forge.js and api/gpt-forge.js now run one shared quality stage (api/_lib/forge-quality-lanes.js over forge-quality-stage.js). The structural check runs first, then the judge under a 30 s shared budget, with at most one retry per request. The retry is skipped when the lane is busy or the caller has one generation or fewer left, it is never charged twice, and the better attempt is kept. The response carries quality_retry, which /forge shows as a chip. Proof is tests/api/forge-quality-stage-wiring.test.js (22 cases, both handlers). It rode in 863171ef6, swept by another session's commit. 58a0c3ff0 fixes the gate fail-open suite's teardown hook. a8d94740c adds the client chip, docs and changelog. Production still serves f0eed584f. Remaining and owned by the owner: push and deploy (`npm run deploy:gcp:full`), then archive this file.
+
 **Priority:** P1. **Area:** quality gate and automatic retry. **Dev port:** 4124. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
 
 ## Operating clause (binding)

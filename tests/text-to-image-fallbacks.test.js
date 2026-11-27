@@ -6,6 +6,7 @@
  * later rung is reached, in order, and that the keyless one is always there.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resetImageRungBreakers } from '../api/_lib/image-rung-breaker.js';
 
 process.env.NVIDIA_API_KEY = 'nim-key';
 process.env.HF_TOKEN = 'hf-token';
@@ -45,7 +46,10 @@ globalThis.fetch = vi.fn(async (url, init) => {
 	throw new Error(`unexpected fetch ${u}`);
 });
 
-beforeEach(() => {
+beforeEach(async () => {
+	// Every rung starts with a closed breaker: the breaker keeps its state in
+	// the shared cache, which outlives a single test.
+	await resetImageRungBreakers();
 	hits.length = 0;
 	persisted.calls = 0;
 	lane.nim = () => json(502, { error: 'gateway' });
@@ -58,7 +62,7 @@ describe('the ladder reaches every rung in order', () => {
 	it('NIM serves first when it is up', async () => {
 		lane.nim = () => json(200, { artifacts: [{ base64: Buffer.from(PNG).toString('base64'), finishReason: 'SUCCESS' }] });
 		const out = await textToImage('a fox', { budgetMs: 20_000 });
-		expect(out.model).toBe('black-forest-labs/flux.1-dev');
+		expect(out.model).toBe('black-forest-labs/flux.2-klein-4b');
 		expect(hits.some((u) => u.includes('huggingface'))).toBe(false);
 	});
 
@@ -82,20 +86,21 @@ describe('the ladder reaches every rung in order', () => {
 		expect(hits.filter((u) => u.includes('huggingface'))).toHaveLength(2);
 	});
 
-	it('sends the NIM request flux.1-dev needs (steps >= 5, a cfg_scale)', async () => {
+	it('sends the NIM request flux.2-klein-4b accepts (4 steps, cfg_scale 1, no mode)', async () => {
 		let body;
 		lane.nim = (init) => { body = JSON.parse(init.body); return json(200, { artifacts: [{ base64: Buffer.from(PNG).toString('base64') }] }); };
 		await textToImage('a fox', { budgetMs: 20_000 });
-		expect(body.steps).toBeGreaterThanOrEqual(5);
-		expect(body.cfg_scale).toBeGreaterThan(0);
-		expect(hits[0]).toContain('flux.1-dev');
+		expect(body.steps).toBe(4);
+		expect(body.cfg_scale).toBe(1);
+		expect(body).not.toHaveProperty('mode');
+		expect(hits[0]).toContain('flux.2-klein-4b');
 	});
 
-	// 2026-11-20: the NIM flux.1-dev schema forbids extra fields and `seed` is not
+	// 2026-11-20: the NIM FLUX schema forbids extra fields and `seed` is not
 	// one of its inputs, so every request answered 422
 	// {"type":"extra_forbidden","loc":["body","seed"]} in under a second and the
 	// free rung never served an image. Probed live with and without the field.
-	it('never sends a seed field to NIM flux.1-dev (its schema rejects it with 422)', async () => {
+	it('never sends a seed field to NIM FLUX (its schema rejects it with 422)', async () => {
 		const bodies = [];
 		lane.nim = (init) => { bodies.push(JSON.parse(init.body)); return json(200, { artifacts: [{ base64: Buffer.from(PNG).toString('base64') }] }); };
 		await textToImage('a fox', { budgetMs: 20_000 });
@@ -220,6 +225,6 @@ describe('a filtered NIM frame never becomes the reference image', () => {
 		expect(await isBlankFrame(gradient)).toBe(false);
 		lane.nim = () => json(200, { artifacts: [{ base64: gradient.toString('base64'), finishReason: 'SUCCESS' }] });
 		const out = await textToImage('a fox', { budgetMs: 20_000 });
-		expect(out.model).toBe('black-forest-labs/flux.1-dev');
+		expect(out.model).toBe('black-forest-labs/flux.2-klein-4b');
 	});
 });

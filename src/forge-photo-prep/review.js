@@ -16,6 +16,7 @@
 
 import './review.css';
 import { photoPrepSupport, preparePhoto, DEFAULT_UPLOAD } from './client.js';
+import { pickUpload, removalNotice } from './core.js';
 
 /** Inputs above this are not decoded on the device (a phone can run out of memory). */
 export const MAX_PREP_INPUT_BYTES = 40 * 1024 * 1024;
@@ -41,7 +42,11 @@ async function gate(file, { viewLabel = 'Photo', onProgress = () => {} }) {
 		result = await preparePhoto(file, { provider: support.provider, onProgress });
 	} catch (err) {
 		console.warn('[forge] on-device photo check failed, uploading the original:', err);
-		return { action: 'fallback', file, note: 'The photo check could not run on this device, so your photo uploads as before.' };
+		const note =
+			err?.code === 'prep_timeout'
+				? 'The photo check took too long, so your photo uploads as before.'
+				: 'The photo check could not run on this device, so your photo uploads as before.';
+		return { action: 'fallback', file, note };
 	}
 	onProgress({ stage: 'review' });
 	return openDialog(file, result, viewLabel);
@@ -52,17 +57,26 @@ function formatBytes(n) {
 	return `${Math.max(1, Math.round(n / 1024))} KB`;
 }
 
+function useLabel(hasPrepared, warned) {
+	if (!hasPrepared) return 'Use original photo';
+	return warned ? 'Use anyway' : 'Use this photo';
+}
+
 function preparedName(name, type) {
 	const ext = type === 'image/jpeg' ? 'jpg' : type.split('/')[1];
 	return `${(name || 'photo').replace(/\.[^.]+$/, '')}-prepared.${ext}`;
 }
 
-const PROVIDER_LABEL = { webgpu: 'WebGPU', wasm: 'WebAssembly' };
+const PROVIDER_LABEL = { webgpu: 'WebGPU', wasm: 'WebAssembly', alpha: 'Your transparency' };
 
 function openDialog(file, result, viewLabel) {
-	const upload = DEFAULT_UPLOAD === 'cutout' ? result.cutout : result.prepared;
+	const upload = pickUpload(result, DEFAULT_UPLOAD);
 	const hasPrepared = Boolean(upload);
-	const warnings = result.warnings || [];
+	const alpha = result.removal?.status === 'alpha';
+	const failed = result.removal?.status === 'failed';
+	const notice = removalNotice(result);
+	// A failed removal says why in one sentence; its raw warning would repeat it.
+	const warnings = failed ? [] : result.warnings || [];
 	const urls = [];
 	const url = (blob) => {
 		const u = URL.createObjectURL(blob);
@@ -99,21 +113,28 @@ function openDialog(file, result, viewLabel) {
 					<figcaption>
 						<strong>Prepared</strong>
 						<span>${side} x ${side} · ${formatBytes(upload.size)}</span>
-						<span class="pp-seg" role="group" aria-label="Prepared preview">
+						${
+							alpha
+								? ''
+								: `<span class="pp-seg" role="group" aria-label="Prepared preview">
 							<button type="button" class="pp-seg-btn" data-show="photo" aria-pressed="true">Photo</button>
 							<button type="button" class="pp-seg-btn" data-show="cutout" aria-pressed="false">Cutout</button>
-						</span>
+						</span>`
+						}
 					</figcaption>
 				</figure>`
 						: ''
 				}
 			</div>
+			${notice ? `<p class="pp-notice ${failed ? 'pp-notice-failed' : 'pp-notice-info'}" role="status" data-removal="${result.removal.status}">${escapeHtml(notice)}</p>` : ''}
 			${
 				warnings.length
 					? `<ul class="pp-warnings" aria-label="What the check found">${warnings
 							.map((w) => `<li data-code="${w.code}">${escapeHtml(w.message)}</li>`)
 							.join('')}</ul>`
-					: '<p class="pp-ok">Looks good: one clear subject, sharp and well lit.</p>'
+					: notice
+						? ''
+						: '<p class="pp-ok">Looks good: one clear subject, sharp and well lit.</p>'
 			}
 			${
 				hasPrepared
@@ -123,7 +144,7 @@ function openDialog(file, result, viewLabel) {
 			<footer class="pp-foot">
 				<span class="pp-meta">${PROVIDER_LABEL[result.provider] || result.provider} · ${seconds} s</span>
 				<button type="submit" value="retake" class="pp-btn">Retake</button>
-				<button type="submit" value="use" class="pp-btn pp-primary" autofocus>${warnings.length ? 'Use anyway' : 'Use this photo'}</button>
+				<button type="submit" value="use" class="pp-btn pp-primary" autofocus>${useLabel(hasPrepared, warnings.length)}</button>
 			</footer>
 		</form>`;
 

@@ -4,6 +4,8 @@ Research sweep of GitHub, npm and the xAI docs, done 2026-11-26 after three.ws j
 
 Read it with [grok-roadmap.md](grok-roadmap.md). The roadmap is a gap analysis of the xAI docs against our code. This file looks outward: what the ecosystem does, which projects are worth borrowing from, and where Grok's own features (live X data, SIP phone calls, multi-agent model, vision, Vertex hosting) give us an edge. Items the roadmap already ranks (remote MCP in production, Collections, Batch, custom voices, image editing, moderation controls, code execution, `previous_response_id`) are not repeated as new ideas. Where the research changes how one of them should be built, that is noted under [What the research adds to the existing roadmap](#what-the-research-adds-to-the-existing-roadmap).
 
+A second pass with showcase demos, tools for other ecosystems and daily features is in [grok-showcase-and-tools.md](grok-showcase-and-tools.md).
+
 Every repository, star count, licence and push date below was read from `gh api` on 2026-11-26. npm numbers are last-week downloads from `api.npmjs.org`. xAI facts come from docs.x.ai via the `xai-docs` MCP server. Anything not verified is marked as such.
 
 ## The short version

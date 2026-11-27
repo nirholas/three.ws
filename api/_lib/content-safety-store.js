@@ -22,6 +22,17 @@ import { sendOpsAlert } from './alerts.js';
 export const HOLD_AFTER_MS = 6 * 60 * 60 * 1000;
 /** A request that just came back undecided is not re-screened inside this window. */
 export const RESCREEN_COOLDOWN_MS = 60 * 1000;
+/**
+ * Repeat abuse. An account with this many models blocked inside the window is
+ * paged to the operator, and its later models are held for a person to look at
+ * even when the screen clears them: a screen that missed once is the likeliest
+ * to miss again for someone who keeps probing it. Only signed-in accounts count.
+ * The anonymous browser key is a shared bucket, so counting it would penalise
+ * strangers for each other. A block an admin later approved is no longer
+ * 'blocked' and stops counting, so a false positive clears itself.
+ */
+export const REPEAT_BLOCK_THRESHOLD = 3;
+export const REPEAT_BLOCK_WINDOW_DAYS = 30;
 
 function toReviewVerdict(verdict) {
 	return verdict === 'clear' || verdict === 'blocked' ? verdict : 'undecided';
@@ -50,6 +61,31 @@ async function alertBlocked(row, result) {
 	);
 }
 
+/** How many of this model's owner's models are currently blocked inside the window. 0 for an anonymous model. */
+async function ownerBlockedCount(id) {
+	const [r] = await sql`
+		select count(*)::int as n from forge_creations
+		where user_id = (select user_id from forge_creations where id = ${id})
+			and safety_status = 'blocked'
+			and safety_checked_at > now() - make_interval(days => ${REPEAT_BLOCK_WINDOW_DAYS})
+	`;
+	return r?.n ?? 0;
+}
+
+async function alertRepeatOwner(row, count) {
+	const [owner] = await sql`select user_id from forge_creations where id = ${row.id}`;
+	if (!owner?.user_id) return;
+	await sendOpsAlert(
+		'⚠️ Repeat content-screen blocks from one account',
+		[
+			`account ${owner.user_id}`,
+			`${count} Forge models blocked in the last ${REPEAT_BLOCK_WINDOW_DAYS} days (latest ${row.id})`,
+			'Their later models are held for manual review until an operator approves them. Review with npm run forge:safety -- --prod-env, and decide whether the account needs action.',
+		].join('\n'),
+		{ signature: `content-safety:repeat:${owner.user_id}`, severity: 'warn' },
+	);
+}
+
 /**
  * Screen a creation and move it to the state the verdict dictates.
  * Never throws; returns { verdict: 'clear' | 'blocked' | 'undecided', ... }.
@@ -64,6 +100,18 @@ export async function screenAndRecord(row, { screen = screenCreation, requested 
 		result = { verdict: 'undecided', categories: [], csam: false, reasons: [String(err?.message || err)], models: [], signals: null };
 	}
 	try {
+		if (result.verdict === 'clear' && requested && (await ownerBlockedCount(row.id)) >= REPEAT_BLOCK_THRESHOLD) {
+			await insertReview({
+				id: row.id,
+				result,
+				note: `Screen clear, held for an operator: the account has ${REPEAT_BLOCK_THRESHOLD} or more blocked models in ${REPEAT_BLOCK_WINDOW_DAYS} days (repeat abuse).`,
+			});
+			await sql`
+				update forge_creations set safety_status = 'held', safety_checked_at = now(), updated_at = now()
+				where id = ${row.id} and safety_status is distinct from 'blocked'
+			`;
+			return { ...result, verdict: 'undecided', heldForReview: true };
+		}
 		await insertReview({ id: row.id, result });
 		if (result.verdict === 'clear') {
 			await sql`
@@ -78,6 +126,8 @@ export async function screenAndRecord(row, { screen = screenCreation, requested 
 				where id = ${row.id}
 			`;
 			await alertBlocked(row, result);
+			const blockedCount = await ownerBlockedCount(row.id);
+			if (blockedCount >= REPEAT_BLOCK_THRESHOLD) await alertRepeatOwner(row, blockedCount);
 		} else {
 			await sql`
 				update forge_creations

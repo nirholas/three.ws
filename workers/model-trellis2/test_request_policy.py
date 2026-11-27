@@ -19,11 +19,14 @@ from request_policy import (
     SAMPLER_STAGES,
     bake_params,
     call_with_retry,
+    HOST_RAM_KILLED_AT_GIB,
     clamp_to_ceiling,
+    host_memory_ceiling,
     is_transient_fetch_error,
     resolve_resolution,
     retry_delays,
     sampler_params,
+    served_ceiling,
     step_down,
 )
 
@@ -180,3 +183,37 @@ def test_unknown_stages_and_keys_and_garbage_values_are_dropped():
         "shape_slat": "not-a-dict",
     })
     assert out == {}
+
+
+GIB = 1024 ** 3
+
+
+def test_the_measured_32_gib_l4_host_is_capped_at_512():
+    # 2026-11-11 and 2026-11-20: 1024 and 1536 killed with signal 9 at 32 GiB,
+    # 512 finished with a 27.1 GiB peak.
+    assert host_memory_ceiling(32 * GIB) == 512
+    assert host_memory_ceiling(16 * GIB) == 512
+
+
+def test_a_host_above_every_measured_kill_is_not_capped():
+    assert host_memory_ceiling(48 * GIB) is None
+    assert host_memory_ceiling(80 * GIB) is None
+
+
+def test_an_unknown_memory_limit_is_not_capped():
+    assert host_memory_ceiling(None) is None
+    assert host_memory_ceiling(0) is None
+
+
+def test_only_listed_resolutions_have_kill_ceilings():
+    assert set(HOST_RAM_KILLED_AT_GIB) <= set(RESOLUTIONS)
+    assert 512 not in HOST_RAM_KILLED_AT_GIB
+
+
+def test_served_ceiling_takes_the_tighter_cap():
+    assert served_ceiling(1536, 32 * GIB) == 512
+    assert served_ceiling(1024, 80 * GIB) == 1024
+    assert served_ceiling(1536, None) == 1536
+    assert served_ceiling(None, 32 * GIB) == 512
+    assert served_ceiling(None, None) is None
+    assert clamp_to_ceiling(resolve_resolution(None, "standard"), served_ceiling(1536, 32 * GIB)) == 512

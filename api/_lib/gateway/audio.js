@@ -29,7 +29,7 @@ import { getGcpAccessToken } from '../gcp-auth.js';
 
 export const SPOKEN_MAX_CHARS = 700;
 const FFMPEG_TIMEOUT_MS = 30_000;
-const SERVER_LANES = ['nvidia', 'gemini', 'edge', 'openai'];
+const SERVER_LANES = ['nvidia', 'gemini', 'openai'];
 const OPUS_ARGS = ['-vn', '-ac', '1', '-ar', '48000', '-c:a', 'libopus', '-b:a', '32k', '-application', 'voip', '-f', 'ogg'];
 
 /**
@@ -158,7 +158,7 @@ function laneConfigured(lane) {
 	if (lane === 'nvidia') return nvidiaTtsConfigured();
 	if (lane === 'gemini') return geminiTtsConfigured();
 	if (lane === 'openai') return Boolean(env.OPENAI_API_KEY);
-	return lane === 'edge';
+	return false;
 }
 
 /** The server-side TTS lanes that can serve right now, in failover order. */

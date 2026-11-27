@@ -32,6 +32,8 @@ three.ws turns a sentence into an animation clip for any rigged avatar. The engi
 
 ## Step 0: re-derive the current state
 
+A design doc for this build exists at `docs/nvidia/builds/872-kimodo-motion-engine.md`. It is a plan written on 2026-11-26, not a spec: this order is complete without it, and where the code or a license disagrees with it, the code and the license win.
+
     curl -s https://three.ws/api/version | head -c 320; echo
     curl -s https://three.ws/api/nvidia/stats | head -c 5000; echo
     sed -n 1,120p workers/model-text2motion/README.md
@@ -75,6 +77,6 @@ Clone Kimodo and `github.com/NVIDIA/soma-retargeter` into your session scratch d
 
 1. Verify every Definition of done line with the command output in front of you.
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
-3. Append a dated entry to `prompts/finish/_context/nvidia-PROGRESS.md` (re-read it first, small anchored edit at the end): order number, commit hashes, what is live, the measured number, what waits on the owner.
+3. Append a dated entry to `prompts/finish/_context/nvidia-PROGRESS.md` (re-read it first, small anchored edit at the end): order number, commit hashes, what is live, the measured number, what waits on the owner. Then bring this build's design doc `docs/nvidia/builds/872-kimodo-motion-engine.md` and its row in `docs/nvidia/builds/README.md` up to date: the status, the measured numbers, anything the design got wrong, and the commit hash in place of the link to this order (the order is archived, so the link would break).
 4. All lines pass: `git mv` this file to `prompts/archive/` in its own closing commit and repoint inbound links. If an owner step is last, leave the file and put a dated status line under the title naming what remains.
 5. Report: what step 0 measured; files and commit hashes; evidence per Definition of done line; the measured numbers; the license clauses you relied on; the one batched owner message (`git push`, the `three-ws-api` deploy, setting the worker URL on `three-ws-api`, the Inception portal edit, the decision about which motion engine serves); one-line judgment calls. No trailing questions.

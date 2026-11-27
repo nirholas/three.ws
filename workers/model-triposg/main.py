@@ -108,9 +108,11 @@ from request_policy import (
     MODES,
     SCRIBBLE_MODE,
     PromptRequired,
+    SEED_MAX,
     pipeline_settings,
     resolve_mode,
     resolve_prompt,
+    resolve_seed,
     should_decimate,
 )
 from matte import (
@@ -580,6 +582,7 @@ async def _run_inference(
     prompt: str,
     scribble_confidence: float,
     target_polycount: int | None,
+    seed: int | None = None,
 ) -> None:
     # Wait for the background model load before touching the GPU. A warm
     # instance passes instantly; a failed load is a designed task error rather
@@ -604,7 +607,7 @@ async def _run_inference(
         gpu = {}
         try:
             def _generate() -> bytes:
-                seed_gen = torch.Generator(device="cuda").manual_seed(0)
+                seed_gen = torch.Generator(device="cuda").manual_seed(resolve_seed(seed))
                 settings = pipeline_settings(
                     mode, prompt=prompt, scribble_confidence=scribble_confidence
                 )
@@ -681,6 +684,8 @@ class InferRequest(BaseModel):
     prompt: str = ""
     scribble_confidence: float = Field(default=DEFAULT_SCRIBBLE_CONFIDENCE, ge=0.0, le=1.0)
     target_polycount: int | None = Field(default=None, ge=100, le=1_000_000)
+    # Repeats a model: the same seed, drawing and settings build the same mesh.
+    seed: int | None = Field(default=None, ge=0, le=SEED_MAX)
     body_type: str = "neutral"
     job_id: str | None = None
 
@@ -710,6 +715,7 @@ async def infer(
         prompt,
         body.scribble_confidence,
         body.target_polycount,
+        body.seed,
     )
     return task
 

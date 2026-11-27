@@ -10,8 +10,9 @@
 // quote, sign, settle rail High and Game-Ready use). Nothing here signs or spends
 // without the wallet prompt in forge-pay.js, which asks first.
 
-import { payForConsumption } from './forge-pay.js';
+import { payForConsumption, forgetPaidProof } from './forge-pay.js';
 import { attachTierPass, getTierPass } from './three-access.js';
+import { describeForgeError } from './forge-errors.js';
 
 const usd = (n) => `$${Number(n).toFixed(2)}`;
 
@@ -80,6 +81,9 @@ function passWithin(ms) {
 	]).finally(() => clearTimeout(timer));
 }
 
+const PAYMENT_REFUSALS = new Set(['payment_invalid', 'payment_expired', 'payment_already_used']);
+const isPaymentRefusal = (res, data) => (res.status === 402 || res.status === 409) && PAYMENT_REFUSALS.has(data?.error);
+
 async function keepRequest(creationId, headers, payment) {
 	const res = await fetch('/api/forge-keep', {
 		method: 'POST',
@@ -114,19 +118,35 @@ export async function ensureKept(creationId, { headers = {} } = {}) {
 		if (res.status === 404 || res.status >= 500) return { ok: true };
 		const price = Number(data.pay_per_use?.usd) || 0;
 		if (res.status === 402 && price > 0) {
-			const paid = await payForConsumption({
-				usd: price,
-				unit: 'keeping this model',
-				confirm: 'Keep the original file of this generation. Previewing stays free.',
-				footnote: '$THREE is the only coin on three.ws. Holders keep every model free.',
-				successText: 'Payment confirmed. Preparing your file…',
-				refPrefix: 'forge-keep',
-			});
+			const pay = () =>
+				payForConsumption({
+					usd: price,
+					unit: 'keeping this model',
+					confirm: 'Keep the original file of this generation. Previewing stays free.',
+					footnote: '$THREE is the only coin on three.ws. Holders keep every model free.',
+					successText: 'Payment confirmed. Preparing your file…',
+					refPrefix: 'forge-keep',
+				});
+			let paid = await pay();
 			if (!paid?.ok) return { ok: false, message: 'Download cancelled. No $THREE was spent.' };
 			({ res, data } = await keepRequest(creationId, headers, paid));
+			// A proof this browser saved from an earlier try can already be spent or
+			// stale: drop it and pay fresh, once. A fresh proof that is refused is
+			// reported below, never paid for again in a loop.
+			if (paid.reused && isPaymentRefusal(res, data)) {
+				forgetPaidProof(paid.paymentId);
+				paid = await pay();
+				if (!paid?.ok) return { ok: false, message: 'Download cancelled. No $THREE was spent.' };
+				({ res, data } = await keepRequest(creationId, headers, paid));
+			}
+			// The server took the proof (kept) or refused it for good: either way it
+			// must not be offered again. A fault leaves it saved, so the next
+			// Download presents the same payment instead of charging twice.
+			if ((res.ok && data.kept) || isPaymentRefusal(res, data)) forgetPaidProof(paid.paymentId);
 			if (res.ok && data.kept) return { ok: true };
 		}
-		return { ok: false, message: data.message || 'Could not confirm this download. Try again.' };
+		// Copy comes from the map (src/forge-errors.js), never the server's text.
+		return { ok: false, message: describeForgeError({ status: res.status, body: data }).message };
 	} catch {
 		return { ok: true };
 	}

@@ -31,6 +31,8 @@ The startups NVIDIA named beside its 2026 Omniverse releases make simulation-rea
 
 ## Step 0: re-derive the current state
 
+A design doc for this build exists at `docs/nvidia/builds/879-simready-prop-pack.md`. It is a plan written on 2026-11-26, not a spec: this order is complete without it, and where the code or a license disagrees with it, the code and the license win.
+
     curl -s https://three.ws/api/nvidia/stats | head -c 4000; echo
     sed -n 1,140p workers/usd-export/README.md
     sed -n 1,80p docs/simready-assets.md
@@ -46,7 +48,7 @@ Read the export worker end to end and its report format. Read our terms for who 
 2. **The object list.** At least 300 everyday objects across the classes the exporter already knows (furniture, containers, tools, kitchenware, toys, warehouse items and so on), each with a Forge-ready prompt, a real-world size in meters and a class label. Sizes come from a cited public source or a stated typical range, not from a guess left unmarked. The list is a committed data file with a schema test.
 3. **A resumable, polite builder.** A script under `scripts/` that works through the list with the platform's own account: submits one job, waits, exports to OpenUSD through the existing worker, runs the validators, stores the GLB, the USD package and the report in our bucket, and records the outcome in a manifest. It yields to interactive visitors (it submits only while no interactive job is waiting on the image rung, enforced by a check that is unit-tested), survives being stopped and restarted without regenerating finished items, and stops itself at a daily cap. An asset that fails validation is retried once with a different seed and otherwise excluded with the reason recorded.
 4. **Run it for real.** Start the build and let it run within this session as far as the image rate allows; the script is the deliverable that finishes the rest. Report the honest count finished, the pass rate by class, and the time and GPU cost per asset. At least 25 finished, validated assets are required to close this order.
-5. **Quality gate before anything is published.** Every included asset passes the existing validators with no error, has a plausible mass for its class and size, and passes the existing quality judge on the rendered preview. Publish the exclusion reasons as counts.
+5. **Quality gate before anything is published.** Every included asset passes the existing validators with no error, has a plausible mass for its class and size, and passes the existing quality judge on the rendered preview. The object list uses generic everyday objects with no brand or product names, and an asset whose preview shows readable brand text or a logo is excluded. Publish the exclusion reasons as counts.
 6. **The dataset package.** A script that assembles the pack from the bucket into the layout a dataset host expects: one folder per asset (USD package, GLB, preview image, report), a metadata file with prompt, class, size, mass, triangle count, validator versions and seed, a dataset card that states plainly how the assets were made, by which models, on what hardware, their limits (generated geometry, approximate mass, convex collision), and the license. NVIDIA-facing wording stays technical: no token, price or monetization vocabulary, and no claim beyond "three.ws is a member of the NVIDIA Inception program".
 7. **A page on our own site.** `/simready/props` (registered in `data/pages.json`): a browsable grid of the pack from the real manifest with search, class filter, a 3D preview and download links, with designed loading, empty and error states. This is live for users whether or not the pack is ever published elsewhere.
 8. **Publishing prepared, not done.** `docs/simready-prop-pack.md` ends with the exact one command that uploads the assembled pack to a Hugging Face dataset under the owner's organization, and the paste-ready description. Do not create the remote repository.
@@ -66,7 +68,7 @@ Read the export worker end to end and its report format. Read our terms for who 
 
 | Blocker | Resolution (act, do not ask) |
 |---|---|
-| The image rung is slow | That is expected: about 80 assets a day at most, less when visitors are active. The builder is resumable for this reason. Report the real rate and the date the full list would finish. |
+| The image rung is slow | That is expected. The rung's ceiling is about 1,900 images a day for the whole site and the builder takes only a small share of it: start the daily cap at 150 assets and lower it if visitors are waiting. The builder is resumable for this reason. Report the real rate and the date the full list would finish. |
 | A component's license forbids open release of outputs | Exclude assets made with it, switch the builder to a route without it, and record the clause. |
 | The platform has no dedicated account for this | Create one through the real registration flow the way `npm run audit:web:provision` does for QA, and record its name (not its password) in the doc. |
 | The export worker rejects a model | Record the validator finding, retry once with another seed, and exclude it. Do not loosen the validators. |
@@ -76,6 +78,6 @@ Read the export worker end to end and its report format. Read our terms for who 
 
 1. Verify every Definition of done line with the command output in front of you.
 2. Commit with explicit paths and a `type(scope): ...` subject that describes the diff.
-3. Append a dated entry to `prompts/finish/_context/nvidia-PROGRESS.md` (re-read it first, small anchored edit at the end): order number, commit hashes, what is live, the measured number, what waits on the owner.
+3. Append a dated entry to `prompts/finish/_context/nvidia-PROGRESS.md` (re-read it first, small anchored edit at the end): order number, commit hashes, what is live, the measured number, what waits on the owner. Then bring this build's design doc `docs/nvidia/builds/879-simready-prop-pack.md` and its row in `docs/nvidia/builds/README.md` up to date: the status, the measured numbers, anything the design got wrong, and the commit hash in place of the link to this order (the order is archived, so the link would break).
 4. All lines pass: `git mv` this file to `prompts/archive/` in its own closing commit and repoint inbound links. If an owner step is last, leave the file and put a dated status line under the title naming what remains.
 5. Report: what step 0 measured; files and commit hashes; evidence per Definition of done line; the measured numbers; the license clauses you relied on; the one batched owner message (`git push`, creating the Hugging Face dataset repository and uploading to it, any forum or social post, the Inception portal edit); one-line judgment calls. No trailing questions.

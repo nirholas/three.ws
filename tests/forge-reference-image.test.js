@@ -8,6 +8,8 @@
  * covers both ids alike.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { REAL_PNG_B64 } from './_helpers/real-image.js';
+import { resetVertexBreaker } from '../api/_lib/vertex-image-breaker.js';
 
 process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 delete process.env.VERTEX_IMAGEN_ENABLED;
@@ -43,7 +45,7 @@ const { generateReferenceImage } = await import('../api/_lib/forge-reference-ima
 const { IMAGE_MODEL_PRIMARY, IMAGE_MODEL_FALLBACK } = await import('../api/_lib/image-model.js');
 
 const IMAGE_OK = {
-	candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: 'aGVsbG8=' } }] } }],
+	candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: REAL_PNG_B64 } }] } }],
 };
 
 // Vertex double: answers per model id. QA scoring (a text model) answers 500 so
@@ -60,7 +62,9 @@ function installFetch() {
 	});
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+	// A failure in one case parks the shared Vertex breaker; start each closed.
+	await resetVertexBreaker();
 	ladder.calls = 0;
 	imageCalls = [];
 	installFetch();

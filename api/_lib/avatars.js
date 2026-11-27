@@ -314,6 +314,34 @@ async function unreferencedKeys(keys) {
 	return wanted.filter((k) => !stillUsed.has(k));
 }
 
+// Takedown removal of an avatar copy of a removed Forge model, on moderator
+// authority (no owner check). Soft-deletes the row, then removes its objects and
+// WAITS for the result, because a takedown must report what is still live.
+// Idempotent: a row already soft-deleted still has its objects removed, so a
+// rerun after a storage outage finishes the job. Returns null for an unknown id.
+export async function removeAvatarForTakedown(id) {
+	const [row] = await sql`
+		select storage_key, thumbnail_key, visibility, deleted_at from avatars where id = ${id} limit 1
+	`;
+	if (!row) return null;
+	if (!row.deleted_at) {
+		await sql`update avatars set deleted_at = now() where id = ${id} and deleted_at is null`;
+		announceIndexNow('avatar', id, { indexable: false, wasPublic: row.visibility === 'public', reason: 'delete', source: 'avatar' });
+	}
+	const keys = await unreferencedKeys([row.storage_key, row.thumbnail_key]);
+	const removed = [];
+	const failed = [];
+	for (const key of keys) {
+		try {
+			await deleteObject(key);
+			removed.push(key);
+		} catch (e) {
+			failed.push({ key, error: e?.message || String(e) });
+		}
+	}
+	return { id, removed, failed };
+}
+
 export async function deleteAvatar({ id, userId }) {
 	const rows = await sql`
 		update avatars set deleted_at = now()

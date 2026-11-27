@@ -18,11 +18,21 @@
 // Self-contained: builds its own button + panel off `forge:model-ready`, and
 // forwards the same x-forge-client identity forge.js uses so an iteration
 // lands in the same anonymous gallery/lineage as its parent.
+//
+// The server fetches the model by URL, so Iterate always works from the last
+// saved model. A `blob:` src in the viewer is another tool's tab-local edit (a
+// Materials look, Refine, the Optimize mesh tools) that the server cannot read;
+// the src observer ignores those, and a model that only exists in the tab gets
+// a note instead of a request that would fail.
 
 import { escapeHtml } from './shared/coin-format.js';
 
 const POLL_INTERVAL_MS = 2500;
 const MAX_POLL_MS = 5 * 60 * 1000;
+const LOCAL_ONLY_NOTE =
+	'Iterate works on a saved model, and this one only exists in this tab. Save it to your account or generate it on three.ws, then describe your change.';
+
+const isTabLocal = (url) => typeof url === 'string' && url.startsWith('blob:');
 
 const actions = document.querySelector('#state-result .result-bar .actions');
 const resultBar = document.getElementById('state-result');
@@ -150,7 +160,11 @@ if (actions && resultBar && viewer) {
 
 	async function runIterate(instruction) {
 		const text = (instruction || '').trim();
-		if (!text || busy || !currentGlbUrl) return;
+		if (!text || busy) return;
+		if (!currentGlbUrl || isTabLocal(currentGlbUrl)) {
+			setStatus(LOCAL_ONLY_NOTE, 'error');
+			return;
+		}
 		const token = ++runToken;
 		setBusy(true);
 		setStatus('Iterating…', 'busy');
@@ -230,7 +244,7 @@ if (actions && resultBar && viewer) {
 	// model (fresh generation, gallery open) should reset the panel.
 	const srcObserver = new MutationObserver(() => {
 		const url = viewer.getAttribute('src');
-		if (!url || url === originalGlbUrl || url === currentGlbUrl) return;
+		if (!url || url === originalGlbUrl || url === currentGlbUrl || isTabLocal(url)) return;
 		if (Array.isArray(lineage) && lineage.some((v) => v.glbUrl === url)) return;
 		onNewSource(url, document.getElementById('result-label')?.textContent?.trim() || '');
 	});

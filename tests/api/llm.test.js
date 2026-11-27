@@ -304,12 +304,15 @@ describe('llmComplete — a hung provider fails over within the cap, not the who
 
 		expect(out.provider).toBe('nvidia');
 		expect(out.text).toBe('served after failover');
-		expect(order).toEqual(['groq', 'nvidia']); // tried the stalled lane, then failed over
-		// Bounded by the per-provider cap (~4s), nowhere near the 30s budget.
-		expect(elapsed).toBeLessThan(9_000);
+		// Tried the stalled lane, then failed over. The stall skip is keyed by host
+		// AND model (2026-11-25), so Groq's second model (groq#120b) gets its own
+		// capped turn before NVIDIA; each attempt is bounded by the ~4s cap.
+		expect(order).toEqual(['groq', 'groq', 'nvidia']);
+		// Two capped stalls (~8s), nowhere near the 30s budget.
+		expect(elapsed).toBeLessThan(12_000);
 
 		delete process.env.LLM_PER_PROVIDER_TIMEOUT_MS;
-	}, 15_000);
+	}, 20_000);
 
 	// The NVIDIA free NIM lane queues under load and was observed hanging 25s while
 	// the reliable Vertex anchor sat one rung later. It carries a tight per-lane cap
@@ -374,10 +377,12 @@ describe('llmComplete — a stalled HOST is not retried once per key', () => {
 		process.env.LLM_PER_PROVIDER_TIMEOUT_MS = '4000';
 
 		const hits = [];
+		const orModels = [];
 		globalThis.fetch = vi.fn((url, opts) => {
 			const u = String(url);
 			if (u.includes(OPENROUTER_HOST)) {
 				hits.push('openrouter');
+				orModels.push(JSON.parse(opts.body).model);
 				return new Promise((_, reject) => {
 					opts.signal?.addEventListener('abort', () => {
 						reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
@@ -394,12 +399,15 @@ describe('llmComplete — a stalled HOST is not retried once per key', () => {
 		const out = await llm.llmComplete({ user: 'u', timeoutMs: 30_000 });
 
 		expect(out.provider).toBe('nvidia');
-		// The host was tried ONCE, not once per key.
-		expect(hits.filter((h) => h === 'openrouter')).toHaveLength(1);
-		expect(hits).toEqual(['openrouter', 'nvidia']);
+		// The stalled model was tried ONCE, not once per key: the skip is keyed by
+		// host and model (2026-11-25), so or-2 and or-3 never re-ask the stalled
+		// primary model. OpenRouter's alternate free models are distinct models
+		// and may each get one capped turn.
+		expect(new Set(orModels).size).toBe(orModels.length);
+		expect(hits.at(-1)).toBe('nvidia');
 
 		delete process.env.LLM_PER_PROVIDER_TIMEOUT_MS;
-	}, 15_000);
+	}, 25_000);
 
 	// An HTTP status is key-scoped, not host-scoped: a 402 means THIS key is out of
 	// credit, and the next key on the same host may be fine. Those siblings must
@@ -453,9 +461,11 @@ describe('llmComplete — a stalled HOST is not retried once per key', () => {
 
 		expect(out.provider).toBe('nvidia');
 		expect(out.text).toBe('anchor answered');
-		expect(hits).toEqual(['groq', 'nvidia']);
-		// The stalled lead was cut at roughly a third of the budget, not all of it.
-		expect(elapsed).toBeLessThan(8_000);
+		// Both Groq models stall (the skip is keyed by host and model since
+		// 2026-11-25); each is cut at its share, and the anchor still answers
+		// inside the 9s budget.
+		expect(hits).toEqual(['groq', 'groq', 'nvidia']);
+		expect(elapsed).toBeLessThan(9_000);
 	}, 15_000);
 
 	// Every rung reports itself, not just the last one: a chain that died because a

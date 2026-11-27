@@ -28,6 +28,8 @@ import { priceForAction } from './_lib/pricing/catalog.js';
 import { checkFeatureAccess } from './_lib/require-three.js';
 import { payToKeepEnabled, keepActionForTier } from './_lib/forge-quote.js';
 import { loadKeepableCreation, isCreationKept } from './_lib/forge-keep.js';
+import { ownerCredentials } from './_lib/forge-owner-credentials.js';
+import { isCreationOwner } from './_lib/forge-store.js';
 import { assertForgePurchase, redeemForgePurchase } from './_lib/forge-consumption-payment.js';
 
 const PAYMENT_ERROR_CODES = new Set(['bad_request', 'payment_invalid', 'payment_expired', 'payment_already_used']);
@@ -57,7 +59,13 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { error: 'invalid_creation', message: 'Pass creation_id as a valid creation id.' });
 	}
 
-	const creation = await loadKeepableCreation(creationId);
+	let creation = await loadKeepableCreation(creationId);
+	// A private model's file is for its maker alone. Anyone else, anonymous or
+	// signed in, gets the same answer as an id that does not exist.
+	if (creation?.visibility === 'private') {
+		const creds = await ownerCredentials(req, res);
+		if (!(await isCreationOwner({ id: creationId, ...creds }))) creation = null;
+	}
 	if (!creation) {
 		return json(res, 404, { error: 'creation_not_found', message: 'That generation is not finished or no longer exists.' });
 	}

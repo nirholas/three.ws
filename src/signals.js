@@ -10,6 +10,9 @@
 import { escapeHtml, fmtPct, compact } from './trader-format.js';
 import { fmtUsdc, epochLabel, publisherAvatarHtml } from './shared/signals-format.js';
 import { updateValue, flipReorder, setLiveDot } from './ui-juice.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const API = '/api/signals/marketplace';
 const SORTS = new Set(['edge', 'roi', 'hitrate', 'subscribers', 'newest']);

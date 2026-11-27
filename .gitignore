@@ -444,7 +444,14 @@ prompts/robinhood-chain/11-toolkit-cli.md
 !/OAI Select Tier Assets-20260716T190344Z-1-001.zip
 tests/openai-comarketing-language.test.js
 
-# scratch OTP relay file used by scripts/get-mixamo-token.mjs
+# stray scratch dump in the repo root
+/x
+
+# declined CoinGecko free-tier change (owner decision 2026-11-27), kept local only
+/api/_lib/market-data/attribution.js
+/tests/market-data-licensing.test.js
+
+# scratch OTP relay file from a retired Mixamo login script
 .mixamo-otp
 
 # local research datasets (large, regenerable; see datasets/*/README.md)
@@ -757,5 +764,3 @@ workers/model-panodepth/weights/
 docs/nvidia-apps-catalog/*.json
 docs/nvidia-apps-catalog/*.csv
 
-# Third-party X timelines pulled by scripts/x-user-timeline.mjs (regenerable, not ours to commit)
-data/x-research/

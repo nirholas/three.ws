@@ -379,6 +379,7 @@
 .nvl-details summary:focus-visible { outline: 2px solid var(--nv); outline-offset: 3px; }
 
 .nvl-muted { color: var(--muted); }
+.nvl-e2e { margin: 0.75rem 0 0; font-size: 0.9rem; line-height: 1.5; }
 .nvl-sr {
 	position: absolute;
 	width: 1px;

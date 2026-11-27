@@ -16,12 +16,12 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/agent-wallets.md` | no-open-work | shipped wallets reference |
 | `docs/agents-vs-avatars.md` | no-open-work | concept doc |
 | `docs/agi.md` | no-open-work | reference doc, no open work found |
-| `docs/agora.md` | order | [711](../711-plan-agora-citizens-daemon-deploy-and-liveness.md). daemon undeployed, trust grades open |
-| `docs/agora/tasks/00-INDEX.md` | order | [707](../707-plan-agora-fleet-render-animation-budget.md), [770](../770-plan-agora-cartographer-profession-reactivation.md). Index shows task 12 open and Cartographer deferred. |
+| `docs/agora.md` | order | [711](../../awaiting-owner/711-plan-agora-citizens-daemon-deploy-and-liveness.md). daemon undeployed, trust grades open |
+| `docs/agora/tasks/00-INDEX.md` | order | [707](../707-plan-agora-fleet-render-animation-budget.md), [770](../../awaiting-owner/770-plan-agora-cartographer-profession-reactivation.md). Index shows task 12 open and Cartographer deferred. |
 | `docs/agora/tasks/archive/01-verify-foundation.md` | shipped | Marked shipped in the index and present in the tree. |
 | `docs/agora/tasks/02-life-engine.md` | shipped | Marked shipped in the index and present in the tree. |
 | `docs/agora/tasks/03-task-supply.md` | shipped | Marked shipped in the index and present in the tree. |
-| `docs/agora/tasks/04-professions.md` | order | [770](../770-plan-agora-cartographer-profession-reactivation.md). Cartographer runner is complete but not in WORK_RUNNERS. |
+| `docs/agora/tasks/04-professions.md` | order | [770](../../awaiting-owner/770-plan-agora-cartographer-profession-reactivation.md). Cartographer runner is complete but not in WORK_RUNNERS. |
 | `docs/agora/tasks/archive/05-commons-scaffold.md` | shipped | Marked shipped in the index and present in the tree. |
 | `docs/agora/tasks/06-economy-visuals.md` | shipped | Marked shipped in the index and present in the tree. |
 | `docs/agora/tasks/archive/07-verify-and-passport.md` | shipped | Marked shipped in the index and present in the tree. |
@@ -85,10 +85,10 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/avatar-cli.md` | no-open-work | shipped CLI reference |
 | `docs/avatar-creation.md` | no-open-work | shipped creation guide |
 | `docs/avatar-engines.md` | no-open-work | engine comparison data page reference |
-| `docs/avatar-fidelity-program.md` | order | [712](../712-plan-avatar-parametric-body-type-reconstruction.md), [730](../730-plan-avatar-dense-identity-fit-rtx.md), [736](../736-plan-avatar-unseen-head-texture-synthesis.md). Tracks 0 and 1 and projective texturing shipped; Track 5, Track 3+4 and Track 2 imagery remain |
+| `docs/avatar-fidelity-program.md` | order | [712](../712-plan-avatar-parametric-body-type-reconstruction.md), [730](../730-plan-avatar-dense-identity-fit-rtx.md), [736](../../awaiting-owner/736-plan-avatar-unseen-head-texture-synthesis.md). Tracks 0 and 1 and projective texturing shipped; Track 5, Track 3+4 and Track 2 imagery remain |
 | `docs/avatar-inspector.md` | no-open-work | shipped inspector reference |
 | `docs/avatar-pipeline.md` | no-open-work | pipeline reference |
-| `docs/avatar-reconstruction.md` | order | [712](../712-plan-avatar-parametric-body-type-reconstruction.md), [730](../730-plan-avatar-dense-identity-fit-rtx.md), [736](../736-plan-avatar-unseen-head-texture-synthesis.md). roadmap rows v2 dense identity, v3 texture inpaint and v3 owned body are unbuilt |
+| `docs/avatar-reconstruction.md` | order | [712](../712-plan-avatar-parametric-body-type-reconstruction.md), [730](../730-plan-avatar-dense-identity-fit-rtx.md), [736](../../awaiting-owner/736-plan-avatar-unseen-head-texture-synthesis.md). roadmap rows v2 dense identity, v3 texture inpaint and v3 owned body are unbuilt |
 | `docs/avatar-studio.md` | no-open-work | shipped studio reference |
 | `docs/avatar-thumbnails.md` | no-open-work | operations reference for shipped crons and backfill script |
 | `docs/avatar-wardrobe.md` | no-open-work | shipped wardrobe reference |
@@ -201,7 +201,7 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/docs-world.md` | shipped | Feature reference for a live surface |
 | `docs/domains.md` | no-open-work | Domain reference, nothing outstanding |
 | `docs/draft-agent-mint.md` | shipped | Feature reference for a live surface |
-| `docs/drops.md` | order | [978](../978-plan-drops-onchain-core-collection-mint.md). Section Not yet wired: minting a drop on-chain; schema columns exist, nothing writes them |
+| `docs/drops.md` | order | [978](../../awaiting-owner/978-plan-drops-onchain-core-collection-mint.md). Section Not yet wired: minting a drop on-chain; schema columns exist, nothing writes them |
 | `docs/economy-heartbeat.md` | shipped | Reference for shipped economy loop |
 | `docs/economy-master.md` | shipped | Reference for shipped master wallet and rebalancer |
 | `docs/economy-solver.md` | shipped | Reference for shipped solver |
@@ -214,7 +214,7 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/engine-store-publishing.md` | owner-only | Unity, Godot and Fab store submissions are manual owner portal steps |
 | `docs/erc8004.md` | shipped | Reference; mainnet Validation Registry is an external deployment, secondary EVM chain |
 | `docs/erc8004/validation-attestation.md` | no-open-work | Design reference for the shipped validation attestation flow. |
-| `docs/event-markets-staking.md` | order | [973](../973-plan-event-markets-staking-devnet-proof-and-launch-kit.md). Built but not deployed to any cluster; buyback executor not built; owner steps are prose |
+| `docs/event-markets-staking.md` | order | [973](../../awaiting-owner/973-plan-event-markets-staking-devnet-proof-and-launch-kit.md). Built but not deployed to any cluster; buyback executor not built; owner steps are prose |
 | `docs/event-markets.md` | shipped | Core markets shipped; staking follow-up tracked by the staking order |
 | `docs/event-readiness/01-play-first-impression.md` | order | [256](../256-plan-play-meetup3-client-ux-audit.md). repeatable client audit pack not re-run against the current build before the 2026-11-06 meetup |
 | `docs/event-readiness/02-play-mobile.md` | order | [256](../256-plan-play-meetup3-client-ux-audit.md). repeatable client audit pack not re-run against the current build before the 2026-11-06 meetup |
@@ -232,8 +232,8 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/event-readiness/14-welcome-concierge.md` | order | [723](../723-plan-play-concierge-greeter-tour.md). no greeter NPC, persona or tour exists in src/game |
 | `docs/event-readiness/15-live-hype-feed.md` | shipped | src/game/activity-ticker.js and activity-feeds.js mounted in coincommunities.js |
 | `docs/event-readiness/16-invite-flow.md` | order | [717](../717-plan-play-invite-sheet-qr-og.md). no invite sheet, QR or share control in the HUD; OG card unverified |
-| `docs/event-readiness/17-plaza-live-show.md` | order | [704](../704-plan-play-plaza-live-show-mount-and-client.md). plaza-stage.js is unmounted and its lazy-imported plaza-stage-show.js does not exist |
-| `docs/event-readiness/18-coin-wars-portal.md` | order | [767](../767-plan-play-war-results-ticker-jumbotron.md). portal shipped; only the ticker row and jumbotron echo of war-result remain |
+| `docs/event-readiness/17-plaza-live-show.md` | order | [704](../../awaiting-owner/704-plan-play-plaza-live-show-mount-and-client.md). plaza-stage.js is unmounted and its lazy-imported plaza-stage-show.js does not exist |
+| `docs/event-readiness/18-coin-wars-portal.md` | order | [767](../../archive/767-plan-play-war-results-ticker-jumbotron.md). portal shipped; only the ticker row and jumbotron echo of war-result remain |
 | `docs/event-readiness/19-forge-props-live.md` | order | [253](../253-plan-play-forge-props-hologram-size-limits.md). no triangle or size ceiling, no per-world server limits, no hologram placement |
 | `docs/event-readiness/20-world-chat-scrollback.md` | order | [727](../727-plan-play-chat-scrollback-community-bridge.md). WalkRoom chat is relay only, no scrollback or community bridge |
 | `docs/event-readiness/21-party-system.md` | shipped | src/game/party.js and party.css |
@@ -246,7 +246,7 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/everything.md` | no-open-work | reference page for /everything |
 | `docs/examples.md` | no-open-work | examples gallery reference |
 | `docs/exit-lab.md` | no-open-work | shipped feature reference |
-| `docs/experiments-agent-launch-funnel.md` | order | [276](../949-plan-launch-funnel-default-coin-path.md). 2 of 788 agents launched; auto-draft and instrumentation missing |
+| `docs/experiments-agent-launch-funnel.md` | order | [276](../../awaiting-owner/949-plan-launch-funnel-default-coin-path.md). 2 of 788 agents launched; auto-draft and instrumentation missing |
 | `docs/experiments-autonomous-trading.md` | order | [763](../763-plan-sniper-experiment-judge-cost-and-exit-giveback.md). judge cost columns and giveback analysis missing |
 | `docs/experiments.md` | no-open-work | process doc for publishing experiments |
 | `docs/fact-check.md` | no-open-work | shipped feature reference |
@@ -255,7 +255,7 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/fee-bridge.md` | owner-only | held, not public by owner decision |
 | `docs/feedback.md` | no-open-work | shipped feature reference |
 | `docs/field.md` | no-open-work | shipped feature reference |
-| `docs/financial-controls.md` | order | [250](../250-plan-payments-withdrawal-send-idempotency.md), 257 (retired 2026-11-04), [274](../274-plan-payments-platform-fee-events-ledger.md), [722](../722-plan-payments-accounting-export-and-durable-ledgers.md), [758](../758-plan-payments-retention-kill-switch-and-alerting.md). open gap register items verified against code |
+| `docs/financial-controls.md` | order | [250](../250-plan-payments-withdrawal-send-idempotency.md), 257 (retired 2026-11-04), [274](../274-plan-payments-platform-fee-events-ledger.md), [722](../../awaiting-owner/722-plan-payments-accounting-export-and-durable-ledgers.md), [758](../758-plan-payments-retention-kill-switch-and-alerting.md). open gap register items verified against code |
 | `docs/first-contribution.md` | not-a-plan | contributor guide |
 | `docs/forge-background-generation.md` | no-open-work | shipped background job design |
 | `docs/forge-desktop.md` | no-open-work | shipped; apps/forge-desktop, cloudbuild.yaml and live /releases/forge/release.json; signing certs are owner secrets already wired |
@@ -280,8 +280,8 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/github-trending-patterns.md` | owner-only | remaining items are owner-only or held (PAT swap, translation review, SDK move) |
 | `docs/glance.md` | no-open-work | shipped widget reference |
 | `docs/glasses.md` | covered-by-existing:docs/glasses/meta-ray-ban-display.md | lanes 2 and 3 tracked in batch b13 doc |
-| `docs/glasses/meta-ray-ban-display.md` | order | [739](../739-plan-glasses-meta-display-lens-web-app.md), [982](../982-plan-glasses-native-wearables-toolkit-lane.md). Phased build plan; /glass does not exist yet; phase 6 native lane gated on hardware. |
-| `docs/glasses/research.md` | order | [739](../739-plan-glasses-meta-display-lens-web-app.md). Research input for the lens app order. |
+| `docs/glasses/meta-ray-ban-display.md` | order | [739](../../awaiting-owner/739-plan-glasses-meta-display-lens-web-app.md), [982](../../awaiting-owner/982-plan-glasses-native-wearables-toolkit-lane.md). Phased build plan; /glass does not exist yet; phase 6 native lane gated on hardware. |
+| `docs/glasses/research.md` | order | [739](../../awaiting-owner/739-plan-glasses-meta-display-lens-web-app.md). Research input for the lens app order. |
 | `docs/globe.md` | no-open-work | shipped feature reference |
 | `docs/google-adk.md` | no-open-work | integration reference |
 | `docs/google-cloud-community-post.md` | not-a-plan | published community post |
@@ -293,7 +293,7 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/guards.md` | no-open-work | guard catalog reference |
 | `docs/haunted-graveyard.md` | no-open-work | shipped feature reference |
 | `docs/herald.md` | no-open-work | shipped feature reference |
-| `docs/hold-to-access.md` | order | [715](../715-plan-three-hold-activate-worlds-private.md), [728](../728-plan-three-hold-activate-early-drops-and-name-dibs.md). five entitlements still enforced:false |
+| `docs/hold-to-access.md` | order | [715](../../awaiting-owner/715-plan-three-hold-activate-worlds-private.md), [728](../728-plan-three-hold-activate-early-drops-and-name-dibs.md). five entitlements still enforced:false |
 | `docs/home-assistant-community-post.md` | not-a-plan | published community post |
 | `docs/home-households.md` | retired-by-owner | Home campaign |
 | `docs/home-plans.md` | retired-by-owner | Home campaign plans/entitlements order 313 |
@@ -328,7 +328,7 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/ibm-community-recap-nichxbt.md` | not-a-plan | event recap content |
 | `docs/ibm-community-thread.md` | not-a-plan | published thread copy |
 | `docs/ibm-community.md` | no-open-work | post catalog and cadence reference |
-| `docs/ibm-event-offer-map.md` | order | [279](../279-plan-ibm-granite-guardian-lane-live.md), [741](../741-plan-play-world-moderation-mute-kick-report.md). Granite lane dark in prod and no mute/kick/ban in /play |
+| `docs/ibm-event-offer-map.md` | order | [279](../279-plan-ibm-granite-guardian-lane-live.md), [741](../../awaiting-owner/741-plan-play-world-moderation-mute-kick-report.md). Granite lane dark in prod and no mute/kick/ban in /play |
 | `docs/ibm-meetup-3/event-form.md` | owner-only | Event form to be filled by the owner. |
 | `docs/ibm-meetup-3/jessica-article.md` | not-a-plan | Event and marketing copy. |
 | `docs/ibm-meetup-3/README.md` | not-a-plan | Event and marketing copy. |
@@ -341,9 +341,9 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/image-to-3d.md` | no-open-work | shipped feature reference |
 | `docs/in-game-economy.md` | no-open-work | shipped feature reference |
 | `docs/inference-billing.md` | no-open-work | shipped spend cap and top-up reference |
-| `docs/inference-node-operator.md` | order | [755](../755-plan-inference-network-buyer-endpoint-and-earnings.md). no buyer enqueues jobs and no earnings ledger |
+| `docs/inference-node-operator.md` | order | [755](../../awaiting-owner/755-plan-inference-network-buyer-endpoint-and-earnings.md). no buyer enqueues jobs and no earnings ledger |
 | `docs/integrations.md` | no-open-work | reference |
-| `docs/internal/fable-playbook.md` | order | [716](../716-plan-forge-share-distribution-funnel-metrics.md), [731](../731-plan-diorama-text-to-microgame-win-rules.md). Playbook says instrument the shipped funnel first; microgame is Tier 2 item 8. |
+| `docs/internal/fable-playbook.md` | order | [716](../716-plan-forge-share-distribution-funnel-metrics.md), [731](../../awaiting-owner/731-plan-diorama-text-to-microgame-win-rules.md). Playbook says instrument the shipped funnel first; microgame is Tier 2 item 8. |
 | `docs/internal/MAINNET-TEST-2026-07-03.md` | shipped | Historical test report; blocking outage resolved per its own status note. |
 | `docs/internal/README.md` | no-open-work | Index and handling rules for the internal tree. |
 | `docs/introduction.md` | no-open-work | reference |
@@ -401,12 +401,12 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/modly.md` | no-open-work | shipped feature reference |
 | `docs/money-feed.md` | no-open-work | reference |
 | `docs/money-flow-map.md` | no-open-work | reference |
-| `docs/money-map.md` | order | [966](../966-plan-token-rail-receiver-wallets-preflight.md). THREE_TREASURY_WALLET and THREE_REWARDS_WALLET unset in production |
+| `docs/money-map.md` | order | [966](../../awaiting-owner/966-plan-token-rail-receiver-wallets-preflight.md). THREE_TREASURY_WALLET and THREE_REWARDS_WALLET unset in production |
 | `docs/monitor.md` | no-open-work | reference |
 | `docs/motion-swap.md` | no-open-work | reference |
 | `docs/mpp-solana.md` | no-open-work | reference |
 | `docs/multi-agent.md` | no-open-work | reference |
-| `docs/native-launchpad.md` | order | [718](../718-plan-launchpad-native-coin-page-and-sol-buy.md). no native coin page and no SOL one-click buy; mainnet config creation is owner-gated |
+| `docs/native-launchpad.md` | order | [718](../../awaiting-owner/718-plan-launchpad-native-coin-page-and-sol-buy.md). no native coin page and no SOL one-click buy; mainnet config creation is owner-gated |
 | `docs/native-widgets.md` | no-open-work | reference |
 | `docs/news-rights.md` | no-open-work | reference |
 | `docs/notifications.md` | order | [286](../286-plan-notifications-page-category-tab-parity.md). client TYPE_CATEGORY drifted from the 13-category server map |
@@ -420,8 +420,8 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/nvidia-models.md` | no-open-work | reference for shipped NIM lanes and free-first ladder |
 | `docs/nvidia-nemotron-ask-the-experts-questions.md` | not-a-plan | question prompts for an NVIDIA panel, external posting |
 | `docs/nvidia-nemotron-spotlight.md` | not-a-plan | draft post for NVIDIA, owner-gated publishing |
-| `docs/nvidia-ngc-listing.md` | order | [981](../981-plan-nvidia-ngc-trellis-image-validation.md). Gate 2 GPU validation, two-stage build and staging script remain; legal agreement is owner |
-| `docs/nvidia-visibility-map.md` | order | [981](../981-plan-nvidia-ngc-trellis-image-validation.md). NGC build work becomes an order; the rest is owner outreach, social posting and portal work |
+| `docs/nvidia-ngc-listing.md` | order | [981](../../awaiting-owner/981-plan-nvidia-ngc-trellis-image-validation.md). Gate 2 GPU validation, two-stage build and staging script remain; legal agreement is owner |
+| `docs/nvidia-visibility-map.md` | order | [981](../../awaiting-owner/981-plan-nvidia-ngc-trellis-image-validation.md). NGC build work becomes an order; the rest is owner outreach, social posting and portal work |
 | `docs/object-library.md` | no-open-work | shipped feature reference |
 | `docs/okx-marketplace.md` | covered-by-existing:913-okx-ai-04-e2e-real-payment-test.md | funded end-to-end settlement on X Layer and legacy rails not yet demonstrated |
 | `docs/onboarding-tier.md` | no-open-work | shipped nav/homepage tier behavior |

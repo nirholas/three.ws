@@ -61,10 +61,12 @@ import { imageModelChain, isModelNotFound } from './image-model.js';
 import { persistImageBase64, looksLikeImageBytes } from './image-persist.js';
 import { subjectNegativePrompt } from '../forge-enhance.js';
 import { isProviderRefusal } from './ai-image-lanes.js';
-import { textToImage, ladderBudgetMs, laneTimeoutMs, VERTEX_IMAGE_COOLDOWN_KEY } from '../_mcp3d/text-to-image.js';
+import { textToImage, ladderBudgetMs, laneTimeoutMs } from '../_mcp3d/text-to-image.js';
 import { parseJsonLoose } from './vision.js';
 import { getRedis } from './redis.js';
 import { markProviderCooldown, providersInCooldown, AUTH_COOLDOWN_SECONDS } from './provider-health.js';
+import { vertexBreakerGate, recordVertexSuccess, recordVertexFailure, classifyVertexFailure, parseRetryAfter } from './vertex-image-breaker.js';
+import { validateGeneratedImage } from './image-validate.js';
 import { generateXaiImage, xaiImageConfigured, XaiImageError } from './xai-image.js';
 
 // Reference-set cache: the SAME enhanced prompt (already director-rewritten,
@@ -199,6 +201,40 @@ const VERTEX_REQUEST_CEILING_MS = 60_000;
 function msLeft(deadline) {
 	return deadline ? deadline - Date.now() : VERTEX_REQUEST_CEILING_MS;
 }
+// The token mint is its own failure class for the breaker: a metadata-server
+// blip or missing credentials must cool the lane like any other outage, instead
+// of every request re-running the mint (three bounded metadata attempts) first.
+async function mintVertexToken() {
+	try {
+		return await getGcpAccessToken();
+	} catch (err) {
+		throw Object.assign(new Error(`GCP access token unavailable: ${err?.message || err}`), {
+			code: err?.code,
+			vertexStage: 'token',
+		});
+	}
+}
+
+// A non-2xx Vertex answer, with Google's parsed error body and any stated
+// Retry-After kept on the error so the breaker can classify it precisely
+// (billing vs permission vs quota) and honour the stated quota reset.
+function vertexHttpError(res, detail) {
+	let body = null;
+	try {
+		body = JSON.parse(detail);
+	} catch {
+		body = null;
+	}
+	const message = body?.error?.message || detail;
+	const err = Object.assign(new Error(`Vertex reference image returned ${res.status}: ${String(message).slice(0, 200)}`), {
+		providerStatus: res.status,
+		providerBody: body,
+		retryAfterSeconds: parseRetryAfter(res.headers?.get?.('retry-after')),
+	});
+	if (res.status === 429) err.code = 'rate_limited';
+	return err;
+}
+
 // Walks the model chain (primary, then the retired id) and moves on ONLY when
 // Vertex says the id is not served; any other failure is final for this lane.
 async function generateViaVertex({ instruction, aspectRatio, deadline = null }) {
@@ -222,7 +258,7 @@ async function generateViaVertexModel({ instruction, aspectRatio, deadline, mode
 	const endpoint =
 		`${aiplatformHost(location)}/v1/projects/${project}` +
 		`/locations/${location}/publishers/google/models/${model}:generateContent`;
-	const token = await getGcpAccessToken();
+	const token = await mintVertexToken();
 
 	const request = async (withSize) => {
 		const imageConfig = withSize
@@ -249,29 +285,30 @@ async function generateViaVertexModel({ instruction, aspectRatio, deadline, mode
 			if (/imageSize|imageConfig/i.test(detail) && msLeft(deadline) > 5_000) {
 				res = await request(false);
 			} else {
-				throw Object.assign(new Error(`Vertex reference image 400: ${detail.slice(0, 200)}`), {
-					providerStatus: 400,
-				});
+				throw vertexHttpError(res, detail);
 			}
 		}
-		if (!res.ok) {
-			const detail = await res.text().catch(() => '');
-			const err = Object.assign(
-				new Error(`Vertex reference image returned ${res.status}: ${detail.slice(0, 200)}`),
-				{ providerStatus: res.status },
-			);
-			if (res.status === 429) err.code = 'rate_limited';
-			throw err;
-		}
+		if (!res.ok) throw vertexHttpError(res, await res.text().catch(() => ''));
 		const data = await res.json();
 		const parts = data?.candidates?.[0]?.content?.parts || [];
 		const imgPart = parts.find((p) => p?.inlineData?.data);
 		const b64 = imgPart?.inlineData?.data;
 		if (!b64) {
+			// A blocked prompt answers 200 with promptFeedback.blockReason and no
+			// candidates; a blocked output carries a finishReason instead.
 			const reason = data?.candidates?.[0]?.finishReason;
-			throw new Error(`Vertex reference image produced no image${reason ? ` (finishReason: ${reason})` : ''}`);
+			const blocked = data?.promptFeedback?.blockReason;
+			const why = reason ? ` (finishReason: ${reason})` : blocked ? ` (blockReason: ${blocked})` : '';
+			throw Object.assign(new Error(`Vertex reference image produced no image${why}`), { providerBody: data, vertexAnswered: true });
 		}
-		return { b64, mime: imgPart.inlineData.mimeType || 'image/png', model: `vertex-ai/${model}` };
+		// A 200 is not proof of a usable reference: a blank, tiny or undecodable
+		// image would be reconstructed into garbage on the GPU. Reject it here so
+		// the step falls through to the ladder like any other failure.
+		const mime = imgPart.inlineData.mimeType || 'image/png';
+		await validateGeneratedImage(b64).catch((err) => {
+			throw Object.assign(err, { vertexAnswered: true });
+		});
+		return { b64, mime, model: `vertex-ai/${model}` };
 	};
 
 	try {
@@ -284,7 +321,7 @@ async function generateViaVertexModel({ instruction, aspectRatio, deadline, mode
 		// than a second attempt at this lane. Refusals and HTTP errors re-throw
 		// unchanged so genuine blocks and outages still fail fast.
 		const noImage = /produced no image/i.test(String(err?.message || ''));
-		if (!noImage || isProviderRefusal(err) || msLeft(deadline) < 10_000) throw err;
+		if (!noImage || isProviderRefusal(err) || classifyVertexFailure(err) === 'safety' || msLeft(deadline) < 10_000) throw err;
 		return await attempt();
 	}
 }
@@ -524,28 +561,37 @@ export async function generateReferenceImage(
 		}
 	}
 
-	// A project-wide billing hold or safety block fails this lane identically on
-	// every call until ops fixes it. Share the breaker with text-to-image.js's
-	// own Vertex rung (VERTEX_IMAGE_COOLDOWN_KEY): either call site marking it
-	// silences both for AUTH_COOLDOWN_SECONDS, instead of this step paying the
-	// full Vertex timeout only to fall through to a textToImage() that pays it
-	// again for the exact same failure.
-	const vertexCooling =
-		vertexImageEnabled() && (await providersInCooldown([VERTEX_IMAGE_COOLDOWN_KEY])).has(VERTEX_IMAGE_COOLDOWN_KEY);
-	if (vertexImageEnabled() && !vertexCooling) {
+	// The Vertex image breaker (api/_lib/vertex-image-breaker.js) classifies
+	// every failure and parks the lane for its class: a billing hold or missing
+	// permission for minutes, a quota for Google's stated reset, an outage
+	// briefly. While parked this step makes no call to Vertex and goes straight
+	// to the ladder; after the window exactly one request probes. The breaker is
+	// shared with text-to-image.js's own Vertex rung, so one refusal silences
+	// both call sites.
+	const gate = vertexImageEnabled() ? await vertexBreakerGate() : null;
+	if (gate && !gate.allow) {
+		console.warn(
+			`[forge-reference-image] vertex lane skipped (${gate.probing ? 'probe in flight' : `cooling, class=${gate.state?.kind || 'unknown'}`}), falling through`,
+		);
+	} else if (gate) {
+		const generate = async (args) => {
+			try {
+				const out = await generateViaVertex(args);
+				await recordVertexSuccess(gate);
+				return out;
+			} catch (err) {
+				await recordVertexFailure(gate, err);
+				throw err;
+			}
+		};
 		try {
-			const result = await runArtDirectedLane({ ...lane, generate: generateViaVertex, laneName: 'vertex-reference', ceilingMs: VERTEX_REQUEST_CEILING_MS });
+			const result = await runArtDirectedLane({ ...lane, generate, laneName: 'vertex-reference', ceilingMs: VERTEX_REQUEST_CEILING_MS });
 			await putCachedReference(cacheKey, result);
 			return { ...result, lane: 'vertex-reference' };
 		} catch (err) {
-			// Any Vertex failure (unconfigured token, safety block, throttle, tier
-			// change) degrades to the existing chain - the reference image still gets
-			// made, just on the prior path. Warn, don't error.
-			const status = err?.providerStatus;
-			if (status === 401 || status === 402 || status === 403) {
-				markProviderCooldown(VERTEX_IMAGE_COOLDOWN_KEY, AUTH_COOLDOWN_SECONDS, 'auth').catch(() => {});
-			}
-			console.warn(`[forge-reference-image] vertex lane failed, falling through: ${err?.message}`);
+			// Any Vertex failure degrades to the existing chain: the reference image
+			// still gets made, just on the prior path. Warn, don't error.
+			console.warn(`[forge-reference-image] vertex lane failed, falling through (class=${err?.vertexFailureKind || 'unknown'}): ${err?.message}`);
 		}
 	}
 
