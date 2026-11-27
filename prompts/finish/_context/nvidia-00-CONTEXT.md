@@ -1,8 +1,8 @@
 # nvidia campaign: shared context
 
-Every `prompts/finish/8NN-nvidia-*.md` work order (851 to 877) names this file in its first lines. Read it before step 0. CLAUDE.md overrides everything here.
+Every `prompts/finish/8NN-nvidia-*.md` work order (851 to 879) names this file in its first lines. Read it before step 0. CLAUDE.md overrides everything here.
 
-The campaign builds on three.ws's NVIDIA Inception membership (accepted July 2026, announced 2026-07-20). Its orders (19 filed 2026-11-16, 870 to 877 added 2026-11-26 from [the showcase research](../../../docs/nvidia-showcase-research.md)) turn membership into things NVIDIA can see, verify and reshare: current NVIDIA models in every lane, NVIDIA acceleration technology moved from "under evaluation" to "running in production", OpenUSD and Omniverse interop, and a digital-human demo that survives a conference floor. **They are independent by design: all of them can run at the same time in separate chats.** No order waits on another, and no order may assume another has landed. If you notice work from a sibling order on disk, reuse it when it fits, but never require it.
+The campaign builds on three.ws's NVIDIA Inception membership (accepted July 2026, announced 2026-07-20). Its orders (19 filed 2026-11-16, 870 to 879 added 2026-11-26 from [the showcase research](../../../docs/nvidia-showcase-research.md)) turn membership into things NVIDIA can see, verify and reshare: current NVIDIA models in every lane, NVIDIA acceleration technology moved from "under evaluation" to "running in production", OpenUSD and Omniverse interop, and a digital-human demo that survives a conference floor. **They are independent by design: all of them can run at the same time in separate chats.** No order waits on another, and no order may assume another has landed. If you notice work from a sibling order on disk, reuse it when it fits, but never require it.
 
 ## Facts every order needs
 
