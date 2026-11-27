@@ -124,3 +124,13 @@ never distributed.
 | `HoloPart completed no usable parts from this mesh` | every decoded part came back empty | retry; if persistent, check the input parts are each a coherent, non-degenerate shape |
 | `pipeline unavailable: ...` / `pipeline not ready` | weight load failed or is still in progress | check `/health`'s `load_error`; retry once the instance reports ready |
 | `internal error (ref <id>)` | anything unexpected | grep the service logs for the correlation id |
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** Restyle Studio "Regenerate part" through `api/forge-holopart.js` (mode `holopart`).
+- **Production:** Not wired: `MODEL_HOLOPART_URL` is unset, so the catalog reports `tools.holopart.available: false` and Restyle hides the button.
+- **GPU and memory:** 1 x NVIDIA L4, 4 vCPU, 16 GiB.
+- **Cold start:** The port opens at once and the pipeline loads in the background from weights staged in `gs://three-ws-model-weights`; `/health` reports not ready and jobs wait until it finishes. Not timed on 2026-11-27: timing it would wake the GPU. Scales to zero (repo default `_MIN_INSTANCES` is 0).
+- **Deploy:** `gcloud builds submit --config workers/model-holopart/cloudbuild.yaml .` (see Deploy above), then set `MODEL_HOLOPART_URL` on `three-ws-api`.

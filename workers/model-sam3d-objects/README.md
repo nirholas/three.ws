@@ -87,3 +87,13 @@ unconfirmed.
 SAM License, see the LICENSE copied beside the weights. Use must comply with
 Trade Controls; the platform endpoint refuses requests from comprehensively
 sanctioned territories before queueing.
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** Photo to scene objects through `api/forge-scene-objects.js` (mode `sam3d`).
+- **Production:** Not wired: `MODEL_SAM3D_URL` is unset. The catalog reports `tools.sam3d.available: false`, and the AR photo-scene page already checks `/api/forge-scene-objects?status` before offering it.
+- **GPU and memory:** 1 x NVIDIA RTX PRO 6000, 20 vCPU, 80 GiB (`_GPU_TYPE`, `_CPU`, `_MEMORY` in `cloudbuild.yaml`).
+- **Cold start:** `entrypoint.sh` copies the staged checkpoints from the weights mount into the image path, then the port opens and the pipeline loads in the background. Not timed on 2026-11-27: timing it would wake the GPU. Scales to zero (repo default `_MIN_INSTANCES` is 0).
+- **Deploy:** `gcloud builds submit --config workers/model-sam3d-objects/cloudbuild.yaml --substitutions=SHORT_SHA=manual$(date +%s) .`, then set `MODEL_SAM3D_URL`.

@@ -163,3 +163,13 @@ NVIDIA L4 (CUDA 12.8), 8 vCPU / 32 GiB. Frames stay in host RAM and are moved to
 the GPU one window at a time, so peak VRAM tracks the window, not the clip. For
 long clips, lower `fps`, raise `keyframe_interval`, or use `mode: "windowed"`
 with a smaller `window_size`.
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** Video to 3D scene on the scene-capture page (`GCP_VIDEO2SCENE_URL`, mode `video2scene`).
+- **Production:** Not wired: `GCP_VIDEO2SCENE_URL` is unset. The scene-capture page has no availability check yet (recorded in `docs/ops/gcp-model-workers.md`).
+- **GPU and memory:** 1 x NVIDIA L4, 8 vCPU, 32 GiB.
+- **Cold start:** The streaming model preloads in the lifespan before the port answers, so a cold start includes the checkpoint load. Not timed on 2026-11-27: timing it would wake the GPU. Scales to zero (repo default `_MIN_INSTANCES` is 0).
+- **Deploy:** `gcloud builds submit --config workers/model-video2scene/cloudbuild.yaml .` (see Deploy above), then set `GCP_VIDEO2SCENE_URL`.

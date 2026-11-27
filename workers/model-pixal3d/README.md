@@ -240,3 +240,13 @@ Known limits:
 Related: [`../model-trellis2/README.md`](../model-trellis2/README.md) (the
 default, non-fidelity lane), [`../../docs/forge-pipeline.md`](../../docs/forge-pipeline.md),
 [`../../docs/ops/gcp-model-workers.md`](../../docs/ops/gcp-model-workers.md).
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** The `pixal3d` image to 3D engine (mode `pixal3d`).
+- **Production:** Wired: `MODEL_PIXAL3D_URL` is set. Over the 7 days to 2026-11-27 the lane finished 1 job and failed 8 (11%), so it is not a protected lane.
+- **GPU and memory:** 1 x NVIDIA L4, 8 vCPU, 32 GiB.
+- **Cold start:** The port opens at once and the weights stage in the background; the first request after idle pays the weight stream and pipeline load, and the keep-warm cron does not warm this lane. Not timed on 2026-11-27: timing it would wake the GPU. Scales to zero (repo default `_MIN_INSTANCES` is 0).
+- **Deploy:** `gcloud builds submit --config workers/model-pixal3d/cloudbuild.yaml .` (see Deploy above).

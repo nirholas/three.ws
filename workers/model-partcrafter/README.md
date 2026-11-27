@@ -179,3 +179,13 @@ the same framing step on a permissively licensed model.
 | `PartCrafter decoded no usable parts from this image` | every decoded part was empty | retry with a clearer, more separable subject, or a lower `num_parts` |
 | `pipeline unavailable: ...` / `pipeline not ready` | weight load failed or is still in progress | check `/health`'s `load_error`; retry once the instance reports ready |
 | `internal error (ref <id>)` | anything unexpected | grep the service logs for the correlation id |
+
+## Fleet facts (2026-11-27)
+
+Checked against the code and the `three-ws-api` service env for the Forge fleet audit (`docs/ops/gcp-model-workers.md`).
+
+- **Serves:** Part-aware image to 3D (`MODEL_PARTCRAFTER_URL`, mode `partcrafter`).
+- **Production:** Not wired: `MODEL_PARTCRAFTER_URL` is unset, so the catalog reports the engine as not configured and the page does not offer it.
+- **GPU and memory:** 1 x NVIDIA L4, 4 vCPU, 16 GiB.
+- **Cold start:** The port opens at once and the pipeline loads in the background from weights staged in `gs://three-ws-model-weights`; jobs wait for it. Not timed on 2026-11-27: timing it would wake the GPU. Scales to zero (repo default `_MIN_INSTANCES` is 0).
+- **Deploy:** `gcloud builds submit --config workers/model-partcrafter/cloudbuild.yaml .` (see Deploy above), then set `MODEL_PARTCRAFTER_URL`.
