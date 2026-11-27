@@ -4,11 +4,13 @@
 //   (b) slamming a single provider's account quota in a burst, and
 //   (c) paying GPU cost N times over for one identical, already-in-flight request.
 //
-// All are best-effort and FAIL OPEN: when Upstash Redis is absent (local/dev) or a
-// command errors, every primitive degrades to "allow / no-op" so generation keeps
-// working. They are protective throttles, not correctness gates — losing them costs
-// efficiency under load, never a wrong result. (Contrast the cost/money limiters in
-// rate-limit.js, which deliberately fail CLOSED.)
+// All FAIL OPEN, but never unbounded: when Upstash Redis is absent (local/dev) or a
+// command errors, the caps and pacing fall back to the same limits held per
+// instance in memory, so generation keeps working and one instance still cannot
+// stampede a lane or a provider. Losing Redis loses fleet-wide coordination (each
+// instance enforces its own copy of the cap), never the cap itself. Coalescing
+// simply stops sharing jobs. (Contrast the cost/money limiters in rate-limit.js,
+// which deliberately fail CLOSED.)
 //
 // One shared Redis client (redis.js) — never construct another here; per-module
 // clients are what caused the June 2026 quota blowout.
@@ -45,7 +47,14 @@ const INFLIGHT_TTL_S = 360; // ~ the longest a generation stays pollable end-to-
 // came back byte-identical. That also silently defeated Refine, which replays a
 // job's seed one tier up. A null option keeps the key identical to a request that
 // never sent options, so existing callers coalesce exactly as before.
-export function forgeRequestHash({ path, tier, backend, prompt, images, options }) {
+//
+// `owner` scopes the fingerprint to whoever may see the result. A private or
+// unlisted generation belongs to one person; coalescing it across people handed
+// the second person the first person's job, and with it their model. The call
+// site passes `user:<id>` (or the browser / IP when signed out) for those, and
+// the literal 'public' only for a request that asked to be public, so identical
+// public work is still shared and private work never is.
+export function forgeRequestHash({ path, tier, backend, prompt, images, options, owner }) {
 	const tierId = typeof tier === 'string' ? tier : tier?.id || '';
 	const imgs = Array.isArray(images) ? images.filter(Boolean).slice().sort() : [];
 	const opt = options || {};
@@ -60,6 +69,7 @@ export function forgeRequestHash({ path, tier, backend, prompt, images, options 
 		opt.textureSize ?? null,
 		opt.targetPolycount ?? null,
 		...(opt.resolution ? [opt.resolution] : []),
+		...(owner ? [`owner:${owner}`] : []),
 	]);
 	return createHash('sha256').update(basis).digest('hex').slice(0, 32);
 }
@@ -184,20 +194,50 @@ export async function laneOccupancy(backendIds = []) {
 
 const SLOT_PREFIX = 'fc:slot:';
 
+// Evict expired leases, count live holders and take a lease in one atomic step.
+// As separate commands, 50 simultaneous callers all read a count of 0 before any
+// of them wrote, and all 50 were admitted past a cap of 12. The tag comment names
+// the script for tests/api/forge-scale-concurrency.test.js.
+// KEYS[1] = lease set; ARGV = now, max, expiresAt, token, keyTtlMs. Returns 1|0.
+const SLOT_ACQUIRE_LUA = `-- forge:slot-acquire
+redis.call('ZREMRANGEBYSCORE', KEYS[1], 0, ARGV[1])
+if redis.call('ZCARD', KEYS[1]) >= tonumber(ARGV[2]) then return 0 end
+redis.call('ZADD', KEYS[1], ARGV[3], ARGV[4])
+redis.call('PEXPIRE', KEYS[1], ARGV[5])
+return 1`;
+
+// Per-instance leases, used when Redis is absent or failing: the same cap, held
+// by this instance alone.
+const memorySlots = new Map(); // name -> Map(token -> expiresAt)
+
+function acquireMemorySlot(name, { max, ttlMs }) {
+	const now = Date.now();
+	let held = memorySlots.get(name);
+	if (!held) memorySlots.set(name, (held = new Map()));
+	for (const [t, exp] of held) if (exp <= now) held.delete(t);
+	if (held.size >= max) return { ok: false, release: async () => {} };
+	const token = randomUUID();
+	held.set(token, now + ttlMs);
+	return {
+		ok: true,
+		release: async () => {
+			held.delete(token);
+		},
+	};
+}
+
 export async function acquireBlockingSlot(name, { max, ttlMs }) {
-	const noop = { ok: true, release: async () => {} };
-	if (!redis) return noop; // dev / no-redis: single instance, no fan-out to protect
+	if (!redis) return acquireMemorySlot(name, { max, ttlMs });
 	const key = `${SLOT_PREFIX}${name}`;
 	const token = `${Date.now()}-${randomUUID()}`;
 	const now = Date.now();
 	try {
-		// Evict expired leases, then count live holders.
-		await redis.zremrangebyscore(key, 0, now);
-		const live = await redis.zcard(key);
-		if (live >= max) return { ok: false, release: async () => {} };
-		await redis.zadd(key, { score: now + ttlMs, member: token });
-		// Safety expiry on the whole set so an idle gate doesn't linger forever.
-		await redis.expire(key, Math.ceil(ttlMs / 1000) + 10);
+		const won = await redis.eval(
+			SLOT_ACQUIRE_LUA,
+			[key],
+			[String(now), String(max), String(now + ttlMs), token, String(ttlMs + 10_000)],
+		);
+		if (Number(won) !== 1) return { ok: false, release: async () => {} };
 		let released = false;
 		return {
 			ok: true,
@@ -207,14 +247,13 @@ export async function acquireBlockingSlot(name, { max, ttlMs }) {
 				try {
 					await redis.zrem(key, token);
 				} catch {
-					/* the TTL will reclaim it */
+					/* the lease expiry reclaims it */
 				}
 			},
 		};
 	} catch {
-		// Redis hiccup → fail open. Under an outage we'd rather serve the lane than
-		// block every free generation behind a blind gate.
-		return noop;
+		// Redis hiccup: hold the cap on this instance instead of dropping it.
+		return acquireMemorySlot(name, { max, ttlMs });
 	}
 }
 
@@ -228,16 +267,29 @@ export async function acquireBlockingSlot(name, { max, ttlMs }) {
 
 const SUBMIT_PREFIX = 'fc:psub:';
 
+// Per-instance windows, used when Redis is absent or failing.
+const memoryWindows = new Map(); // `${provider}:${bucket}` -> count
+
+function memorySubmitAllowed(provider, bucket, limit) {
+	const key = `${provider}:${bucket}`;
+	for (const k of memoryWindows.keys()) {
+		if (k.startsWith(`${provider}:`) && k !== key) memoryWindows.delete(k);
+	}
+	const n = (memoryWindows.get(key) || 0) + 1;
+	memoryWindows.set(key, n);
+	return n <= limit;
+}
+
 export async function providerSubmitAllowed(provider, { limit, windowS }) {
-	if (!redis) return true;
 	const bucket = Math.floor(Date.now() / (windowS * 1000));
+	if (!redis) return memorySubmitAllowed(provider, bucket, limit);
 	const key = `${SUBMIT_PREFIX}${provider}:${bucket}`;
 	try {
 		const n = await redis.incr(key);
 		if (n === 1) await redis.expire(key, windowS + 1);
 		return n <= limit;
 	} catch {
-		return true;
+		return memorySubmitAllowed(provider, bucket, limit);
 	}
 }
 
@@ -260,8 +312,8 @@ export async function providerSubmitAllowed(provider, { limit, windowS }) {
 // concurrent reservers can't both claim the same slot. A reservation is only
 // taken when the wait fits the caller's budget — an over-budget request leaves
 // the bucket untouched and is told to retry, so a rejected caller never steals a
-// slot from one that will actually wait for it. Fail-OPEN without Redis (dev /
-// outage): no bucket to coordinate, so every caller proceeds immediately.
+// slot from one that will actually wait for it. Without Redis (dev / outage) the
+// same GCRA runs per instance in memory: callers still proceed, still paced.
 
 const RATE_PREFIX = 'fc:rate:';
 
@@ -272,7 +324,8 @@ const RATE_PREFIX = 'fc:rate:';
 // lets an idle bucket admit a burst back-to-back. The reservation advances tat to
 // max(now, tat) + interval, and is only taken when the wait fits the budget; the
 // key's TTL tracks the live reservation horizon so an idle bucket self-clears.
-const RATE_RESERVE_LUA = `local now = tonumber(ARGV[1])
+const RATE_RESERVE_LUA = `-- forge:rate-reserve
+local now = tonumber(ARGV[1])
 local interval = tonumber(ARGV[2])
 local tau = tonumber(ARGV[3])
 local maxWait = tonumber(ARGV[4])
@@ -294,26 +347,37 @@ return {1, math.floor(waitMs)}`;
 // (`burst`-deep). Returns { ok, waitMs }: when ok, the caller sleeps `waitMs`
 // (0..maxWaitMs) then submits — the slot is reserved. When !ok the queue is
 // deeper than maxWaitMs; no slot is taken and `waitMs` is the time until one
-// would open, so the caller can surface a retry hint. Fail-open (ok, 0) on a
-// missing or erroring Redis — pacing is a protective throttle, never a gate.
+// would open, so the caller can surface a retry hint. A missing or erroring Redis
+// paces per instance with the same arithmetic instead of waving everyone through.
+const memoryTat = new Map(); // provider -> theoretical arrival time (ms)
+
+function reserveMemoryRateSlot(provider, { now, interval, tau, maxWait }) {
+	const tat = memoryTat.get(provider) ?? now;
+	const waitMs = Math.max(now, tat - tau) - now;
+	if (waitMs > maxWait) return { ok: false, waitMs: Math.floor(waitMs) };
+	memoryTat.set(provider, Math.max(now, tat) + interval);
+	return { ok: true, waitMs: Math.floor(waitMs) };
+}
+
 export async function reserveProviderRateSlot(
 	provider,
 	{ ratePerMin, burst = 1, maxWaitMs, now = Date.now() },
 ) {
-	if (!redis) return { ok: true, waitMs: 0 };
 	const interval = Math.max(1, Math.floor(60_000 / Math.max(1, ratePerMin)));
 	const tau = Math.max(0, (Math.max(1, burst) - 1) * interval);
+	const maxWait = Math.max(0, Math.floor(maxWaitMs));
+	if (!redis) return reserveMemoryRateSlot(provider, { now, interval, tau, maxWait });
 	try {
 		const r = await redis.eval(
 			RATE_RESERVE_LUA,
 			[`${RATE_PREFIX}${provider}`],
-			[String(now), String(interval), String(tau), String(Math.max(0, Math.floor(maxWaitMs)))],
+			[String(now), String(interval), String(tau), String(maxWait)],
 		);
 		const ok = Array.isArray(r) && Number(r[0]) === 1;
 		const waitMs = Array.isArray(r) ? Math.max(0, Number(r[1]) || 0) : 0;
 		return { ok, waitMs };
 	} catch {
-		return { ok: true, waitMs: 0 };
+		return reserveMemoryRateSlot(provider, { now, interval, tau, maxWait });
 	}
 }
 
