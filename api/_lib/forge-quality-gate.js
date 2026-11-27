@@ -84,9 +84,10 @@ export const QUALITY_GATE_DEFAULTS = Object.freeze({
 	// A verdict at or above this composite score passes the gate.
 	passScore: intEnv('FORGE_QUALITY_PASS_SCORE', 60),
 	// Hard cap on auto-retries per generation, so a persistently-bad prompt can
-	// never burn unbounded GCP credit. attempt is 0-indexed, so 2 means the
-	// original plus up to two adjusted regenerations.
-	maxRetries: intEnv('FORGE_QUALITY_MAX_RETRIES', 2),
+	// never burn unbounded GCP credit. attempt is 0-indexed, so 1 means the
+	// original plus ONE adjusted regeneration. One is also the ceiling the Forge
+	// quality stage enforces (forge-quality-stage.js), whatever this says.
+	maxRetries: intEnv('FORGE_QUALITY_MAX_RETRIES', 1),
 	// Vertex model + region. gemini-2.5-flash is vision-capable and serves on
 	// us-central1 and global (both probed live).
 	model: readEnv('VERTEX_QUALITY_MODEL') || 'gemini-2.5-flash',
@@ -96,6 +97,11 @@ export const QUALITY_GATE_DEFAULTS = Object.freeze({
 	renderSize: intEnv('FORGE_QUALITY_RENDER_SIZE', 640),
 	// Per-call vision timeout.
 	timeoutMs: intEnv('FORGE_QUALITY_TIMEOUT_MS', 25_000),
+	// Hard ceiling on one whole judgement (render, every rung, normalization). The
+	// per-call timeout above bounds a single rung, but the walk is Vertex then up to
+	// a dozen platform rungs, which added up to a minute when the judge was down.
+	// Past this the gate returns its fail-open verdict and the model ships.
+	deadlineMs: intEnv('FORGE_QUALITY_DEADLINE_MS', 20_000),
 });
 
 // Circuit-breaker key for the Vertex scoring rung. Namespaced away from the
@@ -193,6 +199,10 @@ export function rubricPrompt(subject, prompt) {
 
 // Clamp a value into a 0-100 integer, or null when it is not a finite number.
 function score100(v) {
+	// Only a real number, or a numeric string, is a score. Number(null) and
+	// Number('') are both 0, which used to turn "no score" into a score of zero.
+	const usable = typeof v === 'number' || (typeof v === 'string' && v.trim() !== '');
+	if (!usable) return null;
 	const n = Number(v);
 	if (!Number.isFinite(n)) return null;
 	return Math.max(0, Math.min(100, Math.round(n)));
@@ -396,6 +406,13 @@ const COMPLETENESS_FLOOR = intEnv('FORGE_QUALITY_COMPLETENESS_FLOOR', 40);
 // NOT by itself fail an otherwise-complete, well-scored model.
 function normalizeVerdict(raw, { subject, provider, model, passScore, renderSource }) {
 	const score = score100(raw?.score);
+	// A reply with no usable score is the judge talking nonsense (an empty object,
+	// prose, an array, a score of "banana"). That is a QA outage, not a quality
+	// verdict, so it fails open and the model ships. It used to fail the model,
+	// which then paid for a retry on the strength of nothing.
+	if (!raw || typeof raw !== 'object' || Array.isArray(raw) || score == null) {
+		return failOpen('the judge answered without a usable score', { subject, renderSource });
+	}
 	const realism = score100(raw?.realism);
 	const completeness = score100(raw?.completeness);
 	const defects = Array.isArray(raw?.defects)
@@ -403,11 +420,10 @@ function normalizeVerdict(raw, { subject, provider, model, passScore, renderSour
 		: [];
 	const hint = typeof raw?.retry_hint === 'string' ? raw.retry_hint.trim() : '';
 	// Pass requires clearing the score threshold AND not being structurally broken
-	// (completeness below the floor). A null score (unparseable field) means the
-	// provider answered but malformed - fail closed to a retry rather than pass a
-	// blind result; a total provider/render outage is handled upstream by fail-open.
+	// (completeness below the floor). A reply with no score never gets here: it
+	// failed open above.
 	const structurallyBroken = completeness != null && completeness < COMPLETENESS_FLOOR;
-	const pass = score != null && score >= passScore && !structurallyBroken;
+	const pass = score >= passScore && !structurallyBroken;
 	return {
 		pass,
 		score,
@@ -448,6 +464,47 @@ function failOpen(reason, { subject = 'object', renderSource = 'none' } = {}) {
 	};
 }
 
+// Cosmos runs started and not yet settled. startCosmosRun owns the count, and the
+// hard deadline below guarantees every increment is matched by a decrement.
+let cosmosInFlight = 0;
+const SHADOW_MAX_INFLIGHT = intEnv('FORGE_COSMOS_SHADOW_MAX_INFLIGHT', 4);
+// Longest one Cosmos run (four renders plus the model call) may stay in flight.
+// renderCosmosViews has no timeout of its own, so without this a hung render held
+// its slot, and its closure, for the life of the instance.
+const COSMOS_HARD_DEADLINE_MS = intEnv('FORGE_COSMOS_HARD_DEADLINE_MS', COSMOS_JUDGE_DEFAULTS.timeoutMs + 20_000);
+
+/** How many Cosmos runs are in flight right now (exposed for tests and metrics). */
+export function cosmosRunsInFlight() {
+	return cosmosInFlight;
+}
+
+// One Cosmos run: render four views, ask the model. Always resolves to
+// { views, verdict } (verdict.available false on any failure), never rejects, and
+// settles within COSMOS_HARD_DEADLINE_MS.
+function startCosmosRun(opts) {
+	cosmosInFlight += 1;
+	let timer;
+	const work = (async () => {
+		let views = null;
+		try {
+			views = await renderCosmosViews(opts.glbUrl);
+		} catch (e) {
+			return { views: null, verdict: { available: false, error: `render failed: ${e?.message || e}` } };
+		}
+		return { views, verdict: await judgeWithCosmos({ views, prompt: opts.prompt || null }) };
+	})().catch((e) => ({ views: null, verdict: { available: false, error: `cosmos run failed: ${e?.message || e}` } }));
+	const deadline = new Promise((resolve) => {
+		timer = setTimeout(
+			() => resolve({ views: null, verdict: { available: false, error: `no answer inside ${COSMOS_HARD_DEADLINE_MS}ms` } }),
+			COSMOS_HARD_DEADLINE_MS,
+		);
+	});
+	return Promise.race([work, deadline]).finally(() => {
+		clearTimeout(timer);
+		cosmosInFlight -= 1;
+	});
+}
+
 /**
  * Run the quality gate on a generated model: the current vision judge, plus the
  * NVIDIA Cosmos Reason physical-plausibility judge when FORGE_COSMOS_JUDGE is on
@@ -467,18 +524,16 @@ function failOpen(reason, { subject = 'object', renderSource = 'none' } = {}) {
 export async function runQualityGate(opts = {}) {
 	const mode = cosmosJudgeMode();
 	if (mode === 'off' || !opts.glbUrl) return runCurrentJudge(opts);
+	// Shadow mode is observation only, so it never queues behind itself: while
+	// SHADOW_MAX_INFLIGHT shadow runs are already in flight (a slow or dead Cosmos
+	// worker, a burst of generations) this request simply skips the shadow and
+	// does no extra render or call. A deciding mode is a promotion the owner
+	// chose, and still runs.
+	if (mode === 'shadow' && cosmosInFlight >= SHADOW_MAX_INFLIGHT) return runCurrentJudge(opts);
 
 	const passScore = opts.passScore ?? QUALITY_GATE_DEFAULTS.passScore;
 	const t0 = Date.now();
-	const cosmosRun = (async () => {
-		let views = null;
-		try {
-			views = await renderCosmosViews(opts.glbUrl);
-		} catch (e) {
-			return { views: null, verdict: { available: false, error: `render failed: ${e?.message || e}` } };
-		}
-		return { views, verdict: await judgeWithCosmos({ views, prompt: opts.prompt || null }) };
-	})();
+	const cosmosRun = startCosmosRun(opts);
 
 	const current = await runCurrentJudge(opts);
 	const currentLatencyMs = Date.now() - t0;
@@ -509,12 +564,14 @@ export async function runQualityGate(opts = {}) {
 		mode,
 		applied,
 	});
+	// Logging is best-effort and must never turn a delivered model into a failure.
 	if (settled) {
-		await record(settled);
+		await Promise.resolve(record(settled)).catch(() => {});
 	} else {
 		// Cosmos is still running (cold worker): log it whenever it lands, in case
-		// the instance keeps CPU long enough. The shipped decision is already made.
-		void cosmosRun.then(record);
+		// the instance keeps CPU long enough. The shipped decision is already made,
+		// and startCosmosRun's hard deadline bounds how long this can stay pending.
+		void cosmosRun.then(record).catch(() => {});
 	}
 	return verdict;
 }
@@ -537,7 +594,7 @@ export async function runQualityGate(opts = {}) {
  * @param {object} [opts.track]         spend-ledger attribution passed to platform vision
  * @returns {Promise<object>} verdict (never throws - fail-open on any error)
  */
-export async function runCurrentJudge({
+async function judgeOnce({
 	glbUrl = null,
 	renderUrl = null,
 	renderBase64 = null,
@@ -628,6 +685,28 @@ export async function runCurrentJudge({
 		passScore,
 		renderSource,
 	});
+}
+
+/**
+ * Run the current vision judge inside a hard deadline. Same options and verdict
+ * as before, plus `deadlineMs` (default QUALITY_GATE_DEFAULTS.deadlineMs). Never
+ * throws and never takes longer than the deadline: a judge that hangs, throws or
+ * walks the whole rung chain returns the fail-open verdict and the model ships.
+ */
+export async function runCurrentJudge(opts = {}) {
+	const deadlineMs = Number(opts.deadlineMs) > 0 ? Number(opts.deadlineMs) : QUALITY_GATE_DEFAULTS.deadlineMs;
+	const subject = subjectFromPrompt(opts.prompt ?? null, opts.subject ?? null);
+	let timer;
+	try {
+		return await Promise.race([
+			judgeOnce(opts).catch((e) => failOpen(`the judge threw: ${e?.message || e}`, { subject })),
+			new Promise((resolve) => {
+				timer = setTimeout(() => resolve(failOpen(`no verdict inside ${deadlineMs}ms`, { subject })), deadlineMs);
+			}),
+		]);
+	} finally {
+		clearTimeout(timer);
+	}
 }
 
 // ── Auto-retry directive ──────────────────────────────────────────────────────
