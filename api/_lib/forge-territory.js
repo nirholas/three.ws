@@ -7,11 +7,13 @@
  * serves those regions, so a request that originates there must never be
  * routed to a lane that runs a Tencent model.
  *
- * The country is resolved server side from the edge geo header
- * (api/_lib/client-geo.js), never from a field the caller controls. An unknown
- * country fails closed: the request is treated as restricted, because the
- * alternative is shipping a licensed-out model to a region we could not rule
- * out.
+ * The country is resolved server side from the headers our own load balancer
+ * sets (GEO_TRUSTED_HEADERS), never from a field the caller controls. Cloud
+ * Run does not strip a client-sent cf-ipcountry or x-vercel-ip-country, so
+ * those two are ignored here even though analytics still reads them. An
+ * unknown country fails closed: the request is treated as restricted, because
+ * the alternative is shipping a licensed-out model to a region we could not
+ * rule out. Setup and verification: docs/ops/gcp-production.md.
  *
  * Lanes that run a Tencent model:
  *   - hunyuan3d    our own Hunyuan3D 2.1 worker.
@@ -32,11 +34,19 @@ export const RESTRICTED_COUNTRIES = Object.freeze([
 	'GB', 'KR',
 ]);
 
-const RESTRICTED = new Set(RESTRICTED_COUNTRIES);
+// Codes that are inside a restricted territory without being one of the listed
+// countries: Aland and the EU outermost regions (French overseas departments,
+// which are EU soil with their own ISO code), plus the pseudo codes geo
+// databases emit for a region (EU, UK), an anonymous proxy (A1), a satellite
+// link (A2), the Asia/Pacific block (AP) and "other" (O1). A pseudo code names
+// no country we can rule out, so it is restricted like an unknown one.
+const RESTRICTED_EXTRA = ['AX', 'GP', 'MQ', 'GF', 'RE', 'YT', 'MF', 'EU', 'UK', 'A1', 'A2', 'AP', 'O1'];
+
+const RESTRICTED = new Set([...RESTRICTED_COUNTRIES, ...RESTRICTED_EXTRA]);
 
 /** True when the country is in a restricted territory or could not be resolved. */
 export function isRestrictedTerritory(country) {
-	if (typeof country !== 'string' || !/^[A-Za-z]{2}$/.test(country)) return true;
+	if (typeof country !== 'string' || !/^[A-Za-z0-9]{2}$/.test(country)) return true;
 	return RESTRICTED.has(country.toUpperCase());
 }
 
@@ -54,9 +64,12 @@ export function filterLanesForTerritory(laneIds, country) {
 	return laneIds.filter((id) => laneAllowedInTerritory(id, country));
 }
 
-/** Country of the requester, resolved from the edge header; null when unknown. */
+/** The headers our own load balancer sets. Nothing else may decide the gate. */
+export const GEO_TRUSTED_HEADERS = Object.freeze(['x-client-geo-location', 'x-client-region']);
+
+/** Country of the requester, resolved from the load balancer header; null when unknown. */
 export function requestTerritory(req) {
-	return clientCountry(req);
+	return clientCountry(req, GEO_TRUSTED_HEADERS);
 }
 
 /**
