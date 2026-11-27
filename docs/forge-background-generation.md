@@ -16,9 +16,10 @@ the job, saves the model to your gallery, and tells you when it's ready.
   generation finishes unattended: the bell inbox and Web Push fire with a link
   straight to the model, and an email goes out with a preview image. Failures
   notify too (bell and push only). Every channel has its own switch under the
-  **Creations** category in the notification preference center. Anonymous
-  users aren't left out: their browser resumes the job from local storage and
-  the finished model is waiting in their gallery.
+  **Creations** category in the notification preference center. Making a
+  model needs an account, so every generation has a signed-in owner to notify.
+  The browser also resumes the job from local storage, and the finished model
+  is waiting in the gallery.
 
 Attended completions never notify. If the result appeared on your screen, the
 platform does not also push, email, or badge you about it.

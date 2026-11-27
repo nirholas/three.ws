@@ -213,3 +213,14 @@ the Cloud Run service:
 # DATABASE_URL is a Secret Manager reference, so describe alone shows no value.
 node scripts/read-service-env.mjs '^DATABASE_URL$' --raw
 ```
+
+## Error codes a caller can see
+
+These are the codes `POST /api/forge` answers with before or instead of a job. The ledger above covers failures that happen after a job exists.
+
+- `401 sign_in_required`: the caller is not signed in on a create call ([api/_lib/creator-account.js](../../api/_lib/creator-account.js)). The body carries `sign_in_url` and the API key page `/dashboard/api-keys`. Not a fault: sign in or send `Authorization: Bearer <key>`.
+- `401 invalid_key`: a bring-your-own-key provider (Meshy, Tripo, Rodin) rejected the key the caller supplied.
+- `402 insufficient_credits`: the caller's own provider account is out of credits. A platform account running dry never shows this code; the caller sees the generic "temporarily unavailable" state and the free lanes take over.
+- `403 region_restricted`: an engine whose licence excludes the caller's region was pinned. The body's `retry_backends` names engines that can serve the same request.
+- `429 daily_limit_reached` and `429 rate_limited`: a throttle. The response states the wait (`retry_after` or `Retry-After`). Wait once, then retry.
+- `501` or `503 backend_unconfigured`: the pinned lane has no worker or key on this deployment. Check `GET /api/forge?health=1` and pick a lane that reports `ok`.

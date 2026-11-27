@@ -6,7 +6,7 @@ Page: [/forge](https://three.ws/forge) and the feature landing [/features/forge]
 
 ## Why it exists
 
-Every other text-to-3D tool makes you choose a vendor, buy credits, and hope the one model they wired up is the right one for your prompt. Forge inverts that. It treats generation as a routing problem over many engines, picks the best free lane for the input you gave it, degrades gracefully when an upstream is down, and only ever charges for higher quality, never to recover a vendor bill. The result is a single surface where a first-time visitor can make a real 3D model in seconds with no account, no key, and no cost, while a power user can pin a specific engine, bring their own key, or push a High-tier generation through multi-view fusion.
+Every other text-to-3D tool makes you choose a vendor, buy credits, and hope the one model they wired up is the right one for your prompt. Forge inverts that. It treats generation as a routing problem over many engines, picks the best free lane for the input you gave it, degrades gracefully when an upstream is down, and only ever charges for higher quality, never to recover a vendor bill. The result is a single surface where a first-time visitor can sign in with a free account and make a real 3D model with no key and no cost, while a power user can pin a specific engine, bring their own key, or push a High-tier generation through multi-view fusion.
 
 Forge is the public, auth-free twin of the 3D Studio MCP server (`api/mcp-3d.js`), so anything the page can do, an agent can do over MCP or a plain HTTP call.
 
@@ -34,7 +34,7 @@ Each backend declares which paths it serves, whether it needs a bring-your-own-k
 
 - **TRELLIS (free)** on NVIDIA NIM (Microsoft TRELLIS). Zero vendor cost, and the last free lane in the chain: it serves a text prompt when every self-host worker and Space is cold or down. Text-only, so it rejects user photos and photo submissions route elsewhere.
 - **Hunyuan3D / TRELLIS (free)** on Hugging Face Spaces. The free photo-to-3D lane and a High-tier engine, with automatic failover across Hunyuan3D 2.1, Hunyuan3D 2, TRELLIS, and TripoSR. Queue waits vary.
-- **TRELLIS (self-host)** and **Hunyuan3D (self-host)**, our own scale-to-zero Cloud Run GPU workers, and the named defaults: TRELLIS at Draft and Standard, Hunyuan3D at High. Zero vendor cost, so free-first routing prefers them first. Self-host TRELLIS is a native single-hop image-to-3D lane; Hunyuan3D leads on people and organic subjects.
+- **TRELLIS (self-host)** and **Hunyuan3D (self-host)**, our own scale-to-zero Cloud Run GPU workers, which are our own GPU lanes. In code the named default at every tier is TRELLIS.2 (`trellis2`), then self-host TRELLIS v1 (`trellis_selfhost`), then Hunyuan3D (`FREE_DEFAULT_FOR_TIERS`, `FREE_FALLBACK_FOR_PATH` in `api/_lib/forge-tiers.js`). A lane whose worker URL is not set on the deployment is skipped, and on 2026-11-27 `trellis2` was unconfigured in production, so `trellis_selfhost` is the lane that actually served image-path jobs. Zero vendor cost, so free-first routing prefers them first. Self-host TRELLIS is a native single-hop image-to-3D lane; Hunyuan3D leads on people and organic subjects.
 - **TripoSG (self-host)**, the sketch-only scribble worker. Untextured geometry from a drawing. It also serves photos as the last automatic failover rung: when every textured photo lane has failed mid-job, the job continues on TripoSG's photo pipeline and returns the shape without textures rather than failing.
 - **Pixal3D (self-host)**, the fidelity lane, labeled **"Match my photo"** in the UI. Built on [TencentARC Pixal3D](https://github.com/TencentARC/Pixal3D) (MIT), pixel-aligned image-to-3D on [Microsoft TRELLIS.2](https://github.com/microsoft/TRELLIS.2)'s backbone. Where the other photo lanes read one view and generate a plausible result, Pixal3D fuses every photo you give it (1 to 4), so the result matches your photos rather than guessing. Never a named default or a failover target (a down Pixal3D must not silently drop the 2nd/3rd photo on a lane that only reads the first view) and only selectable explicitly. With exactly one photo, the optional `fill_other_sides` flag first synthesizes the other three angles with [MV-Adapter](https://github.com/huanngzh/MV-Adapter) (Apache-2.0) before reconstructing.
 - **AniGen (self-host)**, the rig-on-generation lane, labeled **"Rig on generate"** in the UI. Built on [VAST-AI-Research/AniGen](https://github.com/VAST-AI-Research/AniGen) (MIT). Every other image lane hands back a bare mesh; AniGen predicts the mesh, its joint skeleton and its per-vertex skin weights together, so the GLB it returns is already animatable, no separate rerig call. Single reference image; never a named default or a failover target, only selectable explicitly. The catalog's `rigged:true` flag and the poll response's `rigged`/`joint_count` fields mark the result as pre-rigged.
@@ -214,7 +214,7 @@ stills; it never reports a recording that did not happen.
 
 ## Walkthrough
 
-1. Open [/forge](https://three.ws/forge). No login, no wallet, no key required.
+1. Open [/forge](https://three.ws/forge) and sign in. Making a model needs a free three.ws account; no wallet and no key are needed. Signed out, the page shows a sign-in prompt instead of generating.
 2. Pick an input mode: **Describe it** (text), **From photos**, or **From a sketch** (the sketch tab appears only when the TripoSG worker is configured).
 3. For text, type a prompt like `a weathered brass diving helmet`. For photos, add one to six images of the same object from different angles (front, back, left, right, top, three-quarter); each uploads straight to object storage via a presigned URL and the public URLs are fused with multi-view conditioning.
 4. Optionally open the quality controls and pick a tier (Draft, Standard, High) and an engine. The default engine carries a **FREE** pill. Down lanes are disabled with the reason shown.
@@ -421,7 +421,7 @@ check out. The adapter behind this lives at
 
 ## Examples
 
-Forge's read and generate surface is plain HTTP. No key is required for the free lanes.
+Forge's read and generate surface is plain HTTP. Reading (catalog, health, territory, polling a job) is open. Every `POST` that makes something needs an account: a browser session cookie, or an API key or OAuth bearer sent as `Authorization: Bearer <key>`. Make a key at [/dashboard/api-keys](https://three.ws/dashboard/api-keys). Without one the answer is `401 sign_in_required`, whose body names the sign-in URL and the key page. The only account-free way to pay for a model is the wallet-signed x402 twin, `POST /api/x402/forge`. Set `KEY` in the examples below to your key.
 
 ```bash
 # Read the tier/backend/cost matrix the UI renders.
@@ -442,6 +442,7 @@ curl 'https://three.ws/api/forge?territory=1'
 # (and any cache hit) answers with status "done", a glb_url, and a null job_id;
 # slower lanes answer with a job_id to poll instead.
 RESP=$(curl -s -X POST 'https://three.ws/api/forge' \
+  -H "authorization: Bearer $KEY" \
   -H 'content-type: application/json' \
   -d '{"prompt":"a weathered brass diving helmet","tier":"draft"}')
 echo "$RESP" | python3 -c 'import sys,json;j=json.load(sys.stdin);print(j.get("glb_url") or j["job_id"])'
@@ -454,6 +455,7 @@ Image-to-3D over the API sends public image URLs instead of a prompt:
 
 ```bash
 curl -X POST 'https://three.ws/api/forge' \
+  -H "authorization: Bearer $KEY" \
   -H 'content-type: application/json' \
   -d '{"image_urls":["https://…/front.jpg","https://…/side.jpg"],"tier":"standard"}'
 ```
@@ -465,6 +467,7 @@ them) with `backend`, and optionally label each photo's angle with
 
 ```bash
 curl -X POST 'https://three.ws/api/forge' \
+  -H "authorization: Bearer $KEY" \
   -H 'content-type: application/json' \
   -d '{
     "image_urls": ["https://…/front.jpg","https://…/back.jpg","https://…/left.jpg"],
@@ -480,6 +483,7 @@ reconstructing from the single view alone:
 
 ```bash
 curl -X POST 'https://three.ws/api/forge' \
+  -H "authorization: Bearer $KEY" \
   -H 'content-type: application/json' \
   -d '{"image_urls":["https://…/front.jpg"],"fill_other_sides":true,"backend":"pixal3d","tier":"standard"}'
 ```
@@ -490,6 +494,7 @@ needs no separate `/api/forge-rig` call:
 
 ```bash
 curl -X POST 'https://three.ws/api/forge' \
+  -H "authorization: Bearer $KEY" \
   -H 'content-type: application/json' \
   -d '{"image_urls":["https://…/front.jpg"],"backend":"anigen","tier":"standard"}'
 ```
@@ -500,6 +505,7 @@ and Restyle Studio's part picker reads that manifest directly:
 
 ```bash
 curl -X POST 'https://three.ws/api/forge' \
+  -H "authorization: Bearer $KEY" \
   -H 'content-type: application/json' \
   -d '{"image_urls":["https://…/front.jpg"],"backend":"partcrafter","tier":"standard"}'
 ```
@@ -540,6 +546,7 @@ before these existed.
 ```bash
 # Target a 20k-triangle mesh, fit it into a 1.8m-tall box, and request a T-pose.
 curl -X POST 'https://three.ws/api/forge' \
+  -H "authorization: Bearer $KEY" \
   -H 'content-type: application/json' \
   -d '{
     "prompt": "a low-poly adventurer",
@@ -576,6 +583,7 @@ the per-item tier rules.
 
 ```bash
 curl -X POST 'https://three.ws/api/forge-batch' \
+  -H "authorization: Bearer $KEY" \
   -H 'content-type: application/json' \
   -d '{
     "items": [
@@ -620,7 +628,9 @@ with the Generate node's current engine, quality and controls.
 - **The High tier is $THREE hold-or-pay gated** in the handler regardless of which free engine serves it: we charge for quality, not to recover vendor cost. A verified $THREE tier pass also lifts the free-lane quota.
 - **BYOK engines** (Meshy, Tripo, Rodin, Stability, Replicate) require your own key; they are never billed to a platform account.
 - **Photo input** accepts up to six views of one object (front, back, left, right, top, three-quarter); text-only engines are filtered out of the photo modes automatically.
-- Rate limits are per client IP on the shared 3D generation buckets.
+- **Sign-in**: every generate, rig and upload call needs an account and answers `401 sign_in_required` otherwise (see [Examples](#examples)). Polling and the catalog stay open.
+- **Throttles**: limits are per account for the signed-in free draft API (`POST /api/v1/ai/text-to-3d`, 10 a day, then `429` with a reset time and `Retry-After`) and per client on the shared generation buckets. A `429` always states how long to wait. Wait that long once, then retry. The reference-image step on a text prompt can also be throttled upstream (the keyless image rung allows about one image per 45 seconds for the whole service), in which case the page says it is waiting for an image slot rather than failing.
+- **What is serving right now** changes with provider credits and health. Do not read it from this page: `GET /api/forge?health=1` gives each lane's live status, and `GET /api/nvidia/stats` gives per-lane success counts over 7 days. On 2026-11-26 and 2026-11-27 the self-hosted TRELLIS lane served about 72% of jobs at about 93-95% success; `trellis2`, NVIDIA NIM and Hunyuan3D saw no jobs, and the `triposg` sketch lane and the `pixal3d` photo-match lane succeeded well under half the time.
 
 ## Cost preview and pay-to-keep
 

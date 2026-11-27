@@ -1,6 +1,6 @@
 # How the Forge works, in plain language
 
-You type "a weathered brass diving helmet" at [three.ws/forge](https://three.ws/forge), and about half a minute later you are orbiting a real, textured 3D model you can download, view in AR, or drop into a scene. No account, no key, no cost. This page explains what actually happens in between, without the engineering detail. (If you want that, read the [architecture deep dive](./forge-pipeline.md).)
+You type "a weathered brass diving helmet" at [three.ws/forge](https://three.ws/forge), and about half a minute later you are orbiting a real, textured 3D model you can download, view in AR, or drop into a scene. It needs a free three.ws account (sign in, no card) and costs nothing at the Draft and Standard tiers. This page explains what actually happens in between, without the engineering detail. (If you want that, read the [architecture deep dive](./forge-pipeline.md).)
 
 ## The five steps every generation takes
 
@@ -34,7 +34,7 @@ A finished model is a starting point, not a dead end:
 
 ## Agents use the exact same machinery
 
-Everything above is also a tool call. AI agents (Claude, ChatGPT, or your own) generate models through our [free MCP server](./mcp-studio.md) or plain HTTP, and other agents pay per call with USDC over [x402](./x402.md), no account needed. The page you use and the API an agent uses are the same pipeline underneath.
+Everything above is also a tool call. AI agents (Claude, ChatGPT, or your own) generate models through our [free MCP server](./mcp-studio.md) or plain HTTP with a free account or API key (make one at [/dashboard/api-keys](https://three.ws/dashboard/api-keys)), and other agents pay per call with USDC over [x402](./x402.md), no account needed. The page you use and the API an agent uses are the same pipeline underneath.
 
 ## Try it
 

@@ -54,14 +54,14 @@ Because it is one key for everything, a deployment either has the whole NVIDIA l
 This is the headline free model. **Microsoft TRELLIS hosted on NVIDIA NVCF gives `/forge` a zero-vendor-cost text→3D lane that returns a textured GLB.** It is the default draft/standard engine for prompt generations, per the platform's free-first policy.
 
 **Where it's used:**
-- The `/forge` web app — draft and standard tiers default here (`FREE_DEFAULT_FOR_TIERS`).
-- The free **`forge_free` MCP tool** — text prompt → downloadable GLB + viewer link, no payment, no wallet, no key.
+- The `/forge` web app, as the last free text-to-3D fallthrough (`FREE_FALLBACK_FOR_PATH`). It is not a named default: `FREE_DEFAULT_FOR_TIERS` names `trellis2` at every tier. On 2026-11-27 this lane had no jobs in 7 days (`GET /api/nvidia/stats`).
+- The free **`forge_free` MCP tool**: text prompt → downloadable GLB + viewer link, no payment and no wallet. It calls `/api/forge`, so it needs a free three.ws account or API key.
 - The **IBM × three.ws x402 demo** — the free generator next to the paid USDC Forge.
 - The **auto-generation gallery** — a fresh community avatar every minute.
 
 **How it works:**
 - Async by default. Submit returns `202 + NVCF-REQID`; the forge polls the NVCF status endpoint until the GLB is ready (or the job completes synchronously within a 30 s window).
-- **Sampling steps are pinned to the proven budget.** TRELLIS accepts 10 to 50 steps, but the hosted preview only returns inside the gateway's synchronous window at the low end, so the free lane runs `15/15` (`ss_sampling_steps` / `slat_sampling_steps`) for both draft and standard tiers. The `40/40` budget is reserved for a self-hosted TRELLIS NIM; the high tier itself defaults to the self-hosted Hunyuan3D engine, not this lane.
+- **Sampling steps are pinned to the proven budget.** TRELLIS accepts 10 to 50 steps, but the hosted preview only returns inside the gateway's synchronous window at the low end, so the free lane runs `15/15` (`ss_sampling_steps` / `slat_sampling_steps`) for both draft and standard tiers. The `40/40` budget is reserved for a self-hosted TRELLIS NIM; the high tier defaults to the self-hosted `trellis2` lane (`FREE_DEFAULT_FOR_TIERS`), not this one.
 - Prompts are clamped to **77 characters** (TRELLIS truncates server-side) and get a `, studio lighting` suffix unless the caller already supplied lighting/color cues — without it TRELLIS defaults to dark, gritty output.
 - Output GLBs arrive in several shapes over time (inline base64, bare string, CDN URL, numeric-keyed object, raw bytes); the extractor normalizes all of them, then **persists the bytes to R2** so three.ws owns a durable public URL.
 
