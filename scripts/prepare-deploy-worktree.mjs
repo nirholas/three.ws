@@ -28,6 +28,22 @@
 //   node scripts/prepare-deploy-worktree.mjs            plan only, writes nothing
 //   node scripts/prepare-deploy-worktree.mjs --apply    stage the worktree
 //   node scripts/prepare-deploy-worktree.mjs --apply --path ../.deploy-wt-2
+//   node scripts/prepare-deploy-worktree.mjs --apply --ref threews/main
+//
+// --ref (default HEAD) stages any commit without moving the shared checkout.
+// That checkout is where every concurrent session keeps its uncommitted work,
+// so it can sit hundreds of commits behind the tip and be unable to
+// fast-forward (2026-11-27: 226 behind threews/main, every dirty file
+// overlapping an upstream change). Staging HEAD there would have shipped the
+// stale commit and missed every fix after it. The plan warns whenever the
+// staged commit is behind threews/main as of the last fetch.
+//
+// node_modules is hardlinked only when the shared tree matches the lockfile of
+// the commit being staged (the same comparison audit:deploy makes). When it
+// does not, a hardlinked tree is a guaranteed audit:deploy refusal minutes
+// later, and npm ci cannot repair it in place because it writes through the
+// links into the shared tree. So the staged tree gets its own `npm ci` instead,
+// which costs a full install but ships exactly the locked versions.
 //
 // --path (default .deploy-wt beside the repo, so /workspaces/.deploy-wt in the
 // codespace) lets concurrent agents stage their own
@@ -36,11 +52,12 @@
 // it reclaimable, so a tree holding uncommitted work is never destroyed.
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, statSync, copyFileSync, readFileSync } from 'node:fs';
+import { existsSync, statSync, statfsSync, copyFileSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { dirtyCount } from './clean-deploy-worktrees.mjs';
+import { findLockDrift } from './audit-deploy-artifacts.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -52,6 +69,16 @@ const TARGET = (() => {
 	if (!raw || raw.startsWith('--')) fail('--path needs a directory argument');
 	return path.resolve(raw);
 })();
+const REF = (() => {
+	const i = process.argv.indexOf('--ref');
+	if (i === -1) return 'HEAD';
+	const raw = process.argv[i + 1];
+	if (!raw || raw.startsWith('--')) fail('--ref needs a commit argument, e.g. --ref threews/main');
+	return raw;
+})();
+
+/** The project production serves from until the migration cuts over. */
+const LIVE_PROJECT = 'aerial-vehicle-466722-p5';
 
 /**
  * The artifacts `build:gcp` needs that git does not carry. Order matters only
@@ -232,16 +259,85 @@ const ENV_FILES = ['.env', '.env.local'];
  * the rule that a missing REQUIRED artifact is built rather than skipped can be
  * pinned by tests without staging a real worktree.
  *
+ * `npmInstalls` names the trees a fresh `npm ci` in the staged tree will
+ * produce (see nodeModulesStrategy). Those are never hardlinked, whether or not
+ * the source tree has them.
+ *
  * @param {(rel: string) => boolean} present does this artifact exist in the source tree
  * @param {typeof ARTIFACTS} artifacts
- * @returns {{rel:string, action:'stage'|'build'|'skip'|'blocked'}[]}
+ * @param {Set<string>} [npmInstalls] trees npm ci produces in the staged tree
+ * @returns {{rel:string, action:'stage'|'build'|'skip'|'blocked'|'install'}[]}
  */
-export function planArtifacts(present, artifacts = ARTIFACTS) {
+export function planArtifacts(present, artifacts = ARTIFACTS, npmInstalls = new Set()) {
 	return artifacts.map((a) => {
+		if (npmInstalls.has(a.rel)) return { ...a, action: 'install' };
 		if (present(a.rel)) return { ...a, action: 'stage' };
 		if (a.optional) return { ...a, action: 'skip' };
 		return { ...a, action: a.build ? 'build' : 'blocked' };
 	});
+}
+
+/**
+ * Hardlink the shared node_modules, or install fresh in the staged tree.
+ *
+ * @param {{path:string, locked:string, installed:string|null}[]} drift findLockDrift output for the staged commit's lockfile
+ * @returns {{mode:'hardlink'} | {mode:'install', count:number, reason:string}}
+ */
+export function nodeModulesStrategy(drift) {
+	if (!drift.length) return { mode: 'hardlink' };
+	const shown = drift.slice(0, 3).map((d) => `${d.path} locked ${d.locked}, ${d.installed === null ? 'not installed' : `installed ${d.installed}`}`);
+	const more = drift.length > shown.length ? `, and ${drift.length - shown.length} more` : '';
+	return { mode: 'install', count: drift.length, reason: `${shown.join('; ')}${more}` };
+}
+
+/** Free space a fresh install needs: the root tree is about 5.5 GB, plus npm's extraction headroom. */
+export const INSTALL_FREE_FLOOR = 8 * 1024 ** 3;
+
+/**
+ * Refuse a fresh install the disk cannot hold. The disk is shared with every
+ * concurrent session, so an install that dies at 100% takes their builds down too.
+ *
+ * @param {number} freeBytes bytes available to this user on the target filesystem
+ * @returns {string|null} the refusal, or null when there is room
+ */
+export function installRoomError(freeBytes) {
+	if (freeBytes >= INSTALL_FREE_FLOOR) return null;
+	const gib = (n) => `${(n / 1024 ** 3).toFixed(1)} GiB`;
+	return `a fresh npm ci needs about ${gib(INSTALL_FREE_FLOOR)} and the target filesystem has ${gib(freeBytes)} free. Make room first (npm run clean:worktrees -- --apply reclaims idle deploy trees), then re-run.`;
+}
+
+/**
+ * The warning printed when the staged commit lacks commits the upstream has.
+ * Not a refusal: shipping an older commit on purpose (a rollback build) is legitimate.
+ *
+ * @param {string} sha staged commit
+ * @param {number} behind commits on the upstream that the staged commit lacks
+ * @param {string} [upstream]
+ * @returns {string|null}
+ */
+export function behindWarning(sha, behind, upstream = 'threews/main') {
+	if (!behind) return null;
+	return `${sha.slice(0, 9)} is ${behind} commit(s) behind ${upstream} as of the last fetch, so none of their fixes would ship. To ship the tip: git fetch threews, then re-run with --ref ${upstream}.`;
+}
+
+/**
+ * What to run once the tree is staged. Always the gated npm script, never a bare
+ * `gcloud builds submit`, which skips db:check, audit:deploy and check:api-imports.
+ *
+ * @param {string} target staged tree
+ * @param {Record<string, string|undefined>} env
+ * @returns {string[]}
+ */
+export function nextSteps(target, env = process.env) {
+	const project = env.GCP_PROJECT || LIVE_PROJECT;
+	if (project === LIVE_PROJECT) {
+		return [`  cd ${target} && npm run deploy:gcp:full`, '  (build:gcp, every submit gate, the build, cron sync, CDN purge, then smoke:prod)'];
+	}
+	const vars = [`GCP_PROJECT=${project}`, env.GCP_BUILD_MACHINE_TYPE ? `GCP_BUILD_MACHINE_TYPE=${env.GCP_BUILD_MACHINE_TYPE}` : null].filter(Boolean).join(' ');
+	return [
+		`  cd ${target} && npm run build:gcp && ${vars} npm run deploy:gcp:submit`,
+		`  (submit only: deploy:gcp would also sync every cron into ${project}, and crons move there only at cutover; see docs/ops/gcp-project-migration.md)`,
+	];
 }
 
 function fail(message) {
@@ -250,7 +346,8 @@ function fail(message) {
 }
 
 function git(args, cwd = ROOT, timeoutMs = 600_000) {
-	return execFileSync('git', args, { cwd, encoding: 'utf8', timeout: timeoutMs, stdio: ['ignore', 'pipe', 'pipe'] });
+	// The lockfile alone is several MB, past execFileSync's 1 MB default buffer.
+	return execFileSync('git', args, { cwd, encoding: 'utf8', timeout: timeoutMs, maxBuffer: 256 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
 }
 
 /** Same-device check. `cp -al` cannot cross a filesystem boundary. */
@@ -267,9 +364,38 @@ function run() {
 	if (mainTop !== ROOT) fail(`run this from the main worktree (${ROOT}), not ${mainTop}`);
 	if (TARGET === ROOT) fail('--path must not be the main worktree');
 
-	const head = git(['rev-parse', 'HEAD']).trim();
+	let head = '';
+	try {
+		head = git(['rev-parse', '--verify', '--quiet', `${REF}^{commit}`]).trim();
+	} catch {
+		head = '';
+	}
+	if (!head) fail(`--ref ${REF} is not a commit in this repository. If it names a remote branch, run \`git fetch threews\` first.`);
 	console.log(`[prep:worktree] target ${TARGET}`);
-	console.log(`[prep:worktree] source ${ROOT} at ${head.slice(0, 9)}`);
+	console.log(`[prep:worktree] source ${ROOT} at ${head.slice(0, 9)}${REF === 'HEAD' ? '' : ` (--ref ${REF})`}`);
+
+	let behind = 0;
+	try {
+		behind = Number(git(['rev-list', '--count', `${head}..refs/remotes/threews/main`]).trim()) || 0;
+	} catch {
+		// No threews/main remote-tracking ref on this machine, so there is nothing to compare against.
+		behind = 0;
+	}
+	const warning = behindWarning(head, behind);
+	if (warning) console.log(`[prep:worktree] WARNING: ${warning}`);
+
+	let lock;
+	try {
+		lock = JSON.parse(git(['show', `${head}:package-lock.json`]));
+	} catch (err) {
+		fail(`cannot read package-lock.json at ${head.slice(0, 9)} (${String(err.message).slice(0, 120)})`);
+	}
+	const strategy = nodeModulesStrategy(existsSync(path.join(ROOT, 'node_modules')) ? findLockDrift({ lock, root: ROOT }) : [{ path: 'node_modules', locked: 'the whole tree', installed: null }]);
+	const npmInstalls = strategy.mode === 'install' ? new Set(['node_modules', ...nestedWorkspaceTrees(lock)]) : new Set();
+	if (strategy.mode === 'install') {
+		console.log(`[prep:worktree] the shared node_modules differs from package-lock.json at ${head.slice(0, 9)} in ${strategy.count} package(s): ${strategy.reason}`);
+		console.log('[prep:worktree] so the staged tree gets its own `npm ci` (a full install, several GB) instead of a hardlinked copy that audit:deploy would refuse');
+	}
 
 	// Hardlinks are the whole point: a full copy of node_modules is several GB
 	// per tree and is what filled the disk in the first place.
@@ -277,6 +403,13 @@ function run() {
 	if (!existsSync(parent)) fail(`parent directory ${parent} does not exist`);
 	if (!sameDevice(ROOT, parent)) {
 		fail(`${parent} is on a different filesystem than ${ROOT}, so cp -al cannot hardlink into it. Pick a --path under the same mount.`);
+	}
+
+	if (strategy.mode === 'install') {
+		const { bavail, bsize } = statfsSync(parent);
+		const room = installRoomError(bavail * bsize);
+		if (room && APPLY) fail(room);
+		if (room) console.log(`[prep:worktree] WARNING: --apply will refuse: ${room}`);
 	}
 
 	const existing = existsSync(TARGET);
@@ -296,16 +429,20 @@ function run() {
 	}
 
 	// Plan the artifact work before touching anything, so plan mode is honest.
-	const plan = planArtifacts((rel) => existsSync(path.join(ROOT, rel))).map((p) => ({ ...p, src: path.join(ROOT, p.rel) }));
+	const plan = planArtifacts((rel) => existsSync(path.join(ROOT, rel)), ARTIFACTS, npmInstalls).map((p) => ({ ...p, src: path.join(ROOT, p.rel) }));
 	for (const p of plan.filter((x) => x.action === 'blocked')) {
 		fail(`${p.rel} is missing from ${ROOT} and cannot be regenerated here: ${p.missingHint}`);
 	}
 
 	console.log('');
 	for (const p of plan) {
-		const verb = { stage: 'STAGE ', build: 'BUILD ', skip: 'SKIP  ' }[p.action];
-		const note = p.action === 'build' ? ' (missing, will be generated first)' : p.action === 'skip' ? ' (absent and optional)' : '';
-		console.log(`  ${verb}${p.rel}${note}\n         needed by ${p.why}`);
+		const verb = { stage: 'STAGE', build: 'BUILD', skip: 'SKIP', install: 'INSTALL' }[p.action].padEnd(8);
+		const note = {
+			build: ' (missing, will be generated first)',
+			skip: ' (absent and optional)',
+			install: ' (npm ci in the staged tree, not hardlinked)',
+		}[p.action] || '';
+		console.log(`  ${verb}${p.rel}${note}\n          needed by ${p.why}`);
 	}
 
 	const envPlan = ENV_FILES.map((f) => ({ file: f, present: existsSync(path.join(ROOT, f)) }));
@@ -336,8 +473,17 @@ function run() {
 	console.log(`\n[prep:worktree] git worktree add --detach ${TARGET} ${head.slice(0, 9)}`);
 	execFileSync('git', ['worktree', 'add', '--detach', TARGET, head], { cwd: ROOT, stdio: 'inherit', timeout: 900_000 });
 
+	// npm ci runs BEFORE any hardlinking: the postinstall builds dist trees such
+	// as agent-payments-sdk/dist, and it must write into fresh files rather than
+	// through a hardlink into the shared tree. The merge copy below then adds only
+	// what the install did not produce.
+	if (strategy.mode === 'install') {
+		console.log(`\n[prep:worktree] npm ci in ${TARGET} (the locked versions at ${head.slice(0, 9)}; the shared tree is not touched)`);
+		execFileSync('npm', ['ci', '--no-audit', '--no-fund'], { cwd: TARGET, stdio: 'inherit', timeout: 1_800_000 });
+	}
+
 	for (const p of plan) {
-		if (p.action === 'skip') continue;
+		if (p.action === 'skip' || p.action === 'install') continue;
 		const dest = path.join(TARGET, p.rel);
 		const merging = existsSync(dest);
 		try {
@@ -365,8 +511,7 @@ function run() {
 
 	console.log(`\n[prep:worktree] ready at ${TARGET}`);
 	console.log('Next:');
-	console.log(`  cd ${TARGET} && npm run build:gcp`);
-	console.log(`  gcloud builds submit --config server/cloudbuild.yaml --region us-central1 --project ${process.env.GCP_PROJECT || 'aerial-vehicle-466722-p5'}${process.env.GCP_BUILD_MACHINE_TYPE ? ` --machine-type=${process.env.GCP_BUILD_MACHINE_TYPE}` : ''}`);
+	for (const line of nextSteps(TARGET)) console.log(line);
 	console.log(`\nWhen the deploy lands: git worktree remove --force ${TARGET}`);
 	console.log('(or leave it for `npm run clean:worktrees -- --apply` once it is idle past the age floor)');
 }
