@@ -1,25 +1,24 @@
 // Text → image helper for the 3D Studio MCP.
 //
-// Provider selection (free lanes first, per platform policy; first that serves wins):
-//   1. NVIDIA_API_KEY set       → FLUX.1-schnell on NVIDIA NIM (free, ~1–2s)
-//   2. GOOGLE_CLOUD_PROJECT set → Vertex AI Imagen 3 (high quality, free with GCP credits)
-//   3. REPLICATE_API_TOKEN set  → flux-schnell via Replicate (paid backstop, $0.003/image)
-//   + LIVEPEER_FEDERATION_ENABLED → federated Livepeer network lane (Phase 4
-//     compute federation, dark by default; inserted after the free lanes and
-//     before the paid Replicate backstop, see api/_providers/livepeer.js)
+// The ladder, walked in this order (first that serves wins):
+//   1. Vertex AI Gemini image (GOOGLE_CLOUD_PROJECT; leads unless VERTEX_IMAGEN_FIRST=0)
+//   2. NVIDIA NIM FLUX.2 klein 4B (NVIDIA_API_KEY, free)
+//   3. Vertex in its legacy position (only when VERTEX_IMAGEN_FIRST=0)
+//   4. Hugging Face routed fal-ai, then 5. WaveSpeed (HF_TOKEN)
+//   6. Livepeer federation (LIVEPEER_FEDERATION_ENABLED, dark by default; see
+//      api/_providers/livepeer.js)
+//   7. Pollinations (keyless, protected in position: always after every keyed
+//      rung and ahead of the paid backstop)
+//   8. Replicate flux-schnell (REPLICATE_API_TOKEN, paid backstop, $0.003/image)
+//
+// Each rung's breaker lives in api/_lib/image-rung-breaker.js; the order above
+// is mirrored there (imageLadderRungs) for the health endpoint.
+//
+//   VERTEX_IMAGEN_MODEL     : override the Vertex image model (default and fallback: api/_lib/image-model.js)
+//   REPLICATE_TXT2IMG_MODEL : optional Replicate model override
 //
 // The image-to-3D backend (TRELLIS / Hunyuan3D / TripoSR) reconstructs a
 // textured GLB from the generated image. Both steps share the same call site.
-//
-//   NVIDIA_API_KEY          — nvapi key from build.nvidia.com (enables the free NIM lane)
-//   GOOGLE_CLOUD_PROJECT    — GCP project id (enables Vertex AI Imagen path)
-//   VERTEX_IMAGEN_MODEL     : override the Vertex image model (default and fallback: api/_lib/image-model.js)
-//   REPLICATE_API_TOKEN     — paid backstop when the free lanes are absent or down
-//   REPLICATE_TXT2IMG_MODEL — optional Replicate model override
-//
-// NIM lane: black-forest-labs/flux.1-schnell — Apache-2.0, commercial-OK, served
-// free on the NVIDIA NIM catalog as base64 JPEG (no poll; returns inline).
-// Replicate backstop: black-forest-labs/flux-schnell — same family, $0.003/run.
 
 import {
 	IMAGE_RUNG_KEYS,
@@ -121,8 +120,8 @@ const NIM_TIMEOUT_MS = 30_000;
 // that makes the TRELLIS submit timeout terminal). Bounded to one extra attempt
 // so a genuinely-down gateway still hands off fast.
 // ── Ladder budget ─────────────────────────────────────────────────────────
-// Every lane below is bounded on its own (Vertex 90s, NIM 60s, Replicate 45s
-// of polling), but the LADDER never was: a stalled leading lane burned its
+// Every lane below is bounded on its own (Vertex 90s, NIM 30s, Replicate 45s
+// of polling), but the LADDER once was not: a stalled leading lane burned its
 // full window, then the next lane burned its own, and the caller's socket
 // (ChatGPT Actions allow ~45s, the OKX/MCP clients 90s) was long gone before a
 // job even existed. Measured on 2026-08-25: text submits hung 95s+ with no
@@ -132,9 +131,11 @@ const NIM_TIMEOUT_MS = 30_000;
 // the caller's `budgetMs`). Each lane gets min(its own ceiling, what is left),
 // and while a fallback lane still remains the current lane is capped at
 // max(a quarter of the budget, 60% of what is left) so a stalled leader hands
-// off with real time to spare. A lane with under a tenth of the budget left is
-// skipped, and an exhausted ladder surfaces a retryable rate_limited error the
-// forge boundary already maps to a fast 429 with a Retry-After.
+// off with real time to spare. The keyless rung's slice (keylessReserveMs) is
+// held back first: the lanes ahead of it split only the pool above it. A lane
+// without a real slice of that pool left is skipped, and an exhausted ladder
+// surfaces a retryable rate_limited error the forge boundary already maps to a
+// fast 429 with a Retry-After.
 // Vertex's own ceiling lives in vertex-imagen.js (90s); mirrored here so the
 // ladder math can cap it without importing the lane eagerly.
 const VERTEX_LANE_CEILING_MS = 90_000;

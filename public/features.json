@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-26T23:44:59.519Z",
+	"generated_at": "2026-11-27T01:00:25.355Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -6152,6 +6152,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/forge-input-security",
+					"title": "Docs · Forge input security",
+					"description": "Every address, uploaded photo and model file a stranger can send to Forge, the guard in front of each (SSRF checks, DNS pinning, streaming size caps, type from bytes, pixel limits), and the one gap still open.",
+					"added": "2026-11-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
 					"job": null
 				},
 				{

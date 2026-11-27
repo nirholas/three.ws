@@ -1,11 +1,142 @@
 {
-	"generated_at": "2026-11-26T23:47:05.868Z",
+	"generated_at": "2026-11-27T01:00:25.446Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-27",
+			"type": "launch",
+			"title": "Docs · Forge input security",
+			"summary": "Every address, uploaded photo and model file a stranger can send to Forge, the guard in front of each (SSRF checks, DNS pinning, streaming size caps, type from bytes, pixel limits), and the one gap still open.",
+			"link": "/docs/forge-input-security",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "A private Forge model now stays private on every page, and old job links stop working",
+			"summary": "A model you set to private could still be liked, commented on, counted and downloaded by anyone who had its link. Now every one of those answers exactly like a model that does not exist, and only you can open, keep, comment on or download it. A job link from a generation expires after seven days, so one left in a log or a shared message stops being useful. A Tripo completion notice can no longer finish a job that belongs to a different provider, and the file it points at must be a public https address, so it cannot be aimed at an internal one.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "A takedown now removes every copy of a Forge model, and repeat offenders get a human check",
+			"summary": "Removing a Forge model used to leave copies behind: its display thumbnail, its game-ready exports, any avatar saved from it and its Sketchfab listing. The takedown now finds and removes all of them, clears every cached page and feed that showed it, and says plainly what it could not remove instead of reporting success. A model that is private, held or blocked is also no longer picked for the Sketchfab showcase or shown on its social preview card. An account that keeps having models blocked now alerts an operator, and its later models wait for a manual look before they can go public.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Every Forge error now says what happened and what to do next",
+			"summary": "When something goes wrong in Forge, the message now says in plain words what happened and what you can do about it, for every error Forge can return: making a model, uploading a photo, rigging, styling, remeshing and the other tools on a finished model. Your prompt and settings are always kept. A provider's raw error text, internal addresses and anything that looks like a key never reach the page. An error Forge does not recognise still gets an honest message with a short reference you can quote to support. Screen readers now hear every error, including the high demand, limit and storage notices.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Forge never loses or doubles a generation on reload, a closed tab, a double click or a dropped connection",
+			"summary": "Reload /forge, close the tab or lose your connection in the middle of a generation and the page now picks the same job back up when you return, even if you left while the request was still being sent. A double click, a held Enter key or a second tab joins the generation already running instead of starting and charging a second one, on /forge and in Forge Studio. A dropped connection shows an offline note and waits for the network instead of failing, a background tab stops polling until you look at it again, and a job that finished while you were away opens on the result with a note saying so. A job whose engine never answers now ends as failed with a reason instead of spinning forever.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Forge now refuses photos and links that point inside our network or are not really images",
+			"summary": "A reference photo or link sent to Forge could be aimed at an address inside our own network, and an uploaded file was only checked by the name it claimed. Forge now checks where every reference address really goes before a model starts, refuses anything private, and reads the first bytes of each uploaded photo to confirm it is a PNG, JPEG or WebP of a sane size and canvas. Remote images are cut off while they download instead of after, and a malformed 3D file can no longer crash the check that reads it.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Forge photo sets: extra views never delay or break a model, and the page says which photos were used",
+			"summary": "Generating extra side and back views is now optional and time-limited: if it fails, is throttled or takes too long, your model carries on from the image you gave. Generated views are checked before they are used, and a photo in a set that is plainly a different object, or empty, is left out and named. Engines that read a single photo now get your front view and the page tells you, instead of implying every photo counted. You can reorder photos with Alt and the arrow keys and remove one with Delete, and an upload that is refused says which photo it was.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Forge takes iPhone photos, big photos and sideways photos, and tells you plainly when a file is not a photo",
+			"summary": "Photo to 3D on Forge and Forge Studio now reads each file by its contents instead of its name. iPhone HEIC photos, AVIF, GIF and SVG images are converted on your device, photos over 8 MB or wider than 8192 pixels are shrunk instead of refused, and a photo taken sideways is turned upright before it is sent. A PDF or web page renamed to .jpg, an empty file or a tiny icon is refused with a sentence saying what it is and which formats work. Picking a file, dropping it, pasting an image and pasting or dragging an image link all work the same way, and a link is fetched for you safely. If an upload drops, times out or your session expires, the photo stays on the tile and Retry sends it again. Photos that already worked are sent exactly as before.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Forge tells you why a Hunyuan engine is off, and keeps excluded regions off it for every route",
+			"summary": "The Hunyuan3D model licence excludes the EU, the UK and South Korea. Forge now shows a plain note under the engine picker saying which engines are off and why, worded differently when we could not confirm your location, so you are never told you are somewhere you may not be. Behind it, no route (default, fallback, a named engine, the paid API, the 3D Studio tools, photo avatars) can reach a Hunyuan lane for an excluded or unknown country, and you still get a model from another engine. A Hugging Face lane that has run out of free GPU time now rests for half an hour instead of failing every request.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Sketch to 3D now tells you when a drawing is blank, a dot or scribbled edge to edge, and no longer ends in a dead end",
+			"summary": "A blank canvas, a single dot or a drawing smeared over the whole frame is now refused on your device with a message that says what to draw, before anything is uploaded or a generation slot is spent. The drawing canvas lines strokes up under your finger on a phone, keeps Use sketch available after you undo a Clear, keeps keyboard focus inside the dialog and fits any screen height with Use sketch always reachable. The Forge page gets a Draw here instead button for the same canvas. If the sketch engine cannot take or finish a drawing, Forge now continues the job on the standard image engine and tells you, instead of ending in an error, and a drawing the engine could not read no longer takes a healthy engine out of rotation.",
+			"link": "/forge-studio",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "The NVIDIA-hosted 3D lane now rejects bad results and backs off when NVIDIA says wait",
+			"summary": "When Forge falls back to NVIDIA's hosted TRELLIS, a result is now checked to be a real 3D model before the job is marked done, so an error page or a half-downloaded file can no longer show up as a finished creation. Large results delivered by redirect or zip are fetched safely. When NVIDIA throttles the lane, Forge waits as long as NVIDIA asks, instead of a fixed two minutes, and stops polling a throttled job until the wait is over. A dead key or an empty account takes the lane out of rotation for five minutes instead of being retried by every request, and the same rules now apply to the ChatGPT Forge pipeline.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Your own Meshy, Tripo, Rodin and Stability key is checked before use, never leaks, and failures say what happened",
+			"summary": "A key you bring to Forge is now checked locally before any billed call (spaces, line breaks and the wrong vendor prefix are refused without repeating the key), scrubbed from every error and log line even if a provider echoes it back, and sent only to the provider's own address. When your provider account is out of credits, throttling you, down, or refuses the prompt, Forge says which, instead of quietly running on a free engine. A key revoked mid-job now says so instead of spinning. A captured Tripo callback can no longer be replayed under a new delivery id. The key field no longer invites browser autofill, has a Clear button, and says exactly how the key is used.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-26",
 			"type": "update",
@@ -50,6 +181,17 @@
 		{
 			"date": "2026-11-26",
 			"type": "update",
+			"title": "Forge keeps generating when every prompt-writing model is down, and says so plainly",
+			"summary": "Before Forge paints the picture your 3D model is built from, an assistant model rewrites your prompt with materials and lighting. When every one of those models was refusing, Forge used to wait on each of them in turn and then reported the step as if it had run. Now a model that refuses for billing or credit is set aside for half an hour, a busy one for exactly as long as it asks, and when none is available your own prompt goes forward in a fraction of a second. The progress list says whether your prompt was rewritten, used as written because the assistant was unavailable, or used as written because its rewrite was not usable. The Enhance button answers within seconds, leaves your text untouched when it cannot help, tells you so in one sentence, and never keeps spinning.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
 			"title": "Forge keeps going when a backup lane refuses the job",
 			"summary": "When a 3D generation fails mid-job and the next backup engine refuses the handover, Forge now tries the following engine instead of ending the job, and the health report shows for each engine whether it is in rotation, cooling or disabled.",
 			"link": null,
@@ -77,6 +219,16 @@
 			"link": "/forge",
 			"tags": [
 				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Forge skips Google's image service instantly while it is refusing, and brings it back on its own",
+			"summary": "Forge paints a reference picture from your prompt before it builds the 3D model, and Google's image service goes first. When Google refuses for a reason that will not clear in seconds, such as a billing hold, Forge now notices after one try and moves straight to the next image service for every later request, with no wait. A busy service is tried again exactly when Google says, an outage is retried after a short pause, and a prompt Google declines for content reasons no longer sets the whole service aside. Once the pause is over a single request checks whether Google is back, and Forge returns to it without a restart. Forge also checks every picture before using it, so a blank or broken image is replaced instead of turning into a broken model.",
+			"link": "/forge",
+			"tags": [
 				"fix"
 			]
 		},
@@ -148,6 +300,16 @@
 			"title": "pump.fun skill scripts read coins again",
 			"summary": "The swap, coin-fees and create-coin skills' fetch-coin script asked pump.fun's retired /coins-v2 route and failed for every coin. It now reads pump.fun's coin search and keeps only the exact mint, so agents can tell a bonding-curve coin from a graduated one before they trade or claim fees.",
 			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-26",
+			"type": "update",
+			"title": "Text to 3D keeps painting when an image provider is down",
+			"summary": "Typing a prompt into Forge first paints a reference image, and that step tries several image providers in turn. When the first one was out of credits or refusing requests, Forge could stop there and fail, even though the free provider at the end of the line was fine. Now a failing provider hands off at once, a provider out of credits or refusing access is set aside for five minutes so later requests skip it with no wait, a busy one is retried exactly when it says, and the free provider always keeps enough time to answer. When every provider is busy, Forge tells you the real cause and the shortest wait.",
+			"link": "/forge",
 			"tags": [
 				"fix"
 			]

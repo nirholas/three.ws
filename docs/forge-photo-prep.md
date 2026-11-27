@@ -47,7 +47,19 @@ Progress in the slot is real: the worker reports the `runtime`, `model`, `infere
 | `multiple_subjects` | A second component at least 15% the size of the largest | More than one object is in the photo. Keep only the one you want in 3D. |
 | `cut_off` | The subject box touches the frame edge | The subject touches the edge of the photo, so part of it may be missing. Step back a little. |
 
-A photo with warnings shows "Use anyway" and "Retake". A clean photo reads "Looks good: one clear subject, sharp and well lit." Either way, "Send the original photo instead" uploads the untouched file.
+A photo with warnings shows "Use anyway" and "Retake". A clean photo reads "Looks good: one clear subject, sharp and well lit." Either way, "Send the original photo instead" uploads the untouched file. The three ways out of the dialog are accept (the prepared crop), retake (clear the slot and open the picker) and the original (the untouched file). Accept and the original both go straight on to the upload and then Generate.
+
+### A photo that is already cut out
+
+A PNG or WebP with a transparent background does not go through the model. The worker reads the photo's own alpha: when at least 5% of it is transparent and at least half of its border is, the photo counts as already cut out. A solid photo that merely carries an opaque alpha channel, a logo with a few see-through holes inside a frame, or a faint soft edge does not, and still goes through removal. Such a photo never loads the 4.5 MB model, its alpha is the mask, and the upload is that alpha crop (WebP, PNG where the browser cannot encode WebP): centred exactly on the subject, padded 8% a side, longest edge at most 1024 px and never upscaled past the source pixels. The dialog says "This photo already has a transparent background, so background removal was skipped" and drops the Photo and Cutout toggle, since the two are the same image. The TRELLIS.2 worker uses an existing alpha as its mask, so the server skips its own matting for these.
+
+### When removal does not work
+
+The mask is checked before any crop is made. A mask with no subject (under 0.2% of the frame, including a few stray specks) or one that kept the whole frame (96% or more, so nothing was cut away) is a failed removal. The dialog says which in one sentence ("Background removal found no subject..." or "Background removal kept the whole picture..."), offers no prepared image, and the primary button reads "Use original photo". Retake is still there. The largest real subject in the ten-photo bench covers 52% of the frame and the smallest 4%, so neither limit touches a working photo.
+
+### A check that stalls
+
+The pass is bounded on the main thread ([`client.js`](../src/forge-photo-prep/client.js), limits in `PREP_WAIT`): 30 seconds of silence while the runtime and model load (a download that keeps reporting bytes is not cut off), 60 seconds of silence while inference and encoding run, and 180 seconds for the whole pass. Past a limit the worker is terminated and replaced, the visitor sees "The photo check took too long, so your photo uploads as before", and the original uploads. A worker that crashes or reports an error takes the same path. The check never blocks a generation: every outcome except Retake and Esc hands a file to the upload. The pass itself runs in a Web Worker, so the page stays responsive while it works.
 
 ## Privacy
 
@@ -55,7 +67,7 @@ Nothing leaves the device until the visitor confirms the review dialog. The brow
 
 ## Fallback
 
-The check is skipped and the photo uploads as the intake step left it (untouched when it already worked, converted when the lane could not read it), with a one-line note, when the browser lacks Web Workers, `OffscreenCanvas` or `createImageBitmap`, reports under 1 GB of device memory, the photo is over 40 MB, or the model fails to load or run.
+The check is skipped and the photo uploads as the intake step left it (untouched when it already worked, converted when the lane could not read it), with a one-line note, when the browser lacks Web Workers, `OffscreenCanvas` or `createImageBitmap`, reports under 1 GB of device memory, the photo is over 40 MB, the model fails to load or run, or the pass stalls past its bounded wait (see above).
 
 | State | Screen |
 |---|---|

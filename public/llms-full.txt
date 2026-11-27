@@ -3116,6 +3116,12 @@ URL: https://three.ws/docs/forge-photo-prep
 
 How Forge checks and prepares a photo in the browser before photo-to-3D: on-device background matting, a square subject crop, and plain-language warnings for photos that would make a bad mesh.
 
+### Docs · Forge input security
+
+URL: https://three.ws/docs/forge-input-security
+
+Every address, uploaded photo and model file a stranger can send to Forge, the guard in front of each (SSRF checks, DNS pinning, streaming size caps, type from bytes, pixel limits), and the one gap still open.
+
 ### Docs · Transaction landing race
 
 URL: https://three.ws/docs/transaction-landing-race

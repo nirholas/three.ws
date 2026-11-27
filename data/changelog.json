@@ -9,13 +9,6 @@
 		},
 		{
 			"date": "2026-11-27",
-			"title": "Your own Meshy, Tripo, Rodin and Stability key is checked before use, never leaks, and failures say what happened",
-			"summary": "A key you bring to Forge is now checked locally before any billed call (spaces, line breaks and the wrong vendor prefix are refused without repeating the key), scrubbed from every error and log line even if a provider echoes it back, and sent only to the provider's own address. When your provider account is out of credits, throttling you, down, or refuses the prompt, Forge says which, instead of quietly running on a free engine. A key revoked mid-job now says so instead of spinning. A captured Tripo callback can no longer be replayed under a new delivery id. The key field no longer invites browser autofill, has a Clear button, and says exactly how the key is used.",
-			"tags": ["fix", "improvement"],
-			"link": "/forge"
-		},
-		{
-			"date": "2026-11-27",
 			"title": "Forge never loses or doubles a generation on reload, a closed tab, a double click or a dropped connection",
 			"summary": "Reload /forge, close the tab or lose your connection in the middle of a generation and the page now picks the same job back up when you return, even if you left while the request was still being sent. A double click, a held Enter key or a second tab joins the generation already running instead of starting and charging a second one, on /forge and in Forge Studio. A dropped connection shows an offline note and waits for the network instead of failing, a background tab stops polling until you look at it again, and a job that finished while you were away opens on the result with a note saying so. A job whose engine never answers now ends as failed with a reason instead of spinning forever.",
 			"tags": ["fix", "improvement"],
@@ -30,9 +23,9 @@
 		},
 		{
 			"date": "2026-11-27",
-			"title": "Forge takes iPhone photos, big photos and sideways photos, and tells you plainly when a file is not a photo",
-			"summary": "Photo to 3D on Forge and Forge Studio now reads each file by its contents instead of its name. iPhone HEIC photos, AVIF, GIF and SVG images are converted on your device, photos over 8 MB or wider than 8192 pixels are shrunk instead of refused, and a photo taken sideways is turned upright before it is sent. A PDF or web page renamed to .jpg, an empty file or a tiny icon is refused with a sentence saying what it is and which formats work. Picking a file, dropping it, pasting an image and pasting or dragging an image link all work the same way, and a link is fetched for you safely. If an upload drops, times out or your session expires, the photo stays on the tile and Retry sends it again. Photos that already worked are sent exactly as before.",
-			"tags": ["improvement", "fix"],
+			"title": "Your own Meshy, Tripo, Rodin and Stability key is checked before use, never leaks, and failures say what happened",
+			"summary": "A key you bring to Forge is now checked locally before any billed call (spaces, line breaks and the wrong vendor prefix are refused without repeating the key), scrubbed from every error and log line even if a provider echoes it back, and sent only to the provider's own address. When your provider account is out of credits, throttling you, down, or refuses the prompt, Forge says which, instead of quietly running on a free engine. A key revoked mid-job now says so instead of spinning. A captured Tripo callback can no longer be replayed under a new delivery id. The key field no longer invites browser autofill, has a Clear button, and says exactly how the key is used.",
+			"tags": ["fix", "improvement"],
 			"link": "/forge"
 		},
 		{
@@ -53,6 +46,13 @@
 				"improvement",
 				"fix"
 			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-27",
+			"title": "Forge takes iPhone photos, big photos and sideways photos, and tells you plainly when a file is not a photo",
+			"summary": "Photo to 3D on Forge and Forge Studio now reads each file by its contents instead of its name. iPhone HEIC photos, AVIF, GIF and SVG images are converted on your device, photos over 8 MB or wider than 8192 pixels are shrunk instead of refused, and a photo taken sideways is turned upright before it is sent. A PDF or web page renamed to .jpg, an empty file or a tiny icon is refused with a sentence saying what it is and which formats work. Picking a file, dropping it, pasting an image and pasting or dragging an image link all work the same way, and a link is fetched for you safely. If an upload drops, times out or your session expires, the photo stays on the tile and Retry sends it again. Photos that already worked are sent exactly as before.",
+			"tags": ["improvement", "fix"],
 			"link": "/forge"
 		},
 		{
@@ -88,6 +88,27 @@
 			"title": "Forge keeps generating when every prompt-writing model is down, and says so plainly",
 			"summary": "Before Forge paints the picture your 3D model is built from, an assistant model rewrites your prompt with materials and lighting. When every one of those models was refusing, Forge used to wait on each of them in turn and then reported the step as if it had run. Now a model that refuses for billing or credit is set aside for half an hour, a busy one for exactly as long as it asks, and when none is available your own prompt goes forward in a fraction of a second. The progress list says whether your prompt was rewritten, used as written because the assistant was unavailable, or used as written because its rewrite was not usable. The Enhance button answers within seconds, leaves your text untouched when it cannot help, tells you so in one sentence, and never keeps spinning.",
 			"tags": ["fix", "improvement"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-26",
+			"title": "Forge skips Google's image service instantly while it is refusing, and brings it back on its own",
+			"summary": "Forge paints a reference picture from your prompt before it builds the 3D model, and Google's image service goes first. When Google refuses for a reason that will not clear in seconds, such as a billing hold, Forge now notices after one try and moves straight to the next image service for every later request, with no wait. A busy service is tried again exactly when Google says, an outage is retried after a short pause, and a prompt Google declines for content reasons no longer sets the whole service aside. Once the pause is over a single request checks whether Google is back, and Forge returns to it without a restart. Forge also checks every picture before using it, so a blank or broken image is replaced instead of turning into a broken model.",
+			"tags": ["fix"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-26",
+			"title": "Text to 3D keeps painting when an image provider is down",
+			"summary": "Typing a prompt into Forge first paints a reference image, and that step tries several image providers in turn. When the first one was out of credits or refusing requests, Forge could stop there and fail, even though the free provider at the end of the line was fine. Now a failing provider hands off at once, a provider out of credits or refusing access is set aside for five minutes so later requests skip it with no wait, a busy one is retried exactly when it says, and the free provider always keeps enough time to answer. When every provider is busy, Forge tells you the real cause and the shortest wait.",
+			"tags": ["fix"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-26",
+			"title": "Forge tells you when it is busy, instead of saying you hit your limit",
+			"summary": "When the image step or a 3D engine was busy, Forge said \"Generation limit reached\" as if you had used up your account. It now says which wait it is: a busy engine counts down the real wait, keeps your prompt and settings, and tries again once by itself (you can cancel). Your own limit says when it resets, and the daily cap on paid engines points you to the free engines that stay open.",
+			"tags": ["fix"],
 			"link": "/forge"
 		},
 		{
@@ -375,7 +396,12 @@
 			"summary": "While the worker was still loading its model, its health check crashed on a half-loaded library and answered with a server error, so probes could read a starting backend as a broken one. It now reports the GPU as unknown until loading finishes.",
 			"tags": ["fix"]
 		},
-		{"date": "2026-11-25", "title": "Token sentiment pulse reads Bluesky when pump.fun refuses", "summary": "The sentiment pulse (and the paid sentiment_pulse tool) failed for every coin for five days because pump.fun stopped serving its community callouts to outside callers. It now also reads Bluesky posts that name the coin's mint or its exact $TICKER cashtag, reports each source's status separately, and only answers with an error when every source is down.", "tags": ["fix"]},
+		{
+			"date": "2026-11-25",
+			"title": "Token sentiment pulse reads Bluesky when pump.fun refuses",
+			"summary": "The sentiment pulse (and the paid sentiment_pulse tool) failed for every coin for five days because pump.fun stopped serving its community callouts to outside callers. It now also reads Bluesky posts that name the coin's mint or its exact $TICKER cashtag, reports each source's status separately, and only answers with an error when every source is down.",
+			"tags": ["fix"]
+		},
 		{
 			"date": "2026-11-25",
 			"title": "Busy coin charts stay up when the main price source is rate limited",

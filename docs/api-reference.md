@@ -3194,7 +3194,7 @@ outage never burns a free generation.
 | -------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `prompt`       | string  | Image description. 3–2000 characters. Required.                                                                                                     |
 | `aspect_ratio` | string  | One of `1:1`, `16:9`, `9:16`, `4:3`, `3:4`, `3:2`, `2:3`. Default `1:1`.                                                                            |
-| `seed`         | integer | Optional deterministic seed (0 to 4294967295). Honored on the HF, Pollinations and Replicate flux lanes; NIM flux.1-dev and the Vertex/Gemini lane have no seed input and ignore it. |
+| `seed`         | integer | Optional deterministic seed (0 to 4294967295). Honored on the HF, Pollinations and Replicate flux lanes; NIM FLUX.2 klein and the Vertex/Gemini lane have no seed input and ignore it. |
 
 **Response — 200**
 
@@ -3202,7 +3202,7 @@ outage never burns a free generation.
 {
 	"url": "https://three.ws/cdn/forge/refs/<id>.jpg",
 	"provider": "nvidia-nim",
-	"model": "black-forest-labs/flux.1-schnell",
+	"model": "black-forest-labs/flux.2-klein-4b",
 	"width": 1024,
 	"height": 1024,
 	"aspect_ratio": "1:1",
@@ -3245,6 +3245,17 @@ refuses), so an out-of-credit account or a retired route reads `down` with the r
 instead of a green token check. A successful generation names its lane in `provider`:
 `nvidia-nim`, `vertex`, `huggingface`, `livepeer`, `pollinations` or `replicate`. A plain `GET /api/v1/ai/image` returns a
 discovery doc (price, free-tier width, which lanes are configured).
+
+`ladder` is what the next generation will actually do, read from the shared breaker
+state without calling any provider: every rung in walk order (`vertex`, `nim`,
+`hf:fal-ai`, `hf:wavespeed`, `livepeer`, `pollinations`, `replicate`), each with
+`configured`, `state` (`closed`, `open`, `half_open` or `unconfigured`),
+`last_failure_class` (`credits`, `auth`, `rate_limited`, `timeout`, `server`,
+`unreachable`, `invalid`), `last_failure_status`, `last_failure_detail`,
+`last_failure_at`, `consecutive_failures` and `retry_at` (when an open rung is tried
+again; `half_open` means the next request probes it). A `429 rate_limited` from a
+generation carries the shortest wait any rung stated, so `retryAfter` is the earliest
+moment a retry can be served.
 
 **Errors**
 
