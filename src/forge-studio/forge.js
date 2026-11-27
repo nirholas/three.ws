@@ -27,6 +27,8 @@ import { rememberFromResponse } from '../shared/forge-manage-tokens.js';
 import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, uploadSignInUrl, UPLOAD_SIGN_IN_SHORT } from '../shared/upload-sign-in.js';
 import { classifyThrottle, createThrottlePanel } from '../forge-throttle.js';
 import { forgeErrorFromResponse, forgeJobFailedError, announceForgeError, forgeErrorDescriptor } from '../forge-errors.js';
+import { RESUME_WINDOW_MS, createRunGate, newIdempotencyKey } from '../forge-inflight.js';
+import { createHiddenClock, waitUntilVisible, fetchJobStatus, nextBackoff } from '../shared/resilient-poll.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -45,11 +47,20 @@ ensureStateKitStyles();
 // honest elapsed counter. Nothing fakes progress.
 
 const POLL_INTERVAL_MS = 2500;
-// Ceiling for a single reconstruction run. Max-tier texture bakes legitimately
-// run past 10 minutes at full quality; the ceiling must sit above the slowest
-// real generation or the client abandons jobs the server finishes. Queue wait
-// does not count against this window (see pollUntilDone).
-const MAX_POLL_MS = 12 * 60 * 1000;
+// Ceiling for one run's polling, in foreground time. The server fails a job 45
+// minutes after it was created (api/_lib/forge-job-deadline.js), so the page
+// waits a margin past that and always collects the job's real ending (done, or
+// failed with a reason) instead of abandoning a job the server still finishes.
+// Queue wait and time in a background tab do not count (see pollUntilDone).
+const MAX_POLL_MS = RESUME_WINDOW_MS;
+// A tab nobody has looked at for this long stops polling until it is shown.
+const POLL_HIDDEN_PAUSE_MS = 60_000;
+// While status requests fail: the backoff ceiling, and how long the network is
+// "patchy" before the step says the device looks offline.
+const POLL_MAX_BACKOFF_MS = 30_000;
+const POLL_TRANSPORT_GRACE_MS = 90_000;
+const PATCHY_NETWORK_LABEL = 'Reconnecting… your model is still being made';
+const OFFLINE_LABEL = 'You look offline. Your model is still being made and this picks it up when you reconnect';
 const MAX_VIEWS = 4;
 const VIEW_LABELS = ['Front', 'Back', 'Left', 'Right'];
 
@@ -143,6 +154,9 @@ const els = {
 let aspectRatio = '1:1';
 let elapsedTimer = null;
 let pollAbort = false;
+// One generation per tab: the button, Ctrl/Cmd+Enter (and its auto-repeat) and
+// the pay-then-generate path all go through run(), which takes this first.
+const runGate = createRunGate();
 let mode = 'text'; // 'text' | 'image' | 'sketch' — input mode (prompt vs photos vs drawing)
 let lastJob = null; // { prompt, imageUrls } — for retry
 // Automatic engine hops taken for the current submission (lane_failed → switch
@@ -1405,9 +1419,12 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 	// anonymous callers, the free tiers, and BYOK High (server-exempt — no pass needed).
 	if (highTierNeedsPass()) await getTierPass({ interactive: Boolean(_highAccess?.eligible) });
 
+	// The Idempotency-Key makes any resend of this exact request (a retried
+	// socket, a duplicate dispatch) answer with the first job instead of starting
+	// and charging a second one (api/_lib/forge-idempotency.js).
 	const res = await fetch('/api/forge', {
 		method: 'POST',
-		headers: forgeHeaders({ 'content-type': 'application/json' }),
+		headers: forgeHeaders({ 'content-type': 'application/json', 'idempotency-key': newIdempotencyKey() }),
 		body: JSON.stringify(body),
 	});
 	const data = await res.json().catch(() => ({}));
@@ -1522,22 +1539,59 @@ function announceFailoverNote(data) {
 }
 
 async function pollUntilDone(jobId) {
-	let deadline = performance.now() + MAX_POLL_MS;
+	// Foreground-only clock: time in a background tab never spends the budget.
+	const hidden = createHiddenClock();
+	try {
+		return await runPollLoop(jobId, () => performance.now() - hidden.hiddenMs(), hidden);
+	} finally {
+		hidden.stop();
+	}
+}
+
+async function runPollLoop(jobId, runNow, hidden) {
+	let deadline = runNow() + MAX_POLL_MS;
 	// Queue-state tracking: a job waiting for a GPU is alive, so say so (after a
 	// short grace that filters dispatch latency) and never spend the run budget
 	// on line time.
 	let queuedPolls = 0;
 	let inQueue = false;
 	let preQueueMeshLabel = null;
-	while (!pollAbort && performance.now() < deadline) {
-		await sleep(POLL_INTERVAL_MS);
+	// A dropped status request says nothing about the job, which is alive on the
+	// server: back off, say so, and pick it up again when the network returns.
+	let interval = POLL_INTERVAL_MS;
+	let offlineSince = 0;
+	let preOfflineMeshLabel = null;
+	while (!pollAbort && runNow() < deadline) {
+		await sleep(interval);
 		if (pollAbort) return null;
-		const res = await fetch(`/api/forge?job=${encodeURIComponent(jobId)}`, {
-			headers: forgeHeaders(),
-		});
-		const data = await res.json().catch(() => ({}));
+		// Nobody has looked at this tab for a while: stop asking the server, and
+		// ask again the moment the tab is shown.
+		if (hidden.hiddenStreakMs() >= POLL_HIDDEN_PAUSE_MS) {
+			await waitUntilVisible();
+			if (pollAbort) return null;
+		}
+		let data;
+		try {
+			data = await fetchJobStatus(`/api/forge?job=${encodeURIComponent(jobId)}`, {
+				headers: forgeHeaders(),
+			});
+		} catch (err) {
+			if (err?.kind !== 'transport') throw err;
+			if (!offlineSince) {
+				offlineSince = runNow();
+				preOfflineMeshLabel = els.steps?.mesh?.querySelector('span:last-child')?.textContent || null;
+			}
+			setStepLabel('mesh', runNow() - offlineSince > POLL_TRANSPORT_GRACE_MS ? OFFLINE_LABEL : PATCHY_NETWORK_LABEL);
+			interval = nextBackoff(interval, POLL_MAX_BACKOFF_MS);
+			continue;
+		}
+		if (offlineSince) {
+			offlineSince = 0;
+			interval = POLL_INTERVAL_MS;
+			if (preOfflineMeshLabel) setStepLabel('mesh', preOfflineMeshLabel);
+		}
 		if (data.error === 'unconfigured') {
-			const e = forgeErrorFromResponse(res.status, { ...data, error: 'unconfigured' });
+			const e = forgeErrorFromResponse(503, { ...data, error: 'unconfigured' });
 			e.kind = 'unconfigured';
 			throw e;
 		}
@@ -1555,7 +1609,7 @@ async function pollUntilDone(jobId) {
 		}
 		if (data.status === 'queued') {
 			setStep('mesh', 'active');
-			deadline = performance.now() + MAX_POLL_MS;
+			deadline = runNow() + MAX_POLL_MS;
 			queuedPolls += 1;
 			// A cold start is stated by the API, not guessed from how long we have
 			// been waiting, so it skips the 3-poll grace and names itself on the
@@ -2222,9 +2276,16 @@ async function showThrottle(throttle) {
 }
 
 // Run a job (text or image/multi-view). `cfg` = { prompt, imageUrls }.
-async function run(cfg) {
+async function run(cfg, { handoff = false } = {}) {
+	// Taken before the first await, so a second click, a repeated key or a
+	// second path into run() finds the tab busy instead of sending another POST.
+	const gateToken = runGate.enter({ handoff });
+	if (!gateToken) return;
 	stopRateLimitCountdown();
-	if (!(await requireCreateAccount())) return;
+	if (!(await requireCreateAccount())) {
+		runGate.leave(gateToken);
+		return;
+	}
 	// Captured before the single-use payment proof is stripped — tells the upgrade
 	// funnel conversion which path (pay-per-use vs. hold) closed the loop.
 	const wasPaidGeneration = !!cfg.payment;
@@ -2417,7 +2478,7 @@ async function run(cfg) {
 			if (lastJob && autoLaneHops < 1 && selectEngineByBackend(err.retryBackends[0])) {
 				autoLaneHops += 1;
 				if (err.regionRestricted) updateEngineAvailability();
-				run(lastJob);
+				run(lastJob, { handoff: true });
 				return;
 			}
 			if (err.regionRestricted) updateEngineAvailability();
@@ -2454,7 +2515,8 @@ async function run(cfg) {
 		const failure = forgeErrorDescriptor(err, 'generation_failed');
 		showError(failure.message, { title: failure.title });
 	} finally {
-		setBusy(false);
+		// A lane hop has already taken the gate over; its own run ends the busy state.
+		if (runGate.leave(gateToken)) setBusy(false);
 	}
 }
 
@@ -2637,6 +2699,8 @@ els.form.addEventListener('submit', (e) => {
 
 // Cmd/Ctrl+Enter submits from either text box.
 function submitOnModifierEnter(e) {
+	// A held key auto-repeats keydown; only the first press is a request.
+	if (e.repeat) return;
 	if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
 		e.preventDefault();
 		submit();
@@ -2695,6 +2759,7 @@ els.providerKey?.addEventListener('input', () => {
 
 els.cancel.addEventListener('click', () => {
 	pollAbort = true;
+	runGate.reset();
 	stopElapsed();
 	setBusy(false);
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
