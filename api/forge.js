@@ -3157,20 +3157,6 @@ async function startRigJob(req, res) {
 		});
 	}
 
-	// Check the model before any GPU time: an object with no limbs, several
-	// separate pieces, an oversized or already-rigged file is refused here with a
-	// reason, and a Draco or meshopt file is decoded to a copy the worker can read
-	// (api/_lib/rig-preflight.js). A refusal gives the hourly slot back.
-	const pre = await preflightRig({
-		glbUrl,
-		creationId: typeof body?.creation_id === 'string' ? body.creation_id : null,
-		prompt: typeof body?.prompt === 'string' ? body.prompt : null,
-	});
-	if (!pre.ok) {
-		if (pre.status < 500) await refundRigAllowance(rigKey);
-		return json(res, pre.status, pre.body);
-	}
-
 	// Rigging runs on platform-paid GCP/Replicate capacity, so it needs the same
 	// breakers as the paid reconstruction lanes (startJobWithBody): the per-IP cap
 	// above is bypassed by rotating IPs, the global hourly ceiling and the
@@ -3187,6 +3173,23 @@ async function startRigJob(req, res) {
 		return dailyLimitReached(res, daily, 'You’ve reached today’s limit for paid generations. Try again tomorrow.');
 	}
 	refundOnServerFailure(res, () => dailyPaidRefund(rigDailyKey));
+
+	// Check the model before any GPU time: an object with no limbs, several
+	// separate pieces, an oversized or already-rigged file is refused here with a
+	// reason, and a Draco or meshopt file is decoded to a copy the worker can read
+	// (api/_lib/rig-preflight.js). It runs after the breakers so a flood is
+	// stopped before any download; a refusal gives the hourly and daily slots back.
+	const pre = await preflightRig({
+		glbUrl,
+		creationId: typeof body?.creation_id === 'string' ? body.creation_id : null,
+		prompt: typeof body?.prompt === 'string' ? body.prompt : null,
+	});
+	if (!pre.ok) {
+		if (pre.status < 500) {
+			await Promise.all([refundRigAllowance(rigKey), dailyPaidRefund(rigDailyKey).catch(() => {})]);
+		}
+		return json(res, pre.status, pre.body);
+	}
 
 	try {
 		const job = await provider.submit({

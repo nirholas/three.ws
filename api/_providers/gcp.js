@@ -618,15 +618,17 @@ function buildWorkerRequest(request) {
 		// `mesh_gcs_url` (any https URL, the name is historical) and reports
 		// `rigged_gcs_url`. It is the only rerig backend: serviceUrlForMode
 		// resolves rerig from GCP_UNIRIG_URL alone.
-		return {
-			path: '/rig',
-			resultKey: 'rigged_gcs_url',
-			body: {
-				mesh_gcs_url: sourceUrl,
-				template: params?.template || 'wolf3d_neutral',
-				blendshapes: params?.blendshapes !== false,
-			},
+		// `subject` is what the model was made as (the rig preflight reads it from
+		// the creation's prompt): the worker routes a humanoid to its human rigger
+		// and a creature to the non-human one instead of guessing from the
+		// silhouette. Only the two values the worker knows are sent.
+		const body = {
+			mesh_gcs_url: sourceUrl,
+			template: params?.template || 'wolf3d_neutral',
+			blendshapes: params?.blendshapes !== false,
 		};
+		if (params?.subject === 'humanoid' || params?.subject === 'creature') body.subject = params.subject;
+		return { path: '/rig', resultKey: 'rigged_gcs_url', body };
 	}
 
 	if (mode === 'video2motion') {

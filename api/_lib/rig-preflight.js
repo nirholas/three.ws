@@ -388,7 +388,10 @@ export async function preflightRig({ glbUrl, creationId = null, prompt = null })
 	const words = await resolveRigPrompt({ glbUrl, creationId, prompt });
 	const verdict = classifyRigSubject(words || '');
 	if (verdict.subject === 'object') {
-		const named = verdict.hits.object[0];
+		// Name the object the way the prompt first does ("a katana with a blade" is a katana).
+		const lower = (words || '').toLowerCase();
+		const at = (t) => (lower.indexOf(t) < 0 ? Infinity : lower.indexOf(t));
+		const named = [...verdict.hits.object].sort((x, y) => at(x) - at(y))[0];
 		return objectRefusal(`It was made as ${/^[aeiou]/i.test(named) ? 'an' : 'a'} ${named}, which has no limbs to move.`);
 	}
 
