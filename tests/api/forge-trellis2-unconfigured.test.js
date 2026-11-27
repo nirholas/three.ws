@@ -120,7 +120,7 @@ function makeReq(url, body) {
 	return {
 		method: 'POST',
 		url,
-		headers: { 'content-type': 'application/json', 'x-forge-client': 'tester', 'cf-ipcountry': 'US' },
+		headers: { 'content-type': 'application/json', 'x-forge-client': 'tester', 'x-client-region': 'US' },
 		on(event, cb) {
 			if (event === 'data') cb(Buffer.from(JSON.stringify(body)));
 			if (event === 'end') cb();

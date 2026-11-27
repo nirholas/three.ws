@@ -130,7 +130,7 @@ function makeReq(jobId) {
 	return {
 		method: 'GET',
 		url: `/api/forge?job=${encodeURIComponent(jobId)}`,
-		headers: { 'x-forge-client': 'tester', 'x-vercel-ip-country': 'US' },
+		headers: { 'x-forge-client': 'tester', 'x-client-region': 'US' },
 		on(event, cb) {
 			if (event === 'end') cb();
 		},

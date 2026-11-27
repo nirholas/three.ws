@@ -496,7 +496,7 @@ function makeReq(body) {
 		headers: {
 			'content-type': 'application/json',
 			'x-forge-client': 'protected-lanes',
-			'x-vercel-ip-country': 'US',
+			'x-client-region': 'US',
 		},
 		on(event, cb) {
 			if (event === 'data') cb(Buffer.from(JSON.stringify(body)));

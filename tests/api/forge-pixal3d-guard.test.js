@@ -68,7 +68,7 @@ const { default: handler } = await import('../../api/forge.js');
 const { encodeJobToken } = await import('../../api/_lib/forge-job-token.js');
 
 const JOB = encodeJobToken({ provider: 'gcp', taskId: ORIGINAL_TASK });
-const req = () => ({ method: 'GET', url: `/api/forge?job=${encodeURIComponent(JOB)}`, headers: { 'x-forge-client': 'tester', 'x-vercel-ip-country': 'US' }, on(e, cb) { if (e === 'end') cb(); } });
+const req = () => ({ method: 'GET', url: `/api/forge?job=${encodeURIComponent(JOB)}`, headers: { 'x-forge-client': 'tester', 'x-client-region': 'US' }, on(e, cb) { if (e === 'end') cb(); } });
 const res = () => ({ statusCode: 200, headers: {}, body: null, setHeader(n, v) { this.headers[n.toLowerCase()] = v; }, end(b) { this.body = b ? JSON.parse(b) : null; } });
 
 beforeEach(() => {
