@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · 3D tools for Grok fleet apps</title>
+			<link>https://three.ws/docs/grok-fleet-tools</link>
+			<guid isPermaLink="false">2026-11-27:Docs · 3D tools for Grok fleet apps</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Connect the free three.ws 3D MCP server to five open-source apps that run fleets of coding agents: Orca, Happy, OpenMausBot, Suparagent and OpenHands. The file or setting each one reads, and how each was checked.</description>
+		</item>
+		<item>
 			<title>Docs · Forge input security</title>
 			<link>https://three.ws/docs/forge-input-security</link>
 			<guid isPermaLink="false">2026-11-27:Docs · Forge input security</guid>
 			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every address, uploaded photo and model file a stranger can send to Forge, the guard in front of each (SSRF checks, DNS pinning, streaming size caps, type from bytes, pixel limits), and the one gap still open.</description>
+		</item>
+		<item>
+			<title>Docs · The open Grok toolkit, with 3D</title>
+			<link>https://three.ws/docs/grok-toolkit</link>
+			<guid isPermaLink="false">2026-11-27:Docs · The open Grok toolkit, with 3D</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What three.ws gives each of 14 open-source repositories built around Grok: a Grok Build plugin, examples on both xAI SDKs, a cookbook recipe, an Orca plugin, an mcp.toml for Happy, a LiteLLM gateway config and a three-role MetaGPT team. One free 3D MCP server behind all of it, what was run against production, and the command that repeats each check.</description>
 		</item>
 		<item>
 			<title>3D for the open Grok toolkit: xAI's SDKs, MetaGPT, LiteLLM and 11 more</title>

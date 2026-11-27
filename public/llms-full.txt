@@ -3830,6 +3830,18 @@ URL: https://three.ws/docs/grok-bot
 
 Connect Grok Bot to three.ws as a custom MCP connector: exact fields for each sign-in mode, which server to pick, the links every result carries, jobs and safe retries, free limits and install tokens, why a connector key can never spend, guided prompts, and a fix for every connection failure.
 
+### Docs · The open Grok toolkit, with 3D
+
+URL: https://three.ws/docs/grok-toolkit
+
+What three.ws gives each of 14 open-source repositories built around Grok: a Grok Build plugin, examples on both xAI SDKs, a cookbook recipe, an Orca plugin, an mcp.toml for Happy, a LiteLLM gateway config and a three-role MetaGPT team. One free 3D MCP server behind all of it, what was run against production, and the command that repeats each check.
+
+### Docs · 3D tools for Grok fleet apps
+
+URL: https://three.ws/docs/grok-fleet-tools
+
+Connect the free three.ws 3D MCP server to five open-source apps that run fleets of coding agents: Orca, Happy, OpenMausBot, Suparagent and OpenHands. The file or setting each one reads, and how each was checked.
+
 ### Docs · Solana Memo Media MCP
 
 URL: https://three.ws/docs/mcp-solana-memo-media

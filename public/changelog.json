@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-27T21:36:13.571Z",
+	"generated_at": "2026-11-27T21:37:01.234Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -9,9 +9,29 @@
 		{
 			"date": "2026-11-27",
 			"type": "launch",
+			"title": "Docs · 3D tools for Grok fleet apps",
+			"summary": "Connect the free three.ws 3D MCP server to five open-source apps that run fleets of coding agents: Orca, Happy, OpenMausBot, Suparagent and OpenHands. The file or setting each one reads, and how each was checked.",
+			"link": "/docs/grok-fleet-tools",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "launch",
 			"title": "Docs · Forge input security",
 			"summary": "Every address, uploaded photo and model file a stranger can send to Forge, the guard in front of each (SSRF checks, DNS pinning, streaming size caps, type from bytes, pixel limits), and the one gap still open.",
 			"link": "/docs/forge-input-security",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "launch",
+			"title": "Docs · The open Grok toolkit, with 3D",
+			"summary": "What three.ws gives each of 14 open-source repositories built around Grok: a Grok Build plugin, examples on both xAI SDKs, a cookbook recipe, an Orca plugin, an mcp.toml for Happy, a LiteLLM gateway config and a three-role MetaGPT team. One free 3D MCP server behind all of it, what was run against production, and the command that repeats each check.",
+			"link": "/docs/grok-toolkit",
 			"tags": [
 				"launch"
 			]

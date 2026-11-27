@@ -1,20 +1,40 @@
 {
-	"generated_at": "2026-11-27T21:36:13.643Z",
+	"generated_at": "2026-11-27T21:37:01.306Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4791,
+	"total": 4793,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
 		{
 			"date": "2026-11-27",
 			"type": "launch",
+			"title": "Docs · 3D tools for Grok fleet apps",
+			"summary": "Connect the free three.ws 3D MCP server to five open-source apps that run fleets of coding agents: Orca, Happy, OpenMausBot, Suparagent and OpenHands. The file or setting each one reads, and how each was checked.",
+			"link": "/docs/grok-fleet-tools",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "launch",
 			"title": "Docs · Forge input security",
 			"summary": "Every address, uploaded photo and model file a stranger can send to Forge, the guard in front of each (SSRF checks, DNS pinning, streaming size caps, type from bytes, pixel limits), and the one gap still open.",
 			"link": "/docs/forge-input-security",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "launch",
+			"title": "Docs · The open Grok toolkit, with 3D",
+			"summary": "What three.ws gives each of 14 open-source repositories built around Grok: a Grok Build plugin, examples on both xAI SDKs, a cookbook recipe, an Orca plugin, an mcp.toml for Happy, a LiteLLM gateway config and a three-role MetaGPT team. One free 3D MCP server behind all of it, what was run against production, and the command that repeats each check.",
+			"link": "/docs/grok-toolkit",
 			"tags": [
 				"launch"
 			]
@@ -1552,28 +1572,6 @@
 			"link": null,
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-19",
-			"type": "update",
-			"title": "The x402 VS Code extension shows real $THREE prices",
-			"summary": "Endpoints priced in $THREE showed Infinity in the payment summary and the confirm prompt. Amounts now use the token's declared decimals, so you see the actual price, for example 10.000000 $THREE, before you approve a payment.",
-			"link": null,
-			"tags": [
-				"fix",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-19",
-			"type": "update",
-			"title": "Two-factor setup and sign-in challenges stop returning 404",
-			"summary": "Enrolling an authenticator app and answering a two-factor challenge called /api/auth/mfa/..., a path production had no route for, so both failed with Not Found. The route now reaches the MFA handler, so you can turn on two-factor protection and sign in with it.",
-			"link": null,
-			"tags": [
-				"fix",
-				"security"
 			]
 		}
 	]
