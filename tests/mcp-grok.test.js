@@ -116,6 +116,21 @@ describe('grok surface catalog', () => {
 		expect(names('grok')).toContain('get_job');
 	});
 
+	// xAI's Responses API refuses the whole request when any one tool's input
+	// schema has a union at its root: HTTP 400 "invalid_client_tool_schema ...
+	// tool parameter root must be an object type (root schema is an anyOf/oneOf
+	// union with a non-object branch)". One bad tool takes every tool offline
+	// for every Grok model calling us, so each root must be a plain object.
+	it('gives every tool a plain object root schema that xAI accepts', () => {
+		const rejected = toolCatalogFor('grok')
+			.filter((t) => {
+				const s = t.inputSchema || {};
+				return s.type !== 'object' || ['anyOf', 'oneOf', 'allOf', 'not', 'if', 'then', 'else', 'enum', 'const'].some((k) => k in s);
+			})
+			.map((t) => t.name);
+		expect(rejected).toEqual([]);
+	});
+
 	it('tells Grok to share links and collect pending jobs on initialize', async () => {
 		const r = await dispatch({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }, auth, req, { surface: 'grok' });
 		const text = r.result.instructions;

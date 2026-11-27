@@ -212,8 +212,9 @@ const DEFS = [
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
+			// "source_url or source_urls" lives in serverSchema, not here: xAI rejects
+			// a root union in a published schema and drops every tool with it.
 			required: ['source_kind'],
-			anyOf: [{ required: ['source_url'] }, { required: ['source_urls'] }],
 			properties: {
 				source_url: { ...HTTPS_URL, description: 'Public https URL of one file: a stitched 360 video or one raw .insv.' },
 				source_urls: {
@@ -236,6 +237,7 @@ const DEFS = [
 				quality: { type: 'string', enum: QUALITIES, description: 'preview is fastest, standard is the default, high uses more frames and training and takes longest.' },
 			},
 		},
+		serverSchema: { anyOf: [{ required: ['source_url'] }, { required: ['source_urls'] }] },
 		annotations: START_ANNOTATIONS,
 		handler: handleCaptureStart,
 	},
@@ -305,9 +307,13 @@ const DEFS = [
 
 export const PANO_TOOL_NAMES = DEFS.map((d) => d.name);
 
-export const PANO_TOOL_CATALOG = DEFS.map(({ handler: _h, ...schema }) => schema);
+export const PANO_TOOL_CATALOG = DEFS.map(({ handler: _h, serverSchema: _s, ...schema }) => schema);
 
 const ajv = new Ajv({ allErrors: true, useDefaults: true, coerceTypes: true, strict: false });
 addFormats(ajv);
 
-export const PANO_TOOLS = Object.fromEntries(DEFS.map(({ name, handler, inputSchema }) => [name, { handler, validate: ajv.compile(inputSchema) }]));
+// serverSchema adds checks a client's tool parser may refuse to read (a root
+// anyOf, for one): they run here and are never published in the catalog.
+export const PANO_TOOLS = Object.fromEntries(
+	DEFS.map(({ name, handler, inputSchema, serverSchema }) => [name, { handler, validate: ajv.compile({ ...inputSchema, ...serverSchema }) }]),
+);
