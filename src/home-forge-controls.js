@@ -27,6 +27,7 @@ import {
 import { renderLock, lockStateFromAccess } from './three-lock.js';
 import { payForHighGeneration, forgetPaidProof } from './forge-pay.js';
 import { byokUseNote, mountByokKeyField } from './shared/byok-key-ui.js';
+import { controlStateFor, honoredRequest } from './forge-control-state.js';
 
 // Short engine labels for the picker, keyed by backend id — mirrors ENGINE_LABELS
 // in src/forge.js so the two pickers read identically. Free lanes carry a FREE
@@ -205,6 +206,7 @@ export function initForgeControls({ root, clientHeaders, onLane, onRerun, onBloc
 
 	function selectTier(id) {
 		if (!TIER_ORDER.includes(id)) return;
+		if (id !== 'standard' && laneState().tierLocked) return;
 		selectedTier = id;
 		for (const b of els.tier.querySelectorAll('button')) {
 			b.setAttribute('aria-pressed', String(b.dataset.tier === id));
@@ -237,10 +239,31 @@ export function initForgeControls({ root, clientHeaders, onLane, onRerun, onBloc
 	}
 
 	function updateAspectVisibility() {
-		if (!els.aspectRow) return;
-		// Aspect ratio only shapes the reference image an image-path lane renders;
-		// geometry/sketch lanes ignore it. Auto uses the image path, so it shows.
-		els.aspectRow.hidden = selectedEngine.path !== 'image';
+		// Aspect ratio only shapes the reference image an image-path lane paints
+		// from the prompt; lanes that build straight from text ignore it. Auto uses
+		// the image path, so it shows.
+		const state = laneState();
+		if (els.aspectRow) els.aspectRow.hidden = selectedEngine.path !== 'image' || !state.aspectVisible;
+		applyTierLock(state);
+	}
+
+	// The selected engine's control rules (src/forge-control-state.js), the same
+	// ones the full /forge page and the API apply.
+	function laneState() {
+		const id = selectedEngine.backend;
+		return controlStateFor({ backend: id, label: ENGINE_LABELS[id] || id || '', mode: 'text' });
+	}
+
+	// An engine that runs at one quality: Draft and High are disabled with the
+	// reason, and the tier falls back to Standard so the request is one the API takes.
+	function applyTierLock(state) {
+		for (const b of els.tier?.querySelectorAll('button[data-tier]') || []) {
+			const off = state.tierLocked && b.dataset.tier !== 'standard';
+			b.disabled = off;
+			b.dataset.blurb ??= b.title;
+			b.title = off ? state.tierReason : b.dataset.blurb;
+		}
+		if (state.tierLocked && selectedTier !== 'standard') selectTier('standard');
 	}
 
 	// ── Engine picker ──────────────────────────────────────────────────
@@ -483,13 +506,13 @@ export function initForgeControls({ root, clientHeaders, onLane, onRerun, onBloc
 
 	// ── Public API the mini-forge consults ─────────────────────────────
 	function getConfig() {
-		return {
+		const { tier, path, backend, aspect_ratio } = honoredRequest({
 			tier: selectedTier,
 			path: selectedEngine.path || 'image',
 			backend: selectedEngine.backend, // null === Auto (omit → health routing)
 			aspect_ratio: selectedAspect,
-			byokKey,
-		};
+		});
+		return { tier, path, backend, aspect_ratio, byokKey };
 	}
 
 	// Assemble the request headers for a submit: the client id, the BYOK key when a

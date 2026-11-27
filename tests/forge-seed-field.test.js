@@ -142,4 +142,18 @@ describe('mountSeedField', () => {
 		expect(input.value).toBe('banana');
 		expect(msg.dataset.state).toBe('error');
 	});
+
+	it('disables itself with the reason on an engine that takes no seed, and keeps the typed value for the next engine', () => {
+		const { input, msg, field } = mount();
+		type(input, '77');
+		field.setDisabled('Meshy 6 takes no seed, so a seed would not repeat the model.');
+		expect(input.disabled).toBe(true);
+		expect(msg.dataset.state).toBe('off');
+		expect(msg.textContent).toMatch(/takes no seed/);
+		expect(field.seedForSubmit(() => 5)).toBe(5);
+		field.setDisabled('');
+		expect(input.disabled).toBe(false);
+		expect(msg.dataset.state).toBe('locked');
+		expect(field.seedForSubmit(() => 5)).toBe(77);
+	});
 });

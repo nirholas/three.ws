@@ -25,6 +25,7 @@ import {
 import { showSharePanel } from './shared/share.js';
 import { guardSketchFile } from './forge-studio/sketch-guard.js';
 import { stampGlbAttribution } from './shared/glb-attribution.js';
+import { exportFileName, prepareGlbDownload } from './forge-export-files.js';
 import {
 	primeTierPass,
 	attachTierPass,
@@ -53,6 +54,7 @@ import { regionRestrictedError, fetchTerritory, applyRegionNote, regionButtonTit
 import { engineFromQuery } from './forge-engine-link.js';
 import { byokUseNote, mountByokKeyField } from './shared/byok-key-ui.js';
 import { mountSeedField } from './forge-seed-field.js';
+import { PAGE_DEFAULT_ENGINE, controlStateFor, honoredRequest, madeWithSummary } from './forge-control-state.js';
 import { rememberFromResponse } from './shared/forge-manage-tokens.js';
 import { signedInForUploads, accountState, isSignInRequired, renderUploadSignIn, renderCreateSignIn, uploadSignInUrl, UPLOAD_SIGN_IN_SHORT } from './shared/upload-sign-in.js';
 import { forgeAuthHref, installSignInDraftCapture, takeSignInDraft, restoredDraftNote } from './forge-sign-in-return.js';
@@ -156,6 +158,7 @@ const els = {
 	resultCreator: document.getElementById('result-creator'),
 	resultViews: document.getElementById('result-views'),
 	resultQuality: document.getElementById('result-quality'),
+	resultMade: document.getElementById('result-made'),
 	resultQualityRetry: document.getElementById('result-quality-retry'),
 	verdict: document.getElementById('verdict'),
 	download: document.getElementById('download'),
@@ -193,6 +196,7 @@ const els = {
 	creationsCount: document.getElementById('creations-count'),
 	// Quality tier + generation engine + BYOK key.
 	tier: document.getElementById('tier'),
+	tierNote: document.getElementById('forge-tier-note'),
 	// Persistent inline hint under the Quality row — advertises that High is a
 	// $THREE holder feature (toggled locked/unlocked by the live access read).
 	holderNote: document.getElementById('fq-holder-note'),
@@ -291,16 +295,9 @@ let restrictedEngines = new Set();
 // it did not resolve).
 let territoryResolved = null;
 let selectedTier = 'standard';
-// What the composer submits before the catalog has rendered an engine button.
-const DEFAULT_ENGINE = Object.freeze({
-	id: 'trellis',
-	path: 'image',
-	backend: 'trellis',
-	byok: null,
-	polyControl: false,
-	modly: false,
-	modelId: null,
-});
+// What the composer submits before the catalog has rendered an engine button:
+// no backend, so the server's own default lane serves it.
+const DEFAULT_ENGINE = PAGE_DEFAULT_ENGINE;
 let selectedEngine = { ...DEFAULT_ENGINE };
 // Once the user deliberately picks an engine we stop auto-selecting the
 // catalog's per-tier default (e.g. the free NVIDIA lane on draft) under them.
@@ -832,9 +829,25 @@ function setMode(next) {
 // the user supplies their own photos OR uses the geometry-first path (which
 // never paints an intermediate image).
 function updateAspectVisibility() {
-	if (!els.aspect) return;
-	const relevant = mode === 'text' && selectedEngine.path === 'image';
-	els.aspect.classList.toggle('is-hidden', !relevant);
+	const state = controlStateFor({ backend: selectedEngine.backend, label: engineLabel(selectedEngine.backend), mode });
+	els.aspect?.classList.toggle('is-hidden', !(state.aspectVisible && selectedEngine.path === 'image'));
+	applyLaneControls(state);
+}
+
+// Lock what the selected engine cannot honor, with the reason the API would
+// give, so the composer never builds a request the API refuses
+// (src/forge-control-state.js holds the rules, api/_lib/forge-controls.js the record).
+function applyLaneControls(state) {
+	for (const b of els.tier?.querySelectorAll('button[data-tier]') || []) {
+		b.disabled = state.tierLocked && b.dataset.tier !== 'standard';
+	}
+	if (els.tierNote) {
+		els.tierNote.hidden = !state.tierLocked;
+		els.tierNote.textContent = state.tierReason;
+	}
+	if (state.tierLocked && selectedTier !== 'standard') selectTier('standard');
+	seedField.setDisabled(state.seedReason);
+	if (els.imagePrompt) els.imagePrompt.placeholder = state.guidancePlaceholder;
 }
 
 // Quality tier + engine ------------------------------------------------------
@@ -1130,6 +1143,7 @@ function updateByokRow() {
 
 function selectTier(tierId) {
 	if (!['draft', 'standard', 'high'].includes(tierId)) return;
+	if (tierId !== 'standard' && controlStateFor({ backend: selectedEngine.backend }).tierLocked) return;
 	selectedTier = tierId;
 	for (const b of els.tier.querySelectorAll('button')) {
 		b.setAttribute('aria-pressed', String(b.dataset.tier === tierId));
@@ -2101,7 +2115,7 @@ function composeJobBody({ prompt, imageUrls, skipValidation, payment, seed, prog
 		body.payment_id = payment.paymentId;
 		body.ref_id = payment.refId;
 	}
-	return body;
+	return honoredRequest(body);
 }
 
 const JOINING_NOTE =
@@ -2686,7 +2700,8 @@ function updateRefineButton() {
 	const reRunnable =
 		lastJob &&
 		(lastJob.prompt || (Array.isArray(lastJob.imageUrls) && lastJob.imageUrls.length));
-	const show = Boolean(next && reRunnable);
+	const tierLocked = controlStateFor({ backend: lastJob?.made?.backend }).tierLocked;
+	const show = Boolean(next && reRunnable && !tierLocked);
 	els.refine.classList.toggle('is-hidden', !show);
 	if (show) {
 		els.refineLabel.textContent = `Refine → ${TIER_LABELS[next]}`;
@@ -2694,6 +2709,56 @@ function updateRefineButton() {
 			lastJob.imageUrls?.length ? 'reconstruction' : 'prompt'
 		} at ${TIER_LABELS[next]} quality`;
 	}
+}
+
+// The controls a run was made with, so the result can show them and Retry,
+// Refine and Make another can put them back.
+function selectionFor(cfg) {
+	return {
+		engineId: userPickedEngine ? selectedEngine.id : null,
+		backend: selectedEngine.backend,
+		tier: selectedTier,
+		aspect: aspectRatio,
+		seed: Number.isInteger(cfg.seed) ? cfg.seed : null,
+		fromText: !(Array.isArray(cfg.imageUrls) && cfg.imageUrls.length),
+	};
+}
+
+function restoreSelection(made, { tier = made?.tier } = {}) {
+	if (tier && tier !== selectedTier) selectTier(tier);
+	if (!made) return;
+	if (made.engineId && made.engineId !== selectedEngine.id) {
+		const btn = els.engine?.querySelector(`button[data-engine="${made.engineId}"]:not(:disabled)`);
+		if (btn) {
+			userPickedEngine = true;
+			selectEngine(btn);
+		}
+	}
+	if (made.fromText && made.aspect && made.aspect !== aspectRatio) {
+		els.aspect?.querySelector(`button[data-aspect="${made.aspect}"]`)?.click();
+	}
+}
+
+// One line under the result naming the options it was made with: the tier and
+// engine that served it (from the server's answer), the reference shape and
+// the seed this page sent, each only when that lane honored it.
+function renderMadeWith(meta) {
+	if (!els.resultMade) return;
+	const made = lastJob?.made || null;
+	const backend = meta?.backend || made?.backend || null;
+	const tier = meta?.tier || made?.tier;
+	const text = tier
+		? madeWithSummary({
+				tier,
+				engineLabel: backend ? engineLabel(backend) : 'Auto',
+				backend,
+				aspect: made?.aspect,
+				seed: made && (!made.backend || made.backend === backend) ? made.seed : null,
+				fromText: made?.fromText,
+			})
+		: '';
+	els.resultMade.textContent = text;
+	els.resultMade.classList.toggle('is-hidden', !text);
 }
 
 // Point the cross-page result actions at this model. Also called when a local
@@ -2749,6 +2814,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 	if (REDUCED_MOTION) els.viewer.removeAttribute('auto-rotate');
 	lastShownGlb = glbUrl;
 	els.resultLabel.textContent = label;
+	renderMadeWith(meta);
 	// Real, opt-in attribution only: a byline + link to the creator's public
 	// portfolio appears when this creation was forged while signed in
 	// (meta.creatorUsername, set server-side). Anonymous generations — the
@@ -2797,12 +2863,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 	els.download.dataset.engineVersion = meta?.engine_version || '';
 	els.download.setAttribute(
 		'download',
-		`${
-			label
-				.replace(/[^a-z0-9]+/gi, '-')
-				.slice(0, 48)
-				.replace(/^-|-$/g, '') || 'forge'
-		}.glb`,
+		exportFileName(label, 'glb'),
 	);
 	// Offer "Refine" when a higher tier exists and this job can be re-run. Use the
 	// tier the result was actually produced at (meta), falling back to the current
@@ -3447,6 +3508,7 @@ async function run(cfg, { handoff = false } = {}) {
 	// upgrade-funnel conversion which path (pay-per-use vs. hold) closed the loop.
 	const wasPaidGeneration = !!cfg.payment;
 	lastJob = cfg;
+	lastJob.made = selectionFor(cfg);
 	seedField.noteUsed(cfg.seed);
 	pollAbort = false;
 	currentCreationId = null;
@@ -4648,6 +4710,8 @@ els.cancel.addEventListener('click', () => {
 
 els.again.addEventListener('click', () => {
 	stopRateLimitCountdown();
+	// Make another starts from the options the model on screen was made with.
+	restoreSelection(lastJob?.made);
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
 	destinationPicker.hide();
 	showState('empty');
@@ -4699,7 +4763,7 @@ els.refineLocally?.addEventListener('click', () => {
 els.refine?.addEventListener('click', async () => {
 	const next = nextTierAfter(currentResultTier);
 	if (!next || !lastJob) return;
-	selectTier(next);
+	restoreSelection(lastJob.made, { tier: next });
 	// Refining into platform-keyed High runs the same $THREE pre-flight as selecting
 	// it: resolve the holder's eligibility first and open the upsell instead of firing
 	// a job the server would 402. BYOK High is exempt (highTierNeedsPass() is false);
@@ -4784,7 +4848,9 @@ els.download.addEventListener('click', async (e) => {
 		sendFeedback({ downloaded: true });
 		const res = await fetch(glbUrl);
 		if (!res.ok) throw new Error(`fetch ${res.status}`);
-		const stamped = stampGlbAttribution(await res.arrayBuffer(), {
+		// WebP-only maps become PNG so the file opens fully in any glTF importer.
+		const { buffer } = await prepareGlbDownload(await res.arrayBuffer());
+		const stamped = stampGlbAttribution(buffer, {
 			prompt: els.resultLabel?.textContent || '',
 			engine: ENGINE_LABELS[els.download.dataset.engine] || els.download.dataset.engine || undefined,
 			engineVersion: els.download.dataset.engineVersion || undefined,

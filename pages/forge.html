@@ -988,6 +988,27 @@
 			.seed-msg[data-state='error'] {
 				color: var(--danger);
 			}
+			.seed-input:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+			/* Why a control is locked for the selected engine (src/forge-control-state.js). */
+			.fq-lane-note {
+				margin: 0.1rem 0 0;
+				font-size: var(--text-xs);
+				line-height: 1.5;
+				color: var(--ink-dim);
+			}
+			/* The options the model on screen was made with. */
+			.made-chip {
+				font-size: 0.7rem;
+				color: var(--ink-dim);
+				margin-left: 0.5rem;
+				overflow-wrap: anywhere;
+			}
+			.made-chip.is-hidden {
+				display: none;
+			}
 			.seed-msg strong {
 				font-family: var(--font-mono);
 				font-weight: 500;
@@ -4362,6 +4383,7 @@
 							</button>
 						</div>
 					</div>
+					<p class="fq-lane-note" id="forge-tier-note" aria-live="polite" hidden></p>
 					<p class="fq-holder-note" id="fq-holder-note" data-state="locked" data-i18n-html="forge.high_quality_is_a_three_holder_feature">
 						<span class="fq-holder-ico" aria-hidden="true">◆</span> High quality is a
 						<a href="/three-token">$THREE holder</a> feature: hold to unlock, or pay per generation.
@@ -4642,6 +4664,7 @@
 					</div>
 					<div class="result-bar">
 						<span class="label" id="result-label" role="status" aria-live="polite"></span>
+						<span class="made-chip is-hidden" id="result-made" title="The options this model was made with. Make another and Refine reuse them."></span>
 						<a class="result-creator is-hidden" id="result-creator" data-i18n="forge.by">by @</a>
 						<a class="result-visibility is-hidden" id="result-visibility" href="/creations" title="Choose whether this model is public, unlisted or private, or delete it">Who can see this?</a>
 						<span class="saved-chip is-hidden" id="result-saved" aria-label="Auto-saved to gallery" data-i18n="forge.saved" data-i18n-attr="aria-label:forge.auto_saved_to_gallery_arialabel">Saved ✓</span>

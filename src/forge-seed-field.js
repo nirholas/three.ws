@@ -71,13 +71,17 @@ function safeStorage(storage) {
  * @returns {{
  *   seedForSubmit: (mint: () => number) => number | null,
  *   noteUsed: (seed: number | null | undefined) => void,
+ *   setDisabled: (reason: string) => void,
  * }}
  */
 export function mountSeedField({ input, msg, storage = globalThis.localStorage }) {
 	// A page without the field keeps the old behavior: a fresh seed every run.
-	if (!input || !msg) return { seedForSubmit: (mint) => mint(), noteUsed() {} };
+	if (!input || !msg) return { seedForSubmit: (mint) => mint(), noteUsed() {}, setDisabled() {} };
 	const store = safeStorage(storage);
 	let lastUsed = null;
+	// Set while the selected engine takes no seed: the field is disabled and its
+	// note says why, and no seed is checked or sent.
+	let disabledReason = '';
 
 	function showError(text) {
 		input.setAttribute('aria-invalid', 'true');
@@ -87,6 +91,11 @@ export function mountSeedField({ input, msg, storage = globalThis.localStorage }
 
 	function showIdle() {
 		input.removeAttribute('aria-invalid');
+		if (disabledReason) {
+			msg.dataset.state = 'off';
+			msg.replaceChildren(disabledReason);
+			return;
+		}
 		const locked = parseSeedInput(input.value).seed;
 		if (locked !== null) {
 			msg.dataset.state = 'locked';
@@ -155,6 +164,9 @@ export function mountSeedField({ input, msg, storage = globalThis.localStorage }
 
 	return {
 		seedForSubmit(mint) {
+			// The engine takes no seed, so the request leaves it out
+			// (src/forge-control-state.js); a typed value is kept for the next engine.
+			if (disabledReason) return mint();
 			const parsed = validate();
 			if (parsed.error) {
 				input.focus();
@@ -165,6 +177,15 @@ export function mountSeedField({ input, msg, storage = globalThis.localStorage }
 		noteUsed(seed) {
 			lastUsed = Number.isInteger(seed) ? seed : null;
 			if (input.getAttribute('aria-invalid') !== 'true') showIdle();
+		},
+		setDisabled(reason) {
+			const next = reason || '';
+			if (next === disabledReason) return;
+			disabledReason = next;
+			input.disabled = Boolean(next);
+			if (next) showIdle();
+			else if (input.value) validate();
+			else showIdle();
 		},
 	};
 }
