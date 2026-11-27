@@ -70,7 +70,7 @@ Each agent stops at the CLAUDE.md gates and reports. These are yours:
 | [110](../110-forge-hardening-10-lane-failover-and-breakers.md) | 3D lane failover | Prove that when the working lane fails, the user still gets a model | 0 |
 | [111](../../awaiting-owner/111-forge-hardening-11-job-lifecycle-poll-resume.md) | job lifecycle, polling and resume | Never lose a generation: closing the tab, reloading or double-clicking must all be safe | 1 |
 | [112](../112-forge-hardening-12-limits-and-daily-caps.md) | rate limits and daily caps | Make every limit fair, accurate and explained | 0 |
-| [113](../113-forge-hardening-13-error-copy-taxonomy.md) | error handling, page copy | Give every error Forge can return a message that says what happened and what to do | 0 |
+| [113](../../awaiting-owner/113-forge-hardening-13-error-copy-taxonomy.md) | error handling, page copy | Give every error Forge can return a message that says what happened and what to do | 0 |
 | [167](../../awaiting-owner/167-forge-hardening-67-input-security-uploads-and-urls.md) | security: what Forge accepts from the internet | Make sure nothing a stranger sends to Forge can reach inside our systems | 0 |
 | [168](../168-forge-hardening-68-ownership-and-token-security.md) | security: who may do what | Make sure one user can never see, change or spend another user's Forge work | 0 |
 | [169](../../awaiting-owner/169-forge-hardening-69-content-safety-and-takedown.md) | safety: what Forge will make and how it is removed | Make sure Forge refuses what it must, and that removal requests actually remove | 0 |

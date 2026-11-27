@@ -59,7 +59,7 @@ The completion rate differs a lot by campaign:
    - `tests/forge-product-name.test.js` fails because the `es`, `ar`, `bn`, `da` and `sk` catalogs have no `forge.product_name`.
    - These belong to orders 113 and 166.
 2. **Status lines that contradict the code.** Each needs its status corrected or its claim made true.
-   - 113: says the error copy is complete; the guard test is red.
+   - 113: says the error copy is complete; the guard test is red. Resolved later on 2026-11-27 (485c1935c): the four codes, and two more added since, have copy and the guard passes.
    - 262: says the 85-language picker is restored:
      - the i18n lint reports 1339 problems
      - about 1141 keys are behind
@@ -119,6 +119,7 @@ These all sit in the 185+ commits between `f0eed584f` and HEAD.
 - 122 Multi-view inputs. Then do one live post-deploy check.
 - 167 Input security for uploads and URLs. First needs the owner's yes to pin the validated IP in the vendored `worker_security.py` across 36 workers. One of them is the protected `workers/model-trellis/`, which is why it needs the yes.
 - 169 Content safety and takedown. Then do a takedown plan run without `--apply`.
+- 113 Error copy taxonomy. Moved here later on 2026-11-27 once 8ca625b79 stopped the server relaying provider text and 485c1935c added the missing copy. Then check one error live on production.
 
 ### B. Worker or service deploys
 
@@ -252,9 +253,7 @@ Checked 2026-11-27 with `db:status` against production: every migration in `api/
 - 112 Limits and daily caps.
   - No test that Forge keeps working when the rate-limit store is down (task 5).
   - No limiter inventory (task 1) and no limit-size report against one GPU (task 7).
-- 113 Error copy taxonomy (contradicts its status).
-  - Add the four missing codes; the guard test then passes.
-  - The server still puts raw provider text in `message` for `generation_failed`, `rig_failed`, `invalid_key` and `insufficient_credits`.
+- 113 Error copy taxonomy: both gaps closed later on 2026-11-27 (8ca625b79, 485c1935c); moved to `awaiting-owner/`, listed under A.
 - 114 NVIDIA FLUX rung and NVIDIA text lane.
   - No browser walk of `pages/forge-nim.html` and `pages/nim-forge.html`.
   - `docs/nvidia-models.md:96` still names the old FLUX.1-dev rung.

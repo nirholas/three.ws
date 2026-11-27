@@ -29,7 +29,8 @@ grouped by the owner action that clears it:
 All 103 owner-waiting orders the audit found are here. Ninety moved in the first commit. The
 other 13 (902, 911, 913, 914, 917, 954, 957, 958, 961, 962, 965, 970 and 978) followed once the
 owner approved the move under the CLAUDE.md commit gate, because their links sit on lines that
-name other crypto projects.
+name other crypto projects. Order 113 joined later the same day, once its last code gaps were
+closed; the audit lists it under A.
 
 ## Using an order here
 
