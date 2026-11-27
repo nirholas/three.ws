@@ -5,7 +5,7 @@
 // is what to upload (the SAME File object when the photo was already fine, so a
 // photo that worked before reaches the lane byte for byte unchanged) and note
 // says what was done, or is null. When ok is false, code and message carry a
-// refusal written for the person.
+// refusal written for the person, and short a few words for the photo tile.
 //
 // The decision comes from src/shared/forge-image-intake.js (shared with the
 // page-level dropzone and the server-side link import). This module only does
@@ -49,6 +49,21 @@ function makeFile(blob, name, type) {
 	return out;
 }
 
+// The photo tile has room for a few words; the full sentence goes in the note
+// line beside the slots (and is what screen readers hear).
+const SHORT = {
+	empty: 'File is empty',
+	not_image: 'Not a photo',
+	too_small: 'Too small',
+	too_large: 'Over 100 MB',
+	encode_failed: 'Could not shrink',
+};
+
+function refusal(code, message, plan) {
+	const short = code === 'decode_failed' ? `Could not open this ${formatLabel(plan.format)}` : SHORT[code] || 'Cannot use this file';
+	return { ok: false, code, short, message, plan };
+}
+
 function decodeFailedMessage(format) {
 	const label = formatLabel(format);
 	return `This browser could not open this ${label}, so it may be damaged or use a variant Forge cannot read. Open it on your device and export or share it as JPG, then try again.`;
@@ -73,12 +88,12 @@ function describeChanges(plan, from, to) {
  * @param {File|Blob} file
  * @param {{ codec?: object }} [opts]
  * @returns {Promise<{ok:true,file:File|Blob,changed:boolean,note:string|null,plan:object}
- *                  |{ok:false,code:string,message:string,plan:object}>}
+ *                  |{ok:false,code:string,short:string,message:string,plan:object}>}
  */
 export async function normalizeForgeImage(file, { codec } = {}) {
 	const header = new Uint8Array(await file.slice(0, HEADER_BYTES).arrayBuffer());
 	const plan = planIntake({ header, size: file.size, type: file.type, name: file.name });
-	if (plan.action === 'refuse') return { ok: false, code: plan.code, message: plan.message, plan };
+	if (plan.action === 'refuse') return refusal(plan.code, plan.message, plan);
 	if (plan.action === 'pass') {
 		if (file.type === plan.mime) return { ok: true, file, changed: false, note: null, plan };
 		// Right bytes, wrong label (a JPEG saved as .png, or no type at all): the
@@ -92,12 +107,12 @@ export async function normalizeForgeImage(file, { codec } = {}) {
 	try {
 		decoded = await c.decode(file, { format: plan.format, width: plan.width, height: plan.height, maxSide: CONVERT_MAX_SIDE });
 	} catch {
-		return { ok: false, code: 'decode_failed', message: decodeFailedMessage(plan.format), plan };
+		return refusal('decode_failed', decodeFailedMessage(plan.format), plan);
 	}
 	try {
 		const { width, height } = decoded;
-		if (!width || !height) return { ok: false, code: 'decode_failed', message: decodeFailedMessage(plan.format), plan };
-		if (Math.min(width, height) < MIN_SIDE) return { ok: false, code: 'too_small', message: tooSmallMessage(width, height), plan };
+		if (!width || !height) return refusal('decode_failed', decodeFailedMessage(plan.format), plan);
+		if (Math.min(width, height) < MIN_SIDE) return refusal('too_small', tooSmallMessage(width, height), plan);
 
 		const alpha = plan.format !== 'jpeg' && (await c.hasAlpha(decoded.handle));
 		let w = width;
@@ -126,14 +141,13 @@ export async function normalizeForgeImage(file, { codec } = {}) {
 			w = Math.max(1, Math.round(w * STEP_DOWN));
 			h = Math.max(1, Math.round(h * STEP_DOWN));
 		}
-		return {
-			ok: false,
-			code: 'encode_failed',
-			message: `This photo could not be shrunk to fit the 8 MB upload limit on this device. Export it as a JPG under 8 MB (${ACCEPTED_FORMATS_TEXT} all work) and try again.`,
+		return refusal(
+			'encode_failed',
+			`This photo could not be shrunk to fit the 8 MB upload limit on this device. Export it as a JPG under 8 MB (${ACCEPTED_FORMATS_TEXT} all work) and try again.`,
 			plan,
-		};
+		);
 	} catch {
-		return { ok: false, code: 'decode_failed', message: decodeFailedMessage(plan.format), plan };
+		return refusal('decode_failed', decodeFailedMessage(plan.format), plan);
 	} finally {
 		try {
 			c.release(decoded.handle);

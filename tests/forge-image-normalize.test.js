@@ -156,12 +156,16 @@ describe('normalizeForgeImage: refusals are messages, never crashes', () => {
 		expect(r.ok).toBe(false);
 		expect(r.code).toBe(code);
 		expect(r.message).toMatch(/\S/);
+		// The photo tile shows a short label; the full sentence goes beside it.
+		expect(r.short).toMatch(/\S/);
+		expect(r.short.length).toBeLessThanOrEqual(28);
 	});
 
 	it('a HEIC the codec cannot decode gets a message that says how to recover', async () => {
 		const r = await normalizeForgeImage(fileOf('heic'), { codec: sharpCodec() });
 		expect(r.ok).toBe(false);
 		expect(r.code).toBe('decode_failed');
+		expect(r.short).toBe('Could not open this HEIC');
 		expect(r.message).toMatch(/HEIC/);
 		expect(r.message).toMatch(/JPG/);
 	});
