@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-27T21:37:01.234Z",
+	"generated_at": "2026-11-27T21:43:03.363Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -230,6 +230,16 @@
 			"link": "/grok",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Grok measured against today's model on five three.ws tasks",
+			"summary": "We ran Grok 4.7 and Grok 4.3 on the same 250 inputs as the model three.ws uses today, across the five AI tasks people see most. Grok 4.3 passed more often on Forge prompt rewrites (100% against 48%), public X replies (96% against 80%) and agent specs (100% against 76%), and answered faster. Grok 4.7 scored as well but took about 40 seconds on the two longest tasks. Agent chat was a tie. Nothing in production changed: the page has the method, every number and the $3.48 the run cost.",
+			"link": "/docs/evals/grok-4-7-on-three-ws",
+			"tags": [
+				"docs"
 			]
 		},
 		{

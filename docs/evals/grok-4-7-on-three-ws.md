@@ -11,10 +11,12 @@ Lanes measured: Nemotron 3 Ultra (production today), Grok flagship (grok-4.7), G
 | Lane | Model | Calls made | Inputs run per task | Prompt tokens (cached) | Output tokens (reasoning) | Spend |
 |---|---|---|---|---|---|---|
 | Nemotron 3 Ultra (production today) | `nvidia/nemotron-3-ultra-550b-a55b` | 2026-11-20 | all 50 on every task | 279,718 (0) | 31,828 (0) | $0 (free tier) |
-| Grok flagship (grok-4.7) | `grok-4.7` | 2026-11-27 | all 50 on every task | 544,122 (425,984) | 23,918 (428,745) | $3.17 |
+| Grok flagship (grok-4.7) | `grok-4.7` | 2026-11-27 | all 50 on every task | 547,984 (429,696) | 24,299 (436,993) | $3.22 |
 | Grok budget (grok-4.3, reasoning off) | `grok-4.3` | 2026-11-27 | all 50 on every task | 278,704 (118,272) | 16,612 (0) | $0.27 |
 
-Total xAI spend for the Grok columns: $3.43 over 498 answered calls, from the cost xAI reported on each response. The same token counts at list price come to $3.43. Prompt tokens include the cached ones, which bill at the cached rate; reasoning tokens are counted beside the reply's output tokens and bill at the output rate. A call that failed and was retried is not counted.
+Total xAI spend for the Grok columns: $3.48 over 500 answered calls, from the cost xAI reported on each response. The same token counts at list price come to $3.48. Prompt tokens include the cached ones, which bill at the cached rate; reasoning tokens are counted beside the reply's output tokens and bill at the output rate.
+
+85 attempts on Grok flagship (grok-4.7) ended without an answer and were tried again (85 hit the harness's 60 s limit). Latency on this page is the answering attempt alone, so it understates the wait on those inputs. What xAI billed for those attempts is not in the spend above: at the price of that lane's most expensive answered call ($0.04) they would add $3.09.
 
 Coverage: every lane ran every input of every task, so each paired difference covers the full set.
 
@@ -49,7 +51,7 @@ Coverage: every lane ran every input of every task, so each paired difference co
 - Agent spec: the reply must parse with production's `parseSpec` and every field must sit inside the bounds the prompt states, with skills, category and starter body from the real lists.
 - Reported, not required: dash characters in agent chat replies and agent specs. House style bans them in published copy, but neither prompt asks for it and only the X reply path removes them, so they appear as an advisory line instead of a fail.
 
-**Pairwise judge.** For open-ended quality, a third model that produced neither answer compares each pair blind and is asked twice with the answers swapped, so a position preference scores as a tie ([scripts/lib/llm-eval/judge.js](../../scripts/lib/llm-eval/judge.js)). No pairs judged yet, so every comparison on this page is the objective score alone. 498 pairs are answered by both lanes and still waiting for the judge: the run that made the Grok calls had no judge key (GROQ_API_KEY, NVIDIA_API_KEY, OPENROUTER_API_KEY) in its environment. The second command under "Reproduce" judges them without calling xAI again. The judge is the first configured of groq `openai/gpt-oss-120b`, then nvidia `nvidia/nemotron-3-ultra-550b-a55b`, then openrouter `google/gemma-4-31b-it:free`, skipping any model that produced either answer (so never Nemotron 3 Ultra against the current lane, and never Grok).
+**Pairwise judge.** For open-ended quality, a third model that produced neither answer compares each pair blind and is asked twice with the answers swapped, so a position preference scores as a tie ([scripts/lib/llm-eval/judge.js](../../scripts/lib/llm-eval/judge.js)). No pairs judged yet, so every comparison on this page is the objective score alone. 500 pairs are answered by both lanes and still waiting for the judge: the run that made the Grok calls had no judge key (GROQ_API_KEY, NVIDIA_API_KEY, OPENROUTER_API_KEY) in its environment. The second command under "Reproduce" judges them without calling xAI again. The judge is the first configured of groq `openai/gpt-oss-120b`, then nvidia `nvidia/nemotron-3-ultra-550b-a55b`, then openrouter `google/gemma-4-31b-it:free`, skipping any model that produced either answer (so never Nemotron 3 Ultra against the current lane, and never Grok).
 
 **Statistics.** A call that errors or times out scores as a fail for that lane. Intervals are 95% percentile bootstrap intervals (4,000 resamples, fixed seed). A Grok lane is recommended for a task only when its paired difference against the current lane, or its judge win rate, has an interval that excludes a tie, and its p95 latency stays inside the budget (twice the current lane's p95, at least 5 s). Cost per 1,000 calls uses the cost xAI reports per response, else the xAI price table ([api/_lib/xai-pricing.js](../../api/_lib/xai-pricing.js)); the NVIDIA NIM free tier costs the platform nothing.
 
@@ -60,17 +62,17 @@ Coverage: every lane ran every input of every task, so each paired difference co
 | Lane | Pass rate (95% CI) | Answered | p50 ms | p95 ms | Cost per 1,000 calls |
 |---|---|---|---|---|---|
 | Nemotron 3 Ultra (production today) | 48% (34% to 62%) | 50/50 | 6,120 | 11,971 | $0 (free tier) |
-| Grok flagship (grok-4.7) | 98% (94% to 100%) | 49/50 (errors: 0) | 39,283 | 54,857 | $26.88 |
+| Grok flagship (grok-4.7) | 100% (100% to 100%) | 50/50 | 39,283 | 54,857 | $27.07 |
 | Grok budget (grok-4.3, reasoning off) | 100% (100% to 100%) | 50/50 | 1,769 | 2,420 | $0.89 |
 
-- Grok flagship (grok-4.7): paired difference vs current +50 pts (+36 pts to +64 pts).
+- Grok flagship (grok-4.7): paired difference vs current +52 pts (+38 pts to +66 pts).
 - Grok budget (grok-4.3, reasoning off): paired difference vs current +52 pts (+38 pts to +66 pts).
 
 Checks the current lane fails most (rows passing out of rows the check applies to): `usable_rewrite` 24/50.
 
 Why the current lane fails: `too_long` 23, `unfinished` 3.
 
-**Recommendation:** Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_FORGE_DIRECTOR=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. Grok flagship (grok-4.7) scored better but its p95 of 54,857 ms is over the 23,942 ms budget.
+**Recommendation:** Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_FORGE_DIRECTOR=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. The pairwise judge has not scored it yet. Grok flagship (grok-4.7) scored better but its p95 of 54,857 ms is over the 23,942 ms budget.
 
 <details><summary>Failure examples</summary>
 
@@ -79,7 +81,6 @@ Why the current lane fails: `too_long` 23, `unfinished` 3.
 | Nemotron 3 Ultra (production today) | `fd-02` a ripe pomegranate split open, glossy ruby seeds | too_long | A single ripe pomegranate split perfectly in half, symmetrical hemispheres revealing dense ruby arils, thick leathery rind curving outward with natural stem ... |
 | Nemotron 3 Ultra (production today) | `fd-06` a cozy mushroom cottage, thatched roof, stone chimney | too_long | A whimsical mushroom cottage, organic bulbous silhouette with oversized domed cap roof and thick stem-like walls, asymmetrical fairy-tale proportions; constr... |
 | Nemotron 3 Ultra (production today) | `fd-08` a brass storm lantern, weathered patina, warm glow | too_long | A brass storm lantern, compact cylindrical silhouette with domed top, bail handle arching from wired lugs; construction: seamless drawn brass body, soldered ... |
-| Grok flagship (grok-4.7) | `fd-31` a cyber-samurai in a layered carbon-fibre kimono with an armoured s... | error 0: timeout |  |
 
 </details>
 
@@ -149,7 +150,7 @@ Checks the current lane fails most (rows passing out of rows the check applies t
 
 Why the current lane fails: `too_long` 8, `financial` 1, `handle` 1.
 
-**Recommendation:** Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_X_REPLY=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. Grok flagship (grok-4.7) scored better but its p95 of 20,460 ms is over the 7,062 ms budget.
+**Recommendation:** Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_X_REPLY=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. The pairwise judge has not scored it yet. Grok flagship (grok-4.7) scored better but its p95 of 20,460 ms is over the 7,062 ms budget.
 
 <details><summary>Failure examples</summary>
 
@@ -170,19 +171,19 @@ Why the current lane fails: `too_long` 8, `financial` 1, `handle` 1.
 | Lane | Pass rate (95% CI) | Answered | p50 ms | p95 ms | Cost per 1,000 calls |
 |---|---|---|---|---|---|
 | Nemotron 3 Ultra (production today) | 76% (64% to 88%) | 50/50 | 5,674 | 10,058 | $0 (free tier) |
-| Grok flagship (grok-4.7) | 98% (94% to 100%) | 49/50 (errors: 0) | 40,766 | 57,609 | $23.94 |
+| Grok flagship (grok-4.7) | 100% (100% to 100%) | 50/50 | 40,754 | 57,609 | $23.81 |
 | Grok budget (grok-4.3, reasoning off) | 100% (100% to 100%) | 50/50 | 2,855 | 4,229 | $1.04 |
 
-- Grok flagship (grok-4.7): paired difference vs current +22 pts (+10 pts to +34 pts).
+- Grok flagship (grok-4.7): paired difference vs current +24 pts (+12 pts to +36 pts).
 - Grok budget (grok-4.3, reasoning off): paired difference vs current +24 pts (+12 pts to +36 pts).
 
 Checks the current lane fails most (rows passing out of rows the check applies to): `greeting` 41/50, `name` 47/50.
 
 Why the current lane fails: `greeting` 9, `name` 3.
 
-Advisory, dash-free replies: Nemotron 3 Ultra (production today) 1/50, Grok flagship (grok-4.7) 43/49, Grok budget (grok-4.3, reasoning off) 17/50.
+Advisory, dash-free replies: Nemotron 3 Ultra (production today) 1/50, Grok flagship (grok-4.7) 43/50, Grok budget (grok-4.3, reasoning off) 17/50.
 
-**Recommendation:** Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_AGENT_SPEC=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. Grok flagship (grok-4.7) scored better but its p95 of 57,609 ms is over the 20,116 ms budget.
+**Recommendation:** Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_AGENT_SPEC=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. The pairwise judge has not scored it yet. Grok flagship (grok-4.7) scored better but its p95 of 57,609 ms is over the 20,116 ms budget.
 
 <details><summary>Failure examples</summary>
 
@@ -191,7 +192,6 @@ Advisory, dash-free replies: Nemotron 3 Ultra (production today) 1/50, Grok flag
 | Nemotron 3 Ultra (production today) | `as-02` (empty brief) | greeting | {"name":"Memory Architect","description":"Transforms your scattered notes, chats, and screenshots into a queryable personal knowledge graph with automatic co... |
 | Nemotron 3 Ultra (production today) | `as-06` a museum guide for a natural history exhibit about dinosaurs | name | {"name":"Dr. Rex the Curator","description":"A witty paleontologist guide who brings the Age of Dinosaurs to life with fossil facts, extinction theories, and... |
 | Nemotron 3 Ultra (production today) | `as-08` an art critic who reviews 3D models people upload | greeting | {"name":"The Curator","description":"A discerning art critic who analyzes uploaded 3D models &mdash; geometry, materials, composition, and animation &mdash; ... |
-| Grok flagship (grok-4.7) | `as-41` a personal finance explainer that teaches budgeting basics without ... | error 0: timeout |  |
 
 </details>
 
@@ -199,17 +199,17 @@ Advisory, dash-free replies: Nemotron 3 Ultra (production today) 1/50, Grok flag
 
 | Task | Recommendation |
 |---|---|
-| Forge prompt director | Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_FORGE_DIRECTOR=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. Grok flagship (grok-4.7) scored better but its p95 of 54,857 ms is over the 23,942 ms budget. |
+| Forge prompt director | Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_FORGE_DIRECTOR=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. The pairwise judge has not scored it yet. Grok flagship (grok-4.7) scored better but its p95 of 54,857 ms is over the 23,942 ms budget. |
 | Agent chat: tool selection | Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane on the objective score; the pairwise judge has not scored it yet. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane on the objective score; the pairwise judge has not scored it yet. |
 | Agent chat: persona replies | Keep the current lane. Grok flagship (grok-4.7) is a statistical tie with the current lane on the objective score; the pairwise judge has not scored it yet. Grok budget (grok-4.3, reasoning off) is a statistical tie with the current lane on the objective score; the pairwise judge has not scored it yet. |
-| Public X replies | Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_X_REPLY=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. Grok flagship (grok-4.7) scored better but its p95 of 20,460 ms is over the 7,062 ms budget. |
-| Agent spec from a brief | Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_AGENT_SPEC=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. Grok flagship (grok-4.7) scored better but its p95 of 57,609 ms is over the 20,116 ms budget. |
+| Public X replies | Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_X_REPLY=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. The pairwise judge has not scored it yet. Grok flagship (grok-4.7) scored better but its p95 of 20,460 ms is over the 7,062 ms budget. |
+| Agent spec from a brief | Route to Grok budget (grok-4.3, reasoning off): set `LLM_ROUTE_AGENT_SPEC=grok-4.3:none`. It wins on the objective score with an interval that excludes a tie. The pairwise judge has not scored it yet. Grok flagship (grok-4.7) scored better but its p95 of 57,609 ms is over the 20,116 ms budget. |
 
 ## Routing
 
-Routing is per task and off by default. `LLM_ROUTE_<TASK>` names a chat Grok id from `GROK_MODELS`, optionally with a reasoning effort (`<id>:<effort>`); unset, `off`, `default` or an invalid value leave the task on its current chain ([api/_lib/llm.js](../../api/_lib/llm.js) `llmRouteOverride`). The routed Grok rung leads the chain and every existing rung stays behind it, so an xAI error falls through instead of failing the call. `LLM_ROUTE_AGENT_CHAT` does the same for signed-in agent chat in [api/chat.js](../../api/chat.js) when the caller picked no provider, model or agent brain; anonymous chat stays on the free lanes. The flags take effect only where the server has `GROK_API_KEY`.
+Routing is per task and off by default. `LLM_ROUTE_<TASK>` names a chat Grok id from `GROK_MODELS`, optionally with a reasoning effort (`<id>:<effort>`); unset, `off`, `default` or an invalid value leave the task on its current chain ([api/_lib/llm.js](../../api/_lib/llm.js) `llmRouteOverride`). The routed Grok rung leads the chain and every existing rung stays behind it, so an xAI error falls through instead of failing the call. `LLM_ROUTE_AGENT_CHAT` does the same for signed-in agent chat in [api/chat.js](../../api/chat.js) when the caller picked no provider, model or agent brain; anonymous chat stays on the free lanes. A flag does nothing on a server without `GROK_API_KEY`: the task stays on its current chain.
 
-Set these on Cloud Run (owner step):
+This page changes nothing in production and no flag is set today. If the owner decides to route on these results, this is the one command the data supports:
 
 ```bash
 gcloud run services update three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --update-env-vars LLM_ROUTE_FORGE_DIRECTOR=grok-4.3:none,LLM_ROUTE_X_REPLY=grok-4.3:none,LLM_ROUTE_AGENT_SPEC=grok-4.3:none

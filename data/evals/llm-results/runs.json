@@ -66,7 +66,12 @@
         "agent_spec"
       ],
       "rows": 50,
-      "finishedAt": "2026-11-27T20:32:45.371Z"
+      "finishedAt": "2026-11-27T20:32:45.371Z",
+      "unanswered": {
+        "grok": {
+          "timeout": 1
+        }
+      }
     },
     {
       "startedAt": "2026-11-27T20:34:09.860Z",
@@ -83,7 +88,12 @@
         "agent_spec"
       ],
       "rows": 450,
-      "finishedAt": "2026-11-27T21:13:53.358Z"
+      "finishedAt": "2026-11-27T21:13:53.358Z",
+      "unanswered": {
+        "grok": {
+          "timeout": 71
+        }
+      }
     },
     {
       "startedAt": "2026-11-27T21:14:10.242Z",
@@ -99,14 +109,34 @@
         "agent_spec"
       ],
       "rows": 6,
-      "finishedAt": "2026-11-27T21:22:35.972Z"
+      "finishedAt": "2026-11-27T21:22:35.972Z",
+      "unanswered": {
+        "grok": {
+          "timeout": 9
+        }
+      }
+    },
+    {
+      "startedAt": "2026-11-27T21:22:45.701Z",
+      "commit": "7de5990d2",
+      "lanes": [
+        "grok"
+      ],
+      "tasks": [
+        "forge_director",
+        "agent_tools",
+        "agent_chat",
+        "x_reply",
+        "agent_spec"
+      ],
+      "rows": 2,
+      "finishedAt": "2026-11-27T21:28:44.166Z",
+      "unanswered": {
+        "grok": {
+          "timeout": 4
+        }
+      }
     }
   ],
-  "keyProbe": {
-    "lane": "grok_budget",
-    "model": "grok-4.3",
-    "status": 401,
-    "error": "No credentials presented.",
-    "at": "2026-11-20T22:06:52.806Z"
-  }
+  "keyProbe": null
 }

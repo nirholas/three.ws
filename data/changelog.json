@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "Grok measured against today's model on five three.ws tasks",
+			"summary": "We ran Grok 4.7 and Grok 4.3 on the same 250 inputs as the model three.ws uses today, across the five AI tasks people see most. Grok 4.3 passed more often on Forge prompt rewrites (100% against 48%), public X replies (96% against 80%) and agent specs (100% against 76%), and answered faster. Grok 4.7 scored as well but took about 40 seconds on the two longest tasks. Agent chat was a tie. Nothing in production changed: the page has the method, every number and the $3.48 the run cost.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/evals/grok-4-7-on-three-ws"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "3D for the open Grok toolkit: xAI's SDKs, MetaGPT, LiteLLM and 11 more",
 			"summary": "A new page lists 14 open-source projects built around Grok and what three.ws gives each one, all through the same free 3D server. New this week: an example on xAI's TypeScript SDK that streams Grok's tool calls, a LiteLLM proxy config that serves Grok together with the 3D tools from one endpoint, a three-role MetaGPT team where Grok reviews renders of the model and sends it back with the fault named, a plugin for Orca and a config file Happy reads on open. The page says which of these were run against production and gives the command that repeats each check. The MetaGPT team also now starts a new generation when the free generator is busy, instead of ending the run.",
 			"tags": ["feature", "docs"],
