@@ -138,7 +138,8 @@ XAI_API_KEY=... python main.py "a vintage wooden armchair"
 
 - Checked: `--check` against production (21 tools, three chairs, one render). A full run of "a vintage wooden armchair", signed in to three.ws, had the Modeler pick the catalog's Chinese Armchair, the Reviewer look at four rendered views (`look_at_model`: three-quarter, front, side, back) and pass it in one iteration with 3 Grok calls. Signed out, the same brief passes on the public poster render, one view. The default brief (a low-poly chair, which the catalog does not hold) failed review twice signed out and stopped, as designed, with exit code 3.
 - MetaGPT needs Python 3.9 to 3.11, and its last PyPI release is from April 2024, so the example pins a commit of its `main` branch and the whole dependency tree.
-METAGPT_NOT_RUN
+- Checked, generation: the default brief ("a low-poly wooden chair for a cozy cabin scene"), signed in, ran both iterations on 2026-11-27 in 848.8 seconds with 6 Grok calls. The catalog had no fit, so the Modeler generated a chair with `forge_free` each time, the Reviewer looked at four views and failed both on triangle count (23,315 and 28,162 against a low-poly spec), and the run delivered the second chair with the fault named (exit code 3). The free generator did not follow the polygon budget in any of the three generations that day, and the review caught that from the measured count.
+- Two faults found by running it live were fixed with tests first: a busy generator ended the run where it should have started a new generation, and a refusal in the second iteration (the hourly generation limit) printed a stack trace and dropped the chair already made. `python3 -m unittest discover -s tests` in the example runs the 13 tests with no network.
 
 ## 14. LiteLLM: one endpoint for Grok and the 3D tools
 
@@ -181,7 +182,8 @@ Each of these publishes something under the three.ws name on someone else's site
 
 ## What was not run
 
-NOT_RUN_FIRST
+- Generation through the LiteLLM gateway (14). Catalog search through it ran, with a valid three.ws key forwarded; `forge_free` through it did not.
+- Rigging a model from any of these examples. They stop at the GLB.
 - A Grok review through the Claude Code bridge (07), for the sandbox reason given there.
 - The five fleet apps themselves (08 to 11, 13).
 - MetaGPT on Python 3.9 and 3.10. Only 3.11 was tested.

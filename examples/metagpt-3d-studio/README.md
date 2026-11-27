@@ -67,9 +67,11 @@ branch because the last PyPI release (0.8.1, April 2024) predates its current AP
 | `THREE_WS_API_KEY` | none | Enables `look_at_model` views and `forge_free`. |
 | `THREE_WS_MCP_URL` | `https://three.ws/api/mcp-studio` | Point at a local server while developing. |
 
-Exit codes: `0` a model was delivered and passed review, `1` a call failed (the
-message says which side and why), `2` no xAI key, `3` a model was delivered but the
-Reviewer failed it (the fault is printed).
+Exit codes: `0` a model was delivered and passed review, `1` no model was
+delivered (one `error` line says which side refused and why), `2` no xAI key, `3` a
+model was delivered but the Reviewer failed it (the fault is printed). A run that
+stops in its second iteration still delivers the model the first iteration
+reviewed: the reason goes to stderr and the exit code is `3`.
 
 ## How it works
 
@@ -112,6 +114,42 @@ Notes that cost time to find:
   retries a failed LLM call six times with backoff. The script checks the key with
   one `GET /v1/models` first, and each role records the first error so the message
   is the real one.
+- MetaGPT wraps `Role.run` in a decorator that logs a full stack trace and raises
+  a new exception holding the trace text. Each role here catches its own failure
+  inside `_act`, so a refusal from three.ws (the hourly generation limit, for
+  instance) ends the run with one line in the server's own words.
+
+### Generation
+
+`forge_free` answers at once with a job id and `check_job` collects the model. The
+Modeler waits up to 900 seconds for one model (a free-lane chair took about five
+minutes on 2026-11-27) and handles the three answers the server can give along
+the way:
+
+- **Pending:** poll `check_job` again after the `eta_seconds` the server suggests.
+- **A failed status check** (`retryable: true`): the job itself is still running,
+  so poll again after `retry_after`.
+- **`generation_failed`** (the free generator was busy): start a new generation
+  under a new `idempotency_key`, because a repeat with the same key replays the
+  failed job. At most three generations are started per model.
+
+Any other refusal (signed out, rate limited) is returned as it is. The free lane
+allows 30 generations per hour per three.ws account, and the refusal names the
+time the limit resets.
+
+## Tests
+
+```bash
+cd examples/metagpt-3d-studio
+python3 -m unittest discover -s tests
+```
+
+13 tests, standard library only, no network and no MetaGPT install (any Python
+3.10+). [`tests/test_forge.py`](tests/test_forge.py) plays the server's answer
+shapes against the generation leg on a fake clock, and
+[`tests/test_report.py`](tests/test_report.py) covers how a run ends when
+three.ws refuses a call part-way through. `npm test` at the repo root runs them
+too.
 
 ## Sample output
 
@@ -159,7 +197,7 @@ The default brief, "a low-poly wooden chair for a cozy cabin scene", shows the
 second iteration. The catalog is realistic CC0 scans with no low-poly chair, so the
 Reviewer fails the closest match with a specific fault, the Art Director rewrites
 the spec, the Modeler picks again, the Reviewer fails again, and the loop stops
-(exit code 3, 6 Grok calls). Signed in, the Modeler would call `forge_free` instead of settling for the closest match. The signed-out run, trimmed:
+(exit code 3, 6 Grok calls). The signed-out run, trimmed:
 
 ```text
 role     Reviewer reviews iteration 1 of 2
@@ -174,6 +212,49 @@ review   FAIL: Uniform white paint with no visible wood, plus a curved arched cr
 verdict  FAIL after 2 of 2 iterations (6 Grok calls)
 ```
 
+Signed in (`THREE_WS_API_KEY` set), the same default brief has the Modeler
+generate instead of settling for the closest catalog match, and the Reviewer
+looks at four views with the triangle count in hand. Captured 2026-11-27 against
+production, 848.8 seconds, two generations, 6 Grok calls, exit code 3:
+
+```text
+role     ArtDirector writes the spec
+spec     low-poly wooden chair | query 'wooden chair' | kind object
+role     Modeler searches the catalog for 'wooden chair'
+model    low-poly wooden chair via forge_free: nothing in the catalog fit, so it was generated
+role     Reviewer reviews iteration 1 of 2
+render   look_at_model (4 views: three-quarter, front, side, back)
+review   FAIL: Not low-poly: 23,315 triangles with smooth, slightly bowed organic legs instead of four straight, faceted low-poly surfaces.
+role     ArtDirector rewrites the spec after: Not low-poly: 23,315 triangles with smooth, slightly bowed organic legs instead of four straight, faceted low-poly surfaces.
+spec     low-poly wooden chair | query 'wooden chair' | kind object
+role     Modeler searches the catalog for 'wooden chair'
+model    low-poly wooden chair via forge_free: nothing in the catalog fit, so it was generated
+role     Reviewer reviews iteration 2 of 2
+render   look_at_model (4 views: three-quarter, front, side, back)
+review   FAIL: High-poly smooth chair at 28,162 triangles with tapered organic legs and rounded seat edges, not a blocky under-500-triangle chair with four perfectly straight square legs and a flat hard-edged plank seat.
+
+verdict  FAIL after 2 of 2 iterations (6 Grok calls)
+  subject  It is a complete, recognizable wooden chair with seat, back, and four legs, but it is a smooth sculpted chair rather than the requested low-poly blocky one.
+  geometry 28,162 triangles is far above the under-500 budget and the over-1000 must-not limit, so the mesh is not blocky low-poly.
+
+GLB:     https://three.ws/cdn/forge/anon/5097f420-a042-44a2-99a2-60e47e932436.glb
+```
+
+The review is doing its job here: in three generations that day the free
+generator made textured wooden chairs of 23,315 to 28,162 triangles, whatever
+the prompt said about polygon count, and the Reviewer failed them on the number
+`look_at_model` reports, not on a guess from the picture. The chair is still delivered, with the fault. A brief
+without a triangle budget passes: "a vintage wooden armchair" signed in passed
+in one iteration on four views the same day.
+
+When three.ws refuses a call, the run ends with one line. Captured 2026-11-27
+with the account's hourly generation limit used up (exit code 1, since no model
+had been made yet):
+
+```text
+error    no model delivered: Modeler failed: three.ws refused tools/call: Rate limited: the free 3D studio allows 30 generations per hour for this three.ws account, and that limit is used up. It resets at 2026-11-27T22:00:00.000Z ...
+```
+
 With an xAI key that is not valid, captured the same day, xAI answers before any
 role starts:
 
@@ -181,10 +262,7 @@ role starts:
 error    RuntimeError: xAI answered HTTP 400: Incorrect API key provided. You can obtain an API key from https://console.x.ai.
 ```
 
-Not run live: the `forge_free` and `check_job` leg and the four-view
-`look_at_model` leg, because both need a free three.ws account key and the
-captured runs were signed out. They follow the tool schemas from the live
-`tools/list`.
+Not run: Python 3.9 and 3.10 (only 3.11 was tested).
 
 ## Cost
 
