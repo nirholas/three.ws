@@ -1,5 +1,7 @@
 # Forge hardening 67: Make sure nothing a stranger sends to Forge can reach inside our systems
 
+**Status (2026-11-27):** everything the API owns is fixed, committed locally and proven by `tests/api/forge-input-security.test.js` (address guard on every Forge endpoint, upload bytes verified at submit, fetch caps, hostile GLB, `forge-nim` caps). One gap remains and only the owner can clear it: the vendored `worker_security.py` resolves a host to check it and lets httpx resolve it again to connect, so DNS rebinding reaches an internal TLS service. Reproduce with `python3 -I scripts/forge-worker-rebind-repro.py` (exits 1 while open). The fix pins the validated IP in the vendored file across 36 workers, including the protected `workers/model-trellis/`, so it needs the owner's yes before it is committed. Details: `docs/forge-input-security.md`.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/167-forge-hardening-67-input-security-uploads-and-urls.md`.
 
 **Priority:** P0. **Area:** security: what Forge accepts from the internet. **Dev port:** 4167. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
