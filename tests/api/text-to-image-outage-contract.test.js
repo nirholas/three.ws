@@ -510,6 +510,78 @@ describe('a cooled rung recovers on its own', () => {
 	});
 });
 
+// The NIM rung timed out on every request for weeks (flux.1-dev on NVIDIA's
+// gateway, 2026-11-26/27). A flat 60 s cooldown let a dead rung cost one real
+// request every minute, each spending up to its 30 s cap before handing off.
+// Until a probe proves it healthy, each failed probe doubles the wait.
+const retryInSeconds = async (rung) => {
+	const r = (await describeImageLadder()).find((x) => x.rung === rung);
+	return Math.round((Date.parse(r.retry_at) - Date.now()) / 1000);
+};
+
+describe('a rung that keeps failing is tried less and less often', () => {
+	it('NIM: each failed probe doubles the cooldown (60, 120, 240, 480) up to 15 minutes', async () => {
+		freezeClock();
+		process.env.NVIDIA_API_KEY = 'nvapi-test';
+		lane.nim = () => json(500, { error: 'internal' });
+		const waits = [];
+		for (let probe = 1; probe <= 6; probe++) {
+			await textToImage('a fox', { budgetMs: 20_000 });
+			expect(hitsOn('ai.api.nvidia.com')).toBe(probe);
+			const wait = await retryInSeconds('nim');
+			waits.push(wait);
+			// Skipped, no network call, right up to the end of the window.
+			advance(wait - 1);
+			await textToImage('a fox', { budgetMs: 20_000 });
+			expect(hitsOn('ai.api.nvidia.com')).toBe(probe);
+			advance(2);
+		}
+		expect(waits).toEqual([60, 120, 240, 480, 900, 900]);
+		expect((await describeImageLadder()).find((r) => r.rung === 'nim').consecutive_failures).toBe(6);
+	});
+
+	it('NIM: a probe that serves resets the backoff, so the next failure parks it for the short cooldown again', async () => {
+		freezeClock();
+		process.env.NVIDIA_API_KEY = 'nvapi-test';
+		lane.nim = () => json(500, { error: 'internal' });
+		for (let i = 0; i < 3; i++) {
+			await textToImage('a fox', { budgetMs: 20_000 });
+			advance((await retryInSeconds('nim')) + 1);
+		}
+		lane.nim = nimOk;
+		expect((await textToImage('a fox', { budgetMs: 20_000 })).model).toBe('black-forest-labs/flux.2-klein-4b');
+		lane.nim = () => json(500, { error: 'internal' });
+		await textToImage('a fox', { budgetMs: 20_000 });
+		expect(await retryInSeconds('nim')).toBe(SHORT_COOLDOWN_SECONDS);
+	});
+
+	it('a timeout escalates the same way as a 5xx', async () => {
+		freezeClock();
+		const { recordRungFailure } = breaker;
+		const timedOut = () => Object.assign(new Error('nim flux timed out'), { code: 'rate_limited', timedOut: true });
+		expect((await recordRungFailure(IMAGE_RUNG_KEYS.nim, timedOut(), { escalate: true })).cooldownSeconds).toBe(60);
+		expect((await recordRungFailure(IMAGE_RUNG_KEYS.nim, timedOut(), { escalate: true })).cooldownSeconds).toBe(120);
+	});
+
+	it('the backoff is opt-in: an HF rung that keeps failing stays on the flat short cooldown', async () => {
+		freezeClock();
+		process.env.HF_TOKEN = 'hf_test';
+		for (let i = 0; i < 3; i++) {
+			await textToImage('a fox', { budgetMs: 20_000 });
+			expect(await retryInSeconds('hf:fal-ai')).toBe(SHORT_COOLDOWN_SECONDS);
+			advance(SHORT_COOLDOWN_SECONDS + 1);
+		}
+	});
+
+	it('an auth or credits refusal keeps its fixed long cooldown and is not escalated', async () => {
+		freezeClock();
+		const { recordRungFailure } = breaker;
+		const denied = () => Object.assign(new Error('nim flux returned 403'), { providerStatus: 403 });
+		expect((await recordRungFailure(IMAGE_RUNG_KEYS.nim, denied(), { escalate: true })).cooldownSeconds).toBe(LONG_COOLDOWN_SECONDS);
+		expect((await recordRungFailure(IMAGE_RUNG_KEYS.nim, denied(), { escalate: true })).cooldownSeconds).toBe(LONG_COOLDOWN_SECONDS);
+	});
+});
+
 describe('the final error is honest', () => {
 	it('carries the shortest stated wait and names the rung that stated it', async () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test';

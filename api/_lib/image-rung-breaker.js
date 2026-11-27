@@ -56,6 +56,10 @@ export const SHORT_COOLDOWN_SECONDS = 60;
 // A stated wait is believed up to this long; a bogus header must not park a
 // rung for an hour.
 export const MAX_STATED_WAIT_SECONDS = 600;
+// The ceiling of an escalated cooldown (recordRungFailure's `escalate`): a rung
+// that failed every probe is still tried four times an hour, so it comes back on
+// its own once the provider recovers.
+export const MAX_ESCALATED_COOLDOWN_SECONDS = 900;
 // How long after a cooldown ends the breaker remembers it was tripped. Inside
 // this window the rung is half-open: one probe at a time. Past it, a rung that
 // nobody asked for is simply closed again.
@@ -188,10 +192,15 @@ export async function admitRung(key, entry, { leaseSeconds = SHORT_COOLDOWN_SECO
  * Record a rung failure: open (or re-open) its breaker for the class's cooldown
  * and release any probe lease. A failure whose cooldown is zero (a refusal
  * about this prompt) proves the rung answered, so a half-open breaker closes.
+ * `escalate`: a timeout, unreachable, 5xx or bad-body failure on a rung that is
+ * already tripped doubles the previous cooldown (60, 120, 240, 480 s, capped at
+ * MAX_ESCALATED_COOLDOWN_SECONDS), so a rung that is dead rather than blipping
+ * stops costing a real request every minute. A success closes the breaker and
+ * resets it. Auth, credit and stated-wait cooldowns are never escalated.
  * Never throws.
  * @returns {Promise<{ failureClass: string, status?: number, retryAfter?: number, detail: string, cooldownSeconds: number }>}
  */
-export async function recordRungFailure(key, err, { paymentIsThrottle = false, statedWaitOnly = false } = {}) {
+export async function recordRungFailure(key, err, { paymentIsThrottle = false, statedWaitOnly = false, escalate = false } = {}) {
 	const failure = classifyRungFailure(err, { paymentIsThrottle });
 	if (SKIP_CLASSES.has(failure.failureClass)) return { ...failure, cooldownSeconds: 0 };
 	let cooldownSeconds = cooldownSecondsFor(failure);
@@ -203,6 +212,9 @@ export async function recordRungFailure(key, err, { paymentIsThrottle = false, s
 		if (cooldownSeconds > 0) {
 			const now = Date.now();
 			const previous = await cacheGet(`${RECORD_PREFIX}${key}`).catch(() => null);
+			if (escalate && SHORT_CLASSES.has(failure.failureClass) && SHORT_CLASSES.has(previous?.failureClass) && previous.cooldownSeconds > 0) {
+				cooldownSeconds = Math.min(MAX_ESCALATED_COOLDOWN_SECONDS, Math.max(cooldownSeconds, previous.cooldownSeconds * 2));
+			}
 			await cacheSet(
 				`${RECORD_PREFIX}${key}`,
 				{

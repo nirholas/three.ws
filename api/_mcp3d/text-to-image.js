@@ -32,6 +32,7 @@ import {
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
 import { reserveProviderRateSlot, SCALE_LIMITS } from '../_lib/forge-scale.js';
 import { persistImageBase64, persistImageBytes, looksLikeImageBytes } from '../_lib/image-persist.js';
+import { NIM_FLUX_MODEL, NIM_FLUX_URL, NIM_FLUX_TIMEOUT_MS, nimFluxBody } from '../_lib/nim-flux.js';
 
 const REPLICATE_BASE = 'https://api.replicate.com/v1';
 const DEFAULT_TXT2IMG_MODEL = 'black-forest-labs/flux-schnell';
@@ -89,24 +90,11 @@ async function pollReplicatePrediction(getUrl, token, { timeoutMs = REPLICATE_PO
 // read and write the same state.
 export const VERTEX_IMAGE_COOLDOWN_KEY = IMAGE_RUNG_KEYS.vertex;
 
-// NVIDIA NIM FLUX.1-schnell — synchronous genai invoke (no 202/poll), returns
-// { artifacts: [{ base64, finishReason }] }. flux-schnell is the fast 4-step
-// distilled model, so a tight per-attempt timeout is safe: a hung free lane must
-// hand off to the paid lanes, never stall the whole text→3D pipeline.
-// FLUX.2 klein 4B, not FLUX.1. Probed live on 2026-11-26 with the production
-// key: flux.1-dev and flux.1-schnell both accept the request on NVIDIA's gateway
-// and then never answer (70s and 90s probes hung to the client timeout), which
-// is why this rung timed out on every request. flux.2-klein-4b answered 200 in
-// 6.5s warm and 14s cold with a real 1024x1024 JPEG. It is the 4-step distilled
-// model: the endpoint 422s on steps > 4 and cfg_scale > 1, and rejects a `mode`
-// field (extra_forbidden), so none is sent. The rung owns a 30s cap, well past
-// klein's cold start, so a hang hands the rest of the request's time to the
-// rungs behind it.
-const NIM_FLUX_URL = 'https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.2-klein-4b';
-const NIM_FLUX_MODEL = 'black-forest-labs/flux.2-klein-4b';
-const NIM_FLUX_STEPS = 4;
-const NIM_FLUX_CFG_SCALE = 1;
-const NIM_TIMEOUT_MS = 30_000;
+// NVIDIA NIM FLUX: a synchronous genai invoke (no 202/poll) that returns
+// { artifacts: [{ base64, finishReason }] }. The pinned model (FLUX.2 klein 4B,
+// because FLUX.1 hangs on NVIDIA's gateway), its body and its 30s cap live in
+// nim-flux.js, shared with the health check and the hourly production probe.
+const NIM_TIMEOUT_MS = NIM_FLUX_TIMEOUT_MS;
 
 // NVCF fronts the free NIM lane with a gateway that answers a cold model or a
 // momentary capacity/routing blip with a transient 502/503/504 that returns
@@ -507,13 +495,7 @@ async function nimFluxImage(prompt, aspectRatio, { timeoutMs = NIM_TIMEOUT_MS } 
 					accept: 'application/json',
 					'content-type': 'application/json',
 				},
-				body: JSON.stringify({
-					prompt,
-					width,
-					height,
-					steps: NIM_FLUX_STEPS,
-					cfg_scale: NIM_FLUX_CFG_SCALE,
-				}),
+				body: JSON.stringify(nimFluxBody(prompt, width, height)),
 				signal: controller.signal,
 			});
 		} catch (err) {
@@ -806,8 +788,14 @@ async function walkLadder(prompt, { aspectRatio = '1:1', skipNim = false, seed, 
 	// `skipNim`: the caller just watched a sibling NVCF lane time out this same
 	// request, so a second NIM window would only stack timeouts.
 	if (readEnv('NVIDIA_API_KEY') && !skipNim && canTryAhead()) {
-		const served = await attemptRung('nim', IMAGE_RUNG_KEYS.nim, () =>
-			nimFluxImage(prompt, aspectRatio, { timeoutMs: laneMs(NIM_TIMEOUT_MS, true, reserve) }),
+		// `escalate`: until a probe proves the rung healthy, each failed probe
+		// doubles its cooldown, so a dead NVIDIA function (FLUX.1 for weeks in
+		// 2026-11) stops costing a real request every minute.
+		const served = await attemptRung(
+			'nim',
+			IMAGE_RUNG_KEYS.nim,
+			() => nimFluxImage(prompt, aspectRatio, { timeoutMs: laneMs(NIM_TIMEOUT_MS, true, reserve) }),
+			{ record: { escalate: true } },
 		);
 		if (served) return served;
 	}
