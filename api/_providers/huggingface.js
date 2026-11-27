@@ -491,7 +491,15 @@ async function attemptOnSpace({ token, target, photos, params }) {
 		const body = await queueRes.text().catch(() => '');
 		throw tag(Object.assign(
 			new Error(`enqueue ${queueRes.status}: ${body.slice(0, 200)}`),
-			{ code: 'provider_error', status: 502, providerStatus: queueRes.status },
+			{
+				code: 'provider_error',
+				status: 502,
+				providerStatus: queueRes.status,
+				// 402 is credits used up and 429 a drained ZeroGPU quota or a rate
+				// limit. Neither recovers within minutes, and the anonymous retry in
+				// runOnSpace can still succeed on per-IP quota.
+				quotaLike: queueRes.status === 402 || queueRes.status === 429,
+			},
 		));
 	}
 	const queueBody = await queueRes.json().catch(() => ({}));

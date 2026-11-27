@@ -81,6 +81,41 @@ describe('Hugging Face quota exhaustion cools the lane long', () => {
 	});
 });
 
+describe('a Space that refuses the enqueue for payment or rate reasons counts as exhausted', () => {
+	// Credits used up answer 402, a drained ZeroGPU quota or a rate limit answers
+	// 429. Neither says "quota" in the body every time, and neither recovers in a
+	// few minutes, so both pause the lane for the long window.
+	it.each([402, 429])('HTTP %i on every Space pauses the lane for the quota window', async (status) => {
+		globalThis.fetch = vi.fn(async () => new Response('{"error":"try later"}', { status }));
+		const err = await submit().catch((e) => e);
+		expect(err.code).toBe('all_providers_failed');
+		expect(err.quotaExhausted).toBe(true);
+		const until = await providerCooldownUntil(laneCooldownKey('huggingface'));
+		expect((until - Date.now()) / 1000).toBeGreaterThan(HF_LANE_COOLDOWN_SECONDS * 2);
+	});
+
+	it('HTTP 500 is an ordinary failure and keeps the short pause', async () => {
+		globalThis.fetch = vi.fn(async () => new Response('boom', { status: 500 }));
+		const err = await submit().catch((e) => e);
+		expect(err.code).toBe('all_providers_failed');
+		expect(err.quotaExhausted).toBeFalsy();
+	});
+
+	it('a mix of quota and a plain failure is not treated as quota exhaustion', async () => {
+		let n = 0;
+		globalThis.fetch = vi.fn(async (url, init = {}) => {
+			if ((init.method || 'GET') === 'POST') {
+				n += 1;
+				return n <= 2 ? new Response('{"event_id":"e"}', { status: 200 }) : new Response('boom', { status: 500 });
+			}
+			return new Response('event: error\ndata: null\n\n', { status: 200, headers: { 'content-type': 'text/event-stream' } });
+		});
+		const err = await submit().catch((e) => e);
+		expect(err.code).toBe('all_providers_failed');
+		expect(err.quotaExhausted).toBeFalsy();
+	});
+});
+
 describe('markLaneUnhealthy never shortens a standing pause', () => {
 	it('keeps the longer window when a shorter failure lands after it', async () => {
 		await markLaneUnhealthy('huggingface', HF_QUOTA_COOLDOWN_SECONDS);
