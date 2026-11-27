@@ -34,6 +34,7 @@
 // `counts`.
 
 import { createHash } from 'node:crypto';
+import { isWorkerWarm } from '../worker-warmth.js';
 import { rewardsSignerConflicts } from '../token/signer-conflict.js';
 import { cacheHealth, cacheGet } from '../cache.js';
 import { heliusHealth } from '../balances.js';
@@ -783,6 +784,12 @@ async function checkGraniteGuardian() {
 		}
 		if (!cfg.local.configured) {
 			return { ...base, status: 'ok', detail: `watsonx lane configured (${cfg.wxModel})`, metrics: { lanes } };
+		}
+		// The uptime check polls healthz several times a minute; probing a
+		// sleeping GPU here kept granite-guardian's L4 up around the clock for a
+		// few dozen real calls a day. Read /health only while it is running.
+		if ((await isWorkerWarm(cfg.local.url)) === false) {
+			return { ...base, status: 'ok', detail: `self-hosted ${cfg.local.model} scaled to zero; the next assessment cold-starts it${cfg.wx.configured ? ', watsonx configured' : ''}`, metrics: { lanes, idle: true } };
 		}
 		const started = Date.now();
 		let failure = null;

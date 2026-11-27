@@ -20,6 +20,7 @@
 // can poll without hammering vendors.
 
 import { BACKENDS, backendIsConfigured } from './forge-tiers.js';
+import { isWorkerWarm } from './worker-warmth.js';
 import { env } from './env.js';
 import { isWorldRetired, WORLD_RETIRED_DETAIL } from './world-retirement.js';
 import { getRedisBurn } from './redis-usage.js';
@@ -230,6 +231,13 @@ function gcpWorkerProbe(id, urlEnv, labelOverride = null) {
 		const key = readEnv('GCP_RECONSTRUCTION_KEY');
 		if (!url || !key) {
 			return result(id, 'unconfigured', `The ${label} worker is not configured on this deployment.`);
+		}
+		// A sleeping worker is not probed: the GET would wake it and bill up to
+		// 15 instance-minutes for nothing (see worker-warmth.js). A latched model
+		// failure only exists on a running instance, and a real job that fails on
+		// a fresh one still shows up in the lane cooldowns and generation metrics.
+		if ((await isWorkerWarm(url)) === false) {
+			return result(id, 'ok', `The ${label} worker is scaled to zero; the next job cold-starts it. Its /health is read while it is running, so this check never wakes it.`, { idle: true });
 		}
 		const started = Date.now();
 		const res = await probeFetch(`${url.replace(/\/+$/, '')}/health`, {

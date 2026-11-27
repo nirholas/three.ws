@@ -159,6 +159,14 @@
 			<description>We audited every paid Forge step (High generation, keeping a model, Game-Ready export) and closed the gaps. If your payment leaves your wallet but confirmation is slow or the page loses the answer, the sheet now says the payment was sent and checks the same transaction again, instead of offering a second payment. A transfer that landed while its quote was valid is recorded even if the confirmation arrives after the quote expired. A payment you made but did not get to use (the page reloaded, or the next step failed) is remembered and used for your next try of the same thing, with no new charge. A paid generation that fails gives its payment back. The confirm step now also shows who is paid, each share and the wallet address, next to the amount and the token, before your wallet opens.</description>
 		</item>
 		<item>
+			<title>Restyling a Forge model is instant, reversible, and never touches the shape</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Restyling a Forge model is instant, reversible, and never touches the shape</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Restyle materials on /forge now has 15 preset looks (glossy, satin, matte, lacquer, metallic paint, velvet, clay, glazed ceramic, chrome, gold, copper, brushed steel, glass, neon, holographic) that apply instantly on your device without waiting on a server, and the mesh, UVs and textures stay exactly as they were. Every look is a step you can go back to, Back to original restores the model, and the download saves the look you see. Describing a look in your own words still runs AI restyle, now with a live timer and Cancel. If the AI service is down you are told so and offered the presets, and a request that would change the shape points you to the tool that does that. Voxel, brick, lattice and low-poly Stylize results also stop rendering as dark metal.</description>
+		</item>
+		<item>
 			<title>Signing in from Forge no longer loses your prompt</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-27:Signing in from Forge no longer loses your prompt</guid>

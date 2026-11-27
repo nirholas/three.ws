@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-27T19:35:53.204Z",
+	"generated_at": "2026-11-27T06:59:48.936Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -41,17 +41,6 @@
 		{
 			"date": "2026-11-27",
 			"type": "update",
-			"title": "AI replies skip a provider that has run out of credit",
-			"summary": "A model provider that reports an exhausted balance is now set aside however it words the refusal, so requests go straight to one that can answer.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-27",
-			"type": "update",
 			"title": "Every Forge error now says what happened and what to do next",
 			"summary": "When something goes wrong in Forge, the message now says in plain words what happened and what you can do about it, for every error Forge can return: making a model, uploading a photo, rigging, styling, remeshing and the other tools on a finished model. Your prompt and settings are always kept. A provider's raw error text, internal addresses and anything that looks like a key never reach the page. An error Forge does not recognise still gets an honest message with a short reference you can quote to support. Screen readers now hear every error, including the high demand, limit and storage notices.",
 			"link": "/forge",
@@ -85,27 +74,6 @@
 		{
 			"date": "2026-11-27",
 			"type": "update",
-			"title": "Forge finishes generations you walked away from",
-			"summary": "A generation whose tab was closed is now completed into your gallery the same way an open page would complete it, with a time limit that matches how long each engine really takes.",
-			"link": "/forge",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-27",
-			"type": "update",
-			"title": "Forge holds your place in line instead of reporting a limit",
-			"summary": "When the image step behind text-to-3D is busy, Forge and Forge Studio now show your place in line and an estimated wait, keep the place while the page is open, and start your generation on your turn. Cancel hands the place to the next person, and a full line says when to come back.",
-			"link": "/forge",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-27",
-			"type": "update",
 			"title": "Forge never loses or doubles a generation on reload, a closed tab, a double click or a dropped connection",
 			"summary": "Reload /forge, close the tab or lose your connection in the middle of a generation and the page now picks the same job back up when you return, even if you left while the request was still being sent. A double click, a held Enter key or a second tab joins the generation already running instead of starting and charging a second one, on /forge and in Forge Studio. A dropped connection shows an offline note and waits for the network instead of failing, a background tab stops polling until you look at it again, and a job that finished while you were away opens on the result with a note saying so. A job whose engine never answers now ends as failed with a reason instead of spinning forever.",
 			"link": "/forge",
@@ -133,17 +101,6 @@
 			"link": null,
 			"tags": [
 				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-27",
-			"type": "update",
-			"title": "Forge reports agree with each other and lead with what to fix",
-			"summary": "The Forge error report, the funnel report and the internal funnel board now count a generation the same way and print that definition at the top, so they give the same success rate for the same week. Each opens with the top three problems and how they moved against the week before, says plainly that requests refused before a job started are not in its numbers, and hides links, emails and addresses unless asked. The error report answers in about a second instead of two minutes, a missing or unreachable database prints what to do instead of a stack trace or a page of zeros, and an admin who has not finished two-step verification is sent to verify instead of told to sign in.",
-			"link": null,
-			"tags": [
-				"infra",
 				"fix"
 			]
 		},
@@ -211,6 +168,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Restyling a Forge model is instant, reversible, and never touches the shape",
+			"summary": "Restyle materials on /forge now has 15 preset looks (glossy, satin, matte, lacquer, metallic paint, velvet, clay, glazed ceramic, chrome, gold, copper, brushed steel, glass, neon, holographic) that apply instantly on your device without waiting on a server, and the mesh, UVs and textures stay exactly as they were. Every look is a step you can go back to, Back to original restores the model, and the download saves the look you see. Describing a look in your own words still runs AI restyle, now with a live timer and Cancel. If the AI service is down you are told so and offered the presets, and a request that would change the shape points you to the tool that does that. Voxel, brick, lattice and low-poly Stylize results also stop rendering as dark metal.",
+			"link": "/forge",
+			"tags": [
+				"feature",
+				"fix"
 			]
 		},
 		{

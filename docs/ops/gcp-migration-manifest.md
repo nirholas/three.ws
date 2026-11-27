@@ -22,7 +22,53 @@ credits belong to the old billing account `01B467-A61905-9A97D2`, not to the old
 project. Linking project `three-ws` to that account (option 1 in
 [gcp-project-migration.md](gcp-project-migration.md)) lets every row below move
 while the credits keep paying. Nothing in the GPU rows can deploy until billing
-is settled; the CPU rows and buckets can, but would spend trial credit.
+is settled.
+
+The CPU rows are blocked too. Measured on 2026-11-27: the trial's Cloud Run quota
+is 20 vCPU and 40 GiB per region for the whole project, and `three-ws-api`
+already reserves 10 vCPU and 40 GiB at its max of 5 instances. The first worker
+deploy (`rembg-service`, 4 CPU / 16Gi, max 4) was refused with
+`CpuAllocPerProjectRegion requested: 400000 allowed: 20000`. Fitting under that
+quota would mean cutting every worker's max instances, which makes the product
+worse, so the deploys wait for billing instead.
+
+### Done ahead of the billing change (2026-11-27)
+
+- **Images:** the live digest of all 18 services is copied into
+  `us-central1-docker.pkg.dev/three-ws/workers/<service>:migrated`
+  (`granite-guardian` into the europe-west4 `workers` repository), with the same
+  digests as the old revisions. Both repositories keep the newest 3 versions and
+  delete anything older than 30 days.
+- **Runtime identity:** `workers@three-ws` replaces the old
+  `avatar-reconstruction-sa`, which held Cloud Run admin, Storage admin and Cloud
+  Build rights it never used. The new account holds only: object admin on
+  `three-ws-avatar-reconstructions` and `three-ws-garments`, object viewer on
+  `three-ws-model-weights` (no worker writes there), Firestore user and Vertex
+  user on the old project (where the reconstruction jobs and the Imagen calls
+  live), the `avatar-reconstruction-key` secret, and log, metric and trace
+  writers. Services that ran as the old `three-ws@` account run as
+  `three-ws@three-ws`.
+- **Secrets:** the six the bots need (`okx-chat-bot-database-url`,
+  `okx-chat-bot-llm-gateway-token`, `pulse-database-url`,
+  `pulse-solana-ws-urls`, `pulse-solana-rpc-urls`, `pumpfun-claims-bot-token`)
+  are copied, each value hash-checked against the old one.
+- **Configs:** each new service is generated from the live old service's own
+  config (CPU, memory, GPU, CPU allocation, concurrency, timeout, probes,
+  bucket mounts, env, secret references), changing only the image path and the
+  service account. Two deliberate differences, both in `three-ws-multiplayer`:
+  it reaches Redis on the `three-ws-redis` VM over Direct VPC egress instead of
+  the old connector, and `HOLDER_PASS_SECRET` comes from Secret Manager instead of
+  a plain env value (same value, checked by hash).
+- **Build access:** `three-ws-build@three-ws` can read the old project's
+  registries, which the image copy used.
+
+### Services that must never run in both projects
+
+`pulse`, `pumpfun-claims-bot` and `okx-chat-bot` post to channels or write to
+the database on their own loop. Two copies would double every post. They move
+in one step at cutover: stop the old one, then deploy the new one. Every other
+service is called only through an API env var, so its new copy can run beside
+the old one until the switch.
 
 ## How each worker moves
 
@@ -65,11 +111,11 @@ drops below the 7-day figure (95.5%), set the URL back.
 
 | Service | Old region | 30-day requests | 30-day instance-hours | API env var | Status |
 | --- | --- | --- | --- | --- | --- |
-| `model-trellis` | us-central1 | 362,196 | 1,033 | `MODEL_TRELLIS_URL` | Waits on billing (protected lane) |
-| `model-rig` | us-central1 | 29,643 | 805 | `GCP_UNIRIG_URL` | Waits on billing |
-| `rembg-service` | us-central1 | 58,727 | 748 | `GCP_REMBG_URL` | Not started |
-| `granite-guardian` | europe-west4 | 101,963 | 317 | `GRANITE_GUARDIAN_URL` | Waits on billing |
-| `three-ws-multiplayer` | us-central1 | 222,873 | 716 | `MULTIPLAYER_INTERNAL_URL` | Not started; its Memorystore moves with it |
+| `model-trellis` | us-central1 | 362,196 | 1,033 | `MODEL_TRELLIS_URL` | Image and config ready; waits on billing (protected lane) |
+| `model-rig` | us-central1 | 29,643 | 805 | `GCP_UNIRIG_URL` | Image and config ready; waits on billing |
+| `rembg-service` | us-central1 | 58,727 | 748 | `GCP_REMBG_URL` | Image and config ready; waits on billing |
+| `granite-guardian` | europe-west4 | 101,963 | 317 | `GRANITE_GUARDIAN_URL` | Image and config ready; waits on billing |
+| `three-ws-multiplayer` | us-central1 | 222,873 | 716 | `MULTIPLAYER_INTERNAL_URL` | Image and config ready (uses the new Redis VM); waits on billing |
 
 `model-trellis` is the lane that serves Forge: 877 finished jobs in the 7 days to
 2026-11-26 at 95.5% success, out of about 900 across every lane. Its weights live
@@ -79,19 +125,19 @@ in `three-ws-model-weights`.
 
 | Service | Old region | 30-day requests | 30-day instance-hours | API env var | Status |
 | --- | --- | --- | --- | --- | --- |
-| `model-text2motion` | us-east4 | 12,347 | 528 | `GCP_TEXT2MOTION_URL` | Waits on billing |
-| `model-triposg` | us-central1 | 35,414 | 412 | `GCP_TRIPOSG_URL` | Waits on billing |
-| `segment-service` | us-central1 | 9,014 | 709 | `GCP_SEGMENT_URL` | Not started |
-| `remesh-service` | us-central1 | 7,736 | 710 | `GCP_REMESH_URL` | Not started |
-| `stylize-service` | us-central1 | 7,278 | 709 | `GCP_STYLIZE_URL` | Not started |
-| `garment-forge` | us-central1 | 4,330 | 716 | `GCP_GARMENT_FORGE_URL` | Not started |
-| `avatar-reconstruction` | us-central1 | 675 | 679 | `GCP_RECONSTRUCTION_URL` | Not started |
-| `avatar-reconstruction-rtx` | europe-west4 | 2,220 | 7 | none (called by `avatar-reconstruction`) | Waits on billing |
-| `pulse` | us-central1 | 3,254 | 538 | `PULSE_URL` | Not started |
-| `liquidation-collector` | us-central1 | 378 | 682 | `LIQUIDATION_COLLECTOR_URL` | Not started |
-| `pumpfun-creator-rewards` | us-central1 | 12,733 | 1 | none (called on its own schedule) | Not started |
-| `pumpfun-claims-bot` | us-central1 | 4 | 678 | none (feeds `/api/agents/pumpfun`) | Not started |
-| `okx-chat-bot` | us-central1 | 121 | 680 | none (health read from its logs) | Not started |
+| `model-text2motion` | us-east4 | 12,347 | 528 | `GCP_TEXT2MOTION_URL` | Image and config ready; waits on billing |
+| `model-triposg` | us-central1 | 35,414 | 412 | `GCP_TRIPOSG_URL` | Image and config ready; waits on billing |
+| `segment-service` | us-central1 | 9,014 | 709 | `GCP_SEGMENT_URL` | Image and config ready; waits on billing |
+| `remesh-service` | us-central1 | 7,736 | 710 | `GCP_REMESH_URL` | Image and config ready; waits on billing |
+| `stylize-service` | us-central1 | 7,278 | 709 | `GCP_STYLIZE_URL` | Image and config ready; waits on billing |
+| `garment-forge` | us-central1 | 4,330 | 716 | `GCP_GARMENT_FORGE_URL` | Image and config ready; waits on billing |
+| `avatar-reconstruction` | us-central1 | 675 | 679 | `GCP_RECONSTRUCTION_URL` | Image and config ready; waits on billing |
+| `avatar-reconstruction-rtx` | europe-west4 | 2,220 | 7 | none (called by `avatar-reconstruction`) | Image and config ready; waits on billing |
+| `pulse` | us-central1 | 3,254 | 538 | `PULSE_URL` | Image, secrets and config ready; moves at cutover |
+| `liquidation-collector` | us-central1 | 378 | 682 | `LIQUIDATION_COLLECTOR_URL` | Image and config ready; waits on billing |
+| `pumpfun-creator-rewards` | us-central1 | 12,733 | 1 | none (called on its own schedule) | Image and config ready; waits on billing |
+| `pumpfun-claims-bot` | us-central1 | 4 | 678 | none (feeds `/api/agents/pumpfun`) | Image, secrets and config ready; moves at cutover |
+| `okx-chat-bot` | us-central1 | 121 | 680 | none (health read from its logs) | Image, secrets and config ready; moves at cutover |
 
 `model-triposg` is the Forge fallback lane and fails more often than it
 succeeds (17 done, 26 failed in 7 days). It moves as it is; fixing it is
@@ -104,37 +150,48 @@ Cloud Run jobs that move: `vanity-grinder` and `three-ws-x-partners`.
 The move redeploys each worker anyway, so these land with it. None changes what
 a user gets:
 
-- **Request-based billing for the idle CPU workers.** `segment-service`,
-  `remesh-service`, `stylize-service` and `garment-forge` each bill 20 to 24
-  hours a day on 8 CPU / 16Gi for 4k to 9k requests a month, because their CPU
-  is allocated even when idle. If a worker does no background work, it is
-  redeployed with CPU billed only during requests. A worker that does
-  background work keeps its setting.
+- **CPU allocation stays as it is.** `segment-service`, `remesh-service`,
+  `stylize-service`, `garment-forge`, `rembg-service` and
+  `avatar-reconstruction` bill 20 to 24 hours a day for a few thousand requests
+  a month, but each one answers `202` and finishes the job in a FastAPI
+  background task. Billing CPU only during requests would freeze those jobs, so
+  the saving needs a code change (for example, Cloud Tasks pushing each job as
+  its own request) and is not part of the move.
+- **Least-privilege runtime account** (`workers@three-ws`, above).
 - **One image per worker, not every build.** The new registry gets a cleanup
   policy that keeps the newest versions and anything deployed.
 - **No second Redis proxy.** The old site's Redis path (`three-ws-redis-proxy`
   at min 1, an internal load balancer and a VPC connector) is replaced by the
   VM and Direct VPC egress the API already uses.
 
-### Buckets
+### Buckets: kept by name, used from `three-ws`
 
-| Bucket | Why it moves | Status |
+A bucket cannot change projects, and bucket names are global, so a copy in
+`three-ws` would need a new name. That name is the problem:
+`three-ws-avatar-reconstructions` appears in 82 source files and
+`three-ws-model-weights` in 110, and stored user links (avatars, generated
+models, garments) point at public URLs that contain the bucket name. Renaming
+would break every stored link. Storage for all of them is about $23 a month, and
+reads from a Cloud Run service in the same region cost nothing extra across
+projects, so these buckets stay in the old project under their own names. The
+new services are granted access instead:
+
+| Bucket | Used by | Access from `three-ws` |
 | --- | --- | --- |
-| `three-ws-db-backups` | Database backups, cannot be regenerated | Not started |
-| `three-ws-db-archive` | Archived rows, cannot be regenerated | Not started |
-| `three-ws-avatar-reconstructions` | User outputs (242 GB) | Not started |
-| `three-ws-news-archive` | Archived content, cannot be regenerated | Not started |
-| `three-ws-storage-fallback` | Live storage fallback; `three-ws@three-ws` already has access | Not started |
-| `three-ws-desktop-releases` | Desktop builds, served at `/releases/` | Not started; the new LB reads it through an internet NEG until then |
-| `three-ws-x-content-bundles` | Served by the site; `three-ws@three-ws` already has access | Not started |
-| `three-ws-model-weights` | Weights for `model-trellis` and other workers (413 GB) | Not started; moves before the workers that read it |
-| `three-ws-okx-bot-state` | State for `okx-chat-bot` (116 GB) | Moves with the bot if the bot reads it |
+| `three-ws-avatar-reconstructions` | Every Forge and avatar worker writes results here (242 GB, public read) | `workers@three-ws` object admin |
+| `three-ws-model-weights` | Bucket mounts in `model-trellis`, `model-rig`, `model-triposg`, `model-text2motion`, `granite-guardian` (413 GB) | `workers@three-ws` object viewer |
+| `three-ws-garments` | `garment-forge` publishes here (public read) | `workers@three-ws` object admin |
+| `three-ws-storage-fallback` | The API | `three-ws@three-ws` object admin |
+| `three-ws-x-content-bundles` | The API | `three-ws@three-ws` object admin |
+| `three-ws-desktop-releases` | The new load balancer, through an internet NEG | Public read |
+| `three-ws-db-backups`, `three-ws-db-archive`, `three-ws-news-archive` | Backup and archive jobs | Granted when those jobs move |
+| `three-ws-okx-bot-state` | `okx-chat-bot` (116 GB) | Granted when the bot moves at cutover |
 
-Bucket names are global, so a bucket cannot keep its name in a new project
-without being emptied and deleted first. Each one is copied with Storage
-Transfer Service to a new name in `three-ws` in the same location (no egress
-charge within a location), the readers' env vars are switched, and the old
-bucket stays read-only until the owner says yes to deleting it.
+This keeps the old project alive for as long as these buckets live in it,
+under the old billing account. If the old project is ever closed, each bucket
+moves with a same-name swap: copy to a temporary bucket, delete the original,
+create the name in `three-ws`, copy back. That deletes the original, so it
+needs the owner's yes and a short write freeze per bucket.
 
 ## Staying in the old project
 

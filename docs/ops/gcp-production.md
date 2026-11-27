@@ -424,6 +424,38 @@ done
 
 **Grant the identity that actually exports, not the one the service runs as.** The API signs its export with `getGcpAccessToken()` ([api/_lib/gcp-auth.js](../../api/_lib/gcp-auth.js)), which prefers `GCP_SERVICE_ACCOUNT_JSON` over the metadata server. In production that env var is the secret `gcp-vercel-inference-sa-key`, so the API exports as `vercel-inference@`, not its runtime SA `three-ws@`. The Forge-path workers run as `avatar-reconstruction-sa@` and export with their metadata token. From 2026-11-04 to 2026-11-13 only `three-ws@` had the binding, so every export failed with `http 403` and no spans landed. Find the identities with `gcloud run services describe <service> --region us-central1 --format='value(spec.template.spec.serviceAccountName)'` (workers), and read only `client_email` from the API's key secret. An export failure now logs Google's error message (for example the denied permission), so a missing binding names itself in the logs: `gcloud logging read 'textPayload:"[tracing]"' --freshness=1h`.
 
+## Health probes never wake an idle worker
+
+Every GPU worker, and the CPU editing workers (rembg, segment, remesh, stylize, garment-forge, avatar-reconstruction), runs with CPU always allocated. An instance bills for its whole life, and Cloud Run keeps an idle instance up for about 15 minutes after its last request. So a health probe can cost up to 15 billed instance-minutes on a worker nobody is using.
+
+Measured over 24h on 2026-11-27, before the fix:
+
+- `/api/forge?health` is fetched by every Forge, Home, workbench and Microsoft hub page view, and it sent `GET /health` to every worker. `model-hunyuan3d-21-rtx` ran zero jobs and still billed 15.4 GPU hours on 396 probes. Each CPU editing worker got 391 probes and billed about 21 hours.
+- `/api/healthz` is polled by the Cloud Monitoring uptime check from a dozen regions, about 5 times a minute. It probed `granite-guardian` 7,042 times against 27 real calls, which kept its L4 up for 24 hours.
+
+[api/_lib/worker-warmth.js](../../api/_lib/worker-warmth.js) now reads `run.googleapis.com/container/instance_count` first, and the probes in [api/_lib/forge-health.js](../../api/_lib/forge-health.js) and the Granite check in [api/_lib/ops/subsystem-health.js](../../api/_lib/ops/subsystem-health.js) follow it:
+
+- **Worker has an instance:** the full `/health` check runs, `load_error` included.
+- **Worker is scaled to zero:** the lane reports `status: "ok"`, `idle: true`, and the worker is not touched. A latched model failure only exists on a running instance. A job that fails on a fresh instance still shows in the lane cooldowns and generation metrics.
+- **Metric unreadable** (no grant, no project, or a host that is not `run.app`): the probe runs as before. The code logs `[worker-warmth] cannot read instance_count` once per instance and skips Monitoring for 5 minutes.
+
+One fleet-wide read is shared through the cache for 60 seconds, so all lanes and all API instances together cost about one Monitoring call a minute.
+
+**Project and identity.** The project it reads is `GCP_WORKERS_PROJECT`, then `GCP_BILLING_PROJECT`, then `GOOGLE_CLOUD_PROJECT`. The new-project API has `GCP_BILLING_PROJECT=aerial-vehicle-466722-p5`, so it reads the workers' project. The token comes from `getGcpAccessToken()`, which signs as `vercel-inference@` in production (see the tracing note above). That identity, `three-ws@aerial-vehicle-466722-p5` and `three-ws@three-ws` all hold `roles/monitoring.viewer` on `aerial-vehicle-466722-p5`, granted 2026-11-27. Check the grants with:
+
+```bash
+gcloud projects get-iam-policy aerial-vehicle-466722-p5 --account nich@sperax.io \
+  --flatten='bindings[].members' --filter='bindings.role:roles/monitoring.viewer' \
+  --format='value(bindings.members)'
+```
+
+To confirm the fix after a deploy, count probes on a worker that is not running jobs. The count should fall from hundreds a day to the few that land while it is already up:
+
+```bash
+gcloud logging read 'resource.labels.service_name=model-hunyuan3d-21-rtx AND httpRequest.requestUrl:"/health"' \
+  --freshness=6h --project aerial-vehicle-466722-p5 --account nich@sperax.io --format='value(timestamp)' | wc -l
+```
+
 ## Crons (Cloud Scheduler)
 
 **Tick mode (project `three-ws`, from the 2026-11 cutover).** One Scheduler job,
