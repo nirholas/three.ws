@@ -39,6 +39,14 @@
 			<description>When something goes wrong in Forge, the message now says in plain words what happened and what you can do about it, for every error Forge can return: making a model, uploading a photo, rigging, styling, remeshing and the other tools on a finished model. Your prompt and settings are always kept. A provider's raw error text, internal addresses and anything that looks like a key never reach the page. An error Forge does not recognise still gets an honest message with a short reference you can quote to support. Screen readers now hear every error, including the high demand, limit and storage notices.</description>
 		</item>
 		<item>
+			<title>Forge API errors carry a support reference instead of provider text</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Forge API errors carry a support reference instead of provider text</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When an engine fails while starting a model or a rig, the Forge API now answers with a plain message and a short reference you can quote to support, instead of passing the provider's own error text along. The Forge page also explains four more errors in plain words: a photo that is not an image, a photo with too many pixels (naming which photo of a set), a provider that refused the request, and a provider that is not responding.</description>
+		</item>
+		<item>
 			<title>Forge never loses or doubles a generation on reload, a closed tab, a double click or a dropped connection</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-27:Forge never loses or doubles a generation on reload, a closed tab, a double click or a dropped connection</guid>

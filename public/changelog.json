@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-27T01:00:25.446Z",
+	"generated_at": "2026-11-27T05:19:01.286Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -47,6 +47,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Forge API errors carry a support reference instead of provider text",
+			"summary": "When an engine fails while starting a model or a rig, the Forge API now answers with a plain message and a short reference you can quote to support, instead of passing the provider's own error text along. The Forge page also explains four more errors in plain words: a photo that is not an image, a photo with too many pixels (naming which photo of a set), a provider that refused the request, and a provider that is not responding.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"security"
 			]
 		},
 		{
