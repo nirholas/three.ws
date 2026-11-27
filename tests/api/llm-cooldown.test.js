@@ -41,6 +41,13 @@ const fail = (status, headers = {}) => ({
 	json: async () => ({}),
 	text: async () => 'upstream said no',
 });
+const failWith = (status, body, headers = {}) => ({
+	ok: false,
+	status,
+	headers: new Headers(headers),
+	json: async () => JSON.parse(body),
+	text: async () => body,
+});
 
 // Only Groq (three rungs on one key) plus the two keyless lanes are in the
 // chain, which keeps each case's fetch log short and readable.
@@ -194,5 +201,70 @@ describe('llmComplete with cooldowns', () => {
 		const out = await llmComplete({ system: 's', user: 'u' });
 		expect(out.text).toBe('recovered');
 		expect(llmCooldownSnapshot().map((c) => c.rung)).not.toContain(`${out.provider}|${out.model}`);
+	});
+});
+
+// Forge hardening 79 (2026-11-27): an out-of-credits rung must be skipped on the
+// next request and stay skipped, however the provider phrases it. Three shapes
+// slipped through the status-only cooldown: a 200 whose whole content is the
+// account notice (fails over, but was re-asked on every call), a 429 whose body
+// says the quota is spent (cooled only 30s, as if it were a burst limit), and a
+// 400 billing error (never cooled). A plain bad request or a real burst limit
+// must keep its old, short memory.
+describe('out-of-credits rungs are remembered', () => {
+	it('skips a rung that answered with an account notice on the previous call', async () => {
+		onlyGroq();
+		const notice = 'The API key used for this request has reached its budget. Please raise the key budget.';
+		let calls = routeFetch(({ model }) => (model === 'qwen/qwen3.8-27b' ? ok(notice) : ok('from 120b')));
+		const first = await llmComplete({ system: 's', user: 'u' });
+		expect(first.provider).toBe('groq#120b');
+
+		calls = routeFetch(() => ok('from 120b again'));
+		await llmComplete({ system: 's', user: 'u' });
+		expect(calls.map((c) => c.model)).toEqual(['openai/gpt-oss-120b']);
+		expect(llmCooldownSnapshot()).toEqual([
+			expect.objectContaining({ rung: 'groq|qwen/qwen3.8-27b', seconds: 30 * 60 }),
+		]);
+	});
+
+	it('treats a 429 that says the quota is spent as out of credits, not a burst limit', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		onlyGroq();
+		const spent = JSON.stringify({ error: { message: 'You exceeded your current quota, please check your plan and billing details.', type: 'insufficient_quota', code: 'insufficient_quota' } });
+		routeFetch(({ model }) => (model === 'qwen/qwen3.8-27b' ? failWith(429, spent) : ok('fallback')));
+		await llmComplete({ system: 's', user: 'u' });
+
+		// Well past the 30s a burst-limit 429 sits out.
+		vi.setSystemTime(Date.now() + 5 * 60_000);
+		const calls = routeFetch(() => ok('fallback again'));
+		const out = await llmComplete({ system: 's', user: 'u' });
+		expect(out.provider).toBe('groq#120b');
+		expect(calls.map((c) => c.model)).toEqual(['openai/gpt-oss-120b']);
+	});
+
+	it('remembers a 400 billing error such as an exhausted credit balance', async () => {
+		onlyGroq();
+		const broke = JSON.stringify({ type: 'error', error: { type: 'invalid_request_error', message: 'Your credit balance is too low to access the API.' } });
+		routeFetch(({ model }) => (model === 'qwen/qwen3.8-27b' ? failWith(400, broke) : ok('fallback')));
+		await llmComplete({ system: 's', user: 'u' });
+
+		const calls = routeFetch(() => ok('fallback again'));
+		await llmComplete({ system: 's', user: 'u' });
+		expect(calls.map((c) => c.model)).toEqual(['openai/gpt-oss-120b']);
+	});
+
+	it('does not cool a rung on a plain 400, or long-cool a burst-limit 429', async () => {
+		onlyGroq();
+		const badRequest = JSON.stringify({ error: { message: 'max_tokens must be at most 8192' } });
+		routeFetch(({ model }) => (model === 'qwen/qwen3.8-27b' ? failWith(400, badRequest) : ok('fallback')));
+		await llmComplete({ system: 's', user: 'u' });
+		expect(llmCooldownSnapshot()).toEqual([]);
+
+		const burst = JSON.stringify({ error: { message: 'Rate limit reached for model in organization on tokens per minute (TPM): Limit 6000, Used 5800, Requested 900.', type: 'tokens', code: 'rate_limit_exceeded' } });
+		routeFetch(({ model }) => (model === 'qwen/qwen3.8-27b' ? failWith(429, burst, { 'retry-after': '7' }) : ok('fallback')));
+		await llmComplete({ system: 's', user: 'u' });
+		expect(llmCooldownSnapshot()).toEqual([
+			expect.objectContaining({ rung: 'groq|qwen/qwen3.8-27b', status: 429, seconds: 7 }),
+		]);
 	});
 });

@@ -267,8 +267,20 @@ export function cooldownMsForStatus(status, retryAfter = null) {
 	return 0;
 }
 
-function noteRungFailure(p, status, retryAfter) {
-	const ms = cooldownMsForStatus(status, retryAfter);
+// An error body that says the account itself is out of money or quota. Some
+// providers send that as a 429 (OpenAI-style insufficient_quota) or a 400
+// (Anthropic's "credit balance is too low"), which the status alone reads as a
+// burst limit or a bad request; either way the rung was asked again within
+// seconds. Matched on billing words only, so a tokens-per-minute 429 ("Limit
+// 6000, Used 5800") or an invalid-parameter 400 keeps its short memory.
+const OUT_OF_CREDITS_BODY = /insufficient[_ ](?:quota|balance|credits?|funds)|credit balance is too low|out of credits?|no credits? (?:left|remaining)|exceeded your current quota|quota (?:has been )?exhausted|reached its (?:budget|spend(?:ing)? limit)|(?:spend(?:ing)?|billing|budget) limit (?:reached|exceeded|has been reached)|payment required|add (?:more )?credits/i;
+
+export function isOutOfCreditsBody(body) {
+	return OUT_OF_CREDITS_BODY.test(String(body || '').slice(0, 2000));
+}
+
+function noteRungFailure(p, status, retryAfter, body = '') {
+	const ms = status !== 402 && isOutOfCreditsBody(body) ? COOLDOWN_DEAD_MS : cooldownMsForStatus(status, retryAfter);
 	if (ms > 0) COOLDOWNS.set(rungKey(p), { until: Date.now() + ms, status });
 }
 
@@ -1172,7 +1184,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		}
 		if (!upstream.ok) {
 			const body = await upstream.text().catch(() => '');
-			noteRungFailure(p, upstream.status, upstream.headers?.get?.('retry-after'));
+			noteRungFailure(p, upstream.status, upstream.headers?.get?.('retry-after'), body);
 			if (p.name === 'phi' && upstream.status >= 500) notePhiStall(p, upstream.status);
 			lastErr = Object.assign(new Error(`${p.name} ${upstream.status}: ${body.slice(0, 200)}`), { status: 502, code: 'upstream_error' });
 			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: `http ${upstream.status}` });
@@ -1211,7 +1223,9 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		if (isProviderAccountNotice(text)) {
 			// A billing or quota notice delivered as the completion itself. It is a
 			// failed call wearing a 200, so it fails over like one and is never
-			// returned: a caller cannot tell it from an answer.
+			// returned: a caller cannot tell it from an answer. The account stays
+			// out of credit for a while, so the rung sits out like a 402 would.
+			noteRungFailure(p, 402);
 			lastErr = Object.assign(new Error(`${p.name} answered with an account notice instead of a completion`), { status: 502, code: 'provider_notice' });
 			attempts.push({ provider: p.name, ms: Date.now() - startedAt, error: 'account notice as completion' });
 			continue;
