@@ -2163,6 +2163,20 @@
 				animation: saved-pop 3s ease forwards;
 			}
 			.saved-chip.is-hidden { display: none; }
+			/* The model finished while nobody was looking (a reopened page, a tab
+			   left in the background). Stays put, unlike the saved pop: the person
+			   was away, so it must still be there when they look. */
+			.away-chip {
+				font-size: 0.7rem;
+				color: var(--ink);
+				background: color-mix(in srgb, var(--accent) 12%, transparent);
+				border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+				border-radius: 999px;
+				padding: 1px 8px;
+				flex: none;
+				white-space: nowrap;
+			}
+			.away-chip.is-hidden { display: none; }
 
 			/* "What we actually asked the model" — the art-directed rewrite, shown
 			   under the result bar. Collapsed by default: context, not headline. */
@@ -4083,7 +4097,7 @@
 					<input
 						type="file"
 						id="view-file-input"
-						accept="image/*,.heic,.heif,.avif"
+						accept="image/png,image/jpeg,image/webp"
 						multiple
 						hidden
 					/>
@@ -4175,7 +4189,7 @@
 					<input
 						type="file"
 						id="sketch-file-input"
-						accept="image/*,.heic,.heif,.avif"
+						accept="image/png,image/jpeg,image/webp"
 						hidden
 					/>
 					<label for="sketch-prompt" class="is-hidden"
@@ -4505,6 +4519,7 @@
 						<a class="result-creator is-hidden" id="result-creator" data-i18n="forge.by">by @</a>
 						<a class="result-visibility is-hidden" id="result-visibility" href="/creations" title="Choose whether this model is public, unlisted or private, or delete it">Who can see this?</a>
 						<span class="saved-chip is-hidden" id="result-saved" aria-label="Auto-saved to gallery" data-i18n="forge.saved" data-i18n-attr="aria-label:forge.auto_saved_to_gallery_arialabel">Saved ✓</span>
+						<span class="away-chip is-hidden" id="result-away" role="status" title="This model finished on the server while you were away, and was saved to your gallery">Finished while you were away</span>
 						<span
 							class="views-badge is-hidden"
 							id="result-views"
