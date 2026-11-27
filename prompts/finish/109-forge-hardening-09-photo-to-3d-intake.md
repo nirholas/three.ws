@@ -1,5 +1,7 @@
 # Forge hardening 09: Make every photo a user can reasonably drop turn into a model, or a clear reason why not
 
+**Status (2026-11-27):** Done in the repo and verified on the dev server: intake by content, on-device conversion of HEIC, AVIF, GIF, SVG, sideways and oversize photos, refusals with reasons, one shared dropzone, link import through the SSRF guard, upload failures that keep the photo, all test-first. What remains belongs to the owner: push and deploy (`git push threews main`, then `npm run deploy:gcp:full`), since production still runs the old client and has no `source_url` link import until then. After the deploy, rerun `node scripts/forge-intake-verify.mjs --base https://three.ws --page /forge --out <dir>` to see the uploads land, which localhost cannot show because storage refuses its CORS origin.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/109-forge-hardening-09-photo-to-3d-intake.md`.
 
 **Priority:** P0. **Area:** photo to 3D, upload and validation. **Dev port:** 4109. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
