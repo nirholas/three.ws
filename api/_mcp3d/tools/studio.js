@@ -39,6 +39,7 @@ import {
 	textureModeFor,
 } from '../../_lib/forge-tiers.js';
 import { laneHealthSnapshot } from '../../_lib/forge-lane-health.js';
+import { laneAllowedInTerritory, requestTerritory } from '../../_lib/forge-territory.js';
 import { resolveProviderKey } from '../../_lib/forge-provider-key.js';
 import { encodeJobToken, decodeJobToken } from '../../_lib/forge-job-token.js';
 import { watsonxConfig, watsonxChatComplete } from '../../_lib/watsonx.js';
@@ -358,6 +359,16 @@ function resolveEngineArg(args) {
 	if (ENGINES[raw]) return ENGINES[raw].internal;
 	if (BACKENDS[raw] && !MCP_UNSELECTABLE_BACKENDS.has(raw)) return raw;
 	return undefined;
+}
+// Resolve the backend for one tool call. An explicitly named Tencent engine
+// (three-detail) is honoured only where its licence allows; otherwise the call
+// falls back to the platform default, which never picks a Tencent lane for an
+// excluded or unknown country.
+function resolveBackendForCaller({ path, args, req }) {
+	const country = requestTerritory(req);
+	const named = resolveEngineArg(args);
+	const backend = named && laneAllowedInTerritory(named, country) ? named : undefined;
+	return resolveBackendId({ path, backend, country });
 }
 const BACKEND_PROP = {
 	// Intentionally no `enum`: branded names are the advertised vocabulary (below),
@@ -695,7 +706,7 @@ export const toolDefs = [
 			await enforce(limits.mcp3dGenerate, auth);
 			const path = parsePathArg(args);
 			const tier = resolveTier(parseTierArg(args));
-			const backendId = resolveBackendId({ path, backend: resolveEngineArg(args) });
+			const backendId = resolveBackendForCaller({ path, args, req });
 
 			// BYOK geometry-style engines (the geometry/sculpt/instant engines) — native text→mesh.
 			// Routed by registry membership, not just path, so an explicitly chosen
@@ -834,7 +845,7 @@ export const toolDefs = [
 
 			const path = parsePathArg(args);
 			const tier = resolveTier(parseTierArg(args));
-			const backendId = resolveBackendId({ path, backend: resolveEngineArg(args) });
+			const backendId = resolveBackendForCaller({ path, args, req });
 
 			// BYOK geometry-style engines (the geometry/sculpt/instant engines)
 			// reconstruct from the primary view; multi-view fusion stays on the
