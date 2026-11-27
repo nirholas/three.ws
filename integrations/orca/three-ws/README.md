@@ -1,6 +1,6 @@
 # three.ws plugin for Orca
 
-A declarative [Orca](https://github.com/stablyai/orca) plugin that gives the agents Orca launches the three.ws 3D studio over MCP. An agent can search a catalog of ready-made 3D assets, read the docs and check a render with no account, and make, refine or rig a model once it is signed in to a free three.ws account.
+A declarative [Orca](https://github.com/stablyai/orca) plugin that gives the agents Orca launches the three.ws 3D studio over MCP. An agent can search a catalog of ready-made 3D assets, and read the docs with no account, and make, refine, rig or render views of a model once it is signed in to a free three.ws account.
 
 The plugin has one file, [`orca-plugin.json`](orca-plugin.json). Its only contribution is one MCP server:
 

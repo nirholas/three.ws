@@ -12,7 +12,7 @@ The studio is a remote MCP server (streamable HTTP):
 https://three.ws/api/mcp-studio
 ```
 
-- Plain URL: catalog search, docs search, render checks and job status work with no account and no key.
+- Plain URL: catalog search, docs search and job status work with no account and no key. Rendering views of a model (`look_at_model`) is free but needs an account, like making one.
 - To make, refine or rig a model you need a free three.ws account. Two ways in:
   - OAuth: use `https://three.ws/api/mcp-studio?auth=oauth`. The server answers `401` with a sign-in challenge, so a client that supports MCP OAuth opens the three.ws sign-in.
   - API key: create one at https://three.ws/dashboard/api-keys and send it as `Authorization: Bearer <key>`. Keep it in an environment variable, never in a file in your repo.
@@ -290,7 +290,7 @@ Upstream file: `marketplace/plugins/community/three-ws.json`, plus the regenerat
   "slug": "three-ws",
   "name": "three.ws 3D Studio",
   "version": "1.0.1",
-  "summary": "Hosted three.ws 3D studio MCP. Search a catalog of ready-made 3D models, characters and animations, read the docs, and check renders with no account. Making, refining or rigging a 3D model needs a free three.ws account and is not available through this listing. Grant only the individual tools you want.",
+  "summary": "Hosted three.ws 3D studio MCP. Search a catalog of ready-made 3D models, characters and animations, and read the docs with no account. Making, refining, rigging or rendering a 3D model needs a free three.ws account and is not available through this listing. Grant only the individual tools you want.",
   "publisher": "three.ws",
   "source_repo": "https://github.com/nirholas/three.ws",
   "endpoint": "https://three.ws/api/mcp-studio",
@@ -298,7 +298,7 @@ Upstream file: `marketplace/plugins/community/three-ws.json`, plus the regenerat
   "privacy_url": "https://three.ws/privacy",
   "terms_url": "https://three.ws/terms",
   "license": "Apache-2.0",
-  "setup_instructions": "Connect this listing. No account or key is needed for the catalog, docs and render tools. Grant search_catalog, get_catalog_item and search_docs to an agent that needs 3D assets. To make or rig models, use the Suparagent custom MCP server form with the same URL and a three.ws API key as a bearer token (free account, create a key at https://three.ws/dashboard/api-keys). Documentation: https://three.ws/docs",
+  "setup_instructions": "Connect this listing. No account or key is needed for the catalog and docs tools. Grant search_catalog, get_catalog_item and search_docs to an agent that needs 3D assets. To make or rig models, use the Suparagent custom MCP server form with the same URL and a three.ws API key as a bearer token (free account, create a key at https://three.ws/dashboard/api-keys). Documentation: https://three.ws/docs",
   "test_instructions": "Grant search_catalog to an agent and call it once with the query \"chair\" and a limit of 1. A successful call returns a match count and a catalog item with a title and a model link. Remove the grant if the agent does not need the tool."
 }
 ```
