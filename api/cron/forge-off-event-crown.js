@@ -2,39 +2,32 @@
 // GET /api/cron/forge-off-event-crown: crown the daily and overall winners of
 // every Forge-Off themed event (data/forge-off-events.json).
 //
-// A day that has closed is crowned with the top-voted public creation made
-// inside that UTC day (at least one vote), recorded with the day's theme. Once
-// the whole event has closed, the overall winner is the top-voted creation made
-// anywhere in the event window. Zero votes crowns nobody. Idempotent and
-// permanent: the first crowning for (event, board) wins (ON CONFLICT DO NOTHING).
+// Each day board closes at its UTC day end; the overall board closes at the
+// event end. Once a board has closed it is ranked by the shared contest rules
+// (api/_lib/forge-off-standings.js): only eligible entries made inside the
+// board's window, only votes cast before the close, no self-votes, at most 3
+// votes per network per entry, ties to the entry published first. Because only
+// pre-close votes count, a run at 00:07 and a replay a week later pick the same
+// winner.
 //
-// The weekly crown (api/cron/forge-off-crown) is untouched and keeps running
-// whether or not an event is active.
+// Outcomes per board:
+//   crowned   the top entry has at least one counted vote and a clear content
+//             screen; written once and never changed (ON CONFLICT DO NOTHING).
+//   deferred  the top entry's content screen is still pending; nothing is
+//             written and the next hourly run tries again.
+//   (nothing) no entries or no counted votes: the board ends with no winner.
+// Boards already crowned are skipped before any ranking, so running the cron
+// twice crowns each board once.
 //
 // `?dry_run=1` previews without writing. `?now=<ISO>` replays a past moment
-// (owner backfill and tests). Runs daily 00:07 UTC. Auth: CRON_SECRET.
+// (owner backfill and tests). Runs hourly at :07 UTC. Auth: CRON_SECRET.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { forgeStoreEnabled } from '../_lib/forge-store.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { closedDays, eventPhase, listEvents } from '../_lib/forge-off-events.js';
-
-async function topIn(from, to) {
-	const rows = await sql`
-		select id, prompt, glb_url, preview_image_url, model_category, vote_count
-		from forge_creations
-		where status = 'done' and glb_url is not null
-			and (outcome is null or outcome != 'rejected')
-			and (visibility is null or visibility = 'public')
-			and created_at >= ${from.toISOString()}::timestamptz
-			and created_at < ${to.toISOString()}::timestamptz
-			and vote_count >= 1
-		order by vote_count desc, created_at desc
-		limit 1
-	`;
-	return rows[0] || null;
-}
+import { loadEventWinners, loadWindow, pickWinner, rankBoard } from '../_lib/forge-off-standings.js';
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
@@ -56,7 +49,8 @@ export default wrapCron(async (req, res) => {
 		now = new Date(t);
 	}
 
-	const crowned = [];
+	// Every closed board of every event, before touching the database.
+	const pending = [];
 	for (const event of listEvents()) {
 		const boards = closedDays(event, now).map((d) => ({
 			key: `day-${d.index}`,
@@ -67,15 +61,41 @@ export default wrapCron(async (req, res) => {
 		if (eventPhase(event, now) === 'ended') {
 			boards.push({ key: 'overall', theme: event.title, from: event.start, to: event.end });
 		}
-		for (const b of boards) {
-			const winner = await topIn(b.from, b.to);
-			if (!winner) continue;
+		if (boards.length) pending.push({ event, boards });
+	}
+
+	const crowned = [];
+	const deferred = [];
+	if (!pending.length) {
+		return json(res, 200, { ok: true, dry_run: dryRun, now: now.toISOString(), crowned, deferred });
+	}
+
+	const already = await loadEventWinners(pending.map((p) => p.event.slug));
+	for (const { event, boards } of pending) {
+		const open = boards.filter((b) => !already.has(`${event.slug}/${b.key}`));
+		if (!open.length) continue;
+		// One read covers every board of the event: day windows sit inside it.
+		const { entries, votes } = await loadWindow({ from: event.start, to: event.end });
+		for (const b of open) {
+			const pick = pickWinner(rankBoard(entries, votes, { from: b.from, to: b.to, closesAt: b.to }));
+			if (pick.status === 'deferred') {
+				deferred.push({
+					event_slug: event.slug,
+					board_key: b.key,
+					creation_id: pick.entry.id,
+					votes: pick.votes,
+					reason: 'awaiting_content_screen',
+				});
+				continue;
+			}
+			if (pick.status !== 'crowned') continue;
+			const winner = pick.entry;
 			const entry = {
 				event_slug: event.slug,
 				board_key: b.key,
 				theme: b.theme,
 				creation_id: winner.id,
-				votes: Number(winner.vote_count) || 0,
+				votes: pick.votes,
 				prompt: winner.prompt,
 			};
 			if (dryRun) {
@@ -86,7 +106,7 @@ export default wrapCron(async (req, res) => {
 				insert into forge_event_winners
 					(event_slug, board_key, theme, creation_id, votes, prompt, glb_url, preview_image_url, model_category)
 				values (
-					${event.slug}, ${b.key}, ${b.theme}, ${winner.id}, ${entry.votes}, ${winner.prompt},
+					${event.slug}, ${b.key}, ${b.theme}, ${winner.id}, ${pick.votes}, ${winner.prompt},
 					${winner.glb_url}, ${winner.preview_image_url}, ${winner.model_category || 'other'}
 				)
 				on conflict (event_slug, board_key) do nothing
@@ -96,5 +116,5 @@ export default wrapCron(async (req, res) => {
 		}
 	}
 
-	return json(res, 200, { ok: true, dry_run: dryRun, now: now.toISOString(), crowned });
+	return json(res, 200, { ok: true, dry_run: dryRun, now: now.toISOString(), crowned, deferred });
 });

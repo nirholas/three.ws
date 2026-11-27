@@ -1935,13 +1935,17 @@ export function forgeOffWeekStart(ref = new Date()) {
 export async function castVote({ creationId, voterKey, ipHash = null }) {
 	if (!forgeStoreEnabled() || !creationId || !voterKey) return null;
 	try {
-		// Only public, finished, non-rejected creations are votable — the same
-		// bar the board and showcase render. Blocks votes on nonexistent or
-		// private/failed ids before any write.
+		// Only public, finished, non-rejected creations the content screen has
+		// not stopped are votable: the same bar the board and showcase render
+		// (api/_lib/forge-off-standings.js isEligibleEntry). Blocks votes on
+		// nonexistent, private, unlisted, held or blocked ids before any write.
 		const eligible = await sql`
 			select id from forge_creations
 			where id = ${creationId} and status = 'done' and glb_url is not null
 				and (outcome is null or outcome != 'rejected')
+				and (visibility is null or visibility = 'public')
+				and safety_status is distinct from 'blocked'
+				and safety_status is distinct from 'held'
 			limit 1
 		`;
 		if (eligible.length === 0) return null;

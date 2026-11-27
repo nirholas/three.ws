@@ -133,14 +133,13 @@ export function closedDays(event, ref = new Date()) {
 	return event.days.filter((d) => d.end.getTime() <= t);
 }
 
-// The event to show by default: the live one, else the next upcoming, else the
-// most recently ended. Null when no events are configured.
+// The event to show by default: the live one, else the next upcoming. Null
+// between events: an ended event is reached by its own slug (and is listed with
+// its winners on the "no event right now" view), never shown as if current.
 export function pickDefaultEvent(ref = new Date()) {
 	const live = EVENTS.find((e) => eventPhase(e, ref) === 'live');
 	if (live) return live;
-	const upcoming = EVENTS.filter((e) => eventPhase(e, ref) === 'upcoming').sort((a, b) => a.start - b.start)[0];
-	if (upcoming) return upcoming;
-	return [...EVENTS].sort((a, b) => b.end - a.end)[0] || null;
+	return EVENTS.filter((e) => eventPhase(e, ref) === 'upcoming').sort((a, b) => a.start - b.start)[0] || null;
 }
 
 export function publicEvent(event) {

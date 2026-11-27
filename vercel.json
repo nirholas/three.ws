@@ -8275,11 +8275,11 @@
 		},
 		{
 			"path": "/api/cron/forge-off-crown",
-			"schedule": "7 0 * * 1"
+			"schedule": "7 * * * 1"
 		},
 		{
 			"path": "/api/cron/forge-off-event-crown",
-			"schedule": "7 0 * * *"
+			"schedule": "7 * * * *"
 		},
 		{
 			"path": "/api/cron/quality-bench",

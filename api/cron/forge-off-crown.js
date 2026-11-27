@@ -13,21 +13,29 @@
 // distribution pipeline falls back to raw vote/accepted signals. Crowning
 // un-starves it.
 //
-// Winner definition mirrors the live board exactly (listShowcase sort='top'
-// window='week'): highest vote_count among creations CREATED in the week, with
-// at least one real vote. A week with zero votes crowns nobody (no filler).
+// Winner definition mirrors the live board (listShowcase sort='top'
+// window='week'): most votes among public creations CREATED in the week, newest
+// first on a tie, at least one vote. Two rules make the crown final instead of
+// a snapshot of whenever the cron ran: only votes cast before the week closed
+// count (so a re-run or a backfill weeks later picks the same model), and only
+// an entry that is still eligible (public, not rejected, not held or blocked)
+// and has passed the content screen is crowned. If the leader's screen is still
+// pending the week waits; the cron runs hourly on Mondays to pick it up.
+// A week with zero counted votes crowns nobody (no filler).
 //
 // Idempotent and permanent: the first crowning for a week_start wins and is
 // never overwritten (ON CONFLICT DO NOTHING), so a re-run or a late vote can't
 // rewrite history. `?week=YYYY-MM-DD` crowns a specific past week (owner
 // backfill); `?dry_run=1` previews the pick without writing.
 //
-// Runs Monday 00:07 UTC (just after the week rolls over). Auth: CRON_SECRET.
+// Runs hourly at :07 UTC on Mondays (just after the week rolls over, retrying a
+// week whose leader is still being screened). Auth: CRON_SECRET.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { forgeOffWeekStart, forgeStoreEnabled } from '../_lib/forge-store.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { loadWindow, pickWinner, rankBoard } from '../_lib/forge-off-standings.js';
 
 // The Monday that starts the week we are crowning. Default: the week that just
 // completed (the previous Monday relative to now). `weekParam` (YYYY-MM-DD)
@@ -79,21 +87,29 @@ export default wrapCron(async (req, res) => {
 	const weekEnd = new Date(weekStart);
 	weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
 
-	// Top-voted public creation made during the week, at least one vote.
-	const rows = await sql`
-		select id, prompt, glb_url, preview_image_url, model_category, vote_count
-		from forge_creations
-		where status = 'done' and glb_url is not null
-			and (outcome is null or outcome != 'rejected')
-			and created_at >= ${weekStart.toISOString()}::timestamptz
-			and created_at < ${weekEnd.toISOString()}::timestamptz
-			and vote_count >= 1
-		order by vote_count desc, created_at desc
-		limit 1
-	`;
-	const winner = rows[0] || null;
+	// Top public creation made during the week, by votes cast before it closed.
+	const { entries, votes } = await loadWindow({ from: weekStart, to: weekEnd });
+	const pick = pickWinner(
+		rankBoard(entries, votes, {
+			from: weekStart,
+			to: weekEnd,
+			closesAt: weekEnd,
+			excludeSelf: false,
+			perNetworkCap: Infinity,
+			ties: 'latest',
+		}),
+	);
 
-	if (!winner) {
+	if (pick.status === 'deferred') {
+		return json(res, 200, {
+			ok: true,
+			week_start: weekKey,
+			crowned: false,
+			reason: 'awaiting_content_screen',
+			leader: { creation_id: pick.entry.id, votes: pick.votes },
+		});
+	}
+	if (pick.status !== 'crowned') {
 		return json(res, 200, {
 			ok: true,
 			week_start: weekKey,
@@ -101,6 +117,7 @@ export default wrapCron(async (req, res) => {
 			reason: 'no_votes_this_week',
 		});
 	}
+	const winner = { ...pick.entry, vote_count: pick.votes };
 
 	if (dryRun) {
 		return json(res, 200, {

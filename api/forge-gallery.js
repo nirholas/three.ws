@@ -25,6 +25,7 @@ import { cors, json, method, wrap, rateLimited, varyOn } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { hashClient, listCreations, listShowcase, countShowcase, forgeStoreEnabled } from './_lib/forge-store.js';
 import { currentDayWindow, getEvent, isValidSlug } from './_lib/forge-off-events.js';
+import { loadWindow, publicEntry, rankBoard, votedBy } from './_lib/forge-off-standings.js';
 
 export default wrap(async (req, res) => {
 	// Open CORS: this is a public, keyless, read-only feed of models people chose
@@ -92,12 +93,35 @@ export default wrap(async (req, res) => {
 		const rawClient = req.headers['x-forge-client'];
 		const hasClient = Array.isArray(rawClient) ? rawClient[0] : rawClient;
 		const voterKey = hasClient ? hashClient(hasClient) : null;
+		// An event board sorted by votes is a contest standing, so it ranks by the
+		// shared contest rules (votes before the board's close, no self-votes,
+		// network cap, eligible entries only, ties to the earliest), the same
+		// ranking /api/forge-off/event shows and the event crown writes.
+		// vote_count on these cards is the counted contest tally.
+		const contestBoard = Boolean(eventSlug) && sort === 'top' && !backend;
+		const feed = contestBoard
+			? loadWindow(bounds).then(({ entries, votes }) => {
+				const voted = votedBy(votes, voterKey);
+				return rankBoard(entries, votes, { from: bounds.from, to: bounds.to, closesAt: bounds.to })
+					.slice(0, limit)
+					.map((r) => publicEntry(r.entry, r.votes, voted));
+			})
+			: listShowcase({ limit, sort, window, voterKey, ...bounds, ...(backend ? { backend } : {}) });
 		// `total` is the full community-model count (social proof), independent of
 		// the paginated slice. Cheap enough to run alongside the feed read.
-		const [creations, total] = await Promise.all([
-			listShowcase({ limit, sort, window, voterKey, ...bounds, ...(backend ? { backend } : {}) }),
-			countShowcase(),
-		]);
+		let creations;
+		let total;
+		try {
+			[creations, total] = await Promise.all([feed, countShowcase()]);
+		} catch (err) {
+			// Only the contest read can throw (the showcase reads degrade to []):
+			// say so rather than render an empty board that looks like no entries.
+			console.error('[forge-gallery] event standings read failed:', err?.message);
+			return json(res, 503, {
+				error: 'standings_unavailable',
+				message: 'The leaderboard could not be read just now. Try again in a minute.',
+			}, { 'cache-control': 'no-store', 'retry-after': '30' });
+		}
 		// Per-voter reads can't be shared across browsers, so only the anonymous
 		// (no client id) read is CDN-cacheable. A voted-state read is private.
 		//
