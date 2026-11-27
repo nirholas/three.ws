@@ -446,6 +446,12 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			f.submitted = true;
 			f.directorRan = true;
 			if (job?.backend) f.backend = job.backend;
+			// The server says how many views the engine actually reads, which can be
+			// fewer than the photos supplied (a one-image engine) or more (painted
+			// turnaround views). The input row reports that, never the upload count.
+			if (f.mode === 'image' && Number.isFinite(job?.views_used) && job.views_used >= 1) {
+				f.viewCount = job.views_used;
+			}
 			f.directedReported = Boolean(job) && Object.prototype.hasOwnProperty.call(job, 'directed_prompt');
 			if (job?.direction && typeof job.direction === 'object') f.direction = job.direction;
 			if (typeof job?.directed_prompt === 'string' && job.directed_prompt.trim()) {

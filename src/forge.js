@@ -1439,6 +1439,22 @@ function buildSlots() {
 			if (e.key === 'Enter' || e.key === ' ') {
 				e.preventDefault();
 				if (slotEnabled(i) && (slots[i].state === 'empty' || slots[i].state === 'error')) openPicker(i);
+				return;
+			}
+			if (slots[i].state !== 'uploaded') return;
+			// Reorder and remove without a pointer: Alt+Arrow moves the photo one
+			// place (the first place is the one a single-image engine reads), and
+			// Delete removes it. Focus follows the photo.
+			const step = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key];
+			if (e.altKey && step) {
+				e.preventDefault();
+				const to = i + step;
+				if (to < 0 || !slotEnabled(to) || slots[to].state === 'preparing') return;
+				swapSlots(i, to);
+				slotEl(to)?.focus();
+			} else if (e.key === 'Delete' || e.key === 'Backspace') {
+				e.preventDefault();
+				clearSlot(i);
 			}
 		});
 
@@ -1552,7 +1568,7 @@ function renderSlot(i) {
 			: `${VIEW_LABELS[i]} view, not used by ${ENGINE_LABELS.pixal3d}`,
 		preparing: `${VIEW_LABELS[i]} view, ${s.progressText || 'checking the photo on this device'}`,
 		uploading: `${VIEW_LABELS[i]} view, uploading`,
-		uploaded: `${VIEW_LABELS[i]} view, uploaded — drag to reorder`,
+		uploaded: `${VIEW_LABELS[i]} view, uploaded. Drag or press Alt with an arrow key to reorder, Delete to remove`,
 		error: `${VIEW_LABELS[i]} view, upload failed`,
 	};
 	el.setAttribute('aria-label', labels[s.state] || VIEW_LABELS[i]);
@@ -3280,10 +3296,14 @@ async function run(cfg, { handoff = false } = {}) {
 		if (job.creation_id) currentCreationId = job.creation_id;
 		// The server routed this photo to the standard engine because "Match my photo"
 		// is recovering. Say so now instead of letting the swap go unmentioned.
-		if (job.lane_fallback?.reason) setLaneNote(job.lane_fallback.reason);
 		// A sketch request the scribble engine could not take is being built from the
-		// drawing as a picture; the server says so in its own words.
-		if (job.failover_note) setLaneNote(job.failover_note);
+		// drawing as a picture; the server says so in its own words. The views note
+		// (photos a one-image engine did not read, or photos the checks left out)
+		// rides along, so the page never implies coverage nobody used.
+		const laneNotice = [job.failover_note || job.lane_fallback?.reason, job.views_note]
+			.filter(Boolean)
+			.join(' ');
+		if (laneNotice) setLaneNote(laneNotice);
 
 		// Fold every real signal the submit response carries into the timeline: the
 		// lane that actually ran, the art-directed prompt, the reference view (shown

@@ -94,6 +94,23 @@ describe('forge timeline stages', () => {
 		expect(stateOf('direct')).toBe('done');
 	});
 
+	// A one-image engine given three photos reads one of them; the row must say
+	// what the engine used, not what the person supplied.
+	it('counts the views the engine used, not the photos supplied', () => {
+		timeline.begin({ mode: 'image', backend: 'trellis2', viewCount: 3 });
+		expect(labelOf('input')).toBe('Conditioning on 3 reference views');
+		timeline.applySubmit({ status: 'queued', backend: 'trellis2', views_requested: 3, views_used: 1 });
+		expect(labelOf('input')).toBe('Conditioning on 1 reference view');
+		expect(detailOf('input')).toBe('Reconstructing straight from your photo');
+	});
+
+	it('counts painted turnaround views the engine fuses beyond the one photo', () => {
+		timeline.begin({ mode: 'image', backend: 'trellis_selfhost', viewCount: 1 });
+		timeline.applySubmit({ status: 'queued', backend: 'trellis_selfhost', views_requested: 3, views_used: 3 });
+		expect(labelOf('input')).toBe('Conditioning on 3 reference views');
+		expect(detailOf('input')).toBe('The engine fuses every view into one mesh');
+	});
+
 	// Since 2026-11-26 /api/forge reports a `direction` record. When the director
 	// was skipped (every chat model refusing or cooling down, or its rewrite was
 	// discarded) `directed_prompt` is null too, and the old label claimed "The
