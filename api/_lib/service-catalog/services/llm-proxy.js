@@ -18,7 +18,7 @@ export default {
 	acceptsBuilder: 'standard',
 	serviceName: 'three.ws LLM Inference Proxy',
 	tags: ['llm', 'inference', 'completion', 'proxy', 'benchmark'],
-	description: 'three.ws LLM Inference Proxy — pay per completion with no API key required. Runs one-shot text prompts through the platform\'s free-first provider chain. Response includes measured latency, token counts, and the provider actually used. Ideal for latency benchmarking, agent pipelines, and one-off completions. Model aliases: "fast" (sub-second) · "smart" (quality backstop). Price: $0.005 USDC per completion on Base or Solana.',
+	description: 'three.ws LLM Inference Proxy: pay per completion with no API key required. Runs one-shot text prompts through commercially licensed providers only (Vertex AI Gemini and Claude, paid OpenAI). Response includes measured latency, token counts, and the provider actually used. Ideal for latency benchmarking, agent pipelines, and one-off completions. Model aliases: "fast" (sub-second) · "smart" (quality backstop). Price: $0.005 USDC per completion on Base or Solana.',
 	input: {
 		model: 'fast',
 		prompt: 'Count to 3.',

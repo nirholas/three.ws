@@ -726,7 +726,33 @@ function openrouterClaudeMirror(key) {
 // free provider: the prod paid keys are routinely invalid or out of quota, so
 // platform spend never leads and nothing depends on it — but when a key does
 // work, a request that exhausted the free tier still succeeds.
-export function providerChain({ anthropicKey, anthropicModel, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false } = {}) {
+// Providers whose terms license commercial resale of their output: Vertex AI
+// Gemini and Vertex or first-party Claude (paid Google Cloud and Anthropic
+// accounts) and the paid OpenAI API. Every other lane in this file is a free
+// pool, a trial tier or a keyless anonymous service whose terms forbid or do not
+// grant resale, so a product that sells completions must never reach them.
+export const COMMERCIAL_PROVIDER_NAMES = Object.freeze(['vertex-gemini', 'vertex-anthropic', 'anthropic', 'openai']);
+
+// The chain for a call that is sold to a third party (the x402 LLM proxy): only
+// COMMERCIAL_PROVIDER_NAMES, Vertex Gemini first, then Claude, then OpenAI. A
+// caller that names a Claude model (anthropicModel) gets Claude first. A lane
+// whose credentials are not configured is simply absent: there is deliberately
+// no free fallback, an empty chain makes llmComplete throw LlmUnavailableError.
+function commercialProviderChain({ anthropicModel = null } = {}) {
+	const gemini = process.env.GOOGLE_CLOUD_PROJECT ? [vertexGeminiProvider()] : [];
+	const claude = [];
+	if (vertexClaudeEnabled() && isVertexModelId(anthropicModel || ANTHROPIC_MODEL)) {
+		claude.push(vertexAnthropicProvider(anthropicModel));
+	}
+	if (env.ANTHROPIC_API_KEY) claude.push(anthropicProvider(env.ANTHROPIC_API_KEY, anthropicModel));
+	const openai = env.OPENAI_API_KEY
+		? [openaiCompatProvider({ name: 'openai', key: env.OPENAI_API_KEY, url: 'https://api.openai.com/v1/chat/completions', model: OPENAI_MODEL })]
+		: [];
+	return anthropicModel ? [...claude, ...gemini, ...openai] : [...gemini, ...claude, ...openai];
+}
+
+export function providerChain({ anthropicKey, anthropicModel, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, commercialOnly = false } = {}) {
+	if (commercialOnly) return commercialProviderChain({ anthropicModel });
 	const chain = [];
 	// Opt-in: lead with the NVIDIA NIM lane on a chosen Nemotron model. Used by
 	// features that want the NVIDIA-native model to actually produce the result
@@ -1078,8 +1104,13 @@ export function llmConfigured(opts = {}) {
 // { userId, agentId, avatarId, clientId, apiKeyId, tool } — are all optional;
 // pass whatever the call site knows. Recording is fire-and-forget (see
 // recordEvent), so it never delays or fails the completion.
-export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, timeoutMs = 30_000, track = null, chain: chainOverride = null, accept = null, strictCooldowns = false }) {
-	const chain = chainOverride?.length ? chainOverride : providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel, task, preferPhi });
+export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, timeoutMs = 30_000, track = null, chain: chainOverride = null, accept = null, strictCooldowns = false, commercialOnly = false }) {
+	// commercialOnly: the completion is sold on, so only commercially licensed
+	// lanes may serve it. It also strips a caller-supplied chain, and a caller's
+	// BYOK keys are ignored (the commercial chain is the platform's own paid lanes).
+	const chain = chainOverride?.length
+		? (commercialOnly ? chainOverride.filter((p) => COMMERCIAL_PROVIDER_NAMES.includes(p.name)) : chainOverride)
+		: providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel, task, preferPhi, commercialOnly });
 	if (!chain.length) throw new LlmUnavailableError();
 
 	// Per-user daily spend cap on platform-paid keys. Only runs when a userId is

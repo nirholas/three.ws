@@ -2,9 +2,11 @@
 //
 // Paid LLM inference proxy  -  x402 micropayment endpoint for agents that want
 // to run one-shot text completions without an API key of their own. Payment
-// unlocks one completion through the platform's free-first provider chain:
-// Groq leads for "fast" requests (sub-second latency), the full chain
-// (Groq → OpenRouter → NVIDIA NIM → Anthropic) covers fallback. The
+// unlocks one completion served ONLY by commercially licensed providers
+// (`commercialOnly`, see api/_lib/llm.js): Vertex AI Gemini leads, then Vertex or
+// first-party Claude, then the paid OpenAI API. Free-tier and trial pools
+// (Groq, OpenRouter :free, NVIDIA NIM trial, AI Studio free tier, ...) are never
+// used here because their terms do not license reselling output. The
 // response always includes measured wall-clock latency, token counts, and
 // the actual provider/model used so callers can benchmark the route.
 //
@@ -63,15 +65,15 @@ function uptoChargeFor(tokensUsed) {
 }
 
 // Map the caller-facing model alias to llmComplete options.
-// "fast"  → Groq leads the free chain (sub-second latency, sufficient for short prompts)
-// "smart" → same chain, Anthropic backstop moves to the preferred position via anthropicModel
+// "fast"  → Vertex Gemini leads the commercial chain (low latency, short prompts)
+// "smart" → Claude Haiku leads the commercial chain via anthropicModel
 // Only the models the flat per-token rate was priced for are accepted. Any
 // other string would flow verbatim to the paid Anthropic/Vertex lanes and let a
 // caller pick a model that costs more than UPTO_ATOMICS_PER_TOKEN covers.
 const PRICED_ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
 function resolveModelOpts(modelAlias) {
 	if (modelAlias === 'fast') {
-		return { preferNvidia: false }; // default free chain, Groq leads
+		return { preferNvidia: false }; // commercial chain, Vertex Gemini leads
 	}
 	if (modelAlias === 'smart' || modelAlias === PRICED_ANTHROPIC_MODEL) {
 		return { anthropicModel: PRICED_ANTHROPIC_MODEL, preferNvidia: false };
@@ -102,7 +104,7 @@ const INPUT_SCHEMA = {
 		model: {
 			type: 'string',
 			default: 'fast',
-			description: '"fast" (default, Groq), "smart" (Anthropic Haiku), or the pinned Haiku model id.',
+			description: '"fast" (default, Gemini), "smart" (Anthropic Haiku), or the pinned Haiku model id.',
 		},
 		prompt: {
 			type: 'string',
@@ -122,8 +124,8 @@ const INPUT_SCHEMA = {
 
 const OUTPUT_EXAMPLE = {
 	content: '1, 2, 3.',
-	model: 'qwen/qwen3.8-27b',
-	provider: 'groq',
+	model: 'google/gemini-2.5-flash',
+	provider: 'vertex-gemini',
 	latency_ms: 312,
 	tokens_used: 11,
 	input_tokens: 5,
@@ -133,8 +135,8 @@ const OUTPUT_EXAMPLE = {
 		type: 'three-inference-response/v1',
 		jobId: '9b2f1c4e-…',
 		route: '/api/x402/llm-proxy',
-		model: 'qwen/qwen3.8-27b',
-		provider: 'groq',
+		model: 'google/gemini-2.5-flash',
+		provider: 'vertex-gemini',
 		promptSha256: 'a1b2…',
 		responseSha256: 'c3d4…',
 		inputTokens: 5,
@@ -245,6 +247,7 @@ export default paidEndpoint({
 			user: prompt,
 			maxTokens,
 			...opts,
+			commercialOnly: true,
 			timeoutMs: 15_000,
 		});
 		const latencyMs = Date.now() - t0;
