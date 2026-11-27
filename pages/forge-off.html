@@ -27,7 +27,7 @@
 		.fo-btn { display: inline-flex; align-items: center; justify-content: center; font: inherit; font-size: 13.5px; font-weight: 600; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--fo-line); background: var(--fo-card); color: inherit; text-decoration: none; cursor: pointer; transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-fast); }
 		.fo-btn:hover { border-color: var(--fo-accent); background: rgba(124,92,255,.12); }
 		.fo-btn:active { transform: translateY(1px); }
-		.fo-btn:focus-visible, .fo-tab:focus-visible, .fo-vote:focus-visible, .fo-share-btn:focus-visible, .fo-card-link:focus-visible, .fo-past-day summary:focus-visible { outline: 2px solid var(--fo-accent); outline-offset: 2px; }
+		.fo-btn:focus-visible, .fo-tab:focus-visible, .fo-vote:focus-visible, .fo-share-btn:focus-visible, .fo-card-link:focus-visible, .fo-winner-link:focus-visible { outline: 2px solid var(--fo-accent); outline-offset: 2px; }
 		.fo-btn-primary { background: var(--fo-accent); border-color: var(--fo-accent); color: #fff; }
 		.fo-btn-primary:hover { background: #6a49f0; border-color: #6a49f0; }
 		.fo-tabs { display: flex; gap: .5rem; overflow-x: auto; padding: .25rem 0 .5rem; margin: 2rem 0 1rem; scrollbar-width: thin; }
@@ -37,9 +37,41 @@
 		.fo-tab[aria-selected="true"] { border-color: var(--fo-accent); background: rgba(124,92,255,.16); }
 		.fo-tab-n { font-weight: 700; font-size: 13px; }
 		.fo-tab-d { font-size: 11px; color: var(--fo-fg-dim); }
-		.fo-live-dot { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #22c55e; }
+		.fo-tab-s { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--fo-fg-dim); }
+		.fo-tab-live { color: #22c55e; }
+		.fo-board-head { display: flex; flex-direction: column; gap: .35rem; margin: 0 0 .9rem; }
+		.fo-board-status { font-size: 13px; color: var(--fo-fg-dim); margin: 0; }
+		.fo-board-status .fo-countdown { font-weight: 600; color: inherit; }
+		.fo-winner { margin: 0 0 1rem; border: 1px solid rgba(250,204,21,.45); border-radius: 14px; background: rgba(250,204,21,.07); padding: .75rem; }
+		.fo-winner p { margin: .35rem 0 0; color: var(--fo-fg-dim); font-size: 13px; max-width: 62ch; }
+		.fo-winner:empty { display: none; }
+		.fo-winner-pending, .fo-winner-gone { border-color: var(--fo-line); background: var(--fo-card); }
+		.fo-winner-link { display: flex; align-items: center; gap: .9rem; color: inherit; text-decoration: none; border-radius: 10px; }
+		.fo-winner-link:hover strong { text-decoration: underline; }
+		.fo-winner-link .fo-thumb { width: 72px; height: 72px; flex: 0 0 72px; border-radius: 10px; font-size: 10px; text-align: center; }
+		.fo-winner-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+		.fo-winner-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.fo-winner-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #eab308; }
+		.fo-muted-inline { font-size: 12.5px; color: var(--fo-fg-dim); }
+		.fo-votes-final { display: inline-flex; align-items: center; font-size: 12px; padding: 6px 11px; color: var(--fo-fg-dim); font-variant-numeric: tabular-nums; }
+		.fo-notify { display: flex; flex-direction: column; gap: .45rem; margin-top: .6rem; }
+		.fo-notify-label { font-size: 13px; font-weight: 600; }
+		.fo-notify-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+		.fo-input { flex: 1 1 220px; min-width: 0; font: inherit; font-size: 14px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--fo-line); background: var(--bg-0, #0a0a0f); color: inherit; transition: border-color var(--duration-fast); }
+		.fo-input:hover { border-color: rgba(124,92,255,.6); }
+		.fo-input:focus-visible { outline: 2px solid var(--fo-accent); outline-offset: 1px; border-color: var(--fo-accent); }
+		.fo-btn:disabled { opacity: .6; cursor: progress; }
+		.fo-notify-msg { margin: 0; font-size: 13px; color: var(--fo-fg-dim); min-height: 1em; }
+		.fo-notify-msg.is-bad { color: #f87171; }
+		.fo-notify-msg.is-good { color: #22c55e; }
+		.fo-rules-list { margin: 0 0 .8rem; padding-left: 1.3rem; display: flex; flex-direction: column; gap: .4rem; font-size: 14px; line-height: 1.55; max-width: 72ch; }
+		.fo-event-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: .9rem; }
+		.fo-event { border: 1px solid var(--fo-line); border-radius: 14px; background: var(--fo-card); padding: 1rem; display: flex; flex-direction: column; gap: .7rem; align-items: flex-start; }
+		.fo-event .fo-winner { margin: 0; align-self: stretch; }
+		.fo-event .fo-muted { margin: 0; }
+		.fo-event-head { display: flex; flex-direction: column; gap: 2px; }
 		.fo-h2 { font-size: 1.15rem; margin: 2.5rem 0 .6rem; letter-spacing: -.01em; }
-		.fo-board-title { font-size: 1.15rem; margin: 0 0 .9rem; }
+		.fo-board-title { font-size: 1.15rem; margin: 0; }
 		.fo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: .9rem; }
 		.fo-grid-one { grid-template-columns: minmax(0, 320px); }
 		.fo-card { position: relative; display: flex; flex-direction: column; border: 1px solid var(--fo-line); border-radius: 14px; background: var(--fo-card); overflow: hidden; transition: border-color var(--duration-fast), transform var(--duration-fast); }
@@ -63,9 +95,6 @@
 		.fo-note p { margin: 0 0 .6rem; color: var(--fo-fg-dim); max-width: 48ch; }
 		.fo-note-bad { border-style: solid; border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.06); }
 		.fo-muted, .fo-stats { color: var(--fo-fg-dim); font-size: 13px; margin: 0 0 .8rem; }
-		.fo-past-day { border: 1px solid var(--fo-line); border-radius: 12px; padding: .7rem 1rem; margin-bottom: .6rem; background: var(--fo-card); }
-		.fo-past-day summary { cursor: pointer; font-weight: 600; font-size: 14px; border-radius: 6px; }
-		.fo-past-day .fo-grid { margin-top: .9rem; }
 		.fo-share { margin-top: 2rem; }
 		.fo-toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px)); background: #1c1c26; color: #fff; border: 1px solid var(--fo-line); padding: 10px 16px; border-radius: 10px; font-size: 13px; max-width: calc(100vw - 2rem); z-index: 50; }
 		.fo-skel .fo-thumb { animation: fo-pulse 1.4s ease-in-out infinite; }
@@ -80,7 +109,7 @@
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
 	<meta property="og:title" content="Forge-Off: Daily Themed 3D Contest · three.ws">
-	<meta property="og:description" content="A themed creation contest, free with a three.ws account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, and a standing weekly board between events.">
+	<meta property="og:description" content="A themed 3D creation contest, free with a three.ws account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, published rules, and a weekly board between events.">
 	<meta property="og:url" content="https://three.ws/forge-off">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Forge-Off%3A+Daily+Themed+3D+Contest&amp;d=A+themed+creation+contest%2C+free+with+a+three.ws+account%3A+describe+a+thing%2C+get+a+real+textured+3D+model%2C+publish+it%2C+and+vote.+One+board+per+day%2C+an+overall+winner%2C+and+a&amp;p=%2Fforge-off">
 	<meta property="og:image:width" content="1200">
@@ -90,20 +119,25 @@
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
 	<meta name="twitter:title" content="Forge-Off: Daily Themed 3D Contest · three.ws">
-	<meta name="twitter:description" content="A themed creation contest, free with a three.ws account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, and a standing weekly board between events.">
+	<meta name="twitter:description" content="A themed 3D creation contest, free with a three.ws account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, published rules, and a weekly board between events.">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Forge-Off%3A+Daily+Themed+3D+Contest&amp;d=A+themed+creation+contest%2C+free+with+a+three.ws+account%3A+describe+a+thing%2C+get+a+real+textured+3D+model%2C+publish+it%2C+and+vote.+One+board+per+day%2C+an+overall+winner%2C+and+a&amp;p=%2Fforge-off">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Forge-Off: Daily Themed 3D Contest","description":"A themed creation contest, free with a three.ws account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, and a standing weekly board between events.","url":"https://three.ws/forge-off","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=Forge-Off%3A+Daily+Themed+3D+Contest&d=A+themed+creation+contest%2C+free+with+a+three.ws+account%3A+describe+a+thing%2C+get+a+real+textured+3D+model%2C+publish+it%2C+and+vote.+One+board+per+day%2C+an+overall+winner%2C+and+a&p=%2Fforge-off"}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Forge-Off: Daily Themed 3D Contest","description":"A themed 3D creation contest, free with a three.ws account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, published rules, and a weekly board between events.","url":"https://three.ws/forge-off","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=Forge-Off%3A+Daily+Themed+3D+Contest&d=A+themed+creation+contest%2C+free+with+a+three.ws+account%3A+describe+a+thing%2C+get+a+real+textured+3D+model%2C+publish+it%2C+and+vote.+One+board+per+day%2C+an+overall+winner%2C+and+a&p=%2Fforge-off"}]}</script>
 </head>
 <body>
 	<main class="fo-wrap">
-		<section id="fo-hero" aria-live="polite"></section>
-		<div id="fo-days" class="fo-tabs"></div>
-		<section aria-labelledby="fo-board-title">
-			<h2 id="fo-board-title" class="fo-board-title">Today's board</h2>
+		<section id="fo-hero"></section>
+		<div id="fo-days" class="fo-tabs" hidden></div>
+		<section id="fo-board-wrap" aria-labelledby="fo-board-title">
+			<div class="fo-board-head">
+				<h2 id="fo-board-title" class="fo-board-title">Forge-Off</h2>
+				<p id="fo-board-status" class="fo-board-status"></p>
+			</div>
+			<div id="fo-winner"></div>
 			<div id="fo-board" aria-live="polite" aria-busy="true"></div>
 		</section>
-		<section id="fo-overall"></section>
-		<section id="fo-past" hidden></section>
+		<section id="fo-overall" hidden></section>
+		<section id="fo-rules" hidden></section>
+		<section id="fo-events" hidden></section>
 		<div id="fo-share" class="fo-share"></div>
 	</main>
 	<div id="fo-toast" class="fo-toast" role="status" hidden></div>
