@@ -82,7 +82,7 @@ Each agent stops at the CLAUDE.md gates and reports. These are yours:
 
 | Order | Area | What it does | Live generations |
 |---|---|---|---|
-| [114](../114-forge-hardening-14-nim-flux-and-nvidia-text-lane.md) | NVIDIA NIM image rung and NVIDIA text lane | Find out why the NVIDIA FLUX rung times out, and make the NVIDIA lanes of Forge dependable | 1 |
+| [114](../../awaiting-owner/114-forge-hardening-14-nim-flux-and-nvidia-text-lane.md) | NVIDIA NIM image rung and NVIDIA text lane | Find out why the NVIDIA FLUX rung times out, and make the NVIDIA lanes of Forge dependable | 1 |
 | [115](../115-forge-hardening-15-vertex-reference-image-breaker.md) | Vertex reference image module | Make the Vertex image step step aside instantly when billing blocks it, and come back by itself | 0 |
 | [116](../../awaiting-owner/116-forge-hardening-16-trellis2-lane-diagnosis.md) | TRELLIS.2 lane | Find out why the configured first-choice lane serves nothing, without moving traffic onto it | 0 |
 | [117](../../awaiting-owner/117-forge-hardening-17-pixal3d-match-my-photo.md) | Pixal3D lane ("Match my photo") | Fix or honestly gate "Match my photo", which fails four times out of five | 1 |

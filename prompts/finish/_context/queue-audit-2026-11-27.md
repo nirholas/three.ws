@@ -120,6 +120,7 @@ These all sit in the 185+ commits between `f0eed584f` and HEAD.
 - 167 Input security for uploads and URLs. First needs the owner's yes to pin the validated IP in the vendored `worker_security.py` across 36 workers. One of them is the protected `workers/model-trellis/`, which is why it needs the yes.
 - 169 Content safety and takedown. Then do a takedown plan run without `--apply`.
 - 113 Error copy taxonomy. Moved here later on 2026-11-27 once 8ca625b79 stopped the server relaying provider text and 485c1935c added the missing copy. Then check one error live on production.
+- 114 NVIDIA FLUX rung and NVIDIA text lane. Moved here later on 2026-11-27 once 4082835bb, 7da90c615, a58f66eb6 and 66d19f517 landed. Then run `node scripts/nvidia-lane-probes-check.mjs nim_flux` and confirm `/api/v1/ai/image?health=1` shows nim ok on flux.2-klein-4b.
 
 ### B. Worker or service deploys
 
@@ -254,9 +255,7 @@ Checked 2026-11-27 with `db:status` against production: every migration in `api/
   - No test that Forge keeps working when the rate-limit store is down (task 5).
   - No limiter inventory (task 1) and no limit-size report against one GPU (task 7).
 - 113 Error copy taxonomy: both gaps closed later on 2026-11-27 (8ca625b79, 485c1935c); moved to `awaiting-owner/`, listed under A.
-- 114 NVIDIA FLUX rung and NVIDIA text lane.
-  - No browser walk of `pages/forge-nim.html` and `pages/nim-forge.html`.
-  - `docs/nvidia-models.md:96` still names the old FLUX.1-dev rung.
+- 114 NVIDIA FLUX rung and NVIDIA text lane: both gaps closed later on 2026-11-27 (66d19f517 after a browser walk of both pages, c7a1f13c6 for the docs); moved to `awaiting-owner/`, listed under A.
 - 123 Background removal photo prep. The doc and the verify script landed in `541f35ec3` and `4703b3690`. Still missing:
   - the four-photo walkthrough report with timings
   - a changelog entry for the removal fixes
