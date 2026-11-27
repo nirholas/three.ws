@@ -37,6 +37,7 @@ import {
 import { SLOTS, DEFAULT_ANIMATION_MAP } from '../../../src/runtime/animation-slots.js';
 import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 import { libraryReadyClip } from '../../_lib/motion-seed.js';
+import { checkMotionPrompt } from '../../../src/motion-prompt-check.js';
 
 // Largest base64-encoded GLB we'll inline in a JSON-RPC response before falling
 // back to the (small) clip JSON. Keeps responses sane for very heavy avatars.
@@ -567,6 +568,9 @@ export const toolDefs = [
 			additionalProperties: false,
 		},
 		async handler(args, auth, req) {
+			const checked = checkMotionPrompt(args.prompt);
+			if (!checked.ok) throw rpcError(-32602, checked.message, { reason: checked.reason });
+			const { prompt, note: scopeNote } = checked;
 			const rl = await limits.mcpOptimize?.(auth.userId || auth.rateKey);
 			if (rl && !rl.success)
 				throw rpcError(-32000, 'rate_limited', {
@@ -608,7 +612,7 @@ export const toolDefs = [
 
 			const duration = Math.max(1, Math.min(10, Number(args.duration_seconds) || 4));
 			const workerClip = await generateMotionClip(provider, {
-				prompt: args.prompt,
+				prompt,
 				duration_seconds: duration,
 			});
 			// The worker writes HumanML3D's raw rest basis; the library basis is what
@@ -633,7 +637,8 @@ export const toolDefs = [
 			});
 
 			const report = {
-				prompt: args.prompt,
+				prompt,
+				scope_note: scopeNote,
 				source_model: url,
 				filename,
 				bones_matched: result.matched,
@@ -664,7 +669,7 @@ export const toolDefs = [
 				content: [
 					{
 						type: 'text',
-						text: `Generated "${args.prompt}" → retargeted onto ${filename}: ${report.bones_matched}/${report.bones_total} bones (${Math.round(report.coverage * 100)}%), hip scale ${report.hip_scale}×.${note ? ' ' + note : ''} Returning AnimationClip JSON — load it alongside the model and play.`,
+						text: `Generated "${prompt}" → retargeted onto ${filename}: ${report.bones_matched}/${report.bones_total} bones (${Math.round(report.coverage * 100)}%), hip scale ${report.hip_scale}×.${scopeNote ? ' ' + scopeNote : ''}${note ? ' ' + note : ''} Returning AnimationClip JSON: load it alongside the model and play.`,
 					},
 				],
 				structuredContent: {
@@ -690,7 +695,7 @@ export const toolDefs = [
 				content: [
 					{
 						type: 'text',
-						text: `Generated "${args.prompt}" and baked it onto ${filename}: ${report.bones_matched}/${report.bones_total} bones, ${(glbBytes.length / 1024).toFixed(0)} KB animated GLB.`,
+						text: `Generated "${prompt}" and baked it onto ${filename}: ${report.bones_matched}/${report.bones_total} bones, ${(glbBytes.length / 1024).toFixed(0)} KB animated GLB.`,
 					},
 				],
 				structuredContent: {

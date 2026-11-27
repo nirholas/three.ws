@@ -203,6 +203,16 @@ describe('MCP text_to_animation', () => {
 		expect(submit).not.toHaveBeenCalled();
 	});
 
+	it('refuses a prompt that is not a movement before fetching the model or the GPU', async () => {
+		const { fetchModel } = await import('../api/_lib/fetch-model.js');
+		fetchModel.mockClear();
+		await expect(
+			textToAnimation.handler({ prompt: '!!!!!!', model_url: 'https://three.ws/avatars/michelle.glb' }, auth, req),
+		).rejects.toMatchObject({ message: expect.stringMatching(/describe what the body does/i) });
+		expect(fetchModel).not.toHaveBeenCalled();
+		expect(submit).not.toHaveBeenCalled();
+	});
+
 	it('animates a meshopt-compressed rig, the format the Forge auto-rig returns', async () => {
 		modelBytes.current = glbBytes('public/avatars/michelle.glb');
 		const out = await textToAnimation.handler(
