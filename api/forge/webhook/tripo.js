@@ -13,7 +13,11 @@
 //      unconfigured (no secret set) never reaches JSON.parse.
 //   2. IDEMPOTENCY. Tripo-Webhook-Delivery is claimed on forge_webhook_deliveries
 //      before the payload's meaning is used, so a retried delivery is a 200
-//      no-op.
+//      no-op. The delivery header is NOT covered by the signature, so the
+//      signature value itself is claimed too: a captured signed body resent
+//      inside the replay window under a fresh delivery id is the same
+//      duplicate. (Tripo re-signs a retry, but a retry keeps its delivery id,
+//      so one of the two claims always catches it.)
 //   3. ORDERING. materializeCreation is already idempotent on job status (a
 //      second completion for a 'done' row returns its durable copy without
 //      re-writing it), so an out-of-order or duplicate task.completed can
@@ -101,6 +105,14 @@ export function verifySignature(rawBody, headers) {
 	return { ok: true };
 }
 
+/** The hex v1 value of an already verified signature header, as a ledger key. */
+function signatureClaimId(headers) {
+	const header = headers?.['tripo-webhook-signature'];
+	const value = Array.isArray(header) ? header[0] : header;
+	const m = /v1=([0-9a-f]+)/i.exec(String(value || ''));
+	return m ? `sig:${m[1].toLowerCase()}` : null;
+}
+
 /** Tripo's error.message (task.failed) or a generic note. */
 function failureMessage(data) {
 	const msg = data?.error?.message || data?.error?.code;
@@ -135,6 +147,23 @@ export default wrap(async (req, res) => {
 	const { fresh } = await claimForgeWebhookDelivery({ provider: PROVIDER, deliveryId, jobId: null });
 	if (!fresh) {
 		return json(res, 200, { ok: true, duplicate: true, applied: false });
+	}
+	const replayId = signatureClaimId(req.headers);
+	const releaseClaims = async () => {
+		await releaseForgeWebhookDelivery({ provider: PROVIDER, deliveryId }).catch(() => {});
+		if (replayId) await releaseForgeWebhookDelivery({ provider: PROVIDER, deliveryId: replayId }).catch(() => {});
+	};
+	if (replayId) {
+		let replay;
+		try {
+			replay = await claimForgeWebhookDelivery({ provider: PROVIDER, deliveryId: replayId, jobId: null });
+		} catch (err) {
+			await releaseClaims();
+			throw err;
+		}
+		if (!replay.fresh) {
+			return json(res, 200, { ok: true, duplicate: true, applied: false });
+		}
 	}
 
 	let payload;
@@ -194,7 +223,7 @@ export default wrap(async (req, res) => {
 		}
 		await markForgeWebhookApplied({ provider: PROVIDER, deliveryId });
 	} catch (err) {
-		await releaseForgeWebhookDelivery({ provider: PROVIDER, deliveryId }).catch(() => {});
+		await releaseClaims();
 		throw err;
 	}
 

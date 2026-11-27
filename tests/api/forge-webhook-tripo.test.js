@@ -287,7 +287,53 @@ describe('a replayed delivery is applied exactly once', () => {
 	it('claims the delivery before parsing, so malformed JSON cannot be replayed', async () => {
 		const res = await deliver('{not json');
 		expect(res.statusCode).toBe(400);
-		expect(claimForgeWebhookDelivery).toHaveBeenCalledTimes(1);
+		// One claim on the delivery id and one on the signature, both before the body is read.
+		expect(claimForgeWebhookDelivery).toHaveBeenCalledTimes(2);
+		const retry = await deliver('{not json');
+		expect(retry.json.duplicate).toBe(true);
+	});
+});
+
+describe('a captured signed body cannot be replayed under a new delivery id', () => {
+	// The delivery id header is not covered by the signature, so anyone who captures
+	// one signed body can resend it inside the 5 minute window with a fresh id.
+	it('answers 200 duplicate for the same signed body under a different delivery id', async () => {
+		const raw = JSON.stringify(COMPLETED);
+		const signature = sign(raw);
+		const first = await deliver(raw, { deliveryId: 'dlv-a', headers: { 'tripo-webhook-signature': signature } });
+		expect(first.json.applied).toBe(true);
+		const replay = await deliver(raw, { deliveryId: 'dlv-b', headers: { 'tripo-webhook-signature': signature } });
+		expect(replay.statusCode).toBe(200);
+		expect(replay.json.duplicate).toBe(true);
+		expect(materializeCreation).toHaveBeenCalledTimes(1);
+	});
+
+	it('a failure event replayed under a new delivery id does not fail the job twice', async () => {
+		const raw = JSON.stringify(FAILED);
+		const signature = sign(raw);
+		await deliver(raw, { deliveryId: 'dlv-a', headers: { 'tripo-webhook-signature': signature } });
+		const replay = await deliver(raw, { deliveryId: 'dlv-b', headers: { 'tripo-webhook-signature': signature } });
+		expect(replay.json.duplicate).toBe(true);
+		expect(markFailed).toHaveBeenCalledTimes(1);
+	});
+
+	it('a genuine retry (new signature, same delivery id) is still a duplicate', async () => {
+		const raw = JSON.stringify(COMPLETED);
+		await deliver(raw, { deliveryId: 'dlv-a', headers: { 'tripo-webhook-signature': sign(raw, Math.floor(Date.now() / 1000) - 5) } });
+		const retry = await deliver(raw, { deliveryId: 'dlv-a', headers: { 'tripo-webhook-signature': sign(raw) } });
+		expect(retry.json.duplicate).toBe(true);
+		expect(materializeCreation).toHaveBeenCalledTimes(1);
+	});
+
+	it('releases both claims when the apply throws, so the provider retry runs it again', async () => {
+		const raw = JSON.stringify(COMPLETED);
+		const signature = sign(raw);
+		materializeCreation.mockRejectedValueOnce(new Error('storage down'));
+		const failed = await deliver(raw, { deliveryId: 'dlv-a', headers: { 'tripo-webhook-signature': signature } });
+		expect(failed.statusCode).toBe(500);
+		const retry = await deliver(raw, { deliveryId: 'dlv-a', headers: { 'tripo-webhook-signature': signature } });
+		expect(retry.json.applied).toBe(true);
+		expect(materializeCreation).toHaveBeenCalledTimes(2);
 	});
 });
 
