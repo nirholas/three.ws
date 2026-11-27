@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "Your own Meshy, Tripo, Rodin and Stability key is checked before use, never leaks, and failures say what happened",
+			"summary": "A key you bring to Forge is now checked locally before any billed call (spaces, line breaks and the wrong vendor prefix are refused without repeating the key), scrubbed from every error and log line even if a provider echoes it back, and sent only to the provider's own address. When your provider account is out of credits, throttling you, down, or refuses the prompt, Forge says which, instead of quietly running on a free engine. A key revoked mid-job now says so instead of spinning. A captured Tripo callback can no longer be replayed under a new delivery id. The key field no longer invites browser autofill, has a Clear button, and says exactly how the key is used.",
+			"tags": ["fix", "improvement"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "Forge never loses or doubles a generation on reload, a closed tab, a double click or a dropped connection",
 			"summary": "Reload /forge, close the tab or lose your connection in the middle of a generation and the page now picks the same job back up when you return, even if you left while the request was still being sent. A double click, a held Enter key or a second tab joins the generation already running instead of starting and charging a second one, on /forge and in Forge Studio. A dropped connection shows an offline note and waits for the network instead of failing, a background tab stops polling until you look at it again, and a job that finished while you were away opens on the result with a note saying so. A job whose engine never answers now ends as failed with a reason instead of spinning forever.",
 			"tags": ["fix", "improvement"],

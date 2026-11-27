@@ -657,11 +657,22 @@ A creation belongs to whoever made it, proven by one of three credentials: the h
 - **Private** models are invisible to everyone but the owner on `/api/forge-creation`, `/api/forge-keep`, `/api/forge-vote`, `/api/forge-comments`, `/api/forge-og` and `/api/forge-share`.
 - **Job handles** (`f1.` tokens) are HMAC-signed with `JWT_SECRET` and expire seven days after they are minted. Handles minted before expiry existed stay valid, so a deploy never strands a running job. The expiry is signed, so it cannot be extended.
 - **Manage tokens** (`fm1.`) are signed per creation and do not expire, by design: they are the only credential a browser without an account has to delete or hide its own model later.
-- **Your own provider key** (`x-forge-provider-key` or `provider_key`) is used for that request only. It is sent to the provider's own API host as a bearer header, and is never stored, logged, returned, or kept in the idempotency record (which holds a body hash and the response).
-- **Provider callbacks** (`/api/forge/webhook/tripo`) are verified by HMAC with a five minute replay window and a one-time delivery claim. A callback can act only on a job whose backend is Tripo, and the file it names must be a public https address (no userinfo, no internal host, no DNS answer that is an internal address).
+- **Your own provider key** (`x-forge-provider-key` or `provider_key`, or one saved encrypted on the account) is covered in full under [Bring your own provider key](#bring-your-own-provider-key).
+- **Provider callbacks** (`/api/forge/webhook/tripo`) are verified by HMAC with a five minute replay window and a one-time delivery claim, keyed on both the delivery id and the signature itself, so a captured callback cannot be replayed under a fresh delivery id. A callback can act only on a job whose backend is Tripo, and the file it names must be a public https address (no userinfo, no internal host, no DNS answer that is an internal address).
 - **Cookie-authenticated writes** that change shared content (comments) require a CSRF token tied to the account.
 
 The two-account tests that pin all of this are in `tests/api/forge-ownership-security.test.js`.
+
+## Bring your own provider key
+
+Meshy, Tripo, Rodin, Stability and Replicate run on the caller's own account. The key is a credential that costs its owner money, so it is handled narrowly (`api/_lib/forge-byok-guard.js`, `api/_lib/forge-provider-key.js`, `api/_providers/byok-registry.js`).
+
+- **Where the key comes from**, in order: the `x-forge-provider-key` header (or body `provider_key`) for this request, then the key saved on the account (`PATCH /api/user/provider-keys`, AES-256-GCM at rest, removed with the same endpoint or the Remove button on Account), then, for Tripo only, the platform house key. A key that is present but unusable is never skipped past: a malformed or unreadable key is a `401 invalid_key`, not a quiet switch to a house or free lane.
+- **Shape check before any billed call.** A key with a space or line break, control characters, more than 512 characters, the wrong vendor prefix (`tsk_` Tripo, `msy_` Meshy, `sk-` Stability, `r8_` Replicate) or under 12 characters is refused locally with a message that never repeats it. This also stops a header-injection attempt from reaching an HTTP client. `PATCH /api/user/provider-keys` applies the same rule before encrypting.
+- **Where it goes.** Each adapter targets one hard-coded HTTPS host (api.meshy.ai, api.tripo3d.ai, hyperhuman.deemos.com, api.stability.ai) and sends the key only as a bearer header. No request parameter, body field or saved setting can change the host.
+- **Where it never appears.** Every provider adapter is wrapped so a thrown error or a returned `error` string has the key (and its URL-encoded, base64 and `Bearer ...` forms) replaced with `[redacted]` before it can reach a log line, analytics event, job row, idempotency record or response. The page holds the key in memory only and sends it per request; it never writes it to browser storage, and the field has a Clear button.
+- **Failures are told apart, and none falls to a platform-paid lane.** `401 invalid_key` (the provider rejected it, or revoked it mid-job), `402 insufficient_credits` (the user's provider account is empty), `429 rate_limited` with `Retry-After` (the provider is throttling the key), `503 provider_unavailable` (the provider is down or unreachable, nothing was started, the key is fine) and `422 content_refused` (the provider declined the prompt or image). A BYOK job that fails after it started reports the same classes through `error_code` on the poll (`invalid_key`, `insufficient_credits`, `content_refused`, `task_failed`) with copy that names the provider and the fix.
+- **Same rules everywhere.** `POST /api/forge`, `POST /api/gpt-forge` and the 3D Studio MCP tools all resolve keys and classify failures through the same helpers.
 
 ## Cost preview and pay-to-keep
 
