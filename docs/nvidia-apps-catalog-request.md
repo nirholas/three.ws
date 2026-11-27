@@ -38,6 +38,9 @@ The Inception portal has no "publish to the catalog" control. A product record m
   It answers yes to the listing and names the product "Forge: AI 3D Model Generator" at
   https://three.ws/forge. The text as sent is under
   [Sent, 2026-11-27](#sent-2026-11-27). No further email is due until NVIDIA answers.
+- **Portal record renamed:** 2026-11-27, after the reply went out. The portal confirmed
+  `Forge: AI 3D Model Generator saved.` Both of our steps are complete; the listing itself
+  is NVIDIA's decision and three.ws is not in the public catalog yet.
 
 ## What the reply changed
 
@@ -468,10 +471,19 @@ Two things the full thread showed that this record did not have before:
   purpose, to keep it on her two questions; raise it again only in answer to a later NVIDIA
   message.
 
-The reply says the portal record is renamed. The portal edits (name, the 489-character
-description, the 803-character Technical Details, "Do not share" unchecked) are listed in
+### Portal record renamed, 2026-11-27
+
+The reply says the portal record is renamed, and the owner made that true the same day,
+after sending: Portal > Profile > Products > Edit, with the new name, the 489-character
+description and the 803-character Technical Details from
 [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md#1-save-this-product-record).
-Next check: once a month, run the catalog pull above.
+The portal confirmed `Forge: AI 3D Model Generator saved.` and the Products list shows the
+row as `Forge: AI 3D Model Generator | Shipping | GPU Accelerated | cuBLAS;CUDA Python;CUDA Toolkit;cuDNN;Kaolin;Riva;Audio2Face | TensorRT;Triton Inference Server;Omniverse Kit`.
+The list view does not display the description, the Technical Details or the "Do not
+share" checkbox.
+
+That closes send steps 2 and 3 above. Nothing more is owed from our side before the
+listing. Next check: once a month, run the catalog pull above.
 
 ## After you send
 

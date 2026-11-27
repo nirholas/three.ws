@@ -6,7 +6,13 @@ Related docs: [nvidia-inception.md](./nvidia-inception.md) (membership overview)
 
 ---
 
-## Status: product record saved in the portal (2026-10-25), awaiting NVIDIA review
+## Status: reply sent and portal record renamed (2026-11-27), awaiting NVIDIA's listing decision
+
+Both things NVIDIA App Publishing needed from us are done as of 2026-11-27: the owner sent the
+final reply (yes to the listing, product name "Forge: AI 3D Model Generator"), and the same
+day saved the renamed product record in the Inception portal. three.ws is not listed in the
+public catalog yet. The listing is NVIDIA's decision and nothing further is owed from our
+side until they answer. The dated history follows, oldest first.
 
 On 2026-10-25 the owner saved the product record in Portal > Profile > Products exactly as
 specified in section 1 below. The portal confirmed `three.ws 3D AI Studio saved.` and the
@@ -48,6 +54,17 @@ says the portal record is renamed, so the portal must hold the values in section
 the new name, the 489-character description, the 803-character Technical Details, and "Do
 not share" unchecked. The text as sent is in
 [nvidia-reply-2026-11-jiyeon.md](./nvidia-reply-2026-11-jiyeon.md#sent-reply-2026-11-27).
+
+**2026-11-27: portal record renamed.** After the reply went out, the owner edited the record
+in Portal > Profile > Products: the name, the 489-character Product Description and the
+803-character Technical Details from section 1. The portal confirmed
+`Forge: AI 3D Model Generator saved.` and the Products list now shows one row:
+`Forge: AI 3D Model Generator | Shipping | GPU Accelerated | cuBLAS;CUDA Python;CUDA Toolkit;cuDNN;Kaolin;Riva;Audio2Face | TensorRT;Triton Inference Server;Omniverse Kit`.
+That list view proves the name, stage, acceleration and technology lists. It does not
+display the description, the Technical Details or the "Do not share" checkbox, so those
+three rest on the owner's edit, not on a pasted confirmation. The record now matches what
+the reply told NVIDIA. Remaining on our side: nothing. Check the public catalog once a
+month with `node scripts/nvidia-apps-catalog-pull.mjs --inception --find three.ws`.
 
 **Catalog checks since the save:**
 

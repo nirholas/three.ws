@@ -11,7 +11,9 @@ and the field copy in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-lis
 draft stands; this file re-checks it against production, corrects what drifted, and adds the
 checklist and a shorter variant. **The reply was sent on 2026-11-27** (see
 [Sent reply, 2026-11-27](#sent-reply-2026-11-27)); the long and short drafts below are kept
-as the record of what was considered. Editing the Inception portal is the owner's action.
+as the record of what was considered. **The portal record was renamed the same day**, after
+the reply went out: the portal confirmed `Forge: AI 3D Model Generator saved.` Both steps
+on our side are complete, and the listing now waits on NVIDIA.
 
 Measured on production between 2026-11-26 23:40 UTC and 2026-11-27 00:05 UTC. Production ran
 commit `f0eed584f` (built 2026-11-26 06:57 UTC).
@@ -28,12 +30,15 @@ proves it.
    deploy step in the 2026-11-25 send steps is already done.
 2. **The portal record is renamed.** Portal > Profile > Products > Edit: Product/Service Name
    reads `Forge: AI 3D Model Generator`, webpage `https://three.ws/forge`, brand color `0B0D0C`,
-   "Do not share" unchecked. Not verifiable from here (portal login). If this is not done yet,
+   "Do not share" unchecked. **Done 2026-11-27** (after the reply was sent): the portal
+   confirmed `Forge: AI 3D Model Generator saved.` and the Products list shows the new name
+   with Shipping and GPU Accelerated. Before that save the instruction was: if this is not done yet,
    send the "rename pending" wording in the short variant instead of the long one.
 3. **The portal text matches the corrected copy.** Re-paste Product Description (489
    characters) and Technical Details (now 803 characters) from the listing doc. The saved
    Technical Details of 2026-10-25 still names TripoSR and UniRig, which could not be shown
-   serving (see claim 9).
+   serving (see claim 9). **Done 2026-11-27** in the same save, per the owner. The Products
+   list does not display these two fields, so there is no pasted confirmation of their text.
 4. **A signed-out visitor understands what happens.** Open `https://three.ws/forge` in a
    private window, type a prompt, press Generate: the page says "Making a 3D model needs a free
    account" with a Sign in link. Verified 2026-11-26. This is expected, and the reply tells the
@@ -267,7 +272,8 @@ Sources: the listing kit, the sent request email of 2026-09-04, and the portal f
 4. **The prompt-direction chat chain is down (owner: billing and credits).** OpenRouter 402,
    OpenAI 429, Vertex Gemini 403. The "Enhance" and art-director steps then degrade; the live
    generation still completed. The NVIDIA Nemotron rung answered at the last probe.
-5. **Portal record out of step with the page (owner: five minutes in the portal).** Rename,
+5. **Portal record out of step with the page: closed 2026-11-27.** The owner renamed the
+   record and the portal confirmed the save. The item as it stood before the save: rename,
    re-paste the 489-character description and the corrected Technical Details, check the "Do not
    share" box is unchecked.
 6. **The page promises "usually about 60s" and a first-time visitor will wait about three
