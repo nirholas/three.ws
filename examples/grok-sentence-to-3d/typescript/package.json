@@ -1,0 +1,23 @@
+{
+  "name": "grok-sentence-to-3d",
+  "private": true,
+  "type": "module",
+  "description": "Grok finds or makes a 3D chair through the three.ws studio server, attached as a remote MCP tool with the official xAI TypeScript SDK.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning src/index.ts",
+    "check": "node --env-file-if-exists=.env --experimental-strip-types --no-warnings=ExperimentalWarning src/index.ts --check",
+    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test test/lib.test.ts",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@xai-official/sdk": "0.2.11"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.0",
+    "typescript": "^5.9.0"
+  }
+}
