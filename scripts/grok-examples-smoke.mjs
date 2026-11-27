@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-// Smoke test for the six Grok examples in examples/grok-*.
+// Smoke test for the Grok examples. A plain run covers the six in the first
+// table of examples/grok/README.md. Three more (the TypeScript SDK recipe, the
+// LiteLLM gateway and the MetaGPT studio) take longer to install and run when
+// they are named with --only, or with --all.
 //
 // Each example is copied into its own temp directory and set up there the way
 // its README says (npm ci, a Python venv), so nothing is installed globally and
@@ -13,18 +16,22 @@
 //   generation    one free text-to-3D generation (x-search --prop), with
 //                 THREE_WS_API_KEY, or a short-lived QA key minted from
 //                 AUDIT_EMAIL / AUDIT_PASSWORD in .env and revoked afterwards.
+//                 The same key gives the MetaGPT studio its signed-in render
+//                 leg (look_at_model).
 //
 //   npm run grok:examples-smoke
 //   npm run grok:examples-smoke -- --only grok-curl,grok-agent-avatar
+//   npm run grok:examples-smoke -- --all
 //   npm run grok:examples-smoke -- --no-generate
 //   npm run grok:examples-smoke -- --mcp-url https://<public host>/api/mcp-studio
 //   npm run grok:examples-smoke -- --save-output <dir>
 //
-// --mcp-url points the three examples where xAI's cloud calls the MCP server
-// (grok-python-mcp, grok-node-responses, grok-curl) at a development server,
-// which has to be reachable from the internet: xAI cannot call localhost. Those
-// runs send no three.ws key, because a key belongs to a production account and
-// catalog search needs none. The other three examples keep their defaults.
+// --mcp-url points the four examples where xAI's cloud calls the MCP server
+// (grok-python-mcp, grok-node-responses, grok-curl, grok-sentence-to-3d) at a
+// development server, which has to be reachable from the internet: xAI cannot
+// call localhost. Those runs send no three.ws key, because a key belongs to a
+// production account and catalog search needs none. The other examples keep
+// their defaults.
 //
 // --save-output writes one <example>.txt per example: every command it ran and
 // what that command printed, with the xAI key and the three.ws key replaced by
@@ -33,6 +40,7 @@
 // Prints one PASS or FAIL line per example and exits non-zero on any FAIL.
 
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -59,12 +67,21 @@ export function childEnv(base, extra = {}) {
 }
 
 // The examples that hand the three.ws MCP server to xAI as a remote tool.
-const REMOTE_MCP_EXAMPLES = new Set(['grok-python-mcp', 'grok-node-responses', 'grok-curl']);
+const REMOTE_MCP_EXAMPLES = new Set(['grok-python-mcp', 'grok-node-responses', 'grok-curl', 'grok-sentence-to-3d']);
+
+// The examples with a leg that needs a signed-in three.ws account.
+const SIGNED_IN_EXAMPLES = new Set(['grok-x-search-to-3d', 'metagpt-3d-studio']);
 
 /** The environment and three.ws key one example runs with, given an optional --mcp-url. */
 export function legContext({ name, base, threeWsKey, mcpUrl }) {
 	if (!mcpUrl || !REMOTE_MCP_EXAMPLES.has(name)) return { base, threeWsKey };
 	return { base: { ...base, THREE_WS_MCP_URL: mcpUrl }, threeWsKey: null };
+}
+
+/** The examples one run covers: the named ones, else every one with --all, else those not marked `extra`. */
+export function selectExamples(examples, { only = null, all = false } = {}) {
+	if (only) return examples.filter((e) => only.has(e.name));
+	return all ? examples : examples.filter((e) => !e.extra);
 }
 
 /** Did a run fail the way xAI fails a bad key, and not some other way? */
@@ -152,14 +169,42 @@ function workspace(name) {
 	return dir;
 }
 
+// A uv binary: the one on PATH, else one installed into a venv inside the
+// example's temp copy. MetaGPT needs a Python older than most machines default
+// to, and uv fetches it.
+async function uvBin(cwd, base) {
+	if ((await run('uv', ['--version'], { cwd, env: base })).code === 0) return 'uv';
+	await must('python3', ['-m', 'venv', '.uv'], { cwd, env: base }, 'python3 -m venv .uv');
+	await must(join(cwd, '.uv', 'bin', 'pip'), ['install', '--quiet', 'uv'], { cwd, env: base, timeoutMs: 300_000 }, 'pip install uv');
+	return join(cwd, '.uv', 'bin', 'uv');
+}
+
+// Wait for a local server to answer 200 on `url`, or fail with why it did not.
+async function waitForHttp(url, child, what, timeoutMs) {
+	const deadline = Date.now() + timeoutMs;
+	let exited = null;
+	child.on('exit', (code) => (exited = code ?? 1));
+	while (Date.now() < deadline) {
+		if (exited !== null) throw new Error(`${what} exited ${exited} before it listened`);
+		const ok = await fetch(url, { signal: AbortSignal.timeout(2000) }).then((r) => r.ok, () => false);
+		if (ok) return;
+		await new Promise((next) => setTimeout(next, 500));
+	}
+	throw new Error(`${what} did not answer ${url} in ${timeoutMs / 1000}s`);
+}
+
 // The xAI leg, shared by the CLI examples: a real key must succeed, a missing
 // one is replaced by an invalid key that xAI must reject in its own words.
-async function xaiLeg(cmd, args, { cwd, base, threeWsKey }) {
+// `xaiKeyHolder: 'server'` is for an example whose xAI key lives in a server
+// the caller started (which then got the real or invalid key), not in this
+// command. `okCodes` lists the exits that count as a finished run.
+async function xaiLeg(cmd, args, { cwd, base, threeWsKey, extraEnv = {}, okCodes = [0], xaiKeyHolder = 'command' }) {
 	const real = process.env.XAI_API_KEY || process.env.GROK_API_KEY;
-	const env = childEnv(base, { XAI_API_KEY: real || INVALID_XAI_KEY, THREE_WS_API_KEY: threeWsKey });
+	const xaiKey = xaiKeyHolder === 'command' ? real || INVALID_XAI_KEY : null;
+	const env = childEnv(base, { ...extraEnv, XAI_API_KEY: xaiKey, THREE_WS_API_KEY: threeWsKey });
 	const r = await run(cmd, args, { cwd, env, timeoutMs: 15 * 60_000 });
 	if (real) {
-		if (r.code !== 0) throw new Error(`the Grok run exited ${r.code}: ${tail(r.output)}`);
+		if (!okCodes.includes(r.code)) throw new Error(`the Grok run exited ${r.code}: ${tail(r.output)}`);
 		const glb = answerGlb(r.output);
 		return { leg: 'xAI', note: `live run ok${glb ? `, ${glb}` : ''}` };
 	}
@@ -304,6 +349,75 @@ const EXAMPLES = [
 			];
 		},
 	},
+	{
+		name: 'grok-sentence-to-3d',
+		extra: true,
+		async run({ cwd, base, threeWsKey }) {
+			const ts = join(cwd, 'typescript');
+			await must('npm', ['ci', '--no-audit', '--no-fund'], { cwd: ts, env: base, timeoutMs: 300_000 }, 'npm ci');
+			await must('npm', ['test'], { cwd: ts, env: childEnv(base) }, 'npm test');
+			await must('npm', ['run', 'typecheck'], { cwd: ts, env: childEnv(base) }, 'npm run typecheck');
+			const out = await must('npm', ['run', '--silent', 'check'], { cwd: ts, env: childEnv(base) }, 'npm run check');
+			expectLine(out, /three-ws/i, 'the check printed no server');
+			return [{ leg: 'three.ws', note: 'MCP tools + catalog live, unit tests + typecheck' }, await xaiLeg('npm', ['start', '--silent'], { cwd: ts, base, threeWsKey })];
+		},
+	},
+	{
+		name: 'litellm-grok-gateway',
+		extra: true,
+		async run({ cwd, base, threeWsKey }) {
+			const py = join(cwd, '.venv', 'bin', 'python');
+			await must('python3', ['-m', 'venv', '.venv'], { cwd, env: base }, 'python3 -m venv');
+			await must(py, ['-m', 'pip', 'install', '--quiet', '-r', 'requirements.txt'], { cwd, env: base, timeoutMs: 900_000 }, 'pip install');
+			const real = process.env.XAI_API_KEY || process.env.GROK_API_KEY;
+			const port = await freePort();
+			// The key clients present to this one proxy: made here, gone when the proxy stops.
+			const masterKey = `sk-${randomUUID()}`;
+			const proxy = spawn(join(cwd, '.venv', 'bin', 'litellm'), ['--config', 'config.yaml', '--host', '127.0.0.1', '--port', String(port)], {
+				cwd,
+				env: childEnv(base, { LITELLM_MASTER_KEY: masterKey, XAI_API_KEY: real || INVALID_XAI_KEY }),
+				stdio: ['ignore', 'pipe', 'pipe'],
+			});
+			proxy.stdout.on('data', () => {});
+			proxy.stderr.on('data', () => {});
+			try {
+				const origin = `http://127.0.0.1:${port}`;
+				await waitForHttp(`${origin}/health/liveliness`, proxy, 'the LiteLLM proxy', 120_000);
+				const extraEnv = { LITELLM_MASTER_KEY: masterKey, LITELLM_BASE_URL: origin };
+				const out = await must(py, ['main.py', '--check'], { cwd, env: childEnv(base, extraEnv) }, 'main.py --check');
+				expectLine(out, /^ok\s+gateway leg is live/m, 'the check did not reach the three.ws tools through the gateway');
+				return [
+					{ leg: 'three.ws', note: 'MCP gateway + catalog live through the proxy' },
+					await xaiLeg(py, ['main.py'], { cwd, base, threeWsKey, extraEnv, xaiKeyHolder: 'server' }),
+				];
+			} finally {
+				proxy.kill('SIGTERM');
+			}
+		},
+	},
+	{
+		name: 'metagpt-3d-studio',
+		extra: true,
+		async run({ cwd, base, threeWsKey }) {
+			const py = join(cwd, '.venv', 'bin', 'python');
+			const uv = await uvBin(cwd, base);
+			await must(uv, ['venv', '--quiet', '--python', '3.11', '.venv'], { cwd, env: base, timeoutMs: 300_000 }, 'uv venv');
+			await must(uv, ['pip', 'install', '--quiet', '--no-deps', '--python', py, '-r', 'requirements.txt'], { cwd, env: base, timeoutMs: 900_000 }, 'uv pip install');
+			const out = await must(py, ['main.py', '--check'], { cwd, env: childEnv(base) }, 'main.py --check');
+			expectLine(out, /^ok\s+three\.ws leg is live/m, 'the signed-out check did not finish');
+			let views = 'poster render';
+			if (threeWsKey) {
+				const signedIn = await must(py, ['main.py', '--check'], { cwd, env: childEnv(base, { THREE_WS_API_KEY: threeWsKey }) }, 'main.py --check (signed in)');
+				expectLine(signedIn, /^render\s+look_at_model on .+: [1-9]\d* frames/m, 'look_at_model returned no frames for a signed-in account');
+				views = 'poster render + signed-in look_at_model views';
+			}
+			// Exit 3 is a delivered model the Reviewer failed: the team still ran end to end.
+			return [
+				{ leg: 'three.ws', note: `MCP tools + catalog + ${views} live` },
+				await xaiLeg(py, ['main.py', 'a vintage wooden armchair'], { cwd, base, threeWsKey, okCodes: [0, 3] }),
+			];
+		},
+	},
 ];
 
 const STARTER_DEFAULT_GLB = 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb';
@@ -312,6 +426,7 @@ async function main() {
 	const { values } = parseArgs({
 		options: {
 			only: { type: 'string' },
+			all: { type: 'boolean', default: false },
 			'no-generate': { type: 'boolean', default: false },
 			keep: { type: 'boolean', default: false },
 			'mcp-url': { type: 'string' },
@@ -323,13 +438,14 @@ async function main() {
 	if (saveDir) mkdirSync(saveDir, { recursive: true });
 	if (mcpUrl && !/^https:\/\//.test(mcpUrl)) throw new Error('--mcp-url must be an https URL that xAI can reach from the internet');
 	const only = values.only ? new Set(values.only.split(',').map((s) => s.trim())) : null;
-	const selected = EXAMPLES.filter((e) => !only || only.has(e.name));
+	const selected = selectExamples(EXAMPLES, { only, all: values.all });
 	if (!selected.length) throw new Error(`--only matched nothing; examples: ${EXAMPLES.map((e) => e.name).join(', ')}`);
 	const generate = !values['no-generate'] && selected.some((e) => e.name === 'grok-x-search-to-3d');
 
 	let threeWsKey = process.env.THREE_WS_API_KEY || null;
 	let minted = null;
-	if (generate && !threeWsKey) {
+	const needsAccount = !values['no-generate'] && selected.some((e) => SIGNED_IN_EXAMPLES.has(e.name));
+	if (needsAccount && !threeWsKey) {
 		minted = await mintQaKey({ name: 'grok examples smoke', ttlMs: 3600_000 });
 		threeWsKey = minted?.token ?? null;
 	}

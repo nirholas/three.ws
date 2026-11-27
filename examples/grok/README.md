@@ -19,6 +19,18 @@ A seventh, [grok-remote-mcp](../grok-remote-mcp/), is the zero-dependency Node
 version that also collects a slow render across turns with
 `previous_response_id`.
 
+Three more reach Grok through other open-source tools:
+
+| Example | What it shows | Stack | Run it |
+|---|---|---|---|
+| [grok-sentence-to-3d](../grok-sentence-to-3d/) | The remote MCP flow through xAI's official TypeScript SDK, printing each tool call as xAI runs it. Written in the xAI cookbook's layout. | TypeScript, `@xai-official/sdk` | `cd typescript && npm start` |
+| [litellm-grok-gateway](../litellm-grok-gateway/) | Grok and the three.ws 3D tools behind one OpenAI-compatible LiteLLM proxy, with the studio server in LiteLLM's MCP gateway. | Python, LiteLLM | `litellm --config config.yaml`, then `python main.py` |
+| [metagpt-3d-studio](../metagpt-3d-studio/) | A MetaGPT team (Art Director, Modeler, Reviewer) with Grok as every role's model. It finds or makes a model, looks at the render and stops after two iterations. | Python 3.11, MetaGPT | `python main.py` |
+
+[docs/grok-toolkit.md](../../docs/grok-toolkit.md) maps these and the rest of
+the open Grok toolkit (Grok Build, the plugin marketplace, the cookbook, Orca,
+Happy, OpenHands and more) to the three.ws surface each one uses.
+
 ## Keys
 
 Every example reads keys from the environment and never from a file in the
@@ -52,10 +64,18 @@ also makes one model on the free lane with `THREE_WS_API_KEY`.
 `--only grok-curl,grok-agent-avatar` narrows the run and `--no-generate` skips
 the generation.
 
+The three examples in the second table install more (a LiteLLM proxy, MetaGPT on
+Python 3.11), so a plain run leaves them out. Name them with `--only`, or pass
+`--all` to run all nine:
+
+```bash
+npm run grok:examples-smoke -- --only grok-sentence-to-3d,litellm-grok-gateway,metagpt-3d-studio
+```
+
 Two more flags help when you are changing the MCP server itself.
-`--mcp-url https://<public host>/api/mcp-studio` points the three examples where
+`--mcp-url https://<public host>/api/mcp-studio` points the four examples where
 xAI's cloud calls the server (`grok-python-mcp`, `grok-node-responses`,
-`grok-curl`) at a development server. It has to be reachable from the internet,
+`grok-curl`, `grok-sentence-to-3d`) at a development server. It has to be reachable from the internet,
 for example through a tunnel, because xAI cannot call localhost, and those runs
 send no three.ws key. `--save-output <dir>` writes one `<example>.txt` per
 example with every command and what it printed, with the xAI key and the

@@ -8,6 +8,7 @@ import {
 	legContext,
 	redact,
 	resultLine,
+	selectExamples,
 } from '../scripts/grok-examples-smoke.mjs';
 
 describe('grok examples smoke helpers', () => {
@@ -49,6 +50,15 @@ describe('grok examples smoke helpers', () => {
 		expect(answerGlb(curl)).toBe('https://cdn.example/objects/painted_wooden_chair_01.glb');
 		expect(answerGlb('GLB: https://cdn.example/a.glb')).toBe('https://cdn.example/a.glb');
 		expect(answerGlb('no model here')).toBeNull();
+	});
+
+	it('runs the core examples by default and the slower extras only when asked', () => {
+		const examples = [{ name: 'grok-curl' }, { name: 'grok-python-mcp' }, { name: 'metagpt-3d-studio', extra: true }];
+		const names = (list) => list.map((e) => e.name);
+		expect(names(selectExamples(examples))).toEqual(['grok-curl', 'grok-python-mcp']);
+		expect(names(selectExamples(examples, { all: true }))).toEqual(['grok-curl', 'grok-python-mcp', 'metagpt-3d-studio']);
+		expect(names(selectExamples(examples, { only: new Set(['metagpt-3d-studio']) }))).toEqual(['metagpt-3d-studio']);
+		expect(names(selectExamples(examples, { only: new Set(['grok-curl']), all: true }))).toEqual(['grok-curl']);
 	});
 
 	it('prints one PASS or FAIL line per example', () => {
