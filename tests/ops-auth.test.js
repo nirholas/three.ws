@@ -60,6 +60,20 @@ describe('authorizeOps', () => {
 		expect(sessionPassedMfa).toHaveBeenCalledWith('s-7');
 	});
 
+	// Production has OPS_SECRET set, so this is the path a real admin takes. The
+	// secret branch used to return before mfaRequired was attached, and an
+	// unverified admin was told to sign in (401) instead of to verify (403).
+	it('still asks an unverified admin to verify when OPS_SECRET is configured and no secret is sent', async () => {
+		process.env.VERCEL_ENV = 'production';
+		process.env.OPS_SECRET = 'super-secret-value';
+		getSessionUser.mockResolvedValue({ id: 7, sid: 's-7', wallet_address: 'Wa11etAdmin' });
+		isAdminUser.mockResolvedValue(true);
+		sessionPassedMfa.mockResolvedValue(false);
+		await loadFresh();
+		expect(await authorizeOps(reqWith())).toEqual({ ok: false, actor: '', mfaRequired: true });
+		expect(logAudit).not.toHaveBeenCalled();
+	});
+
 	it('an unverified admin can still use the dedicated OPS_SECRET', async () => {
 		process.env.OPS_SECRET = 'super-secret-value';
 		getSessionUser.mockResolvedValue({ id: 7, sid: 's-7', wallet_address: 'Wa11etAdmin' });

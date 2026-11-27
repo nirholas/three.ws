@@ -86,7 +86,9 @@ export async function authorizeOps(req) {
 				: '');
 		if (header && constantTimeEquals(header, secret)) return { ok: true, actor: 'ops-secret' };
 		if (header) recordRejectedSecret(req);
-		return { ok: false, actor: '' };
+		// Carry the admin finding through: production always has a secret set, so
+		// this is the denial an unverified admin actually receives.
+		return mfaRequired ? { ok: false, actor: '', mfaRequired } : { ok: false, actor: '' };
 	}
 
 	// 3. No secret configured: dev-only open, production denies.
