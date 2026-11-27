@@ -27,6 +27,12 @@
         "source": "github",
         "repo": "nirholas/three.ws"
       }
+    },
+    "xai-grok-build": {
+      "source": {
+        "source": "github",
+        "repo": "xai-org/grok-build-plugin-cc"
+      }
     }
   },
   "autoCompactWindow": 200000,
