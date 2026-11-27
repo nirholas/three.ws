@@ -73,6 +73,17 @@ export function requestTerritory(req) {
 }
 
 /**
+ * The reason a refused Tencent lane gives the caller. With no resolved country
+ * it does not name a region: the caller may be somewhere the licence allows and
+ * the missing piece is our location signal, so the message says that instead.
+ */
+export function regionRestrictedMessage(country) {
+	return country
+		? 'This engine is not available in your region because its model licence excludes it. Use the default engine, which is available everywhere.'
+		: 'This engine is off because we could not confirm your location, and its model licence excludes some regions. Use the default engine, which is available everywhere.';
+}
+
+/**
  * What this requester may not use, for GET /api/forge?territory. The answer is
  * per visitor, so it must never share the catalog's edge cache. The country
  * itself is not echoed back, only whether one resolved.

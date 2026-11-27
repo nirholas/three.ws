@@ -193,6 +193,7 @@ import {
 	requestTerritory,
 	isTencentLane,
 } from './_lib/forge-territory.js';
+	regionRestrictedMessage,
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
 import { decideStalledPoll } from './_lib/forge-job-deadline.js';
 import { directPrompt } from './_mcp-studio/gpt-forge-client.js';
@@ -1244,8 +1245,7 @@ async function startJob(req, res) {
 		return json(res, 403, {
 			error: 'region_restricted',
 			backend: body.backend,
-			message:
-				'This engine is not available in your region because its model licence excludes it. Use the default engine, which is available everywhere.',
+			message: regionRestrictedMessage(country),
 			retry_backends: retryBackendSuggestions({ hasImage: isImageMode, country }),
 		});
 	}

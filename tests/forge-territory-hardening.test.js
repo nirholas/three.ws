@@ -61,3 +61,24 @@ describe('codes inside a restricted territory are restricted', () => {
 		}
 	});
 });
+
+describe('the refusal message does not name a region it did not resolve', () => {
+	it('says the location could not be confirmed when the country is unknown', async () => {
+		const { regionRestrictedMessage } = await import('../api/_lib/forge-territory.js');
+		const m = regionRestrictedMessage(null);
+		expect(m).toMatch(/could not confirm your location/);
+		expect(m).not.toMatch(/in your region/);
+		expect(m).toMatch(/default engine/);
+	});
+
+	it('says the region is excluded when the country is known and excluded', async () => {
+		const { regionRestrictedMessage } = await import('../api/_lib/forge-territory.js');
+		expect(regionRestrictedMessage('DE')).toMatch(/not available in your region/);
+		expect(regionRestrictedMessage('DE')).toMatch(/model licence/);
+	});
+
+	it('writes no em or en dash', async () => {
+		const { regionRestrictedMessage } = await import('../api/_lib/forge-territory.js');
+		for (const c of [null, 'DE']) expect(regionRestrictedMessage(c)).not.toMatch(/[\u2013\u2014]/);
+	});
+});
