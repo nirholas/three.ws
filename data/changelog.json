@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "Forge never loses or doubles a generation on reload, a closed tab, a double click or a dropped connection",
+			"summary": "Reload /forge, close the tab or lose your connection in the middle of a generation and the page now picks the same job back up when you return, even if you left while the request was still being sent. A double click, a held Enter key or a second tab joins the generation already running instead of starting and charging a second one, on /forge and in Forge Studio. A dropped connection shows an offline note and waits for the network instead of failing, a background tab stops polling until you look at it again, and a job that finished while you were away opens on the result with a note saying so. A job whose engine never answers now ends as failed with a reason instead of spinning forever.",
+			"tags": ["fix", "improvement"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "Forge tells you why a Hunyuan engine is off, and keeps excluded regions off it for every route",
 			"summary": "The Hunyuan3D model licence excludes the EU, the UK and South Korea. Forge now shows a plain note under the engine picker saying which engines are off and why, worded differently when we could not confirm your location, so you are never told you are somewhere you may not be. Behind it, no route (default, fallback, a named engine, the paid API, the 3D Studio tools, photo avatars) can reach a Hunyuan lane for an excluded or unknown country, and you still get a model from another engine. A Hugging Face lane that has run out of free GPU time now rests for half an hour instead of failing every request.",
 			"tags": ["improvement", "fix"],
