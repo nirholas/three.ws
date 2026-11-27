@@ -97,7 +97,7 @@ export function pairedComparison(aRows, bRows) {
  */
 export function recommend({ task, current, candidates, routeEnv, latencyBudgetMs }) {
 	if (!candidates.length) {
-		return { route: null, text: `Keep the current lane. No Grok results yet: they fill in with one command once the xAI key is installed (see "Reproduce").` };
+		return { route: null, text: `Keep the current lane. No Grok results yet: they fill in with one command when the process running the eval has GROK_API_KEY in its environment (see "Reproduce").` };
 	}
 	const winners = [];
 	const notes = [];
@@ -105,10 +105,13 @@ export function recommend({ task, current, candidates, routeEnv, latencyBudgetMs
 		const objWin = c.diff && excludesTie(c.diff);
 		const objLoss = c.diff && Number.isFinite(c.diff.hi) && c.diff.hi < 0;
 		const judgeWin = c.judge && !objLoss && excludesTie(c.judge, 0.5);
+		const judgeLoss = c.judge && Number.isFinite(c.judge.hi) && c.judge.hi < 0.5;
 		const fast = Number.isFinite(c.summary.p95) && c.summary.p95 <= latencyBudgetMs;
 		if ((objWin || judgeWin) && fast) winners.push({ ...c, by: objWin ? 'objective score' : 'pairwise judge' });
 		else if ((objWin || judgeWin) && !fast) notes.push(`${c.label} scored better but its p95 of ${ms(c.summary.p95)} ms is over the ${ms(latencyBudgetMs)} ms budget.`);
 		else if (objLoss) notes.push(`${c.label} scored worse (${signed(c.diff.mean)}).`);
+		else if (judgeLoss) notes.push(`${c.label} ties on the objective score and loses the pairwise judge (win rate ${pct(c.judge.mean)}).`);
+		else if (!c.judge) notes.push(`${c.label} is a statistical tie with the current lane on the objective score; the pairwise judge has not scored it yet.`);
 		else notes.push(`${c.label} is a statistical tie with the current lane.`);
 	}
 	if (!winners.length) return { route: null, text: `Keep the current lane. ${notes.join(' ')}` };
@@ -144,6 +147,72 @@ export function flagsToSet(recs) {
 	return { routes, held };
 }
 
+const tokens = (v) => Math.round(v).toLocaleString('en-US');
+const money = (micro) => `$${(micro / 1_000_000).toFixed(2)}`;
+const NO_USAGE = Object.freeze({ inputTokens: 0, cachedTokens: 0, outputTokens: 0, reasoningTokens: 0, reportedMicro: null, listMicro: null });
+
+/**
+ * The facts of the runs behind the page: per lane, the model, the dates its
+ * calls were made, how many inputs of each task it ran, the tokens it used and
+ * what that cost. Then one line on spend and one on coverage, so a reader can
+ * tell a full set from a subset before reading a single score. PURE.
+ */
+export function runFacts({ results, sets, taskInfo, lanes, ranLanes, usageOf }) {
+	const read = usageOf || (() => NO_USAGE);
+	const out = [];
+	const tasks = Object.keys(sets);
+	out.push('| Lane | Model | Calls made | Inputs run per task | Prompt tokens (cached) | Output tokens (reasoning) | Spend |', '|---|---|---|---|---|---|---|');
+	const partial = [];
+	const grok = { spend: 0, list: 0, calls: 0, reported: 0, listKnown: true };
+	for (const l of ranLanes) {
+		const isGrok = lanes[l].provider === 'grok';
+		const rows = results.filter((r) => r.lane === l);
+		const days = [...new Set(rows.map((r) => String(r.at || '').slice(0, 10)).filter(Boolean))].sort();
+		const when = days.length > 1 ? `${days[0]} to ${days.at(-1)}` : days[0] || 'n/a';
+		const counts = tasks.map((t) => rows.filter((r) => r.task === t).length);
+		const full = counts.every((c, i) => c === sets[tasks[i]].length);
+		const sizes = [...new Set(tasks.map((t) => sets[t].length))];
+		const perTask = full && sizes.length === 1
+			? `all ${sizes[0]} on every task`
+			: tasks.map((t, i) => `${taskInfo[t].label} ${counts[i]}/${sets[t].length}`).join(', ');
+		if (!full) partial.push(lanes[l].label);
+		const answered = rows.filter((r) => r.ok);
+		const sum = { input: 0, cached: 0, output: 0, reasoning: 0 };
+		for (const r of answered) {
+			const u = read(r);
+			sum.input += u.inputTokens;
+			sum.cached += u.cachedTokens;
+			sum.output += u.outputTokens;
+			sum.reasoning += u.reasoningTokens;
+			if (!isGrok) continue;
+			grok.calls++;
+			if (u.reportedMicro !== null) grok.reported++;
+			if (u.listMicro === null) grok.listKnown = false;
+			else grok.list += u.listMicro;
+		}
+		const spend = answered.reduce((s, r) => s + (r.costMicro || 0), 0);
+		if (isGrok) grok.spend += spend;
+		out.push(`| ${lanes[l].label} | \`${lanes[l].model}\` | ${when} | ${perTask} | ${tokens(sum.input)} (${tokens(sum.cached)}) | ${tokens(sum.output)} (${tokens(sum.reasoning)}) | ${isGrok ? money(spend) : '$0 (free tier)'} |`);
+	}
+	out.push('');
+	if (grok.calls) {
+		const source = grok.reported === grok.calls
+			? 'the cost xAI reported on each response'
+			: grok.reported === 0
+				? 'the token counts xAI returned, at list price'
+				: `the cost xAI reported on ${grok.reported} of ${grok.calls} responses and the token counts at list price for the rest`;
+		const check = grok.listKnown && grok.reported > 0 ? ` The same token counts at list price come to ${money(grok.list)}.` : '';
+		out.push(`Total xAI spend for the Grok columns: ${money(grok.spend)} over ${tokens(grok.calls)} answered calls, from ${source}.${check} Prompt tokens include the cached ones, which bill at the cached rate; reasoning tokens are counted beside the reply's output tokens and bill at the output rate. A call that failed and was retried is not counted.`, '');
+	}
+	out.push(
+		partial.length
+			? `Coverage: ${partial.join(' and ')} ran a subset of the inputs (counts above). Each pass rate is over the inputs that lane ran, and each paired difference covers only the inputs both lanes ran, so a subset lane is compared with the current lane on those inputs and not on the full baseline set.`
+			: 'Coverage: every lane ran every input of every task, so each paired difference covers the full set.',
+		'',
+	);
+	return out;
+}
+
 /**
  * Build the whole report.
  * @param {object} o
@@ -152,7 +221,11 @@ export function flagsToSet(recs) {
  * @param {Record<string, object[]>} o.sets      task -> rows of the input set
  * @param {Record<string, object>} o.taskInfo    TASK_INFO from tasks.js
  * @param {Record<string, object>} o.lanes       LANES from lanes.js
- * @param {object} o.meta                        { generatedOn, production, keyProbe, judgeNote }
+ * @param {object} o.meta                        { generatedOn, production, keyProbe, judgeNote, usageOf }
+ *   usageOf(row) reads a result's token counts and prices them:
+ *   { inputTokens, cachedTokens, outputTokens, reasoningTokens, reportedMicro, listMicro }
+ *   (reportedMicro: the cost the provider put on the response, or null;
+ *   listMicro: the same tokens at list price, or null when unpriced).
  */
 export function buildReport({ results, judged, sets, taskInfo, lanes, meta }) {
 	const out = [];
@@ -168,9 +241,10 @@ export function buildReport({ results, judged, sets, taskInfo, lanes, meta }) {
 	out.push('## Status', '');
 	if (grokRan.length) {
 		out.push(`Lanes measured: ${ranLanes.map((l) => lanes[l].label).join(', ')}.`, '');
+		out.push(...runFacts({ results, sets, taskInfo, lanes, ranLanes, usageOf: meta.usageOf }));
 	} else {
 		out.push(`Baseline only. ${meta.keyProbe}`, '');
-		out.push('Every task set, grader, judge and the routing flags are in place, so the Grok columns fill in with the one command under "Reproduce" once the key is installed, and this page regenerates from the combined results.', '');
+		out.push('Every task set, grader, judge and the routing flags are in place, so the Grok columns fill in with the Grok command under "Reproduce" when the process running it has GROK_API_KEY in its environment, and this page regenerates from the combined results.', '');
 	}
 
 	out.push('## Method', '');
@@ -273,9 +347,10 @@ export function buildReport({ results, judged, sets, taskInfo, lanes, meta }) {
 	out.push('## Reproduce', '');
 	out.push('```bash');
 	out.push('npm run grok:eval-llm -- --prod-env                             # current lane, all five tasks');
-	out.push('npm run grok:eval-llm -- --prod-env --lanes grok,grok_budget    # add the Grok columns (needs GROK_API_KEY on Cloud Run)');
+	out.push('GROK_API_KEY="$(cat <key file>)" npm run grok:eval-llm -- --prod-env --lanes grok,grok_budget    # add the Grok columns');
 	out.push('npm run grok:eval-llm -- --report                               # rebuild this page from saved results');
 	out.push('```', '');
-	out.push('Runs resume from the results file: finished rows are skipped unless `--force` or `--retry-failed`. Grok calls made by the eval are written to the xAI credit ledger under lane `eval`.', '');
+	out.push('The Grok columns need `GROK_API_KEY` in the environment of the process running the eval, and nowhere else: the eval never needs a key on the production service, and a key set in the shell is never replaced by `--prod-env`. `--prod-env` supplies the current lane\'s key, the judge keys and the database the xAI credit ledger lives in.', '');
+	out.push('Runs resume from the results file: finished rows are skipped unless `--force` or `--retry-failed`. Grok calls made by the eval are written to the xAI credit ledger under lane `eval`; calls made without `--prod-env` wait in the results file, and the next `--prod-env` run writes them and judges their pairs without calling xAI again.', '');
 	return { markdown: `${out.join('\n')}\n`, recommendations: recs };
 }

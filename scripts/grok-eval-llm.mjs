@@ -14,7 +14,8 @@
 // from the saved results every run.
 //
 //   npm run grok:eval-llm -- --prod-env                            current lane, all 250 rows
-//   npm run grok:eval-llm -- --prod-env --lanes grok,grok_budget   add the Grok columns
+//   GROK_API_KEY="$(cat <key file>)" npm run grok:eval-llm -- --prod-env --lanes grok,grok_budget
+//                                                                  add the Grok columns
 //   npm run grok:eval-llm -- --prod-env --tasks x_reply --only x-07,x-12 --force
 //   npm run grok:eval-llm -- --report                              rebuild the doc only
 //
@@ -28,19 +29,30 @@
 // --report        do not call any model, rebuild the report from saved results
 // --regrade       do not call any model, re-grade every saved reply with the
 //                 current graders (after a grader fix), then rebuild the report
-// --prod-env      read the model keys from the three-ws-api Cloud Run service
-//                 into this process only. DATABASE_URL is loaded only when a
-//                 Grok lane runs with a key, so Grok spend lands in the xAI
-//                 credit ledger (lane `eval`); no other table is written.
+// --prod-env      read the current lane's and the judges' keys from the
+//                 three-ws-api Cloud Run service into this process only.
+//                 DATABASE_URL is loaded only when a Grok lane runs with a key,
+//                 so Grok spend lands in the xAI credit ledger (lane `eval`);
+//                 no other table is written.
 //
-// A Grok lane with no key installed sends one real request without a key and
-// records xAI's answer (the documented 401) instead of running the set, so the
-// report states exactly what is missing.
+// The Grok lanes need GROK_API_KEY (or XAI_API_KEY) in the environment of the
+// process running the eval, and nowhere else: the eval never needs a key on the
+// production service. A key set in the shell always wins; --prod-env does not
+// read the service's copy of a key the shell already holds. Without --prod-env
+// the Grok lanes still run and are graded; their judge pairs and ledger rows
+// wait in the results file and the next --prod-env run settles both without
+// calling xAI again.
+//
+// A Grok lane run with no key in the environment sends one real request without
+// a key and records xAI's answer (the documented 401) instead of running the
+// set, so the report states exactly what is missing.
 //
 // Results (resumable, last line for a key wins):
 //   data/evals/llm-results/results.jsonl  one line per lane:task:id
 //     { task, id, lane, model, ok, status, error, latencyMs, costMicro, usage,
 //       text, toolCalls, pass, checks, reason, shipped, advisory, at }
+//     Grok rows also carry { responseId, ledgered }: xAI's response id and
+//     whether the call has reached the xAI credit ledger yet.
 //   data/evals/llm-results/judged.jsonl   one line per task:id:lane pair
 //     { task, id, a: 'current', b, judge, score (b vs a: 1 win, 0.5 tie, 0 loss), verdicts, consistent, at }
 //   data/evals/llm-results/runs.json      { runs: [...], keyProbe: { status, error, at } | null }
@@ -55,9 +67,12 @@ import { fileURLToPath } from 'node:url';
 import { loadCloudRunEnv } from './lib/cloud-run-env.mjs';
 import { TASKS, TASK_INFO, buildRequest, judgeInput } from './lib/llm-eval/tasks.js';
 import { LANES, laneKey, callLane } from './lib/llm-eval/lanes.js';
+import { normalizeXaiUsage } from '../api/_lib/xai-usage.js';
+import { priceTableCostMicro } from '../api/_lib/xai-pricing.js';
 import { grade } from './lib/llm-eval/graders.js';
 import { JUDGES, pickJudge, judgePair } from './lib/llm-eval/judge.js';
 import { buildReport, laneSummary } from './lib/llm-eval/report.js';
+import { unledgered, ledgerInput } from './lib/llm-eval/ledger.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'data/evals/llm-results');
@@ -69,6 +84,9 @@ const REPORT_FILE = join(ROOT, 'docs/evals/grok-4-7-on-three-ws.md');
 // Only the model keys the lanes and judges read. DATABASE_URL rides along for
 // the xAI ledger and is dropped again unless a keyed Grok lane runs.
 const ENV_WANTED = /^(NVIDIA_API_KEY|GROK_API_KEY|XAI_API_KEY|GROQ_API_KEY|OPENROUTER_API_KEY|DATABASE_URL)$/;
+// The xAI key under both of its names. One set in the shell is the operator's
+// own and is never replaced by, or mixed with, the service's.
+const XAI_KEY_ENVS = ['GROK_API_KEY', 'XAI_API_KEY'];
 const MAX_ATTEMPTS = 4;
 const MAX_WAIT_S = 120;
 
@@ -229,15 +247,55 @@ function dateOnly(iso) {
 
 function keyProbeNote(probe) {
 	if (!probe) return 'The Grok lanes have not been run yet.';
-	return `The live Grok call (one real request to ${new URL(LANES.grok.url).host} with no key, ${dateOnly(probe.at)}) returned HTTP ${probe.status}: "${probe.error}". No xAI key is installed on the platform yet; installing GROK_API_KEY on the Cloud Run service is the owner step that unlocks the Grok columns.`;
+	return `The live Grok call (one real request to ${new URL(LANES.grok.url).host} with no key, ${dateOnly(probe.at)}) returned HTTP ${probe.status}: "${probe.error}". The process running the eval had no GROK_API_KEY in its environment. The Grok columns need the key there and nowhere else: nothing has to be installed on the production service.`;
 }
 
-function judgeNote(judged) {
+// Grok rows whose current-lane partner answered but that no judge has scored.
+function pairsWaiting(results, judged) {
+	let n = 0;
+	for (const r of results.values()) {
+		if (r.lane === 'current' || !r.ok) continue;
+		if (results.get(`current:${r.task}:${r.id}`)?.ok && !judged.has(`${r.task}:${r.id}:${r.lane}`)) n++;
+	}
+	return n;
+}
+
+function judgeNote(judged, waiting) {
 	const used = [...new Set(judged.map((j) => j.judge))];
 	const order = JUDGES.map((j) => `${j.name} \`${j.model}\``).join(', then ');
-	if (!used.length) return `No pairs judged yet: a pair needs the current lane and a Grok lane on the same input, so the judge runs with the Grok columns. The judge is the first configured of ${order}, skipping any model that produced either answer (so never Nemotron 3 Ultra against the current lane, and never Grok).`;
+	const rule = `The judge is the first configured of ${order}, skipping any model that produced either answer (so never Nemotron 3 Ultra against the current lane, and never Grok).`;
+	const owed = waiting
+		? ` ${waiting} ${waiting === 1 ? 'pair is' : 'pairs are'} answered by both lanes and still waiting for the judge: the run that made the Grok calls had no judge key (${JUDGES.map((j) => j.keyEnv).join(', ')}) in its environment. The second command under "Reproduce" judges them without calling xAI again.`
+		: '';
+	if (!used.length) {
+		if (waiting) return `No pairs judged yet, so every comparison on this page is the objective score alone.${owed} ${rule}`;
+		return `No pairs judged yet: a pair needs the current lane and a Grok lane on the same input, so the judge runs with the Grok columns. ${rule}`;
+	}
 	const consistent = judged.filter((j) => j.consistent).length;
-	return `Judge used: ${used.join(', ')}. ${consistent} of ${judged.length} pairs got the same verdict in both orders; the rest score as the average of the two orders.`;
+	return `Judge used: ${used.join(', ')}. ${consistent} of ${judged.length} pairs got the same verdict in both orders; the rest score as the average of the two orders.${owed}`;
+}
+
+// Write the Grok calls an earlier run made without database access into the
+// xAI credit ledger, once each. A row counts as written only when the ledger
+// holds its response id afterwards, so a dropped insert is tried again next run.
+async function settleLedger(results, ledger) {
+	const owed = unledgered([...results.values()], LANES);
+	if (!owed.length) return;
+	const { sql } = await import('../api/_lib/db.js');
+	const ids = owed.map((r) => r.responseId);
+	const inLedger = async () => new Set((await sql`select request_id from xai_usage where lane = 'eval' and request_id = any(${ids})`).map((x) => x.request_id));
+	const before = await inLedger();
+	for (const r of owed) if (!before.has(r.responseId)) ledger.recordXaiUsage(ledgerInput(r, { backfilled: true }));
+	await ledger.flushXaiUsage();
+	const after = await inLedger();
+	let settled = 0;
+	for (const r of owed) {
+		if (!after.has(r.responseId)) continue;
+		results.set(resultKey(r), { ...r, ledgered: true });
+		settled++;
+	}
+	compactJsonl(RESULTS_FILE, results);
+	console.log(`xAI ledger: wrote ${settled} of ${owed.length} Grok calls an earlier run made without database access`);
 }
 
 async function writeReport(sets, results, judged, runs) {
@@ -252,7 +310,11 @@ async function writeReport(sets, results, judged, runs) {
 			generatedOn: lastRun ? dateOnly(lastRun.finishedAt || lastRun.startedAt) : dateOnly(new Date().toISOString()),
 			production: PRODUCTION_NOTE,
 			keyProbe: keyProbeNote(runs.keyProbe),
-			judgeNote: judgeNote([...judged.values()]),
+			judgeNote: judgeNote([...judged.values()], pairsWaiting(results, judged)),
+			usageOf: (r) => {
+				const u = normalizeXaiUsage(r.usage);
+				return { ...u, reportedMicro: u.costMicro, listMicro: priceTableCostMicro(r.model, u) };
+			},
 		},
 	});
 	mkdirSync(dirname(REPORT_FILE), { recursive: true });
@@ -299,7 +361,7 @@ async function main() {
 	}
 
 	if (opts.prodEnv) {
-		const n = loadCloudRunEnv({ wanted: ENV_WANTED, required: ['NVIDIA_API_KEY'] });
+		const n = loadCloudRunEnv({ wanted: ENV_WANTED, required: ['NVIDIA_API_KEY'], keep: XAI_KEY_ENVS });
 		console.log(`loaded ${n} env vars from Cloud Run`);
 	}
 	const grokKeyed = opts.lanes.some((l) => LANES[l].provider === 'grok' && laneKey(LANES[l]));
@@ -307,7 +369,8 @@ async function main() {
 	for (const k of ['REDIS_URL', 'UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'KV_REST_API_URL', 'KV_REST_API_TOKEN']) delete process.env[k];
 	if (opts.lanes.includes('current') && !process.env.NVIDIA_API_KEY) usage('the current lane needs NVIDIA_API_KEY; pass --prod-env');
 	const ledger = grokKeyed && process.env.DATABASE_URL ? await import('../api/_lib/xai-usage.js') : null;
-	if (grokKeyed && !ledger) console.warn('DATABASE_URL is unset: Grok spend will not reach the xAI ledger for this run');
+	if (grokKeyed && !ledger) console.warn('DATABASE_URL is unset: Grok spend from this run waits in the results file and reaches the xAI ledger on the next --prod-env run');
+	if (ledger) await settleLedger(results, ledger);
 
 	const run = { startedAt: new Date().toISOString(), commit: gitSha(), lanes: opts.lanes, tasks: opts.tasks, rows: 0 };
 	const failedLanes = [];
@@ -318,7 +381,7 @@ async function main() {
 			const first = sets[opts.tasks[0]][0];
 			const res = await callLane(lane, buildRequest(opts.tasks[0], first));
 			runs.keyProbe = { lane: laneName, model: lane.model, status: res.status, error: res.ok ? null : res.error, at: new Date().toISOString() };
-			console.log(`${laneName}: no key installed; live probe returned HTTP ${res.status}${res.ok ? '' : ` (${res.error})`}. Skipping the set.`);
+			console.log(`${laneName}: no ${XAI_KEY_ENVS.join(' or ')} in this process's environment; live probe returned HTTP ${res.status}${res.ok ? '' : ` (${res.error})`}. Skipping the set.`);
 			continue;
 		}
 		const todo = [];
@@ -358,8 +421,10 @@ async function main() {
 				advisory: graded.advisory ?? null,
 				at: new Date().toISOString(),
 			};
-			if (res.ok && lane.provider === 'grok' && ledger) {
-				ledger.recordXaiUsage({ lane: 'eval', model: lane.model, usage: res.usage, requestId: res.responseId, meta: { eval: 'grok-eval-llm', task, row: row.id } });
+			if (lane.provider === 'grok') {
+				rec.responseId = res.ok ? res.responseId : null;
+				rec.ledgered = Boolean(res.ok && ledger);
+				if (rec.ledgered) ledger.recordXaiUsage(ledgerInput(rec));
 			}
 			results.set(resultKey(rec), rec);
 			judged.delete(`${task}:${row.id}:${laneName}`);

@@ -62,10 +62,10 @@ Briefs typed into the "describe your agent" box. `input`: `{ brief }`. Five rows
 
 ```bash
 npm run grok:eval-llm -- --prod-env                             # current production lane, all five tasks
-npm run grok:eval-llm -- --prod-env --lanes grok,grok_budget    # the Grok columns (needs GROK_API_KEY on Cloud Run)
+GROK_API_KEY="$(cat <key file>)" npm run grok:eval-llm -- --prod-env --lanes grok,grok_budget    # the Grok columns
 npm run grok:eval-llm -- --retry-failed --concurrency 1         # re-run rows that errored (NIM 429s)
 npm run grok:eval-llm -- --regrade                              # re-grade saved outputs after a grader change, no calls
 npm run grok:eval-llm -- --report                               # rebuild the doc from saved results
 ```
 
-`--prod-env` loads the provider keys from the Cloud Run service. Raw results land in [llm-results/](llm-results/) (`results.jsonl`, `judged.jsonl`, `runs.json`) and the report in [docs/evals/grok-4-7-on-three-ws.md](../../docs/evals/grok-4-7-on-three-ws.md). Flags and the result file format are documented at the top of [scripts/grok-eval-llm.mjs](../../scripts/grok-eval-llm.mjs).
+`--prod-env` loads the current lane's key, the judge keys and the database the xAI credit ledger lives in from the Cloud Run service. The Grok columns need `GROK_API_KEY` in the environment of the process running the eval and nowhere else; a key set in the shell is never replaced by `--prod-env`. Raw results land in [llm-results/](llm-results/) (`results.jsonl`, `judged.jsonl`, `runs.json`) and the report in [docs/evals/grok-4-7-on-three-ws.md](../../docs/evals/grok-4-7-on-three-ws.md). Flags and the result file format are documented at the top of [scripts/grok-eval-llm.mjs](../../scripts/grok-eval-llm.mjs).

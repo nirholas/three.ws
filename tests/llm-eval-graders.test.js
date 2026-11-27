@@ -12,6 +12,7 @@ import { pickJudge, judgePair, parseVerdict, judgeMessages, JUDGES } from '../sc
 import { TASKS, TASK_INFO, buildRequest, judgeInput } from '../scripts/lib/llm-eval/tasks.js';
 import { LANES, laneBody, parseCompletion, laneCostMicro, laneKey, callLane } from '../scripts/lib/llm-eval/lanes.js';
 import { laneSummary, failureReasons, checkBreakdown, pairedComparison, recommend, flagsToSet, buildReport } from '../scripts/lib/llm-eval/report.js';
+import { unledgered, ledgerInput } from '../scripts/lib/llm-eval/ledger.js';
 import { GROK_DEFAULT_MODEL, GROK_BUDGET_MODEL } from '../api/_lib/chat-models.js';
 import { LIMITS } from '../api/agents/suggest-spec.js';
 
@@ -291,5 +292,73 @@ describe('report and routing rule', () => {
 		expect(markdown).toContain('No flag is recommended until the Grok columns exist.');
 		expect(markdown).not.toMatch(/[\u2013\u2014]/);
 		expect(recommendations.every((r) => r.route === null)).toBe(true);
+	});
+
+	it('never tells the reader to install a key on the production service', () => {
+		const baseline = TASKS.flatMap((task) => SETS[task].map((r) => ({ task, id: r.id, lane: 'current', ok: true, pass: true, latencyMs: 1000, costMicro: 0 })));
+		const { markdown } = buildReport({ results: baseline, judged: [], sets: SETS, taskInfo: TASK_INFO, lanes: LANES, meta: { generatedOn: '2026-11-20', production: 'p', keyProbe: 'probe 401', judgeNote: 'j' } });
+		expect(markdown).not.toMatch(/key is installed|GROK_API_KEY on Cloud Run|setup:xai-key/);
+		expect(markdown).toContain('`GROK_API_KEY` in the environment of the process running the eval, and nowhere else');
+		expect(markdown).toContain('GROK_API_KEY="$(cat <key file>)" npm run grok:eval-llm -- --prod-env --lanes grok,grok_budget');
+	});
+
+	it('says when the judge has not run and when Grok loses it', () => {
+		const current = laneSummary(rows('current', 20), 50);
+		const base = { lane: LANES.grok, label: LANES.grok.label, summary: laneSummary(rows('grok', 21), 50), diff: pairedComparison(rows('current', 20), rows('grok', 21)) };
+		const args = { task: 'x_reply', current, routeEnv: 'LLM_ROUTE_X_REPLY', latencyBudgetMs: 5000 };
+		const unjudged = recommend({ ...args, candidates: [{ ...base, judge: null }] });
+		expect(unjudged.route).toBeNull();
+		expect(unjudged.text).toMatch(/pairwise judge has not scored it yet/);
+		const lost = recommend({ ...args, candidates: [{ ...base, judge: bootstrapMean(Array.from({ length: 50 }, (_, i) => (i < 10 ? 1 : 0)), { seed: 17 }) }] });
+		expect(lost.route).toBeNull();
+		expect(lost.text).toMatch(/loses the pairwise judge \(win rate 20%\)/);
+		const even = recommend({ ...args, candidates: [{ ...base, judge: bootstrapMean(Array.from({ length: 50 }, (_, i) => (i % 2 ? 1 : 0)), { seed: 17 }) }] });
+		expect(even.text).toMatch(/is a statistical tie with the current lane\.$/);
+	});
+
+	it('states dates, model ids, inputs per task and xAI spend once a Grok lane has run', () => {
+		const at = { current: '2026-11-20T22:00:00.000Z', grok: '2026-11-27T20:00:00.000Z' };
+		const mk = (lane, n, costMicro, usage) => TASKS.flatMap((task) => SETS[task].slice(0, n).map((r) => ({ task, id: r.id, lane, model: LANES[lane].model, ok: true, pass: true, latencyMs: 1000, costMicro, usage, at: at[lane] })));
+		const usageOf = (r) => ({ inputTokens: r.usage?.in ?? 0, cachedTokens: r.usage?.cached ?? 0, outputTokens: r.usage?.out ?? 0, reasoningTokens: r.usage?.reason ?? 0, reportedMicro: r.usage?.reported ?? null, listMicro: r.lane === 'grok' ? 1500 : null });
+		const meta = { generatedOn: '2026-11-27', production: 'p', keyProbe: 'k', judgeNote: 'j', usageOf };
+		const grokUsage = { in: 1000, cached: 400, out: 50, reason: 200, reported: 2000 };
+
+		const full = buildReport({ results: [...mk('current', 50, 0, { in: 900, out: 60 }), ...mk('grok', 50, 2000, grokUsage)], judged: [], sets: SETS, taskInfo: TASK_INFO, lanes: LANES, meta }).markdown;
+		expect(full).toContain(`| ${LANES.current.label} | \`${LANES.current.model}\` | 2026-11-20 | all 50 on every task | 225,000 (0) | 15,000 (0) | $0 (free tier) |`);
+		expect(full).toContain(`| ${LANES.grok.label} | \`${GROK_DEFAULT_MODEL}\` | 2026-11-27 | all 50 on every task | 250,000 (100,000) | 12,500 (50,000) | $0.50 |`);
+		expect(full).toContain('Total xAI spend for the Grok columns: $0.50 over 250 answered calls, from the cost xAI reported on each response. The same token counts at list price come to $0.38.');
+		expect(full).toContain('Coverage: every lane ran every input of every task');
+		expect(full).not.toContain('Baseline only');
+		expect(full).not.toMatch(/[\u2013\u2014]/);
+
+		const subset = buildReport({ results: [...mk('current', 50, 0, null), ...mk('grok', 10, 1500, { in: 1000, out: 50 })], judged: [], sets: SETS, taskInfo: TASK_INFO, lanes: LANES, meta }).markdown;
+		expect(subset).toContain('Forge prompt director 10/50, Agent chat: tool selection 10/50');
+		expect(subset).toContain('Total xAI spend for the Grok columns: $0.07 over 50 answered calls, from the token counts xAI returned, at list price.');
+		expect(subset).toContain(`Coverage: ${LANES.grok.label} ran a subset of the inputs`);
+	});
+});
+
+describe('xAI ledger rows owed by the eval', () => {
+	const rec = (over) => ({ task: 'x_reply', id: 'xr-01', lane: 'grok', model: GROK_DEFAULT_MODEL, ok: true, usage: { prompt_tokens: 10, completion_tokens: 2 }, responseId: 'resp-1', ledgered: false, at: '2026-11-27T20:00:00.000Z', ...over });
+
+	it('owes a row only for an answered Grok call that never reached the ledger', () => {
+		const results = [
+			rec(),
+			rec({ id: 'xr-02', responseId: 'resp-2', ledgered: true }),
+			rec({ id: 'xr-03', ok: false, responseId: null }),
+			rec({ id: 'xr-04', lane: 'current', model: LANES.current.model, responseId: 'nim-1', ledgered: undefined }),
+			rec({ id: 'xr-05', lane: 'grok_budget', model: GROK_BUDGET_MODEL, responseId: 'resp-5' }),
+		];
+		expect(unledgered(results, LANES).map((r) => r.id)).toEqual(['xr-01', 'xr-05']);
+	});
+
+	it('keys the ledger row on the xAI response id so a backfill can be repeated', () => {
+		expect(ledgerInput(rec(), { backfilled: true })).toEqual({
+			lane: 'eval',
+			model: GROK_DEFAULT_MODEL,
+			usage: { prompt_tokens: 10, completion_tokens: 2 },
+			requestId: 'resp-1',
+			meta: { eval: 'grok-eval-llm', task: 'x_reply', row: 'xr-01', calledAt: '2026-11-27T20:00:00.000Z', backfilled: true },
+		});
 	});
 });
