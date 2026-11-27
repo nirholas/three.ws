@@ -20,16 +20,24 @@ export function gcloud(args) {
 }
 
 /**
- * Copy every Cloud Run env var whose name matches `wanted` into process.env.
+ * Copy every Cloud Run env var whose name matches `wanted` into process.env,
+ * replacing whatever the shell had, so the CLI acts on production's values.
+ *
+ * `keep` names one credential the operator may supply themselves, under any of
+ * its aliases (GROK_API_KEY and XAI_API_KEY are the same key). When the shell
+ * already holds any of them, none of them is read from the service: the
+ * operator's value stays and the service's copy never enters this process.
+ *
  * Throws when any name in `required` is still unset afterwards.
  * Returns the number of vars loaded.
  */
-export function loadCloudRunEnv({ wanted, required = [] }) {
+export function loadCloudRunEnv({ wanted, required = [], keep = [] }) {
 	const svc = JSON.parse(gcloud(['run', 'services', 'describe', SERVICE, '--region', REGION, '--format', 'json']));
 	const vars = svc?.spec?.template?.spec?.containers?.[0]?.env || [];
+	const kept = keep.some((k) => process.env[k]) ? new Set(keep) : new Set();
 	let n = 0;
 	for (const v of vars) {
-		if (!wanted.test(v.name)) continue;
+		if (!wanted.test(v.name) || kept.has(v.name)) continue;
 		if (typeof v.value === 'string') process.env[v.name] = v.value;
 		else if (v.valueFrom?.secretKeyRef?.name) {
 			const ref = v.valueFrom.secretKeyRef;
