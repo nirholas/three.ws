@@ -38,11 +38,13 @@ beforeAll(() => {
 // duplicate genuinely arrives while the first submit is still running.
 let releaseSubmit = null;
 let submitCount = 0;
+let submitReached = null;
 const gcpSubmit = vi.fn(async ({ params }) => {
 	submitCount += 1;
 	const n = submitCount;
 	await new Promise((resolve) => {
 		releaseSubmit = resolve;
+		submitReached?.();
 	});
 	return { extJobId: `gcpjob-dup-${n}`, viewsUsed: params.images.length, multiview: false };
 });
@@ -125,10 +127,17 @@ async function post(body, key) {
 	return res;
 }
 
-// Wait until the first submit has reached the worker hand-off.
+// Wait until the next submit has reached the worker hand-off. The handler runs
+// its gates first (auth, territory, limits, the view step), which takes from a
+// few milliseconds to over a second when the suite runs beside others, so this
+// waits for the hand-off itself rather than a fixed deadline; the suite's own
+// test timeout bounds a submit that never arrives.
 async function untilSubmitHeld() {
-	for (let i = 0; i < 200 && !releaseSubmit; i++) await new Promise((r) => setTimeout(r, 5));
-	if (!releaseSubmit) throw new Error('first submit never reached the worker');
+	if (releaseSubmit) return;
+	await new Promise((resolve) => {
+		submitReached = resolve;
+	});
+	submitReached = null;
 }
 
 const BODY = {
