@@ -1,12 +1,19 @@
 // Multi-format export layered onto the forge result viewer.
 //
 // The download button always offers the source GLB instantly. This module adds
-// a format menu beside it. Most formats convert the live model in the browser
-// with three.js exporters, so there is no worker, no queue and no upload:
-//   • OBJ  : universal geometry for DCC tools (geometry + UVs, no materials)
-//   • STL  : solid geometry for 3D printing (binary)
+// a format menu beside it. Most formats convert the model in the browser, with
+// no queue and no upload, through the shared engine in src/forge-export-core.js
+// (OBJ, STL and PLY in a worker so a dense mesh never freezes the page; see
+// src/forge-export-client.js). Each file follows the convention of the tool it
+// opens in:
+//   • OBJ  : universal geometry for DCC tools (Y-up meters, normals + UVs)
+//   • STL  : 3D printing, Z-up millimetres standing on the build plate, sized
+//            exactly like the server slicer handoff
 //   • PLY  : vertex data for scanning/point-cloud tools (binary)
 //   • USDZ : textured AR asset for iPhone / Vision Pro
+//
+// Forge and Forge Studio both load this one module, so the two pages offer the
+// same rows and write the same bytes.
 //
 // Two formats have no browser exporter and are converted by the remesh worker
 // (POST /api/forge-remesh with operation:"convert"), which authors them from
@@ -20,12 +27,13 @@
 // platform supports. A server format is a real job, so it reports queued
 // progress and can fail with a message rather than resolving instantly.
 //
-// three.js and the exporters load lazily on first use; the parsed scene is
-// cached per model URL so switching formats doesn't re-download the GLB.
+// three.js and the exporters load lazily on first use, so the menu costs
+// nothing until someone picks a format.
 // Like the stylize/optimize panels, this module injects its own markup and
 // styles and only needs the result panel's download anchor to exist.
 
 import { copyReadme3d, describeResult } from './readme-3d-copy.js';
+import { FORMAT_MIME, exportBaseName, exportFileName } from './forge-export-files.js';
 import { createLogger } from './shared/log.js';
 import { creationIdFromGlbUrl, mountSlicerMenuItems } from './slicer-handoff.js';
 import { mountCraftcloudMenuItem } from './craftcloud-print.js';
@@ -44,7 +52,7 @@ if (download && resultPanel) {
 		{
 			id: 'glb',
 			label: 'GLB',
-			blurb: 'Source format — textures embedded. Works everywhere glTF does.',
+			blurb: 'Source format with textures embedded. Opens in any glTF importer, no extra decoders needed.',
 			ext: 'glb',
 		},
 		{
@@ -52,28 +60,28 @@ if (download && resultPanel) {
 			label: 'OBJ',
 			blurb: 'Universal geometry + UVs for Blender, Maya, C4D. Materials not included.',
 			ext: 'obj',
-			mime: 'text/plain',
+			mime: FORMAT_MIME.obj,
 		},
 		{
 			id: 'stl',
 			label: 'STL',
-			blurb: 'Solid geometry for 3D printing and CAD. Binary, compact.',
+			blurb: 'Solid geometry for 3D printing. Millimetres, Z-up, standing on the build plate.',
 			ext: 'stl',
-			mime: 'model/stl',
+			mime: FORMAT_MIME.stl,
 		},
 		{
 			id: 'ply',
 			label: 'PLY',
 			blurb: 'Vertex-level data for scanning and point-cloud tools. Binary.',
 			ext: 'ply',
-			mime: 'application/octet-stream',
+			mime: FORMAT_MIME.ply,
 		},
 		{
 			id: 'usdz',
 			label: 'USDZ',
-			blurb: 'Textured AR asset — opens directly on iPhone and Vision Pro.',
+			blurb: 'Textured AR asset. Opens directly on iPhone and Vision Pro.',
 			ext: 'usdz',
-			mime: 'model/vnd.usdz+zip',
+			mime: FORMAT_MIME.usdz,
 		},
 		{
 			id: 'readme',
@@ -144,7 +152,7 @@ if (download && resultPanel) {
 			transform: translate(var(--export-menu-shift, 0px), 0);
 		}
 		.export-item {
-			display: flex; align-items: baseline; gap: 0.65rem; width: 100%;
+			display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.65rem; width: 100%;
 			padding: 0.55rem 0.7rem; border: 0; border-radius: 8px;
 			background: transparent; color: inherit; text-align: left; cursor: pointer;
 			transition: background 0.12s ease;
@@ -160,6 +168,9 @@ if (download && resultPanel) {
 		   or the download-again link). The five client-side formats still resolve
 		   in a word, so the column only grows when it has something to say. */
 		.export-item .status:has(.export-again), .export-item .status.is-error { min-width: 9em; }
+		/* A sentence that tells the person what to do (a model too large for the
+		   tab) gets its own line under the row instead of a squeezed column. */
+		.export-item .status.is-long { flex-basis: 100%; min-width: 0; text-align: left; line-height: 1.4; }
 		.export-item .export-again { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 		.export-item .export-again:hover, .export-item .export-again:focus-visible { opacity: 1; text-decoration-thickness: 2px; }
 		.export-menu-footer {
@@ -346,48 +357,8 @@ if (download && resultPanel) {
 
 	// ---- conversion ----------------------------------------------------------
 
-	let three = null; // { THREE, GLTFLoader, exporters... } cached after first load
-	async function loadThree() {
-		if (three) return three;
-		const [THREE, gltf, draco, obj, stl, ply, usdz] = await Promise.all([
-			import('three'),
-			import('three/addons/loaders/GLTFLoader.js'),
-			import('three/addons/loaders/DRACOLoader.js'),
-			import('three/addons/exporters/OBJExporter.js'),
-			import('three/addons/exporters/STLExporter.js'),
-			import('three/addons/exporters/PLYExporter.js'),
-			import('three/addons/exporters/USDZExporter.js'),
-		]);
-		three = {
-			THREE,
-			GLTFLoader: gltf.GLTFLoader,
-			DRACOLoader: draco.DRACOLoader,
-			OBJExporter: obj.OBJExporter,
-			STLExporter: stl.STLExporter,
-			PLYExporter: ply.PLYExporter,
-			USDZExporter: usdz.USDZExporter,
-		};
-		return three;
-	}
-
-	// Parsed-scene cache: one fetch+parse per model URL no matter how many
-	// formats the user exports.
-	let sceneCache = { url: null, scene: null };
-	async function loadScene(url) {
-		if (sceneCache.url === url && sceneCache.scene) return sceneCache.scene;
-		const t = await loadThree();
-		const loader = new t.GLTFLoader();
-		const dracoLoader = new t.DRACOLoader();
-		dracoLoader.setDecoderPath('/three/draco/gltf/');
-		loader.setDRACOLoader(dracoLoader);
-		const gltf = await loader.loadAsync(url);
-		sceneCache = { url, scene: gltf.scene };
-		return gltf.scene;
-	}
-
 	function baseName() {
-		const attr = download.getAttribute('download') || 'forge.glb';
-		return attr.replace(/\.glb$/i, '') || 'forge';
+		return exportBaseName(download.getAttribute('download'));
 	}
 
 	function saveBlob(data, mime, filename) {
@@ -401,26 +372,11 @@ if (download && resultPanel) {
 		setTimeout(() => URL.revokeObjectURL(a.href), 30_000);
 	}
 
-	async function convert(format, scene) {
-		const t = await loadThree();
-		switch (format.id) {
-			case 'obj':
-				return new t.OBJExporter().parse(scene);
-			case 'stl':
-				return new t.STLExporter().parse(scene, { binary: true });
-			case 'ply':
-				return await new Promise((resolve, reject) => {
-					try {
-						new t.PLYExporter().parse(scene, resolve, { binary: true });
-					} catch (err) {
-						reject(err);
-					}
-				});
-			case 'usdz':
-				return await new t.USDZExporter().parseAsync(scene);
-			default:
-				throw new Error(`unknown export format: ${format.id}`);
-		}
+	// The conversion engine loads on first use, not with the page.
+	let client = null;
+	function loadClient() {
+		client ??= import('./forge-export-client.js');
+		return client;
 	}
 
 	// ---- server conversion (FBX, 3MF) ----------------------------------------
@@ -471,7 +427,7 @@ if (download && resultPanel) {
 	const busy = new Set();
 	async function onPick(format, item) {
 		if (format.id === 'glb') {
-			// The source GLB needs no conversion — hand off to the primary anchor.
+			// The source GLB needs no conversion: hand off to the primary anchor.
 			setOpen(false);
 			download.click();
 			return;
@@ -490,7 +446,7 @@ if (download && resultPanel) {
 		}
 		busy.add(format.id);
 		item.setAttribute('aria-disabled', 'true');
-		status.classList.remove('is-error');
+		status.classList.remove('is-error', 'is-long');
 		const spin = (label) => {
 			status.innerHTML = `<span class="export-spinner" aria-hidden="true"></span> ${label}`;
 		};
@@ -525,9 +481,10 @@ if (download && resultPanel) {
 				}, 60_000);
 				return;
 			}
-			const scene = await loadScene(url);
-			const data = await convert(format, scene);
-			saveBlob(data, format.mime, `${baseName()}.${format.ext}`);
+			const { exportInBrowser } = await loadClient();
+			const data = await exportInBrowser(format.id, url, { onPhase: spin });
+			spin('saving');
+			saveBlob(data, format.mime, exportFileName(baseName(), format.ext));
 			status.textContent = 'saved ✓';
 			setTimeout(() => {
 				if (status.textContent === 'saved ✓') status.textContent = '';
@@ -537,7 +494,14 @@ if (download && resultPanel) {
 			// Say what went wrong. "failed" alone sent people re-clicking a button
 			// that was never going to work; a converter that is down and a mesh it
 			// cannot read need different responses from the user.
-			const why = (format.server || format.readme) && err?.message ? `failed: ${err.message}` : 'failed, retry';
+			// An in-browser conversion error is already a sentence written for the
+			// person (src/forge-export-client.js), so it is shown whole.
+			if (err?.name === 'ExportError') {
+				status.textContent = err.message;
+				status.classList.add('is-error', 'is-long');
+				return;
+			}
+			const why = err?.message ? `failed: ${err.message}` : 'failed, retry';
 			status.textContent = why.length > 90 ? `${why.slice(0, 87)}…` : why;
 			status.classList.add('is-error');
 		} finally {
@@ -561,7 +525,7 @@ if (download && resultPanel) {
 	// A new generation invalidates the parsed-scene cache (the href changes, but
 	// clearing eagerly also frees the old scene graph for GC).
 	document.addEventListener('forge:model-ready', (e) => {
-		sceneCache = { url: null, scene: null };
+		client?.then((c) => c.resetExportCache());
 		slicerItems.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl));
 		craftcloudItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
 		minecraftItem.setCreation(e.detail?.creationId || creationIdFromGlbUrl(e.detail?.glbUrl), e.detail?.glbUrl || null);
@@ -576,7 +540,7 @@ if (download && resultPanel) {
 		convertEpoch += 1;
 		for (const status of itemStatus.values()) {
 			status.textContent = '';
-			status.classList.remove('is-error');
+			status.classList.remove('is-error', 'is-long');
 		}
 	});
 }

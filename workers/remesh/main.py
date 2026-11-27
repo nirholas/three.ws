@@ -37,6 +37,7 @@ API contract:
     target_faces?: int,              # default: 50000, range: 1000–500000
     texture_size?: int,              # 512|1024|2048, default 1024 (bake atlas size)
     output_format?: "glb"|"obj"|"stl"|"ply"|"usdz"|"3mf"|"fbx",  # default: "glb"
+    fbx_engine?: "unity"|"unreal",   # FBX axis system, default "unity" (FBX output only)
   } → 202 { task_id, status }
 
   GET /tasks/:id → {
@@ -110,6 +111,9 @@ AUTOREMESHER_COUNT_TOLERANCE = 0.15
 AUTOREMESHER_ACCEPT_TOLERANCE = 0.5
 AUTOREMESHER_MIN_QUAD_RATIO = 0.85
 QUAD_ENGINES = {"auto", "autoremesher", "quadriflow"}
+# Axis presets blender_fbx.py writes an FBX in: Unity reads Y-up, Unreal Z-up.
+# Both are centimetre files with the conversion baked into the vertices.
+FBX_ENGINES = {"unity", "unreal"}
 
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
@@ -779,9 +783,17 @@ def _build_textured_trimesh(verts, faces, uvs, image):
     import trimesh
     mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
     if uvs is not None and image is not None:
-        mesh.visual = trimesh.visual.TextureVisuals(
-            uv=uvs, image=image, material=trimesh.visual.material.SimpleMaterial(image=image),
+        # An explicit PBR material: SimpleMaterial's default diffuse is 102/255
+        # and it writes no metalness, so the bake shipped at 40% brightness on a
+        # surface glTF reads as fully metallic. The bake carries colour only, so
+        # the honest material is an untinted, non-metallic, rough one.
+        material = trimesh.visual.material.PBRMaterial(
+            baseColorTexture=image,
+            baseColorFactor=[255, 255, 255, 255],
+            metallicFactor=0.0,
+            roughnessFactor=1.0,
         )
+        mesh.visual = trimesh.visual.TextureVisuals(uv=uvs, image=image, material=material)
     return mesh
 
 
@@ -834,7 +846,7 @@ def _face_count_marker(stdout: str) -> Optional[int]:
     return None
 
 
-def _blender_convert(in_path: Path, out_path: Path, static: bool) -> int:
+def _blender_convert(in_path: Path, out_path: Path, static: bool, engine: str = "unity") -> int:
     """Convert a local model file via headless Blender, by `out_path`'s suffix.
 
     `.fbx` exports an FBX, preserving the skeleton, skin weights, and
@@ -844,7 +856,8 @@ def _blender_convert(in_path: Path, out_path: Path, static: bool) -> int:
     Returns the converted polygon count. Raises InputFormatError when the input
     imported no mesh polygons, and RuntimeError with a clipped log tail on any
     other failure. `static=True` skips animation baking (used when the upstream
-    geometry op already discarded any rig).
+    geometry op already discarded any rig). `engine` picks the FBX axis preset
+    (see FBX_ENGINES); it only applies when the output is an FBX.
 
     Completion is judged by the child's FACE_COUNT marker plus a non-empty file,
     not by its exit status. Blender can die in its own interpreter teardown after
@@ -855,6 +868,8 @@ def _blender_convert(in_path: Path, out_path: Path, static: bool) -> int:
     cmd = [sys.executable, str(BLENDER_FBX_SCRIPT), str(in_path), str(out_path)]
     if static:
         cmd.append("--static")
+    if out_path.suffix == ".fbx":
+        cmd.append(f"--engine={engine}")
     try:
         proc = subprocess.run(
             cmd, capture_output=True, text=True, timeout=BLENDER_TIMEOUT, check=False,
@@ -922,7 +937,9 @@ def _fbx_to_glb(data: bytes) -> bytes:
         return glb_path.read_bytes()
 
 
-def _convert_to_fbx_preserving_rig(data: bytes, suffix: str, task_id: str) -> tuple[list, dict]:
+def _convert_to_fbx_preserving_rig(
+    data: bytes, suffix: str, task_id: str, fbx_engine: str = "unity",
+) -> tuple[list, dict]:
     """`convert` → FBX without touching geometry, so a rigged GLB keeps its bone
     hierarchy, skin weights, and blendshapes. Blender imports the source
     directly when it can read it as one self-contained file; the rest
@@ -933,13 +950,13 @@ def _convert_to_fbx_preserving_rig(data: bytes, suffix: str, task_id: str) -> tu
         if suffix in BLENDER_IMPORT_FORMATS:
             src_path = Path(tmp) / f"input{suffix}"
             src_path.write_bytes(data)
-            faces = _blender_convert(src_path, out_path, static=False)
+            faces = _blender_convert(src_path, out_path, static=False, engine=fbx_engine)
         else:
             import trimesh
             mesh = _load_concatenated(data, suffix)
             glb_path = Path(tmp) / "bridge.glb"
             trimesh.scene.scene.Scene(geometry={"mesh": mesh}).export(str(glb_path))
-            faces = _blender_convert(glb_path, out_path, static=True)
+            faces = _blender_convert(glb_path, out_path, static=True, engine=fbx_engine)
         fbx_bytes = out_path.read_bytes()
     meta = {"quad_ratio": 0.0, "textured": False, "face_count": faces}
     return [Artifact(f"{task_id}.fbx", fbx_bytes, "application/octet-stream", "model")], meta
@@ -1018,7 +1035,7 @@ def _write_usdz(mesh, task_id: str, out_path: Path) -> None:
         raise RuntimeError("usdz packaging failed")
 
 
-def _export_simple(mesh, output_format: str, task_id: str) -> list:
+def _export_simple(mesh, output_format: str, task_id: str, fbx_engine: str = "unity") -> list:
     """Export a Trimesh to a single self-contained file (GLB embeds textures).
 
     Two formats have no trimesh writer. FBX is bridged through a temp GLB and
@@ -1033,7 +1050,7 @@ def _export_simple(mesh, output_format: str, task_id: str) -> list:
         if fmt == "fbx":
             glb_path = Path(tmpdir) / f"{task_id}.glb"
             trimesh.scene.scene.Scene(geometry={"mesh": mesh}).export(str(glb_path))
-            _blender_convert(glb_path, out_path, static=True)
+            _blender_convert(glb_path, out_path, static=True, engine=fbx_engine)
         elif fmt == "usdz":
             _write_usdz(mesh, task_id, out_path)
         elif fmt == "glb":
@@ -1061,7 +1078,7 @@ def _process_triangle(mesh, operation: str, target_faces: int):
 
 def _process_quad(
     source, target_faces: int, output_format: str, tex_size: int, task_id: str,
-    quad_engine: str = "auto",
+    quad_engine: str = "auto", fbx_engine: str = "unity",
 ):
     import trimesh
     src_uv, src_img = _source_texture(source)
@@ -1102,10 +1119,13 @@ def _process_quad(
     mesh = _build_textured_trimesh(
         tri_mesh.vertices, tri_mesh.faces, baked_uv, baked_img,
     )
-    return _export_simple(mesh, output_format, task_id), meta
+    return _export_simple(mesh, output_format, task_id, fbx_engine), meta
 
 
-def _process_lowpoly(source, target_faces: int, output_format: str, tex_size: int, task_id: str):
+def _process_lowpoly(
+    source, target_faces: int, output_format: str, tex_size: int, task_id: str,
+    fbx_engine: str = "unity",
+):
     import trimesh
     src_uv, src_img = _source_texture(source)
     geom = source.copy()
@@ -1133,7 +1153,7 @@ def _process_lowpoly(source, target_faces: int, output_format: str, tex_size: in
         return _write_textured_quad_obj(low.vertices, polys, baked_uv, baked_img, task_id), meta
 
     mesh = _build_textured_trimesh(low.vertices, low.faces, baked_uv, baked_img)
-    return _export_simple(mesh, output_format, task_id), meta
+    return _export_simple(mesh, output_format, task_id, fbx_engine), meta
 
 
 def _run_processing(
@@ -1145,6 +1165,7 @@ def _run_processing(
     texture_size: int,
     task_id: str,
     quad_engine: str = "auto",
+    fbx_engine: str = "unity",
 ) -> tuple[list, dict]:
     data, suffix = _fetch_mesh(mesh_url)
 
@@ -1153,7 +1174,7 @@ def _run_processing(
     # reads the source directly. Geometry-changing FBX requests fall through to
     # the pipelines below and emit a static FBX via _export_simple.
     if output_format == "fbx" and remesh_mode == "triangle" and operation == "convert":
-        return _convert_to_fbx_preserving_rig(data, suffix, task_id)
+        return _convert_to_fbx_preserving_rig(data, suffix, task_id, fbx_engine)
 
     # Every other path reads the input with trimesh, which cannot parse FBX.
     if suffix == ".fbx":
@@ -1163,17 +1184,20 @@ def _run_processing(
         source = _load_textured(data, suffix)
         return _process_quad(
             source, target_faces, output_format, texture_size, task_id, quad_engine,
+            fbx_engine,
         )
 
     if remesh_mode == "lowpoly":
         source = _load_textured(data, suffix)
-        return _process_lowpoly(source, target_faces, output_format, texture_size, task_id)
+        return _process_lowpoly(
+            source, target_faces, output_format, texture_size, task_id, fbx_engine,
+        )
 
     # triangle (default), legacy behaviour, geometry only.
     mesh = _load_concatenated(data, suffix)
     mesh, meta = _process_triangle(mesh, operation, target_faces)
     meta["face_count"] = len(mesh.faces)
-    return _export_simple(mesh, output_format, task_id), meta
+    return _export_simple(mesh, output_format, task_id, fbx_engine), meta
 
 
 # ── Task orchestration ───────────────────────────────────────────────────────
@@ -1187,6 +1211,7 @@ async def _process(
     output_format: str,
     texture_size: int,
     quad_engine: str = "auto",
+    fbx_engine: str = "unity",
 ) -> None:
     async with _sem:
         _tasks[task_id]["status"] = "running"
@@ -1204,6 +1229,7 @@ async def _process(
                 texture_size,
                 task_id,
                 quad_engine,
+                fbx_engine,
             )
 
             urls: dict[str, str] = {}
@@ -1229,6 +1255,7 @@ async def _process(
                 "textured": meta.get("textured"),
                 "mode": remesh_mode,
                 "output_format": output_format,
+                "fbx_engine": fbx_engine if output_format == "fbx" else None,
                 "bytes": total_bytes,
                 "elapsed_ms": int(elapsed * 1000),
             })
@@ -1265,6 +1292,15 @@ class ProcessRequest(BaseModel):
     target_faces: int = Field(default=50_000, ge=1_000, le=500_000)
     texture_size: int = Field(default=1024)
     output_format: str = Field(default="glb")
+    fbx_engine: str = Field(default="unity", description="unity|unreal (FBX axis preset)")
+
+    @field_validator("fbx_engine")
+    @classmethod
+    def validate_fbx_engine(cls, v: str) -> str:
+        v = (v or "unity").lower()
+        if v not in FBX_ENGINES:
+            raise ValueError(f"fbx_engine must be one of {sorted(FBX_ENGINES)}")
+        return v
 
     @field_validator("output_format")
     @classmethod
@@ -1331,6 +1367,7 @@ async def process_mesh(
         body.output_format,
         body.texture_size,
         body.quad_engine,
+        body.fbx_engine,
     )
     return {"task_id": task_id, "status": "queued", "mode": body.remesh_mode}
 

@@ -2,6 +2,7 @@
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from '../shared/state-kit.js';
 import { showSharePanel } from '../shared/share.js';
 import { stampGlbAttribution } from '../shared/glb-attribution.js';
+import { exportFileName, prepareGlbDownload } from '../forge-export-files.js';
 import {
 	primeTierPass,
 	attachTierPass,
@@ -1963,12 +1964,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 	els.download.href = glbUrl;
 	els.download.setAttribute(
 		'download',
-		`${
-			label
-				.replace(/[^a-z0-9]+/gi, '-')
-				.slice(0, 48)
-				.replace(/^-|-$/g, '') || 'forge'
-		}.glb`,
+		exportFileName(label, 'glb'),
 	);
 	// Cross-link into Parts Studio with this exact model pre-loaded.
 	if (els.segmentBtn) els.segmentBtn.href = `/segment?mesh=${encodeURIComponent(glbUrl)}`;
@@ -3017,7 +3013,9 @@ els.download.addEventListener('click', async (e) => {
 	try {
 		const res = await fetch(glbUrl);
 		if (!res.ok) throw new Error(`fetch ${res.status}`);
-		const stamped = stampGlbAttribution(await res.arrayBuffer(), {
+		// WebP-only maps become PNG so the file opens fully in any glTF importer.
+		const { buffer } = await prepareGlbDownload(await res.arrayBuffer());
+		const stamped = stampGlbAttribution(buffer, {
 			prompt: els.resultLabel?.textContent || '',
 		});
 		const blobUrl = URL.createObjectURL(new Blob([stamped], { type: 'model/gltf-binary' }));

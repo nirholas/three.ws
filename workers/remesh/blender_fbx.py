@@ -19,10 +19,18 @@ written back out as a GLB that the trimesh pipelines can read. An output path
 ending in `.glb` selects that mode.
 
 Usage:
-    python blender_fbx.py <input> <output.fbx|output.glb> [--static]
+    python blender_fbx.py <input> <output.fbx|output.glb> [--static] [--engine=unity|unreal]
 
 `--static` skips animation baking — used when the upstream geometry op
 (simplify/repair) has already discarded any rig, so the FBX is a plain mesh.
+
+`--engine` picks the axis system the FBX is written in (default `unity`):
+`unity` is Y-up, `unreal` is Z-up. Either way the file is in centimetres with
+the unit conversion applied to the geometry, so a 1 m model measures 1 m on
+import and its root carries scale 1. A static mesh also has the axis
+conversion baked into its vertices, so no node carries the -90 degree X
+rotation Blender's defaults leave behind. A rigged export keeps that rotation
+on the armature root, because baking it into a skeleton breaks its animation.
 
 On success, prints `FACE_COUNT:<n>` to stdout (polygons across all mesh objects).
 An input that imports no mesh polygons at all (an ASCII FBX, which Blender's
@@ -118,16 +126,50 @@ def _face_count() -> int:
     return total
 
 
-def _export_fbx(path: Path, static: bool) -> None:
+# Axis system per engine preset, as Blender's exporter names it (the FBX axis
+# Blender's forward and up axes are written to). Unity and the glTF world are
+# Y-up; Unreal and Blender are Z-up, so the Unreal file needs no conversion.
+ENGINE_AXES = {
+    "unity": {"axis_forward": "-Z", "axis_up": "Y"},
+    "unreal": {"axis_forward": "Y", "axis_up": "Z"},
+}
+
+
+def _materialize_images(directory: Path) -> None:
+    """Give every packed image a real file so the FBX exporter can embed it.
+
+    The glTF importer keeps a GLB's images packed inside the .blend data, and
+    the FBX exporter only embeds images it can find on disk, so every texture
+    was silently dropped: the FBX arrived untextured even though the bake had
+    succeeded."""
+    directory.mkdir(parents=True, exist_ok=True)
+    for index, image in enumerate(bpy.data.images):
+        if image.packed_file is None:
+            continue
+        fmt = (image.file_format or "PNG").upper()
+        ext = ".jpg" if fmt == "JPEG" else ".png"
+        stem = "".join(c if c.isalnum() or c in "-_" else "_" for c in image.name) or "texture"
+        target = directory / f"{index:02d}_{stem}{ext}"
+        target.write_bytes(image.packed_file.data)
+        image.filepath = str(target)
+        image.unpack(method="REMOVE")
+
+
+def _export_fbx(path: Path, static: bool, engine: str) -> None:
     _enable_addon("io_scene_fbx")
+    _materialize_images(path.parent / f".{path.stem}_textures")
     # path_mode='COPY' + embed_textures keeps the result a single self-contained
     # file. add_leaf_bones=False avoids the extra tip bones that make Unity warn.
     # use_armature_deform_only=False keeps every bone (control bones included).
+    # FBX_SCALE_ALL writes a centimetre file with the unit conversion applied to
+    # the geometry, so no node carries the 100x scale engines complain about.
     bpy.ops.export_scene.fbx(
         filepath=str(path),
         use_selection=False,
         apply_unit_scale=True,
-        apply_scale_options="FBX_SCALE_NONE",
+        apply_scale_options="FBX_SCALE_ALL",
+        bake_space_transform=static,
+        **ENGINE_AXES[engine],
         use_mesh_modifiers=True,
         mesh_smooth_type="FACE",
         add_leaf_bones=False,
@@ -158,9 +200,13 @@ def _export_glb(path: Path) -> None:
 def main() -> None:
     args = sys.argv[1:]
     static = "--static" in args
+    engines = [a.split("=", 1)[1] for a in args if a.startswith("--engine=")]
+    engine = engines[-1] if engines else "unity"
+    if engine not in ENGINE_AXES:
+        _leave(2, f"blender_fbx: unknown engine '{engine}' (expected one of {sorted(ENGINE_AXES)})")
     positional = [a for a in args if not a.startswith("--")]
     if len(positional) != 2:
-        _leave(2, "usage: blender_fbx.py <input> <output.fbx|output.glb> [--static]")
+        _leave(2, "usage: blender_fbx.py <input> <output.fbx|output.glb> [--static] [--engine=unity|unreal]")
 
     in_path = Path(positional[0])
     out_path = Path(positional[1])
@@ -186,7 +232,7 @@ def main() -> None:
     if out_path.suffix.lower() == ".glb":
         _export_glb(out_path)
     else:
-        _export_fbx(out_path, static)
+        _export_fbx(out_path, static, engine)
 
     if not out_path.exists() or out_path.stat().st_size == 0:
         _leave(1, "blender_fbx: exporter produced no output")
