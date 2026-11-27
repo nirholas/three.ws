@@ -1,7 +1,7 @@
 # OKX-04: End-to-end real payment test (we pay ourselves and verify settlement)
 
 **How to run this:** paste this whole file into a fresh Claude Code chat opened in
-`/workspaces/three.ws`, or say "execute `prompts/finish/913-okx-ai-04-e2e-real-payment-test.md`".
+`/workspaces/three.ws`, or say "execute `prompts/awaiting-owner/913-okx-ai-04-e2e-real-payment-test.md`".
 Read `prompts/finish/_context/okx-ai-00-CONTEXT.md`, `prompts/finish/_context/okx-ai-RUNBOOK.md`, `specs/okx-agent-payments.md`
 and `CLAUDE.md` first. Append your outcome to `prompts/finish/_context/okx-ai-PROGRESS.md` at the end.
 
@@ -150,7 +150,7 @@ the GO or NO-GO, and the single owner action if one remains.
    style: type(scope): what changed and why a reader cares), and delete this
    prompt file in that same commit:
 
-       git rm prompts/finish/913-okx-ai-04-e2e-real-payment-test.md
+       git rm prompts/awaiting-owner/913-okx-ai-04-e2e-real-payment-test.md
 
    A finished order left on disk reads as open work to the next agent, so the
    shrinking directory is the campaign's progress ledger.

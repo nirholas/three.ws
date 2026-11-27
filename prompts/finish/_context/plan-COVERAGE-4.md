@@ -99,7 +99,7 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/prompts/05-agents-rest-parity.md` | shipped | api/v1/rest.js defineRouter |
 | `docs/prompts/06-agents-sdk.md` | shipped | sdk/ and packages agents SDK |
 | `docs/prompts/07-perps.md` | shipped | api/v1/agents/[id]/perps |
-| `docs/prompts/08-lending.md` | order | [970](../970-plan-lending-agent-earn-venue-routes-ui.md). venue and math built, routes tools UI missing |
+| `docs/prompts/08-lending.md` | order | [970](../../awaiting-owner/970-plan-lending-agent-earn-venue-routes-ui.md). venue and math built, routes tools UI missing |
 | `docs/prompts/09-prediction-markets.md` | shipped | api/v1/agents/[id]/predictions |
 | `docs/prompts/10-agent-marketplace-bids.md` | shipped | marketplace bid routes in api/ |
 | `docs/prompts/11-agent-mail.md` | shipped | src/agent-mail.js and api/_lib/mail |

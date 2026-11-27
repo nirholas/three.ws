@@ -201,7 +201,7 @@ Rows `docs/agent-system.md` to `docs/ops/ibm-hosted-page-audit.md` of the per-fi
 | `docs/docs-world.md` | shipped | Feature reference for a live surface |
 | `docs/domains.md` | no-open-work | Domain reference, nothing outstanding |
 | `docs/draft-agent-mint.md` | shipped | Feature reference for a live surface |
-| `docs/drops.md` | order | [978](../978-plan-drops-onchain-core-collection-mint.md). Section Not yet wired: minting a drop on-chain; schema columns exist, nothing writes them |
+| `docs/drops.md` | order | [978](../../awaiting-owner/978-plan-drops-onchain-core-collection-mint.md). Section Not yet wired: minting a drop on-chain; schema columns exist, nothing writes them |
 | `docs/economy-heartbeat.md` | shipped | Reference for shipped economy loop |
 | `docs/economy-master.md` | shipped | Reference for shipped master wallet and rebalancer |
 | `docs/economy-solver.md` | shipped | Reference for shipped solver |

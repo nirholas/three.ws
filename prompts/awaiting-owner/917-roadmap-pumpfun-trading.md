@@ -2,7 +2,7 @@
 
 **Status:** every buildable item of the original plan is shipped. Re-verified 2026-10-23
 against the tree. The full plan lives in git history and in
-[918-roadmap-pumpfun-trading-arena.md](918-roadmap-pumpfun-trading-arena.md).
+[918-roadmap-pumpfun-trading-arena.md](../finish/918-roadmap-pumpfun-trading-arena.md).
 
 ## Shipped, verified in the tree
 
@@ -31,6 +31,6 @@ against the tree. The full plan lives in git history and in
 Delete this file in its own commit once the owner has armed or explicitly dropped
 items 1 to 3:
 
-    git rm prompts/finish/917-roadmap-pumpfun-trading.md
+    git rm prompts/awaiting-owner/917-roadmap-pumpfun-trading.md
 
 Never delete it while an item above is still open.

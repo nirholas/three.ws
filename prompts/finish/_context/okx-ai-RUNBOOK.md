@@ -287,7 +287,7 @@ endpoint matching.**
 > agree, so **read the `on-chain` line before trusting a PASS**; `--no-onchain` asks for that
 > narrower run deliberately, and `--listing <file>` compares against a saved `service-list`
 > capture instead of the CLI. Closing this is an on-chain write, owned by
-> [`okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md). Capture:
+> [`okx-ai-08-forge-relisting.md`](../../awaiting-owner/911-okx-ai-08-forge-relisting.md). Capture:
 > `prompts/okx-ai/e2e-evidence/95-2026-09-09-three-copy-onchain.txt`.
 
 ```bash
@@ -371,12 +371,12 @@ whether the running revision has it, read the field rather than a deploy date:
 `curl -s https://three.ws/api/okx/3d/health | jq '.subsystems[] | select(.name=="payment-rail")'`
 carries `relayer_funded` once it is live and only `settleable` before.
 
-Once funded, run [`okx-ai-04-e2e-real-payment-test.md`](../913-okx-ai-04-e2e-real-payment-test.md). It needs ≥3
+Once funded, run [`okx-ai-04-e2e-real-payment-test.md`](../../awaiting-owner/913-okx-ai-04-e2e-real-payment-test.md). It needs ≥3
 real settlements with transaction hashes.
 
 **Correction (2026-09-02): funding no longer gates the resubmission, and never did.** Earlier
 revisions of this file said "only then does WO-05 unlock". WO-05 is retired; its successor
-[`okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md) states plainly that a listing
+[`okx-ai-08-forge-relisting.md`](../../awaiting-owner/911-okx-ai-08-forge-relisting.md) states plainly that a listing
 does not require a settled payment to be submitted, and the 2026-08-27 resubmission went out
 with all three wallets exactly as they are in the table above. What funding gates is the
 first real end-to-end settlement (WO-04), which is evidence we owe ourselves and the
@@ -402,7 +402,7 @@ This is the holder-visible moment. Work the list top to bottom.
    ```
    Reconcile the service names against `api/_lib/okx-catalog.js`, see §2. If they still
    differ, the service delta did not take; re-run it from
-   [`911-okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md) (the retired
+   [`911-okx-ai-08-forge-relisting.md`](../../awaiting-owner/911-okx-ai-08-forge-relisting.md) (the retired
    WO-05's successor) before announcing.
 
 2. **Search as a buyer would.** We must actually appear:
@@ -459,7 +459,7 @@ This is the holder-visible moment. Work the list top to bottom.
 2. **Append the verbatim remark to `okx-ai-PROGRESS.md`** with the date. Never paraphrase a
    reviewer.
 3. **Map the reason to the work order that owns it**, fix there, and re-run
-   [`okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md). It superseded the
+   [`okx-ai-08-forge-relisting.md`](../../awaiting-owner/911-okx-ai-08-forge-relisting.md). It superseded the
    retired `okx-ai-05-relisting-resubmission.md`, which was deleted on 2026-09-09. Precedent:
    - 2026-07-04 rejection ("your A2MCP service has not been integrated with the OKX Agent
      Payments Protocol standard") was owned by the payment rail, implemented in

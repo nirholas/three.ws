@@ -26,9 +26,10 @@ grouped by the owner action that clears it:
 - H. The GCP billing hold.
 - I. Owner checks, hardware and outside inputs.
 
-Thirteen owner-waiting orders (902, 911, 913, 914, 917, 954, 957, 958, 961, 962, 965, 970 and
-978) are still in `finish/`. Moving them changes lines that name other crypto projects, so the
-move waits on the owner's approval under the CLAUDE.md commit gate.
+All 103 owner-waiting orders the audit found are here. Ninety moved in the first commit. The
+other 13 (902, 911, 913, 914, 917, 954, 957, 958, 961, 962, 965, 970 and 978) followed once the
+owner approved the move under the CLAUDE.md commit gate, because their links sit on lines that
+name other crypto projects.
 
 ## Using an order here
 

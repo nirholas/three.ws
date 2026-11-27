@@ -1,7 +1,7 @@
 # OKX-08: resubmit agent #2632 with the three.ws Forge listing
 
 **How to run this:** paste this whole file into a fresh Claude Code chat opened in
-`/workspaces/three.ws`, or say "execute `prompts/finish/911-okx-ai-08-forge-relisting.md`". Read
+`/workspaces/three.ws`, or say "execute `prompts/awaiting-owner/911-okx-ai-08-forge-relisting.md`". Read
 `prompts/finish/_context/okx-ai-00-CONTEXT.md`, the 2026-08-22 entry in `prompts/finish/_context/okx-ai-PROGRESS.md`,
 `prompts/finish/_context/okx-ai-RUNBOOK.md` and `CLAUDE.md` first.
 
@@ -162,7 +162,7 @@ settlement that has not happened.
    style: type(scope): what changed and why a reader cares), and delete this
    prompt file in that same commit:
 
-       git rm prompts/finish/911-okx-ai-08-forge-relisting.md
+       git rm prompts/awaiting-owner/911-okx-ai-08-forge-relisting.md
 
    A finished order left on disk reads as open work to the next agent, so the
    shrinking directory is the campaign's progress ledger.

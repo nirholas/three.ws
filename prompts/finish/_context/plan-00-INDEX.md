@@ -173,7 +173,7 @@ On 2026-11-03 every tracked markdown file in this repository (2969 of them) was 
 | 967 | [Refresh the GTC 2027 poster evidence and ship a form-ready submission pack](../967-plan-nvidia-gtc-poster-submission-pack-refresh.md) | nvidia | 85 |
 | 968 | [Autopilot gets a guarded trade action and a trading MCP server (quote, positions, execute)](../../awaiting-owner/968-plan-autopilot-trade-action-and-trading-mcp.md) | autopilot | 66 |
 | 969 | [Deploy the four built Solana programs to devnet, smoke-test them, and ship a one-command mainnet runbook](../../awaiting-owner/969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md) | solana | 66 |
-| 970 | [Wire the Kamino lending venue into agent routes, lend tools and an Earn panel, up to the mainnet gate](../970-plan-lending-agent-earn-venue-routes-ui.md) | lending | 60 |
+| 970 | [Wire the Kamino lending venue into agent routes, lend tools and an Earn panel, up to the mainnet gate](../../awaiting-owner/970-plan-lending-agent-earn-venue-routes-ui.md) | lending | 60 |
 | 971 | [The production autopilot gets its missing systemd units and provision script, and is stood up on its VM up to the push credential](../971-plan-ops-autopilot-write-units-and-provision-vm.md) | ops | 58 |
 | 972 | [Custodial wallet encryption key becomes truly dedicated via a verified, reversible re-seal](../../awaiting-owner/972-plan-wallet-key-dedicated-reseal-rotation.md) | wallet | 58 |
 | 973 | [Staked Event Markets proven end to end on devnet, with a $THREE buyback executor and a one-command mainnet launch kit](../../awaiting-owner/973-plan-event-markets-staking-devnet-proof-and-launch-kit.md) | event-markets | 57 |
@@ -181,7 +181,7 @@ On 2026-11-03 every tracked markdown file in this repository (2969 of them) was 
 | 975 | [Build the Robinhood Crypto trading connector with spend caps, simulation and owner-pasted keys](../975-plan-robinhood-crypto-connector-spend-capped.md) | robinhood | 52 |
 | 976 | [A new "paid-intel" sniper arm that buys its entry signals over x402 and logs the payment signature in every decision](../976-plan-x402-paid-intel-sniper-arm.md) | x402 | 52 |
 | 977 | [LongCat video avatar worker runs on an 80GB GPU host with staged weights, an idle-stop lifecycle and API wiring](../977-plan-avatar-longcat-gpu-host-bringup.md) | avatar | 40 |
-| 978 | [3D Drops mint on Solana: one Metaplex Core collection per drop, each revealed item minted into it](../978-plan-drops-onchain-core-collection-mint.md) | drops | 40 |
+| 978 | [3D Drops mint on Solana: one Metaplex Core collection per drop, each revealed item minted into it](../../awaiting-owner/978-plan-drops-onchain-core-collection-mint.md) | drops | 40 |
 | 979 | [The Seeker app 1.1.0 (Agent glance widget) is built, signed, verified and staged so the owner's only step is the portal upload](../../awaiting-owner/979-plan-mobile-seeker-v1-1-widget-release-prep.md) | mobile | 40 |
 | 980 | [Sniper manages retained moon bags and records latency and per-second price telemetry](../980-plan-sniper-moonbag-manager-and-latency-telemetry.md) | sniper | 38 |
 | 981 | [The TRELLIS NGC container passes real Ampere and Hopper inference and a CVE-clean two-stage build](../../awaiting-owner/981-plan-nvidia-ngc-trellis-image-validation.md) | nvidia | 30 |

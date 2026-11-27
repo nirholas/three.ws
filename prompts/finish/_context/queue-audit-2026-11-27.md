@@ -19,8 +19,7 @@ Every open order in `prompts/finish/` (234 files) checked against the committed 
 - **Not checked:** the production database and the GCP console, because no session here had them open. Every verdict that depends on a migration being applied or a service existing says so.
 - **Where the orders went (2026-11-27):**
   - The 13 DONE orders are archived in [prompts/archive/](../../archive/README.md).
-  - 90 of the 103 CODE-DONE/OWNER orders moved to [prompts/awaiting-owner/](../../awaiting-owner/README.md).
-  - The other 13 (902, 911, 913, 914, 917, 954, 957, 958, 961, 962, 965, 970, 978) stay in `finish/` until the owner approves their move. Moving them changes lines that name other crypto projects, so the commit gate applies.
+  - All 103 CODE-DONE/OWNER orders moved to [prompts/awaiting-owner/](../../awaiting-owner/README.md). Thirteen of them (902, 911, 913, 914, 917, 954, 957, 958, 961, 962, 965, 970, 978) moved in a second commit after the owner approved it under the commit gate, because their links sit on lines that name other crypto projects.
   - PARTIAL and NOT-STARTED orders stay in `finish/`.
 
 ## Verdict meanings

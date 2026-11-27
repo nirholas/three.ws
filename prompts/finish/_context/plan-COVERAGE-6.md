@@ -208,12 +208,12 @@ Rows `packages/companion-sdk/README.md` to `robinhood/robinhood-chain-examples/e
 | `prompts/finish/623-beat-23-skill-supply-chain-scanner.md` | excluded | already a work order in the queue |
 | `prompts/archive/626-beat-26-metered-openai-compatible-router.md` | excluded | already a work order in the queue |
 | `prompts/finish/627-beat-27-launch-fee-and-holder-reward-features.md` | excluded | already a work order in the queue |
-| `prompts/finish/902-backlog-01-x402-settle-runway.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/902-backlog-01-x402-settle-runway.md` | excluded | already a work order in the queue |
 | `prompts/finish/907-backlog-08-okx-chat-bot-always-on.md` | excluded | already a work order in the queue |
-| `prompts/finish/911-okx-ai-08-forge-relisting.md` | excluded | already a work order in the queue |
-| `prompts/finish/913-okx-ai-04-e2e-real-payment-test.md` | excluded | already a work order in the queue |
-| `prompts/finish/914-okx-ai-07-final-audit-and-watch.md` | excluded | already a work order in the queue |
-| `prompts/finish/917-roadmap-pumpfun-trading.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/911-okx-ai-08-forge-relisting.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/913-okx-ai-04-e2e-real-payment-test.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/914-okx-ai-07-final-audit-and-watch.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/917-roadmap-pumpfun-trading.md` | excluded | already a work order in the queue |
 | `prompts/finish/918-roadmap-pumpfun-trading-arena.md` | excluded | already a work order in the queue |
 | `prompts/awaiting-owner/919-parity-09-ship-and-publish.md` | excluded | already a work order in the queue |
 | `prompts/finish/920-parity-10-community-skill-registry.md` | excluded | already a work order in the queue |
@@ -237,12 +237,12 @@ Rows `packages/companion-sdk/README.md` to `robinhood/robinhood-chain-examples/e
 | `prompts/awaiting-owner/938-partners-15-listings-prs-and-sends.md` | excluded | already a work order in the queue |
 | `prompts/awaiting-owner/939-partners-16-program-applications.md` | excluded | already a work order in the queue |
 | `prompts/finish/940-partners-17-sketchfab-retag.md` | excluded | already a work order in the queue |
-| `prompts/finish/954-oauth-connector-google.md` | excluded | already a work order in the queue |
-| `prompts/finish/957-uniswap-lane-and-launch-status.md` | excluded | already a work order in the queue |
-| `prompts/finish/958-creator-fee-payouts.md` | excluded | already a work order in the queue |
-| `prompts/finish/961-desktop-agent-runtime.md` | excluded | already a work order in the queue |
-| `prompts/finish/962-approvals-inbox-telegram.md` | excluded | already a work order in the queue |
-| `prompts/finish/965-revenue-ledger-reinvest.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/954-oauth-connector-google.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/957-uniswap-lane-and-launch-status.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/958-creator-fee-payouts.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/961-desktop-agent-runtime.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/962-approvals-inbox-telegram.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/965-revenue-ledger-reinvest.md` | excluded | already a work order in the queue |
 | `prompts/masters/01-the-architect.md` | excluded | reusable master prompt (takes a target, never retires) |
 | `prompts/masters/02-the-scout.md` | excluded | reusable master prompt (takes a target, never retires) |
 | `prompts/masters/03-the-builder.md` | excluded | reusable master prompt (takes a target, never retires) |

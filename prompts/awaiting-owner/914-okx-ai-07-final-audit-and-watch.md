@@ -1,7 +1,7 @@
 # OKX-07: Final audit, docs closure, approval watch, first-sale readiness
 
 **How to run this:** paste this whole file into a fresh Claude Code chat opened in
-`/workspaces/three.ws`, or say "execute `prompts/finish/914-okx-ai-07-final-audit-and-watch.md`".
+`/workspaces/three.ws`, or say "execute `prompts/awaiting-owner/914-okx-ai-07-final-audit-and-watch.md`".
 Read `prompts/finish/_context/okx-ai-00-CONTEXT.md`, all of `prompts/finish/_context/okx-ai-PROGRESS.md`,
 `prompts/finish/_context/okx-ai-RUNBOOK.md` and `CLAUDE.md` first.
 
@@ -122,7 +122,7 @@ result, the executed launch branch, and the single owner action if one remains.
    style: type(scope): what changed and why a reader cares), and delete this
    prompt file in that same commit:
 
-       git rm prompts/finish/914-okx-ai-07-final-audit-and-watch.md
+       git rm prompts/awaiting-owner/914-okx-ai-07-final-audit-and-watch.md
 
    A finished order left on disk reads as open work to the next agent, so the
    shrinking directory is the campaign's progress ledger.

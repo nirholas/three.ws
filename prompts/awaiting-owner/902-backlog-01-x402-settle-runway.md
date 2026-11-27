@@ -1,6 +1,6 @@
 # 01. x402 settle: clear `fee_runway_exhausted` and hold the rate above 90%
 
-Read [00-INDEX.md](_context/backlog-00-INDEX.md) first.
+Read [00-INDEX.md](../finish/_context/backlog-00-INDEX.md) first.
 
 > ## Re-measured 2026-09-25: still ok; same two owner gates, less time on the second
 >
@@ -11,7 +11,7 @@ Read [00-INDEX.md](_context/backlog-00-INDEX.md) first.
 > Fixed this pass: the top rail fault (`This operation was aborted`) was the forge prop
 > pipeline abandoning paid generations at 20s while the server settled them anyway
 > (7 of 9 in 24h); `payX402` now takes `paidTimeoutMs` and the pipeline waits 90s
-> (`fb533a6ec`). Evidence in [PROGRESS.md](_context/backlog-PROGRESS.md), 2026-09-25.
+> (`fb533a6ec`). Evidence in [PROGRESS.md](../finish/_context/backlog-PROGRESS.md), 2026-09-25.
 > Remaining: deploy (gate 2), then fund `Wwwu...T3WwW` (gate 1), about 0.4 SOL for 14 days
 > or about 1.4 SOL to also make the DoD 3 reclaim plan non-zero.
 
@@ -23,7 +23,7 @@ Read [00-INDEX.md](_context/backlog-00-INDEX.md) first.
 > book (40,939 in 24h against 4,341 settles) because the caller-side admission gate cached
 > "yes" for 20s under pacing; fixed in `22f1e08df` together with a hundredfold refusal
 > undercount in `/api/x402/runway-lab` and a self-contradicting `at_or_below_floor` reason
-> (now `below_min_sweep`). Evidence in [PROGRESS.md](_context/backlog-PROGRESS.md),
+> (now `below_min_sweep`). Evidence in [PROGRESS.md](../finish/_context/backlog-PROGRESS.md),
 > 2026-09-24 entry. What remains, both owner-owned:
 >
 > 1. **Deploy `22f1e08df`** (gate 2), then re-read the reject book 3h later for DoD 2.
@@ -39,7 +39,7 @@ Read [00-INDEX.md](_context/backlog-00-INDEX.md) first.
 > The 2026-09-02 header below said only capital remained. That was wrong in a way
 > that mattered: capital would have landed on the wrong wallet. Fixed and shipped
 > in the tree on 2026-09-04 (`0559bc23f`), evidence per item in
-> [PROGRESS.md](_context/backlog-PROGRESS.md):
+> [PROGRESS.md](../finish/_context/backlog-PROGRESS.md):
 >
 > 1. **A thin top-up funded the wrong wallet.** `planTopUps` ranked targets by
 >    absolute deficit, and the relayer/treasury bundle's deficit (0.983 SOL) is
@@ -66,7 +66,7 @@ Read [00-INDEX.md](_context/backlog-00-INDEX.md) first.
 >
 > 1. **The two config levers are already applied in production.**
 >    `GET /api/x402/runway-lab` reports `runway_days: 1` and the 2026-08-01
->    entry in [PROGRESS.md](_context/backlog-PROGRESS.md) records
+>    entry in [PROGRESS.md](../finish/_context/backlog-PROGRESS.md) records
 >    `ECONOMY_MASTER_OPERATING_SOL=0.3` landing with it. Do not re-apply them.
 > 2. **Lever 2 is inert at this balance and was struck on 2026-08-02.** The
 >    governor's budget is `max(minBudgetLamports, spendable / runwayDays)`. With
@@ -105,7 +105,7 @@ Read [00-INDEX.md](_context/backlog-00-INDEX.md) first.
 > (`tests/x402-wallet-fee-governor.test.js`), `WALLET_ENCRYPTION_KEY_PREVIOUS`
 > key rotation, and the dry-run reclaim key gate plus the corrected
 > `sponsor_floor` hint (`afd349790`, 2026-09-02). Full evidence per line is in
-> [PROGRESS.md](_context/backlog-PROGRESS.md).
+> [PROGRESS.md](../finish/_context/backlog-PROGRESS.md).
 
 ## What is wrong (as measured 2026-08-01)
 
@@ -235,7 +235,7 @@ Config that drifts silently is how this class returns. Land at least one of:
 - [ ] The recurrence guard is committed with a test, `npm run gate` green.
 - [ ] `data/changelog.json` entry (tag: `fix`, `infra`) describing the recovery in
       holder-readable language.
-- [ ] [PROGRESS.md](_context/backlog-PROGRESS.md) updated with before/after settle rates.
+- [ ] [PROGRESS.md](../finish/_context/backlog-PROGRESS.md) updated with before/after settle rates.
 
 ## Retire this prompt when it is done (required)
 
@@ -246,7 +246,7 @@ Config that drifts silently is how this class returns. Land at least one of:
    style: type(scope): what changed and why a reader cares), and delete this
    prompt file in that same commit:
 
-       git rm prompts/finish/902-backlog-01-x402-settle-runway.md
+       git rm prompts/awaiting-owner/902-backlog-01-x402-settle-runway.md
 
    A finished order left on disk reads as open work to the next agent, so the
    shrinking directory is the campaign's progress ledger.

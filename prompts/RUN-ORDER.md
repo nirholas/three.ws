@@ -7,11 +7,10 @@ so you can open one, run it, and open the next without consulting anything. Ever
 `finish/` is runnable; the context and log files that must never be run were moved out to
 [finish/_context/](finish/_context/).
 
-**2026-11-27:** the [queue audit](finish/_context/queue-audit-2026-11-27.md) moved the 90 orders
+**2026-11-27:** the [queue audit](finish/_context/queue-audit-2026-11-27.md) moved the 103 orders
 whose code is finished and that wait only on an owner step to [awaiting-owner/](awaiting-owner/),
-and archived 13 orders verified complete. Thirteen more owner-waiting orders stay in `finish/`
-until the owner approves committing their move (commit gate). The counts in this file predate
-that move; trust the directory.
+and archived 13 orders verified complete. The counts in this file predate that move; trust the
+directory.
 
 | Band | What it is | Count |
 |---|---|---|
@@ -129,20 +128,20 @@ commit gate; that content stays uncommitted (a named stash) until the owner appr
 
 | Order(s) | Owner gate |
 |---|---|
-| [902-backlog-01-x402-settle-runway.md](finish/902-backlog-01-x402-settle-runway.md) | Code half done; the sponsor-wallet funding is P0 row 2 above. |
+| [902-backlog-01-x402-settle-runway.md](awaiting-owner/902-backlog-01-x402-settle-runway.md) | Code half done; the sponsor-wallet funding is P0 row 2 above. |
 | [907-backlog-08-okx-chat-bot-always-on.md](finish/907-backlog-08-okx-chat-bot-always-on.md) | Getting the bot off this codespace onto a durable host; owner decides the host. |
-| [911](finish/911-okx-ai-08-forge-relisting.md), [913](finish/913-okx-ai-04-e2e-real-payment-test.md), [914](finish/914-okx-ai-07-final-audit-and-watch.md) | OKX.AI listing pack: relisting, the real-payment gauntlet (real spend, a CLAUDE.md stop-and-ask gate by definition), then the final audit. Run 913 before 914; 911 is independent. Runbook: [finish/_context/okx-ai-RUNBOOK.md](finish/_context/okx-ai-RUNBOOK.md). |
-| [917](finish/917-roadmap-pumpfun-trading.md), [918](finish/918-roadmap-pumpfun-trading-arena.md) | Pump.fun trading and the trading arena; the sniper's `enforce` arming and capital refill are P0 row 19. |
+| [911](awaiting-owner/911-okx-ai-08-forge-relisting.md), [913](awaiting-owner/913-okx-ai-04-e2e-real-payment-test.md), [914](awaiting-owner/914-okx-ai-07-final-audit-and-watch.md) | OKX.AI listing pack: relisting, the real-payment gauntlet (real spend, a CLAUDE.md stop-and-ask gate by definition), then the final audit. Run 913 before 914; 911 is independent. Runbook: [finish/_context/okx-ai-RUNBOOK.md](finish/_context/okx-ai-RUNBOOK.md). |
+| [917](awaiting-owner/917-roadmap-pumpfun-trading.md), [918](finish/918-roadmap-pumpfun-trading-arena.md) | Pump.fun trading and the trading arena; the sniper's `enforce` arming and capital refill are P0 row 19. |
 | [919](awaiting-owner/919-parity-09-ship-and-publish.md) through [925](awaiting-owner/925-parity-15-mention-to-launch.md) | Shipping and publishing, a community skill registry, directory listings, a "why three.ws" page, a builder competition, pricing levers, a mention-to-launch flow. Each needs a listing account, npm publish approval, or an X mention-bot go-live. Shared facts: [finish/_context/parity-00-CONTEXT.md](finish/_context/parity-00-CONTEXT.md). |
 | [926](finish/926-x-grok-45-owner-x-api-tier.md) through [931](archive/931-x-grok-50-player-card-approval.md) | The owner's X API tier, the owner's Grok API key, going live with the mention bot, connector directory listings, the launch announcement, player-card approval. Shared facts: [finish/_context/x-grok-00-CONTEXT.md](finish/_context/x-grok-00-CONTEXT.md). |
 | [932](awaiting-owner/932-best3d-05-pricing-preview-pay-to-keep.md) through [935](awaiting-owner/935-best3d-08-engine-store-publishing.md) | Pricing preview and pay-to-keep, SAM 3D Objects, the orphaned-avatar campaign, engine store publishing. Shared facts: [finish/_context/best3d-00-CONTEXT.md](finish/_context/best3d-00-CONTEXT.md). |
 | [936](awaiting-owner/936-partners-13-tripo-reply-and-house-key.md) through [940](finish/940-partners-17-sketchfab-retag.md) | The Tripo reply and house key, sponsorships, third-party submissions, program applications, a Sketchfab re-tag. Shared facts: [finish/_context/partners-00-CONTEXT.md](finish/_context/partners-00-CONTEXT.md). |
-| [954-oauth-connector-google.md](finish/954-oauth-connector-google.md) | Create a Google Cloud OAuth client and store its secret. Code and tests already ship. |
-| [957-uniswap-lane-and-launch-status.md](finish/957-uniswap-lane-and-launch-status.md) | Owner deploys the launcher contract on Base, then runs the first real launch through the confirmation table. An irreversible on-chain action. |
-| [958-creator-fee-payouts.md](finish/958-creator-fee-payouts.md) | Deploy, a real-browser check, then flip `CREATOR_PAYOUTS_LIVE=true` only after reviewing the first recorded distributions. A real spend path. |
-| [961-desktop-agent-runtime.md](finish/961-desktop-agent-runtime.md) | Apple Developer ID certificate and a Windows code-signing certificate to produce signed installers. |
-| [962-approvals-inbox-telegram.md](finish/962-approvals-inbox-telegram.md) | A throwaway Telegram bot token from @BotFather to exercise the approve/deny flow live. |
-| [965-revenue-ledger-reinvest.md](finish/965-revenue-ledger-reinvest.md) | A real-browser check, a deploy, then the first live reinvest rule confirmed in the browser (a CLAUDE.md spend gate). |
+| [954-oauth-connector-google.md](awaiting-owner/954-oauth-connector-google.md) | Create a Google Cloud OAuth client and store its secret. Code and tests already ship. |
+| [957-uniswap-lane-and-launch-status.md](awaiting-owner/957-uniswap-lane-and-launch-status.md) | Owner deploys the launcher contract on Base, then runs the first real launch through the confirmation table. An irreversible on-chain action. |
+| [958-creator-fee-payouts.md](awaiting-owner/958-creator-fee-payouts.md) | Deploy, a real-browser check, then flip `CREATOR_PAYOUTS_LIVE=true` only after reviewing the first recorded distributions. A real spend path. |
+| [961-desktop-agent-runtime.md](awaiting-owner/961-desktop-agent-runtime.md) | Apple Developer ID certificate and a Windows code-signing certificate to produce signed installers. |
+| [962-approvals-inbox-telegram.md](awaiting-owner/962-approvals-inbox-telegram.md) | A throwaway Telegram bot token from @BotFather to exercise the approve/deny flow live. |
+| [965-revenue-ledger-reinvest.md](awaiting-owner/965-revenue-ledger-reinvest.md) | A real-browser check, a deploy, then the first live reinvest rule confirmed in the browser (a CLAUDE.md spend gate). |
 
 ---
 
