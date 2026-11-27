@@ -637,6 +637,64 @@ export async function openA2fSession(
 	};
 }
 
+// Accepted raw-PCM sample rates: telephone through studio. Outside this range the
+// caller almost certainly sent the wrong number, and resampling garbage would
+// hand A2F (and the fallback) noise.
+export const MIN_SAMPLE_RATE_HZ = 8000;
+export const MAX_SAMPLE_RATE_HZ = 48000;
+
+const invalid = (message) => Object.assign(new Error(message), { code: 'invalid_argument' });
+
+// Read the WAV `fmt ` chunk for the sample encoding: A2F (and parseWav) only
+// understand linear 16-bit PCM, so an 8-bit, 24-bit or float file must be refused
+// with a clear message instead of being decoded as noise.
+function wavEncoding(buf) {
+	let offset = 12;
+	while (offset + 8 <= buf.length) {
+		const id = buf.toString('ascii', offset, offset + 4);
+		const size = buf.readUInt32LE(offset + 4);
+		if (id === 'fmt ' && offset + 8 + 16 <= buf.length) {
+			return { format: buf.readUInt16LE(offset + 8), bits: buf.readUInt16LE(offset + 22) };
+		}
+		offset = offset + 8 + size + (size & 1);
+	}
+	return null;
+}
+
+/**
+ * Decode, downmix and resample caller audio to the 16 kHz mono s16 A2F expects.
+ * Throws Error with code 'invalid_argument' and a message a caller can act on.
+ * @returns {{ mono16k: Int16Array, durationSec: number }}
+ */
+export function normalizeA2fAudio({ wav, pcm, sampleRateHz, channels = 1 } = {}) {
+	let monoSrc;
+	let srcRate;
+	if (Buffer.isBuffer(wav) && wav.length) {
+		const parsed = parseWav(wav);
+		if (!parsed) throw invalid('audio is not a valid WAV (no RIFF/WAVE header). Send a 16-bit PCM WAV, or raw 16-bit PCM with format "pcm"');
+		const enc = wavEncoding(wav);
+		// 0xFFFE is WAVE_FORMAT_EXTENSIBLE, which wraps plain PCM for multichannel files.
+		if (enc && ((enc.format !== 1 && enc.format !== 0xfffe) || enc.bits !== 16)) {
+			throw invalid(`WAV must be 16-bit linear PCM (got format ${enc.format}, ${enc.bits}-bit)`);
+		}
+		monoSrc = toMonoInt16(parsed.pcm, parsed.channels);
+		srcRate = parsed.sampleRateHz;
+	} else if (Buffer.isBuffer(pcm) && pcm.length) {
+		if (!sampleRateHz) throw invalid('sampleRateHz is required when passing raw pcm');
+		monoSrc = toMonoInt16(pcm, channels);
+		srcRate = Number(sampleRateHz);
+	} else {
+		throw invalid('no audio provided (expected wav or pcm)');
+	}
+	if (!(srcRate >= MIN_SAMPLE_RATE_HZ && srcRate <= MAX_SAMPLE_RATE_HZ)) {
+		throw invalid(`sample rate ${srcRate} Hz is outside ${MIN_SAMPLE_RATE_HZ}-${MAX_SAMPLE_RATE_HZ} Hz`);
+	}
+	if (!monoSrc.length) throw invalid('audio has no samples');
+	if (monoSrc.length / srcRate > MAX_AUDIO_SECONDS) throw invalid(`audio exceeds ${MAX_AUDIO_SECONDS}s limit`);
+	const mono16k = resampleInt16(monoSrc, srcRate, A2F_SAMPLE_RATE_HZ);
+	return { mono16k, durationSec: mono16k.length / A2F_SAMPLE_RATE_HZ };
+}
+
 // Generate a facial-animation track from spoken audio on the free NIM lane.
 //
 //   { wav?: Buffer, pcm?: Buffer, sampleRateHz?, channels?, functionId?,
@@ -675,39 +733,7 @@ export async function animateNvidiaA2F(
 	} = {},
 	deps = {},
 ) {
-	// ── Normalize the audio to 16 kHz mono s16 ────────────────────────────────
-	let monoSrc;
-	let srcRate;
-	if (Buffer.isBuffer(wav) && wav.length) {
-		const parsed = parseWav(wav);
-		if (!parsed) {
-			const err = new Error('audio is not a valid WAV (no RIFF/WAVE header)');
-			err.code = 'invalid_argument';
-			throw err;
-		}
-		monoSrc = toMonoInt16(parsed.pcm, parsed.channels);
-		srcRate = parsed.sampleRateHz;
-	} else if (Buffer.isBuffer(pcm) && pcm.length) {
-		if (!sampleRateHz) {
-			const err = new Error('sampleRateHz is required when passing raw pcm');
-			err.code = 'invalid_argument';
-			throw err;
-		}
-		monoSrc = toMonoInt16(pcm, channels);
-		srcRate = sampleRateHz;
-	} else {
-		const err = new Error('no audio provided (expected wav or pcm)');
-		err.code = 'invalid_argument';
-		throw err;
-	}
-
-	if (monoSrc.length / srcRate > MAX_AUDIO_SECONDS) {
-		const err = new Error(`audio exceeds ${MAX_AUDIO_SECONDS}s limit`);
-		err.code = 'invalid_argument';
-		throw err;
-	}
-
-	const mono16k = resampleInt16(monoSrc, srcRate, A2F_SAMPLE_RATE_HZ);
+	const { mono16k } = normalizeA2fAudio({ wav, pcm, sampleRateHz, channels });
 	let blendShapeNames = [];
 	const frames = [];
 	const emotionTrack = new EmotionTrackBuilder();
