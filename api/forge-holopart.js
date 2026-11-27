@@ -3,11 +3,20 @@
  * in an already part-segmented mesh (the output of /api/forge-segment or
  * the PartCrafter image lane).
  *
- *   POST /api/forge-holopart  { mesh_url: string, seed?: number }
- *     → 202 { job_id, status, eta_seconds }
+ *   POST /api/forge-holopart  { mesh_url: string, seed?: number, fallback?: "segment" }
+ *     → 202 { job_id, status, eta_seconds, fallback? }
  *
  *   GET  /api/forge-holopart?job=<id>
- *     → { job_id, status, result_url?, manifest_url?, parts?, part_count?, error? }
+ *     → { job_id, status, result_url?, manifest_url?, parts?, part_count?,
+ *         single_part?, note?, warnings?, error? }
+ *
+ * Heavy to light: with `fallback: "segment"`, a HoloPart worker that is not
+ * deployed or refuses the job hands the same mesh to the light segment worker
+ * (method "connected", which returns the named parts the mesh already carries)
+ * and the 202 carries `fallback: { from, to, reason, note }` so the page can
+ * say the parts came back as split, without hidden surfaces filled. Restyle's
+ * "Regenerate part" does not pass it: a part that was not regenerated is not
+ * a regenerated part, so there the honest answer is the error.
  *
  * Routes to workers/model-holopart (GCP Cloud Run) when MODEL_HOLOPART_URL
  * is set. mesh_url must already carry at least two named part geometries;
@@ -23,6 +32,10 @@ import { isFbxMeshUrl, HOLOPART_FBX_MESSAGE } from './_lib/mesh-input.js';
 
 const JOB_ID_RE = /^[A-Za-z0-9_-]{20,600}$/;
 const SEED_MAX = 4_294_967_295;
+
+export const HOLOPART_FALLBACK_NOTE =
+	'HoloPart (the slower model that fills in hidden surfaces) is not available right now, so these parts ' +
+	'came from the fast splitter: each piece is as it was in the model, with hidden faces left open.';
 
 function unconfigured(res) {
 	return json(res, 503, {
@@ -70,12 +83,19 @@ async function startJob(req, res) {
 		seed = Math.min(n, SEED_MAX);
 	}
 
+	const wantsFallback = body?.fallback === 'segment';
+
 	let provider;
 	try {
 		provider = createRegenProvider();
-		if (!provider.supportsMode('holopart')) return unconfigured(res);
 	} catch {
 		return unconfigured(res);
+	}
+	const canFallback = wantsFallback && provider.supportsMode('segment');
+
+	if (!provider.supportsMode('holopart')) {
+		if (!canFallback) return unconfigured(res);
+		return submitFallback(res, provider, meshUrl, 'unconfigured');
 	}
 
 	try {
@@ -88,6 +108,25 @@ async function startJob(req, res) {
 			job_id: job.extJobId,
 			status: 'queued',
 			eta_seconds: job.eta,
+		});
+	} catch (err) {
+		if (canFallback) return submitFallback(res, provider, meshUrl, 'unavailable');
+		return json(res, 502, { error: 'holopart_failed', message: err?.message || 'Part completion could not start.' });
+	}
+}
+
+async function submitFallback(res, provider, meshUrl, reason) {
+	try {
+		const job = await provider.submit({
+			mode: 'segment',
+			sourceUrl: meshUrl,
+			params: { method: 'connected', max_parts: 64, min_part_faces: 4, crease_angle: 40 },
+		});
+		return json(res, 202, {
+			job_id: job.extJobId,
+			status: 'queued',
+			eta_seconds: job.eta,
+			fallback: { from: 'holopart', to: 'segment', reason, note: HOLOPART_FALLBACK_NOTE },
 		});
 	} catch (err) {
 		return json(res, 502, { error: 'holopart_failed', message: err?.message || 'Part completion could not start.' });
@@ -127,6 +166,9 @@ async function pollJob(req, res, jobId) {
 		manifest_url: result.manifestUrl || null,
 		parts: result.parts || null,
 		part_count: result.partCount ?? null,
+		single_part: result.singlePart === true,
+		note: result.note || null,
+		warnings: result.warnings || null,
 		error: result.error || null,
 	});
 }

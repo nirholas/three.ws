@@ -29,10 +29,11 @@ const status = vi.fn(async () => ({
 	partCount: 2,
 }));
 let supportsHolopart = true;
+let supportsSegment = true;
 
 vi.mock('../../api/_providers/gcp.js', () => ({
 	createRegenProvider: () => ({
-		supportsMode: (m) => m === 'holopart' && supportsHolopart,
+		supportsMode: (m) => (m === 'holopart' && supportsHolopart) || (m === 'segment' && supportsSegment),
 		submit,
 		status,
 	}),
@@ -99,6 +100,8 @@ beforeEach(() => {
 	submit.mockClear();
 	status.mockClear();
 	supportsHolopart = true;
+	supportsSegment = true;
+	submit.mockImplementation(async () => ({ extJobId: `task-holopart-${'x'.repeat(20)}`, eta: 60 }));
 });
 
 describe('POST /api/forge-holopart', () => {
@@ -151,6 +154,76 @@ describe('POST /api/forge-holopart', () => {
 		expect(res.statusCode).toBe(503);
 		expect(JSON.parse(res.body).error).toBe('unconfigured');
 		expect(submit).not.toHaveBeenCalled();
+	});
+});
+
+describe('heavy to light: HoloPart down falls back to the segment worker', () => {
+	it('splits with the segment worker and says why when HoloPart is not deployed', async () => {
+		supportsHolopart = false;
+		submit.mockImplementation(async ({ mode }) => ({ extJobId: `task-${mode}-${'y'.repeat(20)}`, eta: 5 }));
+		const res = makeRes();
+		await handler(makeReq({ body: { mesh_url: MESH, fallback: 'segment' } }), res);
+		expect(res.statusCode).toBe(202);
+		const body = JSON.parse(res.body);
+		expect(submit).toHaveBeenCalledTimes(1);
+		const call = submit.mock.calls[0][0];
+		expect(call.mode).toBe('segment');
+		expect(call.sourceUrl).toBe(MESH);
+		expect(call.params.method).toBe('connected');
+		expect(body.job_id).toBe(`task-segment-${'y'.repeat(20)}`);
+		expect(body.fallback).toEqual({ from: 'holopart', to: 'segment', reason: 'unconfigured', note: expect.any(String) });
+		expect(body.fallback.note).toMatch(/HoloPart/);
+		expect(body.fallback.note).toMatch(/hidden/i);
+	});
+
+	it('falls back when the HoloPart worker refuses the job, and only after trying it', async () => {
+		submit.mockImplementation(async ({ mode }) => {
+			if (mode === 'holopart') throw new Error('worker 503: no instance');
+			return { extJobId: `task-${mode}-${'y'.repeat(20)}`, eta: 5 };
+		});
+		const res = makeRes();
+		await handler(makeReq({ body: { mesh_url: MESH, fallback: 'segment' } }), res);
+		expect(res.statusCode).toBe(202);
+		expect(submit.mock.calls.map((c) => c[0].mode)).toEqual(['holopart', 'segment']);
+		const body = JSON.parse(res.body);
+		expect(body.fallback.reason).toBe('unavailable');
+	});
+
+	it('does not fall back unless the caller asked for it (Restyle regenerate needs real completion)', async () => {
+		supportsHolopart = false;
+		const res = makeRes();
+		await handler(makeReq({ body: { mesh_url: MESH } }), res);
+		expect(res.statusCode).toBe(503);
+		expect(submit).not.toHaveBeenCalled();
+	});
+
+	it('still answers 503 when neither worker is deployed', async () => {
+		supportsHolopart = false;
+		supportsSegment = false;
+		const res = makeRes();
+		await handler(makeReq({ body: { mesh_url: MESH, fallback: 'segment' } }), res);
+		expect(res.statusCode).toBe(503);
+		expect(JSON.parse(res.body).error).toBe('unconfigured');
+		expect(submit).not.toHaveBeenCalled();
+	});
+
+	it('the poll relays single_part, note and warnings from a segment fallback job', async () => {
+		status.mockImplementationOnce(async () => ({
+			status: 'done',
+			resultGlbUrl: 'https://storage.googleapis.com/bucket/segment/t.glb',
+			manifestUrl: 'https://storage.googleapis.com/bucket/segment/t.parts.json',
+			parts: [{ id: 'part_01' }],
+			partCount: 1,
+			singlePart: true,
+			note: 'one continuous surface',
+			warnings: ['capped'],
+		}));
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', url: `/api/forge-holopart?job=task-segment-${'y'.repeat(20)}` }), res);
+		const body = JSON.parse(res.body);
+		expect(body.single_part).toBe(true);
+		expect(body.note).toBe('one continuous surface');
+		expect(body.warnings).toEqual(['capped']);
 	});
 });
 

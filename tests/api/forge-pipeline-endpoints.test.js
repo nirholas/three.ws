@@ -81,7 +81,7 @@ vi.mock('../../api/_lib/ssrf.js', () => ({
 }));
 
 const submitted = [];
-const providerState = { configured: true, statusThrows: false };
+const providerState = { configured: true, statusThrows: false, statusResult: null };
 vi.mock('../../api/_providers/gcp.js', () => ({
 	createRegenProvider: () => {
 		if (!providerState.configured) throw new Error('no gcp worker configured');
@@ -93,7 +93,7 @@ vi.mock('../../api/_providers/gcp.js', () => ({
 			},
 			async status() {
 				if (providerState.statusThrows) throw new Error('worker unreachable');
-				return { status: 'running' };
+				return providerState.statusResult || { status: 'running' };
 			},
 		};
 	},
@@ -204,6 +204,7 @@ beforeEach(() => {
 	rlAllow.value = true;
 	providerState.configured = true;
 	providerState.statusThrows = false;
+	providerState.statusResult = null;
 	storeState.enabled = true;
 	gateState.configured = false;
 	submitted.length = 0;
@@ -335,6 +336,28 @@ describe('forge-rembg / forge-remesh / forge-segment', () => {
 			expect(res.statusCode).toBe(405);
 		});
 	}
+});
+
+describe('forge-segment single part', () => {
+	it('relays single_part and the note so the page explains instead of erroring', async () => {
+		providerState.statusResult = {
+			status: 'done',
+			resultGlbUrl: 'https://storage.googleapis.com/b/segment/t.glb',
+			parts: [{ id: 'part_01' }],
+			partCount: 1,
+			singlePart: true,
+			note: 'one continuous surface',
+		};
+		const res = await call(segment, { url: `/api/forge-segment?job=${JOB}` });
+		expect(res.statusCode).toBe(200);
+		expect(parse(res)).toMatchObject({ status: 'done', part_count: 1, single_part: true, note: 'one continuous surface' });
+	});
+
+	it('reports single_part false on an ordinary split', async () => {
+		providerState.statusResult = { status: 'done', parts: [{ id: 'part_01' }, { id: 'part_02' }], partCount: 2 };
+		const res = await call(segment, { url: `/api/forge-segment?job=${JOB}` });
+		expect(parse(res)).toMatchObject({ single_part: false, note: null });
+	});
 });
 
 describe('forge-upload', () => {

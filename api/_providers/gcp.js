@@ -1042,6 +1042,8 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					if (typeof data.source_faces === 'number') result.sourceFaces = data.source_faces;
 					if (data.method) result.segmentMethod = data.method;
 					if (Array.isArray(data.warnings) && data.warnings.length) result.warnings = data.warnings;
+					if (data.single_part === true) result.singlePart = true;
+					if (typeof data.note === 'string' && data.note) result.note = data.note;
 				}
 			}
 

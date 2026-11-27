@@ -12,7 +12,10 @@
  *
  *   GET  /api/forge-segment?job=<id>
  *     → { job_id, status, result_url?, manifest_url?, parts?, part_count?,
- *         source_faces?, method?, warnings?, error? }
+ *         source_faces?, method?, warnings?, single_part?, note?, error? }
+ *
+ * single_part: the model is one continuous surface with nothing to split;
+ * note explains it in plain words so the page shows guidance, not an error.
  *
  * Routes to workers/segment (GCP Cloud Run) when GCP_SEGMENT_URL is set.
  */
@@ -151,6 +154,8 @@ async function pollJob(req, res, jobId) {
 		source_faces: result.sourceFaces ?? null,
 		method: result.segmentMethod || null,
 		warnings: result.warnings || null,
+		single_part: result.singlePart === true,
+		note: result.note || null,
 		error: result.error || null,
 	});
 }
