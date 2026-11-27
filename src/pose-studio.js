@@ -908,8 +908,9 @@ function boot() {
 		const scn = gltf.scene || gltf.scenes?.[0];
 		const rig = scn && makeGltfRig(scn);
 		if (!rig) {
-			throw new Error(
-				'That model has no recognizable humanoid skeleton — pick a rigged avatar.',
+			throw Object.assign(
+				new Error('That model has no humanoid skeleton yet, so it cannot move. Rig it in the Animations panel, or pick a rigged avatar.'),
+				{ code: 'no_skeleton' },
 			);
 		}
 		mountRig(rig);
@@ -930,6 +931,31 @@ function boot() {
 		const url = avatar?.model_url || avatar?.url;
 		if (!url) throw new Error('That avatar has no downloadable model.');
 		await loadAvatarFromUrl(url, { id: avatar.id, name: avatar.name });
+	}
+
+	// A model that loaded without a skeleton can still be animated: the
+	// animation library offers to auto-rig it, as long as the mesh sits at an
+	// http(s) URL the rigger can fetch.
+	function offerRigFor(modelUrl, name) {
+		if (!state.animLibrary) return;
+		let abs;
+		try {
+			abs = new URL(modelUrl, window.location.href);
+		} catch {
+			return;
+		}
+		if (abs.protocol !== 'https:' && abs.protocol !== 'http:') return;
+		state.animLibrary.offerRig({ url: abs.href, name });
+	}
+
+	// Swap in the freshly rigged GLB and point ?src= at it, so a reload or a
+	// shared link opens the rigged model instead of the original.
+	async function loadRiggedModel(glbUrl, name) {
+		await loadAvatarFromUrl(glbUrl, { name });
+		const url = new URL(window.location.href);
+		url.searchParams.set('src', glbUrl);
+		url.searchParams.delete('avatar');
+		window.history.replaceState({}, '', url);
 	}
 
 	function switchToMannequin() {
@@ -976,6 +1002,7 @@ function boot() {
 					updateUrlAvatar(avatar.id);
 				} catch (err) {
 					setStatus(err.message, 'error');
+					if (err?.code === 'no_skeleton') offerRigFor(avatar.model_url, avatar.name);
 				}
 			},
 		});
@@ -1288,6 +1315,7 @@ function boot() {
 			getRig: () => state.rig,
 			getAvatarId: () => state.avatar?.id || null,
 			setStatus,
+			loadRigged: loadRiggedModel,
 			onPreviewStart: () => {
 				timeline?.pause?.();
 				gizmo.detach();
@@ -2074,13 +2102,16 @@ function boot() {
 		}).then(() => openRequestedExtras());
 	} else if (requestedSrc) {
 		// /viewer funnel: animate a freshly generated GLB by URL. A model with no
-		// humanoid skeleton can't be posed; say so and fall back to the mannequin.
+		// humanoid skeleton can't be posed yet: say so, fall back to the mannequin,
+		// and have the Animations panel offer to rig it.
 		// (Mannequin first: switchToMannequin writes its own status line, and the
 		// error explaining WHY has to be the one left visible.)
-		loadAvatarFromUrl(requestedSrc, { name: _params.get('title') || 'Imported model' })
+		const srcName = _params.get('title') || 'Imported model';
+		loadAvatarFromUrl(requestedSrc, { name: srcName })
 			.catch((err) => {
 				switchToMannequin();
 				setStatus(`${err?.message || 'Could not load that model.'} Showing the mannequin instead.`, 'error');
+				if (err?.code === 'no_skeleton') offerRigFor(requestedSrc, srcName);
 			})
 			.then(() => openRequestedExtras());
 	} else if (requestedAnim || requestedSpell) {

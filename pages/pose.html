@@ -807,6 +807,41 @@
 			.al-gen[data-busy='true'] .al-gen-input {
 				opacity: 0.6;
 			}
+			.al-gen-btn:active:not(:disabled) {
+				transform: translateY(1px);
+			}
+			/* Shown after a failed generation: reruns the same description. */
+			.al-gen-retry {
+				flex: 0 0 auto;
+				appearance: none;
+				border: 1px solid rgba(251, 191, 36, 0.45);
+				background: rgba(251, 191, 36, 0.12);
+				color: #fef3c7;
+				font: inherit;
+				font-size: 12px;
+				font-weight: 600;
+				padding: 7px 10px;
+				border-radius: 8px;
+				cursor: pointer;
+				white-space: nowrap;
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+			}
+			.al-gen-retry:hover {
+				background: rgba(251, 191, 36, 0.22);
+				border-color: rgba(251, 191, 36, 0.75);
+			}
+			.al-gen-retry:active {
+				transform: translateY(1px);
+			}
+			.al-gen-retry:focus-visible {
+				outline: none;
+				border-color: rgba(251, 191, 36, 0.9);
+				box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3);
+			}
+			.al-gen-retry[hidden],
+			.al-inplace[hidden] {
+				display: none;
+			}
 			.al-spell .al-gen-input {
 				background: rgba(167, 139, 250, 0.06);
 				border-color: rgba(167, 139, 250, 0.4);
@@ -1055,6 +1090,32 @@
 				outline: 2px solid var(--accent);
 				outline-offset: 2px;
 			}
+			.al-cta:active {
+				transform: translateY(1px);
+			}
+			/* Rig-it-first offer: the primary action plus a quieter alternative. */
+			.al-empty-actions {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				gap: 8px;
+			}
+			.al-rig-btn {
+				border-color: rgba(34, 211, 238, 0.55);
+				background: rgba(34, 211, 238, 0.18);
+				color: #cffafe;
+			}
+			.al-rig-btn:hover {
+				background: rgba(34, 211, 238, 0.3);
+			}
+			.al-cta-quiet {
+				border-color: var(--border);
+				background: transparent;
+				color: var(--text-2, #d4d4d8);
+			}
+			.al-cta-quiet:hover {
+				background: rgba(255, 255, 255, 0.08);
+			}
 			.al-skeleton-grid {
 				display: grid;
 				grid-template-columns: 1fr 1fr;
@@ -1293,6 +1354,13 @@
 				background: rgba(34, 211, 238, 0.16);
 				border-color: rgba(34, 211, 238, 0.4);
 				color: var(--text);
+			}
+			.al-loop:active {
+				transform: translateY(1px);
+			}
+			/* Sits right after Loop, which already takes the free space. */
+			.al-inplace {
+				margin-left: 0;
 			}
 			.al-save {
 				appearance: none;

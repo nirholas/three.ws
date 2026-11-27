@@ -27,6 +27,15 @@ import {
 } from './animation-retarget.js';
 import { Modal } from './shared/modal.js';
 import { log } from './shared/log.js';
+import { checkMotionPrompt } from './motion-prompt-check.js';
+import {
+	rootTravel,
+	pinRootInPlace,
+	IN_PLACE_TRAVEL_M,
+	generatedClipProblem,
+	normalizeClipTiming,
+} from './generated-motion.js';
+import { runRigJob } from './rig-job.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -35,10 +44,37 @@ const MANIFEST_URL = '/animations/manifest.json';
 // performances rather than twitches. Mirrors AnimationManager's bar.
 const MIN_RIG_BONES = 8;
 
-// Text-to-animation job polling (POST /api/forge-motion → poll until the clip
-// is ready). The motion model runs ~10–30s on a warm GPU container.
+// Text-to-animation job polling (POST /api/forge-motion, then poll until the
+// clip is ready). The motion model runs 10 to 30 s on a warm GPU, but the
+// worker scales to zero when idle and a cold start (GPU attach plus model load)
+// takes minutes, so the cap leaves room for that and the wait text says so.
 const GEN_POLL_INTERVAL_MS = 2500;
-const GEN_MAX_POLL_MS = 90 * 1000;
+const GEN_MAX_POLL_MS = 4 * 60 * 1000;
+// Seconds past which a wait reads as a cold start when the job gave no ETA.
+const GEN_WARM_SECONDS = 30;
+// A finished job whose clip the server could not convert is re-polled (the
+// conversion runs on every poll) this many times before it counts as failed.
+const GEN_CONVERT_RETRIES = 3;
+// Generated motions start and end in different poses, so their loop seam gets
+// a short crossfade by default. The Blend field shows it and can clear it.
+const GEN_LOOP_BLEND_MS = 300;
+// Horizontal root travel below which a clip has no travel worth a toggle.
+const IN_PLACE_MIN_TRAVEL_M = 0.05;
+
+/**
+ * What the person reads while a motion generates: the honest elapsed time, and
+ * once the wait passes the job's estimate, why it is taking longer.
+ * @param {string} prompt
+ * @param {number} seconds elapsed
+ * @param {number|null} eta the job's estimate in seconds, when it gave one
+ */
+export function motionWaitText(prompt, seconds, eta) {
+	const short = prompt.length > 40 ? `${prompt.slice(0, 39)}…` : prompt;
+	const base = `Generating “${short}”: ${seconds}s`;
+	const expected = Number(eta) > 0 ? Number(eta) : GEN_WARM_SECONDS;
+	if (seconds <= expected) return `${base}.`;
+	return `${base}. The motion GPU was asleep and is starting up; the first run after a quiet spell can take a few minutes.`;
+}
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const el = (tag, attrs = {}, children = []) => {
@@ -67,6 +103,7 @@ export class AnimationLibrary {
 	 *   onPreviewStart?: () => void,
 	 *   onPreviewStop?: () => void,
 	 *   setStatus?: (msg: string, kind?: string) => void,
+	 *   loadRigged?: (glbUrl: string, name: string) => Promise<void>,
 	 * }} opts
 	 */
 	constructor(opts) {
@@ -76,6 +113,8 @@ export class AnimationLibrary {
 		this.onPreviewStart = opts.onPreviewStart || (() => {});
 		this.onPreviewStop = opts.onPreviewStop || (() => {});
 		this.setStatus = opts.setStatus || (() => {});
+		// Loads a freshly rigged GLB in place of the unrigged model (host-owned).
+		this.loadRigged = opts.loadRigged || null;
 
 		/** @type {Array} curated manifest defs (with category) */
 		this._defs = [];
@@ -106,6 +145,10 @@ export class AnimationLibrary {
 		this._blendMs = 0;
 		this._loopOn = true;
 		this._editDebounce = null;
+		// "In place": hold the root's horizontal position so a travelling motion
+		// (a generated walk covers metres) stays in view and loops without a snap.
+		this._inPlace = false;
+		this._travel = 0;
 
 		// Resolves once mount() has finished loading the manifest (success or
 		// failure) — openByName() awaits this so a ?anim=<preset> deep-link works
@@ -118,6 +161,16 @@ export class AnimationLibrary {
 		// Text-to-animation job state (token-based abort like the forge panels).
 		this._genToken = 0;
 		this._genTimer = null;
+		this._lastPrompt = '';
+
+		// Auto-rig offer for a model that loaded without a skeleton: the host
+		// calls offerRig() with its URL, and the no-rig state turns into "Rig it
+		// first" with a button that runs the rig job (src/rig-job.js).
+		this._rigOffer = null;
+		this._rigToken = 0;
+		this._rigBusy = false;
+		this._rigError = null;
+		this._rigTimer = null;
 
 		// Resolved DOM refs (built in _renderShell).
 		this._refs = {};
@@ -195,6 +248,8 @@ export class AnimationLibrary {
 		this._genToken++; // a generation in flight was for the previous rig
 		this._stopGenTimer();
 		this._setGenBusy(false);
+		const rig = this.getRig();
+		if (rig && rig.kind !== 'mannequin' && !this._rigBusy) this._rigOffer = null;
 		this.stopPreview({ silent: true });
 		this._disposeMixer();
 		if (this._defs.length) this._evaluateRig();
@@ -253,6 +308,8 @@ export class AnimationLibrary {
 	dispose() {
 		this._genToken++; // abort any in-flight generation poll
 		this._stopGenTimer();
+		this._rigToken++;
+		this._stopRigTimer();
 		this.stopPreview({ silent: true });
 		this._disposeMixer();
 		this._clipCache.clear();
@@ -285,7 +342,7 @@ export class AnimationLibrary {
 		const genInput = el('input', {
 			type: 'text',
 			class: 'al-gen-input',
-			placeholder: 'Generate a motion — “waving confidently”',
+			placeholder: 'Describe a motion, like “waving confidently”',
 			'aria-label': 'Generate an animation from a text description',
 			autocomplete: 'off',
 			maxlength: '200',
@@ -303,7 +360,14 @@ export class AnimationLibrary {
 				submitGen();
 			}
 		});
-		const gen = el('div', { class: 'al-gen' }, [genInput, genBtn]);
+		// Shown only after a generation fails: reruns the same description.
+		const genRetry = el(
+			'button',
+			{ class: 'al-gen-retry', type: 'button', hidden: true, title: 'Try the same description again' },
+			['Try again'],
+		);
+		genRetry.addEventListener('click', () => this.generateFromText(this._lastPrompt));
+		const gen = el('div', { class: 'al-gen' }, [genInput, genBtn, genRetry]);
 
 		// Fingerspell: spell any word in ASL on the avatar's right hand. Built
 		// locally and deterministically (src/fingerspelling.js) — no network,
@@ -353,7 +417,7 @@ export class AnimationLibrary {
 
 		// Shell refs first; _renderTransport() merges its own sub-refs (label,
 		// speed, export button) into this._refs, so it must run after this assign.
-		this._refs = { gen, genInput, genBtn, spell, spellInput, spellBtn, search, chips, grid, empty };
+		this._refs = { gen, genInput, genBtn, genRetry, spell, spellInput, spellBtn, search, chips, grid, empty };
 		const transport = this._renderTransport();
 		this._refs.transport = transport;
 
@@ -406,15 +470,17 @@ export class AnimationLibrary {
 				retry,
 			);
 		} else if (state === 'no-rig') {
-			const cta = el('button', { class: 'al-cta', type: 'button' }, ['Load a rigged avatar']);
-			cta.addEventListener('click', () =>
-				document.querySelector('#pose-load-avatar')?.click(),
-			);
+			const loadCta = (cls = 'al-cta') => {
+				const b = el('button', { class: cls, type: 'button' }, ['Load a rigged avatar']);
+				b.addEventListener('click', () => document.querySelector('#pose-load-avatar')?.click());
+				return b;
+			};
+			if (this._rigOffer) return this._renderRigOffer(make, loadCta);
 			make(
 				'🦴',
 				'Load a rigged avatar to animate',
 				'Animation presets apply to a rigged model. Load one of your avatars (or a public avatar) and the full gallery unlocks here.',
-				cta,
+				loadCta(),
 			);
 		} else if (state === 'incompatible') {
 			make(
@@ -423,6 +489,114 @@ export class AnimationLibrary {
 				`The loaded model exposes only ${this._rigBoneCount()} recognizable humanoid bones — too few to drive the preset library. Try a standard humanoid avatar.`,
 				null,
 			);
+		}
+	}
+
+	// ── Auto-rig for an unrigged model ──────────────────────────────────────
+	/**
+	 * The host loaded a model with no skeleton. Remember it so the empty state
+	 * can offer to rig it instead of only asking for a different avatar.
+	 * @param {{ url: string, name?: string }} offer public http(s) URL of the mesh
+	 */
+	offerRig(offer) {
+		this._rigToken++;
+		this._stopRigTimer();
+		this._rigBusy = false;
+		this._rigError = null;
+		this._rigOffer = offer?.url ? { url: offer.url, name: offer.name || 'this model' } : null;
+		if (this._defs.length) this._evaluateRig();
+	}
+
+	_renderRigOffer(make, loadCta) {
+		const { name } = this._rigOffer;
+		const { empty } = this._refs;
+		const actions = el('div', { class: 'al-empty-actions' });
+		if (this._rigBusy) {
+			const cancel = el('button', { class: 'al-cta al-cta-quiet', type: 'button' }, ['Cancel']);
+			cancel.addEventListener('click', () => this._cancelRig());
+			actions.appendChild(cancel);
+			make('⏳', `Rigging “${name}”`, this._rigWaitText(0), actions);
+			this._refs.rigWait = empty.querySelector('.al-empty-body');
+			return;
+		}
+		if (this._rigError) {
+			const err = this._rigError;
+			if (err.kind !== 'unconfigured') {
+				const retry = el('button', { class: 'al-cta', type: 'button' }, ['Try rigging again']);
+				retry.addEventListener('click', () => this.rigOfferedModel());
+				actions.appendChild(retry);
+			}
+			actions.appendChild(loadCta(err.kind === 'unconfigured' ? 'al-cta' : 'al-cta al-cta-quiet'));
+			make('⚠️', err.title || 'Could not rig this model', err.message, actions);
+			return;
+		}
+		const rigBtn = el('button', { class: 'al-cta al-rig-btn', type: 'button' }, ['Rig this model']);
+		rigBtn.addEventListener('click', () => this.rigOfferedModel());
+		actions.appendChild(rigBtn);
+		actions.appendChild(loadCta('al-cta al-cta-quiet'));
+		make(
+			'🦴',
+			'Rig it first',
+			`“${name}” has no skeleton, so a motion has nothing to move. Rigging adds a humanoid skeleton and skin weights in about a minute, then every motion here plays on it.`,
+			actions,
+		);
+	}
+
+	_rigWaitText(seconds) {
+		const base = `Adding a skeleton and skin weights: ${seconds}s.`;
+		return seconds > 90
+			? `${base} The rigging GPU was asleep and is starting up, which can take a few minutes.`
+			: `${base} This usually takes about a minute.`;
+	}
+
+	/** Run the auto-rig job on the offered model, then hand the rigged GLB to the host. */
+	async rigOfferedModel() {
+		if (!this._rigOffer || this._rigBusy) return;
+		const offer = this._rigOffer;
+		const token = ++this._rigToken;
+		this._rigBusy = true;
+		this._rigError = null;
+		this._setState('no-rig');
+		const t0 = performance.now();
+		this._rigTimer = setInterval(() => {
+			if (token !== this._rigToken) return;
+			const s = Math.floor((performance.now() - t0) / 1000);
+			if (this._refs.rigWait) this._refs.rigWait.textContent = this._rigWaitText(s);
+		}, 1000);
+		this.setStatus(`Rigging “${offer.name}”…`, 'busy');
+		try {
+			const result = await runRigJob(offer.url, { isCurrent: () => token === this._rigToken });
+			if (!result || token !== this._rigToken) return;
+			this._stopRigTimer();
+			if (!this.loadRigged) throw new Error('This page cannot load the rigged model.');
+			await this.loadRigged(result.glbUrl, offer.name);
+			if (token !== this._rigToken) return;
+			this._rigOffer = null;
+			this._rigBusy = false;
+			this.setStatus(`Rigged “${offer.name}”. Pick a motion or describe one.`);
+		} catch (err) {
+			if (token !== this._rigToken) return;
+			this._stopRigTimer();
+			log.warn('[AnimationLibrary] auto-rig failed:', err?.message || err);
+			this._rigBusy = false;
+			this._rigError = err instanceof Error ? err : new Error(String(err));
+			this._setState('no-rig');
+			this.setStatus(this._rigError.message, 'error');
+		}
+	}
+
+	_cancelRig() {
+		this._rigToken++;
+		this._stopRigTimer();
+		this._rigBusy = false;
+		this._setState('no-rig');
+		this.setStatus('Rigging cancelled.');
+	}
+
+	_stopRigTimer() {
+		if (this._rigTimer) {
+			clearInterval(this._rigTimer);
+			this._rigTimer = null;
 		}
 	}
 
@@ -629,7 +803,8 @@ export class AnimationLibrary {
 		const note = dropped.length
 			? ` (${matched}/${total} bones · ${dropped.length} not on this rig)`
 			: ` (${matched}/${total} bones matched)`;
-		this.setStatus(`Playing “${def.label || def.name}” — ${pct}% retargeted${note}.`);
+		this._playStatus = `Playing “${def.label || def.name}”: ${pct}% retargeted${note}.`;
+		this.setStatus(this._playStatus);
 		return true;
 	}
 
@@ -640,11 +815,14 @@ export class AnimationLibrary {
 	 * preset. Token-based abort so a newer request supersedes an in-flight one.
 	 */
 	async generateFromText(prompt) {
-		prompt = (prompt || '').trim();
-		if (prompt.length < 3) {
-			this.setStatus('Describe the motion in a few words first.', 'error');
+		const checked = checkMotionPrompt(prompt);
+		if (!checked.ok) {
+			this.setStatus(checked.message, 'error');
 			return;
 		}
+		prompt = checked.prompt;
+		this._lastPrompt = prompt;
+		this._showGenRetry(false);
 		const rig = this.getRig();
 		if (!rig || rig.kind === 'mannequin') {
 			this.setStatus('Load a rigged avatar before generating a motion.', 'error');
@@ -654,20 +832,25 @@ export class AnimationLibrary {
 		const token = ++this._genToken;
 		this._setGenBusy(true);
 		const t0 = performance.now();
+		let eta = null;
 		const tick = () => {
 			if (token !== this._genToken) return;
-			const s = Math.floor((performance.now() - t0) / 1000);
-			this.setStatus(`Generating “${prompt}” — ${s}s`, 'busy');
+			this.setStatus(motionWaitText(prompt, Math.floor((performance.now() - t0) / 1000), eta), 'busy');
 		};
 		tick();
 		this._genTimer = setInterval(tick, 1000);
 
 		try {
-			const clipJSON = await this._runMotionJob(prompt, token);
-			if (token !== this._genToken || !clipJSON) return; // superseded / aborted
+			const job = await this._runMotionJob(prompt, token, (seconds) => {
+				eta = seconds;
+			});
+			if (token !== this._genToken || !job) return; // superseded / aborted
 			this._stopGenTimer();
+			const timed = normalizeClipTiming(job.clip, job);
+			const problem = generatedClipProblem(timed);
+			if (problem) throw new Error(problem);
 			const name = `gen_${Date.now().toString(36)}`;
-			const clip = parseClipJSON(clipJSON, name);
+			const clip = parseClipJSON(timed, name);
 			this._clipCache.set(name, clip);
 			const def = {
 				name,
@@ -678,52 +861,101 @@ export class AnimationLibrary {
 			};
 			this._baseClip = clip;
 			this._resetEdits(clip.duration, true);
-			this._playClip(this._computeEditedClip(clip), { ...def, loop: this._loopOn });
+			this._setBlend(Math.min(GEN_LOOP_BLEND_MS, Math.round(clip.duration * 250)));
+			const played = this._playClip(this._computeEditedClip(clip), { ...def, loop: this._loopOn });
+			if (played) {
+				const travel = this._inPlace
+					? `It travels ${this._travel.toFixed(1)} m, so it plays in place to stay in view. Turn off In place to see the travel.`
+					: null;
+				const extra = [job.note, travel].filter(Boolean).join(' ');
+				if (extra) this.setStatus(`${this._playStatus} ${extra}`);
+			}
 		} catch (err) {
 			if (token !== this._genToken) return;
 			this._stopGenTimer();
 			const msg =
 				err?.kind === 'unconfigured'
-					? 'Text-to-animation isn’t enabled on this deployment yet.'
-					: err?.message || 'Generation failed.';
+					? 'Text-to-animation is not enabled on this deployment yet.'
+					: err?.message || 'The motion could not be generated. Try again.';
 			this.setStatus(msg, 'error');
+			if (err?.retryable !== false && err?.kind !== 'unconfigured') this._showGenRetry(true);
 		} finally {
 			if (token === this._genToken) this._setGenBusy(false);
 		}
 	}
 
-	/** Submit a motion job and poll until the clip JSON is ready. */
-	async _runMotionJob(prompt, token) {
-		const submit = await fetch('/api/forge-motion', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ prompt }),
-		});
+	/**
+	 * Submit a motion job and poll until its clip is ready.
+	 * @returns {Promise<{ clip: object, fps: number|null, frames: number|null, note: string|null } | null>}
+	 *   null when a newer request superseded this one
+	 */
+	async _runMotionJob(prompt, token, onEta) {
+		const fail = (message, extra = {}) => Object.assign(new Error(message), extra);
+		let submit;
+		try {
+			submit = await fetch('/api/forge-motion', {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ prompt }),
+			});
+		} catch {
+			throw fail('Could not reach the motion generator. Check your connection and try again.');
+		}
 		const sub = await submit.json().catch(() => ({}));
 		if (submit.status === 503 || sub.error === 'unconfigured') {
-			throw Object.assign(new Error(sub.message || 'unconfigured'), { kind: 'unconfigured' });
+			throw fail(sub.message || 'unconfigured', { kind: 'unconfigured' });
 		}
-		if (submit.status === 429) throw new Error('The motion generator is busy. Try again shortly.');
-		if (!submit.ok || !sub.job_id) throw new Error(sub.message || `Generator returned ${submit.status}.`);
+		if (submit.status === 400) {
+			throw fail(sub.message || 'That description could not be used. Describe what the body does.', { retryable: false });
+		}
+		if (submit.status === 401 || submit.status === 403) {
+			throw fail(sub.message || 'Sign in to generate a motion.', { retryable: false });
+		}
+		if (submit.status === 429) {
+			const wait = Number(submit.headers.get('retry-after'));
+			throw fail(
+				wait > 0
+					? `You have used this hour’s motion generations. Try again in ${Math.ceil(wait / 60)} min.`
+					: 'You have used this hour’s motion generations. Try again later.',
+			);
+		}
+		if (!submit.ok || !sub.job_id) {
+			// The server hands the allowance back on any 5xx, so a failed start costs nothing.
+			throw fail('The motion generator could not start this job. Nothing was used from your allowance; try again.');
+		}
+		if (typeof sub.eta_seconds === 'number') onEta?.(sub.eta_seconds);
 
 		const deadline = performance.now() + GEN_MAX_POLL_MS;
+		let convertRetries = GEN_CONVERT_RETRIES;
 		while (token === this._genToken && performance.now() < deadline) {
 			await sleep(GEN_POLL_INTERVAL_MS);
 			if (token !== this._genToken) return null;
-			const res = await fetch(`/api/forge-motion?job=${encodeURIComponent(sub.job_id)}`);
-			const data = await res.json().catch(() => ({}));
-			// The server hands back the clip already converted to the library's
-			// basis; the raw worker URL is the fallback when that step failed.
-			if (data.status === 'done' && data.clip) return data.clip;
-			if (data.status === 'done' && data.clip_url) {
-				const cr = await fetch(data.clip_url);
-				if (!cr.ok) throw new Error(`Couldn’t fetch the generated clip (HTTP ${cr.status}).`);
-				return cr.json();
+			let res;
+			try {
+				res = await fetch(`/api/forge-motion?job=${encodeURIComponent(sub.job_id)}`, { credentials: 'include' });
+			} catch {
+				continue; // a dropped connection mid-poll is not a failed job
 			}
-			if (data.status === 'failed') throw new Error(data.error || 'Generation failed.');
+			const data = await res.json().catch(() => ({}));
+			if (res.status === 400) throw fail(data.message || 'The motion job was lost. Try again.');
+			const timing = { fps: data.fps ?? null, frames: data.frames ?? null, note: sub.note ?? null };
+			// The server converts the clip into the library basis on every poll.
+			// The raw worker clip (clip_url) is in a different rest pose and would
+			// throw the head back on every rig, so a missing conversion is
+			// re-polled rather than played raw.
+			if (data.status === 'done' && data.clip) return { clip: data.clip, ...timing };
+			if (data.status === 'done') {
+				if (convertRetries-- > 0) continue;
+				throw fail('The motion finished but could not be prepared for playback. Try again.');
+			}
+			if (data.status === 'failed') {
+				log.warn('[AnimationLibrary] motion job failed:', data.error);
+				throw fail('The motion generator failed on this one. Try again; different wording often helps.');
+			}
 		}
 		if (token !== this._genToken) return null;
-		throw new Error('Generation timed out. Try a shorter prompt.');
+		throw fail('The motion generator did not answer within 4 minutes. Try again: the GPU may still be starting.');
 	}
 
 	// ── Fingerspell ─────────────────────────────────────────────────────────
@@ -782,6 +1014,12 @@ export class AnimationLibrary {
 			genBtn.textContent = busy ? '✨ Generating…' : '✨ Generate';
 		}
 		if (gen) gen.dataset.busy = busy ? 'true' : 'false';
+		if (busy) this._showGenRetry(false);
+	}
+
+	_showGenRetry(show) {
+		const { genRetry } = this._refs;
+		if (genRetry) genRetry.hidden = !show || !this._lastPrompt;
 	}
 
 	stopPreview({ silent = false } = {}) {
@@ -816,6 +1054,11 @@ export class AnimationLibrary {
 		this._trimEnd = duration;
 		this._blendMs = 0;
 		this._loopOn = loopDefault !== false;
+		// A clip that travels far opens pinned in place; one that only sways
+		// gets no toggle at all.
+		this._travel = this._baseClip ? rootTravel(this._baseClip) : 0;
+		this._inPlace = this._travel > IN_PLACE_TRAVEL_M;
+		this._syncInPlaceBtn();
 		const { trimStartInput, trimEndInput, blendInput, loopBtn } = this._refs;
 		if (trimStartInput) {
 			trimStartInput.max = duration.toFixed(2);
@@ -832,8 +1075,25 @@ export class AnimationLibrary {
 		}
 	}
 
-	/** Apply the current trim range and loop-blend to `base`, never mutating it. */
-	_computeEditedClip(base) {
+	_setBlend(ms) {
+		this._blendMs = Math.max(0, Math.min(2000, ms));
+		if (this._refs.blendInput) this._refs.blendInput.value = String(this._blendMs);
+	}
+
+	_syncInPlaceBtn() {
+		const { inPlaceBtn } = this._refs;
+		if (!inPlaceBtn) return;
+		inPlaceBtn.hidden = this._travel <= IN_PLACE_MIN_TRAVEL_M;
+		inPlaceBtn.setAttribute('aria-pressed', String(this._inPlace));
+		inPlaceBtn.classList.toggle('is-on', this._inPlace);
+		inPlaceBtn.title = this._inPlace
+			? `Playing in place. The motion travels ${this._travel.toFixed(1)} m; click to let it.`
+			: 'Hold the figure in place so the motion stays in view and loops without a jump';
+	}
+
+	/** Apply in-place, the trim range and the loop-blend to `base`, never mutating it. */
+	_computeEditedClip(source) {
+		const base = this._inPlace ? pinRootInPlace(source) : source;
 		const duration = base.duration;
 		const start = Math.max(0, Math.min(this._trimStart, duration));
 		const end = Math.max(start + 1 / 60, Math.min(this._trimEnd ?? duration, duration));
@@ -841,7 +1101,7 @@ export class AnimationLibrary {
 			start > 1e-3 || end < duration - 1e-3 ? trimClip(base, start, end) : base;
 		const edited =
 			this._loopOn && this._blendMs > 0 ? blendClipLoop(trimmed, this._blendMs / 1000) : trimmed;
-		if (edited !== base) edited.name = base.name;
+		if (edited !== source) edited.name = source.name;
 		return edited;
 	}
 
@@ -1104,10 +1364,24 @@ export class AnimationLibrary {
 			this._onEditsChanged();
 		});
 
+		// In place: shown only for a motion whose root travels, so a walk can be
+		// kept in view (and exported as an in-place cycle) or allowed to roam.
+		const inPlaceBtn = el(
+			'button',
+			{ class: 'al-loop al-inplace', type: 'button', 'aria-pressed': 'false', hidden: true },
+			['📍 In place'],
+		);
+		inPlaceBtn.addEventListener('click', () => {
+			this._inPlace = !this._inPlace;
+			this._syncInPlaceBtn();
+			this._onEditsChanged();
+		});
+
 		const editRow = el('div', { class: 'al-edit-row' }, [
 			el('label', { class: 'al-edit-field' }, ['Trim', trimStartInput, 'to', trimEndInput, 's']),
 			el('label', { class: 'al-edit-field' }, ['Blend', blendInput, 'ms']),
 			loopBtn,
+			inPlaceBtn,
 		]);
 
 		const root = el('div', { class: 'al-transport', style: 'display:none' }, [
@@ -1132,6 +1406,7 @@ export class AnimationLibrary {
 			trimEndInput,
 			blendInput,
 			loopBtn,
+			inPlaceBtn,
 		};
 		return { root };
 	}
