@@ -22,6 +22,7 @@ import { initForgeDestinationPicker, storedForgeDestination } from '../shared/fo
 import { regionRestrictedError, fetchRestrictedEngines } from '../forge-region.js';
 import { rememberFromResponse } from '../shared/forge-manage-tokens.js';
 import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, UPLOAD_SIGN_IN_SHORT } from '../shared/upload-sign-in.js';
+import { createLineWaiter, lineAnswerFrom, upstreamBusy, countdownText } from '../forge-line-wait.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -280,6 +281,14 @@ const CLIENT_ID = (() => {
 })();
 
 const CLIENT_HEADERS = { 'x-forge-client': CLIENT_ID };
+
+// The waiting line in front of the image step (src/forge-line-wait.js): holds
+// this person's place while the shared step is saturated and hands back on
+// their turn. Checks in with the same identity the submit carries.
+const lineWaiter = createLineWaiter({
+	panel: els.states.generating,
+	headers: () => ({ ...CLIENT_HEADERS }),
+});
 
 const REDUCED_MOTION =
 	typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1434,6 +1443,18 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 		e.kind = 'sign_in';
 		throw e;
 	}
+	// The image step is saturated: a place in line (429 forge_queued) or a full
+	// line (503 forge_full). Read before the generic 429/503 branches below,
+	// which would call a place in line a "generation limit" and a full line
+	// "unconfigured".
+	const line = lineAnswerFrom(res.status, data);
+	if (line) {
+		const e = new Error(line.message);
+		e.kind = line.kind;
+		e.line = line;
+		e.retryAfter = line.retryAfter;
+		throw e;
+	}
 	// The picked engine's model licence excludes this visitor's region (403
 	// region_restricted). Remember it so the picker disables it, and hand the
 	// catch the engines the server named so it hops instead of dead-ending.
@@ -1505,7 +1526,8 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 					? 'The generator is temporarily unavailable. Refine your current model locally, or try again shortly.'
 					: `You've hit the generation limit. It resets in about ${secs}s.`),
 		);
-		e.kind = 'rate_limited';
+		// The generator throttling us is "busy", never the person's own limit.
+		e.kind = upstreamBusy(data) ? 'busy' : 'rate_limited';
 		e.retryAfter = secs;
 		e.unavailable = unavailable;
 		throw e;
@@ -2219,7 +2241,7 @@ function stopRateLimitCountdown() {
 	}
 }
 
-function showRateLimited({ retryAfter = 10, unavailable = false, busy = false }) {
+function showRateLimited({ retryAfter = 10, unavailable = false, busy = false, title = null, message = null }) {
 	stopElapsed();
 	stopRateLimitCountdown();
 	if (els.generateAnyway) els.generateAnyway.classList.add('is-hidden');
@@ -2230,17 +2252,30 @@ function showRateLimited({ retryAfter = 10, unavailable = false, busy = false })
 	const canRefineLocally = Boolean(lastShownGlb && els.viewer.getAttribute('src'));
 	if (els.refineLocally) els.refineLocally.classList.toggle('is-hidden', !canRefineLocally);
 
+	// A wait state, not a failure: the heading says which wait it is. The page's
+	// translated heading is kept for showError to restore.
+	if (els.errorTitle) {
+		els.errorTitle.dataset.defaultText ??= els.errorTitle.textContent;
+		els.errorTitle.textContent =
+			title ||
+			(busy ? 'High demand right now' : unavailable ? 'Temporarily unavailable' : 'Generation limit reached');
+	}
+
 	let remaining = Math.max(1, Math.ceil(retryAfter));
-	const base = busy
-		? 'High demand — the free 3D engines are all busy right now.'
-		: unavailable
-			? 'The generator is temporarily unavailable.'
-			: 'You’ve hit the generation limit.';
-	const tail = canRefineLocally ? ' Or refine your current model now — instant and unlimited.' : '';
+	const base =
+		message ||
+		(busy
+			? 'High demand: the free 3D engines are all busy right now.'
+			: unavailable
+				? 'The generator is temporarily unavailable.'
+				: 'You’ve hit the generation limit.');
+	const tail = canRefineLocally ? ' Or refine your current model now: instant and unlimited.' : '';
 
 	const render = () => {
 		els.errorMessage.textContent =
-			remaining > 0 ? `${base} Retrying is available in ${remaining}s.${tail}` : `${base} You can try again now.${tail}`;
+			remaining > 0
+				? `${base} Retrying is available in ${countdownText(remaining)}.${tail}`
+				: `${base} You can try again now.${tail}`;
 	};
 	// While counting down, Retry is disabled (it would just 429 again); it
 	// re-enables the moment the window resets.
@@ -2419,6 +2454,20 @@ async function run(cfg) {
 		// so a confident user is never permanently blocked by a cautious verdict.
 		if (err.kind === 'not_usable') {
 			showError(err.message, { allowOverride: true });
+			return;
+		}
+		// A place in line for the image step: show it, keep it, and resubmit the
+		// moment it is this person's turn. A place that lapsed resubmits too, which
+		// rejoins the line (or starts at once if it has emptied).
+		if (err.kind === 'queued') {
+			stopElapsed();
+			els.generateLabel.textContent = 'In line…';
+			const outcome = await lineWaiter.wait(err.line);
+			if (outcome !== 'left' && !pollAbort && lastJob) run(lastJob);
+			return;
+		}
+		if (err.kind === 'full') {
+			showRateLimited({ retryAfter: err.retryAfter, title: 'Forge is full right now', message: err.message });
 			return;
 		}
 		// Rate limited (or the limiter is temporarily unavailable). Designed,
@@ -2739,6 +2788,8 @@ els.providerKey?.addEventListener('input', () => {
 
 els.cancel.addEventListener('click', () => {
 	pollAbort = true;
+	// Waiting in line: the place goes to the next person.
+	lineWaiter.leave();
 	stopElapsed();
 	setBusy(false);
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
