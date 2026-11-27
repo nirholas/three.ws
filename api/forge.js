@@ -204,6 +204,7 @@ import {
 	requestTerritory,
 	isTencentLane,
 	territoryReport,
+	regionRestrictedMessage,
 } from './_lib/forge-territory.js';
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
 import { decideStalledPoll } from './_lib/forge-job-deadline.js';
@@ -217,7 +218,6 @@ import { assertSafePublicUrl, SsrfBlockedError } from './_lib/ssrf-guard.js';
 // pollable id before our timeout: a single slow window otherwise makes every
 // text prompt re-pay that full timeout before failing over to the reconstruct
 // lane. A short cooldown (recorded on a health failure, checked before the lane
-	regionRestrictedMessage,
 // runs) lets subsequent requests skip a degraded lane and go straight to a
 // working one; it expires on its own so a recovered lane is retried promptly.
 // Best-effort via the shared cache: a miss just means "not cooling".
