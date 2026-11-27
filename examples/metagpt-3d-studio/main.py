@@ -60,6 +60,27 @@ def poster_url(glb: str, size: int = 512) -> str:
     return "https://three.ws/api/render/glb?" + urllib.parse.urlencode(query, quote_via=urllib.parse.quote)
 
 
+class StudioError(RuntimeError):
+    """three.ws refused a call. The message is the server's own sentence; `data` holds
+    its fields (`reason`, `retry_after`, ...), e.g. `rate_limited` when an account's
+    hourly generation budget is used up."""
+
+    def __init__(self, message: str, data: dict | None = None) -> None:
+        super().__init__(message)
+        self.data = data or {}
+
+
+def fault_text(err: BaseException) -> str:
+    """One line for a failure. MetaGPT re-raises a role's exception with the whole
+    stack trace as its message; the last line of that trace is the real error."""
+    if isinstance(err, StudioError):
+        return str(err)
+    text = str(err)
+    if text.startswith("Traceback (most recent call last)"):
+        return text.strip().splitlines()[-1].strip()
+    return f"{type(err).__name__}: {text}"
+
+
 # The three.ws leg, spoken directly: MCP JSON-RPC over plain HTTP POST.
 class Studio:
     """A session with the three.ws studio server. The key is optional: catalog search
@@ -91,7 +112,8 @@ class Studio:
         except urllib.error.HTTPError as err:
             raise RuntimeError(f"{MCP_URL} answered HTTP {err.code} to {method}: {err.read()[:300]!r}") from err
         if "error" in payload:
-            raise RuntimeError(f"{MCP_URL} rejected {method}: {payload['error']}")
+            error = payload["error"] if isinstance(payload["error"], dict) else {"message": str(payload["error"])}
+            raise StudioError(f"three.ws refused {method}: {error.get('message') or 'no reason given'}", error.get("data"))
         return payload["result"]
 
     def connect(self) -> str:
@@ -226,6 +248,7 @@ class Run:
         self.done = False
         self.rejected: list[str] = []
         self.final: dict | None = None
+        self.delivered: dict | None = None  # the latest review of a model that exists
         self.error: str | None = None
 
 
@@ -401,11 +424,21 @@ def build_team(brief: str):
             news = await super()._observe()
             return 0 if RUN.done else news
 
+        async def _act(self) -> Message:
+            # Caught here, inside MetaGPT's own wrapper around Role.run: that wrapper logs a
+            # stack trace and re-raises the trace as the message. One role failing ends the run.
+            try:
+                return await self.work()
+            except Exception as err:
+                RUN.error = RUN.error or f"{self.profile} failed: {fault_text(err)}"
+                RUN.done = True
+                return Message(content="{}", role=self.profile, cause_by="metagpt_3d_studio.Stopped")
+
         async def run(self, with_message=None):
             try:
                 return await super().run(with_message)
             except Exception as err:  # MetaGPT's Team would swallow this and report "out of rounds"
-                RUN.error = RUN.error or f"{self.profile} failed: {type(err).__name__}: {err}"
+                RUN.error = RUN.error or f"{self.profile} failed: {fault_text(err)}"
                 RUN.done = True
                 return None
 
@@ -420,7 +453,7 @@ def build_team(brief: str):
             self.set_actions([WriteSpec])
             self._watch([UserRequirement, Review])
 
-        async def _act(self) -> Message:
+        async def work(self) -> Message:
             last = self.rc.news[-1]
             review = json.loads(last.content) if last.cause_by == any_to_str(Review) else None
             print(f"role     {self.profile} writes the spec" if review is None else f"role     {self.profile} rewrites the spec after: {review['fault']}", flush=True)
@@ -439,7 +472,7 @@ def build_team(brief: str):
             self.set_actions([Source])
             self._watch([WriteSpec])
 
-        async def _act(self) -> Message:
+        async def work(self) -> Message:
             spec = json.loads(self.rc.news[-1].content)
             print(f"role     {self.profile} searches the catalog for '{spec['query']}'", flush=True)
             out = await self.rc.todo.run(spec)
@@ -464,11 +497,13 @@ def build_team(brief: str):
             self.set_actions([Review])
             self._watch([Source])
 
-        async def _act(self) -> Message:
+        async def work(self) -> Message:
             sourced = json.loads(self.rc.news[-1].content)
             print(f"role     {self.profile} reviews iteration {RUN.iteration + 1} of {MAX_ITERATIONS}", flush=True)
             review = await self.rc.todo.run(sourced["spec"], sourced["model"], sourced.get("error"))
             print(f"review   {'PASS' if review['pass'] else 'FAIL'}{'' if review['pass'] else ': ' + str(review['fault'])}", flush=True)
+            if review.get("model"):
+                RUN.delivered = review
             if review["pass"] or RUN.iteration >= MAX_ITERATIONS:
                 finish(review)
             return Message(content=json.dumps(review), role=self.profile, cause_by=Review)
@@ -479,6 +514,30 @@ def build_team(brief: str):
     team.hire([ArtDirector(config=config), Modeler(config=config), Reviewer(config=config)])
     team.invest(1.0)
     return team
+
+
+def report(run: Run) -> int:
+    """Print how the run ended and return its exit code. A model that an earlier
+    iteration made and reviewed is still delivered when a later one makes none."""
+    final = run.final
+    stopped = None
+    if final is None or final.get("model") is None:
+        stopped = run.error or (final or {}).get("fault") or "the team ran out of rounds before a review"
+        final = run.delivered
+        if final is None:
+            print(f"error    no model delivered: {stopped}", file=sys.stderr)
+            return EXIT_FAILED
+        print(f"error    the run stopped early, so the last reviewed model is delivered: {stopped}", file=sys.stderr)
+    model = final["model"]
+    print(f"\nverdict  {'PASS' if final['pass'] else 'FAIL'} after {run.iteration} of {MAX_ITERATIONS} iterations ({run.llm_calls} Grok calls)")
+    for point, text in (final.get("points") or {}).items():
+        print(f"  {point:<9}{text}")
+    if not final["pass"]:
+        print(f"  fault    {final['fault']}")
+    print(f"\nGLB:     {model['url']}\nViewer:  {model['viewer_url']}\nPoster:  {poster_url(model['url'], 1024)}")
+    if stopped is None and final["pass"]:
+        return EXIT_OK
+    return EXIT_REVIEW_FAILED if not final["pass"] else EXIT_FAILED
 
 
 def run(brief: str) -> int:
@@ -500,19 +559,7 @@ def run(brief: str) -> int:
 
     team = build_team(brief)
     asyncio.run(team.run(n_round=MAX_ROUNDS, idea=brief))
-    final = RUN.final
-    if final is None or final.get("model") is None:
-        reason = RUN.error or (final or {}).get("fault") or "the team ran out of rounds before a review"
-        print(f"error    no model delivered: {reason}", file=sys.stderr)
-        return EXIT_FAILED
-    model = final["model"]
-    print(f"\nverdict  {'PASS' if final['pass'] else 'FAIL'} after {RUN.iteration} of {MAX_ITERATIONS} iterations ({RUN.llm_calls} Grok calls)")
-    for point, text in (final.get("points") or {}).items():
-        print(f"  {point:<9}{text}")
-    if not final["pass"]:
-        print(f"  fault    {final['fault']}")
-    print(f"\nGLB:     {model['url']}\nViewer:  {model['viewer_url']}\nPoster:  {poster_url(model['url'], 1024)}")
-    return EXIT_OK if final["pass"] else EXIT_REVIEW_FAILED
+    return report(RUN)
 
 
 def main(argv: list[str]) -> int:
