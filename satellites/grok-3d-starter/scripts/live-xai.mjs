@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { runTurn } from '../lib/chat.mjs';
 import { XAI_RESPONSES_URL, loadConfig, missingKeys } from '../lib/config.mjs';
 import { toAppError } from '../lib/errors.mjs';
+import { toolLogLine } from '../lib/tool-log.mjs';
 import { visitorId } from '../lib/xai.mjs';
 import { readSSE } from '../shared/sse.js';
 
@@ -66,7 +67,7 @@ async function turn(label, input) {
 	log(`${label}: ${input.message}`);
 	const models = [];
 	const emit = (event, data) => {
-		if (event === 'tool') log(`  tool ${data.name} ${data.status || ''} ${data.arguments ? data.arguments.slice(0, 160) : ''}`);
+		if (event === 'tool') log(`  ${toolLogLine(data)}`);
 		else if (event === 'tool_result') log(`  result ${data.name}: ${data.kind}`);
 		else if (event === 'job') log(`  render ${data.status || 'started'} ${data.progress ?? ''}`);
 		else if (event === 'model') {
