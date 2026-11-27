@@ -1,0 +1,14 @@
+{
+	"uptime": {
+		"fetchedAt": "2026-11-27T21:01:24.732Z",
+		"intervalSeconds": 300,
+		"probes": 1641,
+		"passed": 1633,
+		"successRate": 0.9951249238269348,
+		"handshakeP50Ms": 158,
+		"handshakeP95Ms": 2742,
+		"toolCallP50Ms": 42,
+		"toolCallP95Ms": 240
+	},
+	"source": "https://three.ws/api/status/mcp, server /api/mcp-grok, window 7d"
+}

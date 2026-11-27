@@ -1,0 +1,17 @@
+{
+	"source": "satellites/grok-3d-starter: node scripts/live-xai.mjs --prompt \"a small brass desk lamp\" --follow-up \"make it chrome\", 2026-11-27, model grok-4.7 against production three.ws",
+	"model": "grok-4.7",
+	"ask": "a small brass desk lamp",
+	"followUp": "make it chrome",
+	"calls": ["search_catalog", "forge_free", "check_job", "refine_model", "check_job"],
+	"first": {
+		"glb_url": "https://three.ws/cdn/forge/anon/7cf2ba0e-ab3c-41ab-a312-dc8b0526b3fe.glb",
+		"prompt": "a small brass desk lamp, polished golden brass, round weighted base, short adjustable arm, conical shade, classic banker's style, sitting on a desk",
+		"seconds": 90
+	},
+	"second": {
+		"glb_url": "https://three.ws/cdn/forge/anon/6a6ca012-74e6-48e5-b271-275831aa41ad.glb",
+		"instruction": "make it chrome",
+		"seconds": 248
+	}
+}
