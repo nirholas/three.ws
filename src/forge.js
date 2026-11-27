@@ -47,6 +47,7 @@ import { generateWithModly, defaultModlyParams } from './modly-local.js';
 import { createModlyPanel, promoteModlyGlb, saveModlyResultToLibrary } from './forge-modly.js';
 import { regionRestrictedError, fetchTerritory, applyRegionNote, regionButtonTitle } from './forge-region.js';
 import { engineFromQuery } from './forge-engine-link.js';
+import { byokUseNote, mountByokKeyField } from './shared/byok-key-ui.js';
 import { mountSeedField } from './forge-seed-field.js';
 import { rememberFromResponse } from './shared/forge-manage-tokens.js';
 import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, uploadSignInUrl, UPLOAD_SIGN_IN_SHORT } from './shared/upload-sign-in.js';
@@ -1072,14 +1073,14 @@ function updateByokRow() {
 	if (selectedEngine.houseKeyAvailable) {
 		els.byokLabel.textContent = `${name} key (optional)`;
 		els.providerKey.placeholder = `Your own ${name} API key, to use it instead of the included lane`;
-		els.byokHint.innerHTML = `This engine is included, billed to your platform credits. Paste your own ${name} key here to use it instead${hint ? ` (<a href="${hint.url}" target="_blank" rel="noopener">get a key</a>)` : ''}.`;
+		els.byokHint.innerHTML = `This engine is included, billed to your platform credits. Paste your own ${name} key here to use it instead${hint ? ` (<a href="${hint.url}" target="_blank" rel="noopener">get a key</a>)` : ''}. ${byokUseNote(name)}`;
 		return;
 	}
 	els.byokLabel.textContent = `${name} key`;
-	els.providerKey.placeholder = `Your ${name} API key (kept in this browser)`;
-	els.byokHint.innerHTML = hint
-		? `This engine runs on your own ${hint.label} key. <a href="${hint.url}" target="_blank" rel="noopener">Get a key →</a> Signed-in users can save it once in Account instead.`
-		: `This engine runs on your own ${name} key, kept in this browser. Signed-in users can save it in Account instead.`;
+	els.providerKey.placeholder = `Your ${name} API key`;
+	els.byokHint.innerHTML =
+		`This engine runs on your own ${name} key${hint ? ` (<a href="${hint.url}" target="_blank" rel="noopener">get a key</a>)` : ''}. ${byokUseNote(name)} ` +
+		'Rather not retype it? Save it encrypted in <a href="/account">Account</a>, where you can also remove it.';
 }
 
 function selectTier(tierId) {
@@ -4294,6 +4295,7 @@ els.engine?.addEventListener('click', (e) => {
 		selectEngine(btn);
 	}
 });
+mountByokKeyField(els.providerKey);
 els.providerKey?.addEventListener('input', () => {
 	providerKey = els.providerKey.value.trim();
 	els.providerKey.removeAttribute('aria-invalid');

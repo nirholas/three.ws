@@ -29,6 +29,7 @@ import { classifyThrottle, createThrottlePanel } from '../forge-throttle.js';
 import { forgeErrorFromResponse, forgeJobFailedError, announceForgeError, forgeErrorDescriptor } from '../forge-errors.js';
 import { RESUME_WINDOW_MS, createRunGate, newIdempotencyKey } from '../forge-inflight.js';
 import { createHiddenClock, waitUntilVisible, fetchJobStatus, nextBackoff } from '../shared/resilient-poll.js';
+import { byokUseNote, mountByokKeyField } from '../shared/byok-key-ui.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -700,10 +701,10 @@ function updateByokRow() {
 	const hint = KEY_HINTS[byok];
 	const name = hint?.label || byok;
 	els.byokLabel.textContent = `${name} key`;
-	els.providerKey.placeholder = `Your ${name} API key (kept in this browser)`;
-	els.byokHint.innerHTML = hint
-		? `This engine runs on your own ${hint.label} key. <a href="${hint.url}" target="_blank" rel="noopener">Get a key →</a> Signed-in users can save it once in Account instead.`
-		: `This engine runs on your own ${name} key, kept in this browser. Signed-in users can save it in Account instead.`;
+	els.providerKey.placeholder = `Your ${name} API key`;
+	els.byokHint.innerHTML =
+		`This engine runs on your own ${name} key${hint ? ` (<a href="${hint.url}" target="_blank" rel="noopener">get a key</a>)` : ''}. ${byokUseNote(name)} ` +
+		'Rather not retype it? Save it encrypted in <a href="/account">Account</a>, where you can also remove it.';
 }
 
 function selectTier(tierId) {
@@ -2763,6 +2764,7 @@ els.engine?.addEventListener('click', (e) => {
 		selectEngine(btn);
 	}
 });
+mountByokKeyField(els.providerKey);
 els.providerKey?.addEventListener('input', () => {
 	providerKey = els.providerKey.value.trim();
 	els.providerKey.removeAttribute('aria-invalid');

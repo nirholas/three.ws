@@ -26,6 +26,7 @@ import {
 } from './three-access.js';
 import { renderLock, lockStateFromAccess } from './three-lock.js';
 import { payForHighGeneration } from './forge-pay.js';
+import { byokUseNote, mountByokKeyField } from './shared/byok-key-ui.js';
 
 // Short engine labels for the picker, keyed by backend id — mirrors ENGINE_LABELS
 // in src/forge.js so the two pickers read identically. Free lanes carry a FREE
@@ -344,15 +345,15 @@ export function initForgeControls({ root, clientHeaders, onLane, onRerun, onBloc
 		const hint = KEY_HINTS[byok];
 		const name = hint?.label || byok;
 		if (els.byokLabel) els.byokLabel.textContent = `${name} key`;
-		if (els.byokKey) els.byokKey.placeholder = `Your ${name} API key (kept in this browser)`;
+		if (els.byokKey) els.byokKey.placeholder = `Your ${name} API key`;
 		if (els.byokHint) {
-			els.byokHint.innerHTML = hint
-				? `Runs on your own ${hint.label} key. <a href="${hint.url}" target="_blank" rel="noopener">Get a key →</a>`
-				: `Runs on your own ${name} key, kept in this browser.`;
+			els.byokHint.innerHTML =
+				`Runs on your own ${name} key${hint ? ` (<a href="${hint.url}" target="_blank" rel="noopener">get a key</a>)` : ''}. ${byokUseNote(name)}`;
 		}
 	}
 
 	if (els.byokKey) {
+		mountByokKeyField(els.byokKey);
 		els.byokKey.addEventListener('input', () => {
 			byokKey = els.byokKey.value.trim();
 		});
