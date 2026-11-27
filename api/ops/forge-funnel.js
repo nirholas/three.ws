@@ -12,7 +12,11 @@
 //
 // A failed panel names itself in `degraded` and the response is 207, matching
 // /api/ops/health and /api/ops/payment-outcomes. `ok` reports whether the board
-// rendered, never whether the funnel is good.
+// rendered, never whether the funnel is good. When every panel fails the
+// database did not answer, and the response is 503 database_unreachable with no
+// numbers at all. The body carries `definitions` (shared with forge:errors),
+// `coverage` (requests refused before a job existed are not recorded here) and
+// `top_problems` (requests lost per lane, with the previous window's count).
 //
 // Auth: authorizeOps (admin session, or x-ops-secret / OPS_SECRET). Owner-only
 // on purpose: it carries per-lane performance and revenue.
@@ -43,5 +47,12 @@ export default wrap(async (req, res) => {
 	const days = clampFunnelDays(url.searchParams.get('days') ?? undefined);
 
 	const report = await gatherForgeFunnel({ days });
+	// Every panel failed: the zeros are fallbacks, not a quiet week. Say so and
+	// send no numbers, so the board cannot draw them.
+	if (report.unreachable) {
+		return error(res, 503, 'database_unreachable', 'the Forge ledger could not be read; no numbers were computed', {
+			degraded: report.degraded.map((d) => d.panel),
+		});
+	}
 	return json(res, report.ok ? 200 : 207, report, { 'cache-control': 'private, no-store' });
 });

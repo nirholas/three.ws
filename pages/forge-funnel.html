@@ -37,6 +37,20 @@
 		.ff-note.inline { padding: 1.25rem 1.25rem; text-align: left; font-size: 13px; }
 
 		.ff-banner { padding: 0.85rem 1.1rem; border-radius: 11px; margin-bottom: 1.5rem; font-size: 12.5px; line-height: 1.6; background: rgba(240,169,59,0.07); border: 1px solid rgba(240,169,59,0.24); color: #f0a93b; }
+		.ff-banner.scope { background: rgba(124,92,255,0.06); border-color: rgba(124,92,255,0.26); color: rgba(255,255,255,0.72); }
+		.ff-banner.scope b { color: #e2e8f0; }
+		.ff-banner code, .ff-detail code { background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+		.ff-top { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; counter-reset: ff-top; }
+		.ff-top li { counter-increment: ff-top; display: grid; grid-template-columns: 1.75rem 1fr auto; gap: 0.85rem; align-items: center; padding: 0.75rem 1rem; border-radius: 11px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); font-size: 13px; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+		.ff-top li:hover { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.045); }
+		.ff-top li::before { content: counter(ff-top); font-weight: 800; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.35); }
+		.ff-top-title { color: rgba(255,255,255,0.82); min-width: 0; overflow-wrap: anywhere; }
+		.ff-top-change { font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; color: rgba(255,255,255,0.45); }
+		.ff-delta { display: inline-block; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-left: 0.35rem; border: 1px solid currentColor; }
+		.ff-delta.worse { color: #f87171; }
+		.ff-delta.better { color: #2fbf71; }
+		.ff-delta.flat { color: rgba(255,255,255,0.45); }
 
 		.ff-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.35); margin: 0 0 0.85rem; display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
 		.ff-section-title span { text-transform: none; letter-spacing: 0; font-weight: 500; color: rgba(255,255,255,0.25); }
@@ -96,6 +110,8 @@
 			.ff-bar-count { text-align: left; }
 			.ff-defs dl { grid-template-columns: 1fr; gap: 0.15rem 0; }
 			.ff-defs dd { margin-bottom: 0.6rem; }
+			.ff-top li { grid-template-columns: 1.5rem 1fr; }
+			.ff-top-change { grid-column: 2; }
 		}
 		@media (prefers-reduced-motion: reduce) {
 			.ff-skeleton { animation: none; }
@@ -162,6 +178,47 @@
 			</div>`;
 		}
 
+		// The ledger only holds requests that became a job. Saying so first keeps a
+		// healthy job table from reading as a healthy product.
+		function blindSpotSection(d) {
+			const note = d.coverage?.note;
+			if (!note) return '';
+			const command = 'npm run forge:funnel -- --requests';
+			return `<div class="ff-banner scope" role="note"><b>Not in these numbers.</b> ${esc(note).replace(command, `<code>${command}</code>`)}</div>`;
+		}
+
+		// A falling count is the good direction for every problem listed here.
+		function changeBadge(change) {
+			if (!change) return '';
+			const tone = change === 'same' ? 'flat' : change.startsWith('-') ? 'better' : 'worse';
+			return `<span class="ff-delta ${tone}">${esc(change)}</span>`;
+		}
+
+		function topProblemsSection(d) {
+			const top = d.top_problems || [];
+			const head = `<div class="ff-section-title">Top problems <span>requests lost after a job was created, against the ${num(d.window_days)} days before</span></div>`;
+			if (!top.length) {
+				return `<section class="ff-section">${head}<div class="ff-note inline">No request was lost after a job was created in this window. Refusals before a job existed are not counted here; see the note above.</div></section>`;
+			}
+			const rows = top.map((p) => `<li>
+				<span class="ff-top-title">${esc(p.title)}</span>
+				<span class="ff-top-change">${p.previous == null ? '' : `previously ${num(p.previous)}`}${changeBadge(p.change)}</span>
+			</li>`).join('');
+			return `<section class="ff-section">${head}<ol class="ff-top">${rows}</ol>
+				<p class="ff-detail">Grouped by cause, with the failing messages: <code>npm run forge:errors -- --days ${num(d.window_days)}</code>. It counts the same requests, so its failed total matches the Lost column below.</p>
+			</section>`;
+		}
+
+		function previousLine(d) {
+			const p = d.previous?.output;
+			if (!p) return '';
+			const now = d.output.generation_success_rate?.value, then = p.generation_success_rate?.value;
+			const moved = typeof now === 'number' && typeof then === 'number'
+				? ` (${now >= then ? '+' : ''}${((now - then) * 100).toFixed(1)} points)`
+				: '';
+			return `<p class="ff-detail">Against the ${num(d.previous.window_days)} days before: <b>${num(p.requests)}</b> requests, <b>${num(p.done)}</b> finished, <b>${num(p.failed)}</b> failed, generation success <b>${pct(p.generation_success_rate)}</b>${moved}.</p>`;
+		}
+
 		function headlineSection(d) {
 			const o = d.output, a = d.new_actors, r = d.retention;
 			return `<section class="ff-section">
@@ -174,6 +231,7 @@
 					${cell('Back after day 30', r.d30, `Makers first seen in the last ${r.cohort_lookback_days} days`)}
 					${cell('Generation success', o.generation_success_rate, 'Finished over finished plus failed')}
 				</div>
+				${previousLine(d)}
 			</section>`;
 		}
 
@@ -237,6 +295,7 @@
 				<td class="ff-class">${esc(l.cost_class)}</td>
 				<td class="num">${num(l.attempts)}</td>
 				<td class="num">${pct(l.generation_success_rate)}</td>
+				<td class="num">${num(l.lost)}</td>
 				<td class="num">${num(l.useful)}</td>
 				<td class="num">${pct(l.useful_output_rate)}${lowPill(l.useful_output_rate)}</td>
 				<td class="num">${l.attempts_per_useful == null ? 'n/a' : num(l.attempts_per_useful, 2)}</td>
@@ -248,13 +307,14 @@
 				<div class="ff-table-wrap"><table class="ff-table">
 					<thead><tr>
 						<th scope="col">Engine</th><th scope="col">Cost</th><th scope="col" class="num">Attempts</th>
-						<th scope="col" class="num">Success</th><th scope="col" class="num">Useful</th>
+						<th scope="col" class="num">Success</th><th scope="col" class="num">Lost</th><th scope="col" class="num">Useful</th>
 						<th scope="col" class="num">Useful rate</th><th scope="col" class="num">Attempts per useful</th>
 						<th scope="col" class="num">Avg time</th><th scope="col" class="num">Time per useful</th>
 					</tr></thead>
 					<tbody>${body}</tbody>
 				</table></div>
-				<p class="ff-detail"><b>Attempts per useful</b> is the cost driver: how many runs an engine spends
+				<p class="ff-detail"><b>Lost</b> is requests whose last attempt failed on that engine with no other engine to carry them;
+				the column adds up to the failed count above. <b>Attempts per useful</b> is the cost driver: how many runs an engine spends
 				for each model someone keeps. <b>Time per useful</b> is total generation seconds over kept
 				models, the quantity GPU cost scales with on the self-hosted engines.${untimed > 0 ? ` <b>${num(untimed)}</b> attempts finished before completion time was recorded and are left out of both time columns.` : ''}</p>
 			</section>`;
@@ -273,14 +333,16 @@
 			</section>`;
 		}
 
+		const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
+
 		function definitions(d) {
 			return `<details class="ff-defs">
 				<summary>How these numbers are defined</summary>
 				<dl>
+					${(d.definitions || []).map((t) => `<dt>${esc(cap(t.term))}</dt><dd>${esc(cap(t.text))}. Same in <code>npm run forge:errors</code>.</dd>`).join('')}
 					<dt>Useful</dt><dd>A finished model the maker accepted or downloaded. Either is a deliberate act on the result. A rating alone is not.</dd>
 					<dt>Maker</dt><dd>The signed-in account when there is one, otherwise the anonymous browser key.</dd>
 					<dt>New maker</dt><dd>A maker whose first-ever Forge creation falls inside the window.</dd>
-					<dt>Failed over</dt><dd>An attempt that moved to another engine is skipped in request-level numbers, because its successor carries the request to its real outcome. The engine table keeps it.</dd>
 					<dt>Low sample</dt><dd>A rate resting on fewer than ${num(d.min_sample)} rows. It is shown, but do not act on it.</dd>
 					<dt>Same numbers, no browser</dt><dd><code>npm run forge:funnel -- --days ${num(d.window_days)}</code>, or <code>GET /api/ops/forge-funnel?days=${num(d.window_days)}</code> with <code>x-ops-secret</code>.</dd>
 				</dl>
@@ -292,13 +354,13 @@
 				? `<div class="ff-banner" role="alert">Partial read: ${d.degraded.map((g) => `<b>${esc(g.panel)}</b> (${esc(g.error)})`).join(', ')}. The other panels are current. A panel that names a missing column means migration <code>20260921120000_forge_destination.sql</code> is not applied yet: <code>npm run db:status</code>.</div>`
 				: '';
 			if (!d.degraded?.length && d.output.requests === 0) {
-				el.innerHTML = `<div class="ff-note">
+				el.innerHTML = blindSpotSection(d) + `<div class="ff-note">
 					<h2>No Forge requests in the last ${num(d.window_days)} days</h2>
-					Nothing was generated in this window, so there is no funnel to read. Pick a longer
+					No request became a job in this window, so there is no funnel to read. Pick a longer
 					window above, or make a model in <a href="/forge">/forge</a> and refresh.
 				</div>`;
 			} else {
-				el.innerHTML = banner + headlineSection(d) + signalSection(d) + destinationSection(d) + laneSection(d) + revenueSection(d) + definitions(d);
+				el.innerHTML = banner + blindSpotSection(d) + topProblemsSection(d) + headlineSection(d) + signalSection(d) + destinationSection(d) + laneSection(d) + revenueSection(d) + definitions(d);
 			}
 			stamp.textContent = d.generated_at ? `read ${new Date(d.generated_at).toLocaleTimeString()}` : '';
 		}
@@ -324,6 +386,28 @@
 				<code>/api/ops/health</code>. <a href="/login?next=/forge-funnel">Sign in</a> as a platform admin,
 				or call the API directly with <code>x-ops-secret: $OPS_SECRET</code>:<br /><br />
 				<code>curl -s -H "x-ops-secret: $OPS_SECRET" https://three.ws/api/ops/forge-funnel | jq</code>
+			</div>`;
+			stamp.textContent = '';
+		}
+
+		function needsVerification(verifyUrl) {
+			const base = verifyUrl || '/login/verify';
+			const href = `${base}${base.includes('?') ? '&' : '?'}next=${encodeURIComponent('/forge-funnel')}`;
+			el.innerHTML = `<div class="ff-note">
+				<h2>Finish two-step verification</h2>
+				You are signed in as an admin, but this session has not passed two-step verification,
+				which every ops board requires. <a href="${esc(href)}">Verify this session</a>, then press Refresh.
+			</div>`;
+			stamp.textContent = '';
+		}
+
+		function unreachable(body) {
+			el.innerHTML = `<div class="ff-note bad">
+				<h2>The Forge ledger did not answer</h2>
+				Every panel failed to read, so no numbers were computed. Zeros would look like a quiet
+				week, so nothing is drawn.${body?.degraded?.length ? ` Panels tried: <code>${esc(body.degraded.join(', '))}</code>.` : ''}<br /><br />
+				Check the database from a terminal with <code>npm run forge:funnel</code>. It names the host it
+				tried and exits 3 when the database does not answer. Then press Refresh.
 			</div>`;
 			stamp.textContent = '';
 		}
@@ -355,6 +439,12 @@
 						headers: { accept: 'application/json' },
 					});
 					if (res.status === 401) return denied();
+					if (res.status === 403 || res.status === 503) {
+						const body = await res.json().catch(() => ({}));
+						if (body.error === 'mfa_required') return needsVerification(body.verify_url);
+						if (body.error === 'database_unreachable') return unreachable(body);
+						if (res.status === 403) return denied();
+					}
 					if (res.status === 429) {
 						return failed(`rate limited, retry in ${res.headers.get('retry-after') || 'a moment'}s`);
 					}
