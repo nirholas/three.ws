@@ -11,6 +11,7 @@
  * Real r2.js with env stubbed; only the network write (putObject) is replaced.
  */
 import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
+import { cubeGlb } from './_helpers/print-glb.js';
 
 const DEAD_PUBLIC_DOMAIN = 'https://pub-0000000000000000000000000000test.r2.dev';
 
@@ -50,14 +51,14 @@ function expectCdnUrlFor(url) {
 describe('forge providers return /cdn/ URLs for bucket-persisted results', () => {
 	it('NVIDIA TRELLIS: a synchronous GLB result', async () => {
 		const { createNvidiaProvider } = await import('../api/_providers/nvidia.js');
-		globalThis.fetch = vi.fn(async () => json({ artifacts: [{ base64: Buffer.from('glb').toString('base64') }] }));
+		globalThis.fetch = vi.fn(async () => json({ artifacts: [{ base64: Buffer.from(await cubeGlb()).toString('base64') }] }));
 		const job = await createNvidiaProvider().textTo3d({ prompt: 'a brass ship compass' });
 		expectCdnUrlFor(job.resultGlbUrl);
 	});
 
 	it('NVIDIA TRELLIS: a polled GLB result', async () => {
 		const { createNvidiaProvider } = await import('../api/_providers/nvidia.js');
-		globalThis.fetch = vi.fn(async () => json({ artifacts: [{ base64: Buffer.from('glb').toString('base64') }] }));
+		globalThis.fetch = vi.fn(async () => json({ artifacts: [{ base64: Buffer.from(await cubeGlb()).toString('base64') }] }));
 		const res = await createNvidiaProvider().status({ taskId: 'req-1' });
 		expect(res.status).toBe('done');
 		expectCdnUrlFor(res.resultGlbUrl);

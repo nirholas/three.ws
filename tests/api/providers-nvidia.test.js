@@ -22,6 +22,7 @@ import {
 	resolveBackendId,
 	backendIsConfigured,
 } from '../../api/_lib/forge-tiers.js';
+import { cubeGlb } from '../_helpers/print-glb.js';
 
 const TRELLIS_INVOKE = 'https://ai.api.nvidia.com/v1/genai/microsoft/trellis';
 const NVCF_STATUS = 'https://api.nvcf.nvidia.com/v2/nvcf/pexec/status';
@@ -203,7 +204,8 @@ describe('nvidia provider — image input is not part of the contract', () => {
 
 describe('nvidia provider — synchronous 200 completion persists the GLB', () => {
 	it('decodes the inline base64 GLB, persists the bytes to R2, returns the public URL', async () => {
-		const glbBytes = Buffer.from('GLB\0binary-mesh-data');
+		// A finished job is stored only when the bytes are a real glTF model.
+		const glbBytes = Buffer.from(await cubeGlb());
 		const b64 = glbBytes.toString('base64');
 		globalThis.fetch = vi.fn(async () => jsonResponse({ artifacts: [{ base64: b64 }] }, 200));
 
@@ -234,7 +236,7 @@ describe('nvidia provider — 202-then-poll loop', () => {
 	});
 
 	it('reports done and persists the GLB when the poll returns 200', async () => {
-		const glbBytes = Buffer.from('polled-glb-bytes');
+		const glbBytes = Buffer.from(await cubeGlb());
 		globalThis.fetch = vi.fn(async (url) => {
 			expect(String(url)).toBe(`${NVCF_STATUS}/req-1`);
 			return jsonResponse({ artifacts: [{ base64: glbBytes.toString('base64') }] }, 200);
@@ -301,8 +303,9 @@ describe('nvidia provider — 202-then-poll loop', () => {
 
 	it('reports failed when the GLB persist throws mid-poll', async () => {
 		putObjectMock.mockRejectedValueOnce(new Error('R2 down'));
+		const glbBytes = Buffer.from(await cubeGlb());
 		globalThis.fetch = vi.fn(async () =>
-			jsonResponse({ artifacts: [{ base64: Buffer.from('x').toString('base64') }] }, 200),
+			jsonResponse({ artifacts: [{ base64: glbBytes.toString('base64') }] }, 200),
 		);
 		const provider = createNvidiaProvider();
 		const res = await provider.status({ taskId: 'req-1' });

@@ -28,31 +28,43 @@
 //           → 202 + header NVCF-REQID  (async; poll)   |   200 + body (synchronous completion)
 //
 //   poll    GET https://api.nvcf.nvidia.com/v2/nvcf/pexec/status/{NVCF-REQID}
-//           → 202 (still running)   |   200 (done, body holds the GLB)
+//           (sent with redirect:"manual" so a 302 is read, not followed)
+//           200 done, body holds the result   | 202 still running
+//           302 large result: `Location` is a presigned URL, fetched with no key
+//           402 credits exhausted (terminal, code insufficient_credits)
+//           400/422 request rejected (terminal)  | 403 missing scope (terminal)
+//           429 throttled: stays running and returns `retryAfter` from Retry-After
+//           5xx / network: stays running (the forge layer owns the overall deadline)
 //
-//   result  The GLB rides inside `body.artifacts[0]`, but the hosted NVCF preview
-//           has shipped it in SEVERAL shapes over time — the original
-//           `{ base64 }` object is no longer the only one observed in prod. The
-//           extractor (extractGlbBase64) normalizes all of:
+//   result  The result rides in `body.artifacts[0]`, or arrives as raw bytes, as a
+//           302 download, or as a zip. The hosted preview has shipped it in
+//           SEVERAL shapes over time. extractGlb normalizes all of:
 //             • { artifacts: [ { base64 } ] }     inline base64 (original)
 //             • { artifacts: [ { data } ] }        inline base64 under `data`
 //             • { artifacts: [ "<base64 string>" ] }   bare string, no wrapper
-//             • { artifacts: [ { url } ] }         CDN URL → fetched + buffered here
-//             • { artifacts: { "0": {…} } }        object with numeric-string keys
-//           plus raw-bytes (model/gltf-binary | octet-stream) when Accept is
-//           ignored. Whatever the shape, we end up with GLB bytes, persist them to
-//           R2, and hand back a durable public URL like the other providers
-//           (replicate/meshy return upstream URLs; TRELLIS hands us the bytes — or
-//           a short-lived CDN URL — so WE own the durable persist). On an
-//           unrecognized shape the warn logs `json keys=[…] artifact[0]=[…]` so the
-//           next schema drift is visible in the first failure without guessing.
+//             • { artifacts: [ { url } ] }         CDN URL, fetched through the SSRF
+//                                                  guard with a byte cap
+//             • { artifacts: { "0": {...} } }      object with numeric-string keys
+//           plus raw bytes (model/gltf-binary | octet-stream) and a zip holding a
+//           .glb or an artifacts JSON. Every candidate is then validated as a real
+//           model (valid GLB header, declared length, JSON chunk, at least one
+//           mesh). An HTML error page, a truncated file or an empty scene is never
+//           marked done: it fails with code nvcf_bad_artifact so the forge layer
+//           can route around the lane. Validated bytes are persisted to R2 and a
+//           durable public URL is returned like the other providers. On an
+//           unrecognized shape the warn logs `json keys=[...] artifact[0]=[...]` so
+//           the next schema drift is visible in the first failure.
 //
 // Error codes match the established provider contract (replicate.js / meshy.js):
 //   provider_unreachable / invalid_key / insufficient_credits / rate_limited /
-//   provider_error — so the forge layer can route around a dead/limited lane.
+//   provider_error / nvcf_bad_artifact, so the forge layer can route around a
+//   dead/limited lane. A 429 carries `retryAfter` (seconds) parsed from Retry-After.
 
+import { unzipSync } from 'fflate';
 import { env } from '../_lib/env.js';
 import { SEED_MAX } from '../_lib/forge-seed.js';
+import { inspectGlb } from '../_lib/glb-inspect.js';
+import { fetchSafePublicUrl, MaxBytesExceededError, SsrfBlockedError } from '../_lib/ssrf-guard.js';
 
 const TRELLIS_INVOKE_URL = 'https://ai.api.nvidia.com/v1/genai/microsoft/trellis';
 const NVCF_STATUS_URL = 'https://api.nvcf.nvidia.com/v2/nvcf/pexec/status';
@@ -201,103 +213,162 @@ function providerError(status, message, retryAfter) {
 		status: mapped,
 		providerStatus: status,
 	});
-	if (retryAfter != null) {
-		const secs = Number(retryAfter);
-		if (Number.isFinite(secs)) err.retryAfter = secs;
-	}
+	const secs = parseRetryAfterSeconds(retryAfter);
+	if (secs != null) err.retryAfter = secs;
 	return err;
 }
 
-// Pull the GLB out of a successful TRELLIS response. The documented and common
-// shape is JSON `{ artifacts: [{ base64 }] }`, but NVCF can also return the raw
-// GLB bytes directly (model/gltf-binary or octet-stream), or a URL-based artifact
-// `{ artifacts: [{ url: "https://..." }] }` (observed when NVIDIA serves the GLB
-// from an asset CDN instead of inlining it). Accept all three. When none match,
-// return a compact diagnostic that shows both the top-level keys AND the
-// artifact[0] keys so the real upstream shape shows up in the logs precisely.
-async function extractGlbBase64(res) {
-	const ct = (res.headers.get('content-type') || '').toLowerCase();
-	if (ct.includes('json')) {
-		const data = await res.json().catch(() => null);
-		const artifact0 = data?.artifacts?.[0];
+// Ceiling on any result body NVIDIA points us at (a large-result download, or
+// an artifact url). A TRELLIS GLB is a few MB; nothing real approaches this.
+const MAX_RESULT_BYTES = 128 * 1024 * 1024;
+const DOWNLOAD_TIMEOUT_MS = 60_000;
 
-		// String artifact — NVIDIA sometimes returns the base64 string directly in
-		// the artifacts array rather than wrapped in an object { base64 }. Accept it
-		// unless it looks like a URL (those go through the artifactUrl path below).
-		if (typeof artifact0 === 'string' && artifact0.length > 0 && !artifact0.startsWith('http')) {
-			return { base64: artifact0 };
-		}
+// HTTP Retry-After is either whole seconds or an HTTP date. Both become seconds
+// from now, so a stated wait is honored whichever way NVIDIA spells it.
+export function parseRetryAfterSeconds(value) {
+	if (value == null || value === '') return null;
+	const secs = Number(value);
+	if (Number.isFinite(secs)) return secs >= 0 ? secs : null;
+	const at = Date.parse(String(value));
+	if (!Number.isFinite(at)) return null;
+	return Math.max(0, Math.ceil((at - Date.now()) / 1000));
+}
 
-		// Inline base64 — the documented shape; also accept output[] variants.
-		const inlineData = artifact0?.base64 ?? artifact0?.data ?? null;
-		const inlineB64 =
-			(typeof inlineData === 'string' && !inlineData.startsWith('http') ? inlineData : null) ||
-			(typeof data?.output === 'string' ? data.output : null) ||
-			data?.output?.[0]?.base64 ||
-			null;
-		if (inlineB64) return { base64: inlineB64 };
+const isGlbBytes = (buf) => buf.length >= 12 && buf.toString('latin1', 0, 4) === 'glTF';
+const isZipBytes = (buf) => buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && (buf[2] === 3 || buf[2] === 5) && (buf[3] === 4 || buf[3] === 6);
 
-		// URL-based artifact — NVIDIA may serve the GLB from an asset CDN.
-		const artifactUrl =
-			(typeof artifact0?.url === 'string' ? artifact0.url : null) ||
-			(typeof inlineData === 'string' && inlineData.startsWith('http') ? inlineData : null) ||
-			null;
-		if (artifactUrl) {
-			try {
-				const artRes = await fetch(artifactUrl, { signal: AbortSignal.timeout(POLL_TIMEOUT_MS) });
-				if (!artRes.ok) {
-					return { base64: null, diag: `artifact url fetch ${artRes.status}: ${artifactUrl.slice(0, 80)}` };
-				}
-				const buf = Buffer.from(await artRes.arrayBuffer());
-				if (buf.length > 0) return { base64: buf.toString('base64') };
-				return { base64: null, diag: `artifact url returned empty body: ${artifactUrl.slice(0, 80)}` };
-			} catch (err) {
-				return { base64: null, diag: `artifact url fetch error: ${err?.message}` };
-			}
-		}
+// What the bytes must prove before they are stored as a finished model: a
+// binary glTF 2.0 whose declared length fits the bytes, whose JSON chunk parses,
+// and which holds at least one mesh. An HTML error page, a truncated transfer
+// or an empty scene all fail here instead of being sold as a model.
+function isRealModel(buf) {
+	const info = inspectGlb(buf);
+	return Boolean(info && info.meshCount > 0);
+}
 
-		// Build a precise diagnostic showing top-level keys and artifact[0] shape so
-		// the actual upstream response is visible in the logs without guessing.
-		const topKeys = data && typeof data === 'object' ? JSON.stringify(Object.keys(data)) : 'unparseable';
-		const arts = data?.artifacts;
-		let artDesc = '';
-		if (Array.isArray(arts)) {
-			if (arts.length === 0) {
-				artDesc = ' artifacts=[]';
-			} else if (artifact0 && typeof artifact0 === 'object') {
-				artDesc = ` artifact[0]=${JSON.stringify(Object.keys(artifact0))}`;
-			} else {
-				artDesc = ` artifact[0]=${typeof artifact0}`;
-			}
-		} else if (arts !== null && arts !== undefined && typeof arts === 'object') {
-			// NVIDIA sometimes returns artifacts as an object with numeric string keys
-			// (e.g. {"0": {"base64": "..."}}) — try to extract the same way as an array.
-			const firstVal = arts['0'] ?? Object.values(arts)[0] ?? null;
-			const firstB64 = firstVal?.base64 ?? (typeof firstVal === 'string' && !firstVal.startsWith('http') ? firstVal : null);
-			if (firstB64) return { base64: firstB64 };
-			const firstUrl = firstVal?.url ?? (typeof firstVal === 'string' && firstVal.startsWith('http') ? firstVal : null);
-			if (firstUrl) {
-				try {
-					const artRes = await fetch(firstUrl, { signal: AbortSignal.timeout(POLL_TIMEOUT_MS) });
-					if (artRes.ok) {
-						const buf = Buffer.from(await artRes.arrayBuffer());
-						if (buf.length > 0) return { base64: buf.toString('base64') };
-					}
-				} catch { /* fall through to diagnostic */ }
-			}
-			artDesc = ` artifacts(object)=${JSON.stringify(Object.keys(arts)).slice(0, 80)}`;
-		} else {
-			artDesc = ` artifacts=${arts === null ? 'null' : typeof arts}`;
-		}
-		return { base64: null, diag: `json keys=${topKeys}${artDesc}` };
+// Pick the artifact out of a parsed JSON result. NVCF has shipped it in several
+// shapes over time; all are normalized to { base64 } or { url }:
+//   { artifacts: [ { base64 } ] }  { artifacts: [ { data } ] }
+//   { artifacts: [ "<base64>" ] }  { artifacts: [ { url } ] }
+//   { artifacts: { "0": {...} } }  { output: "<base64>" }  { output: [ { base64 } ] }
+// On an unrecognized shape the diagnostic names the keys so the next schema
+// drift is visible in the first failure.
+function pickArtifact(data) {
+	const arts = data?.artifacts;
+	const first = Array.isArray(arts)
+		? arts[0]
+		: arts && typeof arts === 'object'
+			? (arts['0'] ?? Object.values(arts)[0])
+			: undefined;
+	const candidates = [
+		typeof first === 'string' ? first : null,
+		first?.base64,
+		first?.data,
+		first?.url,
+		typeof data?.output === 'string' ? data.output : null,
+		data?.output?.[0]?.base64,
+	];
+	const value = candidates.find((c) => typeof c === 'string' && c.length > 0);
+	if (value) {
+		if (/^https?:\/\//i.test(value)) return { url: value };
+		return { base64: value.replace(/^data:[^,]*;base64,/i, '') };
 	}
-	if (ct.includes('gltf') || ct.includes('octet-stream') || ct.startsWith('model/') || ct.includes('binary')) {
-		const buf = Buffer.from(await res.arrayBuffer());
-		if (buf.length > 0) return { base64: buf.toString('base64') };
-		return { base64: null, diag: `empty ${ct} body` };
+	const topKeys = data && typeof data === 'object' ? JSON.stringify(Object.keys(data)) : 'unparseable';
+	let artDesc;
+	if (Array.isArray(arts)) {
+		if (arts.length === 0) artDesc = ' artifacts=[]';
+		else if (first && typeof first === 'object') artDesc = ` artifact[0]=${JSON.stringify(Object.keys(first))}`;
+		else artDesc = ` artifact[0]=${typeof first}`;
+	} else if (arts !== null && arts !== undefined && typeof arts === 'object') {
+		artDesc = ` artifacts(object)=${JSON.stringify(Object.keys(arts)).slice(0, 80)}`;
+	} else {
+		artDesc = ` artifacts=${arts === null ? 'null' : typeof arts}`;
 	}
-	const text = await res.text().catch(() => '');
-	return { base64: null, diag: `ct=${ct || 'none'} body[0:160]=${text.slice(0, 160)}` };
+	return { diag: `json keys=${topKeys}${artDesc}` };
+}
+
+// Turn response bytes into a GLB, a url to download, or a diagnostic. Handles a
+// raw GLB, a zip (NVCF delivers a large result as a zip) holding the GLB or the
+// artifacts JSON, and the artifacts JSON itself.
+function decodeResultBytes(buf) {
+	if (!buf.length) return { diag: 'empty body' };
+	if (isGlbBytes(buf)) return { glb: buf };
+	if (isZipBytes(buf)) {
+		let files;
+		try {
+			files = unzipSync(new Uint8Array(buf), { filter: (f) => f.originalSize <= MAX_RESULT_BYTES });
+		} catch (err) {
+			return { diag: `unreadable zip: ${err?.message}` };
+		}
+		const names = Object.keys(files);
+		const glbName = names.find((n) => /\.glb$/i.test(n)) || names.find((n) => isGlbBytes(Buffer.from(files[n])));
+		if (glbName) return { glb: Buffer.from(files[glbName]) };
+		const jsonName = names.find((n) => /\.json$/i.test(n));
+		if (jsonName) return decodeResultBytes(Buffer.from(files[jsonName]));
+		return { diag: `zip holds no model: ${JSON.stringify(names).slice(0, 120)}` };
+	}
+	const head = buf.toString('utf8', 0, 64).trimStart()[0];
+	if (head === '{' || head === '[') {
+		let data;
+		try {
+			data = JSON.parse(buf.toString('utf8'));
+		} catch {
+			return { diag: 'unparseable json body' };
+		}
+		const art = pickArtifact(data);
+		if (art.url) return { url: art.url };
+		if (art.base64) return { glb: Buffer.from(art.base64, 'base64') };
+		return { diag: art.diag };
+	}
+	return { diag: `body[0:160]=${buf.toString('utf8', 0, 160).replace(/[^\x20-\x7e]/g, '?')}` };
+}
+
+// Download a result NVIDIA points at (a 302 Location for a large result, or an
+// artifact url). The url is untrusted input: it goes through the SSRF guard
+// (public https only, every redirect hop re-checked), the byte ceiling is
+// enforced while streaming, and the NVIDIA key is never sent to it.
+// Resolves to { buf } or { diag, transient }, where transient marks a failure a
+// later poll may succeed past (network error, 5xx).
+async function downloadResult(url) {
+	let res;
+	try {
+		res = await fetchSafePublicUrl(url, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) }, { maxBytes: MAX_RESULT_BYTES });
+	} catch (err) {
+		if (err instanceof SsrfBlockedError) return { diag: 'result url is not an allowed public https address' };
+		if (err instanceof MaxBytesExceededError) return { diag: 'result is larger than the allowed size' };
+		return { diag: `result url fetch error: ${err?.message}`, transient: true };
+	}
+	if (!res.ok) {
+		await res.body?.cancel().catch(() => {});
+		return { diag: `result url fetch ${res.status}`, transient: res.status >= 500 };
+	}
+	try {
+		return { buf: Buffer.from(await res.arrayBuffer()) };
+	} catch (err) {
+		if (err instanceof MaxBytesExceededError) return { diag: 'result is larger than the allowed size' };
+		return { diag: `result download interrupted: ${err?.message}`, transient: true };
+	}
+}
+
+// Resolve a finished response (or a downloaded body) to validated GLB bytes.
+// Resolves to { glb } or { glb: null, diag, invalid?, transient? }.
+async function resolveGlb(buf) {
+	let decoded = decodeResultBytes(buf);
+	if (decoded.url) {
+		const got = await downloadResult(decoded.url);
+		if (!got.buf) return { glb: null, diag: got.diag, transient: got.transient };
+		decoded = decodeResultBytes(got.buf);
+		if (decoded.url) return { glb: null, diag: 'result url pointed at another url' };
+	}
+	if (!decoded.glb) return { glb: null, diag: decoded.diag };
+	if (!isRealModel(decoded.glb)) {
+		return { glb: null, invalid: true, diag: `bytes are not a glTF model (${decoded.glb.length} bytes, starts ${JSON.stringify(decoded.glb.toString('latin1', 0, 8))})` };
+	}
+	return { glb: decoded.glb };
+}
+
+async function extractGlb(res) {
+	return resolveGlb(Buffer.from(await res.arrayBuffer()));
 }
 
 function buildTextBody({ prompt, tier, seed }) {
@@ -345,20 +416,20 @@ export function createNvidiaProvider() {
 	// abort backstop, closing that loss window.
 	const pollHeaders = { ...authHeader, accept: 'application/json', 'nvcf-poll-seconds': '10' };
 
-	// Decode a base64 GLB and store it in R2, returning a durable public URL —
-	// the same persist the Vertex inline-PNG path uses, but for model bytes.
-	async function persistGlb(base64) {
+	// Store validated GLB bytes in R2, returning a durable public URL, the same
+	// persist the Vertex inline-PNG path uses, but for model bytes.
+	async function persistGlb(glb) {
 		const { putObject, cdnUrl } = await import('../_lib/r2.js');
 		const key = `forge/nvidia/${globalThis.crypto.randomUUID()}.glb`;
 		await putObject({
 			key,
-			body: Buffer.from(base64, 'base64'),
+			body: glb,
 			contentType: 'model/gltf-binary',
 		});
 		return cdnUrl(key);
 	}
 
-	// POST the invoke request. Returns either { done:true, glbBase64 } when the
+	// POST the invoke request. Returns either { done:true, glb } when the
 	// generation completed synchronously (200) or { done:false, reqId } when NVCF
 	// accepted it for async processing (202). Throws normalized provider errors.
 	async function postInvoke(body, extraHeaders) {
@@ -414,19 +485,19 @@ export function createNvidiaProvider() {
 				// an NVCF-REQID header when routing to async processing. Read the header
 				// before consuming the body so we can fall through to the poll path.
 				const reqId = res.headers.get('nvcf-reqid');
-				const { base64, diag } = await extractGlbBase64(res);
-				if (!base64) {
+				const { glb, diag } = await extractGlb(res);
+				if (!glb) {
 					if (reqId) {
 						// Async job on 200 — same path as 202.
 						return { done: false, reqId };
 					}
-					console.warn('[nvidia] sync 200 but no GLB artifact — %s', diag);
-					throw Object.assign(new Error('TRELLIS completed but returned no GLB artifact'), {
+					console.warn('[nvidia] sync 200 but no usable GLB artifact: %s', diag);
+					throw Object.assign(new Error('TRELLIS completed but returned no usable GLB artifact'), {
 						code: 'provider_error',
 						status: 502,
 					});
 				}
-				return { done: true, glbBase64: base64 };
+				return { done: true, glb };
 			}
 
 			// Transient gateway status — the model is likely cold-starting or a node
@@ -474,7 +545,7 @@ export function createNvidiaProvider() {
 	// otherwise return the poll handle. Shared by the text and image paths.
 	async function finishSubmit(kind, parsed) {
 		if (parsed.done) {
-			const resultGlbUrl = await persistGlb(parsed.glbBase64);
+			const resultGlbUrl = await persistGlb(parsed.glb);
 			return { kind, taskId: null, resultGlbUrl };
 		}
 		return { kind, taskId: parsed.reqId };
@@ -499,6 +570,9 @@ export function createNvidiaProvider() {
 			try {
 				res = await fetch(`${NVCF_STATUS_URL}/${encodeURIComponent(taskId)}`, {
 					headers: pollHeaders,
+					// A large result answers 302 with a Location to fetch. It is followed by
+					// hand below, through the SSRF guard and without the NVIDIA key.
+					redirect: 'manual',
 					signal: AbortSignal.timeout(POLL_TIMEOUT_MS),
 				});
 			} catch (err) {
@@ -507,22 +581,62 @@ export function createNvidiaProvider() {
 
 			if (res.status === 202) return { status: 'running' };
 
-			if (res.ok) {
-				const { base64, diag } = await extractGlbBase64(res);
-				if (!base64) {
-					console.warn('[nvidia] poll 200 but no GLB artifact — %s', diag);
-					return { status: 'failed', error: 'TRELLIS finished but returned no GLB artifact' };
+			// Finish a poll that produced a result: validate it as a real model, store
+			// it, and report. A result that is not a model is a failure, never a done.
+			const finish = async (outcome) => {
+				if (!outcome.glb) {
+					console.warn('[nvidia] poll result unusable: %s', outcome.diag);
+					// A download that failed in a way a later poll may get past stays alive.
+					if (outcome.transient) return { status: 'running', error: `NVIDIA result download failed: ${outcome.diag}` };
+					return {
+						status: 'failed',
+						error: outcome.invalid
+							? 'NVIDIA returned a file that is not a valid 3D model'
+							: 'TRELLIS finished but returned no GLB artifact',
+						code: 'nvcf_bad_artifact',
+					};
 				}
 				try {
-					const resultGlbUrl = await persistGlb(base64);
-					return { status: 'done', resultGlbUrl };
+					return { status: 'done', resultGlbUrl: await persistGlb(outcome.glb) };
 				} catch (err) {
 					return { status: 'failed', error: `failed to persist GLB: ${err?.message}` };
 				}
+			};
+
+			if (res.ok) return finish(await extractGlb(res));
+
+			// 302: the result is too large to inline. Location is where it is served.
+			if (res.status >= 300 && res.status < 400) {
+				const location = res.headers.get('location');
+				if (!location) return finish({ glb: null, diag: `${res.status} without a Location` });
+				let target;
+				try {
+					target = new URL(location, `${NVCF_STATUS_URL}/${encodeURIComponent(taskId)}`).toString();
+				} catch {
+					return finish({ glb: null, diag: 'unparseable Location' });
+				}
+				const got = await downloadResult(target);
+				if (!got.buf) return finish({ glb: null, diag: got.diag, transient: got.transient });
+				return finish(await resolveGlb(got.buf));
 			}
 
 			if (res.status === 401 || res.status === 403) {
 				return { status: 'failed', error: 'NVIDIA rejected the API key' };
+			}
+			// 402 is documented on this route: the cloud credits behind the hosted
+			// function expired. It does not clear on a later poll, so polling it as
+			// running only held every job to the 45-minute reaper.
+			if (res.status === 402) {
+				return {
+					status: 'failed',
+					error: 'NVIDIA cloud credits for the hosted TRELLIS function have expired',
+					code: 'insufficient_credits',
+					providerStatus: 402,
+				};
+			}
+			// The request itself was rejected; asking again returns the same answer.
+			if (res.status === 400 || res.status === 422) {
+				return { status: 'failed', error: `NVIDIA rejected the request (${res.status})`, code: 'provider_error', providerStatus: res.status };
 			}
 			if (res.status === 404 || res.status === 410) {
 				// The request id is gone: either the consume-once result was taken by a
@@ -537,7 +651,13 @@ export function createNvidiaProvider() {
 			}
 			// 429 / 5xx mid-flight: the job may still be alive — keep polling.
 			if (res.status === 429) {
-				return { status: 'running', error: 'NVIDIA is rate limiting; will retry' };
+				// The stated wait travels back so the poll layer stops asking until then.
+				const retryAfter = parseRetryAfterSeconds(res.headers.get('retry-after'));
+				return {
+					status: 'running',
+					error: 'NVIDIA is rate limiting; will retry',
+					...(retryAfter != null ? { retryAfter } : {}),
+				};
 			}
 			return { status: 'running', error: `NVIDIA poll returned ${res.status}` };
 		},
