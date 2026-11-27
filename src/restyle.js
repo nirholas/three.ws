@@ -36,6 +36,7 @@ import { createAutoRenderer, pagePreference } from './renderer-factory.js';
 import { createRestyleEffects } from './restyle-effects.js';
 import { DEFAULT_STAGE_AVATAR_URL } from './default-stage-avatar.js';
 import { appendLaneCredit } from './shared/image-lane-credit.js';
+import { loadForgeTools, toolUnavailable } from './forge-tool-availability.js';
 
 // A small, always-present local sample so the page is never an empty void: the
 // house default humanoid with its idle clip baked in, so it never stands in bind
@@ -72,6 +73,7 @@ const state = {
 	selectedPartIndex: null,
 	dimmed: [], // [{ material, opacity, transparent }] restored on deselect
 	regenRunToken: 0,
+	regenUnavailable: false, // the server says the HoloPart worker is not deployed
 	benchHold: false, // ?bench hook: pause the on-screen loop while it renders offscreen
 	// The loaded model's own clips. The first one loops in the live view, and
 	// all of them ride along into every exported or saved version.
@@ -92,6 +94,7 @@ async function init() {
 	await buildScene();
 	buildPresetButtons();
 	wireControls();
+	gatePartRegenerate();
 	const url = new URL(location.href).searchParams.get('url');
 	loadModel(url || DEFAULT_MODEL, url ? 'from URL' : 'sample', { originUrl: absoluteUrl(url || DEFAULT_MODEL) });
 	window.addEventListener('resize', onResize);
@@ -796,8 +799,24 @@ function acceptPartSwapFile(file) {
 // geometry of every part in one pass, then pull just the regenerated part
 // matching the selected node's name back out and swap it in, reassembling
 // the result into this same scene while leaving every other part untouched.
+// Offer "Regenerate part" only where the HoloPart worker runs. The catalog's
+// tools map carries the same gate api/forge-holopart.js applies, so a visitor
+// never selects a part and clicks only to be told the engine is missing. An
+// unreadable catalog leaves the button offered; the endpoint still answers.
+export async function gatePartRegenerate() {
+	const tools = await loadForgeTools();
+	if (!toolUnavailable(tools, 'holopart')) return;
+	state.regenUnavailable = true;
+	const btn = document.getElementById('part-regenerate');
+	if (btn) btn.hidden = true;
+	setNote(
+		document.getElementById('parts-note'),
+		'Regenerate part is not available right now: the engine that completes hidden geometry is offline. Swap part, presets and AI restyle still work.',
+	);
+}
+
 async function regenerateSelectedPart() {
-	if (state.selectedPartIndex == null) return;
+	if (state.selectedPartIndex == null || state.regenUnavailable) return;
 	const entry = state.parts[state.selectedPartIndex];
 	if (state.sourceUrlPending) {
 		setNote(el['parts-note'], 'Still checkpointing the model, try again in a moment.', 'busy');

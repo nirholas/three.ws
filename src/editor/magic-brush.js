@@ -19,6 +19,7 @@
  */
 import { Raycaster, Vector2, CanvasTexture, SRGBColorSpace } from 'three';
 import { log } from '../shared/log.js';
+import { loadForgeTools, toolUnavailable } from '../forge-tool-availability.js';
 
 const TEX = 1024; // mask + preview working resolution (UV space)
 const POLL_MS = 2500;
@@ -85,6 +86,9 @@ function injectStyles() {
 	document.head.appendChild(el);
 }
 
+const UNAVAILABLE_NOTE =
+	'Magic Brush is not available right now: the region retexture engine is offline on this server. The other editor tools still work.';
+
 export class MagicBrush {
 	constructor(viewer, session, editor) {
 		this.viewer = viewer;
@@ -102,6 +106,10 @@ export class MagicBrush {
 		this.busy = false;
 		this.painted = false;
 		this.status = null; // { kind, text }
+		// True once the server's catalog says the region-retexture worker is not
+		// deployed here. Unknown (catalog unreadable) stays false: the endpoint's
+		// own answer is then the truth the visitor sees.
+		this.unavailable = false;
 		this.jobToken = null;
 		this._pollTimer = null;
 
@@ -150,6 +158,14 @@ export class MagicBrush {
 				.name('🖌 magic brush [B]');
 		}
 		window.addEventListener('keydown', this._onKey);
+		// Offer the brush only where its worker runs, so nobody paints a region
+		// and writes a prompt for an edit this deployment cannot make.
+		loadForgeTools().then((tools) => {
+			if (!toolUnavailable(tools, 'texture')) return;
+			this.unavailable = true;
+			this._guiCtrl?.hide();
+			this.disable();
+		});
 	}
 
 	rebuild() {
@@ -217,6 +233,7 @@ export class MagicBrush {
 
 	_onKey(e) {
 		if (e.key !== 'b' && e.key !== 'B') return;
+		if (this.unavailable) return;
 		const t = e.target;
 		if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
 		this.toggle();
@@ -489,6 +506,10 @@ export class MagicBrush {
 
 	async _apply() {
 		if (this.busy) return;
+		if (this.unavailable) {
+			this._setStatus('err', UNAVAILABLE_NOTE);
+			return;
+		}
 		if (!this.targetMesh) {
 			this._setStatus('err', 'Load a textured model first.');
 			return;
@@ -613,6 +634,7 @@ export class MagicBrush {
 		const btn = this.panel?.querySelector('.mb-apply');
 		if (!btn) return;
 		const ready =
+			!this.unavailable &&
 			!!this.targetMesh &&
 			this.painted &&
 			(this.prompt.trim().length >= 3 || !!this.color) &&

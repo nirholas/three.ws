@@ -167,3 +167,34 @@ describe('Editor Magic Brush', () => {
 		expect(brush.unavailable).toBe(false);
 	});
 });
+
+describe('Restyle Studio: Regenerate part', () => {
+	function mountPartsCard() {
+		document.body.innerHTML = `
+			<button id="part-regenerate" disabled>Regenerate part</button>
+			<div id="parts-note"></div>`;
+	}
+
+	it('is not offered, with an honest note, when the HoloPart worker is unavailable', async () => {
+		mountPartsCard();
+		stubFetch({ holopart: { available: false } });
+		const { gatePartRegenerate } = await import('../src/restyle.js');
+		await gatePartRegenerate();
+		expect(document.getElementById('part-regenerate').hidden).toBe(true);
+		const note = document.getElementById('parts-note').textContent;
+		expect(note).toMatch(/not available/i);
+		expect(note).not.toMatch(/MODEL_|_URL|_KEY/);
+	});
+
+	it('stays offered when the worker is available or the catalog cannot be read', async () => {
+		for (const catalog of [{ holopart: { available: true } }, 'error']) {
+			vi.resetModules();
+			mountPartsCard();
+			stubFetch(catalog);
+			const { gatePartRegenerate } = await import('../src/restyle.js');
+			await gatePartRegenerate();
+			expect(document.getElementById('part-regenerate').hidden).toBe(false);
+			expect(document.getElementById('parts-note').textContent).toBe('');
+		}
+	});
+});

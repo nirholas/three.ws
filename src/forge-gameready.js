@@ -21,6 +21,7 @@
 
 import { payForConsumption } from './forge-pay.js';
 import { attachTierPass, getAccess, getTierPass } from './three-access.js';
+import { loadForgeTools, toolUnavailable } from './forge-tool-availability.js';
 
 const resultPanel = document.getElementById('state-result');
 const viewer = document.getElementById('viewer');
@@ -73,6 +74,7 @@ if (resultPanel && viewer && triggerBtn) {
 			.gr-seg button:hover { color: var(--ink); }
 			.gr-seg button[aria-pressed='true'] { background: var(--surface-3); color: var(--ink); }
 			.gr-seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+			.gr-seg button[hidden] { display: none; }
 			.gr-topo-hint { font-size: var(--text-xs); color: var(--ink-dim); line-height: 1.4; min-height: 1.4em; margin: 0; }
 			.gr-budget-row { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
 			.gr-budget-row input[type='range'] { flex: 1 1 200px; accent-color: var(--accent); cursor: pointer; min-width: 160px; }
@@ -782,6 +784,23 @@ if (resultPanel && viewer && triggerBtn) {
 		hideWireframe();
 		openPanel(false);
 		loadSourceFaceCount(url);
+	});
+
+	// Offer only what this deployment can run. The catalog's tools map carries
+	// the same gate api/forge-gameready.js applies: without the LATO.2 worker the
+	// API delivers QuadriFlow, so "Artist mesh" is not offered at all. Without
+	// the remesh worker no Game-Ready export can run, so the trigger is hidden.
+	// An unreadable catalog leaves everything offered (the endpoint still answers).
+	loadForgeTools().then((tools) => {
+		if (toolUnavailable(tools, 'lato2')) {
+			const artistBtn = topoGroup.querySelector('button[data-topo="artist"]');
+			if (artistBtn) artistBtn.hidden = true;
+			if (state.topology === 'artist') applyTopology('quad');
+		}
+		if (toolUnavailable(tools, 'remesh')) {
+			openPanel(false);
+			triggerBtn.hidden = true;
+		}
 	});
 
 	// Initial render.
