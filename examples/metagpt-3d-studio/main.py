@@ -1,0 +1,482 @@
+"""A MetaGPT studio team that finds or makes a 3D model through three.ws and checks it.
+
+Three MetaGPT roles, each with its own Action, pass messages through a Team:
+
+    ArtDirector  one-line brief -> model spec + catalog search query   (Grok)
+    Modeler      search_catalog, then forge_free + check_job if signed in and nothing fits
+    Reviewer     renders the GLB, judges it against the spec           (Grok, with the images)
+
+A failed review sends the fault back to the Art Director, who rewrites the spec
+once. At most two iterations, whatever the result. Grok is the LLM through
+xAI's OpenAI-compatible endpoint.
+
+    XAI_API_KEY=... python main.py
+    XAI_API_KEY=... python main.py "a brass desk lamp"
+    python main.py --check     three.ws leg only: list tools, search the catalog, render (no xAI key)
+
+Keys are read from the environment only and are never printed or written.
+"""
+
+from __future__ import annotations
+
+import base64
+import json
+import os
+import re
+import shutil
+import sys
+import tempfile
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+MCP_URL = os.environ.get("THREE_WS_MCP_URL", "https://three.ws/api/mcp-studio")
+XAI_BASE_URL = os.environ.get("XAI_BASE_URL", "https://api.x.ai/v1")
+MODEL = os.environ.get("XAI_MODEL", "grok-4.7")
+REQUIRED_TOOLS = ["search_catalog", "look_at_model", "forge_free", "check_job"]
+DEFAULT_BRIEF = "a low-poly wooden chair for a cozy cabin scene"
+MAX_ITERATIONS = 2
+MAX_ROUNDS = 9  # Team.run cap: 3 roles x 2 iterations plus the Art Director's first pass
+FORGE_WAIT_S = 420
+EXIT_OK, EXIT_FAILED, EXIT_NO_KEY, EXIT_REVIEW_FAILED = 0, 1, 2, 3
+
+
+def xai_key() -> str | None:
+    return os.environ.get("XAI_API_KEY") or os.environ.get("GROK_API_KEY")
+
+
+def viewer_url(glb: str, title: str = "") -> str:
+    query = {"src": glb}
+    if title:
+        query["title"] = title
+    return "https://three.ws/viewer?" + urllib.parse.urlencode(query, quote_via=urllib.parse.quote)
+
+
+def poster_url(glb: str, size: int = 512) -> str:
+    query = {"glbUrl": glb, "width": size, "height": size}
+    return "https://three.ws/api/render/glb?" + urllib.parse.urlencode(query, quote_via=urllib.parse.quote)
+
+
+# The three.ws leg, spoken directly: MCP JSON-RPC over plain HTTP POST.
+class Studio:
+    """A session with the three.ws studio server. The key is optional: catalog search
+    is public, rendering views and generating need a free account key."""
+
+    def __init__(self) -> None:
+        self.key = os.environ.get("THREE_WS_API_KEY")
+        self.session: str | None = None
+        self.tool_names: list[str] = []
+        self._ids = 0
+
+    @property
+    def signed_in(self) -> bool:
+        return bool(self.key)
+
+    def rpc(self, method: str, params: dict) -> dict:
+        self._ids += 1
+        headers = {"content-type": "application/json", "accept": "application/json, text/event-stream"}
+        if self.session:
+            headers["mcp-session-id"] = self.session
+        if self.key:
+            headers["authorization"] = f"Bearer {self.key}"
+        body = json.dumps({"jsonrpc": "2.0", "id": self._ids, "method": method, "params": params}).encode()
+        req = urllib.request.Request(MCP_URL, data=body, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=75) as res:
+                self.session = res.headers.get("mcp-session-id") or self.session
+                payload = json.loads(res.read().decode())
+        except urllib.error.HTTPError as err:
+            raise RuntimeError(f"{MCP_URL} answered HTTP {err.code} to {method}: {err.read()[:300]!r}") from err
+        if "error" in payload:
+            raise RuntimeError(f"{MCP_URL} rejected {method}: {payload['error']}")
+        return payload["result"]
+
+    def connect(self) -> str:
+        init = self.rpc(
+            "initialize",
+            {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "metagpt-3d-studio-example", "version": "1.0.0"}},
+        )
+        self.tool_names = [t["name"] for t in self.rpc("tools/list", {})["tools"]]
+        return init["serverInfo"]["name"]
+
+    def call(self, name: str, arguments: dict) -> dict:
+        """Returns the tool result: `structuredContent` plus the raw `content` blocks."""
+        result = self.rpc("tools/call", {"name": name, "arguments": arguments})
+        return {"data": result.get("structuredContent") or {}, "content": result.get("content", []), "is_error": bool(result.get("isError"))}
+
+    def search(self, query: str, kind: str | None = None, limit: int = 8) -> list[dict]:
+        args: dict = {"q": query, "limit": limit}
+        if kind in ("object", "character"):
+            args["kind"] = kind
+        return self.call("search_catalog", args)["data"].get("items", [])
+
+    def look(self, glb: str, views: list[str], size: int = 384) -> dict:
+        return self.call("look_at_model", {"glb_url": glb, "views": views, "size": size})
+
+    def forge(self, prompt: str) -> dict:
+        """forge_free, then check_job until the model is done. Needs a signed-in key."""
+        out = self.call("forge_free", {"prompt": prompt, "tier": "standard", "idempotency_key": f"metagpt-{int(time.time())}"})
+        deadline = time.time() + FORGE_WAIT_S
+        while out["data"].get("status") == "pending" and time.time() < deadline:
+            time.sleep(min(max(int(out["data"].get("eta_seconds") or 15), 5), 30))
+            out = self.call("check_job", {"job_id": out["data"]["job_id"]})
+        return out
+
+
+def fetch_png(url: str) -> bytes:
+    req = urllib.request.Request(url, headers={"user-agent": "metagpt-3d-studio-example/1.0"})
+    with urllib.request.urlopen(req, timeout=90) as res:
+        body = res.read()
+    if not body.startswith(b"\x89PNG"):
+        raise RuntimeError(f"{url} did not return a PNG")
+    return body
+
+
+def check() -> int:
+    studio = Studio()
+    server = studio.connect()
+    missing = [n for n in REQUIRED_TOOLS if n not in studio.tool_names]
+    print(f"server   {server} ({MCP_URL})")
+    print(f"tools    {len(studio.tool_names)} offered; this example uses {', '.join(REQUIRED_TOOLS)}")
+    print(f"account  {'THREE_WS_API_KEY set: renders and generation are available' if studio.signed_in else 'signed out: catalog search and poster renders only'}")
+    if missing:
+        print(f"error    the server does not offer: {', '.join(missing)}", file=sys.stderr)
+        return EXIT_FAILED
+    items = studio.search("chair", "object", 3)
+    if not items:
+        print("error    search_catalog returned no chairs", file=sys.stderr)
+        return EXIT_FAILED
+    for item in items:
+        print(f"catalog  {item['title']}  {item['url']}")
+    glb = items[0]["url"]
+    looked = studio.look(glb, ["front", "side"], 256)
+    frames = [c for c in looked["content"] if c.get("type") == "image"]
+    if looked["is_error"]:
+        reason = looked["data"].get("status", "error")
+        print(f"render   look_at_model on {items[0]['title']}: {reason}, so the Reviewer falls back to the public poster render")
+        png = fetch_png(poster_url(glb, 512))
+        print(f"render   poster render of {items[0]['title']}: PNG, {len(png)} bytes")
+    else:
+        print(f"render   look_at_model on {items[0]['title']}: {len(frames)} frames")
+        for block in looked["content"]:
+            if block.get("type") == "text":
+                print(f"render   {block['text'][:300]}")
+    print("ok       three.ws leg is live")
+    return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
+# The MetaGPT team. Everything MetaGPT writes (logs, workspace) goes to a temp
+# folder that is removed on exit; the key is passed in memory, never to a file.
+# ---------------------------------------------------------------------------
+
+class Run:
+    """What the team agrees on while it works, and what main() prints at the end."""
+
+    def __init__(self, studio: Studio) -> None:
+        self.studio = studio
+        self.iteration = 0
+        self.llm_calls = 0
+        self.done = False
+        self.rejected: list[str] = []
+        self.final: dict | None = None
+
+
+RUN: Run | None = None
+
+
+def parse_json(text: str) -> dict:
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if not match:
+        raise ValueError(f"Grok did not answer with JSON: {text[:200]!r}")
+    return json.loads(match.group(0))
+
+
+def build_team(brief: str):
+    import contextlib
+    import io
+
+    with contextlib.redirect_stderr(io.StringIO()):  # MetaGPT logs at INFO while it imports
+        from metagpt.actions import Action, UserRequirement
+        from metagpt.config2 import Config
+        from metagpt.logs import logger
+        from metagpt.roles import Role
+        from metagpt.schema import Message
+        from metagpt.team import Team
+        from metagpt.utils.common import any_to_str
+
+    config = Config.from_llm_config(
+        {
+            "api_type": "openai",  # xAI speaks the OpenAI chat-completions protocol
+            "base_url": XAI_BASE_URL,
+            "api_key": xai_key(),
+            "model": MODEL,
+            "temperature": 0.2,
+            "stream": False,
+            "calc_usage": False,  # MetaGPT has no price for Grok ids; the call count is the cap
+        }
+    )
+
+    async def ask(action: Action, prompt: str, images: list[bytes] | None = None) -> str:
+        RUN.llm_calls += 1
+        if not images:
+            return await action.llm.aask(prompt)
+        message = action.llm._user_msg_with_imgs(prompt, [base64.b64encode(i).decode() for i in images])
+        return await action.llm.acompletion_text([message])
+
+    async def ask_json(action: Action, prompt: str, images: list[bytes] | None = None) -> dict:
+        reply = await ask(action, prompt, images)
+        try:
+            return parse_json(reply)
+        except ValueError:
+            return parse_json(await ask(action, prompt + "\n\nAnswer with one JSON object and nothing else.", images))
+
+    class WriteSpec(Action):
+        name: str = "WriteSpec"
+
+        async def run(self, brief: str, review: dict | None = None) -> dict:
+            if review is None:
+                prompt = (
+                    "You are the Art Director of a small 3D studio. Turn this one-line brief into a precise model spec "
+                    f"and a catalog search query.\n\nBrief: {brief}\n\n"
+                )
+            else:
+                prompt = (
+                    "You are the Art Director of a small 3D studio. Your first model failed review.\n\n"
+                    f"Brief: {brief}\nPrevious spec: {json.dumps(review['spec'])}\n"
+                    f"Reviewer's fault: {review['fault']}\nAlready rejected GLBs: {json.dumps(RUN.rejected)}\n\n"
+                    "Rewrite the spec and the search query so the next model avoids that fault.\n\n"
+                )
+            prompt += (
+                "Answer with one JSON object and nothing else, with these keys:\n"
+                '  "subject": one noun phrase for the object,\n'
+                '  "kind": "object" or "character" (a humanoid that should move is a character),\n'
+                '  "must_have": list of 3 to 5 short, checkable features (parts, proportions, material, style),\n'
+                '  "must_not": list of 1 to 3 faults to reject,\n'
+                '  "query": a 1 or 2 word catalog search query (every word must match, so keep it broad),\n'
+                '  "forge_prompt": one sentence for a text-to-3D generator: one subject, its material and style, no scene or background.'
+            )
+            spec = await ask_json(self, prompt)
+            spec["iteration"] = RUN.iteration + 1
+            return spec
+
+    class Source(Action):
+        name: str = "Source"
+
+        async def run(self, spec: dict) -> dict:
+            studio = RUN.studio
+            items = [i for i in studio.search(spec["query"], spec.get("kind")) if i["url"] not in RUN.rejected]
+            if len(items) == 0 and " " in spec["query"]:
+                items = [i for i in studio.search(spec["query"].split()[-1], spec.get("kind")) if i["url"] not in RUN.rejected]
+            chosen = None
+            if items:
+                listing = "\n".join(
+                    f"{n}. {i['title']} | {i.get('license', '')} | tags: {', '.join(i.get('tags', [])[:8])}" for n, i in enumerate(items, 1)
+                )
+                verdict = await ask_json(
+                    self,
+                    "You are the Modeler of a 3D studio. Pick the catalog asset that best fits this spec, judging from titles and tags. "
+                    "If none is a plausible match, pick none.\n\n"
+                    f"Spec: {json.dumps({k: spec[k] for k in ('subject', 'must_have', 'must_not')})}\n\nCandidates:\n{listing}\n\n"
+                    'Answer with one JSON object: {"pick": <number or null>, "why": "<one sentence>"}',
+                )
+                if isinstance(verdict.get("pick"), int) and 1 <= verdict["pick"] <= len(items):
+                    chosen = {**items[verdict["pick"] - 1], "source": "catalog", "why": verdict.get("why", "")}
+            if chosen is None and studio.signed_in:
+                made = studio.forge(spec["forge_prompt"])
+                data = made["data"]
+                if data.get("status") == "done" and data.get("glb_url"):
+                    chosen = {
+                        "title": spec["subject"],
+                        "url": data["glb_url"],
+                        "viewer_url": data.get("viewer_url") or viewer_url(data["glb_url"], spec["subject"]),
+                        "source": "forge_free",
+                        "why": "nothing in the catalog fit, so it was generated",
+                    }
+                else:
+                    return {"error": f"forge_free did not finish: {data.get('message') or data.get('status') or made['content'][:1]}"}
+            if chosen is None:
+                return {"error": "nothing in the free catalog fits, and generation needs a free THREE_WS_API_KEY (https://three.ws/dashboard/api-keys)"}
+            chosen["viewer_url"] = chosen.get("viewer_url") or viewer_url(chosen["url"], chosen["title"])
+            return {"model": chosen, "spec": spec}
+
+    class Review(Action):
+        name: str = "Review"
+
+        async def run(self, spec: dict, model: dict | None, error: str | None) -> dict:
+            RUN.iteration += 1
+            if model is None:
+                return {"pass": False, "fault": error, "points": {}, "spec": spec, "model": None}
+            studio = RUN.studio
+            frames: list[bytes] = []
+            facts = f"Catalog entry: {model['title']}; tags: {', '.join(model.get('tags', [])[:10])}; license: {model.get('license', 'n/a')}."
+            how = "poster render (one three-quarter view)"
+            if studio.signed_in:
+                looked = studio.look(model["url"], ["three-quarter", "front", "side", "back"])
+                if not looked["is_error"]:
+                    frames = [base64.b64decode(c["data"]) for c in looked["content"] if c.get("type") == "image"]
+                    facts = " ".join(c["text"] for c in looked["content"] if c.get("type") == "text")[:1500]
+                    how = f"look_at_model ({len(frames)} views: three-quarter, front, side, back)"
+            if not frames:
+                frames = [fetch_png(poster_url(model["url"], 512))]
+            print(f"render   {how}", flush=True)
+            verdict = await ask_json(
+                self,
+                "You are the Reviewer of a 3D studio. Judge the attached render(s) of a 3D model against its spec, like an art director. "
+                "Be strict and specific.\n\n"
+                f"Spec: {json.dumps({k: spec[k] for k in ('subject', 'must_have', 'must_not')})}\n"
+                f"Model facts: {facts}\nRendered with: {how}\n\n"
+                "Judge four points, one sentence each: subject (is it the thing asked for, complete), shape (anything melted, fused, "
+                "floating, or missing), material (does it read as the material asked for), geometry (use the facts; flag a triangle "
+                "count far too high for a prop, or missing textures). If you only have one view, say what you could not check.\n"
+                'Answer with one JSON object: {"pass": true|false, "fault": "<the specific fault, or empty if pass>", '
+                '"points": {"subject": "...", "shape": "...", "material": "...", "geometry": "..."}}',
+                frames,
+            )
+            verdict.update({"spec": spec, "model": model, "views": how})
+            return verdict
+
+    def finish(review: dict) -> None:
+        RUN.done = True
+        RUN.final = review
+
+    class Guard(Role):
+        """Stops a role once the review is final, so no role starts a third iteration."""
+
+        async def _observe(self) -> int:
+            news = await super()._observe()
+            return 0 if RUN.done else news
+
+    class ArtDirector(Guard):
+        name: str = "Ada"
+        profile: str = "ArtDirector"
+        goal: str = "turn a one-line brief into a precise model spec and a catalog query"
+        constraints: str = "never ask for a third iteration"
+
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self.set_actions([WriteSpec])
+            self._watch([UserRequirement, Review])
+
+        async def _act(self) -> Message:
+            last = self.rc.news[-1]
+            review = json.loads(last.content) if last.cause_by == any_to_str(Review) else None
+            print(f"role     {self.profile} writes the spec" if review is None else f"role     {self.profile} rewrites the spec after: {review['fault']}", flush=True)
+            spec = await self.rc.todo.run(brief, review)
+            print(f"spec     {spec['subject']} | query '{spec['query']}' | kind {spec.get('kind')}", flush=True)
+            return Message(content=json.dumps(spec), role=self.profile, cause_by=WriteSpec, send_to="Modeler")
+
+    class Modeler(Guard):
+        name: str = "Milo"
+        profile: str = "Modeler"
+        goal: str = "find the right model in the free catalog, or generate one when signed in"
+        constraints: str = "search the catalog first"
+
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self.set_actions([Source])
+            self._watch([WriteSpec])
+
+        async def _act(self) -> Message:
+            spec = json.loads(self.rc.news[-1].content)
+            print(f"role     {self.profile} searches the catalog for '{spec['query']}'", flush=True)
+            out = await self.rc.todo.run(spec)
+            if "model" in out:
+                print(f"model    {out['model']['title']} via {out['model']['source']}: {out['model']['why']}", flush=True)
+                RUN.rejected.append(out["model"]["url"])
+            else:
+                print(f"model    none: {out['error']}", flush=True)
+            out.setdefault("model", None)
+            out.setdefault("error", None)
+            return Message(content=json.dumps(out), role=self.profile, cause_by=Source, send_to="Reviewer")
+
+    class Reviewer(Guard):
+        name: str = "Rae"
+        profile: str = "Reviewer"
+        goal: str = "render the chosen model and judge it against the spec"
+        constraints: str = "name the specific fault"
+
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self.set_actions([Review])
+            self._watch([Source])
+
+        async def _act(self) -> Message:
+            sourced = json.loads(self.rc.news[-1].content)
+            print(f"role     {self.profile} reviews iteration {RUN.iteration + 1} of {MAX_ITERATIONS}", flush=True)
+            review = await self.rc.todo.run(sourced["spec"], sourced["model"], sourced.get("error"))
+            print(f"review   {'PASS' if review['pass'] else 'FAIL'}{'' if review['pass'] else ': ' + str(review['fault'])}", flush=True)
+            if review["pass"] or RUN.iteration >= MAX_ITERATIONS:
+                finish(review)
+            return Message(content=json.dumps(review), role=self.profile, cause_by=Review, send_to="ArtDirector")
+
+    logger.remove()
+    logger.add(sys.stderr, level="WARNING")
+    team = Team(use_mgx=False)
+    team.hire([ArtDirector(config=config), Modeler(config=config), Reviewer(config=config)])
+    team.invest(1.0)
+    return team
+
+
+def run(brief: str) -> int:
+    global RUN
+    if not xai_key():
+        print("error    set XAI_API_KEY (create one at https://console.x.ai), or run with --check", file=sys.stderr)
+        return EXIT_NO_KEY
+    studio = Studio()
+    studio.connect()
+    RUN = Run(studio)
+    if not studio.signed_in:
+        print(
+            "note     THREE_WS_API_KEY is not set: the team searches the free catalog and reviews a poster render; "
+            "views and generation need a free key from https://three.ws/dashboard/api-keys",
+            file=sys.stderr,
+        )
+    import asyncio
+
+    team = build_team(brief)
+    asyncio.run(team.run(n_round=MAX_ROUNDS, idea=brief))
+    final = RUN.final
+    if final is None or final.get("model") is None:
+        reason = (final or {}).get("fault") or "the team ran out of rounds before a review"
+        print(f"error    no model delivered: {reason}", file=sys.stderr)
+        return EXIT_FAILED
+    model = final["model"]
+    print(f"\nverdict  {'PASS' if final['pass'] else 'FAIL'} after {RUN.iteration} of {MAX_ITERATIONS} iterations ({RUN.llm_calls} Grok calls)")
+    for point, text in (final.get("points") or {}).items():
+        print(f"  {point:<9}{text}")
+    if not final["pass"]:
+        print(f"  fault    {final['fault']}")
+    print(f"\nGLB:     {model['url']}\nViewer:  {model['viewer_url']}\nPoster:  {poster_url(model['url'], 1024)}")
+    return EXIT_OK if final["pass"] else EXIT_REVIEW_FAILED
+
+
+def main(argv: list[str]) -> int:
+    flags = {a for a in argv if a.startswith("--")}
+    words = [a for a in argv if not a.startswith("--")]
+    scratch = tempfile.mkdtemp(prefix="metagpt-3d-studio-")
+    # MetaGPT writes logs/ and workspace/ under its project root: keep that out of the repo.
+    os.environ["METAGPT_PROJECT_ROOT"] = scratch
+    # MetaGPT builds a default Config when it is imported and insists on an `llm` section.
+    # Give it the endpoint and model only; the key is passed to the roles in memory.
+    os.makedirs(os.path.join(scratch, "config"))
+    with open(os.path.join(scratch, "config", "config2.yaml"), "w") as handle:
+        json.dump({"llm": {"api_type": "openai", "base_url": XAI_BASE_URL, "model": MODEL}}, handle)
+    try:
+        if "--check" in flags:
+            return check()
+        return run(" ".join(words) or DEFAULT_BRIEF)
+    except Exception as err:  # the network boundary: report, never a stack trace
+        status = getattr(err, "status_code", None)
+        if status is not None:
+            print(f"error    xAI answered HTTP {status}: {getattr(err, 'message', err)}", file=sys.stderr)
+        else:
+            print(f"error    {type(err).__name__}: {err}", file=sys.stderr)
+        return EXIT_FAILED
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
