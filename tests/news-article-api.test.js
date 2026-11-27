@@ -51,7 +51,8 @@ vi.mock('../api/_lib/news-knowledge-store.js', () => ({
 
 vi.mock('../api/_lib/news-coins.js', () => ({ enrichTickers: vi.fn(async () => []) }));
 
-const findArticle = vi.fn(async () => null);
+const FEED_ITEM = { title: 'Feed headline', source: 'Feed Source', pub_date: '2026-10-01T00:00:00Z' };
+const findArticle = vi.fn(async () => FEED_ITEM);
 const getNews = vi.fn(async () => ({ articles: [], total: 0, sources_ok: 1, sources_total: 1 }));
 vi.mock('../api/_lib/news.js', async (importOriginal) => {
 	const actual = await importOriginal();
@@ -80,7 +81,7 @@ beforeEach(() => {
 	extractArticle.mockReset();
 	recordExtraction.mockReset();
 	getExtraction.mockReset().mockResolvedValue(null);
-	findArticle.mockReset().mockResolvedValue(null);
+	findArticle.mockReset().mockResolvedValue(FEED_ITEM);
 	getNews.mockReset().mockResolvedValue({ articles: [], total: 0, sources_ok: 1, sources_total: 1 });
 });
 afterEach(() => vi.clearAllMocks());
@@ -119,6 +120,47 @@ describe('url validation', () => {
 	});
 });
 
+describe('feed-only reads', () => {
+	it('refuses a url that did not come from an ingested feed item, without fetching it', async () => {
+		findArticle.mockResolvedValue(null);
+		const out = await call('/api/news/article?url=https%3A%2F%2Fanywhere.example%2Fnot-in-any-feed');
+		expect(out.status).toBe(404);
+		expect(out.body.error).toBe('not_in_feed');
+		expect(extractArticle).not.toHaveBeenCalled();
+		expect(recordExtraction).not.toHaveBeenCalled();
+	});
+
+	it('refuses a restricted publisher host with 410 before any lookup or fetch', async () => {
+		const out = await call('/api/news/article?url=https%3A%2F%2Fwww.nytimes.com%2F2026%2F11%2F01%2Fbusiness%2Fx.html');
+		expect(out.status).toBe(410);
+		expect(findArticle).not.toHaveBeenCalled();
+		expect(extractArticle).not.toHaveBeenCalled();
+	});
+
+	it('caps an LLM summary at 400 chars and key points at 3 of 140', async () => {
+		llmConfigured.mockReturnValue(true);
+		llmComplete.mockResolvedValue({
+			provider: 'test',
+			text: JSON.stringify({ summary: 'S'.repeat(900), key_points: Array.from({ length: 5 }, () => 'K'.repeat(300)), sentiment: 'neutral' }),
+		});
+		const long = 'Recovered body paragraph that is deliberately long enough to need analysis and exceed any budget. '.repeat(5);
+		extractArticle.mockResolvedValue({ paragraphs: [long, long], extraction: 'page', blocked_reason: null, html: null, lane_sources: [] });
+		const out = await call('/api/news/article?url=https%3A%2F%2Fpublisher.example%2Fllm-caps');
+		llmConfigured.mockReturnValue(false);
+		expect(out.body.summary.length).toBeLessThanOrEqual(401);
+		expect(out.body.key_points).toHaveLength(3);
+		expect(out.body.key_points.every((k) => k.length <= 141)).toBe(true);
+	});
+
+	it('hands the stored record only the bounded excerpt', async () => {
+		const long = 'Recovered body paragraph that is deliberately long enough to exceed the quotation budget by a wide margin. '.repeat(6);
+		extractArticle.mockResolvedValue({ paragraphs: [long, long, long], extraction: 'page', blocked_reason: null, html: null, lane_sources: [] });
+		const out = await call('/api/news/article?url=https%3A%2F%2Fpublisher.example%2Fstored-excerpt');
+		expect(recordExtraction.mock.calls[0][0].paragraphs.join('').length).toBeLessThanOrEqual(401);
+		expect(out.body.excerpt_truncated).toBe(true);
+	});
+});
+
 describe('knowledge-base write gate', () => {
 	// A distinct URL per case: the handler keeps a 30-minute in-process cache
 	// keyed by URL, and a cache hit short-circuits before the write.
@@ -154,20 +196,20 @@ describe('extraction lanes', () => {
 		findArticle.mockResolvedValue({ title: 'Feed headline', pub_date: '2026-10-01T00:00:00Z', source: 'Feed Source' });
 		extractArticle.mockResolvedValue({
 			paragraphs: PARAS,
-			extraction: 'wayback',
+			extraction: 'primary',
 			blocked_reason: null,
 			html: null,
-			lane_sources: [{ label: 'Internet Archive snapshot', url: 'https://web.archive.org/web/20240105123000id_/https://publisher.example/lane-a' }],
+			lane_sources: [{ label: 'Acme 8-K filed 2026-10-01', url: 'https://www.sec.gov/Archives/edgar/data/1/2/ex.htm' }],
 		});
 		const out = await call('/api/news/article?url=https%3A%2F%2Fpublisher.example%2Flane-a');
 		expect(extractArticle.mock.calls[0][1]).toMatchObject({ title: 'Feed headline', publishedAt: '2026-10-01T00:00:00Z' });
-		expect(out.body.extraction).toBe('wayback');
+		expect(out.body.extraction).toBe('primary');
 		expect(out.body.lane_sources).toHaveLength(1);
 	});
 
 	it('still serves only the bounded excerpt for a lane-recovered body', async () => {
 		const long = 'Recovered body paragraph that is deliberately long enough to exceed the quotation budget by a wide margin. '.repeat(6);
-		extractArticle.mockResolvedValue({ paragraphs: [long, long, long], extraction: 'wayback', blocked_reason: null, html: null, lane_sources: [] });
+		extractArticle.mockResolvedValue({ paragraphs: [long, long, long], extraction: 'primary', blocked_reason: null, html: null, lane_sources: [] });
 		const out = await call('/api/news/article?url=https%3A%2F%2Fpublisher.example%2Flane-b');
 		expect(out.body.paragraphs.join('').length).toBeLessThanOrEqual(401);
 		expect(out.body.excerpt_truncated).toBe(true);
