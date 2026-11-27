@@ -2,6 +2,13 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-27",
+			"title": "Every Forge error now says what happened and what to do next",
+			"summary": "When something goes wrong in Forge, the message now says in plain words what happened and what you can do about it, for every error Forge can return: making a model, uploading a photo, rigging, styling, remeshing and the other tools on a finished model. Your prompt and settings are always kept. A provider's raw error text, internal addresses and anything that looks like a key never reach the page. An error Forge does not recognise still gets an honest message with a short reference you can quote to support. Screen readers now hear every error, including the high demand, limit and storage notices.",
+			"tags": ["fix", "improvement"],
+			"link": "/forge"
+		},
+		{
 			"date": "2026-11-26",
 			"title": "Forge keeps generating when every prompt-writing model is down, and says so plainly",
 			"summary": "Before Forge paints the picture your 3D model is built from, an assistant model rewrites your prompt with materials and lighting. When every one of those models was refusing, Forge used to wait on each of them in turn and then reported the step as if it had run. Now a model that refuses for billing or credit is set aside for half an hour, a busy one for exactly as long as it asks, and when none is available your own prompt goes forward in a fraction of a second. The progress list says whether your prompt was rewritten, used as written because the assistant was unavailable, or used as written because its rewrite was not usable. The Enhance button answers within seconds, leaves your text untouched when it cannot help, tells you so in one sentence, and never keeps spinning.",
