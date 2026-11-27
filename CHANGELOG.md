@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-27
+
+- **Forge reports agree with each other and lead with what to fix**: The Forge error report, the funnel report and the internal funnel board now count a generation the same way and print that definition at the top, so they give the same success rate for the same week. Each opens with the top three problems and how they moved against the week before, says plainly that requests refused before a job started are not in its numbers, and hides links, emails and addresses unless asked. The error report answers in about a second instead of two minutes, a missing or unreachable database prints what to do instead of a stack trace or a page of zeros, and an admin who has not finished two-step verification is sent to verify instead of told to sign in. `[infra, fix]`
+
 ## 2026-11-26
 
 - **@three-ws/pumpfun-skills coinFees works again**: coinFees() read pump.fun's /coins-v2/<mint> route, which now answers 404 for every coin. It reads the coin record from pump.fun's search route (exact mint match) and reports an unknown mint as coin_not_found. A custom coinsV2Base still reads <base>/<mint> for devnet backends. `[fix]`

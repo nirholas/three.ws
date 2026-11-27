@@ -13,7 +13,11 @@ Forge has recorded the verdict on every generation (`outcome`, `rating`,
 columns, so the acceptance data was collected and never looked at.
 
 Three ways to read it, all backed by `api/_lib/forge-funnel.js` so the
-definitions cannot drift:
+definitions cannot drift. The shared request definition, the blind-spot note and
+the top-problems ranking come from `api/_lib/forge-operator-report.js`, which
+`npm run forge:errors` reads too, so the two reports give the same success rate
+for the same window (see
+[forge-error-triage.md](forge-error-triage.md#one-definition-across-every-forge-report)):
 
 - **[/forge-funnel](../../pages/forge-funnel.html)**, the internal page.
 - `GET /api/ops/forge-funnel?days=30`, the JSON behind it.
@@ -22,21 +26,43 @@ definitions cannot drift:
 ```bash
 npm run forge:funnel                 # last 30 days
 npm run forge:funnel -- --days 7
+npm run forge:funnel -- --days 7 --requests   # add refusals from the Cloud Run request log
 npm run forge:funnel -- --json
 
 curl -s -H "x-ops-secret: $OPS_SECRET" "https://three.ws/api/ops/forge-funnel?days=30" | jq '.output.useful_output_rate'
 ```
 
 The CLI reads `DATABASE_URL` from `.env.local`, then `.env`, then the shell, the
-same order as `npm run forge:errors`. It runs SELECTs and nothing else.
+same order as `npm run forge:errors`. It runs SELECTs and nothing else; on
+production (2026-11-27, 7 days) it answers in under a second.
 
-## Auth
+Exit status: `0` printed, `1` some panels could not be read (named at the end),
+`2` `DATABASE_URL` is not set, `3` the database did not answer at all. A missing
+or unreachable database prints what to do and no stack trace, and the unreachable
+case prints no board, because a board of zeros reads as a quiet week.
 
-Same gate as `/api/ops/health` and the [payment-outcome board](payment-outcomes.md):
-an admin session, or `x-ops-secret` matching `OPS_SECRET` (never `CRON_SECRET`;
-see `api/_lib/ops-auth.js`). Unset secret means open in dev and denied in
-production. It is owner-only on purpose: it carries per-engine performance and
-revenue. Per-IP ceiling is the shared `authedReadIp` bucket.
+## Who can see it
+
+Same gate as `/api/ops/health` and the [payment-outcome board](payment-outcomes.md)
+(`api/_lib/ops-auth.js`):
+
+- **A platform admin whose session passed two-step verification.** An admin who
+  has not verified gets `403 mfa_required` with `verify_url`, and the page links
+  there instead of drawing a sign-in prompt.
+- **A caller sending `x-ops-secret`** (or `Authorization: Bearer`) matching
+  `OPS_SECRET`. Never `CRON_SECRET`. A wrong secret is audited and alerts.
+- **Nobody else.** With no secret configured the gate is open in development and
+  closed in production.
+
+Measured against production on 2026-11-27: no credentials, a signed-in non-admin
+account and a wrong `x-ops-secret` all got `401 unauthorized` from
+`GET /api/ops/forge-funnel`, and the `/forge-funnel` page HTML is a static shell
+with no numbers in it (every figure arrives from that endpoint). Responses are
+`cache-control: private, no-store`. These cases are pinned in
+[tests/api/forge-funnel-endpoint.test.js](../../tests/api/forge-funnel-endpoint.test.js)
+and [tests/ops-auth.test.js](../../tests/ops-auth.test.js). It is owner-only on
+purpose: it carries per-engine performance and revenue. Per-IP ceiling is the
+shared `authedReadIp` bucket.
 
 ## The response envelope
 
@@ -44,23 +70,38 @@ revenue. Per-IP ceiling is the shared `authedReadIp` bucket.
 {
 	"ok": true,
 	"degraded": [],
-	"window_days": 30,
+	"unreachable": false,
+	"definitions": [{ "term": "success", "text": "finished requests over finished plus failed requests; in-flight jobs count as neither" }],
+	"coverage": { "pre_job_failures": "not_recorded", "note": "Requests refused before a job existed ..." },
+	"top_problems": [{ "key": "lane:trellis_selfhost", "title": "trellis_selfhost lost 28 request(s) after a job was created", "affected": 28, "previous": 819, "change": "-791" }],
+	"window_days": 7,
 	"min_sample": 20,
-	"generated_at": "2026-09-21T22:33:20.917Z",
+	"generated_at": "2026-11-27T10:11:57.000Z",
 	"output": {},
 	"new_actors": {},
 	"retention": {},
 	"destinations": {},
 	"lanes": [],
-	"revenue": {}
+	"share": {},
+	"revenue": {},
+	"previous": { "window_days": 7, "output": {}, "lanes": [] }
 }
 ```
+
+`definitions` is the shared list every Forge report prints. `coverage` states
+the blind spot: requests refused before a job existed are not in these numbers.
+`top_problems` is the three lanes that lost the most requests, each with its
+count in the previous window and the change (`new`, `same`, `+n`, `-n`).
+`previous` is the same `output` and `lanes` panels for the window of equal length
+immediately before this one.
 
 `days` is a whole number from 1 to 365, default 30. The panels are read
 independently and in parallel. One that throws is named in `degraded`, its
 section reads as empty, and the status is `207 Multi-Status`, the convention the
 other ops boards use. `ok` says whether the board rendered, never whether the
-funnel is good. If a panel reports a missing column, migration
+funnel is good. When every panel fails, the database did not answer: the
+response is `503 database_unreachable` with the panel names and no numbers, and
+the page says so instead of drawing zeros. If a panel reports a missing column, migration
 `20260921120000_forge_destination.sql` is not applied: `npm run db:status`.
 
 Every rate is an object, not a bare number:
@@ -82,7 +123,7 @@ Do not act on it.
 | Keyless request | A row with no account and no `x-forge-client` header. All of them hash to the literal key `anon`, which would read as one extremely loyal maker, so they count in volume and are left out of every per-maker number. `output.unattributed_requests` says how many. |
 | New maker | A maker whose first-ever Forge creation falls inside the window. |
 | Internal | Rows the platform generated itself (catalog seeder, weekly quality benchmark). Excluded everywhere: by `forge_creations.internal` from this migration on, and by `forge_seed_jobs.creation_id` for older seeder rows. Older benchmark rows cannot be told apart and remain in pre-migration numbers. |
-| Failed over | An attempt re-dispatched to another engine (`superseded_by` set). Request-level panels skip it, because the successor row carries the request to its real outcome. The engine table keeps it, because a lost attempt is what that table measures. |
+| Failed over | An attempt re-dispatched to another engine (`superseded_by` set). Request-level panels skip it, because the successor row carries the request to its real outcome. The engine table keeps it in `attempts`, because a lost attempt is what that table measures, and leaves it out of `lost`. |
 
 ## The panels
 
@@ -108,7 +149,9 @@ this build does not recognise, then `Not answered` last. A known destination
 with no rows still appears, so the table reads "nobody chose Print" and not as a
 gap. `answer_rate` is answered finished rows over all finished rows.
 
-**`lanes`**: per engine. `attempts_per_useful` is the cost driver: terminal
+**`lanes`**: per engine. `lost` is requests whose last attempt failed on that
+engine with nothing to carry them, so the column adds up to `output.failed` and to
+the failed count in `npm run forge:errors`. `attempts_per_useful` is the cost driver: terminal
 attempts spent per kept model. `generation_seconds_per_useful` is total
 generation seconds over kept models, which is what GPU cost scales with on the
 self-hosted engines. Seconds come from `completed_at - created_at`, so only rows
@@ -130,6 +173,29 @@ recorded on the row (`x402_price_atomic`). `usdc_per_useful_asset` divides that
 by every kept model in the window. `agent_weekly_retention` is distinct payer
 wallets from the prior week that paid again this week. $THREE and credit payments
 are not on the row and are not in this panel.
+
+## Requests refused before a job existed
+
+`forge_creations` only holds requests that became a job. A request turned away
+first (sign-in required, throttled, image rejected, reference image or lane
+unavailable) leaves no row and no table records it, so the board and both CLIs
+say so at the top. The one record is the Cloud Run request log, and
+`--requests` reads it:
+
+```bash
+npm run forge:funnel -- --days 7 --requests
+GCP_ACCOUNT=you@example.com GCP_PROJECT=<serving project> npm run forge:funnel -- --requests
+```
+
+It reads `POST /api/forge` and `POST /api/gpt-forge` from the `three-ws-api`
+request log (rigging calls excluded), buckets them by status (accepted, sign-in
+required, payment required, forbidden, throttled, bad input, lane unconfigured,
+server error), and puts the refusals into the top-problems ranking. It needs a
+gcloud sign-in that can read the serving project; `GCP_PROJECT` (default
+`aerial-vehicle-466722-p5`) and `GCP_ACCOUNT` pick which. When gcloud cannot
+read the log, the report says why and prints the rest. A refused request may be
+retried and succeed later, so these are requests, not people. The log read is
+capped at 50,000 lines and says "at least" when it hits the cap.
 
 ## Where destination comes from
 

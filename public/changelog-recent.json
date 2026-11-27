@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-11-26T21:26:49.238Z",
+	"generated_at": "2026-11-27T10:17:07.424Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4754,
+	"total": 4755,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Forge reports agree with each other and lead with what to fix",
+			"summary": "The Forge error report, the funnel report and the internal funnel board now count a generation the same way and print that definition at the top, so they give the same success rate for the same week. Each opens with the top three problems and how they moved against the week before, says plainly that requests refused before a job started are not in its numbers, and hides links, emails and addresses unless asked. The error report answers in about a second instead of two minutes, a missing or unreachable database prints what to do instead of a stack trace or a page of zeros, and an admin who has not finished two-step verification is sent to verify instead of told to sign in.",
+			"link": null,
+			"tags": [
+				"infra",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-26",
 			"type": "update",
@@ -1540,16 +1551,6 @@
 			"tags": [
 				"feature",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "update",
-			"title": "Microsoft Marketplace free trials, from activation to the first paid month",
-			"summary": "Plans bought on Microsoft Marketplace can now start with a free trial. The activation page says when the trial ends and what it becomes afterwards, using the price Microsoft publishes for the plan. While the trial runs, a slim banner under the site header shows the days left, what it converts to and a Manage in Microsoft link, and you can dismiss it for the session. You get one notification and one email a week before the trial ends and again the day before, never more. Microsoft bills nothing until the trial is over, and cancelling in Microsoft before then means no charge.",
-			"link": "/microsoft/activate",
-			"tags": [
-				"feature"
 			]
 		}
 	]

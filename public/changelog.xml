@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Forge reports agree with each other and lead with what to fix</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-27:Forge reports agree with each other and lead with what to fix</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The Forge error report, the funnel report and the internal funnel board now count a generation the same way and print that definition at the top, so they give the same success rate for the same week. Each opens with the top three problems and how they moved against the week before, says plainly that requests refused before a job started are not in its numbers, and hides links, emails and addresses unless asked. The error report answers in about a second instead of two minutes, a missing or unreachable database prints what to do instead of a stack trace or a page of zeros, and an admin who has not finished two-step verification is sent to verify instead of told to sign in.</description>
+		</item>
+		<item>
 			<title>@three-ws/pumpfun-skills coinFees works again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-26:@three-ws/pumpfun-skills coinFees works again</guid>

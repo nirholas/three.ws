@@ -4,15 +4,60 @@ Answering "what is actually failing in 3D generation, and how often?" from the
 outcome ledger, without hand-writing SQL against production.
 
 ```bash
-npm run forge:errors                       # last 7 days, ranked by class
+npm run forge:errors                          # last 7 days, top problems first
 npm run forge:errors -- --days 30
-npm run forge:errors -- --days 7 --json    # machine-readable, same numbers
-npm run forge:errors -- --class lost_task  # every message in one class
-npm run forge:errors -- --include-recovered  # count failed-over attempts too
+npm run forge:errors -- --days 7 --json       # machine-readable, same numbers
+npm run forge:errors -- --class lost_task     # every lane, step and sample in one class
+npm run forge:errors -- --include-recovered   # also rank attempts that failed over
+npm run forge:errors -- --include-internal    # count catalog-seeder and benchmark rows too
+npm run forge:errors -- --reveal              # full messages and prompts (redacted by default)
 ```
 
 Read-only: the script ([scripts/forge-error-report.mjs](../../scripts/forge-error-report.mjs))
-runs two SELECTs against `forge_creations` and writes nothing.
+runs SELECTs against `forge_creations` for this window and the one before it, and
+writes nothing. The counting, wording and redaction live in
+[api/_lib/forge-operator-report.js](../../api/_lib/forge-operator-report.js),
+which `npm run forge:funnel` and `/forge-funnel` share. On production
+(2026-11-27, 7 days) it answers in about 1 second.
+
+Exit status: `0` printed, `1` the `--class` asked for is not in the window, `2`
+`DATABASE_URL` is not set, `3` the database did not answer. A missing or
+unreachable database prints what to do and no stack trace.
+
+## One definition across every Forge report
+
+`forge:errors`, `forge:funnel` and the `/forge-funnel` board count the same
+thing, and each prints the definition at the top (`How this counts`):
+
+- **request**: one generation someone asked for, a `forge_creations` row that did
+  not fail over to another lane, platform rows left out.
+- **success**: finished requests over finished plus failed. Jobs still in flight
+  count as neither, so a busy minute never reads as a failure spike.
+- **failure**: a request whose last attempt failed. An attempt that failed over
+  is "recovered"; its successor carries the outcome.
+- **attempt**: every finished or failed row, failed-over ones included. Lane
+  tables count attempts, and their `lost` column counts requests.
+- **platform rows**: catalog-seeder and quality-benchmark rows (`internal`, or
+  listed in `forge_seed_jobs`), left out everywhere unless `--include-internal`.
+- **public lane stats**: `/api/nvidia/stats` counts attempts per lane over every
+  row, platform rows included, so it reads slightly above the lane table here.
+- **time**: rolling windows ending now, days bucketed in UTC. The previous window
+  is the same length immediately before it.
+
+Measured on production 2026-11-27 over 7 days, both reports said 896 requests,
+833 finished, 63 failed, 93.0% success, and the funnel's per-lane `lost` column
+added up to the same 63. Fixed-row tests in
+[tests/forge-operator-reports.test.js](../../tests/forge-operator-reports.test.js)
+hold that agreement, the UTC day buckets, and in-flight-is-not-failure in place.
+
+## Not in these numbers
+
+A request refused before a job existed (sign-in required, throttled, image
+rejected, reference image or lane unavailable) never reaches `forge_creations`.
+No table records it. Its only record is the Cloud Run request log, which
+`npm run forge:funnel -- --requests` reads and buckets by status (see
+[forge-funnel.md](forge-funnel.md)). Both reports say this at the top, because a
+healthy job table is not a healthy product.
 
 ## Why this exists next to /api/healthz
 
@@ -104,7 +149,49 @@ ground truth. Expect `recovered 0` on windows that predate it.
 
 ## Reading the output
 
-Real output, production, 2026-08-14:
+Real output, production, 2026-11-27 (definitions header and blind-spot note
+trimmed, database host elided):
+
+```
+Top problems by requests lost (change against the 7 day(s) before)
+  1. bad_input_image: 55 (87.3% of ranked), previously 1244 (-1189), worst lane trellis_selfhost x28
+     input image could not be fetched or decoded
+     e.g. image source tmpfiles.org is not a decodable image (UnidentifiedImageError)
+  2. other: 8 (12.7% of ranked), previously 45 (-37), worst lane (not recorded) x8
+     internal error (ref <id>)
+     e.g. internal error (ref 44752d5686c4)
+
+                            this window  previous
+  ------------------------  -----------  --------
+  requests                          896      2409
+  finished                          833       803
+  failed (lost)                      63      1606
+  recovered by failover              23       521
+  still in flight                     0         0
+  success                         93.0%     33.3%
+  platform rows (left out)          137       749
+
+By day (UTC): 2026-11-20 4, 2026-11-21 1, 2026-11-22 24, 2026-11-23 3, 2026-11-24 2, 2026-11-25 13, 2026-11-26 12, 2026-11-27 4
+By lane: trellis_selfhost 28, triposg 26, (not recorded) 8, pixal3d 1
+By step: image 55, (not recorded) 8
+```
+
+- **Top problems** come first: the three causes that lost the most requests,
+  each with its count in the previous window and the change. Messages that
+  differ only by an id, a byte count or a duration are one cause.
+- `bad_input_image` was 87% of this week's losses and 1,244 the week before. It
+  is the caller's photo failing to fetch or decode (here, a link to a temporary
+  file host that served something other than an image), not a lane fault.
+- `internal error (ref <id>)` is the MCP servers' sanitized answer to a
+  database or internal error inside a tool call
+  ([api/_lib/mcp-error-sanitize.js](../../api/_lib/mcp-error-sanitize.js)).
+  These 8 rows have no lane recorded. `--class other` lists their refs (refs are
+  not redacted); the `tool_error` log line whose `log_id` matches a ref has the
+  stack.
+- `--class <id>` prints every lane, step, first and last seen, and redacted
+  sample messages for one cause.
+
+Older output, production, 2026-08-14, before the top-problems layout:
 
 ```
   generations 3642   done 3619   failed 23   still running 0
@@ -202,6 +289,15 @@ recovery accounting above matters more than the raw count.
   See [production-log-triage.md](production-log-triage.md) for the same
   distinction across the rest of the platform.
 
+## Privacy
+
+Error messages and prompts are what callers typed or linked, so the report
+redacts them by default: a URL keeps only its host (`https://host/...`), and
+emails, wallet addresses and IP addresses become `<email>`, `<address>` and
+`<ip>`. `--json` carries the database host, never its credentials. `--reveal`
+shows full messages and prompts when you need them for a specific fix; do not
+paste revealed output into a public channel.
+
 ## Credentials
 
 The script reads `DATABASE_URL` from `.env.local`, then `.env`, then the shell,
@@ -211,8 +307,13 @@ the Cloud Run service:
 
 ```bash
 # DATABASE_URL is a Secret Manager reference, so describe alone shows no value.
-node scripts/read-service-env.mjs '^DATABASE_URL$' --raw
+export DATABASE_URL="$(node scripts/read-service-env.mjs '^DATABASE_URL$' --raw)"
+# The service you can read lives in the three-ws project:
+export DATABASE_URL="$(GCP_PROJECT=three-ws node scripts/read-service-env.mjs '^DATABASE_URL$' --raw)"
 ```
+
+If the database does not answer, it exits 3, names the host it tried, and prints
+no report, because every number in it would have been empty rather than zero.
 
 ## Error codes a caller can see
 

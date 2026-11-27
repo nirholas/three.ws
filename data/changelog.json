@@ -2,6 +2,12 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-27",
+			"title": "Forge reports agree with each other and lead with what to fix",
+			"summary": "The Forge error report, the funnel report and the internal funnel board now count a generation the same way and print that definition at the top, so they give the same success rate for the same week. Each opens with the top three problems and how they moved against the week before, says plainly that requests refused before a job started are not in its numbers, and hides links, emails and addresses unless asked. The error report answers in about a second instead of two minutes, a missing or unreachable database prints what to do instead of a stack trace or a page of zeros, and an admin who has not finished two-step verification is sent to verify instead of told to sign in.",
+			"tags": ["infra", "fix"]
+		},
+		{
 			"date": "2026-11-26",
 			"title": "Forge waits when the image engine asks it to",
 			"summary": "When the engine painting a text prompt's reference image says how long to wait, Forge now passes that wait to you instead of immediately asking again, which was refused and delayed your next try.",
