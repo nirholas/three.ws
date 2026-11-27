@@ -14,7 +14,8 @@ money.
 ## Prerequisites
 
 - Grok Build installed and signed in to your xAI account (see the
-  [Grok Build README](https://github.com/xai-org/grok-build)).
+  [Grok Build README](https://github.com/xai-org/grok-build)). For scripts and
+  CI, `XAI_API_KEY` in the environment signs it in without a browser.
 - A free three.ws account to make or rig a model. The sign-in in step 2 can
   create one. Catalog search, rendering and embed code need no account.
 - Node 22 or newer for the starter.
@@ -131,6 +132,25 @@ the framing and URL tests.
 
 ## Sample output
 
+A real Grok Build turn with the plugin installed, captured 2026-11-27 with Grok
+Build 1.0.92 run headless on an xAI API key (`XAI_API_KEY`, which xAI documents
+for scripts and CI). Asked to "find a wooden chair in the three.ws catalog and
+show me its viewer link", Grok read the plugin's `find-3d-assets` skill and made
+this call through the plugin's MCP server:
+
+```text
+{"type":"tool_call","toolName":"use_tool","rawInput":{"tool_name":"three-ws__search_catalog","tool_input":{"q":"wooden chair","kind":"object","limit":5}}}
+
+10 matches for "wooden chair" (showing 5 from offset 0):
+- `object:painted_wooden_chair_01` | Painted Wooden Chair 01 | CC0 | chair, wood, painted, farmhouse
+- `object:painted_wooden_chair_02` | Painted Wooden Chair 02 | CC0 | old, wooden, vintage, antique
+- `object:WoodenChair_01` | Wooden Chair 01 | CC0 | wood, prop, vintage, furniture
+```
+
+It answered with Wooden Chair 01 and its viewer link. The commands, the whole
+reply, the cost and a second run against production are in the
+[plugin README](../../integrations/grok/three-ws/README.md#sample-run).
+
 The tour's step 2 calls `search_catalog`. This is the call it makes, sent
 straight to the studio server on 2026-11-20 (1,306 matches, top three):
 
@@ -164,16 +184,28 @@ $ npm run dev
 ?src=https://three.ws/avatars/default.glb
   Loaded default.glb. Drag to orbit, scroll to zoom.
 console: clean
+```
 
-$ npm run build
-dist/index.html                   0.94 kB │ gzip:   0.53 kB
-dist/assets/index-B-toSq9g.css    1.67 kB │ gzip:   0.79 kB
-dist/assets/index-DiDqgEaw.js   685.53 kB │ gzip: 172.54 kB
-✓ built in 1.17s
+The starter's tests and build, captured 2026-11-27 from a fresh copy of the
+folder:
 
+```text
 $ npm test
+✔ a taller model needs the camera further back (1.99843ms)
+✔ a narrow viewport backs the camera off for a wide model (0.338091ms)
+✔ the distance scales with the model, so any unit works (0.35275ms)
+✔ only https GLB URLs load (http too, on localhost) (0.49494ms)
+ℹ tests 4
 ℹ pass 4
 ℹ fail 0
+
+$ npm run build
+vite v8.3.8 building client environment for production...
+✓ 14 modules transformed.
+dist/index.html                   0.94 kB │ gzip:   0.53 kB
+dist/assets/index-B-toSq9g.css    1.67 kB │ gzip:   0.79 kB
+dist/assets/index-CUaUA3ep.js   686.12 kB │ gzip: 172.65 kB
+✓ built in 621ms
 ```
 
 ## Cost

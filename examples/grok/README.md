@@ -52,6 +52,35 @@ also makes one model on the free lane with `THREE_WS_API_KEY`.
 `--only grok-curl,grok-agent-avatar` narrows the run and `--no-generate` skips
 the generation.
 
+Two more flags help when you are changing the MCP server itself.
+`--mcp-url https://<public host>/api/mcp-studio` points the three examples where
+xAI's cloud calls the server (`grok-python-mcp`, `grok-node-responses`,
+`grok-curl`) at a development server. It has to be reachable from the internet,
+for example through a tunnel, because xAI cannot call localhost, and those runs
+send no three.ws key. `--save-output <dir>` writes one `<example>.txt` per
+example with every command and what it printed, with the xAI key and the
+three.ws key replaced by `<XAI_API_KEY>` and `<THREE_WS_API_KEY>`. The sample
+output in each example's README comes from those files.
+
+Captured 2026-11-27 with an xAI key, one line per example from that day's
+runs. The first three examples ran against
+production; the same day they also passed with `--mcp-url` set to a tunnel in
+front of a server running this repository's `main`. The last three always use
+production:
+
+```text
+PASS  grok-python-mcp        three.ws: MCP tools + catalog live | xAI: live run ok, https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb  (28.4s)
+PASS  grok-node-responses    three.ws: catalog + PNG render live | xAI: live run ok, https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb  (17.7s)
+PASS  grok-curl              three.ws: REST catalog + PNG render live | xAI: live run ok, https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb  (8.2s)
+PASS  grok-x-search-to-3d    three.ws: MCP tools + catalog live, 6 unit tests | generation: https://three.ws/cdn/forge/anon/4e8135ca-2974-4028-82fe-6a3f7aad6a22.glb (fresh copy to GLB 85.4s) | xAI: live run ok, https://three.ws/cdn/forge/anon/3a089254-f1da-4027-90c9-a1505e1f10bc.glb  (186.3s)
+PASS  grok-agent-avatar      three.ws: page + pinned <agent-3d> CDN script live, 8 tests | xAI: live reply (happy): Hello there, my lovely friend!  (6.4s)
+PASS  grok-build-workflow    three.ws: starter built, 4 tests, catalog GLB live with CORS (768216 bytes) | Grok Build: grok CLI not installed here: the plugin is covered by tests/grok-plugin.test.js and tests/grok-build-plugin-*.test.js  (7.6s)
+```
+
+The Grok Build CLI was not on that run's `PATH`. A real Grok Build turn with the
+plugin was captured the same day and is in the
+[plugin README](../../integrations/grok/three-ws/README.md#sample-run).
+
 Captured 2026-11-20 against production, without an xAI key:
 
 ```text
@@ -67,8 +96,9 @@ all 6 example(s) passed
 ```
 
 The fastest path to a model is `grok-x-search-to-3d --prop`: 82 seconds from a
-fresh copy of the folder to a finished GLB, install and tests included (132
-seconds in an earlier run the same day, when the free lane was busier).
+fresh copy of the folder to a finished GLB on 2026-11-20, install and tests
+included (132 seconds in an earlier run that day, when the free lane was
+busier), and 85 seconds on 2026-11-27.
 
 ## Cost
 

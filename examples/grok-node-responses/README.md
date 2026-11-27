@@ -70,17 +70,32 @@ that answers `image/png`.
 
 ## Sample output
 
-`npm run check`, captured 2026-11-20 against production:
+`node index.mjs --check --out check.png` (`npm run check` writes `model.png`
+instead), captured 2026-11-27 against production:
 
 ```text
 server   three-ws-3d-studio-free (https://three.ws/api/mcp-studio)
 catalog  Arm Chair 01  https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb
-png      model.png (596134 bytes, rendered by https://three.ws/api/render/glb)
+png      check.png (596134 bytes, rendered by https://three.ws/api/render/glb)
 ok       three.ws leg is live
 ```
 
-The full run with an xAI key that is not valid. The request really reaches
-`api.x.ai`, and the error is xAI's own:
+`XAI_API_KEY=... npm start`, the full run, captured 2026-11-27 against
+production with no three.ws key, so Grok answered from the free catalog:
+
+```text
+note     THREE_WS_API_KEY is not set: catalog search works, but making a model needs a free key from https://three.ws/dashboard/api-keys
+tool     search_catalog {"q":"chair","kind":"object"} (ok)
+
+GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb
+Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_01.glb&title=Painted%20Wooden%20Chair%2001
+
+glb      https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb
+png      model.png (144478 bytes, rendered by https://three.ws/api/render/glb)
+```
+
+The full run with an xAI key that is not valid, captured the same day. The
+request really reaches `api.x.ai`, and the error is xAI's own:
 
 ```text
 note     THREE_WS_API_KEY is not set: catalog search works, but making a model needs a free key from https://three.ws/dashboard/api-keys

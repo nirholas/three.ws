@@ -82,6 +82,17 @@ rigged GLB. You can make one for free with `forge_avatar` on the
 
 ## Sample output
 
+With a working xAI key, captured 2026-11-27: the server's start line, then one
+`POST /api/chat` and the reply and mood Grok returned. The page and the
+`<agent-3d>` script loaded from production; the port was a free one picked for
+the run:
+
+```text
+avatar   http://localhost:40707  (model grok-4.7, xAI key set)
+POST /api/chat {"messages":[{"role":"user","content":"Say hello in five words."}]}
+HTTP 200 {"reply":"Hello there, my lovely friend!","mood":"happy"}
+```
+
 Captured 2026-11-20. Starting the server without a key, then `GET /api/health`
 and one chat message:
 

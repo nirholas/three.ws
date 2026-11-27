@@ -69,26 +69,40 @@ up to 8 rounds.
 
 ## Sample output
 
-`python main.py --check`, captured 2026-11-20 against production:
+`python main.py --check`, captured 2026-11-27 against production:
 
 ```text
 server   three-ws-3d-studio-free (https://three.ws/api/mcp-studio)
-tools    16 offered; this example allows search_catalog, forge_free, check_job
+tools    21 offered; this example allows search_catalog, forge_free, check_job
 catalog  Arm Chair 01  https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb
 catalog  Bar Chair Round 01  https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb
 catalog  Barber Shop Chair 01  https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/BarberShopChair_01.glb
 ok       three.ws leg is live
 ```
 
-The full run with an xAI key that is not valid shows how xAI answers. The
-request really reaches `api.x.ai`:
+`XAI_API_KEY=... python main.py`, the full run, captured 2026-11-27 against
+production with no three.ws key, so Grok answered from the free catalog. The
+`tool` line is the call xAI's cloud made to the three.ws server:
+
+```text
+note     THREE_WS_API_KEY is not set: catalog search works, but making a model needs a free key from https://three.ws/dashboard/api-keys
+tool     three-ws___search_catalog {"q":"chair","kind":"object"}
+
+GLB: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb
+Viewer: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_01.glb&title=Painted%20Wooden%20Chair%2001
+
+glb      https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb
+```
+
+The full run with an xAI key that is not valid, captured the same day, shows how
+xAI answers. The request really reaches `api.x.ai`:
 
 ```text
 note     THREE_WS_API_KEY is not set: catalog search works, but making a model needs a free key from https://three.ws/dashboard/api-keys
 error    xAI answered INVALID_ARGUMENT: Incorrect API key provided. You can obtain an API key from https://console.x.ai.
 ```
 
-The free generation the server runs for `forge_free` was captured the same day
+The free generation the server runs for `forge_free` was captured on 2026-11-20
 through the [curl example](../grok-curl/README.md): "a low-poly wooden chair"
 became `https://three.ws/cdn/forge/anon/efefc9dc-5ed9-445f-8e87-fdc608826f39.glb`
 in 180 seconds.

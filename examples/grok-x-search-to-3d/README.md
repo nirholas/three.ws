@@ -74,27 +74,49 @@ Exit codes: `0` success, `1` a call failed, `2` no xAI key.
 
 ## Sample output
 
-`npm run check`, captured 2026-11-20 against production:
+`npm run check`, captured 2026-11-27 against production:
 
 ```text
-server   three-ws-3d-studio-free (https://three.ws/api/mcp-studio), 16 tools
+server   three-ws-3d-studio-free (https://three.ws/api/mcp-studio), 21 tools
 catalog  Moon Rock 01  https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/moon_rock_01.glb
 ok       three.ws leg is live
 ```
 
-A prop made on the free lane with a free three.ws key (`--prop`, 1m49s wall
-clock):
+`XAI_API_KEY=... THREE_WS_API_KEY=... node index.mjs "lunar landers"`, the full
+run, captured 2026-11-27 against production. Grok searched X, wrote the brief,
+and the prop was made on the free lane:
 
 ```text
-prop     a chrome lunar lander with gold foil legs
-job      pending (submitting), checking again in 15s
+x_search "lunar landers", last 7 days
+grok     2 search call(s), 13 posts fetched
+cited    https://x.com/i/status/2124974223093625158
+cited    https://x.com/i/status/2126363956944265506
+cited    https://x.com/i/status/2124959056741970050
+cited    https://x.com/i/status/2124973920168399075
+cited    https://x.com/i/status/2126382323490845004
+summary  People on X are talking up commercial lunar landers from Firefly, Intuitive Machines, and SpaceX’s Starship HLS as bets on Artemis and a future lunar economy. Skeptics counter that a huge Starship-style lander is too inefficient and risky, while others point to smaller designs, Artemis timelines, and international plans.
+prop     A squat brushed-silver metal cylinder on four thin splayed legs with broad pads, standing on a rough charcoal-gray cratered disc.
 job      pending (running), checking again in 20s
-job      pending (running), checking again in 5s
-glb      https://three.ws/cdn/forge/anon/8b9ba6ce-4f92-4273-94f4-68f9aeca93f2.glb  (made in 106s)
-viewer   https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F8b9ba6ce-4f92-4273-94f4-68f9aeca93f2.glb&title=Chrome%20lunar%20lander%20with%20gold%20foil%20legs%2C%20symmetrical%2C%20brushed%20metal%20and%20matte%20f%E2%80%A6
+glb      https://three.ws/cdn/forge/anon/3a089254-f1da-4027-90c9-a1505e1f10bc.glb  (made in 80s)
+viewer   https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3a089254-f1da-4027-90c9-a1505e1f10bc.glb&title=Squat%20silver%20cylinder%20with%20brushed%20metal%20grain%2C%20on%20four%20thin%20legs%20with%20broad%20ma%E2%80%A6
+
+draft post (not posted, copy it if you like it):
+
+X is split on lunar landers: huge Starship or smaller craft. One quiet silver prop for the argument. https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F3a089254-f1da-4027-90c9-a1505e1f10bc.glb&title=Squat%20silver%20cylinder%20with%20brushed%20metal%20grain%2C%20on%20four%20thin%20legs%20with%20broad%20ma%E2%80%A6
 ```
 
-The same prompt with no three.ws key, so a catalog asset stands in:
+A prop made on the free lane with a free three.ws key and no xAI key
+(`node index.mjs --prop "a low-poly wooden chair"`), captured the same day:
+
+```text
+prop     a low-poly wooden chair
+job      pending (running), checking again in 20s
+job      pending (running), checking again in 12s
+glb      https://three.ws/cdn/forge/anon/4e8135ca-2974-4028-82fe-6a3f7aad6a22.glb  (made in 83s)
+viewer   https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2F4e8135ca-2974-4028-82fe-6a3f7aad6a22.glb&title=Low-poly%20wooden%20chair%20with%20simple%20cubic%20seat%2C%20back%2C%20and%20legs%2C%20matte%20wood%20grain%2C%E2%80%A6
+```
+
+`--prop` with no three.ws key, so a catalog asset stands in (captured 2026-11-20):
 
 ```text
 prop     a chrome lunar lander with gold foil legs
@@ -103,8 +125,8 @@ glb      https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/g
 viewer   https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fbrass_pan_01.glb
 ```
 
-The full run with an xAI key that is not valid. The request really reaches
-`api.x.ai`, and the error is xAI's own:
+The full run with an xAI key that is not valid (captured 2026-11-20). The
+request really reaches `api.x.ai`, and the error is xAI's own:
 
 ```text
 x_search "lunar landers", last 7 days
