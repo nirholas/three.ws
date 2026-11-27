@@ -18,6 +18,7 @@
 
 import { fetchTokenConfig, payWithToken, settleTokenPayment } from './token-pay.js';
 import { rememberPaidProof, unspentPaidProof, forgetPaidProof } from './shared/forge-paid-proofs.js';
+import { paymentRecipients, recipientsHtml } from './shared/forge-pay-recipients.js';
 import { ensureRiskAck } from './shared/risk-ack.js';
 
 // Callers report a proof the server redeemed or refused, so it is never offered again.
@@ -74,14 +75,15 @@ function notConfiguredState() {
 // is unset, every quote answers 503 not-configured, so the sheet says so before
 // any risk prompt or Pay button. A failed read returns null and the sheet goes
 // on as normal: the quote stays the authority either way.
+// Also returns who the split pays, for the confirm step.
 async function consumptionRailReady() {
 	try {
 		const cfg = await fetchTokenConfig();
 		const configured = { treasury: cfg?.treasury_configured, rewards: cfg?.rewards_configured };
 		const roles = (cfg?.split_policies?.consumption || []).map((leg) => leg.role);
-		return roles.every((role) => configured[role] !== false);
+		return { ready: roles.every((role) => configured[role] !== false), recipients: paymentRecipients(cfg) };
 	} catch {
-		return null;
+		return { ready: null, recipients: [] };
 	}
 }
 
@@ -203,7 +205,7 @@ export async function payForConsumption({
 	if (saved) return { ok: true, ...saved, reused: true };
 	// A rail that is not switched on gets the honest sheet straight away: there
 	// is nothing to acknowledge when no payment can be taken.
-	const ready = await consumptionRailReady();
+	const { ready, recipients } = await consumptionRailReady();
 	// Real $THREE leaves the wallet, so require the risk acknowledgment first.
 	// (payWithToken gates too, but asking before the payment sheet opens is
 	// the honest order; the second check is a no-op once accepted.)
@@ -251,6 +253,7 @@ export async function payForConsumption({
 		function showConfirm() {
 			showStatus(confirm);
 			actionsEl.innerHTML =
+				recipientsHtml(recipients) +
 				`<button type="button" class="fpay-btn fpay-btn--primary" data-fpay-pay>Pay ${usdLabel(usd)}</button>` +
 				`<button type="button" class="fpay-btn fpay-btn--ghost" data-fpay-cancel>Cancel</button>`;
 			actionsEl.querySelector('[data-fpay-pay]').addEventListener('click', startPayment);
