@@ -273,11 +273,57 @@ describe('origin override', () => {
 		expect(normalizeModlyOrigin('localhost:9000/')).toBe('http://localhost:9000');
 		expect(() => normalizeModlyOrigin('ftp://x')).toThrow(ModlyError);
 		const ref = MODLY_ORIGINS;
-		setModlyOriginOverride('192.168.1.20:8765');
-		expect(ref).toEqual(['http://192.168.1.20:8765', ...MODLY_DEFAULT_ORIGINS]);
-		expect(getModlyOriginOverride()).toBe('http://192.168.1.20:8765');
+		setModlyOriginOverride('127.0.0.1:9100');
+		expect(ref).toEqual(['http://127.0.0.1:9100', ...MODLY_DEFAULT_ORIGINS]);
+		expect(getModlyOriginOverride()).toBe('http://127.0.0.1:9100');
 		setModlyOriginOverride('');
 		expect(ref).toEqual([...MODLY_DEFAULT_ORIGINS]);
+	});
+});
+
+// The bridge carries the user's photo and receives a mesh it then copies to
+// three.ws storage, so it may only ever reach an app on this computer. A
+// pasted address on the LAN or the internet must never become a target.
+describe('loopback only', () => {
+	it('accepts every loopback spelling, on any port', () => {
+		expect(normalizeModlyOrigin('localhost:8765')).toBe('http://localhost:8765');
+		expect(normalizeModlyOrigin('http://127.0.0.1:9100/')).toBe('http://127.0.0.1:9100');
+		expect(normalizeModlyOrigin('127.4.5.6:8765')).toBe('http://127.4.5.6:8765');
+		expect(normalizeModlyOrigin('http://[::1]:8765')).toBe('http://[::1]:8765');
+	});
+
+	it('refuses an address on another machine', () => {
+		for (const foreign of ['192.168.1.20:8765', 'http://10.0.0.5:8765', 'https://evil.example', 'http://localhost.evil.example:8765', 'http://127.0.0.1.nip.io:8765', 'http://[::ffff:c0a8:114]:8765']) {
+			let err;
+			try {
+				normalizeModlyOrigin(foreign);
+			} catch (e) {
+				err = e;
+			}
+			expect(err, foreign).toBeInstanceOf(ModlyError);
+			expect(err.code).toBe('BAD_ORIGIN');
+		}
+	});
+
+	it('will not save a foreign override, and ignores one left in storage by an older build', () => {
+		const store = new Map([['tws:modly-origin', 'http://192.168.1.20:8765']]);
+		vi.stubGlobal('localStorage', {
+			getItem: (k) => store.get(k) ?? null,
+			setItem: (k, v) => store.set(k, String(v)),
+			removeItem: (k) => store.delete(k),
+		});
+		expect(getModlyOriginOverride()).toBe('');
+		expect(() => setModlyOriginOverride('https://evil.example')).toThrow(ModlyError);
+		expect(store.get('tws:modly-origin')).toBe('http://192.168.1.20:8765');
+	});
+
+	it('never sends a request to a foreign origin, even when a caller passes one', async () => {
+		const fetchSpy = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', fetchSpy);
+		const probe = await probeModly({ origins: ['https://evil.example'], timeoutMs: 50 });
+		expect(probe.status).toBe('not-running');
+		await expect(listModlyModels('http://192.168.1.20:8765')).rejects.toMatchObject({ code: 'BAD_ORIGIN' });
+		expect(fetchSpy).not.toHaveBeenCalled();
 	});
 });
 

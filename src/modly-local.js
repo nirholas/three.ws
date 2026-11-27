@@ -31,7 +31,7 @@ const GLB_MAGIC = 0x46546c67; // "glTF", little-endian
  * Typed failure from the Modly client. `code` is stable and safe to branch on:
  *   NOT_RUNNING      no Modly answered at the origin
  *   BLOCKED          the browser refused the loopback request (see `reason`)
- *   BAD_ORIGIN       a user-supplied origin is not an http(s) URL
+ *   BAD_ORIGIN       an origin is not an http(s) URL on this computer (loopback only)
  *   BAD_INPUT        the caller passed an unusable argument
  *   BAD_REQUEST      Modly rejected the request (HTTP 400), `message` is Modly's text
  *   UNKNOWN_MODEL    the model id is not installed in Modly
@@ -69,9 +69,31 @@ function readOverride() {
 	}
 }
 
+// The bridge sends the user's photo to the app and copies the mesh it returns
+// into three.ws storage, so it may only reach an app on this computer: the
+// loopback names, never a LAN address or a public host a link or a pasted
+// value could point it at. URL parsing has already canonicalized the host
+// (IPv4 shorthands, IPv6 brackets), so these checks see its final form.
+function isLoopbackHost(hostname) {
+	const h = String(hostname || '').toLowerCase();
+	if (h === 'localhost' || h === '[::1]') return true;
+	return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h);
+}
+
+/** True when `origin` is an http(s) origin on this computer. */
+export function isLoopbackOrigin(origin) {
+	try {
+		const url = new URL(origin);
+		return (url.protocol === 'http:' || url.protocol === 'https:') && isLoopbackHost(url.hostname);
+	} catch {
+		return false;
+	}
+}
+
 /**
- * Normalize something a person typed ("localhost:9000", "http://10.0.0.5:8765/")
- * into a bare origin. Throws BAD_ORIGIN for anything that is not http(s).
+ * Normalize something a person typed ("localhost:9000", "http://127.0.0.1:8765/")
+ * into a bare origin. Throws BAD_ORIGIN for anything that is not http(s), and
+ * for any host that is not this computer.
  */
 export function normalizeModlyOrigin(input) {
 	const raw = String(input ?? '').trim();
@@ -86,6 +108,9 @@ export function normalizeModlyOrigin(input) {
 	if (url.protocol !== 'http:' && url.protocol !== 'https:') {
 		throw new ModlyError('BAD_ORIGIN', 'Modly is reached over http or https.');
 	}
+	if (!isLoopbackHost(url.hostname)) {
+		throw new ModlyError('BAD_ORIGIN', 'Forge only connects to Modly on this computer: use localhost or 127.0.0.1 with the port Modly shows.');
+	}
 	return url.origin;
 }
 
@@ -95,7 +120,7 @@ function buildOrigins(override) {
 		try {
 			list.push(normalizeModlyOrigin(override));
 		} catch {
-			// A corrupt stored value is ignored; the defaults still apply.
+			// A corrupt or non-local stored value is ignored; the defaults still apply.
 		}
 	}
 	for (const o of MODLY_DEFAULT_ORIGINS) if (!list.includes(o)) list.push(o);
@@ -199,9 +224,13 @@ async function errorFromResponse(res) {
 	return new ModlyError('HTTP', text || `Modly answered HTTP ${status}.`, { status });
 }
 
-// fetch against Modly. A network-level failure (connection refused, blocked by
-// the browser) becomes NOT_RUNNING; aborts surface as CANCELLED or TIMEOUT.
+// fetch against Modly, refused outright for any origin off this computer. A
+// network-level failure (connection refused, blocked by the browser) becomes
+// NOT_RUNNING; aborts surface as CANCELLED or TIMEOUT.
 async function modlyFetch(origin, path, { signal, timeoutMs = 0, ...init } = {}) {
+	if (!isLoopbackOrigin(origin)) {
+		throw new ModlyError('BAD_ORIGIN', `Refused to contact ${String(origin)}: Modly is only reached on this computer.`);
+	}
 	const link = linkSignal(signal, timeoutMs);
 	try {
 		const res = await fetch(`${origin}${path}`, {
