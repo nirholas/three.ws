@@ -9,7 +9,9 @@ Both accounts are signed in on the devbox. Pass `--account` on every gcloud call
 so commands never hit the wrong project.
 
 Related: [gcp-production.md](gcp-production.md) (the main runbook),
-[deploy/redis-vm/README.md](../../deploy/redis-vm/README.md) (the new Redis).
+[deploy/redis-vm/README.md](../../deploy/redis-vm/README.md) (the new Redis),
+[gcp-migration-manifest.md](gcp-migration-manifest.md) (every piece that moves,
+every piece left behind, and the status of each).
 
 ## What runs where
 
