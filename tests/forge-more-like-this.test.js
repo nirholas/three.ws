@@ -3,8 +3,11 @@
 // "More like this" turns one result into a one-tap exploration of its material
 // space. Two things must hold: the variation grammar keeps the same subject
 // while never re-offering a material the prompt already names, and the decoupled
-// client only shows for text-mode results and hands a real prompt back to
-// forge.js via `forge:run-prompt`. Both are pinned here.
+// client only shows for text-mode results. Its chips ask the Iterate panel for a
+// version of THIS model via `forge:iterate-request` (bug reproduced 2026-11-27:
+// every chip fired `forge:run-prompt`, a brand-new generation that rebuilt the
+// shape for a colour change and dropped the version history). Both are pinned
+// here.
 
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import {
@@ -94,7 +97,7 @@ describe('forge-more-like-this client', () => {
 		document.body.innerHTML = '';
 	});
 
-	it('renders three chips + a reshuffle when a text result lands', async () => {
+	it('renders Another take, three material chips and a reshuffle when a text result lands', async () => {
 		buildDom({ textMode: true });
 		await mountFreshModule();
 		document.dispatchEvent(
@@ -103,26 +106,54 @@ describe('forge-more-like-this client', () => {
 		const row = document.querySelector('#state-result .mlt');
 		expect(row).toBeTruthy();
 		expect(row.hidden).toBe(false);
-		expect(row.querySelectorAll('.mlt-chip')).toHaveLength(3);
+		expect(row.querySelectorAll('.mlt-chip')).toHaveLength(4);
+		expect(row.querySelector('.mlt-chip--take').textContent).toBe('Another take');
 		expect(row.querySelector('.mlt-reshuffle')).toBeTruthy();
 		expect(row.querySelector('.mlt-label').textContent).toBe('More like this');
 	});
 
-	it('hands a real derived prompt back via forge:run-prompt on tap', async () => {
+	it('a material chip asks for a version of this model, never a fresh generation', async () => {
 		buildDom({ textMode: true });
 		await mountFreshModule();
 		document.dispatchEvent(
 			new CustomEvent('forge:model-ready', { detail: { label: 'a low-poly red fox' } }),
 		);
-		const spy = vi.fn();
-		document.addEventListener('forge:run-prompt', (e) => spy(e.detail.prompt));
-		const chip = document.querySelector('.mlt-chip');
+		const runPrompt = vi.fn();
+		const iterate = vi.fn();
+		document.addEventListener('forge:run-prompt', (e) => runPrompt(e.detail));
+		document.addEventListener('forge:iterate-request', (e) => iterate(e.detail));
+		const chip = document.querySelector('.mlt-chip:not(.mlt-chip--take)');
 		chip.click();
-		expect(spy).toHaveBeenCalledTimes(1);
-		const sent = spy.mock.calls[0][0];
-		expect(sent.startsWith('a low-poly red fox,')).toBe(true);
-		// The tapped chip's title carries the exact prompt it dispatches.
-		expect(sent).toBe(chip.title);
+		expect(runPrompt).not.toHaveBeenCalled();
+		expect(iterate).toHaveBeenCalledTimes(1);
+		const detail = iterate.mock.calls[0][0];
+		// Only the facet phrase travels, applied to the model on screen.
+		expect(detail.instruction).toMatch(/^(in|as|carved|woven)\b/);
+		expect(detail.instruction).not.toContain('red fox');
+		expect(['look', 'shape']).toContain(detail.mode);
+	});
+
+	it('a surface material keeps the shape and a form change says it rebuilds', async () => {
+		buildDom({ textMode: true });
+		await mountFreshModule();
+		let found = { look: null, shape: null };
+		for (let i = 0; i < 40 && !(found.look && found.shape); i++) {
+			document.dispatchEvent(new CustomEvent('forge:model-ready', { detail: { label: 'a desk lamp' } }));
+			for (const c of document.querySelectorAll('.mlt-chip:not(.mlt-chip--take)')) found[c.dataset.mode] ||= c;
+		}
+		expect(found.look.dataset.instruction).not.toMatch(/low-poly|rattan/);
+		expect(found.look.title).toMatch(/keeps the shape/i);
+		expect(found.shape.title).toMatch(/changes the shape/i);
+	});
+
+	it('Another take asks for a variation of the same subject', async () => {
+		buildDom({ textMode: true });
+		await mountFreshModule();
+		document.dispatchEvent(new CustomEvent('forge:model-ready', { detail: { label: 'a brass astrolabe' } }));
+		const iterate = vi.fn();
+		document.addEventListener('forge:iterate-request', (e) => iterate(e.detail));
+		document.querySelector('.mlt-chip--take').click();
+		expect(iterate).toHaveBeenCalledWith({ mode: 'variation' });
 	});
 
 	it('reshuffle swaps in a new set of chips', async () => {
@@ -131,12 +162,12 @@ describe('forge-more-like-this client', () => {
 		document.dispatchEvent(
 			new CustomEvent('forge:model-ready', { detail: { label: 'a brass astrolabe' } }),
 		);
-		const before = [...document.querySelectorAll('.mlt-chip')].map((c) => c.title);
+		const before = [...document.querySelectorAll('.mlt-chip')].map((c) => c.dataset.instruction || '');
 		// Reshuffle enough times that at least one draw differs from the first.
 		let changed = false;
 		for (let i = 0; i < 12 && !changed; i++) {
 			document.querySelector('.mlt-reshuffle').click();
-			const after = [...document.querySelectorAll('.mlt-chip')].map((c) => c.title);
+			const after = [...document.querySelectorAll('.mlt-chip')].map((c) => c.dataset.instruction || '');
 			if (after.join('|') !== before.join('|')) changed = true;
 		}
 		expect(changed).toBe(true);

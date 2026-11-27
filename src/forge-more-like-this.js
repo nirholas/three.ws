@@ -1,19 +1,25 @@
 // Forge: "More like this" (browser client).
 //
 // After a text→3D result lands, forge.js dispatches `forge:model-ready` with the
-// prompt that produced it (as `label`). This module reads that prompt and offers
-// a compact row of one-tap variations that keep the same subject but restyle its
-// material or finish (see ./shared/forge-variations.js). Tapping a chip fires
-// `forge:run-prompt`, which forge.js turns into an immediate generation using the
-// exact same path as the example chips, so exploring a design space is a single
-// tap, with no retyping.
+// prompt that produced it (as `label`). This module offers a compact row that
+// keeps the subject and varies it:
+//   - "Another take": the same subject prompt with a new seed, a fresh take.
+//   - material chips (see ./shared/forge-variations.js): a surface look such as
+//     brass or glass restyles THIS model and keeps its shape; a chip that changes
+//     form (low-poly, woven rattan) rebuilds from this model's prompt.
+// Every chip asks the Iterate panel (forge-conversational-refine.js) through
+// `forge:iterate-request`, so each result becomes a version in the same history
+// with its parent recorded, instead of a brand-new generation that forgets
+// where it came from.
 //
 // Fully decoupled: no imports from forge.js, no changes to its state. It only
-// listens for the public event, reads the public `#prompt`/`#tab-text` elements,
-// and dispatches a public event back. Degrades to nothing when the result did
-// not come from a text prompt (e.g. photo or sketch mode).
+// listens for the public event, reads the public `#tab-text` element, and
+// dispatches a public event back. Degrades to nothing when the result did not
+// come from a text prompt (e.g. photo or sketch mode), because "the same
+// subject" needs the prompt that made it.
 
 import { deriveVariations } from './shared/forge-variations.js';
+import { isLookOnly } from './shared/iterate-plan.js';
 
 const result = document.getElementById('state-result');
 if (result) {
@@ -35,6 +41,7 @@ if (result) {
 .mlt-chip:hover{background:var(--surface-3);border-color:var(--stroke-strong);transform:translateY(-1px);}
 .mlt-chip:active{transform:translateY(0);}
 .mlt-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.mlt-chip--take{border-color:var(--accent);color:var(--accent);}
 .mlt-dot{width:10px;height:10px;border-radius:var(--radius-pill);
 	background:var(--dot,#888);box-shadow:0 0 0 1px rgba(255,255,255,.14) inset;flex:none;}
 .mlt-reshuffle{display:inline-flex;align-items:center;justify-content:center;
@@ -60,7 +67,7 @@ if (result) {
 	// role="group" so the aria-label is actually exposed (a label on a bare div is
 	// ignored by assistive tech).
 	row.setAttribute('role', 'group');
-	row.setAttribute('aria-label', 'Generate a variation of this model');
+	row.setAttribute('aria-label', 'More like this model');
 	row.hidden = true;
 
 	const bar = result.querySelector('.result-bar');
@@ -76,8 +83,14 @@ if (result) {
 		return !tab || tab.getAttribute('aria-selected') === 'true';
 	}
 
-	function pickVariation(prompt) {
-		document.dispatchEvent(new CustomEvent('forge:run-prompt', { detail: { prompt } }));
+	function requestIteration(detail) {
+		document.dispatchEvent(new CustomEvent('forge:iterate-request', { detail }));
+	}
+
+	// The facet phrase on its own ("in brushed brass"), as an instruction for
+	// the current model rather than a whole new prompt.
+	function facetInstruction(v) {
+		return v.prompt.slice(currentPrompt.length).replace(/^[\s,]+/, '').trim();
 	}
 
 	function renderChips() {
@@ -94,27 +107,42 @@ if (result) {
 		label.textContent = 'More like this';
 		row.appendChild(label);
 
+		const take = document.createElement('button');
+		take.type = 'button';
+		take.className = 'mlt-chip mlt-chip--take';
+		take.title = 'Another take on the same subject with a new seed. Kept as a new version.';
+		take.setAttribute('aria-label', 'Another take on this subject');
+		take.textContent = 'Another take';
+		take.addEventListener('click', () => requestIteration({ mode: 'variation' }));
+		row.appendChild(take);
+
 		for (const v of variations) {
+			const instruction = facetInstruction(v);
+			const look = isLookOnly(instruction);
 			const chip = document.createElement('button');
 			chip.type = 'button';
 			chip.className = 'mlt-chip';
-			chip.title = v.prompt;
+			chip.dataset.instruction = instruction;
+			chip.dataset.mode = look ? 'look' : 'shape';
+			chip.title = look
+				? `Restyle this model ${instruction}. Keeps the shape.`
+				: `Rebuild this model ${instruction}. Changes the shape.`;
 			// The visible label is just the material ("Brass"); give assistive tech
 			// the action context so tabbing onto it is self-explanatory.
-			chip.setAttribute('aria-label', `Re-forge in ${v.label}`);
+			chip.setAttribute('aria-label', look ? `Restyle in ${v.label}, keeps the shape` : `Rebuild as ${v.label}`);
 			chip.innerHTML =
 				`<span class="mlt-dot" style="--dot:${v.swatch}" aria-hidden="true"></span>` +
 				`<span class="mlt-text"></span>`;
 			chip.querySelector('.mlt-text').textContent = v.label;
-			chip.addEventListener('click', () => pickVariation(v.prompt));
+			chip.addEventListener('click', () => requestIteration({ mode: chip.dataset.mode, instruction }));
 			row.appendChild(chip);
 		}
 
 		const reshuffle = document.createElement('button');
 		reshuffle.type = 'button';
 		reshuffle.className = 'mlt-reshuffle';
-		reshuffle.setAttribute('aria-label', 'Show different variations');
-		reshuffle.title = 'Show different variations';
+		reshuffle.setAttribute('aria-label', 'Show different materials');
+		reshuffle.title = 'Show different materials';
 		reshuffle.textContent = '↻';
 		reshuffle.addEventListener('click', renderChips);
 		row.appendChild(reshuffle);
