@@ -143,6 +143,14 @@
 			<description>When a free Forge model looks broken or misses the prompt, Forge quietly makes it once more before showing it to you. That second try now follows strict rules. It happens at most once per model, never twice. It never counts against your generation limit, and Forge skips it when you are down to your last generation or when the service is busy. Forge compares both attempts and shows you the better one, instead of simply the newer one. If the checker itself is slow, down or gives a garbled answer, your model is delivered on time as it is. A small label next to the quality badge now says what happened, for example &quot;Regenerated once&quot; or &quot;Kept first of two&quot;, and hovering or focusing it explains why.</description>
 		</item>
 		<item>
+			<title>Grok can use three.ws tools through the xAI API again</title>
+			<link>https://three.ws/grok</link>
+			<guid isPermaLink="false">2026-11-27:Grok can use three.ws tools through the xAI API again</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>One 360 capture tool described its inputs in a shape xAI refuses, so every Grok request that included three.ws failed before it started. The tool now uses a shape xAI accepts, the connector check on the status page fails if this ever comes back, and the live tool-call count on /grok no longer includes our own uptime checks.</description>
+		</item>
+		<item>
 			<title>Optimize in Forge makes your model smaller without making it look worse</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-27:Optimize in Forge makes your model smaller without making it look worse</guid>

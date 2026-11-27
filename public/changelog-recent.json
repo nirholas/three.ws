@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-27T19:36:22.256Z",
+	"generated_at": "2026-11-27T20:38:34.962Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4788,
+	"total": 4789,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -192,6 +192,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Grok can use three.ws tools through the xAI API again",
+			"summary": "One 360 capture tool described its inputs in a shape xAI refuses, so every Grok request that included three.ws failed before it started. The tool now uses a shape xAI accepts, the connector check on the status page fails if this ever comes back, and the live tool-call count on /grok no longer includes our own uptime checks.",
+			"link": "/grok",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1562,17 +1572,6 @@
 			"link": null,
 			"tags": [
 				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-18",
-			"type": "update",
-			"title": "The NVIDIA Brev GPU quickstart ships a patched JupyterLab and upload parser",
-			"summary": "The Brev quickstart image now runs JupyterLab 4.6.5 and python-multipart 0.0.33 behind FastAPI 0.162. That closes the JupyterLab extension-manager, CommandLinker and XSS advisories and the python-multipart file-write, denial-of-service and parameter-smuggling advisories published this year. The studio's image upload, sample picker and resolution checks behave exactly as before.",
-			"link": null,
-			"tags": [
-				"security",
 				"infra"
 			]
 		}
