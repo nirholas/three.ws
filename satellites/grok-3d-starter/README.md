@@ -25,18 +25,21 @@ You need Node 20.12 or newer and two keys:
 | `THREE_WS_API_KEY` | [three.ws/dashboard/api-keys](https://three.ws/dashboard/api-keys) | Making a model needs a three.ws account. A free account is enough. |
 
 ```bash
-git clone https://github.com/nirholas/grok-3d-starter.git
-cd grok-3d-starter
+git clone --depth 1 --filter=blob:none --sparse https://github.com/nirholas/three.ws.git
+cd three.ws && git sparse-checkout set satellites/grok-3d-starter
+cd satellites/grok-3d-starter
 npm ci
 cp .env.example .env      # then paste both keys into .env
 npm start
 ```
 
+The sparse checkout downloads only this folder (about 7 MB) from the [three.ws repository](https://github.com/nirholas/three.ws/tree/main/satellites/grok-3d-starter). Copy it anywhere and it runs on its own.
+
 Open <http://localhost:8080>. If a key is missing or wrong, the page says which one, where to
 create it, and the exact `.env` line to add, instead of showing the chat.
 
-In GitHub Codespaces, add both keys as Codespaces secrets (the dev container asks for them) and
-the server starts on port 8080 by itself.
+Push the folder to a repository of your own and it works in GitHub Codespaces too: add both keys as
+Codespaces secrets (the dev container asks for them) and the server starts on port 8080 by itself.
 
 ## What happens when you send a message
 

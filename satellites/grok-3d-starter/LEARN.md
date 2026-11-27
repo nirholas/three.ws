@@ -13,8 +13,9 @@ places to change when you make the starter your own. Most of the ten minutes is 
 ## 2. Run it (1 minute)
 
 ```bash
-git clone https://github.com/nirholas/grok-3d-starter.git
-cd grok-3d-starter
+git clone --depth 1 --filter=blob:none --sparse https://github.com/nirholas/three.ws.git
+cd three.ws && git sparse-checkout set satellites/grok-3d-starter
+cd satellites/grok-3d-starter
 npm ci
 cp .env.example .env
 ```
