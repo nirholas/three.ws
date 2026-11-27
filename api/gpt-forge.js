@@ -150,6 +150,13 @@ import {
 	refundCredits,
 } from './_lib/credits.js';
 import { markProviderCooldown, providersInCooldown } from './_lib/provider-health.js';
+import {
+	NIM_TRELLIS_COOLDOWN_KEY,
+	noteNimLaneFailure,
+	noteNimPollOutcome,
+	pollBackoffRemaining,
+} from './_lib/nvcf-lane-health.js';
+export { nimCooldownSeconds } from './_lib/nvcf-lane-health.js';
 import { acquireLock, releaseLock, cacheGet, cacheSet } from './_lib/cache.js';
 import { recallDoneFrame, rememberDoneFrame } from './_lib/forge-done-cache.js';
 import {
@@ -201,16 +208,8 @@ import { observeForgeSubmit } from './_lib/forge-prejob.js';
 // runs) lets subsequent requests skip a degraded lane and go straight to a
 // working one; it expires on its own so a recovered lane is retried promptly.
 // Best-effort via the shared cache: a miss just means "not cooling".
-const NIM_TRELLIS_COOLDOWN_KEY = 'forge-nim-trellis';
-// Sideline the free NIM lane after a failure. The cooldown exists to avoid
-// re-paying the expensive submit-timeout HANG, so a socket timeout / unreachable
-// host (no HTTP status came back) earns the full window. A fast gateway 5xx (a
-// 504/503 the gateway returned promptly: a cold-start/capacity blip the
-// in-provider retry already rode) only earns a short window, so a single transient
-// 504 doesn't sideline the free lane for two minutes and dump every text prompt on
-// the paid lane. See nimCooldownSeconds().
-const NIM_FORGE_COOLDOWN_SECONDS = 120;
-const NIM_FORGE_GATEWAY_COOLDOWN_SECONDS = 30;
+// The cooldown windows, the stated-wait cap and the auth classification live in
+// api/_lib/nvcf-lane-health.js, shared by this file and api/gpt-forge.js.
 
 // Honest cold-start signal for a self-host lane: true only when the liveness
 // probe reached the worker but it answered slowly (a scale-to-zero container
@@ -241,23 +240,6 @@ async function laneColdStart(backendId) {
 // router reads it to avoid skipping the free lane in favour of a dead paid lane.
 const REPLICATE_PAID_COOLDOWN_KEY = 'forge-replicate-paid';
 const REPLICATE_PAID_COOLDOWN_SECONDS = 300;
-
-// Pick how long to cool the free NIM lane after a failure. A Retry-After hint
-// (429) is honoured within bounds; an HTTP status that came back at all means the
-// gateway answered (a fast fail) and earns the short window; no status means our
-// socket timed out / the host was unreachable (the expensive hang) and earns the
-// full window.
-export function nimCooldownSeconds(err) {
-	const retryAfter = Number(err?.retryAfter);
-	if (Number.isFinite(retryAfter) && retryAfter > 0) {
-		return Math.min(
-			Math.max(Math.ceil(retryAfter), NIM_FORGE_GATEWAY_COOLDOWN_SECONDS),
-			NIM_FORGE_COOLDOWN_SECONDS,
-		);
-	}
-	if (typeof err?.providerStatus === 'number') return NIM_FORGE_GATEWAY_COOLDOWN_SECONDS;
-	return NIM_FORGE_COOLDOWN_SECONDS;
-}
 
 // Holder perk (Lever 2): a presented, verified $THREE tier pass lifts the free
 // generation ceiling by that tier's multiplier. The pass is pure-HMAC verifiable
@@ -679,12 +661,12 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 		const nv = await loadNvidiaProvider();
 		submitted = await nv.textTo3d({ prompt, tier, seed: opts?.seed ?? undefined });
 	} catch (err) {
-		// A timed-out / unreachable / throttled / 5xx NIM lane is degraded, cool it
-		// down so the next request skips the submit-timeout gamble and fails over
-		// fast. A 4xx (bad input / key) is not a lane-health fault, so it never cools.
-		if (isUpstreamUnavailable(err)) {
-			markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds(err)).catch(() => {});
-		}
+		// A timed-out / unreachable / throttled / 5xx NIM lane is degraded, and a
+		// dead key or exhausted account is broken until an operator acts: cool the
+		// lane (for the stated Retry-After, or the auth window) so the next request
+		// skips the submit-timeout gamble and fails over fast. A 4xx the caller
+		// caused (a prompt NVIDIA rejects) is not a lane-health fault and never cools.
+		noteNimLaneFailure(err).catch(() => {});
 		console.warn(`[forge] free NVIDIA NIM lane unavailable: ${err?.message || err}`);
 		return false;
 	}
@@ -2979,6 +2961,10 @@ async function pollNvidiaStatus({ nv, upstreamId, clientKey }) {
 	const alias = await cacheGet(nvcfAliasKey(upstreamId)).catch(() => null);
 	const taskId = typeof alias === 'string' && alias ? alias : upstreamId;
 
+	// NVIDIA throttled an earlier poll and stated a wait: honor it, shared across
+	// instances through the cache, instead of polling a gateway that said not yet.
+	if ((await pollBackoffRemaining(taskId)) > 0) return { status: 'running' };
+
 	// Single-flight across instances: whoever loses the race reports running and
 	// lets the client's next poll pick up the winner's outcome from the store.
 	const lockKey = `nvcf:poll-lock:${taskId}`;
@@ -2992,6 +2978,7 @@ async function pollNvidiaStatus({ nv, upstreamId, clientKey }) {
 	} finally {
 		await releaseLock(lockKey);
 	}
+	await noteNimPollOutcome(taskId, result);
 	if (result?.code !== 'nvcf_expired') return result;
 
 	// The request id is dead. A racing poll may have already materialized the
