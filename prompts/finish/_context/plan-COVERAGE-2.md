@@ -46,14 +46,14 @@ Rows `assistant-sdk/README.md` to `docs/agent-symphony.md` of the per-file ledge
 | `concierge-sdk/examples/self-hosted-endpoint.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `concierge-sdk/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `contracts/AGENT_PAYMENTS.md` | order | [984](../984-plan-evm-agentpayments-create2-deploy-readiness.md). deploy guide for undeployed EVM contract |
-| `contracts/agent-invocation/README.md` | order | [969](../969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program not deployed; devnet smoke documented but not run |
-| `contracts/AUDIT-README.md` | order | [969](../969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). audit scope; programs not deployed on any cluster |
+| `contracts/agent-invocation/README.md` | order | [969](../../awaiting-owner/969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program not deployed; devnet smoke documented but not run |
+| `contracts/AUDIT-README.md` | order | [969](../../awaiting-owner/969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). audit scope; programs not deployed on any cluster |
 | `contracts/audit/static-analysis.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `contracts/DEPLOYMENTS.md` | order | [984](../984-plan-evm-agentpayments-create2-deploy-readiness.md). AgentPayments TODO rows and Basescan verification pending; BNB testnet items retired (910); other rows are history |
-| `contracts/event-markets-stake/README.md` | order | [969](../969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program not deployed; owner-gated deploy steps in docs/event-markets-staking.md |
+| `contracts/event-markets-stake/README.md` | order | [969](../../awaiting-owner/969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program not deployed; owner-gated deploy steps in docs/event-markets-staking.md |
 | `contracts/hood-portfolios/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `contracts/idl/pump/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
-| `contracts/knock-escrow/README.md` | order | [969](../969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program not deployed; api/knock depends on it |
+| `contracts/knock-escrow/README.md` | order | [969](../../awaiting-owner/969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program not deployed; api/knock depends on it |
 | `contracts/lib/forge-std/CONTRIBUTING.md` | excluded | vendored third-party source |
 | `contracts/lib/forge-std/README.md` | excluded | vendored third-party source |
 | `contracts/lib/forge-std/RELEASE_CHECKLIST.md` | excluded | vendored third-party source |
@@ -101,9 +101,9 @@ Rows `assistant-sdk/README.md` to `docs/agent-symphony.md` of the per-file ledge
 | `contracts/lib/openzeppelin-contracts/test/TESTING.md` | excluded | vendored third-party source |
 | `contracts/paired-launchpad/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `contracts/program-tests/README.md` | no-open-work | LiteSVM suite shipped and documented |
-| `contracts/README.md` | order | [969](../969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md), [984](../984-plan-evm-agentpayments-create2-deploy-readiness.md). status table: Solana programs and AgentPayments not deployed |
-| `contracts/skill-license/DEPLOYMENT.md` | order | [969](../969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program absent on devnet and mainnet; keypair missing |
-| `contracts/skill-license/README.md` | order | [969](../969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program not deployed |
+| `contracts/README.md` | order | [969](../../awaiting-owner/969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md), [984](../984-plan-evm-agentpayments-create2-deploy-readiness.md). status table: Solana programs and AgentPayments not deployed |
+| `contracts/skill-license/DEPLOYMENT.md` | order | [969](../../awaiting-owner/969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program absent on devnet and mainnet; keypair missing |
+| `contracts/skill-license/README.md` | order | [969](../../awaiting-owner/969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program not deployed |
 | `contracts/v4-hooks/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `contracts/vanity/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `CONTRIBUTING.md` | excluded | license, changelog or repository boilerplate |

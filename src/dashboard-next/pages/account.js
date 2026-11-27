@@ -100,7 +100,7 @@ async function copyToClipboard(text) {
 			<section class="dn-panel" data-section="provider-keys">
 				<div style="margin-bottom:14px">
 					<div class="dn-panel-title">AI Provider Keys</div>
-					<div class="dn-panel-sub" style="margin:0">Bring your own API key to unlock AI models. Your keys are encrypted and never shared.</div>
+					<div class="dn-panel-sub" style="margin:0">Bring your own API key to unlock AI models. Your keys are encrypted and only ever sent to the provider they belong to.</div>
 				</div>
 				<div data-slot="provider-keys">${skelStack(3)}</div>
 			</section>
@@ -306,7 +306,7 @@ function renderProviderKeys(host, keyStatus) {
 							   style="background:rgba(255,255,255,0.04);border:1px solid var(--nxt-stroke-strong);border-radius:6px;
 							          padding:6px 10px;color:var(--nxt-ink);font-size:12.5px;
 						          flex:1 1 200px;min-width:0;max-width:260px;font-family:${MONO}"
-							   autocomplete="off" spellcheck="false" />
+							   autocomplete="new-password" spellcheck="false" />
 						   <button class="dn-btn primary" data-action="save-key" data-provider="${esc(provider)}" style="padding:6px 12px;font-size:12.5px">Save</button>`
 					}
 				</div>
@@ -318,7 +318,7 @@ function renderProviderKeys(host, keyStatus) {
 		<div style="padding:0 2px">
 			${rows}
 			<div style="padding-top:10px;font-size:12px;color:var(--nxt-ink-fade)">
-				Keys are encrypted at rest. OpenRouter and Groq are provided free — no key needed.
+				A saved key is encrypted at rest and decrypted only to run your own requests, where it is sent over HTTPS to that provider and nowhere else. Remove it here any time. OpenRouter and Groq are provided free, no key needed.
 			</div>
 		</div>
 	`;

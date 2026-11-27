@@ -38,8 +38,14 @@ const GEO_HEADERS = [
 // Both are well-formed but carry no country, so they resolve to null.
 const NOT_A_COUNTRY = new Set(['XX', 'T1']);
 
-export function clientCountry(req) {
-	for (const name of GEO_HEADERS) {
+/**
+ * @param {object} req
+ * @param {readonly string[]} [headerNames] Narrow the lookup to these headers.
+ *   Analytics takes the full list; a licence gate passes only the headers its
+ *   own load balancer sets, because the others are caller-controlled there.
+ */
+export function clientCountry(req, headerNames = GEO_HEADERS) {
+	for (const name of headerNames) {
 		const code = normalizeCountry(headerOnce(req?.headers, name));
 		if (code) return code;
 	}

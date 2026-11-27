@@ -13,14 +13,18 @@
 // reaches this module.
 
 import { fetchUpstream, fetchUpstreamPublic } from '../_lib/upstream-fetch.js';
+import { bodyRefusesContent, contentRefusedError } from '../_lib/forge-byok-guard.js';
 
 const STABILITY_BASE = 'https://api.stability.ai/v2beta/3d';
 const ENDPOINT = 'stable-fast-3d';
 
-// Texture richness follows the tier; foreground_ratio/remesh use Stability's
-// sane defaults for a clean, centered reconstruction.
+// Texture richness follows the tier across the three sizes Stable Fast 3D
+// accepts (512, 1024, 2048), so Draft, Standard and High each send a different
+// request. foreground_ratio/remesh use Stability's sane defaults for a clean,
+// centered reconstruction.
 function textureResolutionFor(tier) {
-	return tier?.hd ? '2048' : '1024';
+	if (tier?.hd) return '2048';
+	return tier?.id === 'draft' ? '512' : '1024';
 }
 
 export function createStabilityProvider(apiKey) {
@@ -69,6 +73,11 @@ export function createStabilityProvider(apiKey) {
 				});
 			}
 
+			// Errors come back as JSON ({ name, errors: [...] }); the success body is
+			// binary. A moderation refusal is an HTTP 403 too, so the body is read
+			// before the status is mapped or it would be reported as a rejected key.
+			const errorBody = res.ok ? null : await res.json().catch(() => ({}));
+			if (res.status !== 401 && bodyRefusesContent(errorBody)) throw contentRefusedError('Stability', res.status);
 			if (res.status === 401 || res.status === 403) {
 				throw Object.assign(new Error('Stability rejected the API key.'), {
 					code: 'invalid_key',
@@ -91,8 +100,7 @@ export function createStabilityProvider(apiKey) {
 				});
 			}
 			if (!res.ok) {
-				// Errors come back as JSON ({ errors: [...] }); the success body is binary.
-				const data = await res.json().catch(() => ({}));
+				const data = errorBody;
 				const msg = Array.isArray(data?.errors) ? data.errors.join('; ') : data?.message;
 				throw Object.assign(new Error(msg || `stability returned ${res.status}`), {
 					code: 'provider_error',

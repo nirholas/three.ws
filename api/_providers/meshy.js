@@ -18,6 +18,7 @@
 // key — when absent, the forge endpoint never reaches this module.
 
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { bodyRefusesContent, classifyFailureText, contentRefusedError } from '../_lib/forge-byok-guard.js';
 
 const MESHY_BASE = 'https://api.meshy.ai';
 
@@ -77,6 +78,7 @@ export function createMeshyProvider(apiKey) {
 			});
 		}
 		const data = await res.json().catch(() => ({}));
+		if (res.status !== 401 && bodyRefusesContent(data)) throw contentRefusedError('Meshy', res.status);
 		if (res.status === 401 || res.status === 403) {
 			throw Object.assign(new Error('Meshy rejected the API key.'), {
 				code: 'invalid_key',
@@ -164,6 +166,10 @@ export function createMeshyProvider(apiKey) {
 			}
 			const data = await res.json().catch(() => ({}));
 			if (res.status === 404) return { status: 'failed', error: 'meshy task not found' };
+			// A key revoked mid-job must end the job, not read as "still running".
+			if (res.status === 401 || res.status === 403) {
+				return { status: 'failed', errorCode: 'invalid_key', error: 'meshy rejected the API key' };
+			}
 			if (!res.ok) return { status: 'running', error: `meshy returned ${res.status}` };
 
 			const status = mapStatus(data.status);
@@ -176,7 +182,10 @@ export function createMeshyProvider(apiKey) {
 				else result.error = 'meshy finished but produced no GLB';
 			}
 			if (status === 'failed') {
-				result.error = data?.task_error?.message || data?.task_error || 'meshy task failed';
+				const reason = data?.task_error?.message || data?.task_error;
+				result.error = typeof reason === 'string' && reason ? reason : 'meshy task failed';
+				const failureCode = classifyFailureText(result.error);
+				if (failureCode) result.errorCode = failureCode;
 			}
 			return result;
 		},

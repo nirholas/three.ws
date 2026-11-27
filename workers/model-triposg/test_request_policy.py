@@ -15,6 +15,7 @@ import sys
 
 from request_policy import (
     DEFAULT_SCRIBBLE_CONFIDENCE,
+    DEFAULT_SEED,
     IMAGE_GUIDANCE,
     IMAGE_MODE,
     IMAGE_STEPS,
@@ -25,6 +26,7 @@ from request_policy import (
     pipeline_settings,
     resolve_mode,
     resolve_prompt,
+    resolve_seed,
     should_decimate,
 )
 
@@ -108,6 +110,19 @@ def test_decimation_only_runs_when_asked_and_over_budget():
     assert should_decimate(500_000, None) is False
     assert should_decimate(500_000, 0) is False
     assert should_decimate(500_000, "nope") is False
+
+
+def test_seed_defaults_to_the_fixed_seed_every_request_used_before():
+    # No seed asked for: the same fixed seed as before the field existed, so a
+    # request without one builds exactly what it always built.
+    assert DEFAULT_SEED == 0
+    assert resolve_seed(None) == DEFAULT_SEED
+
+
+def test_seed_reaches_the_sampler_so_a_seed_repeats_a_model():
+    assert resolve_seed(7) == 7
+    assert resolve_seed(0) == 0
+    assert resolve_seed(4_294_967_295) == 4_294_967_295
 
 
 def main() -> int:

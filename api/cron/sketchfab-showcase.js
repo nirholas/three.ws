@@ -64,8 +64,10 @@ function uploadsPerRun() {
 }
 
 // A creation is eligible when it is publicly showable (same bar as the forge
-// gallery), fits the Sketchfab basic-plan size cap, and has no ledger row
-// blocking it (uploaded/live/pending, or failed with the retry budget spent).
+// gallery: public visibility, and a clear content-safety verdict unless it is a
+// platform seed, see api/_lib/content-safety.js), fits the Sketchfab basic-plan
+// size cap, and has no ledger row blocking it (uploaded/live/pending, or failed
+// with the retry budget spent).
 async function selectCandidates(limit) {
 	const winners = await sql`
 		select fc.id, fc.prompt, fc.glb_url, fc.model_category, 'board_winner' as source
@@ -73,6 +75,8 @@ async function selectCandidates(limit) {
 		join forge_creations fc on fc.id = w.creation_id
 		where fc.status = 'done'
 		  and fc.glb_url is not null
+		  and (fc.visibility is null or fc.visibility = 'public')
+		  and (fc.safety_status = 'clear' or coalesce(fc.internal, false))
 		  and (fc.outcome is null or fc.outcome != 'rejected')
 		  and fc.prompt !~* ${DENY_SQL_PATTERN}
 		  and coalesce(fc.size_bytes, 0) <= ${GLB_MAX_BYTES}
@@ -92,6 +96,8 @@ async function selectCandidates(limit) {
 		from forge_creations fc
 		where fc.status = 'done'
 		  and fc.glb_url is not null
+		  and (fc.visibility is null or fc.visibility = 'public')
+		  and (fc.safety_status = 'clear' or coalesce(fc.internal, false))
 		  and (fc.outcome is null or fc.outcome != 'rejected')
 		  and fc.vote_count >= 1
 		  and fc.prompt !~* ${DENY_SQL_PATTERN}
@@ -114,6 +120,8 @@ async function selectCandidates(limit) {
 		from forge_creations fc
 		where fc.status = 'done'
 		  and fc.glb_url is not null
+		  and (fc.visibility is null or fc.visibility = 'public')
+		  and (fc.safety_status = 'clear' or coalesce(fc.internal, false))
 		  and (fc.outcome = 'accepted' or fc.downloaded = true)
 		  and fc.prompt is not null
 		  and fc.prompt !~* ${DENY_SQL_PATTERN}

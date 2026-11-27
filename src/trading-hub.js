@@ -18,6 +18,9 @@ import {
 	isNumeric,
 	sparkPath,
 } from './trading-hub-format.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const $ = (id) => document.getElementById(id);
 const REFRESH_MS = 30_000;

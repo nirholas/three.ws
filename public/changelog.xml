@@ -7,6 +7,102 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Forge input security</title>
+			<link>https://three.ws/docs/forge-input-security</link>
+			<guid isPermaLink="false">2026-11-27:Docs · Forge input security</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every address, uploaded photo and model file a stranger can send to Forge, the guard in front of each (SSRF checks, DNS pinning, streaming size caps, type from bytes, pixel limits), and the one gap still open.</description>
+		</item>
+		<item>
+			<title>A private Forge model now stays private on every page, and old job links stop working</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:A private Forge model now stays private on every page, and old job links stop working</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A model you set to private could still be liked, commented on, counted and downloaded by anyone who had its link. Now every one of those answers exactly like a model that does not exist, and only you can open, keep, comment on or download it. A job link from a generation expires after seven days, so one left in a log or a shared message stops being useful. A Tripo completion notice can no longer finish a job that belongs to a different provider, and the file it points at must be a public https address, so it cannot be aimed at an internal one.</description>
+		</item>
+		<item>
+			<title>A takedown now removes every copy of a Forge model, and repeat offenders get a human check</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:A takedown now removes every copy of a Forge model, and repeat offenders get a human check</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Removing a Forge model used to leave copies behind: its display thumbnail, its game-ready exports, any avatar saved from it and its Sketchfab listing. The takedown now finds and removes all of them, clears every cached page and feed that showed it, and says plainly what it could not remove instead of reporting success. A model that is private, held or blocked is also no longer picked for the Sketchfab showcase or shown on its social preview card. An account that keeps having models blocked now alerts an operator, and its later models wait for a manual look before they can go public.</description>
+		</item>
+		<item>
+			<title>AI replies skip a provider that has run out of credit</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-27:AI replies skip a provider that has run out of credit</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A model provider that reports an exhausted balance is now set aside however it words the refusal, so requests go straight to one that can answer.</description>
+		</item>
+		<item>
+			<title>Every Forge error now says what happened and what to do next</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Every Forge error now says what happened and what to do next</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When something goes wrong in Forge, the message now says in plain words what happened and what you can do about it, for every error Forge can return: making a model, uploading a photo, rigging, styling, remeshing and the other tools on a finished model. Your prompt and settings are always kept. A provider's raw error text, internal addresses and anything that looks like a key never reach the page. An error Forge does not recognise still gets an honest message with a short reference you can quote to support. Screen readers now hear every error, including the high demand, limit and storage notices.</description>
+		</item>
+		<item>
+			<title>Forge API errors carry a support reference instead of provider text</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Forge API errors carry a support reference instead of provider text</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When an engine fails while starting a model or a rig, the Forge API now answers with a plain message and a short reference you can quote to support, instead of passing the provider's own error text along. The Forge page also explains four more errors in plain words: a photo that is not an image, a photo with too many pixels (naming which photo of a set), a provider that refused the request, and a provider that is not responding.</description>
+		</item>
+		<item>
+			<title>Forge caching never hands back a wrong, failed, private or removed model</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Forge caching never hands back a wrong, failed, private or removed model</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Forge answers a repeated prompt from its cache instead of generating again, and that cache is now strict about what it hands out. Every setting that changes the model (size, pose, aspect ratio, sampler settings, the prompt director and more) gives a separate entry, so you never get a model made with different settings. A failed, partial or rejected model is never cached. A model you did not make public is only ever served back to you. A model that is deleted or taken down stops being served at once, and a poll for it says it was removed. Two identical requests sent together, such as a double click or a second tab, now make one model instead of two. If the cache itself is down, Forge still generates, just without the shortcut.</description>
+		</item>
+		<item>
+			<title>Forge finishes generations you walked away from</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Forge finishes generations you walked away from</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A generation whose tab was closed is now completed into your gallery the same way an open page would complete it, with a time limit that matches how long each engine really takes.</description>
+		</item>
+		<item>
+			<title>Forge holds your place in line instead of reporting a limit</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Forge holds your place in line instead of reporting a limit</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When the image step behind text-to-3D is busy, Forge and Forge Studio now show your place in line and an estimated wait, keep the place while the page is open, and start your generation on your turn. Cancel hands the place to the next person, and a full line says when to come back.</description>
+		</item>
+		<item>
+			<title>Forge never loses or doubles a generation on reload, a closed tab, a double click or a dropped connection</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Forge never loses or doubles a generation on reload, a closed tab, a double click or a dropped connection</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Reload /forge, close the tab or lose your connection in the middle of a generation and the page now picks the same job back up when you return, even if you left while the request was still being sent. A double click, a held Enter key or a second tab joins the generation already running instead of starting and charging a second one, on /forge and in Forge Studio. A dropped connection shows an offline note and waits for the network instead of failing, a background tab stops polling until you look at it again, and a job that finished while you were away opens on the result with a note saying so. A job whose engine never answers now ends as failed with a reason instead of spinning forever.</description>
+		</item>
+		<item>
+			<title>Forge now refuses photos and links that point inside our network or are not really images</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Forge now refuses photos and links that point inside our network or are not really images</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A reference photo or link sent to Forge could be aimed at an address inside our own network, and an uploaded file was only checked by the name it claimed. Forge now checks where every reference address really goes before a model starts, refuses anything private, and reads the first bytes of each uploaded photo to confirm it is a PNG, JPEG or WebP of a sane size and canvas. Remote images are cut off while they download instead of after, and a malformed 3D file can no longer crash the check that reads it.</description>
+		</item>
+		<item>
+			<title>Forge photo sets: extra views never delay or break a model, and the page says which photos were used</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-27:Forge photo sets: extra views never delay or break a model, and the page says which photos were used</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Generating extra side and back views is now optional and time-limited: if it fails, is throttled or takes too long, your model carries on from the image you gave. Generated views are checked before they are used, and a photo in a set that is plainly a different object, or empty, is left out and named. Engines that read a single photo now get your front view and the page tells you, instead of implying every photo counted. You can reorder photos with Alt and the arrow keys and remove one with Delete, and an upload that is refused says which photo it was.</description>
+		</item>
+		<item>
 			<title>Forge reports agree with each other and lead with what to fix</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-27:Forge reports agree with each other and lead with what to fix</guid>
@@ -15,12 +111,100 @@
 			<description>The Forge error report, the funnel report and the internal funnel board now count a generation the same way and print that definition at the top, so they give the same success rate for the same week. Each opens with the top three problems and how they moved against the week before, says plainly that requests refused before a job started are not in its numbers, and hides links, emails and addresses unless asked. The error report answers in about a second instead of two minutes, a missing or unreachable database prints what to do instead of a stack trace or a page of zeros, and an admin who has not finished two-step verification is sent to verify instead of told to sign in.</description>
 		</item>
 		<item>
+			<title>Forge stops waiting on a dead NVIDIA image model</title>
+			<link>https://three.ws/nvidia</link>
+			<guid isPermaLink="false">2026-11-27:Forge stops waiting on a dead NVIDIA image model</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When you describe an object, Forge first paints a reference picture. NVIDIA's free FLUX.1 image model had stopped answering, so that step could sit for a full minute before Forge moved on. Forge now uses NVIDIA's FLUX.2 klein model, gives it 30 seconds at most, and tries it less and less often while it keeps failing, so a bad stretch on NVIDIA's side no longer slows every build. The image health check now says when NVIDIA stops serving the model instead of reporting it healthy, the /nvidia status page probes this step every hour, and /nim-forge says plainly when no self-hosted TRELLIS NIM is connected instead of inviting an upload that could only fail.</description>
+		</item>
+		<item>
+			<title>Forge takes iPhone photos, big photos and sideways photos, and tells you plainly when a file is not a photo</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Forge takes iPhone photos, big photos and sideways photos, and tells you plainly when a file is not a photo</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Photo to 3D on Forge and Forge Studio now reads each file by its contents instead of its name. iPhone HEIC photos, AVIF, GIF and SVG images are converted on your device, photos over 8 MB or wider than 8192 pixels are shrunk instead of refused, and a photo taken sideways is turned upright before it is sent. A PDF or web page renamed to .jpg, an empty file or a tiny icon is refused with a sentence saying what it is and which formats work. Picking a file, dropping it, pasting an image and pasting or dragging an image link all work the same way, and a link is fetched for you safely. If an upload drops, times out or your session expires, the photo stays on the tile and Retry sends it again. Photos that already worked are sent exactly as before.</description>
+		</item>
+		<item>
+			<title>Forge tells you why a Hunyuan engine is off, and keeps excluded regions off it for every route</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Forge tells you why a Hunyuan engine is off, and keeps excluded regions off it for every route</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Hunyuan3D model licence excludes the EU, the UK and South Korea. Forge now shows a plain note under the engine picker saying which engines are off and why, worded differently when we could not confirm your location, so you are never told you are somewhere you may not be. Behind it, no route (default, fallback, a named engine, the paid API, the 3D Studio tools, photo avatars) can reach a Hunyuan lane for an excluded or unknown country, and you still get a model from another engine. A Hugging Face lane that has run out of free GPU time now rests for half an hour instead of failing every request.</description>
+		</item>
+		<item>
+			<title>Forge's quality check can only improve your model now, and tells you when it stepped in</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Forge's quality check can only improve your model now, and tells you when it stepped in</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When a free Forge model looks broken or misses the prompt, Forge quietly makes it once more before showing it to you. That second try now follows strict rules. It happens at most once per model, never twice. It never counts against your generation limit, and Forge skips it when you are down to your last generation or when the service is busy. Forge compares both attempts and shows you the better one, instead of simply the newer one. If the checker itself is slow, down or gives a garbled answer, your model is delivered on time as it is. A small label next to the quality badge now says what happened, for example &quot;Regenerated once&quot; or &quot;Kept first of two&quot;, and hovering or focusing it explains why.</description>
+		</item>
+		<item>
+			<title>Optimize in Forge makes your model smaller without making it look worse</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Optimize in Forge makes your model smaller without making it look worse</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Optimize panel under a finished model used to strip the texture and materials in its default Triangle mode, leaving a grey shape, and Quad retopo could make a light model bigger. Triangle now cuts triangles and right-sizes textures while keeping the UVs, materials, texture and any rig, so a 2.5 MB model came out at 0.74 MB and looked the same. A model that is already light is kept as it is, with a plain note saying why, and it does not count against your limit. The panel shows size, triangles, textures and rig before and after, lets you flip the viewer between the original and the optimized copy, and only switches your download when you press Use optimized (Back to original undoes it). The default download opens everywhere, and a smaller meshopt or Draco copy is offered beside it, labelled with what a viewer needs to open it. Oversized models, out-of-range targets and rigged models in Quad or Low-poly now get a clear message instead of a broken result. Forge Studio uses the same panel.</description>
+		</item>
+		<item>
+			<title>Signing in from Forge no longer loses your prompt</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Signing in from Forge no longer loses your prompt</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Making a model on Forge needs a free account, and the page now says so right under Generate, with why: every model is saved to its owner, unlisted, so you can find, download or delete it later. If you type a prompt and pick a quality, engine or aspect before signing in or creating an account, all of it comes back with you and Generate is ready for one click. Photos are not carried over, so they never sit in browser storage on a shared computer: the page tells you before you leave and reminds you to add them again. If your session ends mid-visit, Forge now says your session ended and offers to sign you in again instead of showing a confusing error, and a model that was already building keeps going and is picked up when you come back. Sign-in links from Forge can only return to a page on three.ws.</description>
+		</item>
+		<item>
+			<title>Sketch to 3D now tells you when a drawing is blank, a dot or scribbled edge to edge, and no longer ends in a dead end</title>
+			<link>https://three.ws/forge-studio</link>
+			<guid isPermaLink="false">2026-11-27:Sketch to 3D now tells you when a drawing is blank, a dot or scribbled edge to edge, and no longer ends in a dead end</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A blank canvas, a single dot or a drawing smeared over the whole frame is now refused on your device with a message that says what to draw, before anything is uploaded or a generation slot is spent. The drawing canvas lines strokes up under your finger on a phone, keeps Use sketch available after you undo a Clear, keeps keyboard focus inside the dialog and fits any screen height with Use sketch always reachable. The Forge page gets a Draw here instead button for the same canvas. If the sketch engine cannot take or finish a drawing, Forge now continues the job on the standard image engine and tells you, instead of ending in an error, and a drawing the engine could not read no longer takes a healthy engine out of rotation.</description>
+		</item>
+		<item>
+			<title>The Forge wait now tells the truth the whole way through</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:The Forge wait now tells the truth the whole way through</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>While a model builds, the Elapsed clock on Forge only ever moves forward. Before, it could jump back (from 0:40 to 0:05, for example) once the engine picked up the job. The time it quotes now comes from what the engine serving your job actually took on recent runs, counted from when your job reached that engine, so the art direction and reference image steps no longer make a normal run look slow. Before the engine has your job, the page says the build starts after these first steps. A GPU worker that is booting gets its own line, with the boot time the server gives, and the page says so plainly if the boot runs long. The build after a boot is never called slow because of the boot. Screen readers hear when a boot runs long, and the Studio page now follows the same rules, including stopping the turntable for people who asked for reduced motion. A slow 3D viewer download no longer prints an error either.</description>
+		</item>
+		<item>
+			<title>The NVIDIA-hosted 3D lane now rejects bad results and backs off when NVIDIA says wait</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:The NVIDIA-hosted 3D lane now rejects bad results and backs off when NVIDIA says wait</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When Forge falls back to NVIDIA's hosted TRELLIS, a result is now checked to be a real 3D model before the job is marked done, so an error page or a half-downloaded file can no longer show up as a finished creation. Large results delivered by redirect or zip are fetched safely. When NVIDIA throttles the lane, Forge waits as long as NVIDIA asks, instead of a fixed two minutes, and stops polling a throttled job until the wait is over. A dead key or an empty account takes the lane out of rotation for five minutes instead of being retried by every request, and the same rules now apply to the ChatGPT Forge pipeline.</description>
+		</item>
+		<item>
+			<title>Your own Meshy, Tripo, Rodin and Stability key is checked before use, never leaks, and failures say what happened</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Your own Meshy, Tripo, Rodin and Stability key is checked before use, never leaks, and failures say what happened</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A key you bring to Forge is now checked locally before any billed call (spaces, line breaks and the wrong vendor prefix are refused without repeating the key), scrubbed from every error and log line even if a provider echoes it back, and sent only to the provider's own address. When your provider account is out of credits, throttling you, down, or refuses the prompt, Forge says which, instead of quietly running on a free engine. A key revoked mid-job now says so instead of spinning. A captured Tripo callback can no longer be replayed under a new delivery id. The key field no longer invites browser autofill, has a Clear button, and says exactly how the key is used.</description>
+		</item>
+		<item>
 			<title>@three-ws/pumpfun-skills coinFees works again</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-26:@three-ws/pumpfun-skills coinFees works again</guid>
 			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>coinFees() read pump.fun's /coins-v2/&lt;mint&gt; route, which now answers 404 for every coin. It reads the coin record from pump.fun's search route (exact mint match) and reports an unknown mint as coin_not_found. A custom coinsV2Base still reads &lt;base&gt;/&lt;mint&gt; for devnet backends.</description>
+		</item>
+		<item>
+			<title>A generation Forge fails no longer costs you an allowance</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:A generation Forge fails no longer costs you an allowance</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When Forge itself fails a request (a lane down, storage unavailable), the hourly generation allowance and the daily paid allowance are handed back. The daily cap now follows your account instead of a browser id, and its 429 says when it resets (UTC midnight) with Retry-After and rate-limit headers. Tool limits (remesh, stylize, segment and the rest) name themselves in the 429 so the page can say which limit you hit.</description>
 		</item>
 		<item>
 			<title>Coin pages show what each coin actually paid its creator again</title>
@@ -39,12 +223,76 @@
 			<description>The text and image to 3D generator is now called Forge across three.ws, and Forge by three.ws inside the tools it plugs into: the Blender add-on, the ComfyUI nodes, the Omniverse extension, the Unity, Godot and Unreal bridges, the Modly extension, the Semantic Kernel, n8n, Raycast and Poe integrations, and the Blender MCP server. Shared Forge model pages now end their titles with &quot;Forge · three.ws&quot;, and Forge models carry &quot;Forge by three.ws&quot; as their generator credit in GLB and OpenUSD files. The desktop app keeps its installed name, three.ws Forge.</description>
 		</item>
 		<item>
+			<title>Forge keeps generating when every prompt-writing model is down, and says so plainly</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-26:Forge keeps generating when every prompt-writing model is down, and says so plainly</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Before Forge paints the picture your 3D model is built from, an assistant model rewrites your prompt with materials and lighting. When every one of those models was refusing, Forge used to wait on each of them in turn and then reported the step as if it had run. Now a model that refuses for billing or credit is set aside for half an hour, a busy one for exactly as long as it asks, and when none is available your own prompt goes forward in a fraction of a second. The progress list says whether your prompt was rewritten, used as written because the assistant was unavailable, or used as written because its rewrite was not usable. The Enhance button answers within seconds, leaves your text untouched when it cannot help, tells you so in one sentence, and never keeps spinning.</description>
+		</item>
+		<item>
+			<title>Forge keeps going when a backup lane refuses the job</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:Forge keeps going when a backup lane refuses the job</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When a 3D generation fails mid-job and the next backup engine refuses the handover, Forge now tries the following engine instead of ending the job, and the health report shows for each engine whether it is in rotation, cooling or disabled.</description>
+		</item>
+		<item>
+			<title>Forge now counts the requests that fail before a model starts</title>
+			<link>https://three.ws/nvidia/benchmarks</link>
+			<guid isPermaLink="false">2026-11-26:Forge now counts the requests that fail before a model starts</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Forge's success rate only counted requests that reached a 3D engine, so it could read 93% while people saw failures earlier: at the reference image step, a rate limit, or an engine refusing the job. Every generation request is now counted by where it ended and why, with no prompt text or personal data, and recording never slows or changes your request. The health check, the ops reports and the NVIDIA benchmarks page now show an end-to-end success rate (models delivered out of all requests accepted after sign-in) beside the engine success rate, so a breakdown before the engines shows up in the numbers.</description>
+		</item>
+		<item>
+			<title>Forge seeds you can paste, check and reuse</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-26:Forge seeds you can paste, check and reuse</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Forge page has a Seed field under Engine. Leave it empty for a new random model every time, or paste a seed to get the same model again; it remembers the seed after a reload and tells you right away if a value is not a whole number from 0 to 4294967295. After each run it shows the seed that run used, with a button to keep it. The API now refuses an out-of-range seed with that same message instead of quietly changing it, so two different seeds can no longer come back as the same model, and every engine now gets a seed it actually accepts.</description>
+		</item>
+		<item>
+			<title>Forge skips Google's image service instantly while it is refusing, and brings it back on its own</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-26:Forge skips Google's image service instantly while it is refusing, and brings it back on its own</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Forge paints a reference picture from your prompt before it builds the 3D model, and Google's image service goes first. When Google refuses for a reason that will not clear in seconds, such as a billing hold, Forge now notices after one try and moves straight to the next image service for every later request, with no wait. A busy service is tried again exactly when Google says, an outage is retried after a short pause, and a prompt Google declines for content reasons no longer sets the whole service aside. Once the pause is over a single request checks whether Google is back, and Forge returns to it without a restart. Forge also checks every picture before using it, so a blank or broken image is replaced instead of turning into a broken model.</description>
+		</item>
+		<item>
+			<title>Forge tells you when it is busy, instead of saying you hit your limit</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-26:Forge tells you when it is busy, instead of saying you hit your limit</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the image step or a 3D engine was busy, Forge said &quot;Generation limit reached&quot; as if you had used up your account. It now says which wait it is: a busy engine counts down the real wait, keeps your prompt and settings, and tries again once by itself (you can cancel). Your own limit says when it resets, and the daily cap on paid engines points you to the free engines that stay open.</description>
+		</item>
+		<item>
+			<title>Forge text prompts get a working NVIDIA image rung again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:Forge text prompts get a working NVIDIA image rung again</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The NVIDIA image step behind text-to-3D now uses FLUX.2 klein, which answers in about 6 seconds, instead of FLUX.1 models that hung on NVIDIA's gateway. It also gives up after 30 seconds so the next image provider keeps the rest of the request's time.</description>
+		</item>
+		<item>
 			<title>Forge waits when the image engine asks it to</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-26:Forge waits when the image engine asks it to</guid>
 			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the engine painting a text prompt's reference image says how long to wait, Forge now passes that wait to you instead of immediately asking again, which was refused and delayed your next try.</description>
+		</item>
+		<item>
+			<title>Match my photo no longer makes you wait out a 16 minute cold start</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-26:Match my photo no longer makes you wait out a 16 minute cold start</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>If Match my photo has not finished inside 7 minutes, your job now continues on the standard engine from your original photo and the page says so. When the lane's recent success rate is low, new photos go straight to the standard engine. The estimate on the page shows the lane's measured recent time instead of a fixed guess.</description>
 		</item>
 		<item>
 			<title>Oracle coin pages say plainly when a coin has no score</title>
@@ -69,6 +317,14 @@
 			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The swap, coin-fees and create-coin skills' fetch-coin script asked pump.fun's retired /coins-v2 route and failed for every coin. It now reads pump.fun's coin search and keeps only the exact mint, so agents can tell a bonding-curve coin from a graduated one before they trade or claim fees.</description>
+		</item>
+		<item>
+			<title>Text to 3D keeps painting when an image provider is down</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-26:Text to 3D keeps painting when an image provider is down</guid>
+			<pubDate>Thu, 26 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Typing a prompt into Forge first paints a reference image, and that step tries several image providers in turn. When the first one was out of credits or refusing requests, Forge could stop there and fail, even though the free provider at the end of the line was fine. Now a failing provider hands off at once, a provider out of credits or refusing access is set aside for five minutes so later requests skip it with no wait, a busy one is retried exactly when it says, and the free provider always keeps enough time to answer. When every provider is busy, Forge tells you the real cause and the shortest wait.</description>
 		</item>
 		<item>
 			<title>A private agent's profile no longer shows an earnings error</title>
@@ -4831,12 +5087,12 @@
 			<description>How every signed Solana trade is sent through several landing providers at once: the provider table, first-confirmation-wins racing, per-provider landed and latency stats, failure-streak skipping with health probes, and the per-trade tip ceiling.</description>
 		</item>
 		<item>
-			<title>Docs · X post reader and free video tool</title>
+			<title>Docs · X post reader</title>
 			<link>https://three.ws/docs/x-video</link>
-			<guid isPermaLink="false">2026-10-23:Docs · X post reader and free video tool</guid>
+			<guid isPermaLink="false">2026-10-23:Docs · X post reader</guid>
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.</description>
+			<description>One official X API v2 reader for public X posts, shared by the price-impact tools: how it authenticates, what it returns and where it is used.</description>
 		</item>
 		<item>
 			<title>Docs: Agent self-onboarding</title>
@@ -4885,14 +5141,6 @@
 			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Why build an agent on three.ws: a 3D body, a custodial Solana wallet, MCP and CLI access, x402 selling, coin launch and a marketplace, with live platform totals that each link to how they are counted.</description>
-		</item>
-		<item>
-			<title>X Video Downloader</title>
-			<link>https://three.ws/x-video</link>
-			<guid isPermaLink="false">2026-10-23:X Video Downloader</guid>
-			<pubDate>Fri, 23 Oct 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Paste an X post link and download its video or GIF in every quality, with the post's likes, replies, reposts and views. Free, no account, no API key.</description>
 		</item>
 		<item>
 			<title>Agent memory now learns from trade results, and the decision trail has a verify endpoint</title>
@@ -12055,20 +12303,20 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<description>Every text-to-3D generation starts by painting a concept image, and until today that step leaned on two providers. When one of them was cut off and the other stalled, text prompts failed for hours. The painter now tries five independent sources in order: Google's image model, NVIDIA's FLUX.1-dev, two more FLUX providers routed through Hugging Face, and a keyless public service as the final fallback, all under one shared time budget so a slow provider hands off instead of holding your request. A finished model's status is also remembered, so checking on a done job answers instantly instead of re-scoring it every time.</description>
 		</item>
 		<item>
+			<title>Docs · How $THREE is used</title>
+			<link>https://three.ws/docs/three-thesis</link>
+			<guid isPermaLink="false">2026-08-25:Docs · How $THREE is used</guid>
+			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What the $THREE utility token pays for on three.ws, how the treasury handles it, and the risks. Not an investment, no revenue routed to holders, not financial advice.</description>
+		</item>
+		<item>
 			<title>Docs · Open-Source Footprint</title>
 			<link>https://three.ws/docs/open-source-footprint</link>
 			<guid isPermaLink="false">2026-08-25:Docs · Open-Source Footprint</guid>
 			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Every registry, marketplace, community, and directory where three.ws code and listings live, with live links and the number behind each one.</description>
-		</item>
-		<item>
-			<title>Docs · The $THREE thesis</title>
-			<link>https://three.ws/docs/three-thesis</link>
-			<guid isPermaLink="false">2026-08-25:Docs · The $THREE thesis</guid>
-			<pubDate>Tue, 25 Aug 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>The long-form case for $THREE: what three.ws is, every utility and sink the token has, how platform revenue routes into buybacks, where it trades and is verified, the ecosystem footprint, the roadmap, and every risk the platform documents about itself.</description>
 		</item>
 		<item>
 			<title>Docs · The First 19 Weeks</title>
@@ -36823,20 +37071,20 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<description>three.ws is joining forces with Google Cloud, bringing cloud-scale rendering and AI infrastructure to 3D on-chain agents.</description>
 		</item>
 		<item>
-			<title>three.ws Listed on Anthropic's Official MCP Registry</title>
-			<link>https://three.ws/blog/three-ws-on-anthropic-mcp-registry</link>
-			<guid isPermaLink="false">2026-05-25:three.ws Listed on Anthropic's Official MCP Registry</guid>
-			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>three.ws is now listed on Anthropic's official Model Context Protocol Registry, the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor, and more.</description>
-		</item>
-		<item>
 			<title>three.ws Listed on Coinbase x402 Bazaar and agentic.market</title>
 			<link>https://three.ws/blog/three-ws-x402-bazaar</link>
 			<guid isPermaLink="false">2026-05-25:three.ws Listed on Coinbase x402 Bazaar and agentic.market</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>three.ws is now a verified service provider on the Coinbase x402 Bazaar and agentic.market, the app store and discovery layer for AI agents with 480k active agents and $50M in volume.</description>
+		</item>
+		<item>
+			<title>three.ws Listed on the Official MCP Registry</title>
+			<link>https://three.ws/blog/three-ws-on-mcp-registry</link>
+			<guid isPermaLink="false">2026-05-25:three.ws Listed on the Official MCP Registry</guid>
+			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>three.ws is now listed on the official Model Context Protocol Registry (registry.modelcontextprotocol.io), a community-run directory of MCP servers that MCP clients can discover.</description>
 		</item>
 		<item>
 			<title>three.ws Ships Inside SperaxUSD: DeFi Gets a 3D Face</title>

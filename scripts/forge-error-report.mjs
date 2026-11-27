@@ -25,9 +25,15 @@
  * 2 DATABASE_URL is not set, 3 the database did not answer.
  *
  * Reads DATABASE_URL from .env.local, then .env, then the shell. Read-only.
+ *
+ * Every run also prints the requests that ended BEFORE a job existed (a limiter,
+ * the reference image, a lane refusing the submit), by stage and cause, and the
+ * end-to-end success rate beside the lane rate. Those never create a row, so the
+ * SQL cannot see them; see scripts/lib/forge-prejob-report.mjs.
  */
 
 import { loadRepoEnv, flagValue } from './lib/forge-report-cli.mjs';
+import { loadPreJobBreakdown, printPreJobSection } from './lib/forge-prejob-report.mjs';
 
 loadRepoEnv();
 
@@ -46,6 +52,9 @@ if (!process.env.DATABASE_URL) {
 	process.exit(lib.EXIT_CODES.missing_database);
 }
 
+// Started first, read last: the counter read runs while the SQL does.
+const preJobLoad = loadPreJobBreakdown();
+
 let raw;
 try {
 	raw = await lib.gatherForgeErrors({
@@ -60,9 +69,11 @@ try {
 }
 
 const report = lib.summarizeForgeErrors(raw);
+const preJob = await preJobLoad;
+const endToEnd = preJob.pre_job?.last_24h?.end_to_end_success_rate ?? null;
 
 if (JSON_OUT) {
-	console.log(JSON.stringify({ database: lib.databaseHost(process.env.DATABASE_URL), ...report }, null, 2));
+	console.log(JSON.stringify({ database: lib.databaseHost(process.env.DATABASE_URL), ...report, preJob, endToEndSuccessRate24h: endToEnd }, null, 2));
 } else if (ONLY_CLASS) {
 	const text = lib.formatErrorClass(report, ONLY_CLASS);
 	if (text) {
@@ -74,4 +85,6 @@ if (JSON_OUT) {
 	}
 } else {
 	console.log(lib.formatErrorReport(report, { database: process.env.DATABASE_URL }));
+	console.log(`\n  end-to-end success, last 24h ${endToEnd == null ? 'n/a' : `${(endToEnd * 100).toFixed(1)}%`} (every request accepted past sign-in, including the ones that never became a job)`);
+	printPreJobSection(preJob);
 }

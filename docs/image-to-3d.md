@@ -16,7 +16,7 @@ When you add photos, the app switches to the `image` (image-intermediate) genera
 
 Routing is free-first and health-aware, exactly as in Forge. Because the free NVIDIA NIM TRELLIS lane is text-only (it rejects user images), photo submissions filter it out and fall to the free reconstruction chain in `api/_lib/forge-tiers.js`, most preferred first:
 
-1. **TRELLIS.2 (self-host)**, the configured default at every tier (MIT licensed, the tier picks its resolution). The lane is env-gated on `MODEL_TRELLIS2_URL` and is skipped wherever that worker is not deployed.
+1. **TRELLIS.2 (self-host)**, the configured default at every tier (MIT licensed, the tier picks its resolution). The lane is env-gated on `MODEL_TRELLIS2_URL` and is skipped wherever that worker is not wired. three.ws production has not set it, so photos start at the next rung.
 2. **TRELLIS (self-host)**, our own Cloud Run GPU worker, a native single-hop image-to-3D lane (image to TRELLIS to GLB), zero vendor cost.
 3. **Hunyuan3D (self-host)**, our own high-poly reconstruction worker, strong on people and organic subjects. Its licence excludes the EU, the UK and South Korea, so requests from those countries (or an unknown country) skip it. The composer asks `GET /api/forge?territory` up front and disables the excluded engines before you click Generate; picking one explicitly answers 403 `region_restricted`.
 4. **Hunyuan3D / TRELLIS (free)** on Hugging Face Spaces, with automatic failover across Hunyuan3D 2.1, Hunyuan3D 2, TRELLIS, and TripoSR.

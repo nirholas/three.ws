@@ -10,10 +10,20 @@ import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from './shared/sta
 import {
 	sleepUntilVisibleOrElapsed,
 	createHiddenClock,
+	waitUntilVisible,
 	fetchJobStatus,
 	nextBackoff,
 } from './shared/resilient-poll.js';
+import {
+	RESUME_WINDOW_MS,
+	createInflightStore,
+	createRunGate,
+	keepsInflight,
+	newIdempotencyKey,
+	postGenerationOnce,
+} from './forge-inflight.js';
 import { showSharePanel } from './shared/share.js';
+import { guardSketchFile } from './forge-studio/sketch-guard.js';
 import { stampGlbAttribution } from './shared/glb-attribution.js';
 import {
 	primeTierPass,
@@ -25,21 +35,32 @@ import {
 } from './three-access.js';
 import { injectFestivePresets } from './shared/festive-presets.js';
 import { renderLock, lockStateFromAccess } from './three-lock.js';
-import { payForHighGeneration } from './forge-pay.js';
+import { payForHighGeneration, forgetPaidProof } from './forge-pay.js';
 import { renderQuote, ensureKept } from './forge-keep.js';
 import { initWalletButton, getConnectedWalletAddress } from './wallet.js';
 import { generateForgePrompt } from './forge-prompt-gen.js';
 import { createForgeTimeline } from './forge-timeline.js';
+import { createLaneTimings, describeRange, describeWait, announceFor, formatClock } from './forge-eta.js';
+import { createWaitClock } from './forge-wait-clock.js';
+import { createTabTitle } from './forge-tab-title.js';
+import { announcePolite } from './forge-sr.js';
 import { createCompare } from './forge-compare.js';
 import { initForgeDestinationPicker, storedForgeDestination } from './shared/forge-destination-picker.js';
 import { openedFromShare } from './shared/share-beacon.js';
 import { generateWithModly, defaultModlyParams } from './modly-local.js';
 import { createModlyPanel, hostedFallbackFor, promoteModlyGlb, saveModlyResultToLibrary } from './forge-modly.js';
-import { regionRestrictedError, fetchRestrictedEngines } from './forge-region.js';
+import { regionRestrictedError, fetchTerritory, applyRegionNote, regionButtonTitle } from './forge-region.js';
 import { engineFromQuery } from './forge-engine-link.js';
+import { byokUseNote, mountByokKeyField } from './shared/byok-key-ui.js';
+import { mountSeedField } from './forge-seed-field.js';
 import { rememberFromResponse } from './shared/forge-manage-tokens.js';
-import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, UPLOAD_SIGN_IN_SHORT } from './shared/upload-sign-in.js';
-import { createLineWaiter, lineAnswerFrom, upstreamBusy, countdownText } from './forge-line-wait.js';
+import { signedInForUploads, accountState, isSignInRequired, renderUploadSignIn, renderCreateSignIn, uploadSignInUrl, UPLOAD_SIGN_IN_SHORT } from './shared/upload-sign-in.js';
+import { forgeAuthHref, installSignInDraftCapture, takeSignInDraft, restoredDraftNote } from './forge-sign-in-return.js';
+import { classifyThrottle, createThrottlePanel } from './forge-throttle.js';
+import { forgeErrorFromResponse, forgeJobFailedError, announceForgeError, forgeErrorDescriptor, forgeCopyError } from './forge-errors.js';
+import { normalizeForgeImage } from './shared/forge-image-normalize.js';
+import { uploadForgePhoto } from './shared/forge-upload-client.js';
+import { createLineWaiter, lineAnswerFrom } from './forge-line-wait.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -58,26 +79,30 @@ ensureStateKitStyles();
 // honest elapsed counter. Nothing fakes progress.
 
 const POLL_INTERVAL_MS = 2500;
-// Ceiling for a single reconstruction run. Max-tier texture bakes legitimately
-// run past 10 minutes at full quality; the ceiling must sit above the slowest
-// real generation, not the average one, or the client abandons jobs the server
-// finishes. Queue wait does not count against this window (see pollUntilDone).
-const MAX_POLL_MS = 12 * 60 * 1000;
+// Ceiling for a single reconstruction run, in foreground time. The server is the
+// authority on when a job is over: it fails a job that has not finished within
+// FORGE_JOB_HARD_TTL_MINUTES and says why (api/_lib/forge-job-deadline.js), so
+// the page waits at least that long rather than abandon a job the server is
+// still allowed to finish. Queue wait does not count either (see pollUntilDone).
+const MAX_POLL_MS = RESUME_WINDOW_MS;
 // Flaky-network budget for the status poll. A phone on a train drops sockets,
 // and an edge node answers the occasional 502: neither means the generation
 // died, because all real job state lives server-side. The poll absorbs
-// consecutive transport failures with exponential backoff and only surfaces an
-// error once the network has been unusable for the whole window below. Anything
-// shorter loses a finished model to a single dropped request.
+// transport failures with exponential backoff for as long as the run budget
+// lasts, and wakes the moment the device is back online. After the grace
+// window below the notice says plainly that the connection is down, but the
+// poll never gives up on the job because of it.
 const POLL_MAX_BACKOFF_MS = 20_000;
 const POLL_TRANSPORT_GRACE_MS = 90_000;
+// A tab that has been in the background this long stops polling entirely and
+// asks again the moment it is shown. Nobody is watching it, and the server
+// finishes the job and files it in the gallery whether or not a page asks.
+const POLL_HIDDEN_PAUSE_MS = 60_000;
 // One slot per reference view the server accepts (api/forge.js MAX_VIEWS = 6).
 // MAX_VIEWS is derived from the labels so the slot grid, the pips, the "N of M
 // views" copy, and the fill logic can never disagree about how many exist.
 const VIEW_LABELS = ['Front', 'Back', 'Left', 'Right', 'Top', '3/4'];
 const MAX_VIEWS = VIEW_LABELS.length;
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
-const ACCEPTED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 const els = {
 	form: document.getElementById('composer'),
@@ -104,6 +129,8 @@ const els = {
 	sketchPane: document.getElementById('sketch-pane'),
 	sketchGrid: document.getElementById('sketch-grid'),
 	sketchFileInput: document.getElementById('sketch-file-input'),
+	drawSketchBtn: document.getElementById('draw-sketch-btn'),
+	sketchGuardNote: document.getElementById('sketch-guard-note'),
 	sketchPrompt: document.getElementById('sketch-prompt'),
 	states: {
 		empty: document.getElementById('state-empty'),
@@ -129,6 +156,7 @@ const els = {
 	resultCreator: document.getElementById('result-creator'),
 	resultViews: document.getElementById('result-views'),
 	resultQuality: document.getElementById('result-quality'),
+	resultQualityRetry: document.getElementById('result-quality-retry'),
 	verdict: document.getElementById('verdict'),
 	download: document.getElementById('download'),
 	quote: document.getElementById('forge-quote'),
@@ -158,6 +186,7 @@ const els = {
 	destinationPicker: document.getElementById('forge-destination-picker'),
 	destinationStatus: document.getElementById('forge-destination-status'),
 	savedChip: document.getElementById('result-saved'),
+	finishedAway: document.getElementById('result-away'),
 	resultVisibility: document.getElementById('result-visibility'),
 	creations: document.getElementById('creations'),
 	creationsGrid: document.getElementById('creations-grid'),
@@ -181,10 +210,9 @@ const els = {
 
 let aspectRatio = '1:1';
 let elapsedTimer = null;
-// Wall-clock origin of the running elapsed meter, and a handle to repaint it on
-// demand. Module-level because anchorElapsed() re-points the origin at the
-// server's own job age when a poll frame reports one.
-let elapsedStart = 0;
+// The running wait's two clocks (time since the click, time on the GPU lane; see
+// src/forge-wait-clock.js), and a handle to repaint the meter on demand.
+const waitClock = createWaitClock();
 let elapsedRetick = null;
 let pollAbort = false;
 let mode = 'text'; // 'text' | 'image' | 'sketch' — input mode (prompt vs photos vs drawing)
@@ -211,6 +239,13 @@ function mintSeed() {
 	}
 	return Math.floor(Math.random() * SEED_MAX);
 }
+// The seed field (src/forge-seed-field.js): empty mints a fresh seed per submit
+// as above; a typed seed locks every submit to it. Junk is refused before any
+// request (or payment) goes out.
+const seedField = mountSeedField({
+	input: document.getElementById('forge-seed'),
+	msg: document.getElementById('forge-seed-msg'),
+});
 // Automatic engine hops taken for the current submission (lane_failed → switch
 // to the first suggested backup and re-run). Budget of 1 per user submit; the
 // server's own poll-time failover already walked the async lanes before this.
@@ -251,6 +286,10 @@ let health = null;
 // Engines the server refuses for this visitor's region (GET /api/forge?territory,
 // plus any lane a region_restricted 403 named). Disabled in the picker.
 let restrictedEngines = new Set();
+// Whether the server resolved this visitor's country: true, false, or null when
+// it did not say. Decides how the region note is worded (never asserts a region
+// it did not resolve).
+let territoryResolved = null;
 let selectedTier = 'standard';
 // What the composer submits before the catalog has rendered an engine button.
 const DEFAULT_ENGINE = Object.freeze({
@@ -406,62 +445,31 @@ const CLIENT_ID = (() => {
 // is still recorded, it just stops triggering that offer.
 const CLIENT_HEADERS = { 'x-forge-client': CLIENT_ID, 'x-witness': 'handled' };
 
-// Leave-the-page continuity. The active async job persists here so a reload,
-// a navigation away, or a closed tab does not lose the generation: returning
-// to /forge inside RESUME_WINDOW_MS resumes polling the same job id (all real
-// state lives server-side). Cleared on completion, terminal failure, or
-// cancel. Even a user who never comes back is covered: the server-side
-// finalizer (api/cron/forge-finalize.js) completes the row into their gallery
-// and notifies signed-in creators.
-const INFLIGHT_KEY = 'forge:inflight';
-const RESUME_WINDOW_MS = 30 * 60 * 1000;
+// Leave-the-page continuity (src/forge-inflight.js). The generation is
+// recorded BEFORE its POST goes out, with the exact request and the
+// Idempotency-Key it is sent under, and gains its job id when the POST answers.
+// A reload, a closed and reopened tab, or a second tab asking for the same
+// thing resends that request under that key, and the server answers with the
+// first job instead of starting another; once the job id is known, returning to
+// /forge inside RESUME_WINDOW_MS simply polls it again. Cleared on completion,
+// a terminal failure, or cancel. Even a user who never comes back is covered:
+// the server-side finalizer (api/cron/forge-finalize.js) completes the row into
+// their gallery and notifies signed-in creators.
+const inflightStore = createInflightStore();
+// One generation per tab at a time, whatever the input: a double click, a held
+// Enter key, the pay-then-generate flow, or a resume on load.
+const runGate = createRunGate();
 
 function saveInflight(job, label) {
-	if (!job?.job_id) return;
-	try {
-		localStorage.setItem(
-			INFLIGHT_KEY,
-			JSON.stringify({
-				jobId: job.job_id,
-				creationId: job.creation_id || null,
-				label: label || '',
-				previewImageUrl: job.preview_image_url || null,
-				backend: job.backend || null,
-				tier: job.tier || null,
-				path: job.path || null,
-				startedAt: Date.now(),
-			}),
-		);
-	} catch {
-		// Private mode / storage blocked: resume simply won't be available.
-	}
+	inflightStore.attachJob(job, { label });
 }
 
 function readInflight() {
-	try {
-		const raw = localStorage.getItem(INFLIGHT_KEY);
-		if (!raw) return null;
-		const j = JSON.parse(raw);
-		if (!j?.jobId || !Number.isFinite(j.startedAt)) {
-			clearInflight();
-			return null;
-		}
-		if (Date.now() - j.startedAt > RESUME_WINDOW_MS) {
-			clearInflight();
-			return null;
-		}
-		return j;
-	} catch {
-		return null;
-	}
+	return inflightStore.read();
 }
 
 function clearInflight() {
-	try {
-		localStorage.removeItem(INFLIGHT_KEY);
-	} catch {
-		/* storage blocked */
-	}
+	inflightStore.clear();
 }
 
 const REDUCED_MOTION =
@@ -479,6 +487,7 @@ function showState(name) {
 	for (const [key, node] of Object.entries(els.states)) {
 		node.classList.toggle('is-hidden', key !== name);
 	}
+	tabTitle.show(name);
 	// Leaving the result state always leaves cinema mode with it.
 	if (name !== 'result' && cinemaOn) setCinema(false);
 }
@@ -551,10 +560,23 @@ function setLaneNote(text) {
 // panel reset that a re-run performs.
 let pendingLaneNote = '';
 
+// Measured lane timings (p50 and p95 of finished jobs) from the public
+// /api/nvidia/stats endpoint. They replace the catalog's hand-set ETA wherever a
+// lane has enough history; when the request fails the catalog figure is used and
+// worded as an estimate. Loaded once the catalog is, and again on every
+// generation (the cache makes that free), so a visible estimate line repaints
+// when the numbers land.
+const laneTimings = createLaneTimings();
+laneTimings.onChange(() => updateEstimate());
+
+// The tab title follows the generation: running with the real elapsed clock,
+// then done or stopped. See src/forge-tab-title.js.
+const tabTitle = createTabTitle(document);
+
 // The typical end-to-end time for the current engine+tier, straight from the
 // catalog's real estimate matrix (estimateEtaSeconds). Null when no catalog or
 // estimate exists — the meter then runs indeterminate rather than inventing a
-// duration.
+// duration. Only the fallback: a measured lane timing wins (see describeWait).
 function currentEtaSeconds() {
 	// Once the job is accepted the server's own estimate wins: it names the lane
 	// that actually ran and widens for a cold worker, which the catalog matrix
@@ -574,97 +596,113 @@ function warmEtaFor(backendId, path, tierId) {
 	return Number(est?.eta_seconds) > 0 ? Number(est.eta_seconds) : null;
 }
 
-// Map real elapsed seconds onto an honest fill fraction. The curve approaches
-// 1 asymptotically and is capped below it, so the bar can never reach full on
-// time alone — only a real finished GLB sets it to 100% (see markDone). At
-// elapsed = typical the fill sits ~0.78; it keeps creeping past that but never
-// claims completion.
-function honestFill(elapsedS, typicalS) {
-	const frac = 1 - Math.exp(-elapsedS / (typicalS * 0.66));
-	return Math.min(frac, 0.95);
-}
-
 function setProgress(pct) {
-	if (!els.genProgressFill || !els.genProgress) return;
+	if (!els.genProgress) return;
 	const clamped = Math.max(0, Math.min(100, pct));
-	els.genProgressFill.style.width = `${clamped}%`;
+	if (els.genProgressFill) els.genProgressFill.style.width = `${clamped}%`;
 	els.genProgress.setAttribute('aria-valuenow', String(Math.round(clamped)));
 }
 
-function startElapsed(offsetMs = 0) {
-	// `offsetMs` backdates the counter for a resumed job, so the elapsed line
-	// stays honest about how long the generation has really been running.
-	elapsedStart = performance.now() - Math.max(0, offsetMs);
+// The wait has no percentage the server can stand behind: the workers report
+// queued and running, nothing in between. So while a job runs the bar is an
+// indeterminate "working" indicator (a progressbar with no aria-valuenow), and
+// the only way it ever shows a value is the finished GLB (100) or a local
+// engine that reports a real percent.
+function setIndeterminate(on) {
+	if (!els.genProgress) return;
+	els.genProgress.dataset.indeterminate = String(on);
+	if (on) els.genProgress.removeAttribute('aria-valuenow');
+}
+
+// What the wait meter last told a screen reader, so only a change is spoken.
+let waitPhase;
+// A cold worker's measured boot: the lane seconds at which this job's cold flag
+// first cleared, so the build after it is judged against the lane range on its
+// own (see describeWait's bootS).
+let waitWasCold = false;
+let waitBootS = 0;
+
+// `resumed` ({ waitedS, onLane }) backdates the clocks for a generation picked
+// up again, so the elapsed line stays honest about how long it has really run.
+function startElapsed(resumed = null) {
+	if (resumed) waitClock.resume(resumed.waitedS, { onLane: resumed.onLane });
+	else waitClock.start();
 	stopElapsed();
+	waitPhase = undefined;
+	waitWasCold = false;
+	waitBootS = 0;
+	laneTimings.load();
 	// Reset the meter to a clean running state for this job.
 	if (els.genProgress) {
 		els.genProgress.dataset.done = 'false';
 		els.genProgress.dataset.over = 'false';
-		els.genProgress.dataset.indeterminate = currentEtaSeconds() ? 'false' : 'true';
 	}
-	setProgress(0);
+	setIndeterminate(true);
 	const tick = () => {
-		const s = Math.floor((performance.now() - elapsedStart) / 1000);
-		// Re-read every tick: the accepted job replaces the catalog guess with the
-		// server's real ETA for the lane that actually ran (cold start included).
+		const s = waitClock.totalS();
+		tabTitle.running(s);
 		// A run on the user's own GPU reports a real percent and step, so the
-		// meter shows exactly that instead of a time-based estimate.
+		// meter shows exactly that instead of an estimate.
 		if (modlyRun) {
 			timeline.tick(s);
 			paintModlyProgress(s);
 			return;
 		}
-		const typical = currentEtaSeconds();
-		if (els.genProgress) els.genProgress.dataset.indeterminate = typical ? 'false' : 'true';
-		// The timeline's warming card counts real seconds against that same ETA.
-		timeline.tick(s);
-		if (typical) {
-			const over = s > typical;
-			setProgress(honestFill(s, typical) * 100);
-			if (els.genProgress) els.genProgress.dataset.over = String(over);
-			els.genMeta.innerHTML = over
-				? `Elapsed <strong>${s}s</strong> · longer than usual, still working`
-				: `Elapsed <strong>${s}s</strong> · ~${Math.max(1, typical - s)}s left`;
-		} else {
-			// Unknown duration — the bar travels (indeterminate) and we report only
-			// the honest elapsed count.
-			els.genMeta.innerHTML = `Elapsed <strong>${s}s</strong>`;
-		}
+		// The lane range and the boot allowance are both measured from when the job
+		// reached its lane, so they are judged on the lane clock, never on the time
+		// the director and the reference image took before it.
+		const lane = waitClock.laneS();
+		const cold = timeline.isCold();
+		if (cold) waitWasCold = true;
+		else if (waitWasCold && !waitBootS && lane !== null) waitBootS = lane;
+		timeline.tick(lane ?? 0);
+		// The range comes from what the serving lane actually did (measured p50 and
+		// p95), re-read every tick because the lane can change under a failover.
+		// With no measurement it falls back to the server's own ETA for the job,
+		// worded as an estimate. Nothing here moves the bar: it only travels.
+		const wait = describeWait({
+			elapsedS: lane,
+			timing: laneTimings.timing(timeline.backend()),
+			catalogEtaS: currentEtaSeconds(),
+			cold,
+			coldAllowanceS: timeline.coldSeconds(),
+			bootS: waitBootS,
+		});
+		setIndeterminate(true);
+		if (els.genProgress) els.genProgress.dataset.over = String(wait.over);
+		const say = announceFor(wait.phase, waitPhase);
+		waitPhase = wait.phase;
+		if (say) announcePolite(say);
+		els.genMeta.innerHTML = wait.text
+			? `Elapsed <strong>${formatClock(s)}</strong> · ${wait.text}`
+			: `Elapsed <strong>${formatClock(s)}</strong>`;
 	};
 	tick();
 	elapsedRetick = tick;
 	elapsedTimer = window.setInterval(tick, 1000);
 }
 
-// Re-anchor the running meter to the server's own age for this job.
-//
-// The meter interpolates between polls with a local 1s tick, which is what keeps
-// it smooth, but the tick alone has no idea when the JOB started: only when this
-// tab did. `elapsed_seconds` on every non-terminal poll frame is measured from
-// the creation row, so it is the same number for every viewer of the same job.
-// Snapping to it costs nothing when they already agree and is the difference
-// between "3s in" and the truth on a resumed page.
-//
-// A drift under 2s is ignored, so an ordinary round-trip does not re-snap the
-// display on every poll; past that the server wins in both directions, because
-// the one case that matters (a resumed or coalesced job, where the local clock
-// reads far too LOW) is a correction the meter has to make.
-function anchorElapsed(serverElapsedS) {
-	const s = Number(serverElapsedS);
-	if (!Number.isFinite(s) || s < 0 || !elapsedTimer) return;
-	const localS = (performance.now() - elapsedStart) / 1000;
-	if (Math.abs(s - localS) < 2) return;
-	elapsedStart = performance.now() - s * 1000;
-	elapsedRetick?.();
+// Fold the server's age of this job into the meter. `elapsed_seconds` on every
+// non-terminal poll frame is measured from the creation row, which exists only
+// once the lane accepted the job, so it anchors the lane clock; the Elapsed
+// readout is only ever pushed forward by it (src/forge-wait-clock.js).
+function anchorElapsed(serverElapsedS, { laneChanged = false } = {}) {
+	if (!elapsedTimer) return;
+	if (waitClock.anchor(serverElapsedS, { laneChanged })) elapsedRetick?.();
 }
 
 // Snap the meter to a finished, successful state — the only path to 100%.
 function markProgressDone() {
-	if (!els.genProgress) return;
-	els.genProgress.dataset.indeterminate = 'false';
-	els.genProgress.dataset.over = 'false';
-	els.genProgress.dataset.done = 'true';
-	setProgress(100);
+	if (els.genProgress) {
+		els.genProgress.dataset.indeterminate = 'false';
+		els.genProgress.dataset.over = 'false';
+		els.genProgress.dataset.done = 'true';
+		setProgress(100);
+	}
+	// The model is finished: say so in the tab title and, politely, to a screen
+	// reader. This is the one path every successful generation goes through.
+	tabTitle.done();
+	announcePolite('Your model is ready.');
 }
 
 function stopElapsed() {
@@ -831,6 +869,7 @@ async function loadCatalog() {
 		return;
 	}
 	if (!cached || cachedJson !== JSON.stringify(catalog)) buildEngineButtons();
+	laneTimings.load();
 	selectTier(selectedTier);
 	applyEngineDeepLink();
 	revealSketchMode();
@@ -852,8 +891,9 @@ function applyEngineDeepLink() {
 // Ask which engines this visitor's region excludes, so the picker disables them
 // up front instead of letting a Generate click end in a 403.
 async function loadTerritory() {
-	const restricted = await fetchRestrictedEngines(CLIENT_HEADERS);
+	const { restricted, resolved } = await fetchTerritory(CLIENT_HEADERS);
 	for (const id of restricted) restrictedEngines.add(id);
+	territoryResolved = resolved;
 	if (restrictedEngines.size) updateEngineAvailability();
 }
 
@@ -979,7 +1019,7 @@ function updateEngineAvailability() {
 		btn.setAttribute('aria-disabled', String(blocked));
 		btn.dataset.health = lane ? lane.status : '';
 		if (regionBlocked) {
-			btn.title = `${b?.label || btn.dataset.backend}: not available in your region because its model licence excludes it.`;
+			btn.title = regionButtonTitle(b?.label || btn.dataset.backend, territoryResolved);
 		} else if (laneDown) {
 			btn.title = `${b?.label || btn.dataset.backend} — temporarily unavailable: ${lane.message}`;
 		} else if (blocked) {
@@ -992,6 +1032,12 @@ function updateEngineAvailability() {
 		}
 		if (blocked && btn.dataset.backend === selectedEngine.backend) bounceTo = true;
 	}
+	applyRegionNote({
+		note: document.getElementById('engine-region-note'),
+		picker: els.engine,
+		restricted: restrictedEngines,
+		resolved: territoryResolved,
+	});
 	const defaultId =
 		catalog.default_backend_for_tier?.[selectedTier]?.[selectedEngine.path] ?? null;
 	if (bounceTo) {
@@ -1072,14 +1118,14 @@ function updateByokRow() {
 	if (selectedEngine.houseKeyAvailable) {
 		els.byokLabel.textContent = `${name} key (optional)`;
 		els.providerKey.placeholder = `Your own ${name} API key, to use it instead of the included lane`;
-		els.byokHint.innerHTML = `This engine is included, billed to your platform credits. Paste your own ${name} key here to use it instead${hint ? ` (<a href="${hint.url}" target="_blank" rel="noopener">get a key</a>)` : ''}.`;
+		els.byokHint.innerHTML = `This engine is included, billed to your platform credits. Paste your own ${name} key here to use it instead${hint ? ` (<a href="${hint.url}" target="_blank" rel="noopener">get a key</a>)` : ''}. ${byokUseNote(name)}`;
 		return;
 	}
 	els.byokLabel.textContent = `${name} key`;
-	els.providerKey.placeholder = `Your ${name} API key (kept in this browser)`;
-	els.byokHint.innerHTML = hint
-		? `This engine runs on your own ${hint.label} key. <a href="${hint.url}" target="_blank" rel="noopener">Get a key →</a> Signed-in users can save it once in Account instead.`
-		: `This engine runs on your own ${name} key, kept in this browser. Signed-in users can save it in Account instead.`;
+	els.providerKey.placeholder = `Your ${name} API key`;
+	els.byokHint.innerHTML =
+		`This engine runs on your own ${name} key${hint ? ` (<a href="${hint.url}" target="_blank" rel="noopener">get a key</a>)` : ''}. ${byokUseNote(name)} ` +
+		'Rather not retype it? Save it encrypted in <a href="/account">Account</a>, where you can also remove it.';
 }
 
 function selectTier(tierId) {
@@ -1332,7 +1378,25 @@ function updateEstimate() {
 	// from the prompt first, so "builds from a reference image" would be wrong —
 	// the user supplied no image. Only the photos tab builds from a real reference.
 	const parts = [`<strong>${tierMeta.label}</strong>`, costSegment(backend, tierMeta)];
-	if (est?.eta_seconds) parts.push(`usually ~${est.eta_seconds}s`);
+	const lane = backend.id === 'pixal3d' ? backend.health : null;
+	if (lane?.gated) {
+		parts.push(lane.reason);
+	} else if (lane?.typical_seconds) {
+		// Measured, not hoped for: the median of recent finished jobs, and the point
+		// where the job moves to the standard engine so the wait has a ceiling.
+		const typicalMin = Math.max(1, Math.round(lane.typical_seconds / 60));
+		const capMin = Math.round(lane.allowance_seconds / 60);
+		parts.push(`recent runs took ~${typicalMin} min; after ${capMin} min it finishes on the standard engine`);
+	} else if (est?.eta_seconds) {
+		// Measured p50 and p95 of the lane's finished jobs when it has enough
+		// history, the catalog figure worded as an estimate when it does not.
+		const range = describeRange({
+			timing: laneTimings.timing(selectedEngine.backend),
+			catalogEtaS: est.eta_seconds,
+		});
+		if (range) parts.push(range);
+		if (lane) parts.push(`after ${Math.round(lane.allowance_seconds / 60)} min it finishes on the standard engine`);
+	}
 	// Credits are a real charge only on metered lanes (BYOK or the paid High tier).
 	// Never tack a credit figure onto a "Free" line — "Free · ~3 credits" reads as
 	// a contradiction. costSegment() owns the cost word; this stays consistent with it.
@@ -1366,7 +1430,10 @@ function updateTierTitles() {
 		if (!t) continue;
 		const est = (backend?.estimates?.[selectedEngine.path] || []).find((e) => e.tier === t.id);
 		const parts = [t.blurb];
-		if (est?.eta_seconds) parts.push(`usually ~${est.eta_seconds}s on ${backend.label}`);
+		const range = est?.eta_seconds
+			? describeRange({ timing: laneTimings.timing(backend.id), catalogEtaS: est.eta_seconds })
+			: '';
+		if (range) parts.push(`${range} on ${backend.label}`);
 		if (Number(t.polycount) > 0) parts.push(`up to ${t.polycount.toLocaleString()} polygons`);
 		btn.title = `${t.label}: ${parts.filter(Boolean).join(' · ')}`;
 	}
@@ -1409,10 +1476,12 @@ function buildSlots() {
 			e.stopPropagation();
 			clearSlot(i);
 		});
-		// Retry re-opens the picker for this slot.
+		// Retry re-sends the same photo when the upload can succeed on a second
+		// try; after a refusal (not a photo, too small) it opens the picker.
 		slot.querySelector('.vs-retry').addEventListener('click', (e) => {
 			e.stopPropagation();
-			openPicker(i);
+			if (slots[i].retry) slots[i].retry();
+			else openPicker(i);
 		});
 
 		// Click empty/error → browse for this slot (never a slot past the active
@@ -1424,6 +1493,22 @@ function buildSlots() {
 			if (e.key === 'Enter' || e.key === ' ') {
 				e.preventDefault();
 				if (slotEnabled(i) && (slots[i].state === 'empty' || slots[i].state === 'error')) openPicker(i);
+				return;
+			}
+			if (slots[i].state !== 'uploaded') return;
+			// Reorder and remove without a pointer: Alt+Arrow moves the photo one
+			// place (the first place is the one a single-image engine reads), and
+			// Delete removes it. Focus follows the photo.
+			const step = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key];
+			if (e.altKey && step) {
+				e.preventDefault();
+				const to = i + step;
+				if (to < 0 || !slotEnabled(to) || slots[to].state === 'preparing') return;
+				swapSlots(i, to);
+				slotEl(to)?.focus();
+			} else if (e.key === 'Delete' || e.key === 'Backspace') {
+				e.preventDefault();
+				clearSlot(i);
 			}
 		});
 
@@ -1523,6 +1608,7 @@ function renderSlot(i) {
 		img.alt = '';
 	}
 	el.querySelector('.vs-error-msg').textContent = s.errorMsg || 'Upload failed';
+	el.querySelector('.vs-retry').textContent = s.state === 'error' && !s.retry ? 'Choose another' : 'Retry';
 	if (s.state === 'preparing') {
 		el.querySelector('.vs-preparing-text').textContent = s.progressText || 'Checking photo…';
 		const bar = el.querySelector('.vs-preparing-bar');
@@ -1536,7 +1622,7 @@ function renderSlot(i) {
 			: `${VIEW_LABELS[i]} view, not used by ${ENGINE_LABELS.pixal3d}`,
 		preparing: `${VIEW_LABELS[i]} view, ${s.progressText || 'checking the photo on this device'}`,
 		uploading: `${VIEW_LABELS[i]} view, uploading`,
-		uploaded: `${VIEW_LABELS[i]} view, uploaded — drag to reorder`,
+		uploaded: `${VIEW_LABELS[i]} view, uploaded. Drag or press Alt with an arrow key to reorder, Delete to remove`,
 		error: `${VIEW_LABELS[i]} view, upload failed`,
 	};
 	el.setAttribute('aria-label', labels[s.state] || VIEW_LABELS[i]);
@@ -1601,8 +1687,10 @@ function openPicker(index) {
 
 // Distribute dropped/picked files into slots, starting at `startIndex` (or the
 // first free slot when null), filling free slots up to the active engine's cap.
+// Every file goes through; uploadToSlot judges it by its bytes, so a HEIC the
+// system labeled with no type is converted and a PDF named .jpg is refused there.
 function handleFiles(startIndex, fileList) {
-	const files = Array.from(fileList).filter((f) => f && f.type && f.type.startsWith('image/'));
+	const files = Array.from(fileList).filter(Boolean);
 	if (!files.length) return;
 	const cap = activeMaxImages();
 	const busy = startIndex != null && (slots[startIndex]?.state === 'preparing' || slots[startIndex]?.state === 'uploading');
@@ -1615,61 +1703,12 @@ function handleFiles(startIndex, fileList) {
 	}
 }
 
-// Presign → PUT to object storage → public URL. Shared by the view slots and
-// the sketch uploader. Returns { ok: true, url } or { ok: false, message }.
-async function presignAndPut(file) {
-	// Two legs, two catches on purpose. The presign leg is same-origin, so a
-	// throw there really is the user's connection. The PUT leg is cross-origin to
-	// the bucket, where a rejected credential or a missing CORS rule answers 403
-	// with no Access-Control-Allow-Origin, and the browser hands us a rejected
-	// promise with no status to read. Reporting that as a network fault (one
-	// shared catch, as this had until 2026-09-08) blames the user's phone for our
-	// outage and sends them into an endless Retry loop.
-	let presign;
-	let presignRes;
-	try {
-		presignRes = await fetch('/api/forge-upload', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json', ...CLIENT_HEADERS },
-			body: JSON.stringify({ content_type: file.type, size_bytes: file.size }),
-		});
-		presign = await presignRes.json().catch(() => ({}));
-	} catch {
-		return { ok: false, message: 'No connection. Check your network.' };
-	}
-
-	if (presignRes.status === 503) {
-		// The server distinguishes "this deployment has no storage" from "our
-		// storage is refusing us right now"; only the second is worth asking the
-		// user to come back for.
-		return {
-			ok: false,
-			message:
-				presign.error === 'storage_unavailable'
-					? 'Uploads are down right now. Try again shortly.'
-					: 'Uploads unavailable on this deployment.',
-		};
-	}
-	if (presignRes.status === 429) return { ok: false, message: 'Rate limited. Retry shortly.' };
-	if (isSignInRequired(presignRes.status, presign)) {
-		showUploadSignIn();
-		return { ok: false, message: UPLOAD_SIGN_IN_SHORT };
-	}
-	if (!presignRes.ok || !presign.upload_url || !presign.public_url) {
-		return { ok: false, message: presign.message || 'Upload failed.' };
-	}
-
-	try {
-		const putRes = await fetch(presign.upload_url, {
-			method: 'PUT',
-			headers: { 'content-type': file.type },
-			body: file,
-		});
-		if (!putRes.ok) return { ok: false, message: `Storage rejected the file (${putRes.status}).` };
-		return { ok: true, url: presign.public_url };
-	} catch {
-		return { ok: false, message: 'Storage refused the upload. Try again shortly.' };
-	}
+// Presign → PUT to object storage → public URL, shared by the view slots and
+// the sketch uploader (src/shared/forge-upload-client.js, the same client Forge
+// Studio uses). Resolves { ok: true, url } or { ok: false, message, detail,
+// retryable }.
+function presignAndPut(file) {
+	return uploadForgePhoto(file, { headers: CLIENT_HEADERS, onSignIn: showUploadSignIn });
 }
 
 // Progress copy for the on-device check, from the worker's real events.
@@ -1704,8 +1743,9 @@ function setPhotoPrepNote(text) {
 
 // Photos need an account (api/forge-upload.js), as does generating.
 function showUploadSignIn() {
+	photoRefusedForSignIn = true;
 	const el = photoPrepNoteEl();
-	if (el) renderUploadSignIn(el);
+	if (el) renderUploadSignIn(el, { sessionEnded: noteSignedOut() });
 }
 
 // Asked before the on-device photo check, so a signed-out visitor is not walked
@@ -1746,26 +1786,34 @@ async function photoPrepGate(index, file, objectUrl) {
 	return outcome.file;
 }
 
-// Upload one file into a slot: on-device check and review, then presign → PUT
-// to object storage → record the public URL. The slot moves empty/error →
-// preparing → uploading → uploaded|error, each a real, designed state. The
-// local blob preview shows immediately.
+// Upload one file into a slot: read and, when needed, convert it on the device
+// (src/shared/forge-image-normalize.js: HEIC, AVIF, GIF, sideways and oversize
+// photos become an upright JPEG or WebP under 8 MB; a photo that already works
+// is passed through untouched), then the on-device check and review, then
+// presign → PUT to object storage → record the public URL. The slot moves
+// empty/error → preparing → uploading → uploaded|error, each a real, designed
+// state. The local blob preview shows as soon as the photo is readable.
 async function uploadToSlot(index, file) {
-	if (!ACCEPTED_TYPES.has(file.type)) {
-		setSlotError(index, 'Use PNG, JPG, or WebP.');
-		return;
-	}
-	if (file.size === 0) {
-		setSlotError(index, 'File is empty.');
-		return;
-	}
+	const original = file;
 	if (!(await requireUploadAccount())) {
-		setSlotError(index, UPLOAD_SIGN_IN_SHORT);
+		setSlotError(index, UPLOAD_SIGN_IN_SHORT, () => uploadToSlot(index, original));
 		return;
 	}
 
 	const prev = slots[index];
 	if (prev.objectUrl) URL.revokeObjectURL(prev.objectUrl);
+	const reading = {};
+	slots[index] = { state: 'preparing', url: null, objectUrl: null, errorMsg: '', progressText: 'Reading photo…', progress: null, reading };
+	renderSlot(index);
+	const ready = await normalizeForgeImage(file);
+	if (slots[index].reading !== reading) return; // removed or replaced while reading
+	if (!ready.ok) {
+		slots[index] = { state: 'error', url: null, objectUrl: null, errorMsg: ready.short };
+		renderSlot(index);
+		setPhotoPrepNote(ready.message);
+		return;
+	}
+	file = ready.file;
 	let objectUrl = URL.createObjectURL(file);
 	const picked = await photoPrepGate(index, file, objectUrl);
 	if (!picked) return;
@@ -1774,18 +1822,21 @@ async function uploadToSlot(index, file) {
 		objectUrl = URL.createObjectURL(picked);
 		file = picked;
 	}
-	// Checked after the review: a large original often becomes a small prepared image.
-	if (file.size > MAX_UPLOAD_BYTES) {
-		slots[index] = { ...slots[index], objectUrl };
-		setSlotError(index, 'Too large (max 8 MB).');
-		return;
-	}
+	if (ready.note) setPhotoPrepNote([els.photoPrepNote?.textContent, `${VIEW_LABELS[index]} photo: ${ready.note}`].filter(Boolean).join(' '));
+	await putToSlot(index, file, objectUrl);
+}
+
+// The upload leg alone, so Retry re-sends the photo already prepared and
+// reviewed instead of walking the person through the check again.
+async function putToSlot(index, file, objectUrl) {
 	slots[index] = { state: 'uploading', url: null, objectUrl, errorMsg: '' };
 	renderSlot(index);
 
 	const up = await presignAndPut(file);
+	if (slots[index].objectUrl !== objectUrl) return; // removed while uploading
 	if (!up.ok) {
-		setSlotError(index, up.message);
+		setSlotError(index, up.message, up.retryable ? () => putToSlot(index, file, objectUrl) : null);
+		if (up.detail && up.detail !== up.message) setPhotoPrepNote(up.detail);
 		return;
 	}
 	// Success — keep the local blob preview, remember the public URL.
@@ -1793,7 +1844,9 @@ async function uploadToSlot(index, file) {
 	renderSlot(index);
 }
 
-function setSlotError(index, message) {
+// `retry`, when given, is what the tile's Retry button does (re-send the same
+// photo); without it Retry opens the picker.
+function setSlotError(index, message, retry = null) {
 	const s = slots[index];
 	// Keep any local preview so the user sees what failed.
 	slots[index] = {
@@ -1801,6 +1854,7 @@ function setSlotError(index, message) {
 		url: null,
 		objectUrl: s.objectUrl || null,
 		errorMsg: message,
+		retry,
 	};
 	renderSlot(index);
 }
@@ -1846,7 +1900,8 @@ function buildSketchSlot() {
 	});
 	slot.querySelector('.vs-retry').addEventListener('click', (e) => {
 		e.stopPropagation();
-		openSketchPicker();
+		if (sketch.state === 'error' && sketch.retry) sketch.retry();
+		else openSketchPicker();
 	});
 	slot.addEventListener('click', () => {
 		if (sketch.state === 'empty' || sketch.state === 'error') openSketchPicker();
@@ -1904,30 +1959,45 @@ function renderSketchSlot() {
 
 function clearSketch() {
 	if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
-	Object.assign(sketch, { state: 'empty', url: null, objectUrl: null, errorMsg: '' });
+	Object.assign(sketch, { state: 'empty', url: null, objectUrl: null, errorMsg: '', retry: null });
+	setSketchGuardNote('');
 	renderSketchSlot();
 }
 
 async function uploadSketch(file) {
-	if (!ACCEPTED_TYPES.has(file.type)) {
-		Object.assign(sketch, { state: 'error', url: null, errorMsg: 'Use PNG, JPG, or WebP.' });
+	// Same intake as the photo slots: judged by its bytes, converted when the
+	// lane could not read it as is, refused with a reason otherwise.
+	const ready = await normalizeForgeImage(file);
+	if (!ready.ok) {
+		if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
+		Object.assign(sketch, { state: 'error', url: null, objectUrl: null, errorMsg: ready.short, retry: null });
 		renderSketchSlot();
+		setSketchGuardNote(ready.message);
 		return;
 	}
-	if (file.size === 0) {
-		Object.assign(sketch, { state: 'error', url: null, errorMsg: 'File is empty.' });
+	file = ready.file;
+	// A blank page, a dot or a scribble over the whole frame gives the sketch
+	// model nothing to build from. Say so here, before the file reaches storage
+	// and before a generation slot is spent on it.
+	const out = await guardSketchFile(file, sendSketch);
+	if (out && out.ok === false && out.code) {
+		if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
+		Object.assign(sketch, {
+			state: 'error',
+			url: null,
+			objectUrl: null,
+			errorMsg: 'Draw a clearer outline',
+		});
 		renderSketchSlot();
-		return;
+		setSketchGuardNote(out.message);
 	}
-	if (file.size > MAX_UPLOAD_BYTES) {
-		Object.assign(sketch, { state: 'error', url: null, errorMsg: 'Too large (max 8 MB).' });
-		renderSketchSlot();
-		return;
-	}
+}
+
+async function sendSketch(file) {
 	if (!(await requireUploadAccount())) {
-		Object.assign(sketch, { state: 'error', url: null, errorMsg: UPLOAD_SIGN_IN_SHORT });
+		Object.assign(sketch, { state: 'error', url: null, errorMsg: UPLOAD_SIGN_IN_SHORT, retry: () => sendSketch(file) });
 		renderSketchSlot();
-		return;
+		return { ok: true };
 	}
 	if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
 	Object.assign(sketch, {
@@ -1935,14 +2005,30 @@ async function uploadSketch(file) {
 		url: null,
 		objectUrl: URL.createObjectURL(file),
 		errorMsg: '',
+		retry: null,
 	});
+	setSketchGuardNote('');
 	renderSketchSlot();
 
 	const up = await presignAndPut(file);
 	if (up.ok) Object.assign(sketch, { state: 'uploaded', url: up.url, errorMsg: '' });
-	else Object.assign(sketch, { state: 'error', url: null, errorMsg: up.message });
+	else Object.assign(sketch, { state: 'error', url: null, errorMsg: up.message, retry: up.retryable ? () => sendSketch(file) : null });
 	renderSketchSlot();
+	return { ok: true };
 }
+
+function setSketchGuardNote(message) {
+	const note = els.sketchGuardNote;
+	if (!note) return;
+	note.textContent = message;
+	note.classList.toggle('is-hidden', !message);
+}
+
+els.drawSketchBtn?.addEventListener('click', async () => {
+	const { openSketchCanvas } = await import('./forge-studio/sketch-canvas.js');
+	const file = await openSketchCanvas();
+	if (file) uploadSketch(file);
+});
 
 function firstPreviewUrl() {
 	const s = slots.find((x) => x.state === 'uploaded' && (x.objectUrl || x.url));
@@ -1963,7 +2049,10 @@ function forgeHeaders(extra) {
 	return h;
 }
 
-async function startJob({ prompt, imageUrls, skipValidation, payment, seed, progressId }) {
+// The request body for one generation, built from the composer's inputs. Kept
+// separate from the POST so the page can record the exact request (and join a
+// live record of the same one) before anything is sent.
+function composeJobBody({ prompt, imageUrls, skipValidation, payment, seed, progressId }) {
 	const base = { path: selectedEngine.path, tier: selectedTier, backend: selectedEngine.backend };
 	const body =
 		Array.isArray(imageUrls) && imageUrls.length
@@ -2012,7 +2101,15 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 		body.payment_id = payment.paymentId;
 		body.ref_id = payment.refId;
 	}
+	return body;
+}
 
+const JOINING_NOTE =
+	'This request is already being started, by another tab or an earlier visit. Waiting for that generation instead of starting a second one.';
+
+// Send one generation request. `idempotencyKey` is the key recorded with it:
+// a duplicate under the same key collects the first job rather than making one.
+async function startJob(body, idempotencyKey) {
 	// Platform-keyed High is the $THREE-gated combination — mint/refresh the holder's tier
 	// pass and AWAIT it so forgeHeaders attaches a fresh, RPC-free proof on this very
 	// request. An eligible holder then clears the server gate even if a live on-chain read
@@ -2023,27 +2120,29 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 	// anonymous callers, the free tiers, and BYOK High (server-exempt — no pass needed).
 	if (highTierNeedsPass()) await getTierPass({ interactive: Boolean(_highAccess?.eligible) });
 
-	const res = await fetch('/api/forge', {
-		method: 'POST',
-		headers: forgeHeaders({ 'content-type': 'application/json' }),
-		body: JSON.stringify(body),
+	const { res, data } = await postGenerationOnce({
+		url: '/api/forge',
+		body,
+		key: idempotencyKey,
+		headers: forgeHeaders(),
+		onWaiting: () => setLaneNote(JOINING_NOTE),
+		isCancelled: () => pollAbort,
 	});
-	const data = await res.json().catch(() => ({}));
 	// Signed out (or the session expired mid-visit): the account gate refused it.
 	if (isSignInRequired(res.status, data)) {
-		const e = new Error(data.message || 'Sign in to make a 3D model.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'sign_in';
 		throw e;
 	}
-	// The image step is saturated: a place in line (429 forge_queued) or a full
-	// line (503 forge_full). Read before the generic 429/503 branches below,
-	// which would call a place in line a "generation limit".
+	// The image step is saturated and this request holds a place in line (429
+	// forge_queued). Read before the throttle classifier below, which would show
+	// a countdown instead of the place. A full line (503 forge_full) is a wait
+	// that classifier describes.
 	const line = lineAnswerFrom(res.status, data);
-	if (line) {
+	if (line?.kind === 'queued') {
 		const e = new Error(line.message);
 		e.kind = line.kind;
 		e.line = line;
-		e.retryAfter = line.retryAfter;
 		throw e;
 	}
 	// The picked engine's model licence excludes this visitor's region (403
@@ -2059,16 +2158,11 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 	// misfile it. When the server names configured engines that can take the
 	// request, hop to one visibly (the lane_failed path flips the picker and says
 	// so) rather than count down into the same dead lane; otherwise it is the
-	// recoverable high-demand countdown.
-	if (data.error === 'provider_busy') {
-		const e = new Error(data.message || 'The free 3D engines are at capacity right now.');
-		if (Array.isArray(data.retry_backends) && data.retry_backends.length) {
-			e.kind = 'lane_failed';
-			e.retryBackends = data.retry_backends;
-		} else {
-			e.kind = 'busy';
-			e.retryAfter = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 15;
-		}
+	// recoverable high-demand countdown (classifyThrottle below).
+	if (data.error === 'provider_busy' && Array.isArray(data.retry_backends) && data.retry_backends.length) {
+		const e = forgeErrorFromResponse(res.status, data);
+		e.kind = 'lane_failed';
+		e.retryBackends = data.retry_backends;
 		throw e;
 	}
 	// Only a genuine deployment gap earns the unconfigured panel: it names env
@@ -2078,7 +2172,7 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 	// shed the request - so they land in the recoverable countdown state carrying
 	// the server's own message and retry_after.
 	if (data.error === 'unconfigured') {
-		const e = new Error(data.message || 'unconfigured');
+		const e = forgeErrorFromResponse(res.status, { ...data, error: 'unconfigured' });
 		e.kind = 'unconfigured';
 		throw e;
 	}
@@ -2089,67 +2183,43 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 	// deliver. Models already forged are served from the public CDN and are
 	// unaffected, which is the honest alternative to offer.
 	if (data.error === 'storage_unavailable') {
-		const e = new Error(
-			data.message || '3D generation is paused while our asset storage recovers.',
-		);
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'storage_down';
 		e.retryAfter = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 60;
 		throw e;
 	}
-	if (res.status === 503) {
-		const e = new Error(
-			data.message || 'The generator is temporarily unavailable. Try again shortly.',
-		);
-		e.kind = 'rate_limited';
-		e.retryAfter = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 20;
-		e.unavailable = true;
+	// Every wait (a busy provider, our own image-step pacing, the account limit,
+	// the paid daily cap, a transient 503) goes through one shared classifier, so
+	// the page says which it is instead of calling them all "the limit".
+	const throttle = classifyThrottle({ status: res.status, body: data, headers: res.headers });
+	if (throttle) {
+		const e = forgeErrorFromResponse(res.status, data, { retryAfter: throttle.waitSeconds });
+		e.kind = 'throttled';
+		e.throttle = throttle;
 		throw e;
 	}
 	// Geometry path needs a BYOK key we don't have — a recoverable, designed state.
 	if (data.error === 'needs_key') {
-		const e = new Error(data.message || 'An API key is required for this engine.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'needs_key';
 		e.provider = data.provider;
 		throw e;
 	}
 	if (data.error === 'invalid_key') {
-		const e = new Error(data.message || 'The provider rejected this API key.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'invalid_key';
 		throw e;
 	}
 	if (data.error === 'insufficient_credits') {
-		const e = new Error(data.message || 'The provider account is out of credits.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'credits';
 		throw e;
 	}
 	// Vision pre-check rejected the reference photo (Consumer 1). Recoverable:
 	// the user can swap the photo (Try again) or override (Generate anyway).
 	if (res.status === 422 && data.error === 'image_not_usable') {
-		const e = new Error(data.message || 'That photo doesn’t look usable for 3D.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'not_usable';
-		throw e;
-	}
-	if (res.status === 429 || data.error === 'rate_limited') {
-		const headerReset = Number(res.headers.get('ratelimit-reset'));
-		const secs =
-			Number(data.retry_after) > 0
-				? Math.ceil(Number(data.retry_after))
-				: headerReset > 0
-					? Math.ceil(headerReset)
-					: 10;
-		// `rate_limiter_unavailable` means the distributed limiter (Redis) is down
-		// and the paid lane is failing closed — not that the user spent their quota.
-		const unavailable = data.reason === 'rate_limiter_unavailable';
-		const e = new Error(
-			data.message ||
-				(unavailable
-					? 'The generator is temporarily unavailable. Refine your current model locally, or try again shortly.'
-					: `You've hit the generation limit. It resets in about ${secs}s.`),
-		);
-		// The generator throttling us is "busy", never the person's own limit.
-		e.kind = upstreamBusy(data) ? 'busy' : 'rate_limited';
-		e.retryAfter = secs;
-		e.unavailable = unavailable;
 		throw e;
 	}
 	// High-tier hold-to-access gate ($THREE) — a hold-OR-pay 402 (three_hold_required).
@@ -2157,7 +2227,7 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 	// Carries the full gate payload (held vs required, usd_to_go, acquire, pay_per_use)
 	// straight to the upsell modal.
 	if (res.status === 402 && data.error === 'three_hold_required') {
-		const e = new Error(data.message || 'High-quality generation is a $THREE holder perk.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'hold_required';
 		e.gate = data;
 		throw e;
@@ -2169,30 +2239,19 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 		res.status === 402 &&
 		(data.error === 'payment_invalid' || data.error === 'payment_expired')
 	) {
-		const e = new Error(data.message || 'That $THREE payment could not be verified.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'payment_invalid';
 		e.gate = data;
 		throw e;
 	}
 	if (res.status === 409 && data.error === 'payment_already_used') {
-		const e = new Error(data.message || 'That payment was already used. Pay again to generate.');
+		const e = forgeErrorFromResponse(res.status, data);
 		e.kind = 'payment_used';
 		e.gate = data;
 		throw e;
 	}
-	// Free lane shed this request at the fleet concurrency cap — an influx of
-	// demand, not the user's quota. Recoverable with a short auto-retry, framed as
-	// "high demand" rather than a failure the user caused. (provider_busy comes
-	// from an explicit free-engine pick at capacity; free_lane_unavailable from the
-	// Spaces chain being briefly all-down.)
-	if (data.error === 'provider_busy' || data.error === 'free_lane_unavailable') {
-		const e = new Error(data.message || 'The free 3D engines are at capacity right now.');
-		e.kind = 'busy';
-		e.retryAfter = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 15;
-		throw e;
-	}
 	if (!res.ok) {
-		throw new Error(data.message || `The generator returned ${res.status}.`);
+		throw forgeErrorFromResponse(res.status, data);
 	}
 	return data;
 }
@@ -2201,8 +2260,13 @@ const QUEUE_NOTE =
 	'The engine is finishing earlier jobs. Yours is queued and will run at full quality, nothing is downgraded.';
 const PATCHY_NETWORK_NOTE =
 	'Your connection dropped. Still holding this generation, it keeps running on the server.';
+const OFFLINE_NOTE =
+	'You are offline. Your model is still being made on the server, and this page picks it back up as soon as you are connected.';
 
-async function pollUntilDone(jobId) {
+// `stats.finishedAway` comes back true when the job turned out to be done on
+// the first status check after the user was gone (a resumed visit, or a tab
+// that sat in the background), so the result can say it finished meanwhile.
+async function pollUntilDone(jobId, stats = {}) {
 	const hidden = createHiddenClock();
 	// Foreground time only: a backgrounded tab must not burn the run budget.
 	const runNow = () => performance.now() - hidden.hiddenMs();
@@ -2218,6 +2282,7 @@ async function pollUntilDone(jobId) {
 	// exponentially and tell the user the job is safe rather than killing it.
 	let backoffMs = POLL_INTERVAL_MS;
 	let offlineSince = 0;
+	let firstAfterAway = Boolean(stats.resumed);
 	try {
 		return await runPollLoop();
 	} finally {
@@ -2228,6 +2293,14 @@ async function pollUntilDone(jobId) {
 		while (!pollAbort && runNow() < deadline) {
 			await sleepUntilVisibleOrElapsed(backoffMs);
 			if (pollAbort) return null;
+			// Nobody has looked at this tab for a while: stop asking the server and
+			// ask again the moment the tab is shown. The hidden time never counts
+			// against the run budget (runNow is foreground-only).
+			if (hidden.hiddenStreakMs() >= POLL_HIDDEN_PAUSE_MS) {
+				await waitUntilVisible();
+				if (pollAbort) return null;
+				firstAfterAway = true;
+			}
 
 			let data;
 			try {
@@ -2237,19 +2310,11 @@ async function pollUntilDone(jobId) {
 			} catch (err) {
 				if (err?.kind !== 'transport') throw err;
 				if (!offlineSince) offlineSince = runNow();
-				if (runNow() - offlineSince > POLL_TRANSPORT_GRACE_MS) {
-					// The job is alive on the server and the inflight record is the
-					// only handle this browser has on it, so this branch must NOT be
-					// treated like a failed generation. `kind` says so: the catch in
-					// run() keeps the record instead of clearing it, which is what
-					// makes the "reopen /forge" instruction below actually true.
-					const e = new Error(
-						'Lost the connection to the generator. Your model is still being built and will keep going. Reopen /forge to pick it back up.',
-					);
-					e.kind = 'transport_lost';
-					throw e;
-				}
-				setLaneNote(PATCHY_NETWORK_NOTE);
+				// The job is alive on the server whatever the network is doing, so a
+				// long outage only changes what the notice says. The poll keeps
+				// backing off, wakes the moment the device is online again, and
+				// picks the job back up.
+				setLaneNote(runNow() - offlineSince > POLL_TRANSPORT_GRACE_MS ? OFFLINE_NOTE : PATCHY_NETWORK_NOTE);
 				backoffMs = nextBackoff(backoffMs, POLL_MAX_BACKOFF_MS);
 				continue;
 			}
@@ -2261,14 +2326,14 @@ async function pollUntilDone(jobId) {
 				setLaneNote(inQueue ? QUEUE_NOTE : '');
 			}
 			if (data.error === 'unconfigured') {
-				const e = new Error(data.message || 'unconfigured');
+				const e = forgeErrorFromResponse(503, { ...data, error: 'unconfigured' });
 				e.kind = 'unconfigured';
 				throw e;
 			}
 			// A malformed or missing handle can never resolve: fail immediately
 			// instead of spinning out the full run budget on a stale resume.
 			if (data.error === 'invalid_job' || data.error === 'missing_job') {
-				throw new Error(data.message || 'That generation is no longer available.');
+				throw forgeErrorFromResponse(404, data);
 			}
 			// The server's elapsed is the JOB's age, measured from the row's
 			// created_at; the local meter only knows when THIS tab started counting.
@@ -2278,17 +2343,24 @@ async function pollUntilDone(jobId) {
 			// the elapsed readout and the cold-start countdown describe the
 			// generation rather than the tab, while the 1s tick keeps them moving
 			// smoothly between polls.
-			anchorElapsed(data.elapsed_seconds);
 			// One place folds the poll into the stage timeline: queued vs running, the
 			// lane a poll-time failover moved to, and a reference view that only
 			// becomes visible now (coalesced job, resumed session, failover successor).
+			// A lane change means a new, younger job row, the one case where the lane
+			// clock may go back.
+			const laneBefore = timeline.backend();
 			timeline.applyPoll(data);
-			if (data.status === 'done' && data.glb_url) return data;
+			anchorElapsed(data.elapsed_seconds, { laneChanged: timeline.backend() !== laneBefore });
+			if (data.status === 'done' && data.glb_url) {
+				stats.finishedAway = firstAfterAway;
+				return data;
+			}
+			firstAfterAway = false;
 			if (data.status === 'failed') {
 				// The server names the configured lanes that can still serve a fresh
 				// retry of this request (retry_backends), carry them so the catch can
 				// auto-hop to a backup engine instead of dead-ending.
-				const e = new Error(data.error || 'Generation failed.');
+				const e = forgeJobFailedError(data.error, 'generation_failed');
 				if (data.retryable && Array.isArray(data.retry_backends) && data.retry_backends.length) {
 					e.kind = 'lane_failed';
 					e.retryBackends = data.retry_backends;
@@ -2316,21 +2388,34 @@ async function pollUntilDone(jobId) {
 				// Poll-time failover: the server moved this job onto a backup lane and
 				// keeps it running under the same id. Surface the switch so the user
 				// sees which engine is now serving, rather than a silent swap.
-				if (data.failover_from && data.backend && data.backend !== data.failover_from) {
+				if (data.failover_note) {
+					setLaneNote(data.failover_note);
+				} else if (data.failover_from && data.backend && data.backend !== data.failover_from) {
 					// TripoSG is the last-resort photo lane and returns shape only, so
 					// say so now rather than let an untextured result read as a bug.
 					const shapeOnly =
 						data.backend === 'triposg' ? ' It returns the shape without textures.' : '';
+					const reason =
+						data.failover_from === 'pixal3d'
+							? `${engineLabel('pixal3d')} was taking too long.`
+							: `${engineLabel(data.failover_from)} hit a snag.`;
 					setLaneNote(
-						`${engineLabel(data.failover_from)} hit a snag. Continuing on ${engineLabel(data.backend)}, no action needed.${shapeOnly}`,
+						`${reason} Your model is now being made with the standard engine (${engineLabel(data.backend)}) from your original photo, no action needed.${shapeOnly}`,
 					);
 				}
 			}
 		}
 		if (pollAbort) return null;
-		throw new Error(
-			'Generation timed out. The model may be too complex, try fewer views or a simpler prompt.',
+		// The server had not called the job over when the page's own budget ran
+		// out, so it is NOT reported as failed: the record is kept (keepsInflight),
+		// the finalizer files the model in the gallery if it lands, and Try again
+		// or a reload picks the same job back up instead of starting another.
+		const e = forgeCopyError(
+			'Still being made',
+			'This generation is taking longer than usual and is still running on the server. It will be saved to your gallery when it finishes. Reopen /forge or press Try again to check on it.',
 		);
+		e.kind = 'still_running';
+		throw e;
 	}
 }
 
@@ -2500,6 +2585,7 @@ function setQualityBadge(meta) {
 		el.textContent = '';
 		el.title = 'Automated quality check';
 	};
+	setQualityRetryChip(meta?.quality_retry);
 	const gate = meta?.quality_gate;
 	// A real vision verdict: qa_available and a numeric score.
 	if (gate && gate.qa_available !== false && Number.isFinite(Number(gate.score))) {
@@ -2528,6 +2614,38 @@ function setQualityBadge(meta) {
 		return;
 	}
 	hide();
+}
+
+// What the automatic quality retry did for this model (quality_retry on a done
+// response from the synchronous lanes). The server writes the full sentence;
+// the chip shows a short label and carries that sentence as its accessible name
+// and tooltip, so a regenerated or kept-first model is never shown silently.
+const QUALITY_RETRY_LABELS = {
+	retry: 'Regenerated once',
+	first: 'Kept first of two',
+	busy: 'Not regenerated',
+	allowance: 'Not regenerated',
+	retry_failed: 'Retry did not finish',
+};
+function setQualityRetryChip(retry) {
+	const el = els.resultQualityRetry;
+	if (!el) return;
+	const key = retry?.ran ? retry.kept : retry?.declined;
+	const label = key ? QUALITY_RETRY_LABELS[key] : null;
+	const message = typeof retry?.message === 'string' ? retry.message : '';
+	if (!label || !message) {
+		el.classList.add('is-hidden');
+		el.removeAttribute('data-kind');
+		el.removeAttribute('aria-label');
+		el.textContent = '';
+		el.title = '';
+		return;
+	}
+	el.dataset.kind = retry.ran ? 'ran' : 'declined';
+	el.textContent = label;
+	el.title = message;
+	el.setAttribute('aria-label', `${label}. ${message}`);
+	el.classList.remove('is-hidden');
 }
 
 // Materialize entrance — conceal the standing viewer, play the WebGL dissolve
@@ -2646,6 +2764,9 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 	}
 	// Hide the saved chip by default; caller re-shows it for fresh generations.
 	if (els.savedChip) els.savedChip.classList.add('is-hidden');
+	// Same for "finished while you were away": only run() and resumeInflight()
+	// know the model arrived while nobody was looking, and they re-show it.
+	if (els.finishedAway) els.finishedAway.classList.add('is-hidden');
 	// A fresh generation is this browser's own model: point at the model page,
 	// where its maker decides who sees it (new models start unlisted) or deletes
 	// it. Gallery reopens and share links never show it, since only the maker's
@@ -2998,6 +3119,8 @@ function showError(message, { allowOverride = false, title = 'Generation failed'
 	if (els.errorTitle) els.errorTitle.textContent = title;
 	els.errorMessage.classList.remove('upload-sign-in', 'upload-sign-in--panel');
 	els.errorMessage.textContent = message;
+	// Revealing the panel by class is not reliably announced; this is.
+	announceForgeError(title, message);
 	// The "Generate anyway" affordance only exists for the vision pre-check
 	// rejection; every other error hides it so it can't leak across states.
 	if (els.generateAnyway) els.generateAnyway.classList.toggle('is-hidden', !allowOverride);
@@ -3029,11 +3152,117 @@ function showError(message, { allowOverride = false, title = 'Generation failed'
 // The stage shows why and a sign-in link that returns here, in place of Retry,
 // which could only be refused again.
 function showCreateSignIn() {
-	showError('', { title: 'Sign in to make a 3D model' });
+	const sessionEnded = noteSignedOut();
+	showError('', { title: sessionEnded ? 'Your session ended' : 'Sign in to make a 3D model' });
 	if (els.retry) els.retry.disabled = true;
-	const link = renderCreateSignIn(els.errorMessage);
+	const link = renderCreateSignIn(els.errorMessage, { sessionEnded });
 	const ax = document.activeElement;
 	if (!ax || ax === document.body || ax === els.generate || ax === els.retry) link.focus({ preventScroll: true });
+}
+
+// ── Account note and sign-in round trip ─────────────────────────────────────
+// Whether the visitor had a session when this page loaded. A 401 after that is a
+// session that ended mid-visit, which the prompts say in those words.
+let sessionWasSignedIn = false;
+// A photo was turned away for want of an account. The file itself is never
+// stored, so the restore note asks for it again.
+let photoRefusedForSignIn = false;
+
+async function initAccountNote() {
+	for (const a of document.querySelectorAll('#forge-account-note a[data-auth]')) {
+		a.href = forgeAuthHref(a.dataset.auth, location);
+	}
+	const state = await accountState();
+	document.documentElement.dataset.forgeAccount = state;
+	sessionWasSignedIn = state === 'in';
+	try {
+		if (state === 'in') localStorage.setItem('forge:signed-in', '1');
+		else if (state === 'out') localStorage.removeItem('forge:signed-in');
+	} catch {
+		// Storage blocked: only the no-flash hint is lost.
+	}
+	// Editing tools report a refusal through the site-wide banner
+	// (public/sign-in-watch.js), which reads this to say the session ended.
+	if (sessionWasSignedIn) document.documentElement.dataset.sessionSignedIn = '1';
+}
+
+// The server just refused this visitor for want of a session. Show the account
+// note with its sign-in links again, and return whether that session ended
+// mid-visit (as opposed to never having existed).
+function noteSignedOut() {
+	document.documentElement.dataset.forgeAccount = 'out';
+	try {
+		localStorage.removeItem('forge:signed-in');
+	} catch {
+		// Storage blocked: nothing to forget.
+	}
+	const note = document.getElementById('forge-account-note');
+	const text = document.getElementById('forge-account-note-text');
+	if (sessionWasSignedIn && note && text) {
+		note.dataset.state = 'ended';
+		text.textContent = 'Your session ended. Sign in again to keep making models: your prompt and settings come back with you.';
+	}
+	return sessionWasSignedIn;
+}
+
+// What the composer holds right now, saved when a sign-in link is followed.
+function readComposerDraft() {
+	return {
+		prompt: els.prompt?.value || '',
+		mode,
+		tier: selectedTier,
+		engineId: userPickedEngine ? selectedEngine.id : null,
+		aspect: aspectRatio,
+		hadPhotos: photoRefusedForSignIn || slots.some((s) => s.state !== 'empty') || sketch.state !== 'empty',
+		creationId: lastShownGlb ? currentCreationId : null,
+	};
+}
+
+// Put the saved composer back after the round trip, ready to generate in one
+// click. A generation still in flight or a share link keeps the stage; the
+// composer is restored either way.
+async function restoreSignInDraft() {
+	const draft = takeSignInDraft(globalThis.localStorage);
+	if (!draft) return;
+	const tab = document.getElementById(`tab-${draft.mode}`);
+	if (draft.mode !== mode && tab && !tab.hidden) setMode(draft.mode);
+	selectTier(draft.tier);
+	if (draft.engineId) {
+		const btn = els.engine?.querySelector(`button[data-engine="${draft.engineId}"]:not(:disabled)`);
+		if (btn) {
+			userPickedEngine = true;
+			selectEngine(btn);
+		}
+	}
+	els.aspect?.querySelector(`button[data-aspect="${draft.aspect}"]`)?.click();
+	if (draft.prompt && els.prompt) {
+		els.prompt.value = draft.prompt;
+		els.prompt.dispatchEvent(new Event('input', { bubbles: true }));
+	}
+	const note = document.getElementById('forge-account-note');
+	const text = document.getElementById('forge-account-note-text');
+	if (note && text) {
+		note.dataset.state = 'restored';
+		text.textContent = restoredDraftNote(draft);
+	}
+	const stageBusy = Boolean(readInflight() || window.__forgeShareId);
+	if (stageBusy) return;
+	if (draft.creationId) await reopenCreation(draft.creationId);
+	els.generate?.scrollIntoView({ block: 'center' });
+	els.generate?.focus({ preventScroll: true });
+}
+
+// Reopen the model that was on screen when the visitor left to sign in, so an
+// edit they were about to make is one click away again. Quiet on failure: the
+// model is in their creations either way.
+async function reopenCreation(id) {
+	try {
+		const res = await fetch(`/api/forge-creation?id=${encodeURIComponent(id)}`, { headers: CLIENT_HEADERS });
+		const data = await res.json().catch(() => ({}));
+		if (data?.creation?.glb_url) openCreation(data.creation, { scroll: false });
+	} catch {
+		// Offline or gone: the gallery still lists it.
+	}
 }
 
 // Asked before the generating panel opens, so a signed-out visitor is never
@@ -3126,6 +3355,8 @@ function showStorageDown({ retryAfter = 60, message = '' } = {}) {
 	render();
 	showState('error');
 	revealStage();
+	// Once, not on every countdown tick: #state-error has no live role.
+	announceForgeError(els.errorTitle?.textContent || '', base);
 
 	rateLimitTimer = setInterval(() => {
 		remaining -= 1;
@@ -3137,81 +3368,86 @@ function showStorageDown({ retryAfter = 60, message = '' } = {}) {
 	}, 1000);
 }
 
-// Rate-limit state: a designed, recoverable treatment for a 429. Instead of a
-// dead-end "busy, try again", we (1) show a live countdown to the reset and
-// re-enable Retry automatically when it elapses, and (2) — when a model is
-// already on screen — offer the local Refine path, which needs no API and never
-// throttles, so the user is never fully blocked. Distinguishes a genuine quota
-// hit from a temporarily-unavailable limiter (Redis degraded → fail-closed).
+// Throttle state (src/forge-throttle.js): a wait is not a failure. The panel
+// says which wait it is (a busy provider, our own pacing, the account limit or
+// the paid daily cap), counts down the server's own number, retries a busy
+// provider once by itself (cancellable) and keeps the prompt and settings. When
+// a model is already on screen, local Refine needs no API and never throttles.
 let rateLimitTimer = null;
+const throttlePanel = createThrottlePanel({
+	els: {
+		panel: document.getElementById('state-error'),
+		title: els.errorTitle,
+		message: els.errorMessage,
+		retry: els.retry,
+		lanes: els.errorLanes,
+		refineLocally: els.refineLocally,
+	},
+	onRetry: () => retryLastJob(),
+	actions: {
+		photo: () => {
+			setMode('image');
+			slotEl(0)?.focus();
+		},
+		free_engine: () => {
+			showState('empty');
+			els.engine?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			els.engine?.querySelector('button:not([disabled])')?.focus({ preventScroll: true });
+		},
+	},
+	buttonClass: 'btn btn-ghost',
+	signInUrl: uploadSignInUrl(),
+});
 function stopRateLimitCountdown() {
 	if (rateLimitTimer) {
 		clearInterval(rateLimitTimer);
 		rateLimitTimer = null;
 	}
+	throttlePanel.stop();
 }
 
-function showRateLimited({ retryAfter = 10, unavailable = false, busy = false, title = null, message = null }) {
+async function showThrottle(throttle) {
 	stopElapsed();
 	timeline.fail();
 	stopRateLimitCountdown();
 	if (els.generateAnyway) els.generateAnyway.classList.add('is-hidden');
-
-	// Offer local refinement whenever a model is already loaded — that's exactly
-	// the case after the Refine button 429s, and the one moment the user most
-	// wants to keep improving without waiting on the paid lane.
-	const canRefineLocally = Boolean(lastShownGlb && els.viewer.getAttribute('src'));
-	if (els.refineLocally) els.refineLocally.classList.toggle('is-hidden', !canRefineLocally);
-
-	// This is a wait state, not a failure. The heading must say so, or a quota
-	// pause reads as a broken product.
-	if (els.errorTitle) {
-		els.errorTitle.textContent =
-			title ||
-			(busy ? 'High demand right now' : unavailable ? 'Temporarily unavailable' : 'Generation limit reached');
-	}
-
-	let remaining = Math.max(1, Math.ceil(retryAfter));
-	const base =
-		message ||
-		(busy
-			? 'High demand: the free 3D engines are all busy right now.'
-			: unavailable
-				? 'The generator is temporarily unavailable.'
-				: 'You’ve hit the generation limit.');
-	const tail = canRefineLocally ? ' Or refine your current model now: instant and unlimited.' : '';
-
-	const render = () => {
-		els.errorMessage.textContent =
-			remaining > 0
-				? `${base} Retrying is available in ${countdownText(remaining)}.${tail}`
-				: `${base} You can try again now.${tail}`;
-	};
-	// While counting down, Retry is disabled (it would just 429 again); it
-	// re-enables the moment the window resets.
-	if (els.retry) els.retry.disabled = remaining > 0;
-	render();
+	const signedIn = await signedInForUploads();
+	throttlePanel.show(throttle, {
+		signedIn,
+		canRefineLocally: Boolean(lastShownGlb && els.viewer.getAttribute('src')),
+	});
 	showState('error');
 	revealStage();
-
-	rateLimitTimer = setInterval(() => {
-		remaining -= 1;
-		if (remaining <= 0) {
-			stopRateLimitCountdown();
-			if (els.retry) els.retry.disabled = false;
-		}
-		render();
-	}, 1000);
+	announceForgeError(els.errorTitle?.textContent || '', els.errorMessage?.textContent || '');
+	throttlePanel.focus();
 }
 
 // Run a job (text or image/multi-view). `cfg` = { prompt, imageUrls }.
-async function run(cfg) {
+// `handoff` is set only by a run starting its own successor (the automatic lane
+// hop); every other caller is refused while a generation is already running in
+// this tab, which is what makes a double click or a held Enter key one job.
+async function run(cfg, { handoff = false } = {}) {
+	const gateToken = runGate.enter({ handoff });
+	if (!gateToken) return;
 	stopRateLimitCountdown();
-	if (!(await requireCreateAccount())) return;
+	if (!(await requireCreateAccount())) {
+		runGate.leave(gateToken);
+		return;
+	}
+	// The same request is already live (another tab, or this one before a
+	// reload) and has its job: show that generation rather than start a second.
+	const joined = inflightStore.matching(composeJobBody(cfg));
+	if (joined?.jobId) {
+		lastJob = cfg;
+		runGate.leave(gateToken);
+		await resumeInflight({ note: JOINED_NOTE });
+		return;
+	}
 	// Capture before the single-use payment proof is stripped below — it tells the
 	// upgrade-funnel conversion which path (pay-per-use vs. hold) closed the loop.
 	const wasPaidGeneration = !!cfg.payment;
 	lastJob = cfg;
+	seedField.noteUsed(cfg.seed);
 	pollAbort = false;
 	currentCreationId = null;
 	setBusy(true);
@@ -3245,16 +3481,40 @@ async function run(cfg) {
 	// Watch the server's pre-submit milestones for THIS submission while the POST
 	// below is still open, so the director's rewrite and the reference view land
 	// on the stage list the moment each one genuinely finishes, not at the end.
-	const progressId = mintProgressId();
-	startProgressWatch(progressId);
+	// Recorded before it is sent: a reload or a closed tab during the POST resends
+	// this exact request under this key and collects the job it started. A
+	// request already being started elsewhere is joined under ITS key and body.
+	const body = joined?.body || composeJobBody({ ...cfg, progressId: mintProgressId() });
+	const idempotencyKey = joined?.key || newIdempotencyKey();
+	if (!joined) inflightStore.beginSubmit({ key: idempotencyKey, body, label });
+	startProgressWatch(body.progress_id);
 
 	try {
-		const job = await startJob({ ...cfg, progressId });
+		const job = await startJob(body, idempotencyKey);
+		// Cancelled while the request was open: the job exists server-side and the
+		// finalizer files it, but this page must not pick it back up.
+		if (pollAbort) {
+			clearInflight();
+			return;
+		}
 		// The POST answered, so it now carries every fact the crumbs were standing
 		// in for. Nothing left to watch.
 		stopProgressWatch();
+		// The job row exists from here: the lane clock starts now, and the first
+		// poll's job age corrects it.
+		waitClock.accepted();
 		rememberFromResponse(job);
 		if (job.creation_id) currentCreationId = job.creation_id;
+		// The server routed this photo to the standard engine because "Match my photo"
+		// is recovering. Say so now instead of letting the swap go unmentioned.
+		// A sketch request the scribble engine could not take is being built from the
+		// drawing as a picture; the server says so in its own words. The views note
+		// (photos a one-image engine did not read, or photos the checks left out)
+		// rides along, so the page never implies coverage nobody used.
+		const laneNotice = [job.failover_note || job.lane_fallback?.reason, job.views_note]
+			.filter(Boolean)
+			.join(' ');
+		if (laneNotice) setLaneNote(laneNotice);
 
 		// Fold every real signal the submit response carries into the timeline: the
 		// lane that actually ran, the art-directed prompt, the reference view (shown
@@ -3271,12 +3531,15 @@ async function run(cfg) {
 		// that already succeeded.
 		const isAsync = !(job.status === 'done' && job.glb_url);
 		if (isAsync) saveInflight(job, label);
-		const done = !isAsync ? job : await pollUntilDone(job.job_id);
+		const pollStats = {};
+		const done = !isAsync ? job : await pollUntilDone(job.job_id, pollStats);
 		if (pollAbort || !done) return; // cancelled
 		clearInflight();
 
 		// A pay-per-use proof is single-use and now redeemed on the server — drop it
-		// so a later Retry/Refine of this job never replays a spent payment.
+		// so a later Retry/Refine of this job never replays a spent payment. The pay
+		// sheet remembers unspent proofs across reloads; tell it this one is spent.
+		if (lastJob?.payment) forgetPaidProof(lastJob.payment.paymentId);
 		if (lastJob) delete lastJob.payment;
 
 		rememberFromResponse(done);
@@ -3297,10 +3560,12 @@ async function run(cfg) {
 				path: done.path ?? job.path,
 				quality: done.quality ?? job.quality,
 				quality_gate: done.quality_gate ?? job.quality_gate,
+				quality_retry: done.quality_retry ?? job.quality_retry,
 				rigged: done.rigged ?? job.rigged,
 			},
 			{ autoSaved: !!done.creation_id },
 		);
+		showFinishedAway(pollStats.finishedAway);
 		timeline.complete();
 		// What the model was actually asked for. Only the reference-image lanes run
 		// the art director, so `directed_prompt` is absent on every other lane and
@@ -3342,7 +3607,7 @@ async function run(cfg) {
 		// this browser has on it, so clearing it here is what used to make the
 		// error's own "reopen /forge to pick it back up" a lie. Keep it and the
 		// resume path in boot() picks the same job back up.
-		if (err?.kind !== 'transport_lost') clearInflight();
+		if (!keepsInflight(err)) clearInflight();
 		// This job is over on every branch below (a designed error state, a gate,
 		// or an automatic lane hop that starts a fresh timeline of its own), so the
 		// stage list stops here rather than sitting on a spinning row.
@@ -3365,52 +3630,43 @@ async function run(cfg) {
 				els.providerKey.setAttribute('aria-invalid', 'true');
 				els.providerKey.focus();
 			}
-			showError(err.message || 'Add your API key to use this engine, then retry.');
+			showError(err.message, { title: err.title });
 			return;
 		}
 		if (err.kind === 'credits') {
 			stopElapsed();
-			showError(err.message || 'The provider account is out of credits.');
+			showError(err.message, { title: err.title });
 			return;
 		}
 		// The reference photo failed the vision pre-check. Offer "Generate anyway"
 		// so a confident user is never permanently blocked by a cautious verdict.
 		if (err.kind === 'not_usable') {
-			showError(err.message, { allowOverride: true });
+			showError(err.message, { allowOverride: true, title: err.title });
 			return;
 		}
 		// A place in line for the image step: show it, keep it, and resubmit the
 		// moment it is this person's turn. A place that lapsed resubmits too, which
-		// rejoins the line (or starts at once if it has emptied).
+		// rejoins the line (or starts at once if it has emptied). The resubmit takes
+		// the run gate over, so this run's cleanup leaves the new one busy.
 		if (err.kind === 'queued') {
 			stopProgressWatch();
 			stopElapsed();
+			tabTitle.idle();
 			els.generateLabel.textContent = 'In line…';
 			const outcome = await lineWaiter.wait(err.line);
-			if (outcome !== 'left' && !pollAbort && lastJob) run(lastJob);
+			if (outcome !== 'left' && !pollAbort && lastJob) run(lastJob, { handoff: true });
 			return;
 		}
-		if (err.kind === 'full') {
-			showRateLimited({ retryAfter: err.retryAfter, title: 'Forge is full right now', message: err.message });
-			return;
-		}
-		// Rate limited (or the limiter is temporarily unavailable). Designed,
-		// recoverable state with a live countdown + the local-refine escape hatch.
-		if (err.kind === 'rate_limited') {
-			showRateLimited({ retryAfter: err.retryAfter, unavailable: err.unavailable });
+		// Any wait: a busy provider, our pacing, the account limit or the daily cap.
+		// Designed, recoverable state with a live countdown that says which one.
+		if (err.kind === 'throttled') {
+			await showThrottle(err.throttle);
 			return;
 		}
 		// Object storage is refusing us. Designed, honest, and pointed at the thing
 		// that still works, instead of a raw signing complaint from the store.
 		if (err.kind === 'storage_down') {
 			showStorageDown({ retryAfter: err.retryAfter, message: err.message });
-			return;
-		}
-		// Free lane at capacity under load — same recoverable countdown UI, framed as
-		// high demand. Auto-retry lands the user in line as slots free up, and the
-		// local-refine escape hatch still applies when a model is already on screen.
-		if (err.kind === 'busy') {
-			showRateLimited({ retryAfter: err.retryAfter, busy: true });
 			return;
 		}
 		// High-tier $THREE gate: open the designed upsell (Get $THREE / what you hold
@@ -3443,10 +3699,10 @@ async function run(cfg) {
 					// Queue the switch notice for the re-run's generating panel, so the
 					// automatic hop is visible (picker flip + an in-panel line), never silent.
 					pendingLaneNote = err.regionRestricted
-						? `${engineLabel(failedId)} is not available in your region. Generating on ${engineLabel(err.retryBackends[0])} instead, no action needed.`
+						? `${engineLabel(failedId)} is ${territoryResolved === true ? 'not available in your region' : 'off because we could not confirm your location'}. Generating on ${engineLabel(err.retryBackends[0])} instead, no action needed.`
 						: `${engineLabel(failedId)} hit a snag. Retrying on ${engineLabel(err.retryBackends[0])}, no action needed.`;
 					if (err.regionRestricted) updateEngineAvailability();
-					run(lastJob);
+					run(lastJob, { handoff: true });
 					return;
 				}
 			}
@@ -3459,38 +3715,80 @@ async function run(cfg) {
 		if (err.kind === 'region') {
 			stopElapsed();
 			updateEngineAvailability();
-			showError(err.message);
+			showError(err.message, { title: err.title });
 			return;
 		}
 		// A presented pay-per-use proof was already spent — drop the stale payment so
 		// Retry doesn't replay it, and re-open the pay flow for a fresh generation.
 		if (err.kind === 'payment_used') {
 			stopElapsed();
+			const spent = lastJob?.payment;
+			if (spent) forgetPaidProof(spent.paymentId);
 			if (lastJob) delete lastJob.payment;
 			showState('empty');
-			showError(err.message || 'That payment was already used. Pay again to generate.');
+			// A remembered proof the server had already taken: pay fresh once. A fresh
+			// payment is never reused, so this cannot loop.
+			if (spent?.reused) payThenGenerate({ usd: spent.usd });
+			else showError(err.message, { title: err.title });
 			return;
 		}
 		// The proof was rejected (bad/expired) before any model — drop it and surface
 		// the gate's Pay-per-use path again so the user can pay cleanly.
 		if (err.kind === 'payment_invalid') {
 			stopElapsed();
+			const spent = lastJob?.payment;
+			if (spent) forgetPaidProof(spent.paymentId);
 			if (lastJob) delete lastJob.payment;
 			showState('empty');
-			if (err.gate) onGate(err.gate, gateOpts());
-			else showError(err.message || 'That $THREE payment could not be verified.');
+			if (spent?.reused) payThenGenerate({ usd: spent.usd });
+			else if (err.gate) onGate(err.gate, gateOpts());
+			else showError(err.message, { title: err.title });
 			return;
 		}
-		showError(
-			err.message ||
-				'Something went wrong. Try a simpler, single-subject prompt or cleaner photos.',
-		);
+		const failure = forgeErrorDescriptor(err, 'generation_failed');
+		showError(failure.message, { title: failure.title });
 	} finally {
 		// Every exit from this job (delivered, cancelled, errored, gated) ends the
 		// pre-submit watch, so a poll can never outlive the run that started it.
 		stopProgressWatch();
-		setBusy(false);
+		// Only the run that still holds the tab ends the busy state: a cancelled
+		// run, or one that handed off to an automatic lane hop, leaves it alone.
+		if (runGate.leave(gateToken)) setBusy(false);
 	}
+}
+
+const JOINED_NOTE =
+	'This exact request is already being made, in another tab or an earlier visit. Showing that generation here instead of starting a second one.';
+
+// Resend a recorded request. One that is only holding a place in the image-step
+// line waits for its turn like a fresh submit does, then goes out again under a
+// new key. Null when the person gave the place up.
+async function startResumedJob(inflight) {
+	let key = inflight.key;
+	for (;;) {
+		try {
+			return await startJob(inflight.body, key);
+		} catch (err) {
+			if (err.kind !== 'queued' || pollAbort) throw err;
+			stopElapsed();
+			tabTitle.idle();
+			els.generateLabel.textContent = 'In line…';
+			const outcome = await lineWaiter.wait(err.line);
+			if (outcome === 'left' || pollAbort) return null;
+			key = newIdempotencyKey();
+			inflightStore.beginSubmit({ key, body: inflight.body, label: inflight.label });
+			setBusy(true);
+			startElapsed();
+			showState('generating');
+		}
+	}
+}
+
+// The result arrived on the first look after the user was away (a reopened
+// page, or a tab that sat in the background). Say so on the result itself, so
+// a model that is simply there is never mistaken for a fresh, instant run.
+function showFinishedAway(finishedAway) {
+	if (els.finishedAway) els.finishedAway.classList.toggle('is-hidden', !finishedAway);
 }
 
 // Your GPU (Modly) -----------------------------------------------------------
@@ -3599,10 +3897,8 @@ function renderModlyEstimate() {
 
 function paintModlyProgress(elapsedS) {
 	const pending = modlyRun.state === 'pending';
-	if (els.genProgress) {
-		els.genProgress.dataset.indeterminate = String(pending);
-		els.genProgress.dataset.over = 'false';
-	}
+	setIndeterminate(pending);
+	if (els.genProgress) els.genProgress.dataset.over = 'false';
 	if (!pending) setProgress(modlyRun.pct);
 	const strong = document.createElement('strong');
 	strong.textContent = `${elapsedS}s`;
@@ -3936,9 +4232,13 @@ modly = createModlyPanel({ root: els.modlyPanel, onChange: onModlyChange });
 // Resume an in-flight generation persisted before a reload/navigation. The
 // server holds all job state, so picking it back up is just polling the same
 // job id; the panel restores in its mesh phase with an honest elapsed count.
-async function resumeInflight() {
+async function resumeInflight({ note } = {}) {
 	const inflight = readInflight();
 	if (!inflight) return false;
+	const gateToken = runGate.enter();
+	if (!gateToken) return false;
+	const path = inflight.path || inflight.body?.path || null;
+	const backend = inflight.backend || inflight.body?.backend || null;
 
 	pollAbort = false;
 	currentCreationId = inflight.creationId || null;
@@ -3948,17 +4248,37 @@ async function resumeInflight() {
 	// the next real poll refines the rest. A resumed job whose reference view was
 	// never captured locally still gets it: the poll response carries it.
 	timeline.resume({
-		mode: inflight.path === 'sketch' ? 'sketch' : 'text',
-		backend: inflight.backend,
+		mode: path === 'sketch' ? 'sketch' : 'text',
+		backend,
 		referenceUrl: inflight.previewImageUrl || null,
 		elapsedS: Math.max(0, Math.round((Date.now() - inflight.startedAt) / 1000)),
 	});
-	setLaneNote('Welcome back. This generation kept running while you were away.');
-	startElapsed(Date.now() - inflight.startedAt);
+	setLaneNote(note || 'Welcome back. This generation kept running while you were away.');
+	startElapsed({ waitedS: (Date.now() - inflight.startedAt) / 1000, onLane: Boolean(inflight.jobId) });
 	showState('generating');
 
+	const pollStats = { resumed: true };
 	try {
-		const done = await pollUntilDone(inflight.jobId);
+		// Left before the POST answered: resend the recorded request under its
+		// recorded key. The server answers with the job that request started (or
+		// starts it, if the first send never arrived), never with a second job.
+		let jobId = inflight.jobId;
+		let done = null;
+		if (!jobId) {
+			const job = await startResumedJob(inflight);
+			if (!job || pollAbort) return true;
+			waitClock.accepted();
+			rememberFromResponse(job);
+			if (job.creation_id) currentCreationId = job.creation_id;
+			if (job.status === 'done' && job.glb_url) {
+				done = job;
+				pollStats.finishedAway = true;
+			} else {
+				saveInflight(job, inflight.label);
+				jobId = job.job_id;
+			}
+		}
+		if (!done) done = await pollUntilDone(jobId, pollStats);
 		if (pollAbort || !done) return true;
 		clearInflight();
 		rememberFromResponse(done);
@@ -3974,15 +4294,17 @@ async function resumeInflight() {
 			{
 				views_used: done.views_used,
 				multiview: done.multiview,
-				backend: done.backend ?? inflight.backend,
-				tier: done.tier ?? inflight.tier,
-				path: done.path ?? inflight.path,
+				backend: done.backend ?? backend,
+				tier: done.tier ?? inflight.tier ?? inflight.body?.tier,
+				path: done.path ?? path,
 				quality: done.quality,
 				quality_gate: done.quality_gate,
+				quality_retry: done.quality_retry,
 				rigged: done.rigged,
 			},
 			{ autoSaved: !!done.creation_id },
 		);
+		showFinishedAway(pollStats.finishedAway);
 		timeline.complete();
 		loadGallery();
 		if (!done.preview_image_url && !inflight.previewImageUrl) {
@@ -3990,13 +4312,14 @@ async function resumeInflight() {
 		}
 	} catch (err) {
 		if (pollAbort) return true;
-		clearInflight();
-		showError(
-			err.message ||
-				'Something went wrong resuming your generation. Check your gallery: finished models land there automatically.',
-		);
+		// A job that may still be alive keeps its record for the next visit.
+		if (!keepsInflight(err)) clearInflight();
+		timeline.fail();
+		stopElapsed();
+		const failure = forgeErrorDescriptor(err, 'generation_failed');
+		showError(failure.message, { title: failure.title });
 	} finally {
-		setBusy(false);
+		if (runGate.leave(gateToken)) setBusy(false);
 	}
 	return true;
 }
@@ -4081,7 +4404,10 @@ function submit() {
 	// A fresh user-initiated generation resets the automatic lane-hop budget —
 	// the single silent hop belongs to one submission, never accumulates.
 	autoLaneHops = 0;
-	if (cfg) run({ ...cfg, seed: mintSeed() });
+	throttlePanel.resetAutoRetry();
+	if (!cfg) return;
+	const seed = seedField.seedForSubmit(mintSeed);
+	if (seed !== null) run({ ...cfg, seed });
 }
 
 // Options handed to the gate modal / in-place lock so their "Pay per generation"
@@ -4101,12 +4427,14 @@ async function payThenGenerate(pay) {
 	if (!(usd > 0)) return;
 	const cfg = collectComposerCfg();
 	if (!cfg) return;
+	const seed = seedField.seedForSubmit(mintSeed);
+	if (seed === null) return;
 	// Ensure the job runs at High (the tier the payment buys) even if the click
 	// came from the in-place lock before any submit.
 	if (selectedTier !== 'high') selectTier('high');
 	const result = await payForHighGeneration({ usd });
 	if (!result?.ok) return; // cancelled or failed — the modal explained why
-	run({ ...cfg, seed: mintSeed(), payment: { paymentId: result.paymentId, refId: result.refId } });
+	run({ ...cfg, seed, payment: { paymentId: result.paymentId, refId: result.refId, reused: Boolean(result.reused), usd } });
 }
 
 // Wiring ----------------------------------------------------------------------
@@ -4180,6 +4508,8 @@ els.form.addEventListener('submit', (e) => {
 function submitOnEnter(e) {
 	if (e.key !== 'Enter' || e.isComposing || e.shiftKey || e.altKey) return;
 	e.preventDefault();
+	// A held key repeats keydown many times a second: one press, one submit.
+	if (e.repeat) return;
 	submit();
 }
 els.prompt.addEventListener('keydown', submitOnEnter);
@@ -4279,6 +4609,7 @@ els.engine?.addEventListener('click', (e) => {
 		selectEngine(btn);
 	}
 });
+mountByokKeyField(els.providerKey);
 els.providerKey?.addEventListener('input', () => {
 	providerKey = els.providerKey.value.trim();
 	els.providerKey.removeAttribute('aria-invalid');
@@ -4301,6 +4632,7 @@ els.cancel.addEventListener('click', () => {
 	// Waiting in line: the place goes to the next person.
 	lineWaiter.leave();
 	clearInflight();
+	runGate.reset();
 	stopElapsed();
 	// The user ended the job: the stage list stops claiming anything is running.
 	timeline.fail();
@@ -4329,8 +4661,9 @@ els.again.addEventListener('click', () => {
 	}
 });
 
-els.retry.addEventListener('click', () => {
-	if (els.retry.disabled) return; // mid-countdown; Retry re-enables at reset
+// Replay the last job. Shared by the Retry button and the throttle panel's one
+// automatic retry when a busy provider's countdown ends.
+function retryLastJob() {
 	stopRateLimitCountdown();
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
 	destinationPicker.hide();
@@ -4342,6 +4675,13 @@ els.retry.addEventListener('click', () => {
 		showState('empty');
 		els.prompt.focus();
 	}
+}
+
+els.retry.addEventListener('click', () => {
+	if (els.retry.disabled) return; // mid-countdown; Retry re-enables at reset
+	// A retry the user asked for earns a fresh automatic retry if it is refused.
+	throttlePanel.resetAutoRetry();
+	retryLastJob();
 });
 
 // Rate-limit escape hatch: drop straight back to the loaded model and open the
@@ -4682,7 +5022,15 @@ document.addEventListener('forge:open-creation', (e) => {
 
 // Build the quality/engine controls from the live catalog (tiers, backends,
 // cost/time matrix). Falls back silently to the defaults if it can't load.
-loadCatalog();
+const catalogReady = loadCatalog();
+
+// Sign-in round trip (src/forge-sign-in-return.js): say up front that making a
+// model needs a free account, save the composer whenever a sign-in or
+// registration link is followed, and put it back once the catalog has built the
+// engine buttons it may name.
+initAccountNote();
+installSignInDraftCapture(readComposerDraft);
+catalogReady.then(restoreSignInDraft);
 
 // Surface the $THREE holder gate on the High control up front (pill + note),
 // independent of the catalog so the affordance lands even on older deploys.

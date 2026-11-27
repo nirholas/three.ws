@@ -57,7 +57,7 @@ yields a static FBX.
 
 | `remesh_mode` | What it does |
 |---|---|
-| `triangle` (default) | Repair + quadric-error triangle decimation (open3d, trimesh fallback). Geometry only — drops materials. Honors `operation`. |
+| `triangle` (default) | Repair + quadric-error triangle decimation (open3d, trimesh fallback). Geometry only: it drops materials. Honors `operation`. `/api/forge-remesh` no longer sends a GLB here for triangle `full` or `simplify`: it optimizes that in-process (`api/_lib/glb-optimize.js`), keeping UVs, materials, textures and rig, and only hands the worker non-GLB sources and non-GLB output formats. |
 | `quad` | Quad-dominant topology via AutoRemesher (QuadriFlow as the fallback, see `quad_engine`), then xatlas UV re-unwrap + source-texture re-bake. Reports a real `quad_ratio` and the engine that produced it. An open or non-manifold input is cleaned and rebuilt watertight first (see below). |
 | `lowpoly` | Silhouette-preserving QEM decimation + UV re-unwrap + texture re-bake. |
 

@@ -234,7 +234,7 @@ Rows `.agents/README.md` to `ARCHITECTURE.md` of the per-file ledger. The dispos
 | `agent-payments-sdk/FORK_NOTES.md` | no-open-work | reference doc, no open work |
 | `agent-payments-sdk/README.md` | no-open-work | reference doc, no open work |
 | `agent-payments-sdk/src/solana/examples/README.md` | no-open-work | reference doc, no open work |
-| `agent-protocol-sdk/README.md` | order | [969](../969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program id AgEnt...Zfo not deployed on devnet or mainnet |
+| `agent-protocol-sdk/README.md` | order | [969](../../awaiting-owner/969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md). program id AgEnt...Zfo not deployed on devnet or mainnet |
 | `agent-ui-sdk/CHANGELOG.md` | excluded | license, changelog or repository boilerplate |
 | `agent-ui-sdk/README.md` | no-open-work | reference doc, no open work |
 | `AGENTS.md` | not-a-plan | agent rules file |
@@ -367,5 +367,5 @@ Rows `.agents/README.md` to `ARCHITECTURE.md` of the per-file ledger. The dispos
 | `apps/hq/docs/fix-crypto-news-agents.md` | not-a-plan | prompts for a different repository (free-crypto-news) |
 | `apps/hq/docs/local-backend-audit.md` | no-open-work | parity matrix with closure status recorded |
 | `apps/hq/README.md` | no-open-work | reference README |
-| `apps/hq/ROADMAP.md` | order | [737](../737-plan-hq-agent-defi-tools-and-context-bridge.md), [746](../746-plan-hq-protocol-dashboards-and-risk-heatmap.md). AI integration items and protocol dashboards/risk heatmap unbuilt; many checkboxes stale |
+| `apps/hq/ROADMAP.md` | order | [737](../../awaiting-owner/737-plan-hq-agent-defi-tools-and-context-bridge.md), [746](../../awaiting-owner/746-plan-hq-protocol-dashboards-and-risk-heatmap.md). AI integration items and protocol dashboards/risk heatmap unbuilt; many checkboxes stale |
 | `ARCHITECTURE.md` | order | [776](../776-plan-docs-architecture-known-gaps-truth-pass.md). Known Gaps rows stale vs api/_lib/env.js, secret-box.js, reflection.js |

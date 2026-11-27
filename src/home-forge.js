@@ -34,6 +34,7 @@ import {
 import { milestoneNote } from './forge-milestones.js';
 import { initForgeControls } from './home-forge-controls.js';
 import { generateForgePrompt } from './forge-prompt-gen.js';
+import { requestEnhance } from './forge-enhance-request.js';
 import {
 	sleepUntilVisibleOrElapsed,
 	createHiddenClock,
@@ -419,6 +420,17 @@ async function startJob(prompt, { config = DEFAULT_CFG, headers, payment } = {})
 			data.message || 'High quality is a $THREE holder feature — open Options to hold or pay per generation.',
 		);
 	}
+	// The presented $THREE proof was refused (bad, expired or already spent): the
+	// controls drop it from the remembered proofs and, if it was a reused one, pay
+	// fresh once. Tagged so run() can report it.
+	if (
+		(res.status === 402 && (data.error === 'payment_invalid' || data.error === 'payment_expired')) ||
+		(res.status === 409 && data.error === 'payment_already_used')
+	) {
+		throw Object.assign(new Error(data.message || 'That $THREE payment could not be used. Pay again to continue.'), {
+			paymentRefused: true,
+		});
+	}
 	if (res.status === 429 || data.error === 'rate_limited') {
 		const secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 10;
 		throw new Error(data.message || `The forge is busy. Try again in about ${secs} seconds.`);
@@ -703,10 +715,15 @@ async function run(prompt, { payment } = {}) {
 		// The initial POST always carries the persisted creation id; the async
 		// poll result may not, so prefer the job's id and fall back to done's.
 		showResult(done.glb_url, prompt, { creationId: job.creation_id || done.creation_id || '' });
+		return 'delivered';
 	} catch (err) {
 		if (!pollAbort && seq === runSeq) {
-			showError(err.message || 'Something went wrong. Try a simpler prompt.');
+			// A refused reused proof is replaced by a fresh payment right away, so
+			// there is nothing to show; any other failure is explained.
+			if (err.paymentRefused && payment?.reused) showState('idle');
+			else showError(err.message || 'Something went wrong. Try a simpler prompt.');
 		}
+		if (err.paymentRefused) return 'refused';
 	} finally {
 		if (seq === runSeq) setBusy(false);
 	}
@@ -959,10 +976,11 @@ function surpriseMe() {
 	run(prompt);
 }
 
-// Enhance — the art-director rewrite: POST the raw prompt to /api/forge-enhance
-// (Vertex Gemini → free LLM chain, fail-soft), which returns a richer single-
-// subject spec with per-part PBR materials. Free, no key. Non-destructive: the
-// field is only replaced when a materially different rewrite comes back.
+// Enhance: the art-director rewrite. POST the raw prompt to /api/forge-enhance
+// (Vertex Gemini, then the free LLM chain, fail-open), which returns a richer
+// single-subject spec with per-part PBR materials. Free, no key. Non-destructive:
+// the field is only replaced when a usable, materially different rewrite comes
+// back; when the helper is down the toast says so and the words stay.
 async function enhance() {
 	if (enhanceBusy || busy) return;
 	const raw = els.prompt.value.trim();
@@ -978,36 +996,16 @@ async function enhance() {
 	}
 	els.prompt.setAttribute('aria-busy', 'true');
 	try {
-		const res = await fetch('/api/forge-enhance', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json', ...CLIENT_HEADERS },
-			body: JSON.stringify({ prompt: raw }),
-		});
-		if (res.status === 429) {
-			const data = await res.json().catch(() => ({}));
-			const secs = Number(data.retry_after);
-			showToast(secs > 0 ? `Easy — try enhancing again in ${secs}s.` : 'Slow down a moment, then try again.');
-			return;
+		// requestEnhance always settles (a stalled request ends at its timeout)
+		// and hands back the user's words unless a usable rewrite landed.
+		const out = await requestEnhance(raw, { headers: CLIENT_HEADERS });
+		if (out.kind === 'rewritten') {
+			els.prompt.value = out.prompt;
+			autoGrow();
+			showToast('Rewritten for sharper geometry. Edit freely, or just Forge.');
+		} else {
+			showToast(out.message);
 		}
-		if (res.status === 503) {
-			showToast('The enhancer is offline right now — your prompt is unchanged.');
-			return;
-		}
-		if (!res.ok) {
-			showToast("Couldn't enhance that one. Tweak the wording and retry.");
-			return;
-		}
-		const data = await res.json().catch(() => ({}));
-		const next = typeof data.prompt === 'string' ? data.prompt.trim() : '';
-		if (!next || next.toLowerCase() === raw.toLowerCase()) {
-			showToast('That prompt is already in good shape.');
-			return;
-		}
-		els.prompt.value = next;
-		autoGrow();
-		showToast('Rewritten for sharper geometry. Edit freely, or just Forge.');
-	} catch {
-		showToast('Network hiccup — your prompt is unchanged. Try again.');
 	} finally {
 		enhanceBusy = false;
 		if (els.enhance) {
@@ -1032,7 +1030,8 @@ function boot() {
 		},
 		onRerun: (payment) => {
 			const p = (els.prompt.value.trim() || lastPrompt || '').trim();
-			if (p) run(p, { payment });
+			if (p) return run(p, { payment });
+			return undefined;
 		},
 		onBlockedChange: (blocked) => {
 			highBlocked = blocked;

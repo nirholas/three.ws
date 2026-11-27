@@ -86,5 +86,5 @@ feeds 938. The rest are independent.
 Related campaigns, not duplicated here: best3d
 [072](../072-best3d-06-engine-bridges.md) (engine bridges),
 [075](../075-best3d-09-three-vrm.md) (three-vrm and VRM 0.x export),
-[934](../934-best3d-07-orphaned-avatar-campaign.md) (orphaned avatar users) and
-[935](../935-best3d-08-engine-store-publishing.md) (engine store publishing).
+[934](../../awaiting-owner/934-best3d-07-orphaned-avatar-campaign.md) (orphaned avatar users) and
+[935](../../awaiting-owner/935-best3d-08-engine-store-publishing.md) (engine store publishing).

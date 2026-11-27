@@ -34,7 +34,8 @@
 
 import { getRedis } from './redis.js';
 import { BACKENDS, backendIsConfigured, resolveTier } from './forge-tiers.js';
-import { laneHealthSnapshot, markLaneUnhealthy } from './forge-lane-health.js';
+import { laneHealthSnapshot, markLaneUnhealthy, laneCooling, laneCooldownKey } from './forge-lane-health.js';
+import { providerCooldownUntil } from './provider-health.js';
 import { encodeJobToken } from './forge-job-token.js';
 import { laneAllowedInTerritory } from './forge-territory.js';
 
@@ -154,6 +155,35 @@ export async function pickRedispatchLane({ attempted = [], country = null } = {}
 		// No telemetry → first configured candidate; a bad pick fails over again.
 		return candidates[0];
 	}
+}
+
+/**
+ * Poll-time redispatch: pick the next healthy lane and submit to it. A lane
+ * that refuses the submit is cooled, marked attempted, and the next candidate
+ * is tried, so one unreachable successor cannot end a job a later lane could
+ * serve. Each lane is asked at most once, and at most MAX_LAST_RESORT_SUBMITS
+ * submits are spent per poll. Lanes with no env never reach the network
+ * (pickRedispatchLane filters them first).
+ *
+ * Returns { backend, extJobId, handle, attempted } or null. `attempted` also
+ * carries the lanes that refused, so the chain never re-asks them.
+ */
+export async function submitNextRedispatchLane({ attempted = [], country = null, imageUrl, prompt, tierId, path } = {}) {
+	const tried = [...attempted];
+	for (let i = 0; i < MAX_LAST_RESORT_SUBMITS; i++) {
+		const backend = await pickRedispatchLane({ attempted: tried, country });
+		if (!backend) return null;
+		tried.push(backend);
+		try {
+			const { extJobId, handle } = await submitFailoverJob({ backend, imageUrl, prompt, tierId, path });
+			// The serving lane joins `attempted` only if it fails later; refusers join now.
+			if (extJobId && handle) return { backend, extJobId, handle, attempted: tried.filter((id) => id !== backend) };
+		} catch (err) {
+			console.warn(`[forge] poll-time lane ${backend} refused the job: ${err?.message || err}`);
+		}
+		await markLaneUnhealthy(backend);
+	}
+	return null;
 }
 
 // Submits a last-resort rung may spend before the request fails. Each self-host
@@ -305,4 +335,67 @@ export async function submitFailoverJob({ backend, imageUrl, prompt, tierId, pat
 	}
 
 	throw new Error(`lane ${backend} cannot be redispatched from a poll`);
+}
+
+/**
+ * Whether the submit chain may hand a request to `backendId`: wired on this
+ * deployment, allowed in the caller's territory, not already asked for this
+ * request, and not cooled by a failure another request just saw. Every check
+ * is local or one shared-cache read, so a lane that cannot serve costs the
+ * caller no worker request.
+ */
+export async function submitLaneUsable(backendId, { attempted = [], country = null } = {}) {
+	if (attempted.includes(backendId)) return false;
+	if (!BACKENDS[backendId] || !backendIsConfigured(backendId)) return false;
+	if (!laneAllowedInTerritory(backendId, country)) return false;
+	return !(await laneCooling(backendId));
+}
+
+export const ALL_LANES_FAILED = 'all_lanes_failed';
+
+/**
+ * The error the submit chain throws once every lane it could reach refused.
+ * It reads as upstream-unavailable (providerStatus 503), so a text prompt still
+ * gets the free NIM text lane before the handler answers with it.
+ */
+export function allLanesFailedError(cause, lanesTried = []) {
+	return Object.assign(new Error(`every forge lane refused the job (${lanesTried.join(', ') || 'none'})`), {
+		code: ALL_LANES_FAILED,
+		providerStatus: 503,
+		lanesTried: [...new Set(lanesTried)],
+		cause,
+	});
+}
+
+// The wait the answer states: when the soonest cooled lane comes back, inside
+// sane bounds, so a retry lands on a lane that can take it.
+const ALL_FAILED_MIN_WAIT_S = 15;
+const ALL_FAILED_DEFAULT_WAIT_S = 30;
+const ALL_FAILED_MAX_WAIT_S = 300;
+
+/**
+ * The response for an all-lanes-failed submit: status 503, a stated wait, the
+ * lanes tried, and any configured lane the caller could still pick. `reason`
+ * is what the submit counters record as the cause.
+ */
+export async function allLanesFailedAnswer(err, { country = null, hasImage = true } = {}) {
+	const lanesTried = Array.isArray(err?.lanesTried) ? err.lanesTried : [];
+	const now = Date.now();
+	const until = await Promise.all(lanesTried.map((id) => providerCooldownUntil(laneCooldownKey(id)).catch(() => null)));
+	const soonest = until.filter((t) => Number.isFinite(t) && t > now).sort((a, b) => a - b)[0];
+	const wait = soonest ? Math.ceil((soonest - now) / 1000) : ALL_FAILED_DEFAULT_WAIT_S;
+	const retryAfter = Math.min(ALL_FAILED_MAX_WAIT_S, Math.max(ALL_FAILED_MIN_WAIT_S, wait));
+	return {
+		status: 503,
+		retryAfter,
+		body: {
+			error: 'generation_unavailable',
+			reason: ALL_LANES_FAILED,
+			message: `Every 3D engine that could take this generation is busy or restarting. Try again in about ${retryAfter} seconds; your prompt and settings are kept.`,
+			lanes_tried: lanesTried,
+			retry_after: retryAfter,
+			retryable: true,
+			retry_backends: retryBackendSuggestions({ attempted: lanesTried, hasImage, country }),
+		},
+	};
 }

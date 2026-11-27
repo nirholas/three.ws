@@ -325,6 +325,21 @@ export function resetLlmCooldowns() {
 	COOLDOWNS.clear();
 }
 
+/**
+ * Cooldown memory for a lane a caller invokes directly, outside llmComplete
+ * (api/forge-enhance.js calls Vertex Gemini itself). Keyed exactly like a chain
+ * rung, so a direct call to the same name and model shares one memory with the
+ * chain: a billing 403 seen by either side stops both from asking again.
+ */
+export function noteLaneRefusal(name, model, status, retryAfter = null) {
+	noteRungFailure({ name, model }, status, retryAfter);
+}
+
+/** Seconds until a directly-called lane may be asked again, or 0 when it is free. */
+export function laneCoolingSeconds(name, model, now = Date.now()) {
+	return rungCooling({ name, model }, now) ? Math.max(1, Math.ceil((COOLDOWNS.get(rungKey({ name, model })).until - now) / 1000)) : 0;
+}
+
 // Some hosts answer an exhausted key with HTTP 200 and put the account notice in
 // message.content, so the chain took it as the answer. Production forge rows
 // from 2026-09-12 on carry "The API key used for this request has reached its
@@ -436,6 +451,21 @@ export class LlmUnavailableError extends Error {
 		this.name = 'LlmUnavailableError';
 		this.code = 'llm_unavailable';
 		this.status = 503;
+	}
+}
+
+// Thrown by llmComplete({ strictCooldowns: true }) when every rung in the chain
+// is sitting out a cooldown, before any network call is made. Optional callers
+// (the Forge art director, the Enhance button) would rather skip their nicety in
+// a millisecond than re-ask a chain that refused moments ago. `retryAfterS` is
+// how long until the soonest rung is willing again.
+export class LlmChainCoolingError extends Error {
+	constructor(retryAfterS) {
+		super('Every LLM provider is cooling down after recent refusals.');
+		this.name = 'LlmChainCoolingError';
+		this.code = 'chain_cooling';
+		this.status = 503;
+		this.retryAfterS = retryAfterS;
 	}
 }
 
@@ -708,7 +738,33 @@ function openrouterClaudeMirror(key) {
 // free provider: the prod paid keys are routinely invalid or out of quota, so
 // platform spend never leads and nothing depends on it — but when a key does
 // work, a request that exhausted the free tier still succeeds.
-export function providerChain({ anthropicKey, anthropicModel, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false } = {}) {
+// Providers whose terms license commercial resale of their output: Vertex AI
+// Gemini and Vertex or first-party Claude (paid Google Cloud and Anthropic
+// accounts) and the paid OpenAI API. Every other lane in this file is a free
+// pool, a trial tier or a keyless anonymous service whose terms forbid or do not
+// grant resale, so a product that sells completions must never reach them.
+export const COMMERCIAL_PROVIDER_NAMES = Object.freeze(['vertex-gemini', 'vertex-anthropic', 'anthropic', 'openai']);
+
+// The chain for a call that is sold to a third party (the x402 LLM proxy): only
+// COMMERCIAL_PROVIDER_NAMES, Vertex Gemini first, then Claude, then OpenAI. A
+// caller that names a Claude model (anthropicModel) gets Claude first. A lane
+// whose credentials are not configured is simply absent: there is deliberately
+// no free fallback, an empty chain makes llmComplete throw LlmUnavailableError.
+function commercialProviderChain({ anthropicModel = null } = {}) {
+	const gemini = process.env.GOOGLE_CLOUD_PROJECT ? [vertexGeminiProvider()] : [];
+	const claude = [];
+	if (vertexClaudeEnabled() && isVertexModelId(anthropicModel || ANTHROPIC_MODEL)) {
+		claude.push(vertexAnthropicProvider(anthropicModel));
+	}
+	if (env.ANTHROPIC_API_KEY) claude.push(anthropicProvider(env.ANTHROPIC_API_KEY, anthropicModel));
+	const openai = env.OPENAI_API_KEY
+		? [openaiCompatProvider({ name: 'openai', key: env.OPENAI_API_KEY, url: 'https://api.openai.com/v1/chat/completions', model: OPENAI_MODEL })]
+		: [];
+	return anthropicModel ? [...claude, ...gemini, ...openai] : [...gemini, ...claude, ...openai];
+}
+
+export function providerChain({ anthropicKey, anthropicModel, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, commercialOnly = false } = {}) {
+	if (commercialOnly) return commercialProviderChain({ anthropicModel });
 	const chain = [];
 	// Opt-in: lead with the NVIDIA NIM lane on a chosen Nemotron model. Used by
 	// features that want the NVIDIA-native model to actually produce the result
@@ -1042,6 +1098,10 @@ export function llmConfigured(opts = {}) {
 // Throws LlmUnavailableError when no provider is configured, or the last
 // upstream error (with .status = 502) when every provider failed outright.
 //
+// `strictCooldowns` is optional: when every rung is cooling down it throws
+// LlmChainCoolingError at once, with no network call, instead of the default
+// of asking every rung anyway. For callers whose completion is a nicety.
+//
 // `accept(text)` is optional: a caller that needs structured output passes a
 // predicate, and a completion it rejects is failed over like an empty one
 // (spend still recorded). When no lane yields accepted text the thrown error
@@ -1056,8 +1116,13 @@ export function llmConfigured(opts = {}) {
 // { userId, agentId, avatarId, clientId, apiKeyId, tool } — are all optional;
 // pass whatever the call site knows. Recording is fire-and-forget (see
 // recordEvent), so it never delays or fails the completion.
-export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, timeoutMs = 30_000, track = null, chain: chainOverride = null, accept = null }) {
-	const chain = chainOverride?.length ? chainOverride : providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel, task, preferPhi });
+export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, task = null, preferPhi = false, timeoutMs = 30_000, track = null, chain: chainOverride = null, accept = null, strictCooldowns = false, commercialOnly = false }) {
+	// commercialOnly: the completion is sold on, so only commercially licensed
+	// lanes may serve it. It also strips a caller-supplied chain, and a caller's
+	// BYOK keys are ignored (the commercial chain is the platform's own paid lanes).
+	const chain = chainOverride?.length
+		? (commercialOnly ? chainOverride.filter((p) => COMMERCIAL_PROVIDER_NAMES.includes(p.name)) : chainOverride)
+		: providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel, task, preferPhi, commercialOnly });
 	if (!chain.length) throw new LlmUnavailableError();
 
 	// Per-user daily spend cap on platform-paid keys. Only runs when a userId is
@@ -1127,6 +1192,14 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 	// Honor cooldowns only while something else can still answer: when every
 	// rung is sitting out, try them all anyway rather than fail without asking.
 	const everyRungCooling = chain.every((p) => rungCooling(p));
+	// strictCooldowns: an optional caller asked never to spend a round trip on a
+	// rung that refused recently. With the whole chain cooling it gets an
+	// immediate, network-free answer instead of every dead rung asked again.
+	if (strictCooldowns && everyRungCooling) {
+		const now = Date.now();
+		const soonest = Math.min(...chain.map((p) => COOLDOWNS.get(rungKey(p))?.until ?? now));
+		throw new LlmChainCoolingError(Math.max(1, Math.ceil((soonest - now) / 1000)));
+	}
 	for (const p of chain) {
 		if (!everyRungCooling && rungCooling(p)) {
 			attempts.push({ provider: p.name, skipped: 'cooling' });

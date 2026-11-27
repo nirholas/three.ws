@@ -12,6 +12,9 @@ import { apiFetch } from './api.js';
 import { mountMirrorPanel, openFollowModal } from './shared/agent-mirror-panel.js';
 import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
 import { shortAddress as short } from './shared/address.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtSol = (n) => (n == null || !Number.isFinite(Number(n)) ? '—' : Number(n).toFixed(Math.abs(n) < 1 ? 3 : 2).replace(/\.?0+$/, ''));

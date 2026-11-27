@@ -11,6 +11,7 @@ import { nimCooldownSeconds } from '../../api/forge.js';
 
 const FULL = 120;
 const SHORT = 30;
+const MAX_STATED = 900;
 
 describe('nimCooldownSeconds — failure-mode-tuned cooldown', () => {
 	it('gives a fast gateway 5xx (a 504 that came back) only the short window', () => {
@@ -26,11 +27,11 @@ describe('nimCooldownSeconds — failure-mode-tuned cooldown', () => {
 		expect(nimCooldownSeconds({ message: 'nvidia unreachable: fetch failed' })).toBe(FULL);
 	});
 
-	it('honours a 429 Retry-After, clamped between the short and full windows', () => {
+	it('honours a 429 Retry-After, floored at the short window and capped at the stated-wait maximum', () => {
 		expect(nimCooldownSeconds({ providerStatus: 429, retryAfter: 60 })).toBe(60);
-		// Below the short floor → floored; above the full ceiling → capped.
+		// Below the short floor: floored; above the stated-wait cap: capped.
 		expect(nimCooldownSeconds({ providerStatus: 429, retryAfter: 5 })).toBe(SHORT);
-		expect(nimCooldownSeconds({ providerStatus: 429, retryAfter: 9999 })).toBe(FULL);
+		expect(nimCooldownSeconds({ providerStatus: 429, retryAfter: 9999 })).toBe(MAX_STATED);
 	});
 
 	it('a fast gateway window is meaningfully shorter than the hang window', () => {

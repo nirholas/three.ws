@@ -427,7 +427,7 @@ describe('ClubAudio.startAmbience', () => {
 });
 
 describe('ClubAudio.startMusic', () => {
-	it('streams the first track (club) through a media-element source at the music gain', async () => {
+	it('streams the first track (hiphop) through a media-element source at the music gain', async () => {
 		const audio = new ClubAudio();
 		const music = await audio.startMusic();
 
@@ -436,27 +436,27 @@ describe('ClubAudio.startMusic', () => {
 		// One <audio> element wired through exactly one MediaElementSource.
 		expect(audio.ctx.createdMediaSources).toHaveLength(1);
 		expect(audio.ctx.createdMediaSources[0].mediaElement).toBe(music.el);
-		// First track is club.mp3, playing, at the full bed gain.
-		expect(music.el.src.endsWith('/club/audio/club.mp3')).toBe(true);
+		// First track is hiphop.mp3, playing, at the full bed gain.
+		expect(music.el.src.endsWith('/club/audio/hiphop.mp3')).toBe(true);
 		expect(music.el.paused).toBe(false);
 		expect(music.gain.gain.value).toBeCloseTo(0.85, 3);
 		// Full tracks stream — they must never be decoded into a buffer.
 		expect(audio.ctx.decodedBuffers).toHaveLength(0);
 	});
 
-	it('loops the sequence club → stripper → club on each `ended`', async () => {
+	it('loops the sequence hiphop → pole → hiphop on each `ended`', async () => {
 		const audio = new ClubAudio();
 		await audio.startMusic();
 		const el = audio.music.el;
 
-		expect(el.src.endsWith('/club/audio/club.mp3')).toBe(true);
+		expect(el.src.endsWith('/club/audio/hiphop.mp3')).toBe(true);
 
 		el._emit('ended');
-		expect(el.src.endsWith('/club/audio/im-in-love-wit-a-stripper-fast.mp3')).toBe(true);
+		expect(el.src.endsWith('/club/audio/pole.mp3')).toBe(true);
 		expect(audio.music.index).toBe(1);
 
 		el._emit('ended');
-		expect(el.src.endsWith('/club/audio/club.mp3')).toBe(true);
+		expect(el.src.endsWith('/club/audio/hiphop.mp3')).toBe(true);
 		expect(audio.music.index).toBe(0);
 	});
 

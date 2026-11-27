@@ -3,6 +3,13 @@
  *
  *   POST /api/forge-upload  { content_type, size_bytes, checksum_sha256? }
  *                         → 200 { storage_key, upload_url, public_url, method, headers, expires_in }
+ *   POST /api/forge-upload  { source_url }
+ *                         → 200 the image bytes (application/octet-stream, attachment,
+ *                           x-image-format: jpeg|png|webp|gif|avif|heic|bmp|tiff|svg)
+ *
+ * The second form imports a photo a person pasted as a link: it is fetched
+ * through the SSRF guard and handed back to the page, which prepares and
+ * uploads it like a dropped file (api/_lib/forge-image-import.js).
  *
  * The browser PUTs the image bytes straight to `upload_url` (a short-lived R2
  * presigned URL), then submits `public_url` to /api/forge as one of `image_urls`
@@ -35,6 +42,7 @@ import { presignUpload, publicUrl, objectStorageUsable } from './_lib/r2.js';
 import { hashClient } from './_lib/forge-store.js';
 import { getRequestUser } from './_lib/auth.js';
 import { signInRequired } from './_lib/creator-account.js';
+import { importImageFromUrl, ImageImportError } from './_lib/forge-image-import.js';
 
 // Accepted reference-image types → file extension for the storage key.
 const CONTENT_TYPE_EXT = Object.freeze({
@@ -53,6 +61,9 @@ export default wrap(async (req, res) => {
 	// anonymous caller learns the one thing they can act on.
 	const user = await getRequestUser(req, res);
 	if (!user?.id) return signInRequired(res, { action: 'upload a photo' });
+
+	const body = await readJson(req, 6_000).catch(() => null);
+	if (body && Object.hasOwn(body, 'source_url')) return importFromLink(res, user, body.source_url);
 
 	// Ask whether storage will actually ACCEPT the bytes, not merely whether it
 	// is configured. This endpoint's whole output is a URL the browser uses
@@ -89,8 +100,6 @@ export default wrap(async (req, res) => {
 	if (!rl.success) {
 		return rateLimited(res, rl, 'Upload limit reached. Try again shortly.');
 	}
-
-	const body = await readJson(req, 2_000).catch(() => null);
 
 	const contentType =
 		typeof body?.content_type === 'string' ? body.content_type.trim().toLowerCase() : '';
@@ -146,3 +155,22 @@ export default wrap(async (req, res) => {
 		expires_in: 300,
 	});
 });
+
+async function importFromLink(res, user, sourceUrl) {
+	const rl = await limits.upload(`forge:user:${user.id}`);
+	if (!rl.success) return rateLimited(res, rl, 'Upload limit reached. Try again shortly.');
+	let image;
+	try {
+		image = await importImageFromUrl(sourceUrl);
+	} catch (err) {
+		if (err instanceof ImageImportError) return json(res, err.status, { error: err.code, message: err.message });
+		throw err;
+	}
+	res.statusCode = 200;
+	res.setHeader('content-type', 'application/octet-stream');
+	res.setHeader('content-disposition', 'attachment');
+	res.setHeader('x-content-type-options', 'nosniff');
+	res.setHeader('cache-control', 'no-store');
+	res.setHeader('x-image-format', image.format);
+	res.end(Buffer.from(image.bytes.buffer, image.bytes.byteOffset, image.bytes.byteLength));
+}

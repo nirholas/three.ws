@@ -2,8 +2,8 @@
 // Oracle social endpoint.
 //
 // Reads the latest posts of every tracked handle (admin-attached KOL handles plus
-// the endpoint's own KOL accounts) through the keyless guest reader
-// (api/_lib/x-guest), keeps the ones that mention a $CASHTAG, and POSTs them to
+// the endpoint's own KOL accounts) through the official X API v2 client
+// (api/_lib/x-api.js, needs X_BEARER_TOKEN), keeps the ones that mention a $CASHTAG, and POSTs them to
 // /api/oracle/social, which maps tickers to known mints and lifts oracle_narrative
 // virality. The endpoint is idempotent (virality only ever rises to the max seen,
 // never overwrites an LLM score), so a re-sent tweet is harmless.

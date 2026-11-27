@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const payForConsumption = vi.fn();
-vi.mock('../src/forge-pay.js', () => ({ payForConsumption: (...a) => payForConsumption(...a) }));
+vi.mock('../src/forge-pay.js', () => ({ payForConsumption: (...a) => payForConsumption(...a), forgetPaidProof: () => {} }));
 let tierPass = async () => null;
 vi.mock('../src/three-access.js', () => ({
 	attachTierPass: (h) => h,

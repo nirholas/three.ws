@@ -59,47 +59,19 @@ vi.mock('../../api/_lib/credits.js', () => ({
 }));
 
 const ORIGINAL_FETCH = globalThis.fetch;
-const ENV_KEYS = ['OPENAI_API_KEY', 'ELEVENLABS_API_KEY', 'NVIDIA_API_KEY'];
+const ENV_KEYS = ['GOOGLE_CLOUD_PROJECT', 'OPENAI_API_KEY', 'ELEVENLABS_API_KEY', 'NVIDIA_API_KEY'];
 const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
 
-// Shaped exactly like Microsoft's published voice list, so the real
-// normalizer in api/_lib/tts-edge.js runs over it.
-const EDGE_LIST = [
-	{
-		Name: 'Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)',
-		ShortName: 'en-US-AriaNeural',
-		Gender: 'Female',
-		Locale: 'en-US',
-		FriendlyName: 'Microsoft Aria Online (Natural) - English (United States)',
-		VoiceTag: { ContentCategories: ['News'], VoicePersonalities: ['Positive'] },
-	},
-	{
-		Name: 'Microsoft Server Speech Text to Speech Voice (en-GB, RyanNeural)',
-		ShortName: 'en-GB-RyanNeural',
-		Gender: 'Male',
-		Locale: 'en-GB',
-		FriendlyName: 'Microsoft Ryan Online (Natural) - English (United Kingdom)',
-		VoiceTag: { ContentCategories: ['General'], VoicePersonalities: ['Friendly'] },
-	},
-];
+import { GEMINI_VOICES } from '../../api/_lib/tts-gemini.js';
 
 const OPENAI_MP3 = Buffer.from('openai-mp3-fixture');
 const ELEVEN_MP3 = Buffer.from('eleven-mp3-fixture');
 
-let edgeListCalls = 0;
 let openaiCalls = [];
 
-function stubFetch({ edgeList = EDGE_LIST, edgeStatus = 200, elevenStatus = 200 } = {}) {
+function stubFetch({ elevenStatus = 200 } = {}) {
 	globalThis.fetch = vi.fn(async (url, opts = {}) => {
 		const u = String(url);
-		if (u.includes('voices/list')) {
-			edgeListCalls += 1;
-			if (edgeStatus !== 200) return new Response('nope', { status: edgeStatus });
-			return new Response(JSON.stringify(edgeList), {
-				status: 200,
-				headers: { 'content-type': 'application/json' },
-			});
-		}
 		if (u.includes('api.openai.com')) {
 			openaiCalls.push(JSON.parse(opts.body));
 			return new Response(OPENAI_MP3, {
@@ -194,8 +166,8 @@ beforeEach(() => {
 	creditState.charges.length = 0;
 	creditState.refunds.length = 0;
 	openaiCalls = [];
-	edgeListCalls = 0;
 	for (const k of ENV_KEYS) delete process.env[k];
+	process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 	stubFetch();
 });
 
@@ -210,14 +182,15 @@ afterEach(() => {
 describe('isKnownVoice (api/_lib/voice-providers.js)', () => {
 	it('accepts an id the lane actually publishes and rejects one it does not', async () => {
 		const { isKnownVoice } = await import('../../api/_lib/voice-providers.js');
-		expect(await isKnownVoice('edge', 'en-GB-RyanNeural')).toBe(true);
-		expect(await isKnownVoice('edge', 'zz-ZZ-NopeNeural')).toBe(false);
-		expect(await isKnownVoice('edge', 'not a voice at all')).toBe(false);
+		expect(await isKnownVoice('gemini', 'Kore')).toBe(true);
+		expect(await isKnownVoice('gemini', 'not a voice at all')).toBe(false);
+		// A stored legacy id is mapped at synthesis time, so it is never rejected.
+		expect(await isKnownVoice('gemini', 'en-GB-RyanNeural')).toBe(true);
 	});
 
 	it('treats an omitted voiceId as "use the lane default"', async () => {
 		const { isKnownVoice } = await import('../../api/_lib/voice-providers.js');
-		for (const p of ['edge', 'gemini', 'nvidia', 'openai', 'elevenlabs']) {
+		for (const p of ['gemini', 'nvidia', 'openai', 'elevenlabs']) {
 			expect(await isKnownVoice(p, '')).toBe(true);
 			expect(await isKnownVoice(p, undefined)).toBe(true);
 		}
@@ -240,26 +213,18 @@ describe('isKnownVoice (api/_lib/voice-providers.js)', () => {
 		// would reject ids that are genuinely valid a second later.
 		expect(await isKnownVoice('elevenlabs', 'a-voice-only-this-account-has')).toBe(true);
 	});
-
-	it('fails open when the lane catalog cannot be fetched', async () => {
-		// A Microsoft outage must not turn every Edge request into a 400.
-		vi.resetModules();
-		stubFetch({ edgeStatus: 503 });
-		const { isKnownVoice } = await import('../../api/_lib/voice-providers.js');
-		expect(await isKnownVoice('edge', 'en-US-AriaNeural')).toBe(true);
-	});
 });
 
 describe('POST /api/tts/synthesize voiceId guard', () => {
 	it('rejects a voice the lane does not have instead of silently substituting one', async () => {
 		const res = await call('../../api/tts/synthesize.js', {
-			body: { provider: 'edge', voiceId: 'zz-ZZ-NopeNeural', text: 'hello' },
+			body: { provider: 'gemini', voiceId: 'NotAGeminiVoice', text: 'hello' },
 		});
 		expect(res.statusCode).toBe(400);
 		const body = res.json();
 		expect(body.error).toBe('validation_error');
-		expect(body.error_description).toContain('zz-ZZ-NopeNeural');
-		expect(body.error_description).toContain('/api/tts/catalog?provider=edge');
+		expect(body.error_description).toContain('NotAGeminiVoice');
+		expect(body.error_description).toContain('/api/tts/catalog?provider=gemini');
 	});
 
 	it('never charges for a rejected voice', async () => {
@@ -319,18 +284,18 @@ describe('GET /api/tts/catalog provider guard', () => {
 		expect(body.error).toBe('validation_error');
 		expect(body.error_description).toContain('bogus');
 		// The message names the lanes that do exist, so the caller can fix it.
-		expect(body.error_description).toContain('edge');
+		expect(body.error_description).toContain('gemini');
 	});
 
 	it('serves the lane for a provider id that does exist', async () => {
 		const res = await call('../../api/tts/catalog.js', {
 			method: 'GET',
-			url: '/api/tts/catalog?provider=edge',
+			url: '/api/tts/catalog?provider=gemini',
 		});
 		expect(res.statusCode).toBe(200);
 		const body = res.json();
-		expect(body.counts.edge).toBe(EDGE_LIST.length);
-		expect(body.voices.map((v) => v.id)).toEqual(EDGE_LIST.map((v) => v.ShortName));
+		expect(body.counts.gemini).toBe(GEMINI_VOICES.length);
+		expect(body.voices.map((v) => v.id)).toEqual(GEMINI_VOICES.map((v) => v.id));
 	});
 
 	it('treats a blank provider param as "every lane"', async () => {
@@ -339,7 +304,7 @@ describe('GET /api/tts/catalog provider guard', () => {
 			url: '/api/tts/catalog?provider=',
 		});
 		expect(res.statusCode).toBe(200);
-		expect(res.json().total).toBe(EDGE_LIST.length);
+		expect(res.json().total).toBeGreaterThanOrEqual(GEMINI_VOICES.length);
 	});
 });
 

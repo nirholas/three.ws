@@ -99,6 +99,8 @@ describe('deleteCreation', () => {
 		expect(deletedKeys).toEqual([
 			'forge/client-abc/c-1.glb',
 			'forge/client-abc/c-1.png',
+			'forge/thumb/c-1.png',
+			'forge/thumb/c-1.webp',
 			'forge/uploads/client-abc/photo-1.jpg',
 			'forge/uploads/client-abc/photo-2.jpg',
 		]);
@@ -123,6 +125,8 @@ describe('deleteCreation', () => {
 		const deletedKeys = deleteObjectMock.mock.calls.map(([k]) => k).sort();
 		expect(deletedKeys).toEqual([
 			'forge/client-abc/c-2.glb',
+			'forge/thumb/c-2.png',
+			'forge/thumb/c-2.webp',
 			'forge/uploads/client-abc/original.png',
 		]);
 	});
@@ -140,7 +144,11 @@ describe('deleteCreation', () => {
 		];
 		const out = await deleteCreation({ id: 'c-3', clientKey: 'client-key' });
 		expect(out).toBe('deleted');
-		expect(deleteObjectMock.mock.calls.map(([k]) => k)).toEqual(['forge/client-abc/c-3.png']);
+		expect(deleteObjectMock.mock.calls.map(([k]) => k)).toEqual([
+			'forge/client-abc/c-3.png',
+			'forge/thumb/c-3.webp',
+			'forge/thumb/c-3.png',
+		]);
 	});
 
 	it("returns not_found for a row the caller doesn't own, touching nothing", async () => {

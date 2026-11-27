@@ -3477,14 +3477,6 @@
 			"dest": "/splat.html"
 		},
 		{
-			"src": "/x-video",
-			"dest": "/x-video.html"
-		},
-		{
-			"src": "/x-video/",
-			"dest": "/x-video.html"
-		},
-		{
 			"src": "/capture",
 			"dest": "/capture.html"
 		},
@@ -7944,6 +7936,10 @@
 		{
 			"path": "/api/cron/forge-storage-purge",
 			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/forge-paid-make-whole",
+			"schedule": "*/5 * * * *"
 		},
 		{
 			"path": "/api/llm/health",

@@ -66,7 +66,7 @@ const ROUTES = {
 	'DELETE credentials': { scope: SESSION_ONLY, run: (c) => connector.revoke(c.base) },
 	'PATCH settings': {
 		scope: SESSION_ONLY,
-		run: (c) => connector.updateSettings({ ...c.base, perOrderCapUsd: c.body.per_order_cap_usd, dailyCapUsd: c.body.daily_cap_usd, tradingEnabled: c.body.trading_enabled }),
+		run: (c) => connector.updateSettings({ ...c.base, perOrderCapUsd: c.body.per_order_cap_usd, dailyCapUsd: c.body.daily_cap_usd, tradingEnabled: c.body.trading_enabled, req: c.req }),
 	},
 	'GET holdings': { scope: READ_SCOPE, run: (c) => connector.holdings(c.base) },
 	'GET quote': { scope: READ_SCOPE, run: (c) => connector.quote({ ...c.base, symbols: c.url.searchParams.getAll('symbol').flatMap((s) => s.split(',')) }) },
@@ -86,7 +86,7 @@ const ROUTES = {
 				limitPrice: c.body.limit_price,
 			}),
 	},
-	'POST orders': { scope: TRADE_SCOPE, run: (c) => connector.placeOrder({ ...c.base, previewId: c.body.preview_id, confirmOrder: c.body.confirm_order }) },
+	'POST orders': { scope: TRADE_SCOPE, run: (c) => connector.placeOrder({ ...c.base, previewId: c.body.preview_id, confirmOrder: c.body.confirm_order, req: c.req }) },
 };
 
 const KNOWN_PATHS = new Set(Object.keys(ROUTES).map((k) => k.slice(k.indexOf(' ') + 1)));
@@ -137,7 +137,7 @@ export default async function handler(req, res) {
 			}
 		}
 
-		const data = await route.run({ url, body, principal, base: { userId: principal.userId } });
+		const data = await route.run({ req, url, body, principal, base: { userId: principal.userId } });
 		return send(res, route.status || 200, { data, meta: meta(ctx) });
 	} catch (e) {
 		if (e instanceof connector.ConnectorError) return sendError(res, ctx, e.status, e.code, e.message, e.details);

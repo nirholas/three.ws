@@ -7,7 +7,7 @@
 // shows up on the page with no change to this file (an unknown key gets a
 // readable label derived from its name).
 //
-// Under the breakdown, "where the money is": the treasury and holder-rewards
+// Under the breakdown, "where the money is": the treasury and reserve
 // wallets with copy buttons, Solscan links and their live $THREE and USDC
 // balances (GET /api/three-token/wallets, real RPC reads), plus a summary of
 // the buyback history the page already loads for its buyback panel.
@@ -43,8 +43,8 @@ export const POLICY_COPY = {
 
 export const ROLE_COPY = {
 	seller: { label: 'Seller or creator', note: 'keeps the sale' },
-	treasury: { label: 'Treasury', note: 'funds $THREE buybacks' },
-	rewards: { label: 'Holder rewards', note: 'paid back to $THREE holders' },
+	treasury: { label: 'Treasury', note: 'may fund discretionary $THREE purchases' },
+	rewards: { label: 'Platform reserve', note: 'retained by the platform' },
 };
 
 // Display order: the policies people meet most first. Anything not listed
@@ -141,11 +141,11 @@ export function renderPolicies(config) {
 const WALLET_COPY = {
 	treasury: {
 		label: 'Treasury',
-		note: 'Receives the treasury share of every split and funds $THREE buybacks.',
+		note: 'Receives the treasury share of every split and may fund discretionary $THREE purchases.',
 	},
 	rewards: {
-		label: 'Holder rewards pool',
-		note: 'Receives the holder-rewards share and pays it back to $THREE holders pro rata.',
+		label: 'Platform reserve wallet',
+		note: 'Receives the reserve share of each split and is retained by the platform. It is not paid to holders.',
 	},
 };
 
@@ -283,7 +283,7 @@ const SKELETON_ROWS = (n) => Array.from({ length: n }, () => '<div class="tk-ske
 export function mountFeeFlow(host, { copyText }) {
 	host.innerHTML = `
 		<h2>Where every $100 goes</h2>
-		<p class="tk-ff-lead">Every payment made in $THREE is split on-chain by a published policy, each share paid straight to its wallet. These splits are read live from <a href="/api/token/config" target="_blank" rel="noopener">the public token config</a>, the same one the payment code enforces. The platform never burns $THREE: every share goes to a seller, the treasury, or holders, and nothing is destroyed. <a href="/docs/three-thesis">Why buybacks instead of burns</a></p>
+		<p class="tk-ff-lead">Every payment made in $THREE is split on-chain by a published policy, each share paid straight to its wallet. These splits are read live from <a href="/api/token/config" target="_blank" rel="noopener">the public token config</a>, the same one the payment code enforces. The platform never burns $THREE: every share goes to a seller, the treasury, or the platform reserve, and nothing is destroyed. <a href="/docs/three-thesis">How $THREE is used</a></p>
 		<div data-ff-policies aria-live="polite" aria-busy="true">${SKELETON_ROWS(3)}</div>
 		<h3 class="tk-ff-sub">Where the money is</h3>
 		<div data-ff-wallets aria-live="polite" aria-busy="true">${SKELETON_ROWS(1)}</div>

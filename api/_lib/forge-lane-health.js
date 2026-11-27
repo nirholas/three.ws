@@ -28,7 +28,7 @@
 // behaviour.
 
 import { BACKENDS, isSelfHostBackend } from './forge-tiers.js';
-import { providersInCooldown, markProviderCooldown } from './provider-health.js';
+import { providersInCooldown, markProviderCooldown, providerCooldownUntil } from './provider-health.js';
 
 // Self-host worker URLs are env-gated; the URL env is the lane's first requiresEnv
 // entry, the bearer is the shared GCP_RECONSTRUCTION_KEY (second entry).
@@ -46,9 +46,29 @@ export function laneCooldownKey(backendId) {
 // Record that a self-host lane just failed at submit, so subsequent requests on
 // any instance skip it until the window expires. Fire-and-forget; never throws.
 const LANE_COOLDOWN_SECONDS = 90;
+//
+// A failure never shortens a pause that is already standing: a quota pause of
+// half an hour must not be cut to ninety seconds by the next ordinary failure
+// landing on the same lane.
 export async function markLaneUnhealthy(backendId, seconds = LANE_COOLDOWN_SECONDS) {
 	if (!backendId) return;
-	await markProviderCooldown(laneCooldownKey(backendId), seconds).catch(() => {});
+	const key = laneCooldownKey(backendId);
+	// This instance's cached snapshot may still hold the `ok` it probed before the
+	// failure; it must read down now, not when the 20s window lapses, or the very
+	// next submit on this instance goes straight back to the lane that refused.
+	forgetCachedLane(backendId);
+	const standing = await providerCooldownUntil(key);
+	if (standing && standing >= Date.now() + seconds * 1000) return;
+	await markProviderCooldown(key, seconds).catch(() => {});
+}
+
+// Drop one lane from the per-instance snapshot so the next read re-checks the
+// shared cooldown (which short-circuits the probe) instead of a stale verdict.
+function forgetCachedLane(backendId) {
+	if (!snapshotCache || !(backendId in snapshotCache.byId)) return;
+	const byId = { ...snapshotCache.byId };
+	delete byId[backendId];
+	snapshotCache = { at: snapshotCache.at, byId };
 }
 
 // The free HuggingFace Spaces lane fails as a whole: every Space in its chain
@@ -62,11 +82,21 @@ export async function markLaneUnhealthy(backendId, seconds = LANE_COOLDOWN_SECON
 // request after the window re-tests the Spaces for real.
 export const HF_LANE_COOLDOWN_SECONDS = 300;
 
-/** True while a recent chain-wide HuggingFace failure has the lane paused. */
-export async function hfLaneCooling() {
-	const key = laneCooldownKey('huggingface');
+// When every Space in the chain failed on GPU quota, the cause is the quota, not
+// a blip: it stays exhausted for hours, so the lane is paused for much longer
+// and costs one caller a probe every half hour instead of every five minutes.
+export const HF_QUOTA_COOLDOWN_SECONDS = 1800;
+
+/** True while a recent failure has `backendId` cooled, on any instance. */
+export async function laneCooling(backendId) {
+	const key = laneCooldownKey(backendId);
 	const cooling = await providersInCooldown([key]).catch(() => new Map());
 	return cooling.has(key);
+}
+
+/** True while a recent chain-wide HuggingFace failure has the lane paused. */
+export function hfLaneCooling() {
+	return laneCooling('huggingface');
 }
 
 const PROBE_TIMEOUT_MS = 2_500;

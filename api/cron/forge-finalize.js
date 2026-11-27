@@ -66,6 +66,7 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 import { getRedis } from '../_lib/redis.js';
 import { NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds } from '../forge.js';
 import { mapPoolSettled } from '../_lib/pool.js';
+import { FORGE_JOB_HARD_TTL_MINUTES } from '../_lib/forge-job-deadline.js';
 
 export const maxDuration = 60;
 
@@ -83,7 +84,7 @@ export const ROW_CONCURRENCY = Number(process.env.FORGE_FINALIZE_CONCURRENCY) ||
 // Leave fresh rows to the attended browser poll path.
 const GRACE_MINUTES = 2;
 // The ceiling for a lane with no measured limit of its own (below).
-const HARD_TTL_MINUTES = 45;
+const HARD_TTL_MINUTES = FORGE_JOB_HARD_TTL_MINUTES;
 // Browser clients poll attended for up to 12 minutes (src/forge.js MAX_POLL_MS)
 // and run their own poll-time lane failover. The cron defers acting on a failed
 // self-host poll until that window has passed, so it can never race a live

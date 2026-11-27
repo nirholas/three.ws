@@ -253,7 +253,7 @@ function redisStore(r) {
 	};
 }
 
-const memory = memoryStore();
+let memory = memoryStore();
 const shared = redis ? redisStore(redis) : null;
 let warnedFallback = false;
 
@@ -272,6 +272,12 @@ async function withStore(fn) {
 		}
 	}
 	return fn(memory);
+}
+
+// Empty the per-instance line. A suite that drives the handlers calls this
+// between cases so one case's stated wait never queues the next one's submit.
+export function resetMemoryLine() {
+	memory = memoryStore();
 }
 
 // ── Measurement ─────────────────────────────────────────────────────────────

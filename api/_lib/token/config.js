@@ -9,7 +9,7 @@
 // ECONOMY POLICY — NO PLATFORM BURNS. Every $THREE the platform charges routes to
 // the treasury, a holder-rewards (reflections) pool, and — on a sale — the
 // seller/creator. Supply is never destroyed; the treasury funds buybacks instead,
-// which creates buy pressure without deflation. The `burn` role and burn address
+// without deflation. The `burn` role and burn address
 // remain ONLY for the user-invoked burn primitive (three_burn in three-token-mcp,
 // where a holder may choose to burn their own bag). No platform split policy below
 // includes a burn leg.

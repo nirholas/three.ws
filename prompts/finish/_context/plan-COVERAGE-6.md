@@ -136,7 +136,7 @@ Rows `packages/companion-sdk/README.md` to `robinhood/robinhood-chain-examples/e
 | `prompts/finish/_context/beat-00-CONTEXT.md` | shipped | beat lane done |
 | `prompts/finish/_context/beat-PROGRESS.md` | shipped | beat lane done |
 | `prompts/finish/_context/best3d-00-CONTEXT.md` | no-open-work | context only |
-| `prompts/finish/_context/best3d-PROGRESS.md` | order | [263](../947-plan-ops-gpu-worker-images-redeploy-and-drift-check.md), [751](../751-plan-forge-quality-bench-fleet-ceilings-remeasure.md). remaining items are undeployed GPU lanes and stale quality numbers |
+| `prompts/finish/_context/best3d-PROGRESS.md` | order | [263](../../awaiting-owner/947-plan-ops-gpu-worker-images-redeploy-and-drift-check.md), [751](../751-plan-forge-quality-bench-fleet-ceilings-remeasure.md). remaining items are undeployed GPU lanes and stale quality numbers |
 | `prompts/finish/_context/elevate-00-CONTEXT.md` | no-open-work | context only |
 | `prompts/finish/_context/event-00-CONTEXT.md` | not-a-plan | event context |
 | `prompts/finish/_context/event-PROGRESS.md` | no-open-work | event copy, nothing agent-doable open |
@@ -158,8 +158,8 @@ Rows `packages/companion-sdk/README.md` to `robinhood/robinhood-chain-examples/e
 | `prompts/finish/_context/parity-PROGRESS.md` | no-open-work | done |
 | `prompts/finish/_context/partners-00-CONTEXT.md` | no-open-work | context only |
 | `prompts/finish/_context/partners-PROGRESS.md` | covered-by-existing:085-partners-02-animation-library-license.md | open partner items have existing orders |
-| `prompts/finish/_context/production-100-00-INDEX.md` | order | [724](../724-plan-play-multiplayer-redis-scale-out.md). multiplayer single-instance row |
-| `prompts/finish/_context/production-100-OWNER-ACTIONS.md` | order | [249](../249-plan-ops-db-storage-cap-archive-and-reclaim.md), [263](../947-plan-ops-gpu-worker-images-redeploy-and-drift-check.md), [271](../271-plan-ops-world-health-retired-state.md). rows 32, 31/38/46/67/69/71, 68; rest owner-only |
+| `prompts/finish/_context/production-100-00-INDEX.md` | order | [724](../../awaiting-owner/724-plan-play-multiplayer-redis-scale-out.md). multiplayer single-instance row |
+| `prompts/finish/_context/production-100-OWNER-ACTIONS.md` | order | [249](../249-plan-ops-db-storage-cap-archive-and-reclaim.md), [263](../../awaiting-owner/947-plan-ops-gpu-worker-images-redeploy-and-drift-check.md), [271](../../awaiting-owner/271-plan-ops-world-health-retired-state.md). rows 32, 31/38/46/67/69/71, 68; rest owner-only |
 | `prompts/finish/_context/production-100-PROGRESS.md` | order | [262](../262-plan-i18n-restore-language-picker-manifest.md). untranslated locale keys; rest shipped |
 | `prompts/finish/_context/quality-bar-_shared.md` | not-a-plan | shared rules |
 | `prompts/finish/_context/quality-bar-README.md` | order | [733](../733-plan-web-mobile-core-vitals-remeasure-and-fix.md). stale mobile baseline |
@@ -173,12 +173,12 @@ Rows `packages/companion-sdk/README.md` to `robinhood/robinhood-chain-examples/e
 | `prompts/finish/941-x-grok-17-xai-remote-mcp-e2e.md` | excluded | already a work order in the queue |
 | `prompts/finish/942-best3d-01-trellis2-default-lane.md` | excluded | already a work order in the queue |
 | `prompts/finish/943-best3d-02-pixal3d-multiview.md` | excluded | already a work order in the queue |
-| `prompts/finish/944-best3d-03-rig-anything.md` | excluded | already a work order in the queue |
-| `prompts/finish/945-best3d-04-editable-parts.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/944-best3d-03-rig-anything.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/945-best3d-04-editable-parts.md` | excluded | already a work order in the queue |
 | `prompts/finish/074-best3d-08-webgpu-tsl-path.md` | excluded | already a work order in the queue |
 | `prompts/finish/081-best3d-15-splat-parity.md` | excluded | already a work order in the queue |
 | `prompts/finish/085-partners-02-animation-library-license.md` | excluded | already a work order in the queue |
-| `prompts/finish/946-partners-04-livekit-pipecat-avatar.md` | excluded | work order, closed and deleted 2026-11-04; owner steps tracked as owner-actions row 51 |
+| `prompts/awaiting-owner/946-partners-04-livekit-pipecat-avatar.md` | excluded | work order, closed and deleted 2026-11-04; owner steps tracked as owner-actions row 51 |
 | `prompts/finish/093-partners-10-agent-tool-packages.md` | excluded | work order closed 2026-11-04; remaining owner steps are order 938 |
 | `prompts/finish/094-partners-11-site-builder-embeds.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 57 |
 | `prompts/finish/095-partners-12-home-assistant-hacs.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 58 |
@@ -187,62 +187,62 @@ Rows `packages/companion-sdk/README.md` to `robinhood/robinhood-chain-examples/e
 | `prompts/finish/456-auto-mcp-tools-settings-page.md` | shipped | order retired 2026-11-04: /settings/mcp-tools page and /api/mcp-tools (cc2a0b51f 7780a3df0 7e1842e0d) |
 | `prompts/finish/458-auto-solana-agent-sdk-zod-cve.md` | excluded | already a work order in the queue |
 | `prompts/finish/506-integrate-07-pump-claims-listener.md` | excluded | already a work order in the queue |
-| `prompts/finish/512-integrate-13-anti-snipe-native-lane.md` | excluded | already a work order in the queue |
-| `prompts/finish/530-integrate-31-mcp-registry-cleanup.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/512-integrate-13-anti-snipe-native-lane.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/530-integrate-31-mcp-registry-cleanup.md` | excluded | already a work order in the queue |
 | `prompts/finish/536-integrate-37-three-post-impact.md` | excluded | already a work order in the queue |
 | `prompts/finish/539-integrate-40-coin-intel-signals.md` | excluded | already a work order in the queue |
-| `prompts/finish/540-integrate-41-memo-inscription-reader.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/540-integrate-41-memo-inscription-reader.md` | excluded | already a work order in the queue |
 | `prompts/finish/544-integrate-45-chains-turnover.md` | excluded | already a work order in the queue |
 | `prompts/finish/545-integrate-46-funder-graph-3d.md` | excluded | already a work order in the queue |
 | `prompts/finish/548-integrate-49-robinhood-launch-venues.md` | excluded | already a work order in the queue |
 | `prompts/finish/549-integrate-50-hookforge-catalog.md` | excluded | already a work order in the queue |
-| `prompts/finish/605-beat-05-onchain-allowance-budgets.md` | excluded | already a work order in the queue |
-| `prompts/finish/606-beat-06-burner-wallet-with-owner-confirmation.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/605-beat-05-onchain-allowance-budgets.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/606-beat-06-burner-wallet-with-owner-confirmation.md` | excluded | already a work order in the queue |
 | `prompts/finish/610-beat-10-hire-escrow-evaluator-and-disputes.md` | excluded | already a work order in the queue |
 | `prompts/finish/614-beat-14-deploy-orders-engine-with-ratcheting-exits.md` | excluded | already a work order in the queue |
 | `prompts/finish/615-beat-15-perps-venues-jupiter-and-hyperliquid.md` | excluded | already a work order in the queue |
 | `prompts/finish/616-beat-16-solana-prediction-markets-with-shadow-mode.md` | excluded | already a work order in the queue |
 | `prompts/finish/619-beat-19-token-due-diligence-and-funding-graph.md` | excluded | already a work order in the queue |
 | `prompts/finish/621-beat-21-agent-cli-automation-mode-and-html-reports.md` | excluded | already a work order in the queue |
-| `prompts/finish/622-beat-22-solana-agent-registry-registration.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/622-beat-22-solana-agent-registry-registration.md` | excluded | already a work order in the queue |
 | `prompts/finish/623-beat-23-skill-supply-chain-scanner.md` | excluded | already a work order in the queue |
-| `prompts/finish/626-beat-26-metered-openai-compatible-router.md` | excluded | already a work order in the queue |
+| `prompts/archive/626-beat-26-metered-openai-compatible-router.md` | excluded | already a work order in the queue |
 | `prompts/finish/627-beat-27-launch-fee-and-holder-reward-features.md` | excluded | already a work order in the queue |
-| `prompts/finish/902-backlog-01-x402-settle-runway.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/902-backlog-01-x402-settle-runway.md` | excluded | already a work order in the queue |
 | `prompts/finish/907-backlog-08-okx-chat-bot-always-on.md` | excluded | already a work order in the queue |
-| `prompts/finish/911-okx-ai-08-forge-relisting.md` | excluded | already a work order in the queue |
-| `prompts/finish/913-okx-ai-04-e2e-real-payment-test.md` | excluded | already a work order in the queue |
-| `prompts/finish/914-okx-ai-07-final-audit-and-watch.md` | excluded | already a work order in the queue |
-| `prompts/finish/917-roadmap-pumpfun-trading.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/911-okx-ai-08-forge-relisting.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/913-okx-ai-04-e2e-real-payment-test.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/914-okx-ai-07-final-audit-and-watch.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/917-roadmap-pumpfun-trading.md` | excluded | already a work order in the queue |
 | `prompts/finish/918-roadmap-pumpfun-trading-arena.md` | excluded | already a work order in the queue |
-| `prompts/finish/919-parity-09-ship-and-publish.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/919-parity-09-ship-and-publish.md` | excluded | already a work order in the queue |
 | `prompts/finish/920-parity-10-community-skill-registry.md` | excluded | already a work order in the queue |
-| `prompts/finish/921-parity-11-directory-listings.md` | excluded | already a work order in the queue |
-| `prompts/finish/922-parity-12-why-three-ws.md` | excluded | already a work order in the queue |
-| `prompts/finish/923-parity-13-builder-competition.md` | excluded | already a work order in the queue |
-| `prompts/finish/924-parity-14-pricing-levers.md` | excluded | already a work order in the queue |
-| `prompts/finish/925-parity-15-mention-to-launch.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/921-parity-11-directory-listings.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/922-parity-12-why-three-ws.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/923-parity-13-builder-competition.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/924-parity-14-pricing-levers.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/925-parity-15-mention-to-launch.md` | excluded | already a work order in the queue |
 | `prompts/finish/926-x-grok-45-owner-x-api-tier.md` | excluded | already a work order in the queue |
 | `prompts/finish/927-x-grok-46-owner-grok-api-key.md` | excluded | already a work order in the queue |
 | `prompts/finish/928-x-grok-47-go-live-mention-bot.md` | excluded | already a work order in the queue |
 | `prompts/finish/929-x-grok-48-connector-directory-listings.md` | excluded | already a work order in the queue |
 | `prompts/finish/930-x-grok-49-launch-announcement.md` | excluded | already a work order in the queue |
 | `prompts/finish/931-x-grok-50-player-card-approval.md` | excluded | already a work order in the queue |
-| `prompts/finish/932-best3d-05-pricing-preview-pay-to-keep.md` | excluded | already a work order in the queue |
-| `prompts/finish/933-best3d-06-sam-3d-objects.md` | excluded | already a work order in the queue |
-| `prompts/finish/934-best3d-07-orphaned-avatar-campaign.md` | excluded | already a work order in the queue |
-| `prompts/finish/935-best3d-08-engine-store-publishing.md` | excluded | already a work order in the queue |
-| `prompts/finish/936-partners-13-tripo-reply-and-house-key.md` | excluded | already a work order in the queue |
-| `prompts/finish/937-partners-14-sponsorships.md` | excluded | already a work order in the queue |
-| `prompts/finish/938-partners-15-listings-prs-and-sends.md` | excluded | already a work order in the queue |
-| `prompts/finish/939-partners-16-program-applications.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/932-best3d-05-pricing-preview-pay-to-keep.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/933-best3d-06-sam-3d-objects.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/934-best3d-07-orphaned-avatar-campaign.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/935-best3d-08-engine-store-publishing.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/936-partners-13-tripo-reply-and-house-key.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/937-partners-14-sponsorships.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/938-partners-15-listings-prs-and-sends.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/939-partners-16-program-applications.md` | excluded | already a work order in the queue |
 | `prompts/finish/940-partners-17-sketchfab-retag.md` | excluded | already a work order in the queue |
-| `prompts/finish/954-oauth-connector-google.md` | excluded | already a work order in the queue |
-| `prompts/finish/957-uniswap-lane-and-launch-status.md` | excluded | already a work order in the queue |
-| `prompts/finish/958-creator-fee-payouts.md` | excluded | already a work order in the queue |
-| `prompts/finish/961-desktop-agent-runtime.md` | excluded | already a work order in the queue |
-| `prompts/finish/962-approvals-inbox-telegram.md` | excluded | already a work order in the queue |
-| `prompts/finish/965-revenue-ledger-reinvest.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/954-oauth-connector-google.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/957-uniswap-lane-and-launch-status.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/958-creator-fee-payouts.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/961-desktop-agent-runtime.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/962-approvals-inbox-telegram.md` | excluded | already a work order in the queue |
+| `prompts/awaiting-owner/965-revenue-ledger-reinvest.md` | excluded | already a work order in the queue |
 | `prompts/masters/01-the-architect.md` | excluded | reusable master prompt (takes a target, never retires) |
 | `prompts/masters/02-the-scout.md` | excluded | reusable master prompt (takes a target, never retires) |
 | `prompts/masters/03-the-builder.md` | excluded | reusable master prompt (takes a target, never retires) |

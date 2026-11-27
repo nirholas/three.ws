@@ -50,6 +50,31 @@ export const THRESHOLDS = Object.freeze({
 	sharpnessSide: 512,
 	/** Devices reporting less memory than this (GB) skip the pass. */
 	minDeviceMemoryGb: 1,
+	/** A mask that keeps at least this share of the frame removed nothing: it is a failed removal. */
+	wholeFrameCoverage: 0.96,
+	/** Alpha (0..255) below which a pixel counts as transparent when judging a photo that is already cut out. */
+	transparentAlpha: 16,
+	/** A photo is already cut out when at least this share of it is transparent... */
+	cutoutTransparentShare: 0.05,
+	/** ...and at least this share of its border is transparent too (a cut-out floats in empty space). */
+	cutoutBorderShare: 0.5,
+});
+
+/**
+ * How long the main thread waits on the on-device pass before giving up and
+ * uploading the original. A stalled model download or a worker that never
+ * answers must not hold a generation hostage. The limit is on silence between
+ * worker messages, so a slow but moving download is not cut off, plus one cap
+ * on the whole pass. Limits are generous on purpose: a mid-range phone takes
+ * 10 to 20 seconds, a loaded laptop several times that.
+ */
+export const PREP_WAIT = Object.freeze({
+	/** Silence allowed while the runtime and model load (progress events keep arriving on a live download). */
+	loadIdleMs: 30_000,
+	/** Silence allowed while inference and encoding run (one event marks each stage). */
+	runIdleMs: 60_000,
+	/** The whole pass, however many events arrive. */
+	totalMs: 180_000,
 });
 
 /** RGBA pixels (size x size) to the planar float tensor U²-Netp expects. */
@@ -151,14 +176,25 @@ export function maskBoxToImage(box, size, imgW, imgH) {
  * The square region to cut from the source: the subject's longer edge plus
  * padding, centred on the subject, shifted to stay inside the photo whenever
  * the photo is big enough. sx/sy go negative (the area beyond the photo is
- * padding) only when the square is larger than the photo itself.
+ * padding) only when the square is larger than the photo itself. With
+ * `center` the subject is centred exactly and the square may hang past the photo.
+ * The output is never larger than the square, so a crop is never upscaled past
+ * its source pixels.
  */
-export function squareCropPlan(box, imgW, imgH, { padding = THRESHOLDS.cropPadding, maxSide = THRESHOLDS.maxSide } = {}) {
+export function squareCropPlan(
+	box,
+	imgW,
+	imgH,
+	{ padding = THRESHOLDS.cropPadding, maxSide = THRESHOLDS.maxSide, center = false } = {},
+) {
 	const side = Math.max(1, Math.round(Math.max(box.w, box.h) * (1 + 2 * padding)));
 	const cx = box.x + box.w / 2;
 	const cy = box.y + box.h / 2;
-	const place = (center, extent) => {
-		const start = Math.round(center - side / 2);
+	const place = (mid, extent) => {
+		const start = Math.round(mid - side / 2);
+		// `center` is for a cut-out, where the area beyond the photo is just more
+		// transparent padding: the subject sits exactly in the middle.
+		if (center) return start;
 		if (side >= extent) return Math.round((extent - side) / 2);
 		return Math.min(Math.max(start, 0), extent - side);
 	};
@@ -216,7 +252,81 @@ export function exposureStats(rgba, mask) {
 	return { mean: sum / n, clippedHigh: high / n, clippedLow: low / n };
 }
 
+/** The alpha byte of every pixel in an RGBA buffer. */
+export function alphaChannel(rgba) {
+	const out = new Uint8Array(rgba.length / 4);
+	for (let i = 0; i < out.length; i++) out[i] = rgba[i * 4 + 3];
+	return out;
+}
+
+/**
+ * Whether a photo already has its background removed: a real share of it is
+ * transparent and the transparency reaches the border. A PNG that merely
+ * carries an opaque alpha channel, or a logo with a few see-through holes
+ * inside a solid frame, is not a cut-out and still goes through removal.
+ */
+export function detectCutout(rgba, size = MODEL_SIZE) {
+	const px = size * size;
+	if (rgba.length !== px * 4) throw new Error(`detectCutout: got ${rgba.length} bytes, expected ${px * 4}`);
+	const limit = THRESHOLDS.transparentAlpha;
+	let clear = 0;
+	for (let i = 0; i < px; i++) if (rgba[i * 4 + 3] < limit) clear++;
+	let border = 0;
+	let borderClear = 0;
+	for (let y = 0; y < size; y++) {
+		const edge = y === 0 || y === size - 1;
+		for (let x = 0; x < size; x++) {
+			if (!edge && x !== 0 && x !== size - 1) continue;
+			border++;
+			if (rgba[(y * size + x) * 4 + 3] < limit) borderClear++;
+		}
+	}
+	const transparentShare = clear / px;
+	const borderTransparentShare = borderClear / border;
+	return {
+		cutout: transparentShare >= THRESHOLDS.cutoutTransparentShare && borderTransparentShare >= THRESHOLDS.cutoutBorderShare,
+		transparentShare,
+		borderTransparentShare,
+	};
+}
+
+/**
+ * Did background removal produce something usable? An empty mask found no
+ * subject. A mask that keeps the whole frame cut nothing away. Either way the
+ * crop and the cut-out would only mislead, so the original photo is offered.
+ */
+export function maskVerdict(analysis) {
+	if (!analysis.box || analysis.coverage < THRESHOLDS.noSubjectCoverage) return { ok: false, reason: 'empty' };
+	if (analysis.coverage >= THRESHOLDS.wholeFrameCoverage) return { ok: false, reason: 'whole_frame' };
+	return { ok: true, reason: null };
+}
+
+/**
+ * The blob to upload when the visitor accepts the prepared photo, or null when
+ * the original is the only sensible choice (a failed removal). An already
+ * cut-out photo uploads its alpha crop: the lane uses that alpha as its mask.
+ */
+export function pickUpload(result, defaultUpload) {
+	const status = result.removal?.status;
+	if (status === 'failed') return null;
+	if (status === 'alpha') return result.cutout || null;
+	return (defaultUpload === 'cutout' ? result.cutout : result.prepared) || null;
+}
+
+/** One plain sentence for the review dialog about how removal went, or '' when it went normally. */
+export function removalNotice(result) {
+	const status = result.removal?.status;
+	if (status === 'alpha') return 'This photo already has a transparent background, so background removal was skipped.';
+	if (status === 'failed') {
+		return result.removal.reason === 'whole_frame'
+			? 'Background removal kept the whole picture, so it was not used. Your original photo goes as it is and the 3D engine will separate the subject itself.'
+			: 'Background removal found no subject, so it was not used. Your original photo goes as it is, or retake it against a plain background.';
+	}
+	return '';
+}
+
 const MESSAGES = {
+	background_kept: 'The background could not be separated from the subject.',
 	no_subject: 'No clear subject was found. Photograph one object against a plain background.',
 	subject_small: 'The subject is small in the frame. Move closer so it fills more of the photo.',
 	blurry: 'The photo looks blurry. Hold steady or tap to focus, then retake it.',
@@ -232,6 +342,10 @@ export function assessPhoto(m) {
 	const add = (code) => out.push({ code, message: MESSAGES[code] });
 	if (!m.components.length || m.coverage < THRESHOLDS.noSubjectCoverage) {
 		add('no_subject');
+		return out;
+	}
+	if (m.coverage >= THRESHOLDS.wholeFrameCoverage) {
+		add('background_kept');
 		return out;
 	}
 	if (m.coverage < THRESHOLDS.minCoverage || m.subjectPx < THRESHOLDS.minSubjectPx) add('subject_small');

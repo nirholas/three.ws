@@ -142,7 +142,7 @@ describe('directPrompt — in-process Granite director', () => {
 		state.watsonx.mockRejectedValue(new Error('down'));
 		state.chain.mockRejectedValue(new Error('all rungs dead'));
 		await directPrompt(MESH_DIRECTOR, 'anything', { onFallback });
-		expect(seen.at(-1)).toMatchObject({ reason: 'no_reply' });
+		expect(seen.at(-1)).toMatchObject({ reason: 'chain_failed' });
 
 		state.watsonx.mockResolvedValue({ text: 'A worn oak chair with turned legs, centered.' });
 		const before = seen.length;

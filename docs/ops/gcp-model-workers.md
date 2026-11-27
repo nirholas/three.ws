@@ -21,7 +21,7 @@ result_* }` — and authenticate with one shared bearer secret.
 
 | Lane (`backend` id) | Worker dir            | Cloud Run service  | Path served | What it does |
 |---------------------|-----------------------|--------------------|-------------|--------------|
-| `trellis2`          | `workers/model-trellis2` | `model-trellis2` | `image`  | Default image→3D lane. TRELLIS.2 (MIT): PBR GLB with alpha, `resolution` 512/1024/1536, meshopt packed. Weights staged by `workers/model-trellis2/stage_weights.sh`. The pixal3d and trellis2 stagers abort on an empty repo file listing instead of reporting success after staging nothing (`test_stage_weights.py` in each worker). |
+| `trellis2`          | `workers/model-trellis2` | `model-trellis2` | `image`  | Named first in the image fallback list, but not serving: `MODEL_TRELLIS2_URL` is unset on `three-ws-api`, so the lane is skipped and `trellis_selfhost` serves photos (0 trellis2 jobs in the 7 days to 2026-11-26). On the 32 GiB L4 shape it serves at most `512`; see [trellis2-lane-decision.md](./trellis2-lane-decision.md) before setting the URL. TRELLIS.2 (MIT): PBR GLB with alpha, `resolution` 512/1024/1536, meshopt packed. Weights staged by `workers/model-trellis2/stage_weights.sh`. The pixal3d and trellis2 stagers abort on an empty repo file listing instead of reporting success after staging nothing (`test_stage_weights.py` in each worker). |
 | `trellis_selfhost`  | `workers/model-trellis`  | `model-trellis`  | `image`  | Native single-hop image→3D (Microsoft TRELLIS). Accepts user photos and the FLUX-synthesized view for text prompts. Textured GLB. |
 | `hunyuan3d`         | `workers/model-hunyuan3d`| `model-hunyuan3d`| `image`  | High-poly image-conditioned reconstruction (Tencent Hunyuan3D). Poly-budget aware. |
 | `modly`             | `workers/modly`          | `model-modly`    | `image`  | TripoSG through Modly's headless backend (MIT). Single photo to untextured GLB, repaired and decimated to the tier's face budget. Weights staged by `workers/modly/stage_weights.sh`. |
@@ -105,7 +105,7 @@ faked.
 
 | Env var                 | Used by                | Notes |
 |-------------------------|------------------------|-------|
-| `MODEL_TRELLIS2_URL`    | `trellis2`             | Cloud Run URL of `model-trellis2`. Unset means the lane is skipped. |
+| `MODEL_TRELLIS2_URL`    | `trellis2`             | Cloud Run URL of `model-trellis2`. Unset means the lane is skipped (the production state). Setting it makes `trellis2` the first choice for every photo, so read [trellis2-lane-decision.md](./trellis2-lane-decision.md) first. |
 | `MODEL_TRELLIS_URL`     | `trellis_selfhost`     | Cloud Run URL of `model-trellis`. |
 | `GCP_HUNYUAN3D_URL`     | `hunyuan3d`            | Cloud Run URL of `model-hunyuan3d`. **Not** `GCP_RECONSTRUCTION_URL` — that is the avatar face pipeline, which rejects non-face images. |
 | `MODEL_MODLY_URL`       | `modly`, `modly_hunyuan` | Cloud Run URL of `model-modly`. Unset means both Modly lanes are skipped. |

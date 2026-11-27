@@ -93,7 +93,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const ANIM_DIR = resolve(ROOT, 'public/animations');
 
-// CLI overrides let the bulk Mixamo library pipeline (scripts/mixamo-all.mjs)
+// CLI overrides let the bulk CC0 library pipeline (scripts/cc0-animation-library.mjs)
 // bake into a staging dir for R2 upload without touching the curated public
 // set: --config=<path> --out=<dir> --manifest=<path> --url-prefix=<prefix>.
 // With no flags, behavior is unchanged (curated set → public/animations).

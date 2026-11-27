@@ -85,6 +85,68 @@ ranking: `generation timed out after 41 minutes` and
 `generation timed out after 63 minutes` are already two separate reasons under
 it, and a vendor sentence with no colon becomes its own reason every single time.
 
+## The stats look fine but users say it is broken
+
+Every number above starts at a `forge_creations` row, and so does the lane
+success rate on `/api/forge?health=1`. A request that ends before a job exists
+writes no row: refused at sign-in, rejected input, a credit or region gate, the
+platform rate limiter, the reference image painter refusing, the multi-view
+step failing, or a lane refusing the submit itself. On 2026-11-26 the lane rate
+read 93% while people reported that generation was broken: the requests that
+failed before a lane were in no count at all, so neither this report nor the
+health sensor moved.
+
+Those endings are counted separately, by `observeForgeSubmit` in
+[api/_lib/forge-prejob.js](../../api/_lib/forge-prejob.js), which wraps both
+`POST /api/forge` and `POST /api/gpt-forge`. One event per request: the stage it
+died at, a cause code (the response's `error`), the provider that refused when
+the failure happened inside provider work, the HTTP status, and the wait the
+response stated. No prompt text and no identifiers. Recording is
+fire-and-forget with a 1.5 second ceiling, so a store outage never changes what
+the person gets back.
+
+Where to look, in order:
+
+1. **Health payload.** `curl -s https://three.ws/api/forge?health=1 | jq .pre_job`
+   gives `last_hour` and `last_24h`, each with `accepted`, `jobs_created`,
+   `failed_before_job`, `sign_in_refused`, `by_stage`, `by_cause` (sorted),
+   `by_provider`, `avg_stated_wait_s`, and the three rates. `metrics` beside it
+   carries `success_rate_scope` (what the lane rate counts) and
+   `end_to_end_success_rate`. The block is omitted when the deployment has no
+   counter store, so its absence means "not measured", not "zero".
+2. **The text reports.** `npm run forge:errors` and `npm run forge:funnel` both
+   print a "Before a job existed" section and an end-to-end line beside the lane
+   rate. They read the Redis counters directly when the shell has the Upstash
+   env, otherwise the public health payload (override with `FORGE_HEALTH_URL`).
+   Production's Redis is on a private address, so from a devbox the reports use
+   the health payload.
+3. **Logs, per request.** Every ending logs one line,
+   `jsonPayload.evt="forge_submit"`, with `outcome`, `stage`, `cause`,
+   `provider`, `http_status`, `retry_after_s`. Showcase seed jobs log with
+   `internal: true` and are never counted.
+
+The stages, in the order a request meets them: `sign_in`, `input`, `access`
+(credit, pass or plan gates), `rate_limit` (the platform limiter), `image_check`,
+`gate`, then the provider work the handler marks as it goes: `direction`
+(prompt rewrite), `reference` (painting the image a text prompt needs),
+`views` (the multi-view turnaround) and `submit` (a lane refusing the job). A
+provider's own 429 inside the work counts at the stage where it happened, not
+as `rate_limit`.
+
+The rates:
+
+- **lane success** = finished jobs over terminal jobs. What the 93% was.
+- **pre-job failure** = requests that ended before a job over requests accepted
+  past sign-in.
+- **end-to-end success** = (models delivered in the response + jobs created ×
+  lane success) over requests accepted past sign-in. This is the number a
+  person experiences. A lane rate in the 90s next to an end-to-end rate far
+  below it means the breakage is upstream of the lanes: read `by_stage` and
+  `by_cause` before touching any lane.
+
+The counters cover 24 hours (five-minute buckets for the last hour, hourly
+buckets for the day). Anything older is only in the logs.
+
 ## How the ranking groups
 
 `forge_creations.error` stores whatever the lane said, verbatim
@@ -297,6 +359,62 @@ emails, wallet addresses and IP addresses become `<email>`, `<address>` and
 `<ip>`. `--json` carries the database host, never its credentials. `--reveal`
 shows full messages and prompts when you need them for a specific fix; do not
 paste revealed output into a public channel.
+
+## What the page tells the person
+
+The ledger above is for us. What the person sees when a request fails comes
+from one copy map, [src/forge-errors.js](../../src/forge-errors.js), used by
+both Forge pages (`/forge` and the studio) and every tool on the result panel
+(auto-rig, stylize, split into parts, optimize, game-ready), for submit, poll,
+upload and download failures.
+
+```bash
+npm run forge:error-codes              # every code a Forge endpoint can return: statuses, files
+npm run forge:error-codes -- --missing # only codes with no copy (exits 1 if any)
+npm run forge:error-codes -- --json
+```
+
+The inventory ([scripts/forge-error-codes.mjs](../../scripts/forge-error-codes.mjs))
+reads the handler source statically: `api/forge.js`, `api/forged.js`,
+`api/forge-*.js`, `api/forge/*.js`, `api/forge-off/*.js`, the
+`api/_lib/forge-*.js` helpers and `api/_lib/require-three.js`, plus the shared
+envelope codes from `api/_lib/http.js` and `api/_lib/creator-account.js`.
+It recognizes `error: 'code'` body literals, `error(res, NNN, 'code')` helper
+calls, `code: 'code'` on thrown errors, and `(…, NNN, 'code')` pairs. The
+provider webhook and `api/gpt-forge.js` (its own copy layer) are not scanned.
+
+Rules the map follows, and [tests/forge-error-copy.test.js](../../tests/forge-error-copy.test.js)
+enforces:
+
+- **Every extracted code has an entry.** Add a new `error: 'code'` to a Forge
+  handler without copy and the guard fails, naming the code. Add the entry to
+  `FORGE_ERROR_COPY` (a `title`, a `what` sentence, a `todo` sentence, `retry`
+  of `now`, `wait` or `never`, and the `action` the panel offers).
+- **The server's `message` is never shown.** It can carry provider output
+  (a vendor name, a URL with a token, a stack). Two exceptions are screened:
+  the poll's masked `status: 'failed'` sentence, and our own validation text on
+  `invalid_prompt` / `invalid_options`. Both pass through `isSafeServerText()`,
+  which rejects URLs, hosts, IPs, stack frames, key shapes, markup and vendor
+  names, and fall back to map copy when they fail.
+- **An unknown code still says something true and actionable** and carries a
+  reference: the server's `ref` correlation id when there is one, otherwise
+  `code/status at HH:MM UTC`. Ask a person who reports a failure for that
+  reference, then match it in the logs (`npm run logs`) or the ledger above.
+- **The server keeps provider text out of the body too.** When a provider
+  fails while starting a job, `api/forge.js` and `api/gpt-forge.js` answer
+  `invalid_key`, `insufficient_credits` (own key), `generation_failed` and
+  `rig_failed` through `forgeFailureBody()`
+  ([api/_lib/forge-public-error.js](../../api/_lib/forge-public-error.js)):
+  fixed copy plus a 12-character `ref`, with the raw provider error logged once
+  (credential shapes scrubbed) as `[forge] <code> ref=<ref>: <raw>`. A user's
+  quoted reference finds that line with a `textPayload:"ref=<ref>"` filter on
+  the `three-ws-api` service, using the log commands in
+  [production-log-triage.md](production-log-triage.md).
+  `tests/api/forge-public-error.test.js` fails if either handler relays
+  `err.message` for those codes again.
+- **The prompt and settings are always kept**, and every failure is announced
+  through one visually hidden `role="alert"` region (`announceForgeError`),
+  since the error panel is revealed by toggling a class.
 
 ## Credentials
 

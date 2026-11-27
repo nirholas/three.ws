@@ -35,11 +35,11 @@ import {
 } from './_lib/material-studio-store.js';
 import { requireCreator } from './_lib/creator-account.js';
 import { recordMaterialRestyle } from './_lib/material-restyle-store.js';
+import { checkInstruction } from '../src/shared/restyle-instruction.js';
 
 const ROUTE = '/api/material-studio';
 const MAX_GLB_UPLOAD_BYTES = 64 * 1024 * 1024;
 const MAX_JSON_BODY_BYTES = 16_384;
-const MAX_INSTRUCTION_LEN = 300;
 
 function badRequest(code, message) {
 	return Object.assign(new Error(message), { status: 400, code });
@@ -130,12 +130,11 @@ async function handleRestyle(req, res, { key, userId }) {
 	if (!rl.success) return rateLimited(res, rl, 'Restyle limit reached. Try again shortly.');
 	const body = await readJsonBody(req);
 	const glbUrl = typeof body.glb_url === 'string' ? body.glb_url.trim() : '';
-	const instruction = typeof body.instruction === 'string' ? body.instruction.trim() : '';
 	if (!glbUrl) throw badRequest('missing_glb_url', '"glb_url" is required');
-	if (!instruction) throw badRequest('missing_instruction', '"instruction" is required');
-	if (instruction.length > MAX_INSTRUCTION_LEN) {
-		throw badRequest('instruction_too_long', `"instruction" must be at most ${MAX_INSTRUCTION_LEN} characters`);
-	}
+	// The same shape checks a generation prompt gets, shared with the Forge panel.
+	const checked = checkInstruction(body.instruction);
+	if (!checked.ok) throw badRequest(checked.code, checked.message);
+	const instruction = checked.text;
 	const result = await restyleMaterialFromInstruction({
 		glbUrl,
 		instruction,

@@ -3,14 +3,13 @@
 // Single source of truth for $THREE token data on the client.
 //
 // Every holder surface (dashboard "your position", token page price header,
-// revenue-share / rewards, the live HUD) used to fetch the same handful of
+// the live HUD) used to fetch the same handful of
 // /api/three-token/* endpoints inline and drift apart. This module centralises
 // those reads into one subscribable store so each surface renders from one
 // snapshot and they never disagree.
 //
 // It wraps only EXISTING endpoints — no new fetch primitives:
 //   GET  /api/three-token/stats          (public, edge-cached)  → protocol + token market
-//   GET  /api/three-token/revenue-share  (authed; 401 = guest)  → pro-rata pool math
 //   GET  /api/three-token/activity                              → recent revenue events
 //   GET  /api/three-token/burns                                 → platform burn ledger (empty: the platform never burns)
 //   POST /api/wallet/balances {chain:'solana',address}          → the holder's position
@@ -44,7 +43,6 @@ function errInfo(err) {
 function freshState() {
 	return {
 		protocol:     { status: 'loading', token: null, protocol: null, buyback: null, source: null, updatedAt: null, error: null },
-		revenueShare: { status: 'loading', unauthenticated: false, error: null },
 		activity:     { status: 'loading', events: [], error: null },
 		burns:        { status: 'loading', burns: [], total_burned: null, burn_per_deploy: null, error: null },
 		// position is `idle` until a wallet is known. Statuses:
@@ -144,37 +142,6 @@ export function createThreeTokenData(opts = {}) {
 		}
 	}
 
-	async function loadRevenueShare() {
-		// The endpoint is authed and guests are the common case on the public
-		// token page. Resolve the (cached) session first and skip the request
-		// entirely for guests — issuing it would log a guaranteed-401 network
-		// error to every visitor's console. `me === undefined` means the session
-		// lookup itself failed; fall through and let the request decide.
-		let me;
-		try {
-			me = await getMe();
-		} catch {
-			me = undefined;
-		}
-		if (me === null) {
-			patch('revenueShare', { status: 'ok', unauthenticated: true, error: null });
-			return;
-		}
-		try {
-			const data = await get('/api/three-token/revenue-share');
-			patch('revenueShare', { status: 'ok', unauthenticated: false, error: null, ...data });
-		} catch (err) {
-			// A 401 is not an error here — it just means the visitor is a guest
-			// (e.g. the session expired between the cached lookup and this call).
-			// Pool-level numbers still come from /stats; only the per-user view is gated.
-			if (err instanceof ApiError && err.status === 401) {
-				patch('revenueShare', { status: 'ok', unauthenticated: true, error: null });
-			} else {
-				patch('revenueShare', { status: 'error', error: errInfo(err) });
-			}
-		}
-	}
-
 	// Resolve which Solana address to read the position for. Returns a base58
 	// address string, or a sentinel describing why there isn't one.
 	async function resolveWallet() {
@@ -238,7 +205,7 @@ export function createThreeTokenData(opts = {}) {
 	// ── Public operations ────────────────────────────────────────────────────
 
 	async function refresh() {
-		await Promise.all([loadProtocol(), loadActivity(), loadBurns(), loadRevenueShare()]);
+		await Promise.all([loadProtocol(), loadActivity(), loadBurns()]);
 	}
 
 	async function refreshPosition() {

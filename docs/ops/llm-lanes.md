@@ -103,6 +103,91 @@ surfacing the original 429.
 
 ---
 
+## Forge direction: the chain, its cooldowns, and failing open
+
+Two Forge steps ask this chain to rewrite a prompt: the art director that runs
+inside `POST /api/forge` before the reference image is painted
+(`directForReference` in `api/_lib/forge-direction.js`, task `forge_director`),
+and the page's Enhance button (`POST /api/forge-enhance`, task
+`forge_enhance`). Both are optional. When no model can help, the user's own
+prompt goes forward unchanged, fast, and the response says so.
+
+### Real order under the production key set (2026-11-26)
+
+Printed by `providerChain({ task: 'forge_director' })` with the keys production
+holds (Vertex Claude primary, Groq, OpenRouter, NVIDIA, Hugging Face, OpenAI).
+`forge_enhance` builds the same list. Forge Spark sends `engine: 'nemotron'`,
+which puts NVIDIA Lightning first and drops its later Lightning rung.
+
+1. `vertex-anthropic` Claude Haiku 4.5 (Vertex)
+2. `groq` `qwen/qwen3.8-27b`
+3. `groq#120b` `openai/gpt-oss-120b`
+4. `openrouter` `google/gemma-4-31b-it:free`
+5. `openrouter:nemotron-3.5-super-vl` (`:free`)
+6. `openrouter:nemotron-3-ultra-550b-a55b` (`:free`)
+7. `nvidia` Nemotron Ultra on `integrate.api.nvidia.com`
+8. `huggingface` `meta-llama/Llama-3.3-70B-Instruct`
+9. `kilo` Nemotron Ultra (keyless)
+10. `kilo:super` Nemotron Super VL (keyless)
+11. `ovh` `Meta-Llama-3_3-70B-Instruct` (keyless)
+12. `vertex-gemini` `google/gemini-2.5-flash`
+13. `pollinations` `openai-fast` (keyless)
+14. `llm7` `gemma4:31b` (keyless)
+15. `nvidia:lightning` `nvidia/nemotron-3.5-lightning-30b-a3b`
+16. `groq#instant` `openai/gpt-oss-20b`
+17. `openai` `gpt-5.4-nano` (paid tail)
+
+The director also tries watsonx Granite first, for at most 4 s of its budget, when
+`WATSONX_API_KEY` is set. Enhance tries Vertex Gemini directly first, for at
+most 4 s, unless `FORGE_ENHANCE_VERTEX=off`; that direct call shares cooldown
+memory with rung 12 (`noteLaneRefusal` / `laneCoolingSeconds` in `llm.js`), so
+a billing 403 seen by either side stops both from asking again.
+
+### Cooldown per rung
+
+Every rung uses the same rule (`cooldownMsForStatus` in `api/_lib/llm.js`),
+keyed by rung name and model, held in memory per Cloud Run instance:
+
+- 401, 402, 403, 404, 410 (bad key, no credit, billing hold, retired model): skipped for 30 minutes with no network call.
+- 429: skipped for the provider's `Retry-After`, capped at 5 minutes; 30 seconds when the provider states no wait.
+- A stall (request or body read hit its attempt cap): skipped for 2 minutes, keyed by host and model.
+- 5xx and transport errors (reset, DNS): no cooldown, the next request tries again.
+
+### Budgets
+
+- Director: one shared budget of 8 s for watsonx plus the chain, `FORGE_DIRECTOR_BUDGET_MS` (clamped 1,000 to 20,000).
+- Enhance: one shared budget of 10 s for the direct Vertex call plus the chain, `FORGE_ENHANCE_BUDGET_MS` (clamped 1,000 to 30,000).
+- Both call `llmComplete({ strictCooldowns: true })`: when every rung is cooling it throws `LlmChainCoolingError` (`code: 'chain_cooling'`, `retryAfterS`) without touching the network, instead of re-asking the least-recently-cooled rung.
+
+With the three refusals production returned on 2026-11-26 (OpenRouter 402,
+OpenAI 429, Vertex 403) and every other keyed rung refusing, the first request
+fails open in well under a second and the next one makes zero calls
+(`tests/api/forge-director-fail-open.test.js`,
+`tests/api/forge-enhance-fail-open.test.js`).
+
+### What the responses say
+
+`POST /api/forge` returns a `direction` record beside `directed_prompt`, and
+the `directed` progress crumb carries the same record:
+
+- `{ status: 'directed', ms }`: the brief painted the reference; `directed_prompt` holds it.
+- `{ status: 'known_mark' }`: a known brand mark was resolved to its fixed brief without asking the chain.
+- `{ status: 'skipped', reason, ms }`: the user's prompt painted the reference. `reason` is one of `chain_failed`, `chain_cooling`, `budget_spent`, `no_reply` (nothing usable came back) or `refusal`, `off_topic`, `empty`, `too_long`, `unfinished`, `link`, `not_enriched` (a reply came back and was discarded).
+- `{ status: 'off' }`: the request sent `director: false`.
+
+The page's progress timeline (`src/forge-timeline.js`) shows "Prompt
+art-directed" only for a real rewrite, and says the prompt assistant was
+unavailable, its rewrite was not usable, or direction was off otherwise.
+
+`POST /api/forge-enhance`:
+
+- 200 `{ prompt, enhanced: true }`: a usable rewrite.
+- 200 `{ prompt: <the user's prompt>, enhanced: false, reason }`: the rewrite was empty, over 1,000 characters, a refusal, a link, or about a different subject.
+- 503 `{ error: 'llm_unavailable', prompt: <the user's prompt>, enhanced: false, retry_after? }`: no model is available; `retry_after` is the soonest rung's cooldown.
+
+Every Enhance button uses `src/forge-enhance-request.js`, which ends a stalled
+request at 15 s and shows one sentence for each outcome.
+
 ## Adding Claude: one command
 
 When an `ANTHROPIC_API_KEY` arrives, this is the whole rollout:

@@ -1,5 +1,7 @@
 # Forge hardening 26: Make the wait honest: real progress, real estimates, and no silence
 
+**Status (2026-11-27):** Done in code on local main, not yet in production. The wait clock (src/forge-wait-clock.js, tests/forge-wait-clock.test.js) stops the Elapsed readout running backwards and judges the measured lane range from job acceptance, not the click; the cold-over phase is announced; Studio uses the served lane and the same clocks and drops auto-rotate under reduced motion; the extra-model duplicate define error is gone. Commits c1192cdf7, 56bf1084f, bcd0ba934, c2e997652 (Studio reduced-motion line rode in 863171ef6). Production still serves f0eed584f. Remaining and owned by the owner: push and deploy (`npm run deploy:gcp:full`), then archive this file. Open in the protected trellis lane: polls flip from running back to queued mid-job.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/126-forge-hardening-26-progress-and-wait-experience.md`.
 
 **Priority:** P1. **Area:** waiting experience. **Dev port:** 4126. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.

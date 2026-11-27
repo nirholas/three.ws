@@ -1,8 +1,8 @@
 // Programmatic $THREE buyback engine.
 //
-// Converts accumulated platform USDC revenue into onchain buy pressure: market-buy
+// Converts accumulated platform USDC revenue into on-chain treasury purchases: market-buy
 // $THREE on Jupiter and route the bought tokens into the treasury. This is the
-// documented economy policy — "the treasury funds buybacks … buy pressure without
+// documented economy policy: "the treasury funds buybacks … purchases without
 // deflation" (./config.js) — made programmatic, onchain, and publicly auditable.
 // NO platform burn: supply is never destroyed by this lane.
 //
@@ -364,11 +364,11 @@ export async function buybackStats() {
 		commit_bps: bps,
 		commit_pct: bps / 100,
 		committed_usd: committed,
-		// Share of the *commitment* already converted to buy pressure (keeping the promise).
+		// Share of the *commitment* already converted to purchases (keeping the promise).
 		commitment_progress_pct: commitmentProgressPct(deployedUsd, committed),
 		revenue_usd: revenueUsd,
 		deployed_usd: deployedUsd,
-		// Share of total platform revenue already converted to onchain buy pressure.
+		// Share of total platform revenue already converted to on-chain treasury purchases.
 		deployed_pct: deployedPct(deployedUsd, revenueUsd),
 		three_bought: threeTokens(threeBought),
 		runs: agg[0]?.runs ?? 0,

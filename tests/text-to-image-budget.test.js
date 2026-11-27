@@ -9,6 +9,7 @@
  * submits (no paint step) answered in 3.7s.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resetImageRungBreakers } from '../api/_lib/image-rung-breaker.js';
 
 process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
 process.env.NVIDIA_API_KEY = 'nim-test-key';
@@ -61,7 +62,11 @@ globalThis.fetch = vi.fn(
 		}),
 );
 
-beforeEach(() => {
+beforeEach(async () => {
+	globalThis.fetch.mockClear();
+	// Every rung starts with a closed breaker: the breaker keeps its state in
+	// the shared cache, which outlives a single test.
+	await resetImageRungBreakers();
 	vertex.calls.length = 0;
 	nimMode = 'fail-fast';
 });
@@ -77,6 +82,10 @@ describe('lane budget math', () => {
 		// Never more than what is left, even when the floor would say otherwise.
 		expect(laneTimeoutMs(90_000, { budgetMs: 60_000, remainingMs: 10_000, laneRemains: true })).toBe(10_000);
 		expect(laneTimeoutMs(90_000, { budgetMs: 60_000, remainingMs: 0, laneRemains: true })).toBe(0);
+		// With a reserve held back for the keyless rung, the lanes ahead of it
+		// split only the pool above it, and nothing at all once it is reached.
+		expect(laneTimeoutMs(90_000, { budgetMs: 60_000, remainingMs: 60_000, laneRemains: true, reserveMs: 15_000 })).toBe(27_000);
+		expect(laneTimeoutMs(90_000, { budgetMs: 60_000, remainingMs: 15_000, laneRemains: true, reserveMs: 15_000 })).toBe(0);
 	});
 
 	it('defaults the ladder to 60s and honours the env override and a caller budget', () => {
@@ -93,18 +102,21 @@ describe('lane budget math', () => {
 describe('the ladder as a whole is bounded', () => {
 	it('a stalled Vertex lane is cut at its cap and NIM still gets its turn, all inside the budget', async () => {
 		const started = Date.now();
-		await expect(textToImage('a fox', { budgetMs: 5_000 })).rejects.toThrow(/fetch failed/);
+		await expect(textToImage('a fox', { budgetMs: 10_000 })).rejects.toThrow(/fetch failed/);
 		const elapsed = Date.now() - started;
-		// Vertex was handed 60% of the budget, not its 90s ceiling.
+		// Vertex was handed 60% of the pool above the keyless rung's reserve
+		// (10s budget, 5s reserve), not its 90s ceiling and not the reserve.
 		expect(vertex.calls).toHaveLength(1);
 		// (a millisecond or two elapses between the deadline being set and the
 		// lane being handed its share, so this is a tight band, not an equality)
 		expect(vertex.calls[0].timeoutMs).toBeGreaterThanOrEqual(2_950);
 		expect(vertex.calls[0].timeoutMs).toBeLessThanOrEqual(3_000);
-		// NIM ran after it (one retry after 1.2s), and the whole thing stayed
-		// well inside the budget instead of the old 150s.
-		expect(globalThis.fetch).toHaveBeenCalled();
-		expect(elapsed).toBeLessThan(5_000 + 1_500);
+		// NIM ran after it (one retry after 1.2s), then the keyless rung, and the
+		// whole thing stayed well inside the budget instead of the old 150s.
+		const hosts = globalThis.fetch.mock.calls.map(([url]) => new URL(String(url)).host);
+		expect(hosts).toContain('ai.api.nvidia.com');
+		expect(hosts.at(-1)).toBe('image.pollinations.ai');
+		expect(elapsed).toBeLessThan(10_000 + 1_500);
 	}, 15_000);
 
 	it('a stalled NIM lane is cut at what is left of the budget, never its own 60s ceiling', async () => {

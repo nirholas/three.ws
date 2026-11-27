@@ -62,7 +62,6 @@ import {
 	recordCreationView,
 	deleteCreation,
 	hashClient,
-	ownerClientKey,
 	forgeStoreEnabled,
 	isCreationOwner,
 	setCreationVisibility,
@@ -70,31 +69,9 @@ import {
 } from './_lib/forge-store.js';
 import { setOwnerTags } from './_lib/creation-descriptions.js';
 import { MAX_TAGS } from './_lib/creation-tags.js';
-import { getSessionUser } from './_lib/auth.js';
+import { ownerCredentials } from './_lib/forge-owner-credentials.js';
 import { signInRequired } from './_lib/creator-account.js';
 import { isUuid } from './_lib/validate.js';
-
-function header(req, name) {
-	const raw = req.headers[name];
-	const value = Array.isArray(raw) ? raw[0] : raw;
-	return typeof value === 'string' && value ? value : null;
-}
-
-// Every owner credential the request carries. The client key is dropped when it
-// hashes to the shared anon bucket, so it can never authorize anything.
-// `lazySession` skips the session lookup when the request carries no identity
-// at all, so the anonymous public GET stays one query; writes always resolve it
-// (a bearer-token session has no cookie).
-async function ownerCredentials(req, res, { lazySession = false } = {}) {
-	const clientHeader = header(req, 'x-forge-client');
-	const manageToken = header(req, 'x-forge-manage-token') ?? undefined;
-	const clientKey = clientHeader ? ownerClientKey(hashClient(clientHeader)) : null;
-	const hasIdentity = Boolean(clientHeader || manageToken || req.headers.cookie || req.headers.authorization);
-	const user = !lazySession || hasIdentity ? await getSessionUser(req, res).catch(() => null) : null;
-	const creds = { clientKey, userId: user?.id ?? null };
-	if (manageToken) creds.manageToken = manageToken;
-	return creds;
-}
 
 export default wrap(async (req, res) => {
 	// The anonymous read is public and is made from other origins (embeds, the Power

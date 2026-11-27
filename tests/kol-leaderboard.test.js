@@ -117,8 +117,8 @@ describe('getLeaderboard', () => {
 	});
 });
 
-describe('fetchXProfile rung order', () => {
-	const guestUser = { username: 'synthkol', name: 'Synth KOL', avatar: 'https://example.test/a.jpg', verified: false, followers: 987 };
+describe('fetchXProfile', () => {
+	const user = { username: 'synthkol', name: 'Synth KOL', avatar: 'https://example.test/a.jpg', verified: false, followers: 987 };
 
 	async function load() {
 		vi.resetModules();
@@ -126,46 +126,27 @@ describe('fetchXProfile rung order', () => {
 		return (await import('../src/kol/x-profile.js')).fetchXProfile;
 	}
 	afterEach(() => {
-		delete process.env.TWITTER_BEARER_TOKEN;
 		vi.doUnmock('../api/_lib/cache.js');
 	});
 
-	it('uses the guest reader when the bearer token is unset', async () => {
-		delete process.env.TWITTER_BEARER_TOKEN;
+	it('maps the official X API profile', async () => {
 		const fetchXProfile = await load();
-		const bearerLookup = vi.fn();
-		const p = await fetchXProfile('synthkol', { bearerLookup, guestLookup: async () => guestUser });
-		expect(bearerLookup).not.toHaveBeenCalled();
-		expect(p).toMatchObject({ handle: 'synthkol', followerCount: 987, source: 'x-guest' });
+		const p = await fetchXProfile('synthkol', { lookup: async () => user });
+		expect(p).toMatchObject({ handle: 'synthkol', followerCount: 987, source: 'x-api' });
 	});
 
-	it('prefers the bearer rung when it answers', async () => {
-		process.env.TWITTER_BEARER_TOKEN = 'synthetic-token';
+	it('resolves null when X is not configured, never a fabricated count', async () => {
 		const fetchXProfile = await load();
-		const guestLookup = vi.fn();
 		const p = await fetchXProfile('synthkol', {
-			bearerLookup: async () => ({ handle: 'synthkol', followerCount: 1000, source: 'x-api' }),
-			guestLookup,
+			lookup: async () => { throw Object.assign(new Error('not configured'), { reason: 'not_configured' }); },
 		});
-		expect(p.source).toBe('x-api');
-		expect(guestLookup).not.toHaveBeenCalled();
+		expect(p).toBeNull();
 	});
 
-	it('falls through to the guest reader when the bearer is rate limited', async () => {
-		process.env.TWITTER_BEARER_TOKEN = 'synthetic-token';
+	it('resolves null when X is rate limited', async () => {
 		const fetchXProfile = await load();
 		const p = await fetchXProfile('synthkol', {
-			bearerLookup: async () => { throw new Error('Request failed with code 429'); },
-			guestLookup: async () => guestUser,
-		});
-		expect(p).toMatchObject({ followerCount: 987, source: 'x-guest' });
-	});
-
-	it('resolves null when both rungs fail, never a fabricated count', async () => {
-		delete process.env.TWITTER_BEARER_TOKEN;
-		const fetchXProfile = await load();
-		const p = await fetchXProfile('synthkol', {
-			guestLookup: async () => { throw Object.assign(new Error('cooling down'), { reason: 'rate_limited' }); },
+			lookup: async () => { throw Object.assign(new Error('cooling down'), { reason: 'rate_limited' }); },
 		});
 		expect(p).toBeNull();
 	});

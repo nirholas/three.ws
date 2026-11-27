@@ -1,6 +1,6 @@
 # Character Library: rigged characters, ready to animate
 
-The Character Library is a free, curated gallery of professionally rigged humanoid 3D characters. Every character ships as a web-ready GLB with a full skeleton, skin weights, and textures, so it drives the entire three.ws animation library (idle, walk, run, wave, dance, and the rest of the canonical clip set) out of the box via animation retargeting. No account, no payment, no upload step: browse, preview live, and send any character into a studio in one click.
+The Character Library is a free, curated gallery of rigged humanoid 3D characters under open licenses. Every character ships as a web-ready GLB with a full skeleton, skin weights, and textures, so it drives the entire three.ws animation library (idle, walk, run, wave, dance, and the rest of the canonical clip set) out of the box via animation retargeting. No account, no payment, no upload step: browse, preview live, and send any character into a studio in one click.
 
 Page: [/character-library](https://three.ws/character-library) · API: `GET /api/avatars/library`
 Source: [`pages/character-library.html`](../pages/character-library.html) · [`src/character-library.js`](../src/character-library.js) · [`api/avatars/library.js`](../api/avatars/library.js)
@@ -11,7 +11,9 @@ Source: [`pages/character-library.html`](../pages/character-library.html) · [`s
 
 ## What is in the library
 
-A hundred-plus professionally rigged Mixamo humanoid characters (Y Bot, X Bot, Warrok, Remy, Vanguard, zombies, knights, and more), staged as optimized GLBs on the R2 CDN. The manifest can also merge additional CC0 characters from other sources (for example Quaternius), so the API's `total` field is the authoritative count. Nothing on the page hard-codes a number: the hero headline and the results counter render `total` from the manifest.
+Openly licensed (CC0) rigged humanoid characters, such as the Quaternius base character, staged as optimized GLBs on the R2 CDN from [`public/avatars/extra/characters.json`](../public/avatars/extra/characters.json). The API's `total` field is the authoritative count. Nothing on the page hard-codes a number: the hero headline and the results counter render `total` from the manifest.
+
+Adobe Mixamo characters are not part of the library. Mixamo's terms allow using an exported character inside a product but not redistributing it as a standalone download, so the library once held 106 of them and no longer does. The endpoint also filters any Mixamo-sourced row out of an older published manifest.
 
 Every entry is animation-ready: the GLB carries a skinned mesh, and the three.ws runtime retargets the canonical clip library onto it automatically (see [Animations](./animations.md) for how retargeting and the clip registry work). There is no per-character allowlist; any character in the library plays any clip.
 
@@ -50,7 +52,7 @@ Without `limit`:
 ```json
 {
   "avatars": [ { "...": "entry, see below" } ],
-  "total": 107,
+  "total": 12,
   "generated_at": "2026-07-21T13:39:15.447Z"
 }
 ```
@@ -60,7 +62,7 @@ With `limit` (and optional `offset`), the response adds `offset` and `next_offse
 ```json
 {
   "avatars": [ "..." ],
-  "total": 107,
+  "total": 12,
   "offset": 0,
   "next_offset": 25,
   "generated_at": "2026-07-21T13:39:15.447Z"
@@ -78,8 +80,8 @@ Each entry in `avatars`:
 | `bytes` | number | GLB file size |
 | `skins` | number | Skinned mesh count in the GLB |
 | `animations` | number | Animation clip count baked into the GLB itself (retargeted library clips come from the runtime, not the file) |
-| `source` | string | Where the character came from, e.g. `"mixamo"` or `"quaternius"` |
-| `license` | string | License tag for this entry, e.g. `"Mixamo"` or `"CC0"` (see Licensing below) |
+| `source` | string | Where the character came from, e.g. `"quaternius"` |
+| `license` | string | License tag for this entry, e.g. `"CC0"` (see Licensing below) |
 
 Before the manifest is first uploaded, the endpoint returns `{ "avatars": [], "total": 0 }` rather than an error, so consumers feature-detect by emptiness.
 
@@ -95,7 +97,6 @@ Returns the first two characters plus `total`, `offset`, and `next_offset`, each
 
 Every manifest entry carries a `license` field; read it per character rather than assuming one license for the whole library.
 
-- **`"Mixamo"`**: the character is an Adobe Mixamo character, used under Adobe's Mixamo terms. The manifest records the tag only, it does not restate the terms; consult Adobe's Mixamo licensing FAQ for what those terms permit before redistributing the GLB outside three.ws.
 - **`"CC0"`**: public domain. Free for any use, including commercial, with no attribution required.
 
 Using any library character inside three.ws (previewing, animating, publishing a widget or embed) is free.
@@ -104,10 +105,9 @@ Using any library character inside three.ws (previewing, animating, publishing a
 
 The gallery and API are read-only consumers of a manifest built by a local pipeline. The GLBs total several gigabytes, far too large for the deploy bundle, so all bytes live on the R2 CDN and only the manifest index is published:
 
-1. `scripts/fetch-mixamo-avatars.mjs` downloads the source characters.
-2. `scripts/convert-mixamo-avatars.mjs` converts them to web GLB.
-3. `scripts/fetch-mixamo-avatar-thumbnails.mjs` stages the PNG thumbnails.
-4. `scripts/build-mixamo-avatar-library.mjs` reads `public/avatars/mixamo/catalog.json`, merges the extra CC0 characters from `public/avatars/extra/characters.json`, and PUTs `avatars/library/manifest.json` to R2 (`--dry-run` prints without uploading).
+`scripts/build-character-library.mjs` reads `public/avatars/extra/characters.json` (the GLB and thumbnail bytes are already on R2) and PUTs `avatars/library/manifest.json` to R2 (`--dry-run` prints without uploading). Add a character by uploading its canonicalized GLB and thumbnail to R2, adding a row with `source` and `license` to the JSON file, and rerunning the script. Only add characters whose license permits commercial redistribution.
+
+Owner action: the objects under `avatars/mixamo/` in the R2 bucket (source FBX, GLB, thumbnails) are no longer referenced and should be deleted, then the manifest republished with `node scripts/build-character-library.mjs`.
 
 R2 CORS is configured by `scripts/set-r2-cors.mjs` so browsers can GET the GLBs cross-origin. Since 2026-09-10 the live read rule is world-open, so a manifest GLB loaded straight from the bucket host works on any origin. Measure the live policy yourself with `node scripts/set-r2-cors.mjs --probe`, which needs no credentials and exits 0 when the bucket matches the canonical policy. Before that date the bucket echoed only an allowlist (`three.ws`, `*.vercel.app`, `localhost:3000`) and every other origin got a `200` with no `access-control-allow-origin`, which is why older embed guides route around it. [`/cdn/<key>`](./media-api.md#how-bucket-objects-are-served-cdnkey) is still the better URL when you have the object key (first-party and CDN-cached for 30 days), and [`/api/glb`](./media-api.md#same-origin-glb-proxy) is still the answer for a model URL on a host that is not ours.
 

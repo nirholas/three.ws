@@ -5,7 +5,7 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | File | Disposition | Detail |
 |---|---|---|
 | `docs/ops/image-selfie-3d-review-2026-10-09.md` | order | [273](../273-plan-forge-image-lane-licence-and-model-currency.md). section 5 follow-ups; engine chain covered by 067/068, selfie by avatar-lhm-photoreal-selfie-lane |
-| `docs/ops/ISSUES.md` | order | [271](../271-plan-ops-world-health-retired-state.md), [268](../268-plan-solana-rpc-call-volume-budget-and-read-cache.md), [726](../726-plan-ops-alerts-email-push-channel.md). items 1 to 6 are owner money or credentials; 7 recovered; 8 covered by 907 |
+| `docs/ops/ISSUES.md` | order | [271](../../awaiting-owner/271-plan-ops-world-health-retired-state.md), [268](../268-plan-solana-rpc-call-volume-budget-and-read-cache.md), [726](../../awaiting-owner/726-plan-ops-alerts-email-push-channel.md). items 1 to 6 are owner money or credentials; 7 recovered; 8 covered by 907 |
 | `docs/ops/livepeer-federation.md` | no-open-work | guard in tree, awaits routine deploy |
 | `docs/ops/llm-lanes.md` | no-open-work | reference |
 | `docs/ops/materialize-fulfillment.md` | owner-only | partner signing and credentials are owner actions |
@@ -28,10 +28,10 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/ops/site-health-audit-2026-09-15.md` | order | [262](../262-plan-i18n-restore-language-picker-manifest.md). i18n lint backlog; other findings covered by site-console-resweep-and-fix |
 | `docs/ops/sniper-fleet-review-2026-10-01.md` | order | [980](../980-plan-sniper-moonbag-manager-and-latency-telemetry.md). plan items 9 and 11 unbuilt; 8 and 12 are on-chain owner actions |
 | `docs/ops/solana-rpc-lanes.md` | order | [268](../268-plan-solana-rpc-call-volume-budget-and-read-cache.md). live rpc_lanes degraded |
-| `docs/ops/stranded-wallets.md` | order | [972](../972-plan-wallet-key-dedicated-reseal-rotation.md). shared key finding and rotation tooling |
+| `docs/ops/stranded-wallets.md` | order | [972](../../awaiting-owner/972-plan-wallet-key-dedicated-reseal-rotation.md). shared key finding and rotation tooling |
 | `docs/ops/swarm-100-audit.md` | order | [262](../262-plan-i18n-restore-language-picker-manifest.md). only open finding is i18n coverage |
 | `docs/ops/trading-bot-report.md` | no-open-work | report |
-| `docs/ops/wallet-key-migration.md` | order | [972](../972-plan-wallet-key-dedicated-reseal-rotation.md). duplicate key values not fixed |
+| `docs/ops/wallet-key-migration.md` | order | [972](../../awaiting-owner/972-plan-wallet-key-dedicated-reseal-rotation.md). duplicate key values not fixed |
 | `docs/ops/wallet-rescue.md` | owner-only | moves real funds, owner action |
 | `docs/ops/worker-and-avatar-rules.md` | no-open-work | rules reference |
 | `docs/ops/x-story-findings-2026-09-30.md` | order | [277](../277-plan-site-announced-surfaces-defect-sweep.md), [738](../738-plan-site-demo-defaults-tpose-and-account-hygiene.md). verified open: concierge empty rung, agent-identities viewer, labs categorize, tty, herald, T-pose defaults |
@@ -41,7 +41,7 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/oracle-trading-mcp-plan.md` | order | [702](../702-plan-mcp-oracle-and-agent-trader-servers.md). nothing built: no api/mcp-oracle.js, no packages/oracle-mcp or agent-trader-mcp, 404 live |
 | `docs/oracle.md` | no-open-work | shipped reference; MCP packaging gap is in the oracle-trading-mcp-plan order |
 | `docs/orphaned-avatar-campaign.md` | covered-by-existing:934-best3d-07-orphaned-avatar-campaign.md | draft campaign wording awaiting owner approval |
-| `docs/oss-adoption-2026-09.md` | order | [740](../740-plan-platform-opentelemetry-gcp-traces.md), [744](../744-plan-avatar-lhm-photoreal-selfie-lane.md), [782](../782-plan-platform-dead-code-and-secret-history-scans.md). Tier 1 OTel, LHM and dead-code/secrets tooling unbuilt; Spark, BiRefNet, A2F, PartCrafter/HoloPart shipped or covered by 070/081; Tier 2 models not ordered (speculative) |
+| `docs/oss-adoption-2026-09.md` | order | [740](../740-plan-platform-opentelemetry-gcp-traces.md), [744](../744-plan-avatar-lhm-photoreal-selfie-lane.md), [782](../../awaiting-owner/782-plan-platform-dead-code-and-secret-history-scans.md). Tier 1 OTel, LHM and dead-code/secrets tooling unbuilt; Spark, BiRefNet, A2F, PartCrafter/HoloPart shipped or covered by 070/081; Tier 2 models not ordered (speculative) |
 | `docs/overlay-audit.md` | no-open-work | shipped audit tool reference |
 | `docs/package-extraction.md` | owner-only | standalone-repo publishing needs owner gh/npm creds; vscode-x402 is already published on Marketplace and Open VSX |
 | `docs/page-performance.md` | no-open-work | rules reference |
@@ -99,7 +99,7 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/prompts/05-agents-rest-parity.md` | shipped | api/v1/rest.js defineRouter |
 | `docs/prompts/06-agents-sdk.md` | shipped | sdk/ and packages agents SDK |
 | `docs/prompts/07-perps.md` | shipped | api/v1/agents/[id]/perps |
-| `docs/prompts/08-lending.md` | order | [970](../970-plan-lending-agent-earn-venue-routes-ui.md). venue and math built, routes tools UI missing |
+| `docs/prompts/08-lending.md` | order | [970](../../awaiting-owner/970-plan-lending-agent-earn-venue-routes-ui.md). venue and math built, routes tools UI missing |
 | `docs/prompts/09-prediction-markets.md` | shipped | api/v1/agents/[id]/predictions |
 | `docs/prompts/10-agent-marketplace-bids.md` | shipped | marketplace bid routes in api/ |
 | `docs/prompts/11-agent-mail.md` | shipped | src/agent-mail.js and api/_lib/mail |
@@ -110,19 +110,19 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/prompts/16-self-funded-inference.md` | covered-by-existing:626-beat-26-metered-openai-compatible-router.md | metered router order |
 | `docs/prompts/17-unified-mcp-endpoint.md` | order | [258](../258-plan-mcp-unified-endpoint-serve-and-publish.md). registry built, no handler or route |
 | `docs/prompts/18-open-model-roster.md` | shipped | model roster in api/_lib/evals/models.js and brain proxy |
-| `docs/prompts/19-self-custody-and-signers.md` | order | [259](../259-plan-wallet-self-custody-routes-export-history.md). custody library built, no routes |
+| `docs/prompts/19-self-custody-and-signers.md` | order | [259](../../awaiting-owner/259-plan-wallet-self-custody-routes-export-history.md). custody library built, no routes |
 | `docs/prompts/20-local-agent-runtime-tui.md` | covered-by-existing:961-desktop-agent-runtime.md | desktop runtime order |
 | `docs/prompts/21-agent-memory-and-self-improvement.md` | order | [261](../261-plan-agent-memory-settings-page-and-api.md). library wired in run.js, no owner surface |
-| `docs/prompts/22-external-mcp-integrations-for-agents.md` | order | [266](../266-plan-mcp-external-integrations-agent-connections.md). catalog and client built, no routes or runtime |
+| `docs/prompts/22-external-mcp-integrations-for-agents.md` | order | [266](../../awaiting-owner/266-plan-mcp-external-integrations-agent-connections.md). catalog and client built, no routes or runtime |
 | `docs/prompts/23-distribution-into-agent-frameworks.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | tool packages order |
-| `docs/prompts/24-more-gateways-and-voice.md` | order | [708](../708-plan-gateway-slack-whatsapp-voice-adapters.md). adapters missing |
-| `docs/prompts/25-sandboxed-code-execution.md` | order | [701](../701-plan-agent-sandbox-code-execution-tools-runner.md). lib built, no runner or tools |
+| `docs/prompts/24-more-gateways-and-voice.md` | order | [708](../../awaiting-owner/708-plan-gateway-slack-whatsapp-voice-adapters.md). adapters missing |
+| `docs/prompts/25-sandboxed-code-execution.md` | order | [701](../../awaiting-owner/701-plan-agent-sandbox-code-execution-tools-runner.md). lib built, no runner or tools |
 | `docs/prompts/26-tool-gateway-bundle.md` | order | [703](../703-plan-mcp-tool-gateway-metered-routes-tools.md). lib built, no routes |
-| `docs/prompts/27-bounties-and-hackathons.md` | order | [706](../706-plan-bounties-build-program-routes-and-pages.md). schema and sources built, no routes or pages |
+| `docs/prompts/27-bounties-and-hackathons.md` | order | [706](../../awaiting-owner/706-plan-bounties-build-program-routes-and-pages.md). schema and sources built, no routes or pages |
 | `docs/prompts/28-public-economics-dashboard.md` | shipped | api/three-token/[action].js and /three-token |
 | `docs/prompts/29-free-tier-and-hosting-plan.md` | shipped | plans and entitlements in api/_lib |
 | `docs/prompts/30-trading-tool-parity.md` | shipped | trading tools in api/_mcp and api/_mcpagent |
-| `docs/prompts/31-human-task-fulfillment.md` | order | [974](../974-plan-human-tasks-escrow-marketplace-routes-pages.md). schema and lib built, no routes or pages |
+| `docs/prompts/31-human-task-fulfillment.md` | order | [974](../../awaiting-owner/974-plan-human-tasks-escrow-marketplace-routes-pages.md). schema and lib built, no routes or pages |
 | `docs/prompts/32-evm-secondary-leg.md` | shipped | EVM rails in api/_lib/x402 and wallets |
 | `docs/prompts/33-account-social-and-sso.md` | order | [719](../719-plan-mcp-account-status-dashboard-url-tools.md). status and URL tools missing |
 | `docs/prompts/34-localization.md` | shipped | locale files and src i18n |
@@ -137,7 +137,7 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/prompts/event-markets/07-pick-leaderboard-and-rewards.md` | shipped | tests/event-market*.test.js |
 | `docs/prompts/event-markets/08-live-odds-feed.md` | shipped | tests/event-market*.test.js |
 | `docs/prompts/event-markets/09-agents-as-forecasters.md` | shipped | tests/event-market*.test.js |
-| `docs/prompts/event-markets/10-staked-markets-solana.md` | order | [973](../973-plan-event-markets-staking-devnet-proof-and-launch-kit.md). built locally, devnet proof and launch runbook missing |
+| `docs/prompts/event-markets/10-staked-markets-solana.md` | order | [973](../../awaiting-owner/973-plan-event-markets-staking-devnet-proof-and-launch-kit.md). built locally, devnet proof and launch runbook missing |
 | `docs/prompts/event-markets/README.md` | shipped | tests/event-market*.test.js |
 | `docs/prompts/README.md` | not-a-plan | prompt pack index |
 | `docs/PROTOCOL-vanity.md` | no-open-work | protocol spec for shipped vanity grinder |
@@ -190,10 +190,10 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/remix.md` | no-open-work | shipped reference |
 | `docs/reputation-staking-market.md` | owner-only | mainnet open is one env flip REPUTATION_MARKET_ALLOW_MAINNET=1 by owner; devnet shipped |
 | `docs/reputation.md` | no-open-work | shipped reference |
-| `docs/research/3d-landscape-2026-10.md` | order | [721](../721-plan-forge-ultratex-texture-rung.md). texture and 3D adoption items; rest covered by best3d orders |
+| `docs/research/3d-landscape-2026-10.md` | order | [721](../../awaiting-owner/721-plan-forge-ultratex-texture-rung.md). texture and 3D adoption items; rest covered by best3d orders |
 | `docs/research/competitor-teardown-2026-09.md` | no-open-work | beat campaigns closed; findings consumed by those orders |
 | `docs/research/crypto-agent-oss-landscape-2026-10.md` | no-open-work | integrate campaign orders consumed it; other-coin research only |
-| `docs/research/forge-3d-adoption-2026-10-30.md` | order | [721](../721-plan-forge-ultratex-texture-rung.md), [757](../757-plan-forge-replace-nvdiffrast-bake-rasteriser.md). UltraTex rung and nvdiffrast license |
+| `docs/research/forge-3d-adoption-2026-10-30.md` | order | [721](../../awaiting-owner/721-plan-forge-ultratex-texture-rung.md), [757](../757-plan-forge-replace-nvdiffrast-bake-rasteriser.md). UltraTex rung and nvdiffrast license |
 | `docs/research/grok-ecosystem-2026-10.md` | not-a-plan | survey for standalone repos; states none of it is three.ws work |
 | `docs/research/gta-multiplayer-world-2026-11.md` | owner-only | product direction decision for the owner |
 | `docs/research/launchpad-landscape-2026-09.md` | no-open-work | launch campaign orders consumed it |
@@ -205,7 +205,7 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/research/oss-landscape-2026-10-notes/coding-mcp-skills.md` | no-open-work | research notes; actionable items captured in the oss-landscape orders |
 | `docs/research/oss-landscape-2026-10-notes/irl-home-robotics.md` | no-open-work | research notes; actionable items captured in the oss-landscape orders |
 | `docs/research/oss-landscape-2026-10-notes/worlds-engines.md` | no-open-work | research notes; actionable items captured in the oss-landscape orders |
-| `docs/research/oss-landscape-2026-10.md` | order | [760](../760-plan-agent-ag-ui-event-stream.md), [773](../773-plan-identity-web-bot-auth-signed-requests.md), [759](../759-plan-memory-temporal-facts-benchmark-scores.md), [732](../732-plan-screen-autonomous-browser-agent-owner-lease.md), [766](../766-plan-play-generative-npc-loop.md). gaps 5 8 10 12 14; others covered by existing orders |
+| `docs/research/oss-landscape-2026-10.md` | order | [760](../760-plan-agent-ag-ui-event-stream.md), [773](../773-plan-identity-web-bot-auth-signed-requests.md), [759](../759-plan-memory-temporal-facts-benchmark-scores.md), [732](../732-plan-screen-autonomous-browser-agent-owner-lease.md), [766](../../awaiting-owner/766-plan-play-generative-npc-loop.md). gaps 5 8 10 12 14; others covered by existing orders |
 | `docs/research/solana-robinhood-playbook-2026-10.md` | order | [975](../975-plan-robinhood-crypto-connector-spend-capped.md), [710](../710-plan-agent-follow-button-capped-copy-trading.md), 735 (shipped). items 4 7 8; others covered by 548 512 627 622 958 |
 | `docs/resilience.md` | no-open-work | shipped reference |
 | `docs/restyle.md` | no-open-work | shipped reference |
@@ -225,10 +225,10 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/security/audit-2026-10-25/FINDINGS-DETAIL.md` | shipped | Order 260 retired 2026-11-04: every record, fingerprint and surface is closed in `docs/security/audit-2026-10-25/CLOSURE.md` with its fixing commit and regression test. |
 | `docs/security/audit-2026-10-25/NEEDS-VALIDATION.md` | shipped | Order 260 retired 2026-11-04: every record, fingerprint and surface is closed in `docs/security/audit-2026-10-25/CLOSURE.md` with its fixing commit and regression test. |
 | `docs/security/audit-2026-10-25/REPORT.md` | shipped | Order 260 retired 2026-11-04: every record, fingerprint and surface is closed in `docs/security/audit-2026-10-25/CLOSURE.md` with its fixing commit and regression test. |
-| `docs/security/review-2026-06-24.md` | order | [714](../714-plan-security-csp-drop-unsafe-eval.md). unsafe-eval is the one security header item still tracked. |
-| `docs/security/SECURITY_AUDIT.md` | order | [714](../714-plan-security-csp-drop-unsafe-eval.md). H12 unsafe-eval still in 26 vercel.json lines; other findings fixed |
-| `docs/security/SECURITY_REMEDIATION.md` | order | [714](../714-plan-security-csp-drop-unsafe-eval.md). item 7 (scope unsafe-eval) is the only open item |
-| `docs/seed-quality.md` | order | [748](../748-plan-seed-vision-gate-own-cron.md). vision stage is off in the prod cron; own-cron phase is the fix |
+| `docs/security/review-2026-06-24.md` | order | [714](../../archive/714-plan-security-csp-drop-unsafe-eval.md). unsafe-eval is the one security header item still tracked. |
+| `docs/security/SECURITY_AUDIT.md` | order | [714](../../archive/714-plan-security-csp-drop-unsafe-eval.md). H12 unsafe-eval still in 26 vercel.json lines; other findings fixed |
+| `docs/security/SECURITY_REMEDIATION.md` | order | [714](../../archive/714-plan-security-csp-drop-unsafe-eval.md). item 7 (scope unsafe-eval) is the only open item |
+| `docs/seed-quality.md` | order | [748](../../awaiting-owner/748-plan-seed-vision-gate-own-cron.md). vision stage is off in the prod cron; own-cron phase is the fix |
 | `docs/seeker-app.md` | no-open-work | shipped reference |
 | `docs/seeker-publishing.md` | no-open-work | publish runbook, submission done |
 | `docs/seeker-submission-day.md` | owner-only | v1.0.0 submitted 2026-08-28; remaining steps are owner phone check and store approval |
@@ -247,9 +247,9 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/signature-wall.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
 | `docs/sim-readiness.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
 | `docs/simready-assets.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
-| `docs/site-performance.md` | order | [713](../713-plan-perf-forge-marketplace-thumbs-cls.md). open thumbnail sizing, marketplace hero budget, forge composer CLS, brand mark |
+| `docs/site-performance.md` | order | [713](../../awaiting-owner/713-plan-perf-forge-marketplace-thumbs-cls.md). open thumbnail sizing, marketplace hero budget, forge composer CLS, brand mark |
 | `docs/sketchfab.md` | covered-by-existing:940-partners-17-sketchfab-retag.md | retag backfill script shipped; the run is the owner-gated order |
-| `docs/skill-bundles.md` | order | [709](../709-plan-marketplace-bundle-buyer-storefront.md). buyer browser surface missing |
+| `docs/skill-bundles.md` | order | [709](../../awaiting-owner/709-plan-marketplace-bundle-buyer-storefront.md). buyer browser surface missing |
 | `docs/skill-candidates.md` | no-open-work | reference doc, verified against code, no outstanding items |
 | `docs/skill-directory-listings.md` | no-open-work | reference doc, verified against code, no outstanding items |
 | `docs/skill-import.md` | no-open-work | reference doc, verified against code, no outstanding items |
@@ -268,7 +268,7 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/solana.md` | no-open-work | reference doc, verified against code, no outstanding items |
 | `docs/sonar.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
 | `docs/spatial-mcp.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
-| `docs/specs/agent-trading.md` | order | [968](../968-plan-autopilot-trade-action-and-trading-mcp.md). no trade kind in api/_lib/autopilot.js and no packages/trading-mcp |
+| `docs/specs/agent-trading.md` | order | [968](../../awaiting-owner/968-plan-autopilot-trade-action-and-trading-mcp.md). no trade kind in api/_lib/autopilot.js and no packages/trading-mcp |
 | `docs/splat.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
 | `docs/spotlight.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
 | `docs/stage.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
@@ -286,7 +286,7 @@ Rows `docs/ops/image-selfie-3d-review-2026-10-09.md` to `docs/x-partner-series.m
 | `docs/terminal.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
 | `docs/the-first-19-weeks.md` | not-a-plan | published roundup article |
 | `docs/three-microbuy.md` | no-open-work | reference doc, verified against code, no outstanding items |
-| `docs/three-thesis.md` | order | [255](../255-plan-three-gate-fail-closed-on-rpc-failure.md), [715](../715-plan-three-hold-activate-worlds-private.md), [728](../728-plan-three-hold-activate-early-drops-and-name-dibs.md). fail-open balance gate (api/_lib/three-gate.js) and unenforced holder perks |
+| `docs/three-thesis.md` | order | [255](../255-plan-three-gate-fail-closed-on-rpc-failure.md), [715](../../awaiting-owner/715-plan-three-hold-activate-worlds-private.md), [728](../728-plan-three-hold-activate-early-drops-and-name-dibs.md). fail-open balance gate (api/_lib/three-gate.js) and unenforced holder perks |
 | `docs/threejs-forum-post.md` | not-a-plan | published forum post copy |
 | `docs/timeline.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
 | `docs/token-due-diligence.md` | no-open-work | reference doc, verified against code, no outstanding items |

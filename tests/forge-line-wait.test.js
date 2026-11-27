@@ -8,14 +8,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
 	lineAnswerFrom,
-	upstreamBusy,
 	waitText,
-	countdownText,
 	waitInLine,
 	createLineCard,
 	createLineWaiter,
 	LINE_URL,
 } from '../src/forge-line-wait.js';
+import { classifyThrottle, describeThrottle } from '../src/forge-throttle.js';
 import { lineAnswer, lineStatusBody } from '../api/_lib/forge-line.js';
 
 const queuedDecision = (over = {}) => ({
@@ -62,6 +61,16 @@ describe('reading the server answers', () => {
 		expect(line.message).toMatch(/^Forge is full right now: 20 people/);
 	});
 
+	it('a full line is described as full, with the server depth and wait', () => {
+		const a = lineAnswer({ action: 'full', depth: 20, maxDepth: 20, retryAfterSeconds: 240 });
+		const throttle = classifyThrottle({ status: a.status, body: a.body });
+		expect(throttle).toMatchObject({ kind: 'provider_busy', source: 'line_full', waitSeconds: 240, autoRetry: false });
+		const copy = describeThrottle(throttle, { canUsePhoto: true });
+		expect(copy.title).toBe('Forge is full right now');
+		expect(copy.lead).toBe(a.body.message);
+		expect(copy.actions).toEqual(['photo']);
+	});
+
 	it('anything else is not a line answer', () => {
 		expect(lineAnswerFrom(429, { error: 'rate_limited', message: 'Generation limit reached. Try again shortly.' })).toBeNull();
 		expect(lineAnswerFrom(503, { error: 'generation_unavailable' })).toBeNull();
@@ -74,28 +83,11 @@ describe('reading the server answers', () => {
 		expect(lineAnswerFrom(a.status, a.body).checkAgainSeconds).toBe(15);
 	});
 
-	it('the generator being busy is told apart from the person allowance', () => {
-		// api/forge.js throttle answer, both flavours.
-		expect(upstreamBusy({ error: 'rate_limited', queued: false, message: 'The 3D generator is busy right now.' })).toBe(true);
-		expect(upstreamBusy({ error: 'rate_limited', queued: true, message: 'Your generation is queued behind a few others' })).toBe(true);
-		// api/_lib/http.js rateLimited: the per-account allowance.
-		expect(upstreamBusy({ error: 'rate_limited', message: 'Generation limit reached. Try again shortly.', retry_after: 30 })).toBe(false);
-		expect(upstreamBusy({ error: 'rate_limited', reason: 'rate_limiter_unavailable' })).toBe(false);
-		expect(upstreamBusy(null)).toBe(false);
-	});
-
 	it('wait wording matches what the server writes', () => {
 		for (const eta of [3, 12, 44, 59, 60, 89, 130, 600, 855]) {
 			const body = lineAnswer(queuedDecision({ position: 2, etaSeconds: eta })).body;
 			expect(body.message).toContain(`starts in ${waitText(eta)}.`);
 		}
-	});
-
-	it('a retry countdown reads in seconds, then minutes', () => {
-		expect(countdownText(45)).toBe('45s');
-		expect(countdownText(60)).toBe('1:00');
-		expect(countdownText(239)).toBe('3:59');
-		expect(countdownText(0)).toBe('0s');
 	});
 });
 

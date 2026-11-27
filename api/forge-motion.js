@@ -5,7 +5,9 @@
  *     prompt: string,            // "waving confidently", "a slow tai-chi sweep"
  *     duration_seconds?: number, // 1–10, default 4
  *     fps?: number               // 8–60, default 30
- *   } → 202 { job_id, status, eta_seconds }
+ *   } → 202 { job_id, status, eta_seconds, note }
+ *   400 invalid_prompt (empty, no words, one key held down) is checked before
+ *   the allowance is charged; a 5xx (unconfigured, submit failed) refunds it.
  *
  *   GET  /api/forge-motion?job=<id>
  *     → { job_id, status, clip_url?, frames?, fps?, error? }
@@ -22,11 +24,12 @@
  */
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
-import { limits, clientIp } from './_lib/rate-limit.js';
+import { limits, clientIp, refundOnServerFailure } from './_lib/rate-limit.js';
 import { requireCreator } from './_lib/creator-account.js';
 import { createRegenProvider } from './_providers/gcp.js';
 import { fetchUpstream } from './_lib/upstream-fetch.js';
 import { libraryReadyClip } from './_lib/motion-seed.js';
+import { checkMotionPrompt } from '../src/motion-prompt-check.js';
 
 // Provider job ids are base64url JSON envelopes (packJobId in _providers/gcp.js)
 // and run several hundred chars — a 64-char cap 400s every poll.
@@ -50,6 +53,13 @@ async function startJob(req, res) {
 	const who = await requireCreator(req, res, { action: 'make an animation' });
 	if (!who) return;
 	const rateKey = who.user ? `user:${who.user.id}` : clientIp(req);
+	// Read and check the prompt before charging: a refusal costs nothing.
+	const body = await readJson(req, 4_000).catch(() => null);
+	const checked = checkMotionPrompt(body?.prompt);
+	if (!checked.ok) {
+		return json(res, 400, { error: 'invalid_prompt', reason: checked.reason, message: checked.message });
+	}
+	const { prompt, note } = checked;
 	// The free-lane bucket, not the paid one. This endpoint has exactly one
 	// backend: the self-hosted text2motion worker behind GCP_TEXT2MOTION_URL,
 	// which is our own Cloud Run GPU service. There is no vendor fallback: with
@@ -61,15 +71,10 @@ async function startJob(req, res) {
 	if (!rl.success) {
 		return rateLimited(res, rl);
 	}
+	// Charged up front; handed back when the job never starts (a 5xx: worker
+	// unconfigured or the submit failed), so a failure never costs a generation.
+	refundOnServerFailure(res, () => limits.mcp3dGenerateFreeRefund(rateKey));
 
-	const body = await readJson(req, 4_000).catch(() => null);
-	const prompt = typeof body?.prompt === 'string' ? body.prompt.trim() : '';
-	if (prompt.length < 3 || prompt.length > 1000) {
-		return json(res, 400, {
-			error: 'invalid_prompt',
-			message: 'Describe the motion in 3–1000 characters (e.g. "waving confidently").',
-		});
-	}
 	const duration = Math.max(MIN_DURATION, Math.min(MAX_DURATION, Number(body?.duration_seconds) || 4));
 	const fps = Math.max(8, Math.min(60, Number(body?.fps) || 30));
 
@@ -91,6 +96,7 @@ async function startJob(req, res) {
 			job_id: job.extJobId,
 			status: 'queued',
 			eta_seconds: job.eta,
+			note,
 		});
 	} catch (err) {
 		return json(res, 502, { error: 'motion_failed', message: err?.message || 'Motion generation could not start.' });

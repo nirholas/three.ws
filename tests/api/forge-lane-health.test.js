@@ -137,6 +137,31 @@ describe('laneHealthSnapshot — self-host worker probing', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 
+	// The cooldown a submit failure records is shared across instances, but this
+	// instance's cached snapshot still held the probe it took before the failure,
+	// so for up to 20s the router (and the submit fallback chain) read the lane
+	// that had just refused as `ok` and sent it the next job anyway.
+	it('reads a lane as down the moment a failure cools it, even inside the snapshot cache window', async () => {
+		process.env.MODEL_TRELLIS_URL = 'https://trellis.example.run.app';
+		process.env.GCP_RECONSTRUCTION_KEY = 'secret';
+		const fetchMock = vi.fn(async () => new Response(JSON.stringify({ ready: true }), { status: 200 }));
+		globalThis.fetch = fetchMock;
+		const { markLaneUnhealthy } = await import('../../api/_lib/forge-lane-health.js');
+		const { clearProviderCooldown } = await import('../../api/_lib/provider-health.js');
+
+		expect((await laneHealthSnapshot(['trellis_selfhost'])).statusMap.trellis_selfhost).toBe('ok');
+		try {
+			await markLaneUnhealthy('trellis_selfhost');
+			const after = await laneHealthSnapshot(['trellis_selfhost']);
+			expect(after.statusMap.trellis_selfhost).toBe('down');
+			expect(after.byId.trellis_selfhost.cooled).toBe(true);
+			// No second probe was spent to learn it.
+			expect(fetchMock).toHaveBeenCalledTimes(1);
+		} finally {
+			await clearProviderCooldown(laneCooldownKey('trellis_selfhost'));
+		}
+	});
+
 	it('exposes a distinct cooldown key namespace per lane', () => {
 		expect(laneCooldownKey('trellis_selfhost')).toBe('forge-lane:trellis_selfhost');
 		expect(laneCooldownKey('triposg')).toBe('forge-lane:triposg');

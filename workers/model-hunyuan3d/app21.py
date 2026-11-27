@@ -297,15 +297,25 @@ def _load_pipeline():
     log.info("[2.1] pipelines loaded")
 
 
-def _generate(img: Image.Image, q: dict) -> bytes:
+def _generate(img: Image.Image, q: dict, seed: int | None = None) -> bytes:
     # Isolate the subject from a busy background: the shape DiT conditions on it.
     subject = img if img.mode == "RGBA" else _pipeline["rembg"](img.convert("RGB"))
+
+    shape_kwargs = {}
+    if seed is not None:
+        # The caller's seed fixes the shape DiT's starting noise, so the same
+        # seed and photo repeat the same mesh. No seed: the unseeded draw every
+        # request used before the field existed.
+        import torch  # already loaded by the pipeline thread; this is a lookup
+
+        shape_kwargs["generator"] = torch.Generator(device="cuda").manual_seed(seed)
 
     mesh = _pipeline["shape"](
         image=subject,
         num_inference_steps=q["steps"],
         guidance_scale=5.0,
         octree_resolution=q["octree_resolution"],
+        **shape_kwargs,
     )[0]
 
     with tempfile.TemporaryDirectory(prefix="hy3d21_") as tmp:
@@ -407,7 +417,9 @@ def _decode_image(src: str) -> Image.Image:
     return decode_image(src, on_retry=note_retry)
 
 
-async def _run_inference(task_id: str, images: list[str], quality: dict | None = None) -> None:
+async def _run_inference(
+    task_id: str, images: list[str], quality: dict | None = None, seed: int | None = None
+) -> None:
     if _load_error:
         await _update_task(task_id, status="failed", error=f"pipeline unavailable: {_load_error}")
         return
@@ -427,7 +439,7 @@ async def _run_inference(task_id: str, images: list[str], quality: dict | None =
         try:
             img = await loop.run_in_executor(None, _decode_image, images[0])
             q = quality or _DEFAULT_QUALITY
-            glb_bytes = await loop.run_in_executor(None, _generate, img, q)
+            glb_bytes = await loop.run_in_executor(None, _generate, img, q, seed)
 
             blob_name = f"raw-meshes/hunyuan3d/{task_id}.glb"
             blob = _bucket.blob(blob_name)
@@ -475,6 +487,9 @@ class InferRequest(BaseModel):
     tier: str | None = None
     path: str | None = None
     target_polycount: int | None = None
+    # Repeats a model: the same seed and photo build the same shape. The API
+    # sends Forge's uint32 range (api/_lib/forge-seed.js).
+    seed: int | None = Field(default=None, ge=0, le=4_294_967_295)
 
 
 @app.post("/infer", status_code=202)
@@ -488,7 +503,7 @@ async def infer(
     # Persist "queued" before responding — a poll can reach a different instance
     # the moment the 202 lands, and that instance has nothing local to fall back on.
     await _update_task(task_id, status="queued", model=MODEL_LABEL)
-    background_tasks.add_task(_run_inference, task_id, body.images, _quality_for(body.tier))
+    background_tasks.add_task(_run_inference, task_id, body.images, _quality_for(body.tier), body.seed)
     return {"task_id": task_id, "status": "queued"}
 
 

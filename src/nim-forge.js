@@ -43,6 +43,9 @@ const state = {
 	tier: 'standard',
 	imageDataUri: null,
 	busy: false,
+	// null until the readiness check answers; false means the server said no
+	// NIM is wired, so nothing this page sends could succeed.
+	configured: null,
 	blobUrl: null,
 	timer: null,
 };
@@ -52,17 +55,53 @@ async function checkReadiness() {
 	try {
 		const res = await fetch(API, { method: 'GET' });
 		const data = await res.json();
+		state.configured = Boolean(data.configured);
 		if (data.configured) {
 			els.badge.dataset.state = 'up';
 			els.statusText.textContent = 'NIM online · /v1/infer';
 		} else {
 			els.badge.dataset.state = 'down';
 			els.statusText.textContent = 'NIM not configured';
+			showOffline();
 		}
+		updateGenerate();
 	} catch {
+		// Unknown, not absent: leave Generate usable so the server's own answer
+		// (and its error message) reaches the user.
 		els.badge.dataset.state = 'down';
 		els.statusText.textContent = 'engine unreachable';
 	}
+}
+
+// The stage panel for a deployment with no NIM wired. Built here rather than
+// in the page markup so the page's translated copy never overwrites it.
+function showOffline() {
+	let panel = document.getElementById('panel-offline');
+	if (!panel) {
+		panel = document.createElement('div');
+		panel.className = 'nf-panel';
+		panel.id = 'panel-offline';
+		panel.setAttribute('role', 'status');
+		const body = document.createElement('div');
+		const title = document.createElement('h2');
+		title.textContent = 'No TRELLIS NIM is wired here';
+		const text = document.createElement('p');
+		text.append(
+			'This demo talks only to a self-hosted Microsoft TRELLIS NIM, and this deployment has none. Set ',
+			Object.assign(document.createElement('code'), { textContent: 'NIM_TRELLIS_URL' }),
+			' to wire one, point the NIM console at your own container, or make the model on the hosted Forge.',
+		);
+		const actions = document.createElement('div');
+		actions.className = 'nf-actions';
+		actions.append(
+			Object.assign(document.createElement('a'), { className: 'nf-download', href: '/forge', textContent: 'Open the hosted Forge' }),
+			Object.assign(document.createElement('a'), { className: 'nf-download', href: '/forge-nim', textContent: 'Use your own NIM endpoint' }),
+		);
+		body.append(title, text, actions);
+		panel.append(body);
+		els.stage.prepend(panel);
+	}
+	showPanel('offline');
 }
 
 // ── Mode switch ─────────────────────────────────────────────────────────────
@@ -141,6 +180,11 @@ function clearImage() {
 // ── Generate button enablement ──────────────────────────────────────────────
 function updateGenerate() {
 	if (state.busy) return;
+	if (state.configured === false) {
+		els.generate.disabled = true;
+		els.generate.textContent = 'NIM not configured';
+		return;
+	}
 	const ready = state.mode === 'image' ? Boolean(state.imageDataUri) : els.prompt.value.trim().length >= 3;
 	els.generate.disabled = !ready;
 	els.generate.textContent = ready
@@ -152,6 +196,7 @@ function updateGenerate() {
 
 // ── Stage panel switching ───────────────────────────────────────────────────
 function showPanel(which) {
+	document.getElementById('panel-offline')?.classList.toggle('is-active', which === 'offline');
 	els.panelEmpty.classList.toggle('is-active', which === 'empty');
 	els.panelLoading.classList.toggle('is-active', which === 'loading');
 	els.panelError.classList.toggle('is-active', which === 'error');
@@ -183,7 +228,7 @@ function stopTimer() {
 
 // ── Generate ────────────────────────────────────────────────────────────────
 async function generate() {
-	if (state.busy) return;
+	if (state.busy || state.configured === false) return;
 	const payload = { tier: state.tier };
 	if (state.mode === 'image') {
 		if (!state.imageDataUri) return;

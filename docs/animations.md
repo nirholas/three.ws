@@ -176,9 +176,8 @@ publishes CC0-only content instead:
   endpoint or its mirror (`scripts/mirror-animation-library.mjs`) even if one
   were ever staged by mistake. Covered by
   `tests/animations-library-endpoint.test.js`.
-- **Mixamo research path**: `scripts/mixamo-all.mjs` keeps its download and
-  local `--build` phases for offline retargeting research, but its `--upload`
-  phase is permanently disabled and refuses to run. `cc0-animation-library.mjs`
+- **Mixamo scripts removed**: the Mixamo bulk-download and catalog scripts
+  (`mixamo-all.mjs` and friends) were deleted on 2026-11-26. `cc0-animation-library.mjs`
   is the only script allowed to publish to the live bulk library.
 - **Already-stored Mixamo objects**: clips uploaded to R2 before this policy
   are left in place (deleting stored objects is not reversible); they are

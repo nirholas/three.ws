@@ -139,6 +139,10 @@ describe('deleteCreation erases every stored variant', () => {
 				`forge/678ab2f7d7cd/${ID}.png`,
 				`forge/678ab2f7d7cd/${ID}.web.glb`,
 				'forge/uploads/678ab2f7d7cd/89224ed8.png',
+				// The display thumbnail is written outside the creation prefix, so it
+				// is named from the id even though no column records it.
+				`forge/thumb/${ID}.png`,
+				`forge/thumb/${ID}.webp`,
 				`variants/256/forge/678ab2f7d7cd/${ID}.png.abc123.webp`,
 				`variants/512/forge/uploads/678ab2f7d7cd/89224ed8.png.def456.webp`,
 			].sort(),

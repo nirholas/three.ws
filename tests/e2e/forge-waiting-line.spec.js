@@ -178,7 +178,7 @@ for (const path of ['/forge', '/forge-studio']) {
 			// Waiting is not generating: the "feel free to leave" promise is false here.
 			await expect(page.locator('#state-generating .gen-leave-hint')).toBeHidden();
 			await expect(page.locator('#state-error')).toBeHidden();
-			await expect(page.getByText('Generation limit reached')).toHaveCount(0);
+			await expect(page.getByText('You have used your generations for now')).toHaveCount(0);
 
 			firstCheckIn.open();
 			await expect(card).toContainText("You're number 2 in line");
@@ -230,7 +230,7 @@ for (const path of ['/forge', '/forge-studio']) {
 			await expect(error).toBeVisible({ timeout: 30_000 });
 			await expect(page.locator('#error-title')).toHaveText('Forge is full right now');
 			await expect(page.locator('#error-message')).toContainText('20 people are already waiting');
-			await expect(page.locator('#error-message')).toContainText(/in [34]:\d\d/);
+			await expect(page.locator('#state-error .forge-throttle__line')).toContainText(/in [34]:\d\d/);
 			await expect(page.locator('#retry')).toBeDisabled();
 		});
 
@@ -257,11 +257,10 @@ for (const path of ['/forge', '/forge-studio']) {
 			});
 			await submitPrompt(page, path);
 			await expect(page.locator('#state-error')).toBeVisible({ timeout: 30_000 });
-			await expect(page.locator('#error-title')).toHaveText('High demand right now');
-			await expect(page.locator('#retry')).toBeEnabled({ timeout: 10_000 });
+			await expect(page.locator('#error-title')).toHaveText('The 3D engine is busy');
 
-			await page.locator('#retry').click();
-			await expect(page.locator('#error-title')).toHaveText('Generation limit reached', { timeout: 30_000 });
+			// A busy engine is retried once by itself; the second answer is the allowance.
+			await expect(page.locator('#error-title')).toHaveText('You have used your generations for now', { timeout: 30_000 });
 		});
 	});
 }

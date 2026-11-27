@@ -1,14 +1,14 @@
 // Oracle: the X account a coin links to, as a conviction input. A coin whose
 // linked account is days old with a handful of followers reads very differently
 // from one linked to an established account, and the platform never had that
-// signal because the paid X API was the only reader. This uses the keyless
-// guest reader (api/_lib/x-guest), cached, bounded by a short deadline, and
+// signal because the X API credentials were not wired in. This uses the keyless
+// official X API v2 client (api/_lib/x-api.js), cached, bounded by a short deadline, and
 // negative-cached so a dead or rate-limited reader never slows scoring.
 //
 // Every failure resolves to null ("unknown", treated as neutral downstream).
 
 import { cacheGet, cacheSet } from '../cache.js';
-import { fetchGuestProfile } from '../x-guest/index.js';
+import { fetchXProfile } from '../x-api.js';
 
 const HIT_TTL_S = 6 * 3600;
 const MISS_TTL_S = 600;
@@ -44,7 +44,7 @@ export function xHandleFromLink(link) {
  * @param {object} [deps] test seams
  * @returns {Promise<{handle:string, ageDays:number|null, followers:number|null, verified:boolean, source:string}|null>}
  */
-export async function xAccountSignal(link, { lookup = fetchGuestProfile, now = Date.now } = {}) {
+export async function xAccountSignal(link, { lookup = fetchXProfile, now = Date.now } = {}) {
 	const handle = xHandleFromLink(link);
 	if (!handle) return null;
 
@@ -63,7 +63,7 @@ export async function xAccountSignal(link, { lookup = fetchGuestProfile, now = D
 			ageDays: Number.isFinite(joined) ? Math.max(0, Math.floor((now() - joined) / DAY_MS)) : null,
 			followers: Number.isFinite(profile.followers) ? profile.followers : null,
 			verified: !!profile.verified,
-			source: 'x-guest',
+			source: 'x-api',
 		};
 		await cacheSet(key, signal, HIT_TTL_S).catch(() => {});
 		return signal;

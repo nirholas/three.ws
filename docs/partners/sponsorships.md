@@ -1,7 +1,7 @@
 # Open-source sponsorships
 
 *Re-read 2026-11-14 from each project's own sponsorship page (first pass 2026-10-23). This is
-the working table for [work order 937](../../prompts/finish/937-partners-14-sponsorships.md).
+the working table for [work order 937](../../prompts/awaiting-owner/937-partners-14-sponsorships.md).
 Every sponsorship is recurring spend, so nothing here has been started, paid or announced until
 the **Owner decision** column says so.*
 

@@ -15,6 +15,8 @@
 // getRegenProviderByName(). The reconstruct endpoint checks platform first and
 // falls back to a user's stored BYOK key when the platform is unconfigured.
 
+import { guardProvider } from './forge-byok-guard.js';
+
 // Tier used when adapting BYOK geometry providers for the regen interface.
 // Mirrors the forge "standard" tier: solid polycount, PBR textures, no HD
 // surcharge so the selfie pipeline isn't pay-gated without warning.
@@ -31,7 +33,7 @@ function createMeshyRegenAdapter(key) {
 	async function meshy() {
 		if (!_meshy) {
 			const mod = await import('../_providers/meshy.js');
-			_meshy = mod.createMeshyProvider(key);
+			_meshy = guardProvider(mod.createMeshyProvider(key), key);
 		}
 		return _meshy;
 	}
@@ -92,7 +94,7 @@ function createTripoRegenAdapter(key) {
 	async function tripo() {
 		if (!_tripo) {
 			const mod = await import('../_providers/tripo.js');
-			_tripo = mod.createTripoProvider(key);
+			_tripo = guardProvider(mod.createTripoProvider(key), key);
 		}
 		return _tripo;
 	}

@@ -202,12 +202,16 @@ async function handleSettle(req, res) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const body = parse(settleSchema, await readJson(req));
+	// resumeSameTx: a resent settle for the caller's own transaction returns the
+	// payment it already recorded (a lost response must not strand a payment).
+	// Every payment this route settles is redeemed single-use downstream.
 	const result = await verifyAndSettlePayment({
 		quoteToken: body.quote_token,
 		txSignature: body.tx_signature,
 		payerWallet: body.payer_wallet ?? user.wallet_address ?? null,
 		userId: user.id,
 		network: body.network,
+		resumeSameTx: true,
 	});
 
 	return json(res, 200, {
@@ -222,6 +226,7 @@ async function handleSettle(req, res) {
 		slot: result.confirmation.slot,
 		ref_type: result.quote.refType ?? null,
 		ref_id: result.quote.refId ?? null,
+		...(result.replay ? { replay: true } : {}),
 	});
 }
 

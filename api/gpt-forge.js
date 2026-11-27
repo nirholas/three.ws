@@ -63,9 +63,10 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { cors, json as sendJson, method, readJson, wrap, rateLimited } from './_lib/http.js';
+import { cors, json as sendJson, method, readJson, wrap, rateLimited, setRateLimitHeaders } from './_lib/http.js';
 import { withManageToken } from './_lib/forge-manage-token.js';
-import { limits, clientIp } from './_lib/rate-limit.js';
+import { limits, clientIp, refundOnServerFailure } from './_lib/rate-limit.js';
+import { preflightRig, refundRigAllowance } from './_lib/rig-preflight.js';
 import { textToImage, synthesizeTurnaroundViews, ladderBudgetMs } from './_mcp3d/text-to-image.js';
 import { createRegenProvider } from './_providers/replicate.js';
 import { createRegenProvider as createGcpProvider } from './_providers/gcp.js';
@@ -101,8 +102,22 @@ import {
 	hfLaneCooling,
 	HF_LANE_COOLDOWN_SECONDS,
 } from './_lib/forge-lane-health.js';
-import { resolveProviderKey } from './_lib/forge-provider-key.js';
+import { resolveProviderKey, resolveCallerProviderKey } from './_lib/forge-provider-key.js';
+import { KEY_SHAPES, byokFailureResponse, byokPollFailure, rejectedKeyBody } from './_lib/forge-byok-guard.js';
 import { validateForgeImage } from './_lib/forge-image-validate.js';
+import { findUnsafeUrl, verifyUploadedReferences } from './_lib/forge-input-guard.js';
+import {
+	extendWithTurnaroundViews,
+	droppedViewsNote,
+	narrowToSingleView,
+	pruneMismatchedPhotos,
+	viewsReport,
+} from './_lib/forge-views.js';
+import {
+	SKETCH_FALLBACK_NOTE,
+	SKETCH_UNREADABLE_MESSAGE,
+	isUnusableInputError,
+} from './_lib/forge-sketch-fallback.js';
 import { encodeJobToken, decodeJobToken } from './_lib/forge-job-token.js';
 import {
 	hashClient,
@@ -124,6 +139,7 @@ import {
 	acquireBlockingSlot,
 	providerSubmitAllowed,
 	dailyPaidAllowed,
+	dailyPaidRefund,
 	SCALE_LIMITS,
 } from './_lib/forge-scale.js';
 import { env as _env } from './_lib/env.js';
@@ -136,6 +152,7 @@ import {
 	redeemForgePayment,
 	releaseForgePayment,
 } from './_lib/forge-high-payment.js';
+import { withPaidGenerationScope, notePaidGeneration } from './_lib/forge-paid-generation.js';
 import {
 	chargeCreditsForAction,
 	quoteCreditsForAction,
@@ -144,6 +161,13 @@ import {
 } from './_lib/credits.js';
 import { markProviderCooldown, providersInCooldown } from './_lib/provider-health.js';
 import { forgeToolAvailability } from './_lib/forge-tool-availability.js';
+import {
+	NIM_TRELLIS_COOLDOWN_KEY,
+	noteNimLaneFailure,
+	noteNimPollOutcome,
+	pollBackoffRemaining,
+} from './_lib/nvcf-lane-health.js';
+export { nimCooldownSeconds } from './_lib/nvcf-lane-health.js';
 import { acquireLock, releaseLock, cacheGet, cacheSet } from './_lib/cache.js';
 import { recallDoneFrame, rememberDoneFrame } from './_lib/forge-done-cache.js';
 import {
@@ -165,11 +189,20 @@ import {
 	bindJobToCacheKey,
 	cacheKeyForJob,
 } from './_lib/forge-cache.js';
-import { shouldRetryForQuality, shouldEscalateToVisionQA } from './_lib/glb-quality.js';
+import { requestScope } from './_lib/forge-request-identity.js';
+import { claimGeneration, awaitGeneration, publishGeneration, releaseGeneration } from './_lib/forge-stampede.js';
+import { shouldEscalateToVisionQA } from './_lib/glb-quality.js';
+import { noteAllowance } from './_lib/forge-quality-stage.js';
+import {
+	runSyncLaneQualityStage,
+	admitNimQualityRetry,
+	admitHfQualityRetry,
+	qualityRetryField,
+} from './_lib/forge-quality-lanes.js';
 import {
 	resolveLiveJob,
 	bindJobSuccessor,
-	pickRedispatchLane,
+	submitNextRedispatchLane,
 	retryBackendSuggestions,
 	submitFailoverJob,
 	MAX_FAILOVER_HOPS,
@@ -179,10 +212,15 @@ import {
 	laneAllowedInTerritory,
 	requestTerritory,
 	isTencentLane,
+	regionRestrictedMessage,
 } from './_lib/forge-territory.js';
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
+import { decideStalledPoll } from './_lib/forge-job-deadline.js';
 import { directPrompt } from './_mcp-studio/gpt-forge-client.js';
 import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
+import { markSubmitStage, noteSubmitError } from './_lib/forge-events.js';
+import { forgeFailureBody } from './_lib/forge-public-error.js';
+import { observeForgeSubmit } from './_lib/forge-prejob.js';
 
 // Circuit-breaker key + window for the free NVIDIA NIM TRELLIS text→3D lane. The
 // hosted NVCF gateway can degrade so a submit neither completes nor hands back a
@@ -192,16 +230,8 @@ import { meshDirectorFor, meshSubjectClass, resolveLogoPrompt } from './_lib/for
 // runs) lets subsequent requests skip a degraded lane and go straight to a
 // working one; it expires on its own so a recovered lane is retried promptly.
 // Best-effort via the shared cache: a miss just means "not cooling".
-const NIM_TRELLIS_COOLDOWN_KEY = 'forge-nim-trellis';
-// Sideline the free NIM lane after a failure. The cooldown exists to avoid
-// re-paying the expensive submit-timeout HANG, so a socket timeout / unreachable
-// host (no HTTP status came back) earns the full window. A fast gateway 5xx (a
-// 504/503 the gateway returned promptly: a cold-start/capacity blip the
-// in-provider retry already rode) only earns a short window, so a single transient
-// 504 doesn't sideline the free lane for two minutes and dump every text prompt on
-// the paid lane. See nimCooldownSeconds().
-const NIM_FORGE_COOLDOWN_SECONDS = 120;
-const NIM_FORGE_GATEWAY_COOLDOWN_SECONDS = 30;
+// The cooldown windows, the stated-wait cap and the auth classification live in
+// api/_lib/nvcf-lane-health.js, shared by this file and api/gpt-forge.js.
 
 // Honest cold-start signal for a self-host lane: true only when the liveness
 // probe reached the worker but it answered slowly (a scale-to-zero container
@@ -232,23 +262,6 @@ async function laneColdStart(backendId) {
 // router reads it to avoid skipping the free lane in favour of a dead paid lane.
 const REPLICATE_PAID_COOLDOWN_KEY = 'forge-replicate-paid';
 const REPLICATE_PAID_COOLDOWN_SECONDS = 300;
-
-// Pick how long to cool the free NIM lane after a failure. A Retry-After hint
-// (429) is honoured within bounds; an HTTP status that came back at all means the
-// gateway answered (a fast fail) and earns the short window; no status means our
-// socket timed out / the host was unreachable (the expensive hang) and earns the
-// full window.
-export function nimCooldownSeconds(err) {
-	const retryAfter = Number(err?.retryAfter);
-	if (Number.isFinite(retryAfter) && retryAfter > 0) {
-		return Math.min(
-			Math.max(Math.ceil(retryAfter), NIM_FORGE_GATEWAY_COOLDOWN_SECONDS),
-			NIM_FORGE_COOLDOWN_SECONDS,
-		);
-	}
-	if (typeof err?.providerStatus === 'number') return NIM_FORGE_GATEWAY_COOLDOWN_SECONDS;
-	return NIM_FORGE_COOLDOWN_SECONDS;
-}
 
 // Holder perk (Lever 2): a presented, verified $THREE tier pass lifts the free
 // generation ceiling by that tier's multiplier. The pass is pure-HMAC verifiable
@@ -321,6 +334,20 @@ function json(res, status, body, headers) {
 // Stable opaque handle for the browser making the request (x-forge-client),
 // kept beside the owning account to scope the gallery to one client without
 // trusting any of its other input.
+// The 429 for the per-identity daily paid cap: names the limit, says when it
+// resets (UTC midnight) and carries the standard rate-limit headers.
+function dailyLimitReached(res, daily, message) {
+	const retryAfter = Math.max(1, setRateLimitHeaders(res, { limit: daily.limit, remaining: 0, reset: daily.resetAt }));
+	res.setHeader('retry-after', String(retryAfter));
+	return json(res, 429, {
+		error: 'daily_limit_reached',
+		limit: 'generation_daily',
+		message,
+		retry_after: retryAfter,
+		reset_at: new Date(daily.resetAt).toISOString(),
+	});
+}
+
 function clientKeyFrom(req) {
 	const raw = req.headers['x-forge-client'];
 	return hashClient(Array.isArray(raw) ? raw[0] : raw);
@@ -521,14 +548,14 @@ export function qualityGateAppliesTo(tierId, quality = undefined) {
 	if (s === 'adaptive') return shouldEscalateToVisionQA(quality);
 	return false; // 'high' scope, non-high tier
 }
-// Bounded retry cap: default 1, clamped 0..2 so a quality retry can never turn one
-// generation into an unbounded credit/latency sink.
+// Bounded retry cap: default 1, clamped 0..1 (the stage's own ceiling) so a
+// quality retry can never turn one generation into more than two.
 export function qualityGateMaxRetries() {
 	const raw = readForgeEnv('FORGE_QUALITY_GATE_MAX_RETRIES');
 	if (raw == null) return 1; // unset → default 1 (Number(null) is 0, so guard first)
 	const n = Number(raw);
 	if (!Number.isFinite(n)) return 1;
-	return Math.max(0, Math.min(2, Math.floor(n)));
+	return Math.max(0, Math.min(1, Math.floor(n)));
 }
 
 // Score a finished generation via the dedicated vision-QA module. Fail-open: an
@@ -567,81 +594,6 @@ export async function scoreQualityGate({ glbUrl, prompt, tier, backend, referenc
 export function qualityGateFailed(verdict) {
 	return Boolean(verdict) && verdict.skipped !== true && verdict.pass === false;
 }
-// Numeric quality score used to keep the best result across retries. A passing
-// verdict floors at 1; an explicit numeric score wins; a bare fail is 0.
-function qualityScoreValue(verdict) {
-	const n = Number(verdict?.score);
-	if (Number.isFinite(n)) return n;
-	if (verdict?.pass === true) return 1;
-	return 0;
-}
-
-// Post-generation quality stage for the synchronous lanes: score the delivered
-// model and, on a failing verdict, run a bounded best-of retry that keeps the
-// higher-scoring result. `regenerate({ hint })` re-runs the SAME lane and returns
-// { glbUrl, durable }; it is called at most qualityGateMaxRetries() times. When
-// the module exposes its own auto-retry helper it owns the loop instead (it holds
-// the hint interpretation); either way this is fail-open and never discards a
-// delivered model for a worse one. Returns { durable, verdict, retried }.
-async function qualityGateFinalize({ tierId, prompt, path, backend, referenceImageUrl, durable, regenerate }) {
-	// In 'adaptive' scope the cheap deterministic signal on the delivered mesh
-	// decides whether a free-lane generation is worth a vision pass: a clean,
-	// textured draft is trusted and returns here with no added latency.
-	if (!qualityGateAppliesTo(tierId, durable?.quality) || !durable?.glbUrl) {
-		return { durable, verdict: null, retried: false };
-	}
-	let bestDurable = durable;
-	let bestVerdict = await scoreQualityGate({ glbUrl: durable.glbUrl, prompt, tier: tierId, backend, referenceImageUrl });
-	let bestScore = qualityScoreValue(bestVerdict);
-	let retried = false;
-	const maxRetries = qualityGateMaxRetries();
-
-	// The module's buildRetryDirective owns the retry decision: it returns the next
-	// adjusted directive ({ prompt, tier, path, attempt }) or null when a retry must
-	// NOT happen (verdict passed, QA outage, or the cap is reached), so it enforces
-	// both the hint (tightened prompt / negative guidance) and the cap. Absent module
-	// falls back to the verdict's suggested_retry_hint under our own env cap.
-	let buildDirective = null;
-	try {
-		const mod = await import('./_lib/forge-quality-gate.js');
-		if (typeof mod.buildRetryDirective === 'function') buildDirective = mod.buildRetryDirective;
-	} catch {
-		// Module absent: the local hint path below drives the (bounded) retry.
-	}
-
-	let attempt = 0;
-	while (attempt < maxRetries && typeof regenerate === 'function') {
-		let directive;
-		if (buildDirective) {
-			directive = buildDirective(bestVerdict, { prompt, tier: tierId, path, attempt, maxRetries });
-			if (!directive) break; // module says stop (passed / QA outage / cap reached)
-		} else {
-			if (!qualityGateFailed(bestVerdict)) break;
-			directive = { prompt, hint: bestVerdict?.suggested_retry_hint || null };
-		}
-		attempt += 1;
-		const retryPrompt = directive.prompt || prompt;
-		let next;
-		try {
-			next = await regenerate({ prompt: retryPrompt, hint: directive.hint || bestVerdict?.suggested_retry_hint || null });
-		} catch (err) {
-			console.warn(`[forge] quality-gate retry regenerate failed, keeping best result: ${err?.message || err}`);
-			break;
-		}
-		if (!next?.durable?.glbUrl) break;
-		retried = true;
-		const nextVerdict = await scoreQualityGate({ glbUrl: next.durable.glbUrl, prompt: retryPrompt, tier: tierId, backend, referenceImageUrl });
-		const nextScore = qualityScoreValue(nextVerdict);
-		// Keep the higher-scoring result; a passing verdict always wins and ends the loop.
-		if (nextVerdict?.pass === true || nextScore > bestScore) {
-			bestDurable = next.durable;
-			bestVerdict = nextVerdict;
-			bestScore = nextScore;
-		}
-		if (bestVerdict?.pass === true) break;
-	}
-	return { durable: bestDurable, verdict: bestVerdict, retried };
-}
 
 // Free NVIDIA NIM TRELLIS text→3D lane, extracted so it serves two callers:
 //   1. the draft default (backendId === 'nvidia'), and
@@ -656,12 +608,12 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 		const nv = await loadNvidiaProvider();
 		submitted = await nv.textTo3d({ prompt, tier, seed: opts?.seed ?? undefined });
 	} catch (err) {
-		// A timed-out / unreachable / throttled / 5xx NIM lane is degraded, cool it
-		// down so the next request skips the submit-timeout gamble and fails over
-		// fast. A 4xx (bad input / key) is not a lane-health fault, so it never cools.
-		if (isUpstreamUnavailable(err)) {
-			markProviderCooldown(NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds(err)).catch(() => {});
-		}
+		// A timed-out / unreachable / throttled / 5xx NIM lane is degraded, and a
+		// dead key or exhausted account is broken until an operator acts: cool the
+		// lane (for the stated Retry-After, or the auth window) so the next request
+		// skips the submit-timeout gamble and fails over fast. A 4xx the caller
+		// caused (a prompt NVIDIA rejects) is not a lane-health fault and never cools.
+		noteNimLaneFailure(err).catch(() => {});
 		console.warn(`[forge] free NVIDIA NIM lane unavailable: ${err?.message || err}`);
 		return false;
 	}
@@ -711,65 +663,22 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 			derivePbr: opts?.derivePbr !== false,
 		});
 
-		// One auto-retry on a flagged low-quality/degenerate output (CLAUDE.md: no
-		// silent mediocrity). Only worth attempting when the free NIM lane already
-		// completed synchronously once: a second synchronous completion is the
-		// common case, so this stays a bounded, in-request retry rather than a
-		// background job. Best-effort: any retry failure just keeps the first result.
-		let retried = false;
-		if (shouldRetryForQuality(durable?.quality)) {
-			try {
-				const nv = await loadNvidiaProvider();
-				const retry = await nv.textTo3d({ prompt, tier, seed: opts?.seed ?? undefined });
-				if (!retry.taskId && retry.resultGlbUrl) {
-					const retryJob = randomUUID().replace(/-/g, '');
-					await createCreation({
-						clientKey,
-						userId: await sessionUserIdFromReq(req),
-						ipHash: hashIp(ip),
-						prompt,
-						aspect,
-						previewImageUrl: null,
-						replicateJobId: retryJob,
-						textToImageModel: null,
-						viewsRequested: 0,
-						viewsUsed: null,
-						multiview: false,
-						backend: backendId,
-						tier: tier.id,
-						path,
-					});
-					const retryDurable = await materializeCreation({
-						replicateJobId: retryJob,
-						clientKey,
-						userId: await sessionUserIdFromReq(req),
-						glbUrl: retry.resultGlbUrl,
-						quality: true,
-						compress: opts?.compression && opts.compression !== 'none' ? opts.compression : null,
-						derivePbr: opts?.derivePbr !== false,
-					});
-					if (retryDurable) {
-						durable = retryDurable;
-						retried = true;
-					}
-				}
-			} catch (err) {
-				console.warn(`[forge] quality auto-retry (nvidia) failed, keeping first result: ${err?.message || err}`);
-			}
-		}
-
-		// Vision-QA quality gate (High/realism tier by default; env-tunable via
-		// FORGE_QUALITY_GATE). Score the delivered model and, on a failing verdict,
-		// run a bounded best-of retry on this same free lane keeping the higher-
-		// scoring result. Dormant for draft/standard by default, so the free default
-		// lane pays no extra latency. Fail-open end to end.
-		const gated = await qualityGateFinalize({
+		// Quality stage (forge-quality-lanes.js): cheap structural check, then the
+		// vision judge when the scope calls for it, then at most one retry. The
+		// retry is skipped while the NIM lane is cooling or at its fleet cap, or
+		// when this caller is at the edge of their allowance; it is never charged
+		// as a second generation, and the better of the two models is delivered.
+		// The judge is fail-open and the whole stage runs under its own time bound.
+		const stage = await runSyncLaneQualityStage({
+			req,
+			durable,
 			tierId: tier.id,
 			prompt,
 			path,
-			backend: backendId,
-			referenceImageUrl: null,
-			durable,
+			gateApplies: qualityGateAppliesTo,
+			scoreGate: scoreQualityGate,
+			admitRetry: admitNimQualityRetry,
+			maxRetries: qualityGateMaxRetries(),
 			regenerate: async ({ prompt: retryPrompt } = {}) => {
 				const useP = retryPrompt || prompt;
 				const nvr = await loadNvidiaProvider();
@@ -781,27 +690,31 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 					prompt: useP, aspect, previewImageUrl: null, replicateJobId: rj,
 					textToImageModel: null, viewsRequested: 0, viewsUsed: null, multiview: false,
 					backend: backendId, tier: tier.id, path,
+					recordStart: false,
 				});
 				const rd = await materializeCreation({
 					replicateJobId: rj, clientKey, userId: await sessionUserIdFromReq(req),
 					glbUrl: r.resultGlbUrl, quality: true,
 					compress: opts?.compression && opts.compression !== 'none' ? opts.compression : null,
 					derivePbr: opts?.derivePbr !== false,
+					recordEvent: false,
 				});
-				return rd ? { glbUrl: rd.glbUrl, durable: rd } : null;
+				return rd ? { durable: rd } : null;
 			},
 		});
-		if (gated.durable) durable = gated.durable;
-		if (gated.retried) retried = true;
-		const qualityGate = gated.verdict;
+		durable = stage.durable ?? durable;
+		const retried = stage.retried;
+		const qualityGate = stage.verdict;
 
 		if (cacheKey && durable?.glbUrl) {
 			await putCachedForgeResult(cacheKey, {
 				glb_url: durable.glbUrl,
+				creation_id: durable.id ?? null,
 				backend: backendId,
 				tier: tier.id,
 				path,
 				quality: durable.quality || null,
+				quality_gate: qualityGate || null,
 			});
 		}
 
@@ -813,6 +726,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 			durable: Boolean(durable),
 			quality: durable?.quality || null,
 			quality_retried: retried,
+			quality_retry: qualityRetryField(stage.retry),
 			quality_gate: qualityGate || undefined,
 			compression: durable?.compression || null,
 			options: opts?.hasOptions ? summarizeForgeOptions(opts) : undefined,
@@ -845,6 +759,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 		path,
 	});
 	if (cacheKey) await bindJobToCacheKey(token, cacheKey);
+	await publishGeneration(req, token);
 	if (opts) await bindJobToOptions(token, opts);
 	json(res, 200, {
 		job_id: token,
@@ -1011,116 +926,61 @@ async function runHfImageLane({
 		derivePbr: opts?.derivePbr !== false,
 	});
 
-	// One auto-retry on a flagged low-quality/degenerate output. Only attempted
-	// when a concurrency slot is free right now: the HF lane is capacity-capped,
-	// so a busy fleet keeps the first (flagged) result rather than starving
-	// other callers of their turn on the free Spaces.
-	let retried = false;
-	if (shouldRetryForQuality(durable?.quality)) {
-		const retrySlot = await acquireBlockingSlot('hf', { max: SCALE_LIMITS.hfConcurrent, ttlMs: SCALE_LIMITS.hfSlotTtlMs });
-		if (retrySlot.ok) {
-			try {
-				const retrySubmitted = await provider.submit({
-					mode: 'reconstruct',
-					sourceUrl: imageUrls[0],
-					params: { images: imageUrls, prompt: prompt || undefined, seed: opts?.seed ?? undefined },
-				});
-				const retryFinished = await provider.status(retrySubmitted.extJobId);
-				if (retryFinished?.resultGlbUrl) {
-					const retryJob = randomUUID().replace(/-/g, '');
-					await createCreation({
-						clientKey,
-						userId: await sessionUserIdFromReq(req),
-						ipHash: hashIp(ip),
-						prompt: prompt || (isImageMode ? 'image-to-3d' : ''),
-						aspect,
-						previewImageUrl: preview,
-						replicateJobId: retryJob,
-						textToImageModel: isImageMode ? null : textToImageModel,
-						viewsRequested: imageUrls.length,
-						viewsUsed: imageUrls.length,
-						multiview: imageUrls.length > 1,
-						sourceImageUrls: imageUrls,
-						backend: backendId,
-						tier: tier.id,
-						path,
-					});
-					const retryDurable = await materializeCreation({
-						replicateJobId: retryJob,
-						clientKey,
-						userId: await sessionUserIdFromReq(req),
-						glbUrl: retryFinished.resultGlbUrl,
-						quality: true,
-						compress: wantCompress,
-						derivePbr: opts?.derivePbr !== false,
-					});
-					if (retryDurable) {
-						durable = retryDurable;
-						retried = true;
-					}
-				}
-			} catch (err) {
-				console.warn(`[forge] quality auto-retry (huggingface) failed, keeping first result: ${err?.message || err}`);
-			} finally {
-				await retrySlot.release();
-			}
-		}
-	}
-
-	// Vision-QA quality gate (High/realism tier by default; env-tunable). Bounded
-	// best-of retry on this same free lane. Each retry must claim a free
-	// concurrency slot first, so a busy fleet keeps the first result rather than
-	// starving other callers. Fail-open end to end.
-	const gated = await qualityGateFinalize({
+	// Quality stage (forge-quality-lanes.js): structural check, vision judge
+	// when in scope, at most one retry. The retry needs a free Spaces slot of its
+	// own and is skipped at the edge of the caller's allowance; it is never
+	// charged as a second generation and the better model is delivered.
+	const stage = await runSyncLaneQualityStage({
+		req,
+		durable,
 		tierId: tier.id,
 		prompt,
 		path,
-		backend: backendId,
-		referenceImageUrl: preview,
-		durable,
+		gateApplies: qualityGateAppliesTo,
+		scoreGate: scoreQualityGate,
+		admitRetry: admitHfQualityRetry,
+		maxRetries: qualityGateMaxRetries(),
 		regenerate: async ({ prompt: retryPrompt } = {}) => {
 			const useP = retryPrompt || prompt;
-			const rslot = await acquireBlockingSlot('hf', { max: SCALE_LIMITS.hfConcurrent, ttlMs: SCALE_LIMITS.hfSlotTtlMs });
-			if (!rslot.ok) return null;
-			try {
-				const rs = await provider.submit({
-					mode: 'reconstruct',
-					sourceUrl: imageUrls[0],
-					params: { images: imageUrls, prompt: useP || undefined, seed: opts?.seed ?? undefined },
-				});
-				const rf = await provider.status(rs.extJobId);
-				if (!rf?.resultGlbUrl) return null;
-				const rj = randomUUID().replace(/-/g, '');
-				await createCreation({
-					clientKey, userId: await sessionUserIdFromReq(req), ipHash: hashIp(ip),
-					prompt: useP || (isImageMode ? 'image-to-3d' : ''), aspect,
-					previewImageUrl: preview, replicateJobId: rj,
-					textToImageModel: isImageMode ? null : textToImageModel,
-					viewsRequested: imageUrls.length, viewsUsed: imageUrls.length,
-					multiview: imageUrls.length > 1, sourceImageUrls: imageUrls, backend: backendId, tier: tier.id, path,
-				});
-				const rd = await materializeCreation({
-					replicateJobId: rj, clientKey, userId: await sessionUserIdFromReq(req),
-					glbUrl: rf.resultGlbUrl, quality: true, compress: wantCompress,
-					derivePbr: opts?.derivePbr !== false,
-				});
-				return rd ? { glbUrl: rd.glbUrl, durable: rd } : null;
-			} finally {
-				await rslot.release();
-			}
+			const rs = await provider.submit({
+				mode: 'reconstruct',
+				sourceUrl: imageUrls[0],
+				params: { images: imageUrls, prompt: useP || undefined, seed: opts?.seed ?? undefined },
+			});
+			const rf = await provider.status(rs.extJobId);
+			if (!rf?.resultGlbUrl) return null;
+			const rj = randomUUID().replace(/-/g, '');
+			await createCreation({
+				clientKey, userId: await sessionUserIdFromReq(req), ipHash: hashIp(ip),
+				prompt: useP || (isImageMode ? 'image-to-3d' : ''), aspect,
+				previewImageUrl: preview, replicateJobId: rj,
+				textToImageModel: isImageMode ? null : textToImageModel,
+				viewsRequested: imageUrls.length, viewsUsed: imageUrls.length,
+				multiview: imageUrls.length > 1, sourceImageUrls: imageUrls, backend: backendId, tier: tier.id, path,
+				recordStart: false,
+			});
+			const rd = await materializeCreation({
+				replicateJobId: rj, clientKey, userId: await sessionUserIdFromReq(req),
+				glbUrl: rf.resultGlbUrl, quality: true, compress: wantCompress,
+				derivePbr: opts?.derivePbr !== false,
+				recordEvent: false,
+			});
+			return rd ? { durable: rd } : null;
 		},
 	});
-	if (gated.durable) durable = gated.durable;
-	if (gated.retried) retried = true;
-	const qualityGate = gated.verdict;
+	durable = stage.durable ?? durable;
+	const retried = stage.retried;
+	const qualityGate = stage.verdict;
 
 	if (cacheKey && !isImageMode && durable?.glbUrl) {
 		await putCachedForgeResult(cacheKey, {
 			glb_url: durable.glbUrl,
+			creation_id: durable.id ?? null,
 			backend: backendId,
 			tier: tier.id,
 			path,
 			quality: durable.quality || null,
+			quality_gate: qualityGate || null,
 		});
 	}
 
@@ -1132,6 +992,7 @@ async function runHfImageLane({
 		durable: Boolean(durable),
 		quality: durable?.quality || null,
 		quality_retried: retried,
+		quality_retry: qualityRetryField(stage.retry),
 		quality_gate: qualityGate || undefined,
 		compression: durable?.compression || null,
 		options: opts?.hasOptions ? summarizeForgeOptions(opts) : undefined,
@@ -1149,7 +1010,18 @@ async function runHfImageLane({
 	return true;
 }
 
+// A stampede claim this request took and never resolved with a job handle (a
+// synchronous lane, a rejection, a throw) is released when the request ends,
+// so identical requests waiting on it stop waiting. See _lib/forge-stampede.js.
 async function startJob(req, res) {
+	try {
+		return await startJobUnguarded(req, res);
+	} finally {
+		await releaseGeneration(req);
+	}
+}
+
+async function startJobUnguarded(req, res) {
 	const ip = clientIp(req);
 	const body = await readJson(req, 8_000).catch(() => null);
 
@@ -1239,8 +1111,7 @@ async function startJob(req, res) {
 		return json(res, 403, {
 			error: 'region_restricted',
 			backend: body.backend,
-			message:
-				'This engine is not available in your region because its model licence excludes it. Use the default engine, which is available everywhere.',
+			message: regionRestrictedMessage(country),
 			retry_backends: retryBackendSuggestions({ hasImage: isImageMode, country }),
 		});
 	}
@@ -1297,29 +1168,41 @@ async function startJob(req, res) {
 	// and is never cached, matching the module's own privacy boundary.
 	const cacheEligible = !isImageMode && tier.id !== 'high' && BACKENDS[backendId]?.byok === false;
 	const forceRegenerate = body?.force_regenerate === true;
+	// What makes this request the same as another one, and who may be handed its
+	// result (_lib/forge-request-identity.js). Shared by the result-cache key and
+	// the in-flight coalescing hash below, so the two can never disagree. A
+	// request that did not ask to be public is keyed to its own requester, and
+	// every cache read is checked against the creation row, so a model removed
+	// or made private since it was cached is never served.
+	const requestViewer = { userId: await sessionUserIdFromReq(req), clientKey: clientKeyFrom(req) };
+	const requestIdentity = {
+		aspectRatio: VALID_ASPECT.has(body?.aspect_ratio) ? body.aspect_ratio : '1:1',
+		director: body?.director,
+		scope: requestScope(requestViewer),
+	};
 	const cacheKey = cacheEligible
-		? forgeResultCacheKey({ path, tier, backend: backendId, prompt, options: opts })
+		? forgeResultCacheKey({ path, tier, backend: backendId, prompt, options: opts, ...requestIdentity })
 		: null;
+	const sendCachedResult = (cached) =>
+		json(res, 200, {
+			job_id: null,
+			creation_id: null,
+			status: 'done',
+			glb_url: cached.glb_url,
+			durable: true,
+			cached: true,
+			cached_at: cached.cached_at,
+			mode: 'text_to_3d',
+			path: cached.path || path,
+			tier: cached.tier || tier.id,
+			backend: cached.backend || backendId,
+			prompt: prompt || null,
+			quality: cached.quality || null,
+			options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
+		});
 	if (cacheKey && !forceRegenerate) {
-		const cached = await getCachedForgeResult(cacheKey);
-		if (cached) {
-			return json(res, 200, {
-				job_id: null,
-				creation_id: null,
-				status: 'done',
-				glb_url: cached.glb_url,
-				durable: true,
-				cached: true,
-				cached_at: cached.cached_at,
-				mode: 'text_to_3d',
-				path: cached.path || path,
-				tier: cached.tier || tier.id,
-				backend: cached.backend || backendId,
-				prompt: prompt || null,
-				quality: cached.quality || null,
-				options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
-			});
-		}
+		const cached = await getCachedForgeResult(cacheKey, { viewer: requestViewer });
+		if (cached) return sendCachedResult(cached);
 	}
 
 	// $THREE hold-to-access gate (Token Utility v1): the High tier (200k poly +
@@ -1392,6 +1275,7 @@ async function startJob(req, res) {
 					feature: 'forge.high',
 					get_three_url: '/three-token',
 					pay_per_use: usd ? { action: 'forge.high', usd } : null,
+					...(err.retryAfter ? { retry_after: err.retryAfter } : {}),
 					message: err.message || 'That $THREE payment could not be verified.',
 				});
 			}
@@ -1413,8 +1297,16 @@ async function startJob(req, res) {
 			? await limits.mcp3dGenerateFreeTiered(rlKey, await freeLaneMultiplier(req, body))
 			: await limits.mcp3dGenerate(rlKey);
 		if (!rl.success) {
-			return rateLimited(res, rl, 'Generation limit reached. Try again shortly.');
+			return rateLimited(res, rl, 'Generation limit reached. Try again shortly.', { limit: 'generation_hourly' });
 		}
+		// Remember how much allowance this charge left, so the quality stage never
+		// spends the caller's last generation on an automatic retry.
+		noteAllowance(req, rl);
+		// Charged up front; handed back if Forge itself fails (a 5xx).
+		const freeMultiplier = isFreeLane ? await freeLaneMultiplier(req, body) : 1;
+		refundOnServerFailure(res, () =>
+			isFreeLane ? limits.mcp3dGenerateFreeRefund(rlKey, freeMultiplier) : limits.mcp3dGenerateRefund(rlKey),
+		);
 		// Cost circuit breaker: a platform-wide hourly ceiling on PLATFORM-keyed paid
 		// generation (the shared Replicate/self-host budget), on top of the per-IP cap
 		// above. It stops the influx/abuse failure mode where many callers each stay
@@ -1435,19 +1327,28 @@ async function startJob(req, res) {
 			// hourly cap and the global hourly cap leave open (one actor under every
 			// per-request limit can still drain paid spend over a day). Keyed by the
 			// forge client id. Free and BYOK lanes are never counted.
-			const daily = await dailyPaidAllowed(clientKeyFrom(req), {
+			// Keyed by account when there is one: the client id is a header the
+			// caller picks, so a made-up value must not mint a fresh allowance.
+			const dailyKey = accountId ? `user:${accountId}` : clientKeyFrom(req);
+			const daily = await dailyPaidAllowed(dailyKey, {
 				limit: SCALE_LIMITS.paidDailyPerClient,
 			});
 			if (!daily.ok) {
-				return json(res, 429, {
-					error: 'daily_limit_reached',
-					message:
-						'You’ve reached today’s limit for paid generations. Free engines (NVIDIA, Hugging Face) stay open, or try again tomorrow.',
-				});
+				return dailyLimitReached(
+					res,
+					daily,
+					'You’ve reached today’s limit for paid generations. Free engines (NVIDIA, Hugging Face) stay open, or try again tomorrow.',
+				);
 			}
+			refundOnServerFailure(res, () => dailyPaidRefund(dailyKey));
 		}
 	}
 
+	// What the checks below left out of a set of photos, by position, and how many
+	// the person supplied: reported back so the page can say which photo and why.
+	const suppliedUrls = imageUrls;
+	const suppliedViewCount = imageUrls.length;
+	let droppedPhotos = [];
 	if (isImageMode) {
 		if (imageUrls.length > MAX_VIEWS) {
 			return json(res, 400, {
@@ -1464,6 +1365,16 @@ async function startJob(req, res) {
 				});
 			}
 		}
+		// The worker fetches each of these from inside our network, so a loopback,
+		// link-local (cloud metadata) or private-range target is refused here.
+		if (await findUnsafeUrl(imageUrls)) {
+			return json(res, 400, {
+				error: 'invalid_image_url',
+				message: 'Each reference image must point at a publicly reachable host.',
+			});
+		}
+		const badUpload = await verifyUploadedReferences(imageUrls);
+		if (badUpload) return json(res, badUpload.status, { error: badUpload.code, message: badUpload.message });
 		if (prompt.length > 1000) {
 			return json(res, 400, {
 				error: 'invalid_prompt',
@@ -1489,6 +1400,13 @@ async function startJob(req, res) {
 			// a slot, it actively corrupts multi-view fusion by voting for geometry
 			// that isn't there.
 			const track = { meta: { forgeClient: clientKeyFrom(req) } };
+			// A photo of a different object, or of nothing, adds no coverage: it votes
+			// for geometry that is not there. Judged by colour once the background is
+			// out, on positive evidence only (an unreadable photo is kept).
+			const matched = await pruneMismatchedPhotos(imageUrls);
+			droppedPhotos = matched.dropped.map(({ position, reason }) => ({ position, reason }));
+			imageUrls = matched.urls;
+			const photoPositions = imageUrls.map((u) => suppliedUrls.indexOf(u) + 1);
 			const checks = await Promise.all(imageUrls.map((u) => validateForgeImage(u, { track })));
 			// The primary view is load-bearing: if it can't be reconstructed the whole
 			// job can't, so reject with the one-click override as before.
@@ -1506,6 +1424,9 @@ async function startJob(req, res) {
 			// rather than fail the job or feed a corrupting view into fusion. The
 			// primary always survives, so a single-photo upload is unaffected.
 			const usable = imageUrls.filter((_, i) => i === 0 || checks[i].ok);
+			imageUrls.forEach((_, i) => {
+				if (i > 0 && !checks[i].ok) droppedPhotos.push({ position: photoPositions[i], reason: 'unusable' });
+			});
 			if (usable.length < imageUrls.length) {
 				console.warn(
 					`[forge] pruned ${imageUrls.length - usable.length} unusable secondary view(s) before fusion; keeping ${usable.length}`,
@@ -1560,6 +1481,7 @@ async function startJob(req, res) {
 		});
 	}
 
+	markSubmitStage('submit');
 	try {
 		// Pay-per-use: claim the settled $THREE payment now, immediately before any
 		// provider work, so every cheap failure above (rate limit, moderation, bad
@@ -1583,6 +1505,7 @@ async function startJob(req, res) {
 				});
 			}
 			paidHigh.redeemed = true;
+			notePaidGeneration({ highPaymentId: paidHigh.paymentId });
 		}
 
 		// Prepaid-credit charge: debit now, immediately before provider work, so
@@ -1600,6 +1523,7 @@ async function startJob(req, res) {
 				});
 				creditsCharge.ledgerId = charged.ledgerId;
 				creditsCharge.chargedUsd = charged.chargedUsd;
+				if (charged.chargedUsd > 0) notePaidGeneration({ creditLedgerId: charged.ledgerId });
 			} catch (err) {
 				if (err.code === 'insufficient_credits') {
 					return json(res, 402, {
@@ -1608,7 +1532,7 @@ async function startJob(req, res) {
 						available_usd: err.available_usd,
 						required_usd: err.required_usd,
 						top_up_url: '/credits',
-						message: err.message,
+						message: `Generating a High model costs ${Number(err.required_usd || 0).toFixed(2)} in credits, your balance is ${Number(err.available_usd || 0).toFixed(2)}. Top up to continue.`,
 					});
 				}
 				throw err;
@@ -1654,13 +1578,64 @@ async function startJob(req, res) {
 							'Sketch-to-3D is not configured on this deployment (GCP_TRIPOSG_URL is not set).',
 					});
 				}
-				// The sketch model is conditioned on the drawing: no other lane can
-				// serve it, so there is nothing to fail over to. Cool the worker so the
-				// next request skips it while it recovers, and return a designed,
+				// Cool the worker so the next request skips it while it recovers. The
+				// drawing is still a picture, so an image lane can build it: try the
+				// configured ones before giving up, and only then return a designed,
 				// retryable state instead of a raw provider error.
 				if (isUpstreamUnavailable(err)) {
 					await markLaneUnhealthy('triposg');
 					console.warn(`[forge] self-host sketch lane unavailable: ${err?.message || err}`);
+					const rescued = await submitLastResortLane({
+						attempted: ['triposg'],
+						country,
+						imageUrl: sketchUrl,
+						prompt,
+						tierId: tier.id,
+						path: 'image',
+					});
+					if (rescued) {
+						console.warn(`[forge] sketch request served by image lane ${rescued.backend}`);
+						const rescuedCreationId = await createCreation({
+							clientKey: clientKeyFrom(req),
+							userId: await sessionUserIdFromReq(req),
+							ipHash: hashIp(ip),
+							prompt,
+							aspect: null,
+							previewImageUrl: sketchUrl,
+							replicateJobId: rescued.extJobId,
+							textToImageModel: null,
+							viewsRequested: 1,
+							viewsUsed: 1,
+							multiview: false,
+							backend: rescued.backend,
+							tier: tier.id,
+							path: 'image',
+						});
+						await bindJobToOptions(rescued.handle, opts);
+						const rescuedCold = await coldStartFor(rescued.backend);
+						return json(res, 200, {
+							job_id: rescued.handle,
+							creation_id: rescuedCreationId,
+							status: 'queued',
+							mode: 'image_to_3d',
+							path: 'image',
+							tier: tier.id,
+							backend: rescued.backend,
+							prompt,
+							preview_image_url: sketchUrl,
+							reference_image_urls: [sketchUrl],
+							views_requested: 1,
+							views_used: 1,
+							multiview: false,
+							cold_start: rescuedCold,
+							cold_start_seconds: rescuedCold ? coldStartSecondsFor(rescued.backend) : undefined,
+							eta_seconds: estimateEtaSeconds({ backendId: rescued.backend, tier, cold: rescuedCold }),
+							estimated_credits: estimateCredits({ backendId: rescued.backend, path: 'image', tier }),
+							options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
+							failover_from: 'triposg',
+							failover_note: SKETCH_FALLBACK_NOTE,
+						});
+					}
 					res.setHeader('retry-after', '20');
 					return json(res, 503, {
 						error: 'generation_unavailable',
@@ -1723,7 +1698,9 @@ async function startJob(req, res) {
 		const byokProvider = BACKENDS[backendId].byok;
 		const byokFactory = BYOK_PROVIDER_FACTORIES[byokProvider];
 		if (byokFactory) {
-			const key = await resolveProviderKey(req, body, byokProvider);
+			const found = await resolveCallerProviderKey(req, body, byokProvider);
+			if (found.rejected) return json(res, 401, rejectedKeyBody(KEY_SHAPES[byokProvider]?.label, found.rejected));
+			const key = found.key;
 			if (!key) return needsKey(res, backendId);
 
 			let gp;
@@ -1743,9 +1720,10 @@ async function startJob(req, res) {
 					imageUrl: previewImageUrl,
 					prompt: prompt || undefined,
 					tier,
+					seed: opts.seed ?? undefined,
 				});
 			} else if (typeof gp.textToGeometry === 'function') {
-				submitted = await gp.textToGeometry({ prompt, tier });
+				submitted = await gp.textToGeometry({ prompt, tier, seed: opts.seed ?? undefined });
 			} else {
 				// Image-only backend (e.g. Stable Fast 3D) asked to run text→3D.
 				return json(res, 422, {
@@ -1969,8 +1947,24 @@ async function startJob(req, res) {
 				backend: backendId,
 				prompt,
 				images: isImageMode ? imageUrls : null,
+				options: opts,
+				...requestIdentity,
 			});
-			const existing = await coalesceInFlight(requestHash);
+			let existing = forceRegenerate ? null : await coalesceInFlight(requestHash);
+			// Stampede guard (_lib/forge-stampede.js): the in-flight record above is
+			// only written once a job exists, a minute or more from now for a text
+			// prompt. An identical request that arrives in that window waits for the
+			// first one instead of starting a second pipeline: it is handed the job
+			// the first one starts, or its cached result, or (if the first one
+			// failed, or the wait ran out) it carries on and generates itself.
+			if (!existing && !forceRegenerate && (await claimGeneration(req, requestHash)) === 'waiter') {
+				const settled = await awaitGeneration(requestHash);
+				existing = settled.jobHandle || (await coalesceInFlight(requestHash));
+				if (!existing && cacheKey) {
+					const cached = await getCachedForgeResult(cacheKey, { viewer: requestViewer });
+					if (cached) return sendCachedResult(cached);
+				}
+			}
 			if (existing) {
 				return json(res, 200, {
 					job_id: existing,
@@ -2008,6 +2002,7 @@ async function startJob(req, res) {
 			// single biggest lever on "does this look like a real photograph"
 			// available before the reference image is even generated.
 			let directedPrompt = prompt;
+			markSubmitStage('direction');
 			if (body?.director !== false) {
 				// Known brand marks resolve deterministically before the LLM gets a
 				// say: no model reliably knows a niche mark's geometry, and the
@@ -2027,6 +2022,7 @@ async function startJob(req, res) {
 			// most photoreal single view we can synthesize. Fail-open: an absent module
 			// or a Vertex outage transparently falls back to the standing text→image
 			// provider (FLUX/Imagen/NIM), so this path runs identically either way.
+			markSubmitStage('reference');
 			const synthesized = await seedReferenceImage({
 				prompt: directedPrompt,
 				aspect,
@@ -2049,10 +2045,38 @@ async function startJob(req, res) {
 		// speed, and a caller who supplied multiple calibrated views keeps exactly
 		// those. Best-effort: a failed view just means fewer views, never a
 		// failed generation.
-		if (backendId === 'trellis_selfhost' && tier.id !== 'draft' && views.length === 1) {
-			const turnaround = await synthesizeTurnaroundViews(referenceImageUrl).catch(() => []);
-			if (turnaround.length) views = [...views, ...turnaround];
+		// A lane that reads one image is handed the one that shows the object best
+		// and the response says so. The painter is bounded and fail-open: whatever
+		// it does (throws, throttles, hangs, answers with a blank or foreign
+		// picture) the job carries on at once with the views it already holds.
+		const singleView = narrowToSingleView({
+			views,
+			labels: null,
+			backendId,
+			engineLabel: BACKENDS[backendId]?.label,
+		});
+		if (singleView.views !== views) {
+			views = singleView.views;
+			referenceImageUrl = views[0];
 		}
+		if (backendId === 'trellis_selfhost' && tier.id !== 'draft' && views.length === 1) {
+			markSubmitStage('views');
+		}
+		const turnaround = await extendWithTurnaroundViews({
+			views,
+			referenceImageUrl,
+			backendId,
+			tierId: tier.id,
+			synthesize: (...args) => synthesizeTurnaroundViews(...args),
+		});
+		views = turnaround.views;
+		const viewsNote = [
+			singleView.note,
+			droppedViewsNote(droppedPhotos, { total: suppliedViewCount }),
+		]
+			.filter(Boolean)
+			.join(' ');
+		markSubmitStage('submit');
 
 		// Explicitly chosen free HuggingFace lane. Unlike the trellis free-first
 		// path below: which degrades to the paid Replicate lane when the free
@@ -2206,7 +2230,7 @@ async function startJob(req, res) {
 					previewImageUrl: referenceImageUrl,
 					replicateJobId: job.extJobId,
 					textToImageModel: isImageMode ? null : textToImageModel,
-					viewsRequested: views.length,
+					viewsRequested: Math.max(views.length, isImageMode ? suppliedViewCount : 0),
 					viewsUsed: job.viewsUsed ?? views.length,
 					multiview: views.length > 1,
 					sourceImageUrls: views,
@@ -2214,6 +2238,8 @@ async function startJob(req, res) {
 					tier: tier.id,
 					path,
 				});
+				await registerInFlight(requestHash, token);
+				await publishGeneration(req, token);
 				if (cacheKey) await bindJobToCacheKey(token, cacheKey);
 				await bindJobToOptions(token, opts);
 
@@ -2229,6 +2255,12 @@ async function startJob(req, res) {
 					prompt: prompt || null,
 					preview_image_url: referenceImageUrl,
 					reference_image_urls: views,
+					...viewsReport({
+						requested: Math.max(views.length, isImageMode ? suppliedViewCount : 0),
+						used: job.viewsUsed ?? views.length,
+						note: viewsNote,
+						dropped: droppedPhotos,
+					}),
 					text_to_image_model: isImageMode ? null : textToImageModel,
 					cold_start: cold,
 					options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
@@ -2519,8 +2551,8 @@ async function startJob(req, res) {
 		// backend handled it and how many views it fused: these can differ from
 		// what was requested when a single-view model is configured and we fall
 		// back to the primary view. Surfaced so a downgrade is never silent.
-		const viewsRequested = views.length;
-		const viewsUsed = typeof job.viewsUsed === 'number' ? job.viewsUsed : viewsRequested;
+		const viewsRequested = Math.max(views.length, isImageMode ? suppliedViewCount : 0);
+		const viewsUsed = typeof job.viewsUsed === 'number' ? job.viewsUsed : views.length;
 		const multiview = Boolean(job.multiview);
 
 		// TRELLIS returns a bare Replicate prediction id (kept as the job handle
@@ -2562,6 +2594,7 @@ async function startJob(req, res) {
 		// requests in the next few minutes coalesce onto it instead of re-running the
 		// GPU pipeline. First writer wins; best-effort (no-op without Redis).
 		await registerInFlight(requestHash, jobHandle);
+		await publishGeneration(req, jobHandle);
 		// Cache-eligibility was fixed before any lane failover reassigned backendId;
 		// a BYOK pick already disqualified it above, so it's always safe to bind
 		// here for whichever platform lane actually ran.
@@ -2583,9 +2616,13 @@ async function startJob(req, res) {
 			prompt: prompt || null,
 			preview_image_url: referenceImageUrl,
 			reference_image_urls: views,
-			views_requested: viewsRequested,
-			views_used: viewsUsed,
-			multiview,
+			...viewsReport({
+				requested: viewsRequested,
+				used: viewsUsed,
+				note: viewsNote,
+				dropped: droppedPhotos,
+				multiview,
+			}),
 			text_to_image_model: textToImageModel,
 			cold_start: cold,
 			options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,
@@ -2593,21 +2630,26 @@ async function startJob(req, res) {
 			estimated_credits: estimateCredits({ backendId, path, tier }),
 		});
 	} catch (err) {
+		noteSubmitError(err);
 		if (err?.code === 'unconfigured') return unconfigured(res);
+		// A request that ran on the caller's own provider key is answered by that
+		// provider's failure class and never handed to a platform-paid engine.
+		const byokUserKey = Boolean(BACKENDS[backendId]?.byok);
+		if (byokUserKey) {
+			const failure = byokFailureResponse(err, KEY_SHAPES[BACKENDS[backendId].byok]?.label);
+			if (failure) {
+				if (failure.retryAfter) res.setHeader('retry-after', String(failure.retryAfter));
+				return json(res, failure.status, failure.body);
+			}
+		}
 		if (err?.code === 'invalid_key') {
-			return json(res, 401, {
-				error: 'invalid_key',
-				message: err.message || 'The provider rejected this API key.',
-			});
+			return json(res, 401, forgeFailureBody('invalid_key', err, 'gpt-forge'));
 		}
 		if (err?.code === 'insufficient_credits' && BACKENDS[backendId]?.byok) {
 			// BYOK lane: the message names the CALLER'S own provider account, which
 			// they can act on: surface it. The platform's own paid lane falls through
 			// to the sanitized "temporarily unavailable" state below.
-			return json(res, 402, {
-				error: 'insufficient_credits',
-				message: err.message || 'The provider account is out of credits.',
-			});
+			return json(res, 402, forgeFailureBody('insufficient_credits', err, 'gpt-forge'));
 		}
 		// Last-resort free fallback: when the paid image-intermediate TRELLIS lane
 		// (Replicate) is throttled, over-quota, unreachable, OR out of credit, a text
@@ -2626,6 +2668,7 @@ async function startJob(req, res) {
 		// request (the draft nvidia→trellis→nvidia loop).
 		if (
 			(isUpstreamUnavailable(err) || isPaidCreditFailure(err)) &&
+			!byokUserKey &&
 			!isImageMode &&
 			!nvidiaTried &&
 			prompt
@@ -2707,10 +2750,7 @@ async function startJob(req, res) {
 				retry_after: 60,
 			});
 		}
-		return json(res, 502, {
-			error: 'generation_failed',
-			message: err?.message || 'The generator could not start this job.',
-		});
+		return json(res, 502, forgeFailureBody('generation_failed', err, 'gpt-forge'));
 	} finally {
 		// A claimed pay-per-use payment that did NOT deliver a model, any non-2xx
 		// exit (validation 4xx, unconfigured 5xx, provider failure), is released so
@@ -2744,8 +2784,10 @@ async function startRigJob(req, res) {
 	const accountId = await sessionUserIdFromReq(req);
 	const rl = await limits.mcp3dGenerate(accountId ? `user:${accountId}` : ip);
 	if (!rl.success) {
-		return rateLimited(res, rl, 'Rigging limit reached. Try again shortly.');
+		return rateLimited(res, rl, 'Rigging limit reached. Try again shortly.', { limit: 'generation_hourly' });
 	}
+	const rigKey = accountId ? `user:${accountId}` : ip;
+	refundOnServerFailure(res, () => limits.mcp3dGenerateRefund(rigKey));
 
 	const body = await readJson(req, 8_000).catch(() => null);
 	const glbUrl = typeof body?.glb_url === 'string' ? body.glb_url.trim() : '';
@@ -2753,6 +2795,14 @@ async function startRigJob(req, res) {
 		return json(res, 400, {
 			error: 'invalid_glb_url',
 			message: 'glb_url must be an http(s) URL to a GLB mesh, under 2048 characters.',
+		});
+	}
+	// The rig worker fetches this URL from inside our network, so a loopback,
+	// link-local (cloud metadata) or private-range target is refused here.
+	if (await findUnsafeUrl([glbUrl])) {
+		return json(res, 400, {
+			error: 'invalid_glb_url',
+			message: 'glb_url must point at a publicly reachable host.',
 		});
 	}
 
@@ -2796,8 +2846,26 @@ async function startRigJob(req, res) {
 		});
 	}
 
+	// Same preflight as /api/forge?action=rig: an object with no limbs, an
+	// oversized, already-rigged or multi-piece model is refused with the reason,
+	// and a Draco or meshopt file is decoded to a copy the worker can read
+	// (api/_lib/rig-preflight.js). A refusal gives the hourly slot back.
+	const pre = await preflightRig({
+		glbUrl,
+		creationId: typeof body?.creation_id === 'string' ? body.creation_id : null,
+		prompt: typeof body?.prompt === 'string' ? body.prompt : null,
+	});
+	if (!pre.ok) {
+		if (pre.status < 500) await refundRigAllowance(rigKey);
+		return json(res, pre.status, pre.body);
+	}
+
 	try {
-		const job = await provider.submit({ mode: 'rerig', sourceUrl: glbUrl, params: {} });
+		const job = await provider.submit({
+			mode: 'rerig',
+			sourceUrl: pre.sourceUrl,
+			params: pre.subject ? { subject: pre.subject } : {},
+		});
 		// GCP rig jobs poll through a token-encoded handle so /api/forge?action=status
 		// routes back to the GCP worker; Replicate jobs use the bare prediction id.
 		const jobToken =
@@ -2820,6 +2888,7 @@ async function startRigJob(req, res) {
 			status: 'queued',
 			mode: 'rig',
 			source_glb_url: glbUrl,
+			subject: pre.subject,
 			eta_seconds: typeof job.eta === 'number' ? job.eta : null,
 		});
 	} catch (err) {
@@ -2827,6 +2896,8 @@ async function startRigJob(req, res) {
 			return json(res, 501, { error: 'rig_unconfigured', message: err.message });
 		}
 		if (err?.code === 'rate_limited' || err?.providerStatus === 429) {
+			// The rigger turned the job away, so this call does not count.
+			await refundRigAllowance(rigKey);
 			res.setHeader('retry-after', '10');
 			return json(res, 429, {
 				error: 'rate_limited',
@@ -2834,10 +2905,7 @@ async function startRigJob(req, res) {
 				retry_after: 10,
 			});
 		}
-		return json(res, 502, {
-			error: 'rig_failed',
-			message: err?.message || 'The rigger could not start this job.',
-		});
+		return json(res, 502, forgeFailureBody('rig_failed', err, 'gpt-forge'));
 	}
 }
 
@@ -2870,6 +2938,10 @@ async function pollNvidiaStatus({ nv, upstreamId, clientKey }) {
 	const alias = await cacheGet(nvcfAliasKey(upstreamId)).catch(() => null);
 	const taskId = typeof alias === 'string' && alias ? alias : upstreamId;
 
+	// NVIDIA throttled an earlier poll and stated a wait: honor it, shared across
+	// instances through the cache, instead of polling a gateway that said not yet.
+	if ((await pollBackoffRemaining(taskId)) > 0) return { status: 'running' };
+
 	// Single-flight across instances: whoever loses the race reports running and
 	// lets the client's next poll pick up the winner's outcome from the store.
 	const lockKey = `nvcf:poll-lock:${taskId}`;
@@ -2883,6 +2955,7 @@ async function pollNvidiaStatus({ nv, upstreamId, clientKey }) {
 	} finally {
 		await releaseLock(lockKey);
 	}
+	await noteNimPollOutcome(taskId, result);
 	if (result?.code !== 'nvcf_expired') return result;
 
 	// The request id is dead. A racing poll may have already materialized the
@@ -2968,6 +3041,17 @@ async function pollTicket(req, res, ticket) {
 	return json(res, 404, { error: 'unknown_job', message: 'That job id is not recognized (it may be mistyped or expired).' });
 }
 
+// A non-terminal upstream answer for a job the finalizer already failed, or one
+// past its allowance, ends the job here with a reason (see forge-job-deadline.js).
+// Returns true when it answered.
+async function answerStalledPoll(res, { pendingStatus, meta, upstreamId, clientKey, jobId, metaFields }) {
+	const stalled = decideStalledPoll({ pendingStatus, row: meta });
+	if (!stalled) return false;
+	if (stalled.markFailed) await markFailed({ replicateJobId: upstreamId, clientKey, error: stalled.storedError });
+	json(res, 200, { job_id: jobId, status: 'failed', error: stalled.error, ...metaFields });
+	return true;
+}
+
 async function pollJob(req, res, jobId) {
 	// A job handle is either a bare Replicate prediction id (legacy / image-
 	// TRELLIS path) or a forge token encoding the geometry/GCP provider + the
@@ -3038,9 +3122,20 @@ async function pollJob(req, res, jobId) {
 	// Poll the provider that owns this job. BYOK providers re-resolve the key per
 	// poll (the client resends it, or it loads from the session store).
 	let result;
+	let byokPoll = null;
 	try {
 		if (BYOK_PROVIDER_FACTORIES[provider]) {
-			const key = await resolveProviderKey(req, null, provider);
+			const found = await resolveCallerProviderKey(req, null, provider);
+			if (found.rejected) {
+				return json(res, 200, {
+					job_id: jobId,
+					status: 'failed',
+					error_code: 'invalid_key',
+					error: found.rejected.message,
+					...metaFields,
+				});
+			}
+			const key = found.key;
 			if (!key) {
 				return json(res, 200, {
 					job_id: jobId,
@@ -3049,6 +3144,7 @@ async function pollJob(req, res, jobId) {
 					...metaFields,
 				});
 			}
+			byokPoll = { key, label: KEY_SHAPES[provider]?.label };
 			const gp = BYOK_PROVIDER_FACTORIES[provider](key);
 			result = await gp.status({ kind: liveToken.kind, taskId: upstreamId });
 		} else if (provider === 'replicate_byok') {
@@ -3106,7 +3202,9 @@ async function pollJob(req, res, jobId) {
 		}
 	} catch {
 		// A transient poll error shouldn't fail the job: report running so the
-		// client's loop retries.
+		// client's loop retries. Unless the job is already past its allowance: a
+		// worker that stopped answering must not keep a caller polling forever.
+		if (await answerStalledPoll(res, { pendingStatus: 'running', meta, upstreamId, clientKey, jobId, metaFields })) return;
 		return json(res, 200, { job_id: jobId, status: 'running', ...metaFields });
 	}
 
@@ -3131,20 +3229,6 @@ async function pollJob(req, res, jobId) {
 			compress: boundOpts?.compression || null,
 			derivePbr: boundOpts?.derivePbr !== false,
 		});
-		// Populate the result cache this job was bound to at submit time (text→3D,
-		// non-high-tier, platform-keyed lanes only: see forgeResultCacheKey). A
-		// job with no binding (image mode, high tier, BYOK, or no options
-		// requested) is a no-op here.
-		const boundCacheKey = await cacheKeyForJob(jobId);
-		if (boundCacheKey && durable?.glbUrl) {
-			await putCachedForgeResult(boundCacheKey, {
-				glb_url: durable.glbUrl,
-				backend: meta?.backend || null,
-				tier: meta?.tier || null,
-				path: meta?.path || null,
-				quality: durable.quality || null,
-			});
-		}
 		// Post-generation vision-QA verdict for the async self-host lanes: the
 		// High/MAX realism path (self-host TRELLIS / Hunyuan3D) completes here.
 		// Tier-scoped (default High only) and fail-open, so draft/standard pay no
@@ -3159,6 +3243,23 @@ async function pollJob(req, res, jobId) {
 				tier: meta?.tier || null,
 				backend: meta?.backend || null,
 				referenceImageUrl: meta?.preview_image_url || null,
+			});
+		}
+		// Populate the result cache this job was bound to at submit time (text→3D,
+		// non-high-tier, platform-keyed lanes only: see forgeResultCacheKey). A
+		// job with no binding (image mode, high tier, BYOK) is a no-op here.
+		// Written after the vision verdict and with the creation row, so a model
+		// that failed the verdict is never cached and a removed one is never served.
+		const boundCacheKey = await cacheKeyForJob(jobId);
+		if (boundCacheKey && durable?.glbUrl) {
+			await putCachedForgeResult(boundCacheKey, {
+				glb_url: durable.glbUrl,
+				creation_id: durable.id ?? null,
+				backend: meta?.backend || null,
+				tier: meta?.tier || null,
+				path: meta?.path || null,
+				quality: durable.quality || null,
+				quality_gate: qualityGate || null,
 			});
 		}
 		const doneFrame = {
@@ -3199,29 +3300,41 @@ async function pollJob(req, res, jobId) {
 		// submit-side cooldown. BYOK lanes are excluded (never auto-selected).
 		const failedBackend = meta?.backend || null;
 		const platformLaneFailed = Boolean(failedBackend && BACKENDS[failedBackend] && !BACKENDS[failedBackend].byok);
-		if (platformLaneFailed) await markLaneUnhealthy(failedBackend);
+		// A worker that refuses the INPUT is healthy: the image was the problem, and
+		// cooling the lane would send the next user's good request elsewhere.
+		const inputUnusable = isUnusableInputError(result.error);
+		if (platformLaneFailed && !inputUnusable) await markLaneUnhealthy(failedBackend);
 
 		// Automatic redispatch (see _lib/forge-failover.js): recover the original
 		// inputs from the creation row and continue the SAME job on the next
 		// configured lane: the client keeps polling this id and sees
 		// status:"running" with a new backend instead of a dead end. Scoped to
-		// platform image-path jobs with a stored reference view; sketch stays on
-		// its purpose-built lane and BYOK vendors are never silently swapped.
-		const attempted = [...new Set([...(live?.attempted || []), failedBackend].filter(Boolean))];
+		// platform jobs with a stored reference view, and BYOK vendors are never
+		// silently swapped. A sketch job whose scribble worker failed continues on
+		// the standard image lanes, which read the drawing as a picture; a drawing
+		// the worker could not read at all would fail on every lane, so it stops here.
+		let attempted = [...new Set([...(live?.attempted || []), failedBackend].filter(Boolean))];
 		const hop = live?.hop || 0;
+		const sketchFallback = meta?.path === 'sketch';
 		const redispatchable =
-			platformLaneFailed && hop < MAX_FAILOVER_HOPS && meta?.preview_image_url && meta?.path !== 'sketch';
+			platformLaneFailed &&
+			hop < MAX_FAILOVER_HOPS &&
+			meta?.preview_image_url &&
+			!(sketchFallback && inputUnusable);
 		if (redispatchable) {
-			const nextLane = await pickRedispatchLane({ attempted, country: requestTerritory(req) });
-			if (nextLane) {
-				try {
-					const submitted = await submitFailoverJob({
-						backend: nextLane,
-						imageUrl: meta.preview_image_url,
-						prompt: meta.prompt,
-						tierId: meta.tier,
-						path: meta.path,
-					});
+			try {
+				const submitted = await submitNextRedispatchLane({
+					attempted,
+					country: requestTerritory(req),
+					imageUrl: meta.preview_image_url,
+					prompt: meta.prompt,
+					tierId: meta.tier,
+					path: sketchFallback ? 'image' : meta.path,
+				});
+				if (submitted) {
+					const nextLane = submitted.backend;
+					// Lanes that refused the submit join the list, so they are never re-asked.
+					attempted = submitted.attempted;
 					// Provenance row for the successor so later polls resolve its meta
 					// and the success path materializes into the store as usual. The
 					// redispatch reconstructs from the primary stored view, so a
@@ -3238,7 +3351,9 @@ async function pollJob(req, res, jobId) {
 						multiview: false,
 						backend: nextLane,
 						tier: meta.tier,
-						path: meta.path,
+						// The successor is an image job whatever the original was, so its
+						// outcome is counted against the lane that actually serves it.
+						path: sketchFallback ? 'image' : meta.path,
 					});
 					// Report "running" ONLY once the successor is durably chaseable -
 					// otherwise the client would poll a dead handle forever.
@@ -3258,11 +3373,12 @@ async function pollJob(req, res, jobId) {
 							...metaFields,
 							backend: nextLane,
 							failover_from: failedBackend,
+							...(sketchFallback ? { failover_note: SKETCH_FALLBACK_NOTE } : {}),
 						});
 					}
-				} catch (err) {
-					console.warn(`[forge] poll-time failover redispatch failed: ${err?.message || err}`);
 				}
+			} catch (err) {
+				console.warn(`[forge] poll-time failover redispatch failed: ${err?.message || err}`);
 			}
 		}
 
@@ -3274,10 +3390,18 @@ async function pollJob(req, res, jobId) {
 			meta?.path === 'sketch'
 				? []
 				: retryBackendSuggestions({ attempted, hasImage: Boolean(meta?.preview_image_url), country: requestTerritory(req) });
+		// A job that ran on the caller's own provider account is explained in terms
+		// of that account, not the platform's generic "temporarily unavailable" copy.
+		const ownKeyFailure = byokPoll ? byokPollFailure(result, byokPoll.label, byokPoll.key) : null;
 		return json(res, 200, {
 			job_id: jobId,
 			status: 'failed',
-			error: sanitizeJobError(result.error) || '3D generation hit a snag, please try again.',
+			error: ownKeyFailure
+				? ownKeyFailure.error
+				: sketchFallback && inputUnusable
+					? SKETCH_UNREADABLE_MESSAGE
+					: sanitizeJobError(result.error) || '3D generation hit a snag, please try again.',
+			...(ownKeyFailure ? { error_code: ownKeyFailure.error_code } : {}),
 			...metaFields,
 			...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),
 		});
@@ -3299,6 +3423,7 @@ async function pollJob(req, res, jobId) {
 	// poll), and only while queued: a worker that answered "running" is up by
 	// definition, so the flag clears on a real signal rather than on a timer.
 	const pendingStatus = result.status || 'running';
+	if (await answerStalledPoll(res, { pendingStatus, meta, upstreamId, clientKey, jobId, metaFields })) return;
 	const cold = pendingStatus === 'queued' ? await laneColdStart(meta?.backend) : false;
 	return json(res, 200, {
 		job_id: jobId,
@@ -3338,6 +3463,10 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'POST') {
 		const isRig = (url.searchParams.get('action') || '').trim() === 'rig';
+		// Count how every generation POST ends, including the ones that end
+		// before a job exists (see _lib/forge-prejob.js). Installed before the
+		// sign-in check so its refusal is counted too.
+		const submit = isRig ? null : observeForgeSubmit(res);
 		// Making a model needs an account or a platform job (see
 		// _lib/creator-account.js). Checked before the submit ticket, rate limits
 		// and any provider spend, so an anonymous caller learns the one thing they
@@ -3358,7 +3487,7 @@ export default wrap(async (req, res) => {
 		if (isRig) {
 			return startRigJob(req, res);
 		}
-		return startJob(req, res);
+		return submit.run(() => withPaidGenerationScope(() => startJob(req, res)));
 	}
 
 	// ?catalog: the tier + backend + cost/time matrix the composer renders.

@@ -11,8 +11,6 @@
 //     checking in), shows the position and the server's own wait estimate,
 //     and resolves the moment it is this person's turn so the page resubmits.
 //     Leaving (Cancel, closing the page) hands the place to the next person.
-//   - upstreamBusy() tells the generator's "busy" answer apart from a
-//     person's own allowance, so busy is never reported as "limit reached".
 //
 // Every number shown comes from the server's answers. The countdown between
 // check-ins only ticks the server's estimate down; the next check-in replaces it.
@@ -45,13 +43,6 @@ export function waitText(seconds) {
 	if (s < 60) return `about ${Math.max(5, Math.round(s / 5) * 5)} seconds`;
 	const m = Math.round(s / 60);
 	return m <= 1 ? 'about a minute' : `about ${m} minutes`;
-}
-
-// "45s" under a minute, "3:59" above it: a countdown to a retry.
-export function countdownText(seconds) {
-	const s = Math.max(0, Math.ceil(Number(seconds) || 0));
-	if (s < 60) return `${s}s`;
-	return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
 function placeFrom(data) {
@@ -94,14 +85,6 @@ export function lineAnswerFrom(status, data) {
 		};
 	}
 	return null;
-}
-
-// The submit handler's answer when a generator throttled the request carries a
-// boolean `queued` (api/forge.js, api/gpt-forge.js). The per-account allowance
-// answer (api/_lib/http.js rateLimited) never does. The first is "busy", only
-// the second is "you've reached your limit".
-export function upstreamBusy(data) {
-	return Boolean(data) && data.error === 'rate_limited' && typeof data.queued === 'boolean';
 }
 
 // ── Keeping the place ───────────────────────────────────────────────────────

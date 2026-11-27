@@ -7,6 +7,11 @@ so you can open one, run it, and open the next without consulting anything. Ever
 `finish/` is runnable; the context and log files that must never be run were moved out to
 [finish/_context/](finish/_context/).
 
+**2026-11-27:** the [queue audit](finish/_context/queue-audit-2026-11-27.md) moved the 103 orders
+whose code is finished and that wait only on an owner step to [awaiting-owner/](awaiting-owner/),
+and archived 13 orders verified complete. The counts in this file predate that move; trust the
+directory.
+
 | Band | What it is | Count |
 |---|---|---|
 | `023` to `039` | The `x-grok-` campaign. Runnable, no gate. | 1 |
@@ -78,7 +83,7 @@ context file says otherwise.
 
 | Order | Why now |
 |---|---|
-| [101](finish/101-forge-hardening-01-reference-step-stated-wait.md) through [187](finish/187-forge-hardening-87-operator-reports.md) | The `forge-hardening-` campaign. Measured 2026-11-26: text prompts on Forge were failing before a job existed (the image ladder was down to one rung at one image per 45 seconds), while the main 3D lane ran at 93.3%. NVIDIA's catalog reviewer will open `/forge`. Start with 184, 101, 102, 103, 182, 177, 105 and 106; the rest in waves per [finish/_context/forge-hardening-00-INDEX.md](finish/_context/forge-hardening-00-INDEX.md). |
+| [101](archive/101-forge-hardening-01-reference-step-stated-wait.md) through [187](finish/187-forge-hardening-87-operator-reports.md) | The `forge-hardening-` campaign. Measured 2026-11-26: text prompts on Forge were failing before a job existed (the image ladder was down to one rung at one image per 45 seconds), while the main 3D lane ran at 93.3%. NVIDIA's catalog reviewer will open `/forge`. Start with 184, 101, 102, 103, 182, 177, 105 and 106; the rest in waves per [finish/_context/forge-hardening-00-INDEX.md](finish/_context/forge-hardening-00-INDEX.md). |
 | [436](finish/436-auto-forge-finalize-ttl-reap-decoupling.md) | Measured 2026-10-25: 96% of forge 3D generations in the last 24h never finished; 780 `forge_creations` rows stuck in `generating`, some over a day old against a documented 45-minute timeout. The core 3D-generation feature is effectively down for most users. |
 | [401](finish/401-auto-restore-green-vitest.md) | `npm run test:core` has 52 failing files and 108 failing tests on `evolve`. Every other order's "tests pass" line is unverifiable until this is green. |
 | [433](finish/433-auto-fix-account-link-codes-schema-collision.md) | A table-name collision in `account_link_codes` is breaking every phone/desktop/CLI/Telegram account-link call in production right now. |
@@ -86,9 +91,9 @@ context file says otherwise.
 | [434](finish/434-auto-fix-stale-structure-status-claims.md) | STRUCTURE.md still claims some shipped surfaces as "not yet applied / not yet deployed." Cheap, mechanical, no owner action. |
 | [023](finish/023-x-grok-01-connector-compat-probe.md), [024](finish/024-x-grok-02-cloud-agent-rate-limits.md), [039](archive/941-x-grok-17-xai-remote-mcp-e2e.md) | The `x-grok-` campaign's runnable orders: the connector compatibility probe, cloud-agent rate limits, and the xAI MCP end-to-end proof. Shared facts: [finish/_context/x-grok-00-CONTEXT.md](finish/_context/x-grok-00-CONTEXT.md). |
 | [067](finish/942-best3d-01-trellis2-default-lane.md) through [081](finish/081-best3d-15-splat-parity.md) | The `best3d-` campaign's six runnable orders (067, 068, 069, 070, 074, 081): TRELLIS.2 default lane, Pixal3D multi-view, non-humanoid rigging, editable parts, the WebGPU TSL path, splat parity. Run 067 first, 068 and 069 after it, 070 before any later part work. Shared facts: [finish/_context/best3d-00-CONTEXT.md](finish/_context/best3d-00-CONTEXT.md). |
-| [087](finish/946-partners-04-livekit-pipecat-avatar.md) | The `partners-` campaign's remaining runnable order: LiveKit and Pipecat avatar plugins (085, the animation library license, and 092, VRoid Hub import, are retired). Shared facts: [finish/_context/partners-00-CONTEXT.md](finish/_context/partners-00-CONTEXT.md). |
+| [087](awaiting-owner/946-partners-04-livekit-pipecat-avatar.md) | The `partners-` campaign's remaining runnable order: LiveKit and Pipecat avatar plugins (085, the animation library license, and 092, VRoid Hub import, are retired). Shared facts: [finish/_context/partners-00-CONTEXT.md](finish/_context/partners-00-CONTEXT.md). |
 | [506](finish/506-integrate-07-pump-claims-listener.md) through [549](finish/549-integrate-50-hookforge-catalog.md) | The `integrate-` campaign's 12 runnable orders (506, 510, 512, 530, 534, 536, 539, 540, 544, 545, 548, 549): pump.fun claims listener, per-coin earnings source, native-lane anti-snipe fee, MCP registry cleanup, news reader lanes, $THREE-post impact, coin intel signals, memo/inscription reader, chains turnover, 3D funder graph, Robinhood Chain launch venues, hookforge catalog. Shared facts: [finish/_context/integrate-00-CONTEXT.md](finish/_context/integrate-00-CONTEXT.md). |
-| [605](finish/605-beat-05-onchain-allowance-budgets.md) through [627](finish/627-beat-27-launch-fee-and-holder-reward-features.md) | The `beat-` campaign's 12 runnable orders (605, 606, 610, 614, 615, 616, 619, 621, 622, 623, 626, 627): on-chain allowance budgets, a burner wallet with owner confirmation, hire-escrow evaluator and disputes, orders engine with ratcheting exits, perps venues, Solana prediction markets in shadow mode, token due diligence and funding graph, agent CLI automation and HTML reports, Solana agent registry registration, skill supply-chain scanner, metered OpenAI-compatible router, launch-fee/holder-reward features. On-chain steps are devnet or simulation only. Shared facts: [finish/_context/beat-00-CONTEXT.md](finish/_context/beat-00-CONTEXT.md). |
+| [605](awaiting-owner/605-beat-05-onchain-allowance-budgets.md) through [627](finish/627-beat-27-launch-fee-and-holder-reward-features.md) | The `beat-` campaign's 12 runnable orders (605, 606, 610, 614, 615, 616, 619, 621, 622, 623, 626, 627): on-chain allowance budgets, a burner wallet with owner confirmation, hire-escrow evaluator and disputes, orders engine with ratcheting exits, perps venues, Solana prediction markets in shadow mode, token due diligence and funding graph, agent CLI automation and HTML reports, Solana agent registry registration, skill supply-chain scanner, metered OpenAI-compatible router, launch-fee/holder-reward features. On-chain steps are devnet or simulation only. Shared facts: [finish/_context/beat-00-CONTEXT.md](finish/_context/beat-00-CONTEXT.md). |
 
 ## plan-. The planning corpus as work orders
 
@@ -113,7 +118,7 @@ re-scope it to the next event or close it as moot.
 | [257](finish/257-plan-payments-x402-audit-ledger-durability.md) | The x402 payment audit ledger is not durable or unique per transaction. |
 | [258](finish/258-plan-mcp-unified-endpoint-serve-and-publish.md) to [286](finish/286-plan-notifications-page-category-tab-parity.md) | P1: built-but-unwired features and unshipped fixes, in score order (unified MCP endpoint, self-custody routes, the October security audit, memory settings, the language picker, stale GPU worker images, and more). |
 | [700](finish/700-plan-x402-self-hostable-solana-facilitator.md) to [790](finish/790-plan-docs-avatar-regenerate-api-reference-refresh.md) | P2 then P3, in score order. |
-| [966](finish/966-plan-token-rail-receiver-wallets-preflight.md) to [985](finish/985-plan-drive-open-head-unit-carplay-lane.md) | Gated: everything up to the owner step is runnable now; the order names the gate. |
+| [966](awaiting-owner/966-plan-token-rail-receiver-wallets-preflight.md) to [985](finish/985-plan-drive-open-head-unit-carplay-lane.md) | Gated: everything up to the owner step is runnable now; the order names the gate. |
 
 ## P2. Owner-gated distribution, listings and closeouts (batch the human touchpoints)
 
@@ -123,20 +128,20 @@ commit gate; that content stays uncommitted (a named stash) until the owner appr
 
 | Order(s) | Owner gate |
 |---|---|
-| [902-backlog-01-x402-settle-runway.md](finish/902-backlog-01-x402-settle-runway.md) | Code half done; the sponsor-wallet funding is P0 row 2 above. |
+| [902-backlog-01-x402-settle-runway.md](awaiting-owner/902-backlog-01-x402-settle-runway.md) | Code half done; the sponsor-wallet funding is P0 row 2 above. |
 | [907-backlog-08-okx-chat-bot-always-on.md](finish/907-backlog-08-okx-chat-bot-always-on.md) | Getting the bot off this codespace onto a durable host; owner decides the host. |
-| [911](finish/911-okx-ai-08-forge-relisting.md), [913](finish/913-okx-ai-04-e2e-real-payment-test.md), [914](finish/914-okx-ai-07-final-audit-and-watch.md) | OKX.AI listing pack: relisting, the real-payment gauntlet (real spend, a CLAUDE.md stop-and-ask gate by definition), then the final audit. Run 913 before 914; 911 is independent. Runbook: [finish/_context/okx-ai-RUNBOOK.md](finish/_context/okx-ai-RUNBOOK.md). |
-| [917](finish/917-roadmap-pumpfun-trading.md), [918](finish/918-roadmap-pumpfun-trading-arena.md) | Pump.fun trading and the trading arena; the sniper's `enforce` arming and capital refill are P0 row 19. |
-| [919](finish/919-parity-09-ship-and-publish.md) through [925](finish/925-parity-15-mention-to-launch.md) | Shipping and publishing, a community skill registry, directory listings, a "why three.ws" page, a builder competition, pricing levers, a mention-to-launch flow. Each needs a listing account, npm publish approval, or an X mention-bot go-live. Shared facts: [finish/_context/parity-00-CONTEXT.md](finish/_context/parity-00-CONTEXT.md). |
+| [911](awaiting-owner/911-okx-ai-08-forge-relisting.md), [913](awaiting-owner/913-okx-ai-04-e2e-real-payment-test.md), [914](awaiting-owner/914-okx-ai-07-final-audit-and-watch.md) | OKX.AI listing pack: relisting, the real-payment gauntlet (real spend, a CLAUDE.md stop-and-ask gate by definition), then the final audit. Run 913 before 914; 911 is independent. Runbook: [finish/_context/okx-ai-RUNBOOK.md](finish/_context/okx-ai-RUNBOOK.md). |
+| [917](awaiting-owner/917-roadmap-pumpfun-trading.md), [918](finish/918-roadmap-pumpfun-trading-arena.md) | Pump.fun trading and the trading arena; the sniper's `enforce` arming and capital refill are P0 row 19. |
+| [919](awaiting-owner/919-parity-09-ship-and-publish.md) through [925](awaiting-owner/925-parity-15-mention-to-launch.md) | Shipping and publishing, a community skill registry, directory listings, a "why three.ws" page, a builder competition, pricing levers, a mention-to-launch flow. Each needs a listing account, npm publish approval, or an X mention-bot go-live. Shared facts: [finish/_context/parity-00-CONTEXT.md](finish/_context/parity-00-CONTEXT.md). |
 | [926](finish/926-x-grok-45-owner-x-api-tier.md) through [931](archive/931-x-grok-50-player-card-approval.md) | The owner's X API tier, the owner's Grok API key, going live with the mention bot, connector directory listings, the launch announcement, player-card approval. Shared facts: [finish/_context/x-grok-00-CONTEXT.md](finish/_context/x-grok-00-CONTEXT.md). |
-| [932](finish/932-best3d-05-pricing-preview-pay-to-keep.md) through [935](finish/935-best3d-08-engine-store-publishing.md) | Pricing preview and pay-to-keep, SAM 3D Objects, the orphaned-avatar campaign, engine store publishing. Shared facts: [finish/_context/best3d-00-CONTEXT.md](finish/_context/best3d-00-CONTEXT.md). |
-| [936](finish/936-partners-13-tripo-reply-and-house-key.md) through [940](finish/940-partners-17-sketchfab-retag.md) | The Tripo reply and house key, sponsorships, third-party submissions, program applications, a Sketchfab re-tag. Shared facts: [finish/_context/partners-00-CONTEXT.md](finish/_context/partners-00-CONTEXT.md). |
-| [954-oauth-connector-google.md](finish/954-oauth-connector-google.md) | Create a Google Cloud OAuth client and store its secret. Code and tests already ship. |
-| [957-uniswap-lane-and-launch-status.md](finish/957-uniswap-lane-and-launch-status.md) | Owner deploys the launcher contract on Base, then runs the first real launch through the confirmation table. An irreversible on-chain action. |
-| [958-creator-fee-payouts.md](finish/958-creator-fee-payouts.md) | Deploy, a real-browser check, then flip `CREATOR_PAYOUTS_LIVE=true` only after reviewing the first recorded distributions. A real spend path. |
-| [961-desktop-agent-runtime.md](finish/961-desktop-agent-runtime.md) | Apple Developer ID certificate and a Windows code-signing certificate to produce signed installers. |
-| [962-approvals-inbox-telegram.md](finish/962-approvals-inbox-telegram.md) | A throwaway Telegram bot token from @BotFather to exercise the approve/deny flow live. |
-| [965-revenue-ledger-reinvest.md](finish/965-revenue-ledger-reinvest.md) | A real-browser check, a deploy, then the first live reinvest rule confirmed in the browser (a CLAUDE.md spend gate). |
+| [932](awaiting-owner/932-best3d-05-pricing-preview-pay-to-keep.md) through [935](awaiting-owner/935-best3d-08-engine-store-publishing.md) | Pricing preview and pay-to-keep, SAM 3D Objects, the orphaned-avatar campaign, engine store publishing. Shared facts: [finish/_context/best3d-00-CONTEXT.md](finish/_context/best3d-00-CONTEXT.md). |
+| [936](awaiting-owner/936-partners-13-tripo-reply-and-house-key.md) through [940](finish/940-partners-17-sketchfab-retag.md) | The Tripo reply and house key, sponsorships, third-party submissions, program applications, a Sketchfab re-tag. Shared facts: [finish/_context/partners-00-CONTEXT.md](finish/_context/partners-00-CONTEXT.md). |
+| [954-oauth-connector-google.md](awaiting-owner/954-oauth-connector-google.md) | Create a Google Cloud OAuth client and store its secret. Code and tests already ship. |
+| [957-uniswap-lane-and-launch-status.md](awaiting-owner/957-uniswap-lane-and-launch-status.md) | Owner deploys the launcher contract on Base, then runs the first real launch through the confirmation table. An irreversible on-chain action. |
+| [958-creator-fee-payouts.md](awaiting-owner/958-creator-fee-payouts.md) | Deploy, a real-browser check, then flip `CREATOR_PAYOUTS_LIVE=true` only after reviewing the first recorded distributions. A real spend path. |
+| [961-desktop-agent-runtime.md](awaiting-owner/961-desktop-agent-runtime.md) | Apple Developer ID certificate and a Windows code-signing certificate to produce signed installers. |
+| [962-approvals-inbox-telegram.md](awaiting-owner/962-approvals-inbox-telegram.md) | A throwaway Telegram bot token from @BotFather to exercise the approve/deny flow live. |
+| [965-revenue-ledger-reinvest.md](awaiting-owner/965-revenue-ledger-reinvest.md) | A real-browser check, a deploy, then the first live reinvest rule confirmed in the browser (a CLAUDE.md spend gate). |
 
 ---
 

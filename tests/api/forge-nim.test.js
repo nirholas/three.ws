@@ -29,10 +29,18 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 // refused below); only the outbound pinned call is captured so the suite stays
 // offline and can assert what a caller's host receives.
 const pinnedFetch = vi.fn();
-vi.mock('../../api/_lib/ssrf-guard.js', async (importOriginal) => ({
-	...(await importOriginal()),
-	fetchSafePublicUrlPinned: (...a) => pinnedFetch(...a),
-}));
+// The reference-image and artifact fetches go through the unpinned guard. The
+// real guard stays in place unless a case installs a stand-in, so a case can
+// observe the limits the handler asks for without touching the network.
+const safeFetchStandIn = vi.hoisted(() => ({ impl: null }));
+vi.mock('../../api/_lib/ssrf-guard.js', async (importOriginal) => {
+	const real = await importOriginal();
+	return {
+		...real,
+		fetchSafePublicUrlPinned: (...a) => pinnedFetch(...a),
+		fetchSafePublicUrl: (...a) => (safeFetchStandIn.impl ? safeFetchStandIn.impl(...a) : real.fetchSafePublicUrl(...a)),
+	};
+});
 
 const ORIGINAL_FETCH = globalThis.fetch;
 // MODEL_TRELLIS_URL is cleared too, and never set: it points at our own async
@@ -44,6 +52,7 @@ const saved = {};
 
 beforeEach(() => {
 	pinnedFetch.mockReset();
+	safeFetchStandIn.impl = null;
 	for (const k of ENV_KEYS) {
 		saved[k] = process.env[k];
 		delete process.env[k];
@@ -343,5 +352,89 @@ describe('POST /api/forge-nim — upstream failures', () => {
 		);
 		expect(res.statusCode).toBe(502);
 		expect(body.error).toBe('nim_no_artifact');
+	});
+});
+
+
+// What a stranger can make this endpoint swallow. The reference image is fetched
+// from an address the caller names and is forwarded to a GPU NIM, so it is
+// bounded while it streams and judged by its bytes, never by the Content-Type the
+// remote host chose to send.
+describe('POST /api/forge-nim: the reference image is bounded and judged by its bytes', () => {
+	const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAfbLI3wAAAABJRU5ErkJggg==', 'base64');
+	const imageResponse = (buf, ct = 'image/png') => ({
+		ok: true,
+		status: 200,
+		headers: { get: (h) => (h.toLowerCase() === 'content-type' ? ct : null) },
+		arrayBuffer: async () => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength),
+	});
+	const run = (image) =>
+		dispatch(makeReq({ body: { mode: 'image', image } }), makeRes());
+
+	beforeEach(() => {
+		process.env.NIM_TRELLIS_URL = 'https://nim.example.run.app';
+	});
+
+	it('asks the guarded fetch to stop reading at the 10 MB image ceiling', async () => {
+		const calls = [];
+		safeFetchStandIn.impl = async (url, init, opts) => {
+			calls.push(opts);
+			return imageResponse(PNG);
+		};
+		globalThis.fetch = vi.fn(async () => jsonResponse({ artifacts: [{ base64: fakeGlb().toString('base64') }] }));
+		const { res } = await run('https://cdn.example.com/photo.png');
+		expect(res.statusCode).toBe(200);
+		expect(calls[0]?.maxBytes).toBe(10 * 1024 * 1024);
+	});
+
+	it('answers 413 when the guarded fetch reports the body ran past the ceiling', async () => {
+		const { MaxBytesExceededError } = await import('../../api/_lib/ssrf-guard.js');
+		safeFetchStandIn.impl = async () => {
+			throw new MaxBytesExceededError(10 * 1024 * 1024 + 1, 10 * 1024 * 1024);
+		};
+		const { res, body } = await run('https://cdn.example.com/huge.png');
+		expect(res.statusCode).toBe(413);
+		expect(body.error).toBe('image_too_large');
+	});
+
+	it('refuses a fetched file that is not an image even when its Content-Type says image/png', async () => {
+		safeFetchStandIn.impl = async () => imageResponse(Buffer.from('<html><body>not a picture</body></html>'));
+		globalThis.fetch = vi.fn();
+		const { res, body } = await run('https://cdn.example.com/photo.png');
+		expect(res.statusCode).toBe(415);
+		expect(body.error).toBe('bad_image');
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+	});
+
+	it('refuses a data URI whose bytes are not an image', async () => {
+		globalThis.fetch = vi.fn();
+		const payload = Buffer.from('#!/bin/sh\nrm -rf /\n').toString('base64');
+		const { res, body } = await run(`data:image/png;base64,${payload}`);
+		expect(res.statusCode).toBe(415);
+		expect(body.error).toBe('bad_image');
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+	});
+
+	it('forwards the type the bytes prove, not the one the header claimed', async () => {
+		safeFetchStandIn.impl = async () => imageResponse(PNG, 'text/plain');
+		const fetchMock = vi.fn(async () => jsonResponse({ artifacts: [{ base64: fakeGlb().toString('base64') }] }));
+		globalThis.fetch = fetchMock;
+		const { res } = await run('https://cdn.example.com/photo');
+		expect(res.statusCode).toBe(200);
+		expect(JSON.parse(fetchMock.mock.calls[0][1].body).image).toMatch(/^data:image\/png;base64,/);
+	});
+
+	it('caps the artifact file a NIM points at to a GLB-sized ceiling and checks it is a GLB', async () => {
+		const seen = [];
+		safeFetchStandIn.impl = async (url, init, opts) => {
+			seen.push(opts);
+			return binaryResponse(Buffer.from('MZ not a model at all, just bytes'));
+		};
+		globalThis.fetch = vi.fn(async () => jsonResponse({ artifacts: [{ url: 'https://files.example.com/out.glb' }] }));
+		const { res, body } = await run('data:image/png;base64,iVBORw0KGgo=');
+		expect(seen[0]?.maxBytes).toBeGreaterThan(0);
+		expect(seen[0]?.maxBytes).toBeLessThanOrEqual(256 * 1024 * 1024);
+		expect(res.statusCode).toBe(502);
+		expect(body.error).toBe('nim_bad_artifact');
 	});
 });

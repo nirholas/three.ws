@@ -9,8 +9,8 @@ review dialog. Measurements, privacy notes and the verification run live in
 | File | Role |
 |---|---|
 | `core.js` | Pure math, no DOM: input tensor, mask analysis, crop plan, sharpness and exposure metrics, the warnings and every threshold (`THRESHOLDS`), and the device gate. Unit tested in `tests/forge-photo-prep.test.js`. |
-| `worker.js` | Web Worker: loads `onnxruntime-web` (WebGPU execution provider, WebAssembly fallback), fetches and caches the model, runs inference, encodes the prepared JPEG and the cutout WebP, reports real progress stages (`runtime`, `model`, `inference`, `encode`). |
-| `client.js` | Main thread: capability detection (`photoPrepSupport`), one lazily created worker, `preparePhoto(file)`, and `DEFAULT_UPLOAD`. |
+| `worker.js` | Web Worker: loads `onnxruntime-web` (WebGPU execution provider, WebAssembly fallback), fetches and caches the model, runs inference, encodes the prepared JPEG and the cutout WebP, reports real progress stages (`runtime`, `model`, `inference`, `encode`). A PNG, WebP or other format that can carry transparency is decoded first: when it is already cut out, the model is never loaded and the photo's own alpha is the mask. An empty or whole-frame mask comes back as `removal: { status: 'failed' }` with no crop. |
+| `client.js` | Main thread: capability detection (`photoPrepSupport`), one lazily created worker, `preparePhoto(file)` with a bounded wait (`PREP_WAIT` in `core.js`, rejects with `PrepTimeoutError` and replaces the worker), and `DEFAULT_UPLOAD`. |
 | `review.js`, `review.css` | The review dialog (original next to prepared, warnings, "Use anyway" or "Retake", "Send the original photo instead") and the slot's preparing overlay. Called from `uploadToSlot` in `src/forge.js`, loaded only after a photo is picked. |
 
 ## Model
@@ -48,7 +48,10 @@ The model is fetched once and kept in the Cache API (`three-ws-photo-prep-v1`).
 The check is skipped, and the original uploads exactly as before with a
 one-line note, when the browser lacks Web Workers, `OffscreenCanvas` or
 `createImageBitmap`, when it reports under 1 GB of device memory, when the
-photo is over 40 MB, or when the model fails to load or run.
+photo is over 40 MB, when the model fails to load or run, or when the pass
+stalls: 30 s of silence while the runtime and model load, 60 s while it runs,
+or 180 s in total. A mask that is empty or kept the whole frame is a failed
+removal: the dialog explains it and offers the original photo.
 
 ## Checks
 

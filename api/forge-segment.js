@@ -18,7 +18,7 @@
  */
 
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
-import { limits, clientIp } from './_lib/rate-limit.js';
+import { limits, clientIp, refundOnServerFailure } from './_lib/rate-limit.js';
 import { requireCreator } from './_lib/creator-account.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
@@ -47,8 +47,9 @@ async function startJob(req, res) {
 	if (!who) return;
 	const rateKey = who.user ? `user:${who.user.id}` : clientIp(req);
 	const rl = await limits.mcp3dGenerate(rateKey);
+	refundOnServerFailure(res, () => limits.mcp3dGenerateRefund(rateKey));
 	if (!rl.success) {
-		return rateLimited(res, rl);
+		return rateLimited(res, rl, 'Tool limit reached. Try again shortly.', { limit: 'tool_hourly' });
 	}
 
 	const body = await readJson(req, 4_000).catch(() => null);

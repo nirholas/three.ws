@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 	<head>
+		<script>/* Forge account hint, no-flash: a visitor this browser last saw signed in does not see the sign-in note flash in and out (src/forge.js confirms with /api/auth/me) */(function(){try{if(localStorage.getItem('forge:signed-in')==='1')document.documentElement.setAttribute('data-forge-account','in');}catch(e){}})();</script>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -368,6 +369,20 @@
 				background: var(--danger, #e05a5a);
 				opacity: 0.7;
 			}
+			/* Why an engine is off for this visitor's region (or an unresolved
+			   location). Page text, not a tooltip: a disabled button shows no hover on
+			   touch and is not announced with its title. */
+			.engine-region-note {
+				margin: var(--space-xs) 0 0;
+				padding: var(--space-2xs) var(--space-sm);
+				border-left: 2px solid var(--warning, #e0a93e);
+				font-size: var(--text-xs);
+				line-height: 1.45;
+				color: var(--ink-dim);
+			}
+			.engine-region-note[hidden] {
+				display: none;
+			}
 			.aspect button:focus-visible,
 			.chip:focus-visible {
 				outline: 2px solid var(--accent);
@@ -717,6 +732,61 @@
 			.fq-holder-note[data-state='unlocked'] .fq-holder-ico {
 				color: #6ee7a8;
 			}
+			/* Account note under Generate (src/forge-sign-in-return.js). Ships
+			   visible: signed out is the state a first visit is in, so the line is
+			   there from the first frame and never pushes the rail down. A visitor
+			   who is signed in (or whose state is unknown) gets it removed, which is
+			   the rarer reflow. After a sign-in round trip it carries the "your
+			   prompt is back" line instead. */
+			.fq-account-note {
+				margin: 0.6rem 0 0;
+				padding: 0.55rem 0.7rem;
+				border: 1px solid var(--line);
+				border-radius: 10px;
+				background: color-mix(in srgb, var(--ink) 4%, transparent);
+				font-size: var(--text-xs);
+				line-height: 1.5;
+				color: var(--ink-dim);
+			}
+			.fq-account-note[data-state='restored'] {
+				border-color: color-mix(in srgb, #6ee7a8 45%, var(--line));
+				color: var(--ink);
+			}
+			.fq-account-note[data-state='ended'] {
+				border-color: color-mix(in srgb, var(--danger, #f87171) 45%, var(--line));
+				color: var(--ink);
+			}
+			.fq-account-links {
+				display: inline-flex;
+				flex-wrap: wrap;
+				gap: 0.25rem 0.75rem;
+				margin-left: 0.25rem;
+			}
+			.fq-account-links a {
+				color: var(--accent);
+				font-weight: 600;
+				text-decoration: underline;
+				text-underline-offset: 2px;
+				border-radius: 3px;
+				transition: color var(--duration-fast), text-decoration-thickness var(--duration-fast);
+			}
+			.fq-account-links a:hover {
+				color: var(--ink);
+				text-decoration-thickness: 2px;
+			}
+			.fq-account-links a:active {
+				opacity: 0.75;
+			}
+			.fq-account-links a:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			html[data-forge-account='in'] .fq-account-note:not([data-state='restored']),
+			html[data-forge-account='unknown'] .fq-account-note:not([data-state='restored']),
+			html[data-forge-account='in'] .fq-account-links,
+			html[data-forge-account='unknown'] .fq-account-links {
+				display: none;
+			}
 			/* Quiet holder free-quota line under Generate + the Forge-local wallet
 			   connect chip (Part A). Token-only, matches the holder-note treatment. */
 			.fq-perk-row {
@@ -847,7 +917,7 @@
 				color: var(--ink);
 			}
 			.byok-input {
-				flex: 1 1 16rem;
+				flex: 1 1 11rem;
 				min-width: 0;
 				background: var(--bg);
 				border: 1px solid var(--stroke);
@@ -901,6 +971,54 @@
 			   engine can change twice in 70ms), and each variant wraps to a different
 			   number of lines. The ghost holds the longest variant's height in the
 			   same grid cell, so the row never resizes under the content below it. */
+			/* Seed: shares the API-key input's look (hover, focus ring, invalid ring);
+			   the note under it carries the range error or the last run's seed. */
+			.seed-input {
+				flex: 0 1 13rem;
+				font-variant-numeric: tabular-nums;
+			}
+			.seed-msg {
+				flex-basis: 100%;
+				margin: 0;
+				font-size: var(--text-xs);
+				line-height: 1.5;
+				color: var(--ink-dim);
+				overflow-wrap: anywhere;
+			}
+			.seed-msg[data-state='error'] {
+				color: var(--danger);
+			}
+			.seed-msg strong {
+				font-family: var(--font-mono);
+				font-weight: 500;
+				color: var(--ink);
+			}
+			.seed-reuse {
+				margin-left: 0.25rem;
+				padding: 0.1rem 0.5rem;
+				border: 1px solid var(--stroke);
+				border-radius: var(--radius-md);
+				background: transparent;
+				color: var(--accent);
+				font: inherit;
+				font-weight: 500;
+				cursor: pointer;
+				transition:
+					border-color var(--duration-fast),
+					background var(--duration-fast);
+			}
+			.seed-reuse:hover {
+				border-color: var(--accent);
+				background: var(--accent-soft);
+			}
+			.seed-reuse:active {
+				transform: translateY(1px);
+			}
+			.seed-reuse:focus-visible {
+				outline: none;
+				border-color: var(--accent);
+				box-shadow: 0 0 0 3px var(--accent-soft);
+			}
 			.fq-estimate-wrap {
 				display: grid;
 			}
@@ -1159,6 +1277,50 @@
 				margin: var(--space-sm) 0 0;
 				text-align: center;
 			}
+			/* "Draw here instead": opens the in-browser sketch canvas
+			   (src/forge-studio/sketch-canvas.js) as an alternative to uploading a drawing. */
+			.draw-cta-row {
+				display: flex;
+				justify-content: center;
+				margin-top: var(--space-sm);
+			}
+			.draw-cta {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				background: transparent;
+				border: 1px dashed var(--stroke-strong);
+				color: var(--ink-dim);
+				border-radius: var(--radius-sm, 8px);
+				padding: 0.4rem 0.8rem;
+				font-size: var(--text-xs);
+				cursor: pointer;
+				transition:
+					border-color var(--duration-fast),
+					color var(--duration-fast),
+					background var(--duration-fast);
+			}
+			.draw-cta svg {
+				width: 14px;
+				height: 14px;
+			}
+			.draw-cta:hover {
+				border-color: var(--accent);
+				color: var(--ink);
+			}
+			.draw-cta:active {
+				transform: translateY(1px);
+			}
+			.draw-cta:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.sketch-guard-note {
+				color: var(--ink);
+				border: 1px solid var(--stroke-strong);
+				border-radius: var(--radius-sm, 8px);
+				padding: 0.5rem 0.75rem;
+			}
 
 			/* Match my photo (Pixal3D): shown only while that engine is selected
 			   (src/forge.js updatePixal3dPanel). */
@@ -1330,6 +1492,43 @@
 				background: color-mix(in srgb, var(--warn) 8%, transparent);
 			}
 			.quality-badge.is-hidden {
+				display: none;
+			}
+
+			/* What the automatic quality retry did. Short label, the full sentence
+			   is the tooltip and accessible name; focusable so keyboard users reach
+			   it. Ran reads accent, declined reads quiet. */
+			.quality-retry-chip {
+				display: inline-flex;
+				align-items: center;
+				font-family: var(--font-mono);
+				font-size: 0.62rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				border-radius: 999px;
+				padding: 1px 8px;
+				margin-left: 0.4rem;
+				border: 1px dashed var(--stroke);
+				color: var(--ink-dim);
+				cursor: help;
+				transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+			}
+			.quality-retry-chip[data-kind='ran'] {
+				color: var(--ink);
+				border-style: solid;
+			}
+			.quality-retry-chip:hover {
+				color: var(--ink);
+				border-color: var(--ink-dim);
+			}
+			.quality-retry-chip:active {
+				background: color-mix(in srgb, var(--ink) 8%, transparent);
+			}
+			.quality-retry-chip:focus-visible {
+				outline: 2px solid var(--accent, currentColor);
+				outline-offset: 2px;
+			}
+			.quality-retry-chip.is-hidden {
 				display: none;
 			}
 
@@ -1730,11 +1929,13 @@
 				transform: translateY(-1px);
 			}
 
-			/* Honest elapsed-vs-typical meter. The fill maps real elapsed time
-			   against the engine's real catalog ETA on an asymptotic curve that
-			   never reaches 100% on its own — only a real finished GLB snaps it to
-			   full. Past the typical time it holds near the cap and recolours to
-			   amber ("longer than usual"), so the bar is informative, never faked. */
+			/* The wait indicator. The workers report queued and running and nothing
+			   between, so there is no percentage to show: while a job runs this is
+			   an indeterminate band (a progressbar with no aria-valuenow). Only a
+			   real finished GLB (or a local engine's own reported percent) gives it
+			   a width. Once the job passes the typical time measured for its lane
+			   it recolours to amber, which is a statement about elapsed time and
+			   claims nothing about how much is left. */
 			.gen-progress {
 				position: relative;
 				height: 5px;
@@ -1788,8 +1989,8 @@
 			.gen-progress[data-indeterminate='true'] .gen-progress-fill::after {
 				animation-play-state: running;
 			}
-			/* No catalog ETA (unknown duration) — a slim travelling band instead of
-			   a measured fill, so we never imply a finish time we don't have. */
+			/* A slim travelling band instead of a measured fill, so the bar never
+			   implies progress or a finish time nobody knows. */
 			.gen-progress[data-indeterminate='true'] .gen-progress-fill {
 				width: 38% !important;
 				animation: gen-indeterminate 1.5s ease-in-out infinite;
@@ -2071,6 +2272,20 @@
 				animation: saved-pop 3s ease forwards;
 			}
 			.saved-chip.is-hidden { display: none; }
+			/* The model finished while nobody was looking (a reopened page, a tab
+			   left in the background). Stays put, unlike the saved pop: the person
+			   was away, so it must still be there when they look. */
+			.away-chip {
+				font-size: 0.7rem;
+				color: var(--ink);
+				background: color-mix(in srgb, var(--accent) 12%, transparent);
+				border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+				border-radius: 999px;
+				padding: 1px 8px;
+				flex: none;
+				white-space: nowrap;
+			}
+			.away-chip.is-hidden { display: none; }
 
 			/* "What we actually asked the model" — the art-directed rewrite, shown
 			   under the result bar. Collapsed by default: context, not headline. */
@@ -3997,7 +4212,7 @@
 					<input
 						type="file"
 						id="view-file-input"
-						accept="image/png,image/jpeg,image/webp"
+						accept="image/*,.heic,.heif,.avif"
 						multiple
 						hidden
 					/>
@@ -4079,10 +4294,17 @@
 						id="sketch-grid"
 						aria-label="Your sketch — add one drawing"
 					></div>
+					<div class="draw-cta-row">
+						<button type="button" class="draw-cta" id="draw-sketch-btn">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+							Draw here instead
+						</button>
+					</div>
+					<p class="views-hint sketch-guard-note is-hidden" id="sketch-guard-note" role="alert"></p>
 					<input
 						type="file"
 						id="sketch-file-input"
-						accept="image/png,image/jpeg,image/webp"
+						accept="image/*,.heic,.heif,.avif"
 						hidden
 					/>
 					<label for="sketch-prompt" class="is-hidden"
@@ -4174,19 +4396,36 @@
 						<span class="el-item"><span class="el-dot el-dot-busy"></span> busy</span>
 						<span class="el-item"><span class="el-dot el-dot-down"></span> unavailable</span>
 					</p>
+					<p class="engine-region-note" id="engine-region-note" role="note" hidden></p>
 					<div class="byok-row is-hidden" id="byok-row">
 						<label class="fq-label" for="provider-key" id="byok-label" data-i18n="forge.api_key">API key</label>
 						<input
 							class="byok-input"
 							id="provider-key"
 							type="password"
-							autocomplete="off"
+							autocomplete="new-password"
 							autocapitalize="off"
 							spellcheck="false"
-							placeholder="Your provider API key (kept in this browser)"
+							placeholder="Your provider API key"
 							aria-describedby="byok-hint"
 						/>
 						<span class="byok-hint" id="byok-hint"></span>
+					</div>
+					<div class="fq-row fq-row--seed">
+						<label class="fq-label" for="forge-seed">Seed</label>
+						<input
+							class="byok-input seed-input"
+							id="forge-seed"
+							type="text"
+							inputmode="numeric"
+							autocomplete="off"
+							spellcheck="false"
+							maxlength="20"
+							placeholder="Random"
+							title="A whole number from 0 to 4294967295. Leave empty for a random seed every run."
+							aria-describedby="forge-seed-msg"
+						/>
+						<p class="seed-msg" id="forge-seed-msg" aria-live="polite"></p>
 					</div>
 					<div class="fq-estimate-wrap">
 						<p class="fq-estimate fq-estimate-ghost" aria-hidden="true"><strong>Standard</strong> · billed to your own key · usually ~75s · ~20 credits · up to 30,000 polygons · shapes geometry straight from the prompt</p>
@@ -4212,6 +4451,14 @@
 					<span id="generate-label">Generate</span>
 					<kbd class="gen-kbd" aria-hidden="true">↵</kbd>
 				</button>
+
+				<!-- Why an account is needed, said before any effort is spent. Hidden for
+				     signed-in visitors; after a sign-in round trip it says the prompt and
+				     settings are back. Links are pointed at this exact page by forge.js. -->
+				<p class="fq-account-note" id="forge-account-note" data-state="signed-out" aria-live="polite">
+					<span id="forge-account-note-text">A free account is needed to make a model: each one is saved to its owner, unlisted, so you can find, download or delete it later.</span>
+					<span class="fq-account-links"><a href="/login?next=%2Fforge" data-auth="login">Sign in</a><a href="/register?next=%2Fforge" data-auth="register">Create a free account</a></span>
+				</p>
 
 				<!-- Quiet holder line under Generate: an active free-quota perk for $THREE
 				     holders, or a non-blocking upsell + a reachable wallet connect so a
@@ -4341,14 +4588,16 @@
 							class="gen-progress"
 							id="gen-progress"
 							role="progressbar"
-							aria-label="Generation progress"
+							aria-label="Generation in progress"
 							aria-valuemin="0"
 							aria-valuemax="100"
-							aria-valuenow="0"
 						>
 							<div class="gen-progress-fill" id="gen-progress-fill"></div>
 						</div>
-						<div class="gen-meta" id="gen-meta">Elapsed 0s</div>
+						<!-- Rewritten every second with the real elapsed clock. aria-live off
+						     keeps the surrounding live region from reading it out each time;
+						     the slow-run and finished moments are announced separately. -->
+						<div class="gen-meta" id="gen-meta" aria-live="off">Elapsed 0:00</div>
 						<p class="gen-leave-hint" data-i18n="forge.feel_free_to_leave_this_page_your">
 							Feel free to leave this page. Your model keeps generating, lands in
 							your gallery automatically, and signed-in creators get notified when
@@ -4396,6 +4645,7 @@
 						<a class="result-creator is-hidden" id="result-creator" data-i18n="forge.by">by @</a>
 						<a class="result-visibility is-hidden" id="result-visibility" href="/creations" title="Choose whether this model is public, unlisted or private, or delete it">Who can see this?</a>
 						<span class="saved-chip is-hidden" id="result-saved" aria-label="Auto-saved to gallery" data-i18n="forge.saved" data-i18n-attr="aria-label:forge.auto_saved_to_gallery_arialabel">Saved ✓</span>
+						<span class="away-chip is-hidden" id="result-away" role="status" title="This model finished on the server while you were away, and was saved to your gallery">Finished while you were away</span>
 						<span
 							class="views-badge is-hidden"
 							id="result-views"
@@ -4406,6 +4656,7 @@
 							id="result-quality"
 							title="Automated quality check"
 						 data-i18n-attr="title:forge.automated_quality_check_title"></span>
+						<span class="quality-retry-chip is-hidden" id="result-quality-retry" role="note" tabindex="0"></span>
 						<div class="actions">
 							<button
 								class="btn btn--ghost"

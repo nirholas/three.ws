@@ -77,8 +77,7 @@
             <li><strong>Users pay the agent</strong> for its skills — analysis, content, trading signals, entertainment — via x402 micropayments in USDC.</li>
             <li><strong>The agent pays for what it uses</strong> — LLM inference, RPC calls, storage — from its own wallet, without requiring any developer intervention.</li>
             <li><strong>Revenue flows upstream</strong> — the owner wallet receives earnings on a configurable schedule.</li>
-            <li><strong>Buyback and burn</strong> — a portion of revenue can be automatically routed to buy back the agent's associated token and send it to a burn address.</li>
-        </ul>
+                    </ul>
 
         <h2>Security model</h2>
         <p>Agent wallets use a server-side custodial keypair scoped to the agent's on-chain identity. The private key never touches the client. Transaction signing is gated behind the agent's permission model — agents can only spend within their configured budget and to approved destination categories. Owners retain full withdrawal authority at all times.</p>

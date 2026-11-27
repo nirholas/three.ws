@@ -17,25 +17,23 @@ const AUDIO_BASE = '/club/audio';
 // Try .ogg first (smaller, mono-q4); fall back to .mp3 on Safari/older
 // browsers that lack Vorbis support.
 const FORMATS = ['ogg', 'mp3'];
-// A few full-length tracks ship as mp3 only (no Vorbis encode) — probing for
-// their non-existent .ogg just burns a guaranteed 404 on every club visit.
-// List them so loadBuffer goes straight to mp3.
-const MP3_ONLY = new Set(['club', 'entrance', 'im-in-love-wit-a-stripper-fast']);
+// Tracks that ship as mp3 only (no Vorbis encode) skip the guaranteed .ogg 404.
+// Every bundled track is a CC0 loop with both encodes, so the set is empty.
+const MP3_ONLY = new Set();
 
 const AMBIENCE_GAIN = 0.35;
 const STYLE_GAIN = 0.75;
 const AMBIENCE_DUCK_GAIN = 0.1;
 const MASTER_GAIN = 0.75;
-// Walk-in anthem — plays once, full-volume, the moment the rope drops.
+// Walk-in sting (a CC0 synthesised loop played once), full-volume, the moment the rope drops.
 const ENTRANCE_GAIN = 0.9;
 
 // ── Music bed ────────────────────────────────────────────────────────────────
-// Full-length tracks are the club's soundtrack. Unlike the short synth loops
-// (which decodeAudioData into memory), these stream through an <audio> element
-// piped into the graph via createMediaElementSource — a 30 MB+ song never gets
-// fully decoded into a Float32 buffer. The element loops the sequence below in
-// order, forever: club anthem → the stripper cut → back to the top.
-const MUSIC_SEQUENCE = ['club', 'im-in-love-wit-a-stripper-fast'];
+// The synthesised CC0 loops are the club's soundtrack. They stream through an
+// <audio> element piped into the graph via createMediaElementSource. The
+// element loops the sequence below in order, forever: hip hop bed → pole bed
+// → back to the top.
+const MUSIC_SEQUENCE = ['hiphop', 'pole'];
 const MUSIC_GAIN = 0.85;
 // Ducked level while a tipped dancer's style loop or the walk-in anthem plays
 // over the top, so the foreground track stays clearly audible.
@@ -377,14 +375,14 @@ export class ClubAudio {
 	}
 
 	// One-shot walk-in anthem: the moment the bouncer admits the wallet we
-	// play `entrance.{ogg,mp3}` straight through (no loop), ducking any crowd
+	// play the `rumba` loop straight through (no loop), ducking any crowd
 	// ambience under it and restoring it when the track ends. Routed through
 	// the master bus, so the mute pill silences it like everything else.
 	//
 	// Throws if the AudioContext can't be unlocked (no user gesture yet) so
 	// the caller can retry on the next interaction — and leaves
 	// `_entrancePlayed` false in that case so the retry still fires.
-	async playEntrance(name = 'entrance', { gain = ENTRANCE_GAIN } = {}) {
+	async playEntrance(name = 'rumba', { gain = ENTRANCE_GAIN } = {}) {
 		if (this._entrancePlayed) return null;
 		await this.ensureContext();
 		if (this.ctx.state === 'suspended') {
@@ -668,8 +666,7 @@ const TRACK_BY_DANCE = Object.freeze({
 	thriller: 'thriller',
 	capoeira: 'capoeira',
 	hiphop: 'hiphop',
-	offabean: 'hiphop',
-	twerk: 'im-in-love-wit-a-stripper-fast',
+	twerk: 'pole',
 	spin: 'pole',
 	climb: 'pole',
 	combo: 'pole',
@@ -683,12 +680,10 @@ export function styleAudioFor(dance) {
 // Display labels for screen-reader announcements.
 export const TRACK_LABELS = Object.freeze({
 	ambience: 'Crowd ambience',
-	entrance: 'Walk-in anthem',
-	club: 'Club anthem',
-	'im-in-love-wit-a-stripper-fast': 'In Love With a Stripper',
+	entrance: 'Walk-in sting',
 	rumba: 'Rumba mix',
 	silly: 'Silly mix',
-	thriller: 'Thriller mix',
+	thriller: 'Zombie shuffle mix',
 	capoeira: 'Capoeira mix',
 	hiphop: 'Hip Hop mix',
 	pole: 'Pole choreography mix',

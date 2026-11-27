@@ -57,9 +57,12 @@ beforeAll(async () => {
 	// Dev secret for tier-pass sign/verify symmetry; in-memory (fail-open) limiter.
 	process.env.NODE_ENV = 'development';
 	delete process.env.HOLDER_PASS_SECRET;
-	// No platform vendor key → the post-gate platform path lands on a clean 503
-	// 'unconfigured' instead of making a real Replicate call. Keeps every
-	// not-402 assertion hermetic regardless of the CI environment.
+	// No platform worker URL → the post-gate platform path lands on a clean 503
+	// 'unconfigured' instead of making a real GPU call. Keeps every not-402
+	// assertion hermetic regardless of the CI environment. The lane is TRELLIS.2
+	// because High changes what it builds; a lane that ignores the tier rejects
+	// High with a 400 before the gate (forge-controls.js).
+	delete process.env.MODEL_TRELLIS2_URL;
 	delete process.env.REPLICATE_API_TOKEN;
 	forge = (await import('../api/forge.js')).default;
 });
@@ -67,7 +70,7 @@ beforeAll(async () => {
 describe('POST /api/forge — $THREE High-tier gate', () => {
 	it('blocks High on a platform backend with no pass — 402 three_hold_required + full payload', async () => {
 		const res = mockRes();
-		await forge(mockReq({ body: { prompt: 'a brass telescope', tier: 'high', backend: 'trellis' } }), res);
+		await forge(mockReq({ body: { prompt: 'a brass telescope', tier: 'high', backend: 'trellis2' } }), res);
 
 		expect(res.statusCode).toBe(402);
 		const b = res.json;
@@ -93,24 +96,24 @@ describe('POST /api/forge — $THREE High-tier gate', () => {
 		const res = mockRes();
 		await forge(
 			mockReq({
-				body: { prompt: 'a brass telescope', tier: 'high', backend: 'trellis' },
+				body: { prompt: 'a brass telescope', tier: 'high', backend: 'trellis2' },
 				headers: { 'x-three-tier-pass': pass },
 			}),
 			res,
 		);
 
-		// The gate must not fire: it falls through to the (unconfigured) generation
-		// path, never the 402 holder lock.
+		// The gate must not fire: it falls through to the (unconfigured) engine
+		// the caller named, never the 402 holder lock.
 		expect(res.statusCode).not.toBe(402);
 		expect(res.json?.error).not.toBe('three_hold_required');
-		expect(res.json?.error).toBe('unconfigured');
+		expect(res.json?.error).toBe('backend_unconfigured');
 	});
 
 	it('accepts the pass via body.tier_pass as well as the header', async () => {
 		const pass = signTierPass({ wallet: WALLET, level: 2, tierId: 'silver', usd: 120 });
 		const res = mockRes();
 		await forge(
-			mockReq({ body: { prompt: 'a brass telescope', tier: 'high', backend: 'trellis', tier_pass: pass } }),
+			mockReq({ body: { prompt: 'a brass telescope', tier: 'high', backend: 'trellis2', tier_pass: pass } }),
 			res,
 		);
 		expect(res.statusCode).not.toBe(402);
@@ -130,14 +133,14 @@ describe('POST /api/forge — $THREE High-tier gate', () => {
 
 	it('never gates the Standard tier', async () => {
 		const res = mockRes();
-		await forge(mockReq({ body: { prompt: 'a brass telescope', tier: 'standard', backend: 'trellis' } }), res);
+		await forge(mockReq({ body: { prompt: 'a brass telescope', tier: 'standard', backend: 'trellis2' } }), res);
 		expect(res.statusCode).not.toBe(402);
 		expect(res.json?.error).not.toBe('three_hold_required');
 	});
 
 	it('never gates the Draft tier', async () => {
 		const res = mockRes();
-		await forge(mockReq({ body: { prompt: 'a brass telescope', tier: 'draft', backend: 'trellis' } }), res);
+		await forge(mockReq({ body: { prompt: 'a brass telescope', tier: 'draft', backend: 'trellis2' } }), res);
 		expect(res.statusCode).not.toBe(402);
 		expect(res.json?.error).not.toBe('three_hold_required');
 	});
@@ -146,7 +149,7 @@ describe('POST /api/forge — $THREE High-tier gate', () => {
 		const res = mockRes();
 		await forge(
 			mockReq({
-				body: { prompt: 'a brass telescope', tier: 'high', backend: 'trellis' },
+				body: { prompt: 'a brass telescope', tier: 'high', backend: 'trellis2' },
 				headers: { 'x-three-tier-pass': 'not.a.valid.pass' },
 			}),
 			res,

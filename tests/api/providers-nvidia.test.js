@@ -22,6 +22,7 @@ import {
 	resolveBackendId,
 	backendIsConfigured,
 } from '../../api/_lib/forge-tiers.js';
+import { cubeGlb } from '../_helpers/print-glb.js';
 
 const TRELLIS_INVOKE = 'https://ai.api.nvidia.com/v1/genai/microsoft/trellis';
 const NVCF_STATUS = 'https://api.nvcf.nvidia.com/v2/nvcf/pexec/status';
@@ -96,8 +97,8 @@ describe('nvidia provider — text→3D submit', () => {
 		// the prompt carries none — keeps draft renders from coming out flat/unlit.
 		expect(body.prompt).toBe('a tiny brass teapot, studio lighting');
 		expect(body.output_format).toBe('glb');
-		expect(body.ss_sampling_steps).toBe(15); // draft tier
-		expect(body.slat_sampling_steps).toBe(15);
+		expect(body.ss_sampling_steps).toBe(10); // draft tier: TRELLIS's floor
+		expect(body.slat_sampling_steps).toBe(10);
 		expect(body.seed).toBe(7);
 
 		expect(job).toEqual({ kind: 'text-to-3d', taskId: 'req-text-1' });
@@ -127,6 +128,20 @@ describe('nvidia provider — text→3D submit', () => {
 
 		expect(calls[0].body.ss_sampling_steps).toBe(15);
 		expect(calls[0].body.slat_sampling_steps).toBe(15);
+	});
+
+	it('sends Draft a smaller step budget than Standard, so the Draft button changes the build', async () => {
+		// Draft and Standard used to share 15/15 here, so picking Draft on this
+		// engine charged the Draft price for the Standard model (forge-controls.js
+		// records every tier as applied on this lane).
+		const calls = stubAccept();
+		const provider = createNvidiaProvider();
+		await provider.textTo3d({ prompt: 'a small red teapot', tier: 'draft' });
+		await provider.textTo3d({ prompt: 'a small red teapot', tier: 'standard' });
+
+		expect(calls[0].body.ss_sampling_steps).toBe(10);
+		expect(calls[1].body.ss_sampling_steps).toBe(15);
+		expect(calls[0].body.ss_sampling_steps).toBeLessThan(calls[1].body.ss_sampling_steps);
 	});
 
 	it('errors cleanly when NVCF accepts the job but omits the NVCF-REQID', async () => {
@@ -203,7 +218,8 @@ describe('nvidia provider — image input is not part of the contract', () => {
 
 describe('nvidia provider — synchronous 200 completion persists the GLB', () => {
 	it('decodes the inline base64 GLB, persists the bytes to R2, returns the public URL', async () => {
-		const glbBytes = Buffer.from('GLB\0binary-mesh-data');
+		// A finished job is stored only when the bytes are a real glTF model.
+		const glbBytes = Buffer.from(await cubeGlb());
 		const b64 = glbBytes.toString('base64');
 		globalThis.fetch = vi.fn(async () => jsonResponse({ artifacts: [{ base64: b64 }] }, 200));
 
@@ -234,7 +250,7 @@ describe('nvidia provider — 202-then-poll loop', () => {
 	});
 
 	it('reports done and persists the GLB when the poll returns 200', async () => {
-		const glbBytes = Buffer.from('polled-glb-bytes');
+		const glbBytes = Buffer.from(await cubeGlb());
 		globalThis.fetch = vi.fn(async (url) => {
 			expect(String(url)).toBe(`${NVCF_STATUS}/req-1`);
 			return jsonResponse({ artifacts: [{ base64: glbBytes.toString('base64') }] }, 200);
@@ -301,8 +317,9 @@ describe('nvidia provider — 202-then-poll loop', () => {
 
 	it('reports failed when the GLB persist throws mid-poll', async () => {
 		putObjectMock.mockRejectedValueOnce(new Error('R2 down'));
+		const glbBytes = Buffer.from(await cubeGlb());
 		globalThis.fetch = vi.fn(async () =>
-			jsonResponse({ artifacts: [{ base64: Buffer.from('x').toString('base64') }] }, 200),
+			jsonResponse({ artifacts: [{ base64: glbBytes.toString('base64') }] }, 200),
 		);
 		const provider = createNvidiaProvider();
 		const res = await provider.status({ taskId: 'req-1' });

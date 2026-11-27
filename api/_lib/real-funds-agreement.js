@@ -26,6 +26,7 @@ import { logAuditNow } from './audit.js';
 import { clientIp } from './rate-limit.js';
 import { error } from './http.js';
 import { env } from './env.js';
+import { clientCountry } from './client-geo.js';
 import {
 	AGREEMENT_ATTESTATIONS,
 	AGREEMENT_DOCUMENTS,
@@ -33,6 +34,35 @@ import {
 	RISK_ACK_VERSION,
 	normalizeSignatureName,
 } from '../../public/risk-ack.js';
+
+/**
+ * Comprehensively sanctioned jurisdictions, refused with HTTP 451 before any
+ * real-funds action. Override with REAL_FUNDS_BLOCKED_COUNTRIES (comma-separated
+ * ISO 3166-1 alpha-2 codes). Unknown country never blocks.
+ */
+export const SANCTIONED_COUNTRIES = Object.freeze(new Set(['CU', 'IR', 'KP', 'SY', 'RU', 'BY']));
+
+// Sanctioned regions of Ukraine (Crimea incl. Sevastopol, Donetsk, Luhansk). The
+// edge geo header carries "UA,<region>,<city>", so these match on the region name.
+const SANCTIONED_UA_REGIONS = /\b(crimea|sevastopol|donetsk|luhansk|lugansk)\b/i;
+
+function blockedCountries() {
+	const raw = process.env.REAL_FUNDS_BLOCKED_COUNTRIES;
+	if (raw === undefined || raw === '') return SANCTIONED_COUNTRIES;
+	return new Set(raw.split(',').map((c) => c.trim().toUpperCase()).filter(Boolean));
+}
+
+/** True when the edge geo header places the request in a sanctioned jurisdiction. Pure. */
+export function isSanctionedRequest(req) {
+	const country = clientCountry(req);
+	if (!country) return false;
+	if (blockedCountries().has(country)) return true;
+	if (country === 'UA') {
+		const raw = req?.headers?.['x-client-geo-location'];
+		return typeof raw === 'string' && SANCTIONED_UA_REGIONS.test(raw.split(',').slice(1).join(','));
+	}
+	return false;
+}
 
 const SLUG = /^[a-z0-9][a-z0-9-]{0,39}$/;
 const PATH = /^\/[\x20-\x7e]{0,199}$/;
@@ -227,6 +257,16 @@ export async function currentSignatureFor(userId) {
 }
 
 /**
+ * True when the account holds a current signature. Cached like the HTTP gate.
+ * Throws on a database failure so the caller can fail closed.
+ * @param {string} userId
+ */
+export async function hasCurrentAgreement(userId) {
+	if (_cachedSigned(userId)) return true;
+	return Boolean(await currentSignatureFor(userId));
+}
+
+/**
  * Every signature this account has made, newest first, for the review page.
  * @param {string} userId
  * @param {{ limit?: number }} [opts]
@@ -285,6 +325,16 @@ export function agreementRequirement() {
  */
 export async function requireRealFundsAgreement(req, res, { userId, network = null, context = 'real-funds' } = {}) {
 	if (String(network || '').toLowerCase() === 'devnet') return true;
+	if (isSanctionedRequest(req)) {
+		error(
+			res,
+			451,
+			'region_not_supported',
+			'Real-funds features are not available in your region because of sanctions law. Nothing was sent.',
+			{ context },
+		);
+		return false;
+	}
 	if (!userId) {
 		error(res, 401, 'unauthorized', 'sign in to use real-funds features');
 		return false;

@@ -13,6 +13,7 @@ import { logAudit } from '../_lib/audit.js';
 import { encryptProviderKey, BYOK_PROVIDERS } from '../_lib/provider-keys.js';
 import { z } from 'zod';
 import { parse } from '../_lib/validate.js';
+import { keyShapeProblem } from '../_lib/forge-byok-guard.js';
 
 const patchSchema = z.object({
 	anthropic: z.string().trim().min(1).max(512).nullable().optional(),
@@ -54,6 +55,15 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const body = parse(patchSchema, await readJson(req));
+
+	// A key that cannot be a real key for its provider is refused here rather than
+	// stored: it would only fail later, on a billed call, with a vaguer message.
+	// The message names the provider and never repeats the value.
+	for (const [provider, value] of Object.entries(body)) {
+		if (typeof value !== 'string') continue;
+		const problem = keyShapeProblem(provider, value);
+		if (problem) return error(res, 400, 'validation_error', problem.message);
+	}
 
 	const set = {};
 	const cleared = [];

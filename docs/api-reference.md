@@ -2129,6 +2129,42 @@ labeled with the prompt.
 | `502`  | `generation_failed`              | The lane could not start the job; retry is free                      |
 | `503`  | `not_configured` / `lane_timeout`| Lane unavailable on this deployment, or slow to accept; retry later  |
 
+### Forge reference photos: `POST /api/forge-upload`
+
+The page uploads reference photos in two steps: presign here, then `PUT` the bytes straight to object storage. Signed in only; rate limited per account.
+
+```
+POST /api/forge-upload  { "content_type": "image/jpeg", "size_bytes": 812345 }
+  -> 200 { "upload_url": "<presigned PUT>", "public_url": "https://three.ws/cdn/forge/uploads/..." }
+```
+
+`content_type` is `image/png`, `image/jpeg` or `image/webp` (`400 invalid_content_type` otherwise) and `size_bytes` at most 8 MB (`400 invalid_size` otherwise). The page converts every other format, and anything larger, on the device first. Pass `public_url` in `image_urls` on `POST /api/forge`. A deployment with no bucket answers `503 unconfigured`; a bucket refusing our credential answers `503 storage_unavailable`.
+
+The same endpoint fetches an image the visitor pasted as a link, since the browser cannot read most other sites itself:
+
+```
+POST /api/forge-upload  { "source_url": "https://example.com/photos/mug.jpg" }
+  -> 200 application/octet-stream (the image bytes), x-image-format: jpeg|png|webp|heic|avif|gif|svg
+```
+
+The fetch runs through the SSRF guard with a pinned address, reads at most 25 MB, and judges the result by its bytes, not the content type the site claims. A link to a web page follows its `og:image` preview once. Refusals carry a sentence for the visitor in `message`: `400 url_blocked` (not http(s), or a private, loopback or metadata address), `415 url_not_image` (names what it found, such as a PDF or a page with no preview image), `413 url_too_large`, `422 url_unreachable` (the site answered with an error status, named in the message) and `502 url_unreachable` (no answer in time, or the connection dropped). The bytes come back as an attachment with `nosniff` and are never rendered by the server; the page then prepares and uploads them like a dropped photo. Code: [`api/_lib/forge-image-import.js`](../api/_lib/forge-image-import.js).
+
+### Forge photo sets: view counts and notices
+
+A `POST /api/forge` (and `/api/gpt-forge`) image request reports how its photos
+were used, on the submit response and, for the counts, on every poll:
+
+- `views_requested`: photos you supplied, or views the job was built from for a text prompt.
+- `views_used`: views the engine actually reads. A one-image engine reports `1` however many photos you sent, and is given your `front` view (the first when `view_labels` is absent).
+- `multiview`: whether more than one view was fused.
+- `views_note`: one sentence for a person, present only when something was left out (a one-image engine, or photos the checks removed). Omitted otherwise.
+- `views_dropped`: `[{ position, reason }]`, present only when photos were removed. `position` is the photo's place in your `image_urls` starting at 1; `reason` is `different_subject`, `blank`, `too_small`, `wrong_shape` or `unusable`.
+
+Painting extra views is bounded by `FORGE_VIEWS_BUDGET_MS` and fails open: the
+job continues with the single image, never fails because a view could not be
+made. An uploaded file that is rejected names its place when you sent several
+(`Photo 2 of 3: ...`). Details: [forge.md](./forge.md#several-photos-and-generated-views).
+
 ### Forge in a world: the `world` field
 
 `POST /api/forge` accepts an optional `world` string (letters, digits, `: _ . -`, up
@@ -2218,7 +2254,7 @@ provider answers at all it **fails open** (`verdict.pass: true`,
 and any critical structural defect (blob, incomplete, duplicated, floating
 fragments) fails the gate regardless of score. `retry` is `null` when the model
 passes, when QA was unavailable (never retry on an outage), or when the retry cap
-(`FORGE_QUALITY_MAX_RETRIES`, default 2) is reached. The same logic is importable
+(`FORGE_QUALITY_MAX_RETRIES`, default 1) is reached. The same logic is importable
 for server-side use as `runQualityGate` + `buildRetryDirective` from
 `api/_lib/forge-quality-gate.js` — the generation router uses it directly.
 
@@ -2242,11 +2278,55 @@ transform before taking the bounding box, because a meshopt or
 `KHR_mesh_quantization` file stores integer positions and relies on the node scale to
 get back to metres, so raw accessor min/max can be off by orders of magnitude.
 
-On a failing verdict the router runs a bounded best-of retry
-(`FORGE_QUALITY_GATE_MAX_RETRIES`, default 1, clamped 0-2), keeping the
-higher-scoring result. The delivered generation carries a `quality` (deterministic)
-and, when scored, a `quality_gate` (vision verdict) field: the `/forge` result bar
-renders these as a **Verified NN% / Low NN% / Checked** confidence chip.
+**Automatic retry on the synchronous lanes.** The free NVIDIA NIM text lane and
+the Hugging Face photo lane finish inside the request, and run one quality stage
+on the model before answering (`api/_lib/forge-quality-stage.js`, wired through
+`api/_lib/forge-quality-lanes.js`):
+
+1. The cheap deterministic check runs first. A broken or degenerate mesh asks for
+   a retry with no vision call at all.
+2. Otherwise the vision judge scores it, when `FORGE_QUALITY_GATE` puts it in
+   scope. Every scoring in one request shares one time budget
+   (`FORGE_QUALITY_STAGE_BUDGET_MS`, default 30000). A judge that is unreachable,
+   slow past the budget, or answers something that is not a verdict counts as
+   "no verdict": the model ships as is, with `quality_gate.qa_available: false`,
+   and no retry is spent on it.
+3. At most **one** automatic retry per request (`FORGE_QUALITY_GATE_MAX_RETRIES`,
+   default 1, clamped 0-1), whichever check asked for it. It is skipped when the
+   lane is busy (NIM cooling down or at its fleet cap of
+   `FORGE_NIM_QUALITY_RETRY_MAX` concurrent retries, default 4; no free Hugging
+   Face slot) and when the caller has one generation or fewer left in their
+   allowance.
+4. The retry is not counted against the caller: it takes no second allowance
+   charge and records no second funnel start or completion.
+5. Both attempts are compared and the **better** one is delivered. The losing
+   attempt's row is retired, so it never appears in the gallery. The response is
+   written only after this, so a model the caller has already seen is never
+   swapped.
+
+The async lanes (self-host TRELLIS, Hunyuan3D, hosted NVIDIA TRELLIS) are scored
+once on poll and never retried.
+
+The delivered generation carries a `quality` (deterministic) and, when scored, a
+`quality_gate` (vision verdict) field: the `/forge` result bar renders these as a
+**Verified NN% / Low NN% / Checked** confidence chip. When the stage retried, or
+wanted to and declined, the response also carries `quality_retry`:
+
+```json
+{
+  "ran": true,
+  "kept": "first",
+  "reason": "vision",
+  "declined": null,
+  "message": "The first attempt did not pass the automatic quality check. It was regenerated once, and Forge kept the first result because it was the better of the two."
+}
+```
+
+`kept` is `first` or `retry`; `declined` is `busy`, `allowance` or `retry_failed`
+when no retry ran. The `/forge` result bar shows it as a second chip
+(**Regenerated once / Kept first of two / Not regenerated / Retry did not
+finish**) whose tooltip and accessible name are the full `message`.
+`quality_retried` (boolean) stays for older clients.
 
 **Errors**
 
@@ -3158,7 +3238,7 @@ outage never burns a free generation.
 | -------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `prompt`       | string  | Image description. 3–2000 characters. Required.                                                                                                     |
 | `aspect_ratio` | string  | One of `1:1`, `16:9`, `9:16`, `4:3`, `3:4`, `3:2`, `2:3`. Default `1:1`.                                                                            |
-| `seed`         | integer | Optional deterministic seed (0 to 4294967295). Honored on the HF, Pollinations and Replicate flux lanes; NIM flux.1-dev and the Vertex/Gemini lane have no seed input and ignore it. |
+| `seed`         | integer | Optional deterministic seed (0 to 4294967295). Honored on the HF, Pollinations and Replicate flux lanes; NIM FLUX.2 klein and the Vertex/Gemini lane have no seed input and ignore it. |
 
 **Response — 200**
 
@@ -3166,7 +3246,7 @@ outage never burns a free generation.
 {
 	"url": "https://three.ws/cdn/forge/refs/<id>.jpg",
 	"provider": "nvidia-nim",
-	"model": "black-forest-labs/flux.1-schnell",
+	"model": "black-forest-labs/flux.2-klein-4b",
 	"width": 1024,
 	"height": 1024,
 	"aspect_ratio": "1:1",
@@ -3209,6 +3289,17 @@ refuses), so an out-of-credit account or a retired route reads `down` with the r
 instead of a green token check. A successful generation names its lane in `provider`:
 `nvidia-nim`, `vertex`, `huggingface`, `livepeer`, `pollinations` or `replicate`. A plain `GET /api/v1/ai/image` returns a
 discovery doc (price, free-tier width, which lanes are configured).
+
+`ladder` is what the next generation will actually do, read from the shared breaker
+state without calling any provider: every rung in walk order (`vertex`, `nim`,
+`hf:fal-ai`, `hf:wavespeed`, `livepeer`, `pollinations`, `replicate`), each with
+`configured`, `state` (`closed`, `open`, `half_open` or `unconfigured`),
+`last_failure_class` (`credits`, `auth`, `rate_limited`, `timeout`, `server`,
+`unreachable`, `invalid`), `last_failure_status`, `last_failure_detail`,
+`last_failure_at`, `consecutive_failures` and `retry_at` (when an open rung is tried
+again; `half_open` means the next request probes it). A `429 rate_limited` from a
+generation carries the shortest wait any rung stated, so `retryAfter` is the earliest
+moment a retry can be served.
 
 **Errors**
 

@@ -15,13 +15,13 @@ import {
 const AJ = {
 	name: 'aj',
 	label: 'Aj',
-	url: '/r2-proxy/avatars/mixamo/glb/aj.glb',
-	thumb: '/r2-proxy/avatars/mixamo/thumbs/aj.png',
+	url: '/r2-proxy/avatars/quaternius/glb/aj.glb',
+	thumb: '/r2-proxy/avatars/quaternius/thumbs/aj.png',
 	bytes: 5918024,
-	source: 'mixamo',
+	source: 'quaternius',
 };
-const ABE = { name: 'abe', label: 'Abe', url: '/r2-proxy/avatars/mixamo/glb/abe.glb', bytes: 35947032, source: 'mixamo' };
-const ALIEN = { name: 'alien-soldier', label: 'Alien Soldier', url: '/r2-proxy/avatars/mixamo/glb/alien-soldier.glb', bytes: 4101348, source: 'mixamo' };
+const ABE = { name: 'abe', label: 'Abe', url: '/r2-proxy/avatars/quaternius/glb/abe.glb', bytes: 35947032, source: 'quaternius' };
+const ALIEN = { name: 'alien-soldier', label: 'Alien Soldier', url: '/r2-proxy/avatars/quaternius/glb/alien-soldier.glb', bytes: 4101348, source: 'quaternius' };
 const LIBRARY = [AJ, ABE, ALIEN];
 
 describe('character name', () => {
@@ -57,16 +57,16 @@ describe('size formatting', () => {
 
 describe('card meta line', () => {
 	it('pairs the source with the size', () => {
-		expect(cardMeta(AJ)).toBe('Mixamo · 5.6 MB');
+		expect(cardMeta(AJ)).toBe('quaternius · 5.6 MB');
 	});
 
 	// The separator used to render unconditionally, so a row with no size showed
-	// "Mixamo · " with the bullet dangling off the end of the line.
+	// "quaternius · " with the bullet dangling off the end of the line.
 	it('drops the separator when there is no size to separate', () => {
-		expect(cardMeta({ name: 'aj', source: 'mixamo' })).toBe('Mixamo');
+		expect(cardMeta({ name: 'aj', source: 'quaternius' })).toBe('quaternius');
 	});
 
-	it('names a non-Mixamo source rather than mislabelling it', () => {
+	it('names any manifest source rather than mislabelling it', () => {
 		expect(cardMeta({ name: 'k', source: 'avaturn', bytes: 2097152 })).toBe('avaturn · 2.0 MB');
 	});
 });
@@ -74,9 +74,9 @@ describe('card meta line', () => {
 describe('viewer deep links', () => {
 	it('points the three actions at the viewers that take a raw model URL', () => {
 		const links = viewerLinks(AJ);
-		expect(links.preview).toBe('/app#model=%2Fr2-proxy%2Favatars%2Fmixamo%2Fglb%2Faj.glb');
-		expect(links.use).toBe('/studio?model=%2Fr2-proxy%2Favatars%2Fmixamo%2Fglb%2Faj.glb');
-		expect(links.animate).toBe('/pose?src=%2Fr2-proxy%2Favatars%2Fmixamo%2Fglb%2Faj.glb&title=Aj');
+		expect(links.preview).toBe('/app#model=%2Fr2-proxy%2Favatars%2Fquaternius%2Fglb%2Faj.glb');
+		expect(links.use).toBe('/studio?model=%2Fr2-proxy%2Favatars%2Fquaternius%2Fglb%2Faj.glb');
+		expect(links.animate).toBe('/pose?src=%2Fr2-proxy%2Favatars%2Fquaternius%2Fglb%2Faj.glb&title=Aj');
 	});
 
 	it('encodes a name with a space so the Animation Studio title survives', () => {

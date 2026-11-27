@@ -16,6 +16,9 @@
 import './agent-perps.css';
 import { consumeCsrfToken } from './api.js';
 import { shortAddress as shortAddr } from './shared/address.js';
+import { mountRiskNoteOnMain } from './shared/risk-note-mount.js';
+
+mountRiskNoteOnMain('trading');
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const root = document.getElementById('apx-root');

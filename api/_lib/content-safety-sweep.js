@@ -72,6 +72,8 @@ export async function sweepContentSafety({ promoteLimit = 20, backfillLimit = 10
 			(await promote(row, d)) === 'promoted' ? stats.promoted++ : stats.errors++;
 		} else if (result.verdict === 'blocked') {
 			stats.blocked++;
+		} else if (result.heldForReview) {
+			stats.held++;
 		} else {
 			stats.undecided++;
 			if (now - new Date(row.publish_requested_at).getTime() > HOLD_AFTER_MS) {

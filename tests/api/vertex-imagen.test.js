@@ -26,6 +26,16 @@ vi.mock('../../api/_lib/ssrf-guard.js', () => ({ fetchSafePublicUrl: safeFetch }
 
 import { generateImage, editImage, isConfigured } from '../../api/_mcp3d/vertex-imagen.js';
 import { IMAGE_MODEL_PRIMARY } from '../../api/_lib/image-model.js';
+import { resetVertexBreaker, vertexBreakerState } from '../../api/_lib/vertex-image-breaker.js';
+import { REAL_PNG_B64, encodeTestImage } from '../_helpers/real-image.js';
+
+// Every image this client returns is decoded and sanity-checked (real pixels,
+// sane size, not blank), so the fixtures are real encoded images: a 512px
+// gradient, as PNG and as JPEG, plus a flat frame and a thumbnail to reject.
+const PNG_B64 = REAL_PNG_B64;
+const JPEG_B64 = await encodeTestImage({ format: 'jpeg' });
+const FLAT_B64 = await encodeTestImage({ flat: true });
+const THUMB_B64 = await encodeTestImage({ width: 64, height: 64 });
 
 const ORIGINAL_FETCH = globalThis.fetch;
 const ENV_KEYS = ['GOOGLE_CLOUD_PROJECT', 'GOOGLE_CLOUD_LOCATION', 'VERTEX_IMAGEN_MODEL', 'VERTEX_IMAGEN_EDIT_MODEL'];
@@ -43,7 +53,7 @@ function stubFetch(responder) {
 
 // A Gemini image generateContent success: the image rides back as an
 // inlineData part (base64 + mimeType), same as the live API.
-function geminiImageResponse(b64 = Buffer.from('gemini-png').toString('base64'), mime = 'image/png') {
+function geminiImageResponse(b64 = PNG_B64, mime = 'image/png') {
 	return new Response(
 		JSON.stringify({
 			candidates: [{ content: { parts: [{ inlineData: { mimeType: mime, data: b64 } }] }, finishReason: 'STOP' }],
@@ -53,16 +63,19 @@ function geminiImageResponse(b64 = Buffer.from('gemini-png').toString('base64'),
 }
 
 // A legacy Imagen :predict success: base64 under predictions[].bytesBase64Encoded.
-function imagenPredictResponse(b64 = Buffer.from('imagen-png').toString('base64')) {
+function imagenPredictResponse(b64 = PNG_B64) {
 	return new Response(JSON.stringify({ predictions: [{ bytesBase64Encoded: b64 }] }), {
 		status: 200,
 		headers: { 'content-type': 'application/json' },
 	});
 }
 
-beforeEach(() => {
+beforeEach(async () => {
 	for (const k of ENV_KEYS) delete process.env[k];
 	process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
+	// Failure cases cool the shared Vertex breaker; each case starts closed.
+	await resetVertexBreaker();
+	vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -72,6 +85,7 @@ afterEach(() => {
 		else process.env[k] = ORIGINAL_ENV[k];
 	}
 	vi.clearAllMocks();
+	vi.restoreAllMocks();
 });
 
 describe('vertex-imagen — default Gemini image path', () => {
@@ -93,12 +107,12 @@ describe('vertex-imagen — default Gemini image path', () => {
 		expect(body.generationConfig.imageConfig.aspectRatio).toBe('16:9');
 
 		// Response parse: inlineData → data URI carrying the real mime type + model tag.
-		expect(result.imageUrl).toBe(`data:image/png;base64,${Buffer.from('gemini-png').toString('base64')}`);
+		expect(result.imageUrl).toBe(`data:image/png;base64,${PNG_B64}`);
 		expect(result.model).toBe(`vertex-ai/${IMAGE_MODEL_PRIMARY}`);
 	});
 
 	it('preserves the response mime type in the data URI', async () => {
-		stubFetch(() => geminiImageResponse(Buffer.from('jpg').toString('base64'), 'image/jpeg'));
+		stubFetch(() => geminiImageResponse(JPEG_B64, 'image/jpeg'));
 		const result = await generateImage('a teapot');
 		expect(result.imageUrl.startsWith('data:image/jpeg;base64,')).toBe(true);
 	});
@@ -144,7 +158,7 @@ describe('vertex-imagen — legacy Imagen :predict override', () => {
 			safetySetting: 'block_some',
 			personGeneration: 'allow_adult',
 		});
-		expect(result.imageUrl).toBe(`data:image/png;base64,${Buffer.from('imagen-png').toString('base64')}`);
+		expect(result.imageUrl).toBe(`data:image/png;base64,${PNG_B64}`);
 		expect(result.model).toBe('vertex-ai/imagen-4.0-generate-001');
 	});
 });
@@ -256,5 +270,118 @@ describe('vertex-imagen — editImage routing', () => {
 		const instance = calls[0].body.instances[0];
 		expect(instance.editConfig.editMode).toBe('inpainting-insert');
 		expect(instance.mask.image.bytesBase64Encoded).toBe(Buffer.from('mask-bytes').toString('base64'));
+	});
+});
+
+// The breaker (api/_lib/vertex-image-breaker.js) is shared with the forge
+// reference step; these pin that the text-to-image ladder's Vertex client
+// honours it too, so a billing hold costs one call, not one per request.
+describe('vertex-imagen: shared breaker', () => {
+	const BILLING_HOLD = {
+		error: {
+			code: 403,
+			message: 'There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856',
+			status: 'PERMISSION_DENIED',
+		},
+	};
+
+	it('after one billing 403, the next ten generate and edit calls make zero network calls', async () => {
+		const calls = stubFetch(() => new Response(JSON.stringify(BILLING_HOLD), { status: 403 }));
+		await expect(generateImage('x')).rejects.toMatchObject({ providerStatus: 403 });
+		expect(calls).toHaveLength(1);
+		for (let i = 0; i < 5; i++) {
+			const t0 = performance.now();
+			await expect(generateImage('x')).rejects.toMatchObject({ code: 'provider_cooling', vertexFailureKind: 'billing' });
+			expect(performance.now() - t0).toBeLessThan(50);
+			await expect(editImage(`data:image/png;base64,${PNG_B64}`, 'side view')).rejects.toMatchObject({ code: 'provider_cooling' });
+		}
+		expect(calls).toHaveLength(1);
+		const state = await vertexBreakerState();
+		expect(state).toMatchObject({ state: 'open', kind: 'billing', failures: 1 });
+	});
+
+	it('the cooling error carries no providerStatus, so a caller cannot mistake it for a fresh 403', async () => {
+		stubFetch(() => new Response(JSON.stringify(BILLING_HOLD), { status: 403 }));
+		await generateImage('x').catch(() => {});
+		const err = await generateImage('x').catch((e) => e);
+		expect(err.providerStatus).toBeUndefined();
+		expect(err.retryAt).toMatch(/^\d{4}-/);
+	});
+
+	it('ignoreBreaker still tries a cooled lane when the caller has nothing behind it', async () => {
+		const calls = stubFetch(() => new Response(JSON.stringify(BILLING_HOLD), { status: 403 }));
+		await generateImage('x').catch(() => {});
+		await expect(generateImage('x', { ignoreBreaker: true })).rejects.toMatchObject({ providerStatus: 403 });
+		expect(calls).toHaveLength(2);
+	});
+
+	it('a safety block does not cool the lane', async () => {
+		let calls = stubFetch(
+			() => new Response(JSON.stringify({ candidates: [{ finishReason: 'IMAGE_SAFETY', content: { parts: [] } }] }), { status: 200 }),
+		);
+		await expect(generateImage('x')).rejects.toThrow(/IMAGE_SAFETY/);
+		expect((await vertexBreakerState()).state).toBe('closed');
+		calls = stubFetch(() => geminiImageResponse());
+		await generateImage('y');
+		expect(calls).toHaveLength(1);
+	});
+
+	it('a 429 honours the stated RetryInfo delay', async () => {
+		stubFetch(
+			() =>
+				new Response(
+					JSON.stringify({
+						error: {
+							code: 429,
+							message: 'Resource exhausted.',
+							status: 'RESOURCE_EXHAUSTED',
+							details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '21s' }],
+						},
+					}),
+					{ status: 429 },
+				),
+		);
+		await expect(generateImage('x')).rejects.toMatchObject({ code: 'rate_limited', retryAfter: 21 });
+		const state = await vertexBreakerState();
+		expect(state.kind).toBe('quota');
+		expect(Date.parse(state.next_probe_at) - Date.now()).toBeGreaterThan(19_000);
+		expect(Date.parse(state.next_probe_at) - Date.now()).toBeLessThanOrEqual(21_000);
+	});
+
+	it('a success while half-open closes the breaker', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		try {
+			stubFetch(() => new Response(JSON.stringify({ error: { message: 'boom' } }), { status: 503 }));
+			await generateImage('x').catch(() => {});
+			vi.setSystemTime(Date.now() + 31_000);
+			expect((await vertexBreakerState()).state).toBe('half_open');
+			const calls = stubFetch(() => geminiImageResponse());
+			await generateImage('x');
+			expect(calls).toHaveLength(1);
+			expect((await vertexBreakerState()).state).toBe('closed');
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+});
+
+describe('vertex-imagen: returned image validation', () => {
+	it('rejects a flat single-colour frame without cooling the lane', async () => {
+		stubFetch(() => geminiImageResponse(FLAT_B64));
+		await expect(generateImage('x')).rejects.toMatchObject({ code: 'bad_image', reason: 'blank' });
+		expect((await vertexBreakerState()).state).toBe('closed');
+	});
+
+	it('rejects a thumbnail', async () => {
+		stubFetch(() => geminiImageResponse(THUMB_B64));
+		await expect(generateImage('x')).rejects.toMatchObject({ code: 'bad_image', reason: 'dimensions' });
+	});
+
+	it('rejects bytes that do not decode as an image, on the edit path too', async () => {
+		stubFetch(() => geminiImageResponse(Buffer.from('<html>502 Bad Gateway</html>'.repeat(4)).toString('base64')));
+		await expect(editImage(`data:image/png;base64,${PNG_B64}`, 'side view')).rejects.toMatchObject({
+			code: 'bad_image',
+			reason: 'undecodable',
+		});
 	});
 });
