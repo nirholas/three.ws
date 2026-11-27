@@ -107,6 +107,15 @@ def main() -> int:
     no_images = client.post("/infer", json={"images": []}, headers=auth)
     check("an empty images list is 422", no_images.status_code == 422, no_images.text)
 
+    # The seed field: present on the request model, and bounded to the uint32
+    # range the API sends (a seed outside it is a caller error, not a crash in
+    # torch.Generator.manual_seed).
+    check("the request model takes a seed", "seed" in service.InferRequest.model_fields)
+    bad_seed = client.post("/infer", json={"images": [png_data_uri()], "seed": -1}, headers=auth)
+    check("a negative seed is 422", bad_seed.status_code == 422, bad_seed.text)
+    big_seed = client.post("/infer", json={"images": [png_data_uri()], "seed": 4_294_967_296}, headers=auth)
+    check("a seed above uint32 is 422", big_seed.status_code == 422, big_seed.text)
+
     over_budget = client.post(
         "/infer", json={"images": [png_data_uri()], "target_polycount": 12}, headers=auth
     )

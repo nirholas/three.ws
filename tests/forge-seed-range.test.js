@@ -28,6 +28,7 @@ process.env.MODEL_ANIGEN_URL = 'https://anigen.worker.test';
 process.env.MODEL_PARTCRAFTER_URL = 'https://partcrafter.worker.test';
 process.env.MODEL_MODLY_URL = 'https://modly.worker.test';
 process.env.GCP_HUNYUAN3D_URL = 'https://hunyuan.worker.test';
+process.env.GCP_TRIPOSG_URL = 'https://triposg.worker.test';
 process.env.LIVEPEER_GATEWAY_URL = 'https://livepeer.gateway.test';
 process.env.HF_RECONSTRUCT_SPACES = 'tencent/Hunyuan3D-2';
 delete process.env.GOOGLE_CLOUD_PROJECT;
@@ -266,6 +267,9 @@ describe('3D lanes receive a seed inside their range', () => {
 		{ mode: 'partcrafter', host: 'partcrafter.worker.test' },
 		{ mode: 'modly', host: 'modly.worker.test' },
 		{ mode: 'hunyuan', host: 'hunyuan.worker.test' },
+		// TripoSG: the sketch lane, and its photo pipeline (the last photo rung).
+		{ mode: 'sketch', host: 'triposg.worker.test' },
+		{ mode: 'triposg', host: 'triposg.worker.test' },
 	];
 	const GPU_CASES = GPU_LANES.flatMap((l) => ACCEPTED.map((seed) => ({ ...l, seed })));
 

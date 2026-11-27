@@ -565,6 +565,7 @@ function buildWorkerRequest(request) {
 		if (Number.isFinite(Number(params?.scribble_confidence))) {
 			body.scribble_confidence = Number(params.scribble_confidence);
 		}
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		return {
 			path: '/infer',
 			resultKey: 'result_gcs_url',
@@ -580,6 +581,7 @@ function buildWorkerRequest(request) {
 		if (Number.isFinite(Number(params?.target_polycount))) {
 			body.target_polycount = Math.round(Number(params.target_polycount));
 		}
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		return {
 			path: '/infer',
 			resultKey: 'result_gcs_url',
