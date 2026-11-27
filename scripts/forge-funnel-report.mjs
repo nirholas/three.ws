@@ -1,141 +1,73 @@
 #!/usr/bin/env node
 /**
- * Forge funnel report: does a generation turn into an asset someone keeps?
+ * Forge funnel report: does a request turn into an asset someone keeps?
  *
- * `npm run forge:errors` ranks what fails. This is the question after it: of the
- * meshes that came back, how many did a person accept or download, do new makers
- * return for a second one, what is each generation for, and which lane earns its
- * attempts. Same numbers as the owner board at /forge-funnel
- * (GET /api/ops/forge-funnel); both read api/_lib/forge-funnel.js, so the
- * definitions cannot drift.
+ * `npm run forge:errors` ranks what fails after a job exists. This is the
+ * question around it: how many requests finished, how many a person accepted or
+ * downloaded, whether new makers come back, what each generation is for, and
+ * which lane loses requests. Same numbers as the owner board at /forge-funnel
+ * (GET /api/ops/forge-funnel) and the same success definition as forge:errors;
+ * all three read api/_lib/forge-funnel.js and api/_lib/forge-operator-report.js.
+ *
+ * Requests refused before a job existed are not in forge_creations. The report
+ * says so at the top, and --requests reads the one record that has them, the
+ * Cloud Run request log (needs a gcloud login that can read the serving project;
+ * GCP_PROJECT and GCP_ACCOUNT pick which).
  *
  * Usage:
- *   node scripts/forge-funnel-report.mjs              # last 30 days
- *   node scripts/forge-funnel-report.mjs --days 7
- *   node scripts/forge-funnel-report.mjs --json
+ *   npm run forge:funnel                       # last 30 days
+ *   npm run forge:funnel -- --days 7
+ *   npm run forge:funnel -- --days 7 --requests
+ *   npm run forge:funnel -- --json
  *
- * Reads DATABASE_URL from .env.local, then .env, then the shell (same order as
- * scripts/apply-migrations.mjs). Read-only: it runs SELECTs and nothing else.
- * Needs migration 20260921120000_forge_destination.sql applied.
+ * Exit status: 0 printed, 1 some panels could not be read (named at the end),
+ * 2 DATABASE_URL is not set, 3 the database did not answer at all.
+ *
+ * Reads DATABASE_URL from .env.local, then .env, then the shell. Read-only.
  */
 
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
+import { loadRepoEnv, flagValue, readForgeRequestLog } from './lib/forge-report-cli.mjs';
 
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(HERE, '..');
-
-for (const envFile of ['.env.local', '.env']) {
-	try {
-		const raw = readFileSync(path.resolve(REPO_ROOT, envFile), 'utf8');
-		for (const line of raw.split('\n')) {
-			const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
-			if (!m || process.env[m[1]]) continue;
-			let val = m[2].trim();
-			if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-				val = val.slice(1, -1);
-			}
-			process.env[m[1]] = val;
-		}
-	} catch { /* file not present */ }
-}
+loadRepoEnv();
 
 const args = process.argv.slice(2);
-const flag = (name, fallback) => {
-	const i = args.indexOf(`--${name}`);
-	return i >= 0 && args[i + 1] && !args[i + 1].startsWith('--') ? args[i + 1] : fallback;
-};
 const JSON_OUT = args.includes('--json');
+const WITH_REQUESTS = args.includes('--requests');
 
-if (!process.env.DATABASE_URL) {
-	console.error('DATABASE_URL is not set. Add it to .env.local or export it in your shell.');
-	console.error('Production\'s value: node scripts/read-service-env.mjs \'^DATABASE_URL$\' --raw');
-	process.exit(2);
-}
-
-// Imported after the env files load: the db module resolves DATABASE_URL lazily,
-// but env.js snapshots other vars at import time.
+// Imported after the env files load: env.js snapshots some vars at import time.
+const lib = await import('../api/_lib/forge-operator-report.js');
 const { gatherForgeFunnel, clampFunnelDays } = await import('../api/_lib/forge-funnel.js');
 
-const pct = (m) => (m?.value == null ? 'n/a' : `${(m.value * 100).toFixed(1)}%`);
-const base = (m) => `${m?.n ?? 0}/${m?.of ?? 0}${m?.low_sample ? '  (low sample)' : ''}`;
-const line = (label, m) => console.log(`  ${label.padEnd(30)} ${pct(m).padStart(7)}   ${base(m)}`);
-
-function table(headers, rows) {
-	const widths = headers.map((h, i) => Math.max(h.length, ...rows.map((r) => String(r[i]).length)));
-	const fmt = (r) => r.map((c, i) => (i === 0 ? String(c).padEnd(widths[i]) : String(c).padStart(widths[i]))).join('  ');
-	console.log(`  ${fmt(headers)}`);
-	console.log(`  ${widths.map((w) => '-'.repeat(w)).join('  ')}`);
-	for (const r of rows) console.log(`  ${fmt(r)}`);
+if (!process.env.DATABASE_URL) {
+	console.error(lib.missingDatabaseMessage('npm run forge:funnel'));
+	process.exit(lib.EXIT_CODES.missing_database);
 }
 
-const report = await gatherForgeFunnel({ days: clampFunnelDays(flag('days', undefined)) });
+const report = await gatherForgeFunnel({ days: clampFunnelDays(flagValue(args, 'days', undefined)) });
+
+if (report.unreachable) {
+	console.error(lib.unreachableDatabaseMessage(report.degraded[0]?.error, process.env.DATABASE_URL));
+	process.exit(lib.EXIT_CODES.unreachable_database);
+}
+
+let requestLog = null;
+if (WITH_REQUESTS) {
+	const read = readForgeRequestLog({ days: report.window_days });
+	requestLog = read.ok
+		? { ok: true, project: read.project, summary: lib.summarizeRequestLog(lib.parseRequestLogLines(read.text), { truncated: read.truncated }) }
+		: { ok: false, project: read.project, error: read.error };
+}
 
 if (JSON_OUT) {
-	console.log(JSON.stringify(report, null, 2));
-	process.exit(report.ok ? 0 : 1);
-}
-
-const { output: o, new_actors: a, retention: r, destinations: d, lanes, share: sh, revenue: v } = report;
-
-console.log(`\nForge funnel, last ${report.window_days} days  (rates under ${report.min_sample} rows are flagged low sample)\n`);
-
-console.log('Output');
-console.log(`  requests ${o.requests}   done ${o.done}   failed ${o.failed}   in flight ${o.in_flight}   keyless (left out of per-maker metrics) ${o.unattributed_requests}`);
-line('Generation success', o.generation_success_rate);
-line('Useful output (kept or downloaded)', o.useful_output_rate);
-line('Feedback coverage', o.feedback_coverage);
-console.log(`  accepted ${o.accepted}   rejected ${o.rejected}   downloaded ${o.downloaded}   rated ${o.rated}   avg rating ${o.avg_rating ?? 'n/a'}`);
-
-console.log(`\nNew makers (first-ever creation inside the window): ${a.new_actors}`);
-line('First asset success', a.first_asset_success_rate);
-line('Reached any finished asset', a.reached_any_asset_rate);
-line('Second asset', a.second_asset_rate);
-
-console.log(`\nRetention (makers first seen in the last ${r.cohort_lookback_days} days)`);
-line('Came back after day 7', r.d7);
-line('Came back after day 30', r.d30);
-
-console.log('\nWhat it was for');
-line('Answered', d.answer_rate);
-table(
-	['destination', 'done', 'useful', 'downloaded', 'useful rate'],
-	d.rows.map((x) => [x.label, x.done, x.useful, x.downloaded, pct(x.useful_output_rate)]),
-);
-
-console.log('\nLanes (failed-over attempts included: an attempt a lane lost is what this measures)');
-if (lanes.length) {
-	table(
-		['backend', 'class', 'attempts', 'done', 'useful', 'success', 'useful rate', 'attempts/useful', 'avg s', 's/useful'],
-		lanes.map((l) => [
-			l.backend, l.cost_class, l.attempts, l.done, l.useful,
-			pct(l.generation_success_rate), pct(l.useful_output_rate),
-			l.attempts_per_useful ?? 'n/a', l.avg_generation_seconds ?? 'n/a', l.generation_seconds_per_useful ?? 'n/a',
-		]),
-	);
+	const body = requestLog
+		? {
+			...report,
+			request_log: requestLog,
+			top_problems: lib.funnelTopProblems(report.lanes, report.previous.lanes, requestLog.ok ? requestLog.summary : null),
+		}
+		: report;
+	console.log(JSON.stringify(body, null, 2));
 } else {
-	console.log('  no terminal attempts in this window');
+	console.log(lib.formatFunnelReport(report, { requestLog }));
 }
-
-console.log('\nShares (aggregate counters, no identifiers; unfurls are cards rendered, not human views)');
-if (sh.empty) {
-	console.log('  no shares recorded in this window');
-} else {
-	console.log(`  unfurls ${sh.unfurls}   creation page loads ${sh.page_loads}   AR launches ${sh.ar_launches}   share-sheet actions ${sh.share_actions}   "make your own" clicks ${sh.cta_clicks}`);
-	console.log(`  creations started from a share ${sh.from_share.started}   done ${sh.from_share.done}   useful ${sh.from_share.useful}`);
-	console.log(`  X share clicks ${sh.x_share.total} (model ${sh.x_share.model}, avatar ${sh.x_share.avatar}, anatomy ${sh.x_share.anatomy})   Ask @grok clicks ${sh.grok_ask.total} (model ${sh.grok_ask.model}, avatar ${sh.grok_ask.avatar}, anatomy ${sh.grok_ask.anatomy})`);
-	line('Useful rate (from a share)', sh.from_share.useful_output_rate);
-	line('Share to forge (starts per page load)', sh.share_to_forge);
-}
-
-console.log(`\nRevenue (${v.rail} only: the one rail whose price is recorded on the row)`);
-console.log(`  paid generations ${v.paid_generations}   distinct payers ${v.distinct_payers}   USDC ${v.usdc.toFixed(2)}   USDC per useful asset ${v.usdc_per_useful_asset ?? 'n/a'}`);
-line('Paying agents back next week', v.agent_weekly_retention);
-
-if (!report.ok) {
-	console.log('\nDegraded panels:');
-	for (const g of report.degraded) console.log(`  ${g.panel}: ${g.error}`);
-	process.exit(1);
-}
-console.log('');
+process.exitCode = report.ok ? lib.EXIT_CODES.ok : lib.EXIT_CODES.degraded;

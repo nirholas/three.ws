@@ -39,6 +39,7 @@ import { sql } from './db.js';
 import { BACKENDS, backendCostClass } from './forge-tiers.js';
 import { FORGE_DESTINATIONS } from '../../src/shared/forge-destinations.js';
 import { readShareFunnel } from './share-funnel.js';
+import { OUTCOME_DEFINITIONS, PRE_JOB_BLIND_SPOT, funnelTopProblems } from './forge-operator-report.js';
 
 export const FUNNEL_MIN_DAYS = 1;
 export const FUNNEL_MAX_DAYS = 365;
@@ -193,6 +194,8 @@ export function summarizeLanes(rows = []) {
 				attempts,
 				done: int(r.done),
 				failed: int(r.failed),
+				// Requests that ended on this lane with no failover: what users lost here.
+				lost: int(r.lost),
 				useful,
 				generation_success_rate: measured(r.done, attempts),
 				useful_output_rate: measured(useful, r.done),
@@ -302,6 +305,65 @@ export async function gatherShareFunnel(windowDays) {
 // ── Queries ────────────────────────────────────────────────────────────────
 
 /**
+ * Request-level output over the window (from, to] days before now, platform
+ * rows and failed-over attempts left out. The error report counts the same
+ * rows the same way (forge-operator-report.js), and a fixed-row test holds the
+ * two to it.
+ */
+async function readOutput(from, to) {
+	const [r] = await sql`
+		select
+			count(*)::int                                                            as requests,
+			count(*) filter (where fc.status = 'generating')::int                    as in_flight,
+			count(*) filter (where fc.status = 'done')::int                          as done,
+			count(*) filter (where fc.status = 'failed')::int                        as failed,
+			count(*) filter (where fc.status = 'done'
+				and (fc.outcome = 'accepted' or fc.downloaded))::int                 as useful,
+			count(*) filter (where fc.status = 'done' and fc.outcome = 'accepted')::int as accepted,
+			count(*) filter (where fc.status = 'done' and fc.outcome = 'rejected')::int as rejected,
+			count(*) filter (where fc.status = 'done' and fc.downloaded)::int        as downloaded,
+			count(*) filter (where fc.status = 'done' and fc.rating is not null)::int as rated,
+			avg(fc.rating) filter (where fc.status = 'done')                         as avg_rating,
+			count(*) filter (where fc.status = 'done' and (fc.outcome in ('accepted', 'rejected')
+				or fc.downloaded or fc.rating is not null))::int                     as signalled,
+			count(*) filter (where fc.user_id is null and fc.client_key = 'anon')::int as unattributed
+		from forge_creations fc
+		where fc.created_at > now() - make_interval(days => ${from})
+		  and fc.created_at <= now() - make_interval(days => ${to})
+		  and fc.internal = false
+		  and fc.superseded_by is null
+		  and not exists (select 1 from forge_seed_jobs sj where sj.creation_id = fc.id)
+	`;
+	return summarizeOutput(r);
+}
+
+/** Terminal attempts per lane over the window (from, to], failed-over attempts included. */
+async function readLanes(from, to) {
+	const rows = await sql`
+		select fc.backend,
+		       count(*) filter (where fc.status = 'done')::int   as done,
+		       count(*) filter (where fc.status = 'failed')::int as failed,
+		       count(*) filter (where fc.status = 'failed'
+		           and fc.superseded_by is null)::int            as lost,
+		       count(*) filter (where fc.status = 'done'
+		           and (fc.outcome = 'accepted' or fc.downloaded))::int as useful,
+		       count(*) filter (where fc.completed_at is not null
+		           and fc.status in ('done', 'failed'))::int     as timed,
+		       coalesce(sum(extract(epoch from (fc.completed_at - fc.created_at)))
+		           filter (where fc.completed_at is not null
+		               and fc.status in ('done', 'failed')), 0)  as gen_seconds
+		from forge_creations fc
+		where fc.created_at > now() - make_interval(days => ${from})
+		  and fc.created_at <= now() - make_interval(days => ${to})
+		  and fc.internal = false
+		  and fc.status in ('done', 'failed')
+		  and not exists (select 1 from forge_seed_jobs sj where sj.creation_id = fc.id)
+		group by fc.backend
+	`;
+	return summarizeLanes(rows);
+}
+
+/**
  * Build the whole report. The panels are read independently: one failing query
  * names itself in `degraded` and leaves the others standing, matching the other
  * ops boards.
@@ -310,7 +372,9 @@ export async function gatherShareFunnel(windowDays) {
 export async function gatherForgeFunnel({ days = FUNNEL_DEFAULT_DAYS } = {}) {
 	const windowDays = clampFunnelDays(days);
 	const degraded = [];
+	let panels = 0;
 	const panel = async (name, fn, fallback) => {
+		panels += 1;
 		try {
 			return await fn();
 		} catch (err) {
@@ -319,35 +383,8 @@ export async function gatherForgeFunnel({ days = FUNNEL_DEFAULT_DAYS } = {}) {
 		}
 	};
 
-	const outputPending = panel(
-		'output',
-		async () => {
-			const [r] = await sql`
-				select
-					count(*)::int                                                            as requests,
-					count(*) filter (where fc.status = 'generating')::int                    as in_flight,
-					count(*) filter (where fc.status = 'done')::int                          as done,
-					count(*) filter (where fc.status = 'failed')::int                        as failed,
-					count(*) filter (where fc.status = 'done'
-						and (fc.outcome = 'accepted' or fc.downloaded))::int                 as useful,
-					count(*) filter (where fc.status = 'done' and fc.outcome = 'accepted')::int as accepted,
-					count(*) filter (where fc.status = 'done' and fc.outcome = 'rejected')::int as rejected,
-					count(*) filter (where fc.status = 'done' and fc.downloaded)::int        as downloaded,
-					count(*) filter (where fc.status = 'done' and fc.rating is not null)::int as rated,
-					avg(fc.rating) filter (where fc.status = 'done')                         as avg_rating,
-					count(*) filter (where fc.status = 'done' and (fc.outcome in ('accepted', 'rejected')
-						or fc.downloaded or fc.rating is not null))::int                     as signalled,
-					count(*) filter (where fc.user_id is null and fc.client_key = 'anon')::int as unattributed
-				from forge_creations fc
-				where fc.created_at > now() - make_interval(days => ${windowDays})
-				  and fc.internal = false
-				  and fc.superseded_by is null
-				  and not exists (select 1 from forge_seed_jobs sj where sj.creation_id = fc.id)
-			`;
-			return summarizeOutput(r);
-		},
-		summarizeOutput(),
-	);
+	const outputPending = panel('output', () => readOutput(windowDays, 0), summarizeOutput());
+	const previousOutputPending = panel('previous_output', () => readOutput(windowDays * 2, windowDays), summarizeOutput());
 
 	const newActorsPending = panel(
 		'new_actors',
@@ -434,31 +471,8 @@ export async function gatherForgeFunnel({ days = FUNNEL_DEFAULT_DAYS } = {}) {
 		summarizeDestinations(),
 	);
 
-	const lanesPending = panel(
-		'lanes',
-		async () => {
-			const rows = await sql`
-				select fc.backend,
-				       count(*) filter (where fc.status = 'done')::int   as done,
-				       count(*) filter (where fc.status = 'failed')::int as failed,
-				       count(*) filter (where fc.status = 'done'
-				           and (fc.outcome = 'accepted' or fc.downloaded))::int as useful,
-				       count(*) filter (where fc.completed_at is not null
-				           and fc.status in ('done', 'failed'))::int     as timed,
-				       coalesce(sum(extract(epoch from (fc.completed_at - fc.created_at)))
-				           filter (where fc.completed_at is not null
-				               and fc.status in ('done', 'failed')), 0)  as gen_seconds
-				from forge_creations fc
-				where fc.created_at > now() - make_interval(days => ${windowDays})
-				  and fc.internal = false
-				  and fc.status in ('done', 'failed')
-				  and not exists (select 1 from forge_seed_jobs sj where sj.creation_id = fc.id)
-				group by fc.backend
-			`;
-			return summarizeLanes(rows);
-		},
-		[],
-	);
+	const lanesPending = panel('lanes', () => readLanes(windowDays, 0), []);
+	const previousLanesPending = panel('previous_lanes', () => readLanes(windowDays * 2, windowDays), []);
 
 	const sharePending = panel('share', () => gatherShareFunnel(windowDays), summarizeShare());
 
@@ -497,7 +511,7 @@ export async function gatherForgeFunnel({ days = FUNNEL_DEFAULT_DAYS } = {}) {
 
 	// Independent reads, so they run together. Revenue per useful asset needs the
 	// useful count from the output panel, so it is summarized once both are in.
-	const [output, newActors, retention, destinations, lanes, share, revenueRaw] = await Promise.all([
+	const [output, newActors, retention, destinations, lanes, share, revenueRaw, previousOutput, previousLanes] = await Promise.all([
 		outputPending,
 		newActorsPending,
 		retentionPending,
@@ -505,12 +519,21 @@ export async function gatherForgeFunnel({ days = FUNNEL_DEFAULT_DAYS } = {}) {
 		lanesPending,
 		sharePending,
 		revenueRawPending,
+		previousOutputPending,
+		previousLanesPending,
 	]);
 	const revenue = summarizeRevenue(revenueRaw, { useful: output.useful_output_rate.n });
 
 	return {
 		ok: degraded.length === 0,
 		degraded,
+		// Every panel failed: the database did not answer at all. The zeros in the
+		// panels are then fallbacks, not measurements, and callers must say so
+		// instead of rendering them (the CLI exits 3, the endpoint answers 503).
+		unreachable: degraded.length === panels,
+		definitions: OUTCOME_DEFINITIONS,
+		coverage: { pre_job_failures: 'not_recorded', note: PRE_JOB_BLIND_SPOT },
+		top_problems: funnelTopProblems(lanes, previousLanes),
 		window_days: windowDays,
 		generated_at: new Date().toISOString(),
 		min_sample: MIN_SAMPLE,
@@ -521,5 +544,6 @@ export async function gatherForgeFunnel({ days = FUNNEL_DEFAULT_DAYS } = {}) {
 		lanes,
 		share,
 		revenue,
+		previous: { window_days: windowDays, output: previousOutput, lanes: previousLanes },
 	};
 }
