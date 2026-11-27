@@ -340,6 +340,15 @@ class SemanticsTests(unittest.TestCase):
         self.assertEqual(semantics.classify("upholstered dining chair, dark wood frame", None).cls.label, "chair")
         self.assertEqual(semantics.classify("Stylized flying squirrel standing on all four legs", None).cls.group, "animal")
 
+    def test_small_vehicles_are_not_cars(self):
+        # A go-kart is a vehicle, but scaled as a 4.5 m car it would be wrong
+        # by a factor of 2.5 in every axis (and its mass by far more).
+        for prompt in ("a go-kart with roll bar, weathered post-apocalyptic", "racing kart", "dune buggy", "an ATV quad bike"):
+            c = semantics.classify(prompt, "vehicle")
+            self.assertEqual((c.cls.group, c.source), ("vehicle", "prompt"), prompt)
+            self.assertLess(c.cls.size_m, 3.0, prompt)
+        self.assertEqual(semantics.classify("golf cart", None).cls.label, "kart")
+
     def test_rigged_falls_back_to_avatar(self):
         c = semantics.classify("auto-rig", "avatar", rigged=True)
         self.assertEqual(c.cls.group, "character")

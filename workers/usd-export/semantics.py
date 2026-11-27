@@ -73,6 +73,9 @@ _TABLE: list[tuple[tuple[str, ...], ObjectClass]] = [
     # vehicles
     (("car", "truck", "van", "jeep", "suv", "taxi", "racecar", "sedan", "pickup"),
      _c("car", "vehicle", "steel shell", 150, 4.5, 0.9, 0.8, 0.1)),
+    # Open-frame small vehicles: about 1.8 m long, ~90 kg over the volume of their convex hulls.
+    (("go-kart", "go kart", "gokart", "kart", "buggy", "dune buggy", "atv", "quad bike", "golf cart"),
+     _c("kart", "vehicle", "steel frame", 180, 1.8, 0.9, 0.8, 0.1)),
     (("bus", "tram", "train", "locomotive"), _c("bus", "vehicle", "steel shell", 120, 12.0, 0.9, 0.8, 0.1)),
     (("motorcycle", "motorbike", "scooter"), _c("motorcycle", "vehicle", "steel", 300, 2.1, 0.9, 0.8, 0.1)),
     (("bicycle", "bike"), _c("bicycle", "vehicle", "aluminium", 150, 1.75, 0.8, 0.7, 0.1)),
