@@ -16,6 +16,8 @@ and [Grok Build](#grok-build) picks the same server up from a project
 
 **Connector reference** (exact fields per sign-in mode, the result and job contracts, limits, troubleshooting): [Grok Bot connector reference](./grok-bot.md)
 
+**The open Grok toolkit** (what three.ws gives each of 14 open-source repositories built around Grok, from xAI's SDKs and plugin marketplace to MetaGPT and LiteLLM, with the command that checks each one): [Grok toolkit](./grok-toolkit.md)
+
 | | |
 |---|---|
 | **URL** | `https://three.ws/api/mcp-grok` |
