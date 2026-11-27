@@ -418,6 +418,63 @@ work (quad remesh, low-poly, FBX and 3MF conversion, and the slicer files
 below) starts from the saved model, because the edit only exists in your
 browser; the format menu says so instead of silently converting the original.
 
+## Optimize on the server: smaller, never worse
+
+Below the mesh tools, **Optimize on the server** makes a lighter copy of the
+saved model. It has three modes:
+
+- **Triangle** (the default) reduces triangles toward the target and caps
+  every texture at the chosen edge. It keeps the UVs, the materials, the
+  texture and any rig, skin or animation, so the result looks like the
+  original. A GLB answers in a few seconds, with no queue.
+- **Quad retopo** rebuilds the surface as clean quads for animation work.
+- **Low-poly** rebuilds a stylized low-poly surface and bakes the texture
+  back onto it.
+
+The result never replaces the original on its own. The panel shows size,
+triangles, textures and rig before and after, and **Original / Optimized**
+switches the viewer between the two. Only **Use optimized** points the
+Download button and later edits at the new file, and **Back to original**
+undoes that.
+
+The default download is a plain GLB that opens in every viewer and engine. Its
+textures are JPEG for colour, and PNG for normal maps and anything that needs
+alpha. **Compatibility** can add a smaller copy beside it: meshopt (with WebP
+textures) for the web, or Draco. Each compressed link names the glTF extensions
+a reader needs, so you know which one to ship where.
+
+The guards are there so a run can only help:
+
+- **Already light.** A model that would not get at least 5% smaller is kept as
+  it is. The panel says why, and nothing is charged against your limit.
+- **Too large.** A GLB over 64 MB or 3,000,000 triangles is refused, and the
+  message states the limit.
+- **Target out of range.** A target is clamped to between 1,000 and 500,000
+  faces, with a note. Quad retopo never asks for more than half the model's
+  triangles, so it cannot inflate a light model.
+- **Rigged models.** Quad retopo and Low-poly rebuild the surface and would
+  drop the skeleton, so they refuse a rigged model and point to Triangle.
+
+The same route serves agents. A triangle GLB optimize answers `200` with the
+finished result straight away, while quad, low-poly and non-GLB outputs answer
+`202` with a job to poll:
+
+```bash
+curl -sX POST https://three.ws/api/forge-remesh \
+  -H 'content-type: application/json' \
+  -d '{"mesh_url":"https://.../model.glb","remesh_mode":"triangle","target_faces":20000,"texture_size":1024,"compression":"meshopt"}'
+# → 200 { "job_id": "opt_...", "status": "done", "noop": false,
+#         "result_url": ".../universal.glb", "compressed_url": ".../meshopt.glb",
+#         "requires": ["EXT_meshopt_compression", "EXT_texture_webp", "KHR_mesh_quantization"],
+#         "before": { "bytes": 2503112, "triangles": 56246, ... },
+#         "after":  { "bytes": 738584,  "triangles": 19998, ... }, "notes": [] }
+```
+
+`compression` accepts `none` (the default), `meshopt` and `draco`. A result that
+is already light comes back with `noop: true`, a `reason`, and `result_url`
+pointing at the original. `GET /api/forge-remesh?job=opt_...` returns the same
+record again.
+
 ## Open in a 3D-printing slicer
 
 The format menu's **Open in OrcaSlicer** and **Open in Bambu Studio** rows,

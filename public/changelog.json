@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-27T05:50:04.560Z",
+	"generated_at": "2026-11-27T05:56:23.871Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -146,6 +146,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Optimize in Forge makes your model smaller without making it look worse",
+			"summary": "The Optimize panel under a finished model used to strip the texture and materials in its default Triangle mode, leaving a grey shape, and Quad retopo could make a light model bigger. Triangle now cuts triangles and right-sizes textures while keeping the UVs, materials, texture and any rig, so a 2.5 MB model came out at 0.74 MB and looked the same. A model that is already light is kept as it is, with a plain note saying why, and it does not count against your limit. The panel shows size, triangles, textures and rig before and after, lets you flip the viewer between the original and the optimized copy, and only switches your download when you press Use optimized (Back to original undoes it). The default download opens everywhere, and a smaller meshopt or Draco copy is offered beside it, labelled with what a viewer needs to open it. Oversized models, out-of-range targets and rigged models in Quad or Low-poly now get a clear message instead of a broken result. Forge Studio uses the same panel.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{

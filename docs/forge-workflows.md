@@ -41,7 +41,7 @@ Ports are typed: **text**, **image** and **mesh**. A link can only join an outpu
 | Load 3D | | mesh | `POST /api/scene-glb-upload` when you upload | A public https `.glb` link, or a GLB file you upload (up to 200 MB). |
 | For Each | | text or image | Nothing (local) | Repeats everything downstream once per item: up to 12 photos or 50 prompts (one per line). |
 | Generate 3D | text, or image plus an optional text hint | mesh | `POST /api/forge`, then `GET /api/forge?job=` and `?progress=` | Text or photo to a textured GLB. The **Engine** list comes from the live catalog (`/api/forge?catalog=1`) with health from `/api/forge?health=1`; **Auto** picks the best free engine. **Quality** is Draft, Standard, or High for $THREE holders. In photo mode the list also offers **Your GPU (Modly)**. |
-| Remesh | mesh | mesh | `POST /api/forge-remesh` | Repair, simplify or convert to triangles, quads or low-poly at a target face count. |
+| Remesh | mesh | mesh | `POST /api/forge-remesh` | Repair, simplify or convert to triangles, quads or low-poly at a target face count. Triangle mode on a GLB keeps the UVs, materials, textures and rig, and keeps a model that is already light as it is (see [Forge](./forge.md#optimize-on-the-server-smaller-never-worse)). |
 | Auto-rig | mesh | mesh | `POST /api/forge?action=rig` | Adds a humanoid skeleton and skin weights. |
 | Segment | mesh | mesh | `POST /api/forge-segment` | Splits the model into parts (auto, connected pieces or sharp creases). |
 | Stylize | mesh | mesh | `POST /api/forge-stylize` | Voxel, brick, Voronoi or low-poly restyle. |
