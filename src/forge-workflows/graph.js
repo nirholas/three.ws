@@ -23,6 +23,12 @@ export const PORT_TYPES = ['image', 'text', 'mesh'];
 
 const MAX_NODES = 200;
 const MAX_EDGES = 600;
+const MAX_COORD = 100000;
+const MAX_TEXT = 200;
+const MAX_TEXTAREA = 20000;
+const MAX_URL = 2048;
+const MAX_PORT_ID = 64;
+const LIVE_OPTION_RE = /^[A-Za-z0-9._:/@-]{0,128}$/;
 
 /** Resolve a node's input ports (a definition may derive them from params). */
 export function inputPorts(def, params = {}) {
@@ -465,17 +471,17 @@ export function parseWorkflow(input, types) {
 
 	const ids = new Set();
 	const nodes = data.nodes.map((raw, i) => {
-		if (!raw || typeof raw.id !== 'string' || !raw.id || ids.has(raw.id)) throw new Error(`Node ${i + 1} has a missing or duplicate id.`);
+		if (!raw || typeof raw.id !== 'string' || !raw.id || raw.id.length > 80 || ids.has(raw.id)) throw new Error(`Node ${i + 1} has a missing or duplicate id.`);
+		if (!Object.prototype.hasOwnProperty.call(types, raw.type)) throw new Error(`Node ${i + 1} uses an unknown type "${String(raw.type).slice(0, 40)}".`);
 		const def = types[raw.type];
-		if (!def) throw new Error(`Node ${i + 1} uses an unknown type "${String(raw.type).slice(0, 40)}".`);
 		ids.add(raw.id);
 		const params = raw.params && typeof raw.params === 'object' && !Array.isArray(raw.params) ? raw.params : {};
 		return {
 			id: raw.id,
 			type: raw.type,
-			x: Number.isFinite(raw.x) ? raw.x : 0,
-			y: Number.isFinite(raw.y) ? raw.y : 0,
-			params: { ...defaultParams(def), ...structuredCloneSafe(params) },
+			x: coord(raw.x),
+			y: coord(raw.y),
+			params: sanitizeParams(def, params),
 		};
 	});
 	const edgeIds = new Set();
@@ -487,8 +493,8 @@ export function parseWorkflow(input, types) {
 		edgeIds.add(id);
 		edges.push({
 			id,
-			from: { node: raw.from.node, port: String(raw.from.port) },
-			to: { node: raw.to.node, port: String(raw.to.port) },
+			from: { node: raw.from.node, port: String(raw.from.port).slice(0, MAX_PORT_ID) },
+			to: { node: raw.to.node, port: String(raw.to.port).slice(0, MAX_PORT_ID) },
 		});
 	}
 	return {
@@ -498,6 +504,67 @@ export function parseWorkflow(input, types) {
 		nodes,
 		edges,
 	};
+}
+
+function coord(v) {
+	return Number.isFinite(v) ? Math.max(-MAX_COORD, Math.min(MAX_COORD, v)) : 0;
+}
+
+function own(obj, k) {
+	return Object.prototype.hasOwnProperty.call(obj, k);
+}
+
+/**
+ * Rebuild a node's params from its definition. Only declared params survive and
+ * each is coerced to its declared kind, so a hand-edited or hostile file can
+ * never carry an extra field (a backend override, a script, a huge blob) into
+ * an executor's request body. A value that does not fit falls back to the
+ * param's default; the user sees that default in the inspector.
+ */
+export function sanitizeParams(def, raw = {}) {
+	const out = {};
+	for (const p of def?.params || []) {
+		const fallback = p.default !== undefined ? structuredCloneSafe(p.default) : undefined;
+		const v = own(raw, p.id) ? raw[p.id] : undefined;
+		const value = v === undefined ? fallback : coerceParam(p, v, fallback);
+		if (value !== undefined) out[p.id] = value;
+	}
+	return out;
+}
+
+function coerceParam(p, v, fallback) {
+	switch (p.kind) {
+		case 'select': {
+			if (typeof p.options === 'function') {
+				// Live catalogs (engines, Modly models) are only known at run time;
+				// preflight checks the value against them. Here it only has to be an id.
+				return typeof v === 'string' && LIVE_OPTION_RE.test(v) ? v : fallback;
+			}
+			return (p.options || []).some((o) => o.value === v) ? v : fallback;
+		}
+		case 'number': {
+			const n = typeof v === 'number' ? v : typeof v === 'string' && v.trim() ? Number(v) : NaN;
+			if (!Number.isFinite(n)) return fallback;
+			let c = n;
+			if (Number.isFinite(p.min)) c = Math.max(p.min, c);
+			if (Number.isFinite(p.max)) c = Math.min(p.max, c);
+			return c;
+		}
+		case 'text':
+		case 'textarea':
+			return typeof v === 'string' ? v.slice(0, p.maxLength || (p.kind === 'text' ? MAX_TEXT : MAX_TEXTAREA)) : fallback;
+		case 'mesh-url':
+			return typeof v === 'string' ? v.slice(0, MAX_URL) : fallback;
+		case 'checkbox':
+			return typeof v === 'boolean' ? v : fallback;
+		case 'images':
+			return (Array.isArray(v) ? v : [])
+				.filter((i) => i && typeof i === 'object' && typeof i.url === 'string' && i.url.length <= MAX_URL && /^https:\/\/\S+$/i.test(i.url))
+				.slice(0, p.max || 12)
+				.map((i) => ({ url: i.url, name: typeof i.name === 'string' && i.name.trim() ? i.name.slice(0, MAX_TEXT) : 'photo' }));
+		default:
+			return v === null || typeof v !== 'object' ? v : fallback;
+	}
 }
 
 /** Deep copy with fresh ids (used when a template is instantiated). */

@@ -392,6 +392,8 @@ describe('serialization', () => {
 		expect(() => parseWorkflow({ kind: 'other' }, T)).toThrow(/not a Forge workflow/);
 		expect(() => parseWorkflow({ kind: WORKFLOW_KIND, version: 99, nodes: [], edges: [] }, T)).toThrow(/newer version/);
 		expect(() => parseWorkflow({ kind: WORKFLOW_KIND, version: 1, nodes: [{ id: 'a', type: 'teleport' }], edges: [] }, T)).toThrow(/unknown type/);
+		expect(() => parseWorkflow({ kind: WORKFLOW_KIND, version: 1, nodes: [{ id: 'a', type: 'constructor' }], edges: [] }, T)).toThrow(/unknown type/);
+		expect(() => parseWorkflow({ kind: WORKFLOW_KIND, version: 1, nodes: [{ id: 'a', type: 'toString' }], edges: [] }, T)).toThrow(/unknown type/);
 		expect(() => parseWorkflow({ kind: WORKFLOW_KIND, version: 1, nodes: [{ id: 'a', type: 'rig' }, { id: 'a', type: 'rig' }], edges: [] }, T)).toThrow(/duplicate id/);
 	});
 
@@ -409,5 +411,107 @@ describe('serialization', () => {
 		expect(w.name).toBe('Imported workflow');
 		expect(w.nodes[0]).toMatchObject({ x: 0, y: 0, params: { mode: 'text', engine: 'auto', tier: 'draft' } });
 		expect(w.edges).toEqual([]);
+	});
+
+	it('drops unexpected fields from an imported file instead of carrying them into a run', () => {
+		const hostile = JSON.stringify({
+			kind: WORKFLOW_KIND,
+			version: 1,
+			name: 'x'.repeat(500),
+			script: 'alert(1)',
+			nodes: [
+				{
+					id: 'g',
+					type: 'generate',
+					x: 1e308,
+					y: -Infinity,
+					onRun: 'fetch("https://evil.example")',
+					params: {
+						mode: 'teleport',
+						tier: 'ultra',
+						engine: 'x'.repeat(5000),
+						backend: 'paid_lane',
+						__proto__: { polluted: true },
+						constructor: { prototype: { polluted: true } },
+					},
+				},
+				{ id: 'r', type: 'remesh', params: { targetFaces: '99999999', textureSize: 'huge', extra: [1, 2, 3] } },
+				{ id: 'p', type: 'prompt', params: { text: 'y'.repeat(5000) } },
+				{ id: 'i', type: 'image', params: { images: [{ url: 'javascript:alert(1)', name: 'a' }, { url: 'https://three.ws/a.png', name: 7, extra: 1 }, 'nope'] } },
+				{ id: 'x', type: 'export', params: { autoDownload: 'yes', filename: { evil: true } } },
+			],
+			edges: [{ id: 'e', from: { node: 'p', port: 'text', evil: 1 }, to: { node: 'g', port: 'prompt' }, handler: 'x' }],
+		});
+		const w = parseWorkflow(hostile, T);
+		expect(Object.keys(w).sort()).toEqual(['edges', 'kind', 'name', 'nodes', 'version']);
+		expect(w.name.length).toBeLessThanOrEqual(120);
+		for (const n of w.nodes) {
+			expect(Object.keys(n).sort()).toEqual(['id', 'params', 'type', 'x', 'y']);
+			const declared = new Set(T[n.type].params.map((p) => p.id));
+			for (const k of Object.keys(n.params)) expect(declared.has(k)).toBe(true);
+			expect(Math.abs(n.x)).toBeLessThanOrEqual(100000);
+			expect(Math.abs(n.y)).toBeLessThanOrEqual(100000);
+		}
+		const g = w.nodes.find((n) => n.id === 'g').params;
+		expect(g.mode).toBe('text');
+		expect(g.tier).toBe('draft');
+		expect(g.engine).toBe('auto');
+		expect(g).not.toHaveProperty('backend');
+		expect({}.polluted).toBeUndefined();
+		expect(Object.prototype.hasOwnProperty.call(g, '__proto__')).toBe(false);
+
+		const r = w.nodes.find((n) => n.id === 'r').params;
+		expect(r.targetFaces).toBe(500000);
+		expect(r.textureSize).toBe(defaults('remesh').textureSize);
+		expect(r).not.toHaveProperty('extra');
+
+		expect(w.nodes.find((n) => n.id === 'p').params.text.length).toBe(1000);
+		expect(w.nodes.find((n) => n.id === 'i').params.images).toEqual([{ url: 'https://three.ws/a.png', name: 'photo' }]);
+		const x = w.nodes.find((n) => n.id === 'x').params;
+		expect(x.autoDownload).toBe(true);
+		expect(x.filename).toBe(defaults('export').filename);
+		expect(w.edges).toEqual([{ id: 'e', from: { node: 'p', port: 'text' }, to: { node: 'g', port: 'prompt' } }]);
+	});
+
+	it('keeps every value a real template saved, so sanitizing never changes a legitimate file', () => {
+		for (const t of TEMPLATES) {
+			const w = instantiateTemplate(t.id);
+			const back = parseWorkflow(serializeWorkflow(w, T), T);
+			expect(back.nodes.map((n) => n.params)).toEqual(w.nodes.map((n) => n.params));
+		}
+	});
+});
+
+describe('execution order', () => {
+	it('every template orders each link source before its target', () => {
+		for (const t of TEMPLATES) {
+			const w = instantiateTemplate(t.id);
+			const { order, cycle } = topoSort(w);
+			expect(cycle).toEqual([]);
+			expect(order).toHaveLength(w.nodes.length);
+			const at = new Map(order.map((id, i) => [id, i]));
+			for (const e of w.edges) expect(at.get(e.from.node)).toBeLessThan(at.get(e.to.node));
+		}
+	});
+
+	it('orders a diamond so the join runs after both branches', () => {
+		const w = wf(
+			[
+				['p', 'prompt', 0, 0, { text: 'a' }],
+				['g', 'generate', 100, 0],
+				['r', 'rig', 200, -100],
+				['m', 'remesh', 200, 100],
+				['v', 'preview', 300, -100],
+				['x', 'export', 300, 100],
+			],
+			[
+				['p', 'text', 'g', 'prompt'],
+				['g', 'mesh', 'r', 'mesh'],
+				['g', 'mesh', 'm', 'mesh'],
+				['r', 'mesh', 'v', 'mesh'],
+				['m', 'mesh', 'x', 'mesh'],
+			],
+		);
+		expect(topoSort(w).order).toEqual(['p', 'g', 'r', 'm', 'v', 'x']);
 	});
 });
