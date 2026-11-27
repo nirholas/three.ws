@@ -20,6 +20,7 @@ import { fetchTokenConfig, payWithToken, settleTokenPayment } from './token-pay.
 import { rememberPaidProof, unspentPaidProof, forgetPaidProof } from './shared/forge-paid-proofs.js';
 import { paymentRecipients, recipientsHtml } from './shared/forge-pay-recipients.js';
 import { ensureRiskAck } from './shared/risk-ack.js';
+import { leaveAppForPayment } from './shared/native-handoff.js';
 
 // Callers report a proof the server redeemed or refused, so it is never offered again.
 export { forgetPaidProof };
@@ -203,6 +204,9 @@ export async function payForConsumption({
 	// no second charge. A stale one is refused by the server and forgotten there.
 	const saved = unspentPaidProof({ kind: refPrefix, usd });
 	if (saved) return { ok: true, ...saved, reused: true };
+	// Inside the three.ws iOS app the payment runs in Safari instead (App Review
+	// 3.1.1); the app shows its own hand-off sheet, so stop here.
+	if (leaveAppForPayment()) return { ok: false, cancelled: true };
 	// A rail that is not switched on gets the honest sheet straight away: there
 	// is nothing to acknowledge when no payment can be taken.
 	const { ready, recipients } = await consumptionRailReady();
