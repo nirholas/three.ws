@@ -67,6 +67,39 @@
       ],
       "rows": 50,
       "finishedAt": "2026-11-27T20:32:45.371Z"
+    },
+    {
+      "startedAt": "2026-11-27T20:34:09.860Z",
+      "commit": "a6d31179e",
+      "lanes": [
+        "grok",
+        "grok_budget"
+      ],
+      "tasks": [
+        "forge_director",
+        "agent_tools",
+        "agent_chat",
+        "x_reply",
+        "agent_spec"
+      ],
+      "rows": 450,
+      "finishedAt": "2026-11-27T21:13:53.358Z"
+    },
+    {
+      "startedAt": "2026-11-27T21:14:10.242Z",
+      "commit": "74c65ccb3",
+      "lanes": [
+        "grok"
+      ],
+      "tasks": [
+        "forge_director",
+        "agent_tools",
+        "agent_chat",
+        "x_reply",
+        "agent_spec"
+      ],
+      "rows": 6,
+      "finishedAt": "2026-11-27T21:22:35.972Z"
     }
   ],
   "keyProbe": {
