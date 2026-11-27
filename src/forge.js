@@ -51,7 +51,9 @@ import { mountSeedField } from './forge-seed-field.js';
 import { rememberFromResponse } from './shared/forge-manage-tokens.js';
 import { signedInForUploads, isSignInRequired, renderUploadSignIn, renderCreateSignIn, uploadSignInUrl, UPLOAD_SIGN_IN_SHORT } from './shared/upload-sign-in.js';
 import { classifyThrottle, createThrottlePanel } from './forge-throttle.js';
-import { forgeErrorFromResponse, forgeJobFailedError, announceForgeError, forgeErrorDescriptor, forgeUploadFailure, forgeCopyError } from './forge-errors.js';
+import { forgeErrorFromResponse, forgeJobFailedError, announceForgeError, forgeErrorDescriptor, forgeCopyError } from './forge-errors.js';
+import { normalizeForgeImage } from './shared/forge-image-normalize.js';
+import { uploadForgePhoto } from './shared/forge-upload-client.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -94,8 +96,6 @@ const POLL_HIDDEN_PAUSE_MS = 60_000;
 // views" copy, and the fill logic can never disagree about how many exist.
 const VIEW_LABELS = ['Front', 'Back', 'Left', 'Right', 'Top', '3/4'];
 const MAX_VIEWS = VIEW_LABELS.length;
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
-const ACCEPTED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 const els = {
 	form: document.getElementById('composer'),
@@ -1410,10 +1410,12 @@ function buildSlots() {
 			e.stopPropagation();
 			clearSlot(i);
 		});
-		// Retry re-opens the picker for this slot.
+		// Retry re-sends the same photo when the upload can succeed on a second
+		// try; after a refusal (not a photo, too small) it opens the picker.
 		slot.querySelector('.vs-retry').addEventListener('click', (e) => {
 			e.stopPropagation();
-			openPicker(i);
+			if (slots[i].retry) slots[i].retry();
+			else openPicker(i);
 		});
 
 		// Click empty/error → browse for this slot (never a slot past the active
@@ -1524,6 +1526,7 @@ function renderSlot(i) {
 		img.alt = '';
 	}
 	el.querySelector('.vs-error-msg').textContent = s.errorMsg || 'Upload failed';
+	el.querySelector('.vs-retry').textContent = s.state === 'error' && !s.retry ? 'Choose another' : 'Retry';
 	if (s.state === 'preparing') {
 		el.querySelector('.vs-preparing-text').textContent = s.progressText || 'Checking photo…';
 		const bar = el.querySelector('.vs-preparing-bar');
@@ -1602,8 +1605,10 @@ function openPicker(index) {
 
 // Distribute dropped/picked files into slots, starting at `startIndex` (or the
 // first free slot when null), filling free slots up to the active engine's cap.
+// Every file goes through; uploadToSlot judges it by its bytes, so a HEIC the
+// system labeled with no type is converted and a PDF named .jpg is refused there.
 function handleFiles(startIndex, fileList) {
-	const files = Array.from(fileList).filter((f) => f && f.type && f.type.startsWith('image/'));
+	const files = Array.from(fileList).filter(Boolean);
 	if (!files.length) return;
 	const cap = activeMaxImages();
 	const busy = startIndex != null && (slots[startIndex]?.state === 'preparing' || slots[startIndex]?.state === 'uploading');
@@ -1616,52 +1621,12 @@ function handleFiles(startIndex, fileList) {
 	}
 }
 
-// Presign → PUT to object storage → public URL. Shared by the view slots and
-// the sketch uploader. Returns { ok: true, url } or { ok: false, message }.
-async function presignAndPut(file) {
-	// Two legs, two catches on purpose. The presign leg is same-origin, so a
-	// throw there really is the user's connection. The PUT leg is cross-origin to
-	// the bucket, where a rejected credential or a missing CORS rule answers 403
-	// with no Access-Control-Allow-Origin, and the browser hands us a rejected
-	// promise with no status to read. Reporting that as a network fault (one
-	// shared catch, as this had until 2026-09-08) blames the user's phone for our
-	// outage and sends them into an endless Retry loop.
-	let presign;
-	let presignRes;
-	try {
-		presignRes = await fetch('/api/forge-upload', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json', ...CLIENT_HEADERS },
-			body: JSON.stringify({ content_type: file.type, size_bytes: file.size }),
-		});
-		presign = await presignRes.json().catch(() => ({}));
-	} catch {
-		return forgeUploadFailure(0, {});
-	}
-
-	// The server distinguishes "this deployment has no storage" (unconfigured)
-	// from "our storage is refusing us right now" (storage_unavailable); the copy
-	// map (src/forge-errors.js) says which, and only the second asks for a retry.
-	if (presignRes.status === 503 || presignRes.status === 429) return forgeUploadFailure(presignRes.status, presign);
-	if (isSignInRequired(presignRes.status, presign)) {
-		showUploadSignIn();
-		return { ok: false, message: UPLOAD_SIGN_IN_SHORT };
-	}
-	if (!presignRes.ok || !presign.upload_url || !presign.public_url) {
-		return forgeUploadFailure(presignRes.status, presignRes.ok ? { error: 'presign_failed' } : presign);
-	}
-
-	try {
-		const putRes = await fetch(presign.upload_url, {
-			method: 'PUT',
-			headers: { 'content-type': file.type },
-			body: file,
-		});
-		if (!putRes.ok) return forgeUploadFailure(putRes.status, { error: 'upload_rejected' });
-		return { ok: true, url: presign.public_url };
-	} catch {
-		return forgeUploadFailure(0, { error: 'upload_rejected' });
-	}
+// Presign → PUT to object storage → public URL, shared by the view slots and
+// the sketch uploader (src/shared/forge-upload-client.js, the same client Forge
+// Studio uses). Resolves { ok: true, url } or { ok: false, message, detail,
+// retryable }.
+function presignAndPut(file) {
+	return uploadForgePhoto(file, { headers: CLIENT_HEADERS, onSignIn: showUploadSignIn });
 }
 
 // Progress copy for the on-device check, from the worker's real events.
@@ -1738,26 +1703,34 @@ async function photoPrepGate(index, file, objectUrl) {
 	return outcome.file;
 }
 
-// Upload one file into a slot: on-device check and review, then presign → PUT
-// to object storage → record the public URL. The slot moves empty/error →
-// preparing → uploading → uploaded|error, each a real, designed state. The
-// local blob preview shows immediately.
+// Upload one file into a slot: read and, when needed, convert it on the device
+// (src/shared/forge-image-normalize.js: HEIC, AVIF, GIF, sideways and oversize
+// photos become an upright JPEG or WebP under 8 MB; a photo that already works
+// is passed through untouched), then the on-device check and review, then
+// presign → PUT to object storage → record the public URL. The slot moves
+// empty/error → preparing → uploading → uploaded|error, each a real, designed
+// state. The local blob preview shows as soon as the photo is readable.
 async function uploadToSlot(index, file) {
-	if (!ACCEPTED_TYPES.has(file.type)) {
-		setSlotError(index, 'Use PNG, JPG, or WebP.');
-		return;
-	}
-	if (file.size === 0) {
-		setSlotError(index, 'File is empty.');
-		return;
-	}
+	const original = file;
 	if (!(await requireUploadAccount())) {
-		setSlotError(index, UPLOAD_SIGN_IN_SHORT);
+		setSlotError(index, UPLOAD_SIGN_IN_SHORT, () => uploadToSlot(index, original));
 		return;
 	}
 
 	const prev = slots[index];
 	if (prev.objectUrl) URL.revokeObjectURL(prev.objectUrl);
+	const reading = {};
+	slots[index] = { state: 'preparing', url: null, objectUrl: null, errorMsg: '', progressText: 'Reading photo…', progress: null, reading };
+	renderSlot(index);
+	const ready = await normalizeForgeImage(file);
+	if (slots[index].reading !== reading) return; // removed or replaced while reading
+	if (!ready.ok) {
+		slots[index] = { state: 'error', url: null, objectUrl: null, errorMsg: ready.short };
+		renderSlot(index);
+		setPhotoPrepNote(ready.message);
+		return;
+	}
+	file = ready.file;
 	let objectUrl = URL.createObjectURL(file);
 	const picked = await photoPrepGate(index, file, objectUrl);
 	if (!picked) return;
@@ -1766,18 +1739,21 @@ async function uploadToSlot(index, file) {
 		objectUrl = URL.createObjectURL(picked);
 		file = picked;
 	}
-	// Checked after the review: a large original often becomes a small prepared image.
-	if (file.size > MAX_UPLOAD_BYTES) {
-		slots[index] = { ...slots[index], objectUrl };
-		setSlotError(index, 'Too large (max 8 MB).');
-		return;
-	}
+	if (ready.note) setPhotoPrepNote([els.photoPrepNote?.textContent, `${VIEW_LABELS[index]} photo: ${ready.note}`].filter(Boolean).join(' '));
+	await putToSlot(index, file, objectUrl);
+}
+
+// The upload leg alone, so Retry re-sends the photo already prepared and
+// reviewed instead of walking the person through the check again.
+async function putToSlot(index, file, objectUrl) {
 	slots[index] = { state: 'uploading', url: null, objectUrl, errorMsg: '' };
 	renderSlot(index);
 
 	const up = await presignAndPut(file);
+	if (slots[index].objectUrl !== objectUrl) return; // removed while uploading
 	if (!up.ok) {
-		setSlotError(index, up.message);
+		setSlotError(index, up.message, up.retryable ? () => putToSlot(index, file, objectUrl) : null);
+		if (up.detail && up.detail !== up.message) setPhotoPrepNote(up.detail);
 		return;
 	}
 	// Success — keep the local blob preview, remember the public URL.
@@ -1785,7 +1761,9 @@ async function uploadToSlot(index, file) {
 	renderSlot(index);
 }
 
-function setSlotError(index, message) {
+// `retry`, when given, is what the tile's Retry button does (re-send the same
+// photo); without it Retry opens the picker.
+function setSlotError(index, message, retry = null) {
 	const s = slots[index];
 	// Keep any local preview so the user sees what failed.
 	slots[index] = {
@@ -1793,6 +1771,7 @@ function setSlotError(index, message) {
 		url: null,
 		objectUrl: s.objectUrl || null,
 		errorMsg: message,
+		retry,
 	};
 	renderSlot(index);
 }
@@ -1838,7 +1817,8 @@ function buildSketchSlot() {
 	});
 	slot.querySelector('.vs-retry').addEventListener('click', (e) => {
 		e.stopPropagation();
-		openSketchPicker();
+		if (sketch.state === 'error' && sketch.retry) sketch.retry();
+		else openSketchPicker();
 	});
 	slot.addEventListener('click', () => {
 		if (sketch.state === 'empty' || sketch.state === 'error') openSketchPicker();
@@ -1896,27 +1876,23 @@ function renderSketchSlot() {
 
 function clearSketch() {
 	if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
-	Object.assign(sketch, { state: 'empty', url: null, objectUrl: null, errorMsg: '' });
+	Object.assign(sketch, { state: 'empty', url: null, objectUrl: null, errorMsg: '', retry: null });
 	setSketchGuardNote('');
 	renderSketchSlot();
 }
 
 async function uploadSketch(file) {
-	if (!ACCEPTED_TYPES.has(file.type)) {
-		Object.assign(sketch, { state: 'error', url: null, errorMsg: 'Use PNG, JPG, or WebP.' });
+	// Same intake as the photo slots: judged by its bytes, converted when the
+	// lane could not read it as is, refused with a reason otherwise.
+	const ready = await normalizeForgeImage(file);
+	if (!ready.ok) {
+		if (sketch.objectUrl) URL.revokeObjectURL(sketch.objectUrl);
+		Object.assign(sketch, { state: 'error', url: null, objectUrl: null, errorMsg: ready.short, retry: null });
 		renderSketchSlot();
+		setSketchGuardNote(ready.message);
 		return;
 	}
-	if (file.size === 0) {
-		Object.assign(sketch, { state: 'error', url: null, errorMsg: 'File is empty.' });
-		renderSketchSlot();
-		return;
-	}
-	if (file.size > MAX_UPLOAD_BYTES) {
-		Object.assign(sketch, { state: 'error', url: null, errorMsg: 'Too large (max 8 MB).' });
-		renderSketchSlot();
-		return;
-	}
+	file = ready.file;
 	// A blank page, a dot or a scribble over the whole frame gives the sketch
 	// model nothing to build from. Say so here, before the file reaches storage
 	// and before a generation slot is spent on it.
@@ -1936,7 +1912,7 @@ async function uploadSketch(file) {
 
 async function sendSketch(file) {
 	if (!(await requireUploadAccount())) {
-		Object.assign(sketch, { state: 'error', url: null, errorMsg: UPLOAD_SIGN_IN_SHORT });
+		Object.assign(sketch, { state: 'error', url: null, errorMsg: UPLOAD_SIGN_IN_SHORT, retry: () => sendSketch(file) });
 		renderSketchSlot();
 		return { ok: true };
 	}
@@ -1946,13 +1922,14 @@ async function sendSketch(file) {
 		url: null,
 		objectUrl: URL.createObjectURL(file),
 		errorMsg: '',
+		retry: null,
 	});
 	setSketchGuardNote('');
 	renderSketchSlot();
 
 	const up = await presignAndPut(file);
 	if (up.ok) Object.assign(sketch, { state: 'uploaded', url: up.url, errorMsg: '' });
-	else Object.assign(sketch, { state: 'error', url: null, errorMsg: up.message });
+	else Object.assign(sketch, { state: 'error', url: null, errorMsg: up.message, retry: up.retryable ? () => sendSketch(file) : null });
 	renderSketchSlot();
 	return { ok: true };
 }
