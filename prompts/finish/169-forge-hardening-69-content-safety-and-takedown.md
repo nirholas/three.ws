@@ -1,5 +1,7 @@
 # Forge hardening 69: Make sure Forge refuses what it must, and that removal requests actually remove
 
+**Status (2026-11-27):** Done and tested on the real schema (gate with the provider down, refusal copy, removal handler, repeat-abuse hold, takedown reach across thumbnails, game-ready exports, avatar copies, Sketchfab listing and cache paths). Left open for the owner: run `npm run forge:takedown -- <id> --prod-env` once WITHOUT `--apply` on a real model to read the plan against production, then deploy (nothing here is pushed or deployed). The takedown script itself was only syntax-checked, never run against production, because a real removal cannot be undone.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/169-forge-hardening-69-content-safety-and-takedown.md`.
 
 **Priority:** P0. **Area:** safety: what Forge will make and how it is removed. **Dev port:** 4169. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
