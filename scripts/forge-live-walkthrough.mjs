@@ -823,7 +823,18 @@ async function main() {
 					if (list.length > 200) list.splice(0, list.length - 200);
 				};
 				v.addEventListener('load', () => log('load', ''));
-				v.addEventListener('error', (e) => log('error', JSON.stringify(e.detail ?? {}).slice(0, 300)));
+				// An Error (or an image's error Event) stringifies to {}, which hides the
+				// cause; spell out its name, message and the failing request instead.
+				v.addEventListener('error', (e) => {
+					const src = e.detail?.sourceError;
+					const cause = src && {
+						name: src.name || src.constructor?.name || typeof src,
+						message: src.message || (src.type ? `${src.type} event` : String(src)),
+						...(src.target?.src ? { target: String(src.target.src).slice(0, 160) } : {}),
+						...(src.stack ? { stack: String(src.stack).split('\n').slice(0, 4).join(' | ') } : {}),
+					};
+					log('error', JSON.stringify({ type: e.detail?.type, ...(cause ? { sourceError: cause } : {}) }).slice(0, 600));
+				});
 				v.addEventListener('progress', (e) => log('progress', String(e.detail?.totalProgress ?? '')));
 			};
 			new MutationObserver(hook).observe(document, { childList: true, subtree: true });

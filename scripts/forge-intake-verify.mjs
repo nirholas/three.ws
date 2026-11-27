@@ -92,8 +92,9 @@ async function clearSlots(page) {
 	});
 }
 
-async function waitForOutcome(page, puts, toasts) {
+async function waitForOutcome(page, puts, toasts, loadsNow) {
 	const started = Date.now();
+	const loadsAtStart = loadsNow();
 	let sawChange = false;
 	const timeline = [];
 	let last = '';
@@ -104,6 +105,8 @@ async function waitForOutcome(page, puts, toasts) {
 			await use.first().click();
 		}
 		const s = await slotState(page);
+		// A dev-server reload empties the slot without an error; run the row again.
+		if (loadsNow() !== loadsAtStart) throw new Error('navigation: the page reloaded during the row');
 		const key = `${s.state}|${s.message}|${s.preparing}`;
 		if (key !== last) {
 			timeline.push({ t: Date.now() - started, state: s.state, ...(s.state === 'preparing' ? { text: s.preparing } : {}) });
@@ -129,6 +132,11 @@ async function main() {
 	const page = await context.newPage();
 	const errors = [];
 	page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`));
+	// Counts every load of the page itself, so a row can tell it was reloaded under it.
+	let pageLoads = 0;
+	page.on('framenavigated', (frame) => {
+		if (frame === page.mainFrame()) pageLoads++;
+	});
 	page.on('console', (msg) => {
 		if (msg.type() === 'error') errors.push(`console: ${msg.text()}`);
 	});
@@ -200,12 +208,12 @@ async function main() {
 	// The dev server reloads the page when any watched file changes (other work
 	// in the same tree does that, and an API edit restarts the whole server),
 	// which destroys the page mid-row. Re-open it and run that row again, up to
-	// twice, and say so in the results.
+	// four times, and say so in the results.
 	const navigated = (err) => /Execution context was destroyed|navigation|Target page, context or browser has been closed|Timeout .*exceeded/.test(String(err?.message || err));
 	async function attempt(run) {
 		await clearSlots(page);
 		await run();
-		return waitForOutcome(page, puts, toasts);
+		return waitForOutcome(page, puts, toasts, () => pageLoads);
 	}
 	async function record(path, item, run) {
 		const putsBefore = puts.length;
@@ -217,7 +225,7 @@ async function main() {
 				outcome = await attempt(run);
 				if (tries) outcome.retriedAfterReload = true;
 			} catch (err) {
-				if (!navigated(err) || tries >= 2) throw err;
+				if (!navigated(err) || tries >= 4) throw err;
 				reloads++;
 				// A server mid-restart can miss this load too; the next attempt
 				// then fails the same way and counts against the same limit.
