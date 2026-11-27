@@ -2254,7 +2254,7 @@ provider answers at all it **fails open** (`verdict.pass: true`,
 and any critical structural defect (blob, incomplete, duplicated, floating
 fragments) fails the gate regardless of score. `retry` is `null` when the model
 passes, when QA was unavailable (never retry on an outage), or when the retry cap
-(`FORGE_QUALITY_MAX_RETRIES`, default 2) is reached. The same logic is importable
+(`FORGE_QUALITY_MAX_RETRIES`, default 1) is reached. The same logic is importable
 for server-side use as `runQualityGate` + `buildRetryDirective` from
 `api/_lib/forge-quality-gate.js` — the generation router uses it directly.
 
@@ -2278,11 +2278,55 @@ transform before taking the bounding box, because a meshopt or
 `KHR_mesh_quantization` file stores integer positions and relies on the node scale to
 get back to metres, so raw accessor min/max can be off by orders of magnitude.
 
-On a failing verdict the router runs a bounded best-of retry
-(`FORGE_QUALITY_GATE_MAX_RETRIES`, default 1, clamped 0-2), keeping the
-higher-scoring result. The delivered generation carries a `quality` (deterministic)
-and, when scored, a `quality_gate` (vision verdict) field: the `/forge` result bar
-renders these as a **Verified NN% / Low NN% / Checked** confidence chip.
+**Automatic retry on the synchronous lanes.** The free NVIDIA NIM text lane and
+the Hugging Face photo lane finish inside the request, and run one quality stage
+on the model before answering (`api/_lib/forge-quality-stage.js`, wired through
+`api/_lib/forge-quality-lanes.js`):
+
+1. The cheap deterministic check runs first. A broken or degenerate mesh asks for
+   a retry with no vision call at all.
+2. Otherwise the vision judge scores it, when `FORGE_QUALITY_GATE` puts it in
+   scope. Every scoring in one request shares one time budget
+   (`FORGE_QUALITY_STAGE_BUDGET_MS`, default 30000). A judge that is unreachable,
+   slow past the budget, or answers something that is not a verdict counts as
+   "no verdict": the model ships as is, with `quality_gate.qa_available: false`,
+   and no retry is spent on it.
+3. At most **one** automatic retry per request (`FORGE_QUALITY_GATE_MAX_RETRIES`,
+   default 1, clamped 0-1), whichever check asked for it. It is skipped when the
+   lane is busy (NIM cooling down or at its fleet cap of
+   `FORGE_NIM_QUALITY_RETRY_MAX` concurrent retries, default 4; no free Hugging
+   Face slot) and when the caller has one generation or fewer left in their
+   allowance.
+4. The retry is not counted against the caller: it takes no second allowance
+   charge and records no second funnel start or completion.
+5. Both attempts are compared and the **better** one is delivered. The losing
+   attempt's row is retired, so it never appears in the gallery. The response is
+   written only after this, so a model the caller has already seen is never
+   swapped.
+
+The async lanes (self-host TRELLIS, Hunyuan3D, hosted NVIDIA TRELLIS) are scored
+once on poll and never retried.
+
+The delivered generation carries a `quality` (deterministic) and, when scored, a
+`quality_gate` (vision verdict) field: the `/forge` result bar renders these as a
+**Verified NN% / Low NN% / Checked** confidence chip. When the stage retried, or
+wanted to and declined, the response also carries `quality_retry`:
+
+```json
+{
+  "ran": true,
+  "kept": "first",
+  "reason": "vision",
+  "declined": null,
+  "message": "The first attempt did not pass the automatic quality check. It was regenerated once, and Forge kept the first result because it was the better of the two."
+}
+```
+
+`kept` is `first` or `retry`; `declined` is `busy`, `allowance` or `retry_failed`
+when no retry ran. The `/forge` result bar shows it as a second chip
+(**Regenerated once / Kept first of two / Not regenerated / Retry did not
+finish**) whose tooltip and accessible name are the full `message`.
+`quality_retried` (boolean) stays for older clients.
 
 **Errors**
 

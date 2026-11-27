@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-27T05:45:31.102Z",
+	"generated_at": "2026-11-27T05:50:04.762Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4780,
+	"total": 4781,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -138,6 +138,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-27",
+			"type": "update",
+			"title": "Forge's quality check can only improve your model now, and tells you when it stepped in",
+			"summary": "When a free Forge model looks broken or misses the prompt, Forge quietly makes it once more before showing it to you. That second try now follows strict rules. It happens at most once per model, never twice. It never counts against your generation limit, and Forge skips it when you are down to your last generation or when the service is busy. Forge compares both attempts and shows you the better one, instead of simply the newer one. If the checker itself is slow, down or gives a garbled answer, your model is delivered on time as it is. A small label next to the quality badge now says what happened, for example \"Regenerated once\" or \"Kept first of two\", and hovering or focusing it explains why.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -1555,16 +1566,6 @@
 			"title": "Docs · OneDrive and SharePoint in Forge",
 			"summary": "Pick source photos from OneDrive or SharePoint in Forge and save finished 3D models back to your Microsoft files.",
 			"link": "/docs/onedrive",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-16",
-			"type": "launch",
-			"title": "Docs · OpenUSD export (simulation-ready)",
-			"summary": "Export a Forge model or any public GLB as validated OpenUSD for NVIDIA Omniverse and Isaac Sim: convex collision hulls, a rigid body with mass from volume times density, semantic labels and skeletons, from the Forge menu, the API or the MCP tool.",
-			"link": "/docs/openusd-export",
 			"tags": [
 				"launch"
 			]

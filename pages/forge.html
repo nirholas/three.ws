@@ -1495,6 +1495,43 @@
 				display: none;
 			}
 
+			/* What the automatic quality retry did. Short label, the full sentence
+			   is the tooltip and accessible name; focusable so keyboard users reach
+			   it. Ran reads accent, declined reads quiet. */
+			.quality-retry-chip {
+				display: inline-flex;
+				align-items: center;
+				font-family: var(--font-mono);
+				font-size: 0.62rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				border-radius: 999px;
+				padding: 1px 8px;
+				margin-left: 0.4rem;
+				border: 1px dashed var(--stroke);
+				color: var(--ink-dim);
+				cursor: help;
+				transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+			}
+			.quality-retry-chip[data-kind='ran'] {
+				color: var(--ink);
+				border-style: solid;
+			}
+			.quality-retry-chip:hover {
+				color: var(--ink);
+				border-color: var(--ink-dim);
+			}
+			.quality-retry-chip:active {
+				background: color-mix(in srgb, var(--ink) 8%, transparent);
+			}
+			.quality-retry-chip:focus-visible {
+				outline: 2px solid var(--accent, currentColor);
+				outline-offset: 2px;
+			}
+			.quality-retry-chip.is-hidden {
+				display: none;
+			}
+
 			/* Example chips ------------------------------------------------ */
 			/* A grid, not a wrapping flex row: every chip owns a cell whose position
 			   depends only on the container width. The labels are replaced by random
@@ -4613,6 +4650,7 @@
 							id="result-quality"
 							title="Automated quality check"
 						 data-i18n-attr="title:forge.automated_quality_check_title"></span>
+						<span class="quality-retry-chip is-hidden" id="result-quality-retry" role="note" tabindex="0"></span>
 						<div class="actions">
 							<button
 								class="btn btn--ghost"

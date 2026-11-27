@@ -155,6 +155,7 @@ const els = {
 	resultCreator: document.getElementById('result-creator'),
 	resultViews: document.getElementById('result-views'),
 	resultQuality: document.getElementById('result-quality'),
+	resultQualityRetry: document.getElementById('result-quality-retry'),
 	verdict: document.getElementById('verdict'),
 	download: document.getElementById('download'),
 	quote: document.getElementById('forge-quote'),
@@ -2564,6 +2565,7 @@ function setQualityBadge(meta) {
 		el.textContent = '';
 		el.title = 'Automated quality check';
 	};
+	setQualityRetryChip(meta?.quality_retry);
 	const gate = meta?.quality_gate;
 	// A real vision verdict: qa_available and a numeric score.
 	if (gate && gate.qa_available !== false && Number.isFinite(Number(gate.score))) {
@@ -2592,6 +2594,38 @@ function setQualityBadge(meta) {
 		return;
 	}
 	hide();
+}
+
+// What the automatic quality retry did for this model (quality_retry on a done
+// response from the synchronous lanes). The server writes the full sentence;
+// the chip shows a short label and carries that sentence as its accessible name
+// and tooltip, so a regenerated or kept-first model is never shown silently.
+const QUALITY_RETRY_LABELS = {
+	retry: 'Regenerated once',
+	first: 'Kept first of two',
+	busy: 'Not regenerated',
+	allowance: 'Not regenerated',
+	retry_failed: 'Retry did not finish',
+};
+function setQualityRetryChip(retry) {
+	const el = els.resultQualityRetry;
+	if (!el) return;
+	const key = retry?.ran ? retry.kept : retry?.declined;
+	const label = key ? QUALITY_RETRY_LABELS[key] : null;
+	const message = typeof retry?.message === 'string' ? retry.message : '';
+	if (!label || !message) {
+		el.classList.add('is-hidden');
+		el.removeAttribute('data-kind');
+		el.removeAttribute('aria-label');
+		el.textContent = '';
+		el.title = '';
+		return;
+	}
+	el.dataset.kind = retry.ran ? 'ran' : 'declined';
+	el.textContent = label;
+	el.title = message;
+	el.setAttribute('aria-label', `${label}. ${message}`);
+	el.classList.remove('is-hidden');
 }
 
 // Materialize entrance — conceal the standing viewer, play the WebGL dissolve
@@ -3504,6 +3538,7 @@ async function run(cfg, { handoff = false } = {}) {
 				path: done.path ?? job.path,
 				quality: done.quality ?? job.quality,
 				quality_gate: done.quality_gate ?? job.quality_gate,
+				quality_retry: done.quality_retry ?? job.quality_retry,
 				rigged: done.rigged ?? job.rigged,
 			},
 			{ autoSaved: !!done.creation_id },
@@ -4162,6 +4197,7 @@ async function resumeInflight({ note } = {}) {
 				path: done.path ?? path,
 				quality: done.quality,
 				quality_gate: done.quality_gate,
+				quality_retry: done.quality_retry,
 				rigged: done.rigged,
 			},
 			{ autoSaved: !!done.creation_id },

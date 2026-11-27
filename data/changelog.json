@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "Forge's quality check can only improve your model now, and tells you when it stepped in",
+			"summary": "When a free Forge model looks broken or misses the prompt, Forge quietly makes it once more before showing it to you. That second try now follows strict rules. It happens at most once per model, never twice. It never counts against your generation limit, and Forge skips it when you are down to your last generation or when the service is busy. Forge compares both attempts and shows you the better one, instead of simply the newer one. If the checker itself is slow, down or gives a garbled answer, your model is delivered on time as it is. A small label next to the quality badge now says what happened, for example \"Regenerated once\" or \"Kept first of two\", and hovering or focusing it explains why.",
+			"tags": ["fix", "improvement"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "Forge stops waiting on a dead NVIDIA image model",
 			"summary": "When you describe an object, Forge first paints a reference picture. NVIDIA's free FLUX.1 image model had stopped answering, so that step could sit for a full minute before Forge moved on. Forge now uses NVIDIA's FLUX.2 klein model, gives it 30 seconds at most, and tries it less and less often while it keeps failing, so a bad stretch on NVIDIA's side no longer slows every build. The image health check now says when NVIDIA stops serving the model instead of reporting it healthy, the /nvidia status page probes this step every hour, and /nim-forge says plainly when no self-hosted TRELLIS NIM is connected instead of inviting an upload that could only fail.",
 			"tags": ["fix", "improvement"],
