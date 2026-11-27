@@ -1,0 +1,23 @@
+# LiteLLM proxy: Grok plus the three.ws studio MCP server behind one
+# OpenAI-compatible endpoint. See README.md.
+
+model_list:
+  - model_name: grok
+    litellm_params:
+      model: xai/grok-4.7
+      api_key: os.environ/XAI_API_KEY
+
+mcp_servers:
+  three_ws:
+    transport: http
+    url: https://three.ws/api/mcp-studio
+    description: three.ws 3D studio (free catalog search, free model generation and rigging)
+    # Only the tools this example needs. Delete this line to expose all of them.
+    allowed_tools: [search_catalog, forge_free, check_job]
+    # Lets the master key reach this server without a database (README, "Why a master key").
+    allow_all_keys: true
+    # Catalog search is public. A three.ws API key is sent per request by the
+    # client in the x-mcp-three_ws-authorization header (README, "API key").
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
