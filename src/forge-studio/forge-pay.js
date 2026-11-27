@@ -16,8 +16,12 @@
 // (Retry). The modal never throws; it resolves { ok:false } on cancel/error and
 // { ok:true, paymentId, refId } on a verified on-chain payment.
 
-import { fetchTokenConfig, payWithToken } from '../token-pay.js';
+import { fetchTokenConfig, payWithToken, settleTokenPayment } from '../token-pay.js';
+import { rememberPaidProof, unspentPaidProof, forgetPaidProof } from '../shared/forge-paid-proofs.js';
 import { leaveAppForPayment } from '../shared/native-handoff.js';
+
+// Callers report a proof the server redeemed or refused, so it is never offered again.
+export { forgetPaidProof };
 
 const ECONOMY_URL = '/three-token';
 const SIGN_IN_URL = '/login';
@@ -192,6 +196,11 @@ export async function payForConsumption({
 	successText = 'Payment confirmed — continuing…',
 	refPrefix = 'forge',
 } = {}) {
+	// A proof this browser already paid for and the server has not taken yet (the
+	// follow-up request failed, or the page reloaded) buys this action: no sheet,
+	// no second charge. A stale one is refused by the server and forgotten there.
+	const saved = unspentPaidProof({ kind: refPrefix, usd });
+	if (saved) return { ok: true, ...saved, reused: true };
 	if (leaveAppForPayment()) return { ok: false, cancelled: true };
 	// A rail that is not switched on gets the honest sheet straight away.
 	const ready = await consumptionRailReady();
@@ -199,6 +208,9 @@ export async function payForConsumption({
 	return new Promise((resolve) => {
 		const refId = clientNonce(refPrefix);
 		let settled = false;
+		// Set the moment the payment settles: closing the sheet after that hands
+		// the proof back instead of reporting a cancel for money already spent.
+		let paidResult = null;
 
 		const overlay = document.createElement('div');
 		overlay.className = 'fpay-overlay';
@@ -222,7 +234,7 @@ export async function payForConsumption({
 			cleanup();
 			resolve(result);
 		};
-		const close = () => finish({ ok: false, cancelled: true });
+		const close = () => finish(paidResult || { ok: false, cancelled: true });
 
 		// ── State renderers ────────────────────────────────────────────────────
 		function showStatus(text, { busy = false } = {}) {
@@ -271,6 +283,67 @@ export async function payForConsumption({
 			actionsEl.querySelector('[data-fpay-cancel]').addEventListener('click', close);
 		}
 
+		// The transfer left the wallet but was not verified (settle failed or never
+		// answered). Offering a new payment here would charge twice, so the only
+		// retry re-checks the SAME transaction.
+		function showSent(err) {
+			const sig = String(err?.tx_signature || '');
+			const short = sig.length > 16 ? `${sig.slice(0, 8)}…${sig.slice(-8)}` : sig;
+			statusEl.className = 'fpay-status fpay-status--err';
+			statusEl.innerHTML =
+				`<strong class="fpay-err-title">Payment sent, not verified yet</strong>` +
+				`<span class="fpay-err-detail">Your $THREE was sent in transaction ${escapeHtml(short)}. Do not pay again: check it here. ` +
+				`If it still will not verify, keep this transaction and contact support.</span>`;
+			const explorer = sig
+				? `<a class="fpay-btn fpay-btn--ghost" href="https://solscan.io/tx/${encodeURIComponent(sig)}${err?.network === 'devnet' ? '?cluster=devnet' : ''}" target="_blank" rel="noopener">View transaction</a>`
+				: '';
+			actionsEl.innerHTML =
+				`<button type="button" class="fpay-btn fpay-btn--primary" data-fpay-retry>Check again</button>` +
+				explorer +
+				`<button type="button" class="fpay-btn fpay-btn--ghost" data-fpay-cancel>Close</button>`;
+			actionsEl.querySelector('[data-fpay-retry]').addEventListener('click', () => recheck(err));
+			actionsEl.querySelector('[data-fpay-cancel]').addEventListener('click', close);
+		}
+
+		// A sent transaction that failed on-chain moved nothing, so a fresh payment
+		// is the honest retry. Every other paid failure keeps the re-check.
+		function showFailure(err) {
+			if (err?.paid && err.code !== 'tx_failed' && err.tx_signature && err.quote_token) showSent(err);
+			else showError(err);
+		}
+
+		function succeed(result) {
+			if (!result?.ok || !result.payment_id) {
+				throw Object.assign(new Error('Payment could not be verified.'), {
+					code: 'verification_failed',
+				});
+			}
+			settled = true;
+			paidResult = { ok: true, paymentId: result.payment_id, refId };
+			rememberPaidProof({ kind: refPrefix, usd, paymentId: result.payment_id, refId });
+			statusEl.className = 'fpay-status fpay-status--ok';
+			statusEl.innerHTML = `<span class="fpay-check" aria-hidden="true">✓</span> ${escapeHtml(successText)}`;
+			actionsEl.innerHTML = '';
+			setTimeout(() => finish(paidResult), 850);
+		}
+
+		async function recheck(sent) {
+			actionsEl.innerHTML = '';
+			showStatus(PHASE_COPY.settling, { busy: true });
+			try {
+				succeed(
+					await settleTokenPayment({
+						quoteToken: sent.quote_token,
+						txSignature: sent.tx_signature,
+						network: sent.network,
+					}),
+				);
+			} catch (err) {
+				if (settled) return;
+				showFailure(err?.paid ? err : sent);
+			}
+		}
+
 		async function startPayment() {
 			actionsEl.innerHTML = '';
 			showStatus(PHASE_COPY.quoting, { busy: true });
@@ -283,19 +356,10 @@ export async function payForConsumption({
 					onStatus: (phase) =>
 						showStatus(PHASE_COPY[phase] || 'Working…', { busy: true }),
 				});
-				if (!result?.ok || !result.payment_id) {
-					throw Object.assign(new Error('Payment could not be verified.'), {
-						code: 'verification_failed',
-					});
-				}
-				settled = true;
-				statusEl.className = 'fpay-status fpay-status--ok';
-				statusEl.innerHTML = `<span class="fpay-check" aria-hidden="true">✓</span> ${escapeHtml(successText)}`;
-				actionsEl.innerHTML = '';
-				setTimeout(() => finish({ ok: true, paymentId: result.payment_id, refId }), 850);
+				succeed(result);
 			} catch (err) {
 				if (settled) return; // already resolved
-				showError(err);
+				showFailure(err);
 			}
 		}
 
