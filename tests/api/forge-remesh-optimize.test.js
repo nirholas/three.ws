@@ -340,6 +340,8 @@ describe('guards', () => {
 		expect(res.statusCode).toBe(202);
 		expect(h.submit.mock.calls[0][0].params.target_faces).toBe(10_000);
 		expect(res.json.notes.join(' ')).toMatch(/lowered to 10,000/);
+		// The page shows the measured source beside the worker's face count.
+		expect(res.json.before).toEqual({ bytes: h.sources.get(URLS.heavy).byteLength, triangles: 20_000 });
 	});
 
 	it('keeps a light model as it is in quad and low-poly instead of inflating it', async () => {

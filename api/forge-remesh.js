@@ -141,6 +141,7 @@ async function startJob(req, res) {
 		const guarded = await guardSurfaceRebuild(res, { meshUrl, remeshMode, targetFaces, notes, rateKey });
 		if (guarded.handled) return;
 		targetFaces = guarded.targetFaces;
+		if (guarded.before) return submitWorker(res, { meshUrl, remeshMode, operation, targetFaces, textureSize, outputFormat, notes, extra: { before: guarded.before } });
 	}
 
 	return submitWorker(res, { meshUrl, remeshMode, operation, targetFaces, textureSize, outputFormat, notes });
@@ -375,7 +376,7 @@ async function guardSurfaceRebuild(res, { meshUrl, remeshMode, targetFaces, note
 	} else if (header.triangles <= target) {
 		noopReason = `This model is already light (${header.triangles.toLocaleString('en-US')} triangles, at or under the ${target.toLocaleString('en-US')} target). The original is kept.`;
 	}
-	if (!noopReason) return { targetFaces: target };
+	if (!noopReason) return { targetFaces: target, before: { bytes: source.bytes.byteLength, triangles: header.triangles } };
 
 	const id = sha256(`${OPTIMIZE_PIPELINE}|${sha256(source.bytes)}|${remeshMode}|${target}`).slice(0, 40);
 	const record = {
