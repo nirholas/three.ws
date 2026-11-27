@@ -115,8 +115,26 @@ export function toJob(record) {
 	};
 	if (record.files) job.files = record.files;
 	if (record.summary) job.summary = record.summary;
-	if (record.error) job.error = record.error;
+	if (record.error) {
+		const friendly = friendlyWorkerError(record.error);
+		job.error = friendly || record.error;
+		if (friendly) job.error_detail = record.error;
+	}
 	return job;
+}
+
+// The worker caps the GLB it downloads at 96 MiB (MAX_GLB_BYTES in
+// workers/usd-export/main.py) and reports the overrun in its own words
+// ("response exceeded N bytes" / "response too large: N bytes"). Those are true
+// but say nothing the user can act on, so they become the limit and the way out.
+const OVERSIZE_RE = /^response (?:exceeded \d+ bytes|too large: \d+ bytes)/;
+const OVERSIZE_MESSAGE =
+	'This model is over 96 MB, the most the OpenUSD exporter accepts. Reduce it with Optimize in the Forge viewer, then export again.';
+
+function friendlyWorkerError(raw) {
+	if (typeof raw !== 'string') return '';
+	if (OVERSIZE_RE.test(raw)) return OVERSIZE_MESSAGE;
+	return '';
 }
 
 function workerDetail(err) {

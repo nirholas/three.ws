@@ -209,4 +209,14 @@ describe('toJob', () => {
 		expect(job.stage_label).toMatch(/usdchecker/);
 		expect(job.error).toMatch(/did not pass validation/);
 	});
+
+	it('tells the user what to do when the model is over the exporter size cap', () => {
+		for (const raw of ['response exceeded 100663296 bytes', 'response too large: 140000000 bytes']) {
+			const job = toJob(record('error', 'fetching', { error: raw }));
+			expect(job.error).toMatch(/over 96 MB/);
+			expect(job.error).toMatch(/Optimize/);
+			expect(job.error).not.toMatch(/\d{6,}/);
+			expect(job.error_detail).toBe(raw);
+		}
+	});
 });
