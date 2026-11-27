@@ -68,6 +68,8 @@ const { recordEvent } = await import('../api/_lib/usage.js');
 const { dispatch } = await import('../api/_mcp-studio/dispatch.js');
 const { usageClientLabel, madeModelUrl } = await import('../api/_mcp-studio/usage-tags.js');
 const { buildGrokStats } = await import('../api/_lib/grok-stats.js');
+const { chooseProbeCall } = await import('../api/_lib/mcp-probe.js');
+const { toolCatalogFor } = await import('../api/_mcp-studio/dispatch.js');
 const { default: statsHandler, STATS_CACHE } = await import('../api/grok/stats.js');
 const { default: grokHandler } = await import('../api/mcp-grok.js');
 
@@ -219,12 +221,17 @@ describe('stats from real Grok surface traffic', () => {
 			}
 			// An anonymous creator call is refused and makes nothing.
 			await dispatch(call('forge_free', { prompt: PROMPT }), anon, mkReq(), { surface: 'grok', caller: { key: IP, kind: 'ip' } });
+			// Our own uptime probe (api/cron/mcp-probe.js) makes this exact read on
+			// /api/mcp-grok every five minutes, 288 a day: synthetic, never usage.
+			const probe = chooseProbeCall('/api/mcp-grok', toolCatalogFor('grok'));
+			const p = await dispatch(call(probe.name, probe.arguments), anon, mkReq(), { surface: 'grok', caller: { key: IP, kind: 'ip' } });
+			expect(p.result.isError).toBeFalsy();
 			// The free studio surface is shared with every other client: never counted as Grok.
 			await dispatch(call('forge_free', { prompt: PROMPT }), anon, mkReq('/api/mcp-studio'), { surface: 'full', account: accountB, caller: callerB });
 		} finally {
 			globalThis.fetch = realFetch;
 		}
-		await waitForRows(sql, (r) => r.filter((e) => e.kind === 'tool_call' && e.tool === 'forge_free').length >= 5);
+		await waitForRows(sql, (r) => r.filter((e) => e.kind === 'tool_call' && e.tool === 'forge_free').length >= 5 && r.some((e) => e.kind === 'tool_call' && e.tool === 'search_docs'));
 		// One of account A's models is older than a day but inside 30 days; an
 		// event from 40 days ago sits outside every window.
 		const [first] = await sql`select id from usage_events where meta->>'server' = 'mcp-grok' and meta ? 'glb' and user_id = ${userA.id} order by created_at limit 1`;
@@ -252,6 +259,12 @@ describe('stats from real Grok surface traffic', () => {
 
 	it('counts distinct signed-in clients over 30 days', () => {
 		expect(stats.clients['30d']).toBe(2);
+	});
+
+	it('never counts our own uptime probe as Grok usage', async () => {
+		const [probeRow] = await sql`select tool from usage_events where kind = 'tool_call' and tool = 'search_docs' and meta->>'server' = 'mcp-grok'`;
+		expect(probeRow).toBeTruthy();
+		expect(stats.tool_calls).toEqual({ '24h': 3, '30d': 4 });
 	});
 
 	it('counts Grok tool calls per window', () => {

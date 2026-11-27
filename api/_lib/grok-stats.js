@@ -12,8 +12,14 @@
 
 import { sql as defaultSql } from './db.js';
 import { env } from './env.js';
+import { PREFERRED_CALLS } from './mcp-probe.js';
 
 export const GROK_SERVER = 'mcp-grok';
+
+// Our own uptime probe (api/cron/mcp-probe.js) makes this exact read on the
+// Grok endpoint every five minutes. It is synthetic traffic, so a row with its
+// tool and arguments is never counted as Grok usage.
+const PROBE_CALL = PREFERRED_CALLS[`/api/${GROK_SERVER}`];
 
 // A stable identity: a signed-in account or a verified install token. MCP
 // sessions and IPs rotate, so counting them would inflate "clients".
@@ -42,6 +48,7 @@ export async function buildGrokStats({ sql = defaultSql } = {}) {
 		from usage_events
 		where kind = 'tool_call'
 			and meta->>'server' = ${GROK_SERVER}
+			and not coalesce(tool = ${PROBE_CALL.name} and meta->'args_summary' @> ${JSON.stringify(PROBE_CALL.arguments)}::jsonb, false)
 			and created_at > now() - interval '30 days'
 	`;
 	const since = row?.counting_since ? new Date(row.counting_since).toISOString() : null;

@@ -48,7 +48,7 @@ export const STEPS = Object.freeze([
 // database round trip). /api/mcp-studio: the catalog search the marketplace
 // reviewers try first. A server not named here gets the first of SAFE_CALLS
 // that it lists.
-const PREFERRED_CALLS = Object.freeze({
+export const PREFERRED_CALLS = Object.freeze({
 	'/api/mcp-grok': { name: 'search_docs', arguments: { query: 'connect Grok to three.ws', limit: 1 } },
 	'/api/mcp-studio': { name: 'search_catalog', arguments: { q: 'chair', limit: 1 } },
 });
