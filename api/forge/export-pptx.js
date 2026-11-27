@@ -131,6 +131,21 @@ function titleCardSvg(title) {
 }
 
 /**
+ * Give every mesh without a NORMAL attribute computed normals. Generated Forge
+ * models (trimesh output) ship positions and UVs only, and the CPU rasterizer
+ * reads normals from the geometry, so without this the poster is lit by the
+ * ambient term alone: a flat, pale silhouette. PowerPoint and the web viewer
+ * shade such models from their faces, and so must the poster. The rasterizer
+ * reads the attribute on every frame, so adding it after load is enough.
+ */
+export function addMissingNormals(scene) {
+	scene.traverse((object) => {
+		const geometry = object.isMesh ? object.geometry : null;
+		if (geometry?.attributes?.position && !geometry.attributes.normal) geometry.computeVertexNormals();
+	});
+}
+
+/**
  * Render the Office-safe GLB itself, in-process on the CPU rasterizer, from
  * the camera PowerPoint opens with: straight down -Z, model as authored, no
  * ground. The slide is someone else's background, so the cut-out carries no
@@ -144,6 +159,7 @@ export async function renderPoster(glb) {
 	const model = await AvatarModel.load(
 		glb.buffer.slice(glb.byteOffset, glb.byteOffset + glb.byteLength),
 	);
+	addMissingNormals(model.scene);
 	const png = encodePng(
 		renderFrame(model, {
 			width: POSTER_WIDTH,
