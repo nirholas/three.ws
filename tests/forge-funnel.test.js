@@ -232,10 +232,24 @@ describe('summarizeLanes', () => {
 
 	it('reports null, never Infinity, when a lane produced nothing useful or untimed rows', () => {
 		const [lane] = summarizeLanes([{ backend: null, done: 3, failed: 2, useful: 0, timed: 0, gen_seconds: 0 }]);
-		expect(lane.backend).toBe('unknown');
+		expect(lane.backend).toBe('(not recorded)');
 		expect(lane.attempts_per_useful).toBeNull();
 		expect(lane.avg_generation_seconds).toBeNull();
 		expect(lane.generation_seconds_per_useful).toBeNull();
+	});
+	// Production 2026-11-27: rows with no backend and the ChatGPT surface's 'gcp'
+	// provider both rendered as cost class "paid", a guess the table presented as
+	// fact. Only a lane this build knows has a known cost.
+	it('does not invent a cost class for a lane this build does not know', () => {
+		const lanes = summarizeLanes([
+			{ backend: null, done: 59, failed: 8 },
+			{ backend: 'gcp', done: 51, failed: 0 },
+			{ backend: 'trellis_selfhost', done: 712, failed: 43 },
+		]);
+		const by = Object.fromEntries(lanes.map((l) => [l.backend, l.cost_class]));
+		expect(by['(not recorded)']).toBe('unknown');
+		expect(by.gcp).toBe('unknown');
+		expect(by.trellis_selfhost).toBe('free');
 	});
 });
 

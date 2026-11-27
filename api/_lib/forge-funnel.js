@@ -36,7 +36,7 @@
 // Read-only. Every query is a SELECT.
 
 import { sql } from './db.js';
-import { backendCostClass } from './forge-tiers.js';
+import { BACKENDS, backendCostClass } from './forge-tiers.js';
 import { FORGE_DESTINATIONS } from '../../src/shared/forge-destinations.js';
 import { readShareFunnel } from './share-funnel.js';
 
@@ -179,14 +179,17 @@ export function summarizeDestinations(rows = []) {
 export function summarizeLanes(rows = []) {
 	return rows
 		.map((r) => {
-			const backend = r.backend == null ? 'unknown' : String(r.backend);
+			const backend = r.backend == null ? '(not recorded)' : String(r.backend);
 			const attempts = int(r.done) + int(r.failed);
 			const useful = int(r.useful);
 			const timed = int(r.timed);
 			const seconds = Number(r.gen_seconds) || 0;
 			return {
 				backend,
-				cost_class: backendCostClass(backend),
+				// Only a lane this build defines has a known cost. A row with no
+				// backend, or another surface's provider id (the ChatGPT forge's
+				// 'gcp'), reads as unknown rather than a guessed "paid".
+				cost_class: Object.hasOwn(BACKENDS, backend) ? backendCostClass(backend) : 'unknown',
 				attempts,
 				done: int(r.done),
 				failed: int(r.failed),
