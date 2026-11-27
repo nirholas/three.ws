@@ -159,14 +159,6 @@
 			<description>We audited every paid Forge step (High generation, keeping a model, Game-Ready export) and closed the gaps. If your payment leaves your wallet but confirmation is slow or the page loses the answer, the sheet now says the payment was sent and checks the same transaction again, instead of offering a second payment. A transfer that landed while its quote was valid is recorded even if the confirmation arrives after the quote expired. A payment you made but did not get to use (the page reloaded, or the next step failed) is remembered and used for your next try of the same thing, with no new charge. A paid generation that fails gives its payment back. The confirm step now also shows who is paid, each share and the wallet address, next to the amount and the token, before your wallet opens.</description>
 		</item>
 		<item>
-			<title>Restyling a Forge model is instant, reversible, and never touches the shape</title>
-			<link>https://three.ws/forge</link>
-			<guid isPermaLink="false">2026-11-27:Restyling a Forge model is instant, reversible, and never touches the shape</guid>
-			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
-			<category>feature</category>
-			<description>Restyle materials on /forge now has 15 preset looks (glossy, satin, matte, lacquer, metallic paint, velvet, clay, glazed ceramic, chrome, gold, copper, brushed steel, glass, neon, holographic) that apply instantly on your device without waiting on a server, and the mesh, UVs and textures stay exactly as they were. Every look is a step you can go back to, Back to original restores the model, and the download saves the look you see. Describing a look in your own words still runs AI restyle, now with a live timer and Cancel. If the AI service is down you are told so and offered the presets, and a request that would change the shape points you to the tool that does that. Voxel, brick, lattice and low-poly Stylize results also stop rendering as dark metal.</description>
-		</item>
-		<item>
 			<title>Signing in from Forge no longer loses your prompt</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-11-27:Signing in from Forge no longer loses your prompt</guid>
@@ -181,6 +173,14 @@
 			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>A blank canvas, a single dot or a drawing smeared over the whole frame is now refused on your device with a message that says what to draw, before anything is uploaded or a generation slot is spent. The drawing canvas lines strokes up under your finger on a phone, keeps Use sketch available after you undo a Clear, keeps keyboard focus inside the dialog and fits any screen height with Use sketch always reachable. The Forge page gets a Draw here instead button for the same canvas. If the sketch engine cannot take or finish a drawing, Forge now continues the job on the standard image engine and tells you, instead of ending in an error, and a drawing the engine could not read no longer takes a healthy engine out of rotation.</description>
+		</item>
+		<item>
+			<title>Status checks no longer keep idle GPU servers running</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-27:Status checks no longer keep idle GPU servers running</guid>
+			<pubDate>Fri, 27 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Forge status check and the site health check used to ping every 3D and safety model server on every page view and every uptime poll. Each ping woke the server and kept it billed for about 15 minutes, even when nobody was generating anything. Status checks now ask Google Cloud whether a server is already running and leave sleeping servers alone. Running servers still get the full check, so a model that fails to load is still caught. Generation speed and quality do not change.</description>
 		</item>
 		<item>
 			<title>The Forge wait now tells the truth the whole way through</title>

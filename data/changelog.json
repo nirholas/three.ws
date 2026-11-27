@@ -44,7 +44,7 @@
 			"summary": "The Forge status check and the site health check used to ping every 3D and safety model server on every page view and every uptime poll. Each ping woke the server and kept it billed for about 15 minutes, even when nobody was generating anything. Status checks now ask Google Cloud whether a server is already running and leave sleeping servers alone. Running servers still get the full check, so a model that fails to load is still caught. Generation speed and quality do not change.",
 			"tags": [
 				"fix",
-				"performance"
+				"infra"
 			],
 			"link": "/forge"
 		},
