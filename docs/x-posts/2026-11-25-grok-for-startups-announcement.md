@@ -1,20 +1,61 @@
-# Grok for Startups announcement thread (2026-11-25)
+# Grok for Startups thread: corrected repost (2026-11-27)
 
-The thread that announces three.ws joining xAI's Grok for Startups program, posted from @trythreews. Nine posts. The head image is the program card; every post after it shows proof instead of telling.
+The thread that says three.ws is in xAI's Grok for Startups program and shows what we built on Grok, posted from @trythreews. Ten posts. It replaces the thread of 2026-11-25.
 
 House voice: one link per post, no hashtags, no emoji, no dashes. The account has X Premium, so posts run long, but the timeline cuts each one at about 280 characters behind "Show more": the opening of every post (everything before its first extra paragraph) fits 280 on its own and is the hook, and the paragraphs after it are the substance for readers who open it.
 
+## Correction note (2026-11-27)
+
+The original thread went out on 2026-11-25 and came down on 2026-11-27 at xAI's request. The Grok for Startups team told us that being accepted gives access to credits and does not include co-marketing or the other items the thread claimed. This file is the corrected version. Every claim left in it has a source in [Sources](#sources); a claim with no source was cut.
+
+What changed, and why:
+
+- **Post 1, "the first crypto-native company approved":** removed. xAI publishes no member list, so it cannot be proven.
+- **Post 1, "working directly with the xAI, @SpaceXSI and Cursor teams on co-marketing":** removed. It was false: the program is a credit program, not co-marketing and not a partnership.
+- **Post 1, "our plugin is headed to the Grok Bot, Grok Build and @cursor_ai marketplaces":** removed. Nothing has been submitted to any marketplace (the submission log in the listings doc is empty).
+- **Post 3, "Grok checks its own work" and "This one looks first":** now "Grok can check its own work". The render check runs only when Grok chooses to call it, so the guarantee is gone.
+- **Post 3, "426 checks so far":** removed. It could not be re-run on the day of the rewrite, and it counted every caller of the tool, our own tests included.
+- **Post 5, "works everywhere you use Grok":** now names only the two surfaces with recorded use, the grok.com custom connector and Grok Bot. Grok Build never ran a model turn, the xAI API refused our tools in production from 2026-11-21, and Cursor connects but lists us nowhere.
+- **Post 6, "One command runs all six against production, so you know they work" and "82 seconds":** removed. Both were measured with no xAI key, so they proved our side only. The post now says exactly that.
+- **Post 7, "Grok was using us before we got in", "Traffic every single day", "2 errors" and "written by people and agents we have never met":** removed. The call count includes our own testing, and the prompt figure is a text match against our repository, not proof of who wrote a prompt. The post now states what was counted.
+- **Post 8, "xAI vets every applicant" and "Guides to the program say it looks for venture-backed startups":** removed. Both were unsourced statements about xAI's process.
+- **Tags:** @SpaceXSI, @cursor_ai, @ericzakariasson and @XDevelopers are gone. A tag on an xAI, SpaceXSI or Cursor account implies that account took part.
+- **Added, post 10:** the Ask @grok button, verified live on production the day of the rewrite.
+- **Kept word for word:** posts 2, 4 and 9 (post 4 only swaps its link tag to `utm_content=repost`).
+
+Source documents the rest of this file cites by short name:
+
+- **Numbers appendix:** [docs/partners/xai-comarketing-kit.md, appendix](../partners/xai-comarketing-kit.md#appendix-where-every-number-comes-from)
+- **Listings doc:** [docs/partners/grok-bot-listings.md](../partners/grok-bot-listings.md)
+- **Program summary:** [docs/partners/xai-grok-startups-plan.md, what membership gives us](../partners/xai-grok-startups-plan.md#what-membership-actually-gives-us)
+
+[kit]: ../partners/xai-comarketing-kit.md#appendix-where-every-number-comes-from
+[listings]: ../partners/grok-bot-listings.md
+[plan]: ../partners/xai-grok-startups-plan.md#what-membership-actually-gives-us
+
+## Before posting
+
+1. Delete the 2026-11-25 thread.
+2. Do not post while xAI refuses our tool catalog. On 2026-11-27 production (`f0eed584f`) still published a tool whose schema root is an `anyOf` union, which makes the xAI API reject every three.ws tool; the fix is commit `a99f32c10`, not yet deployed. Run this, and post only when both lines end in `rejected: []`:
+
+```bash
+for p in mcp-grok mcp-studio; do curl -s https://three.ws/api/$p -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const m=JSON.parse(s.replace(/^data: /m,""));const bad=m.result.tools.filter(t=>{const r=t.inputSchema||{};return r.type!=="object"||["anyOf","oneOf","allOf","not","if","then","else","enum","const"].some(k=>k in r)}).map(t=>t.name);console.log(process.argv[1],m.result.tools.length,"tools, rejected:",bad)})' $p; done
+```
+
+3. Post 6 needs more than that check: its examples call Grok through the xAI API. Post it only once a run with a real xAI key is recorded in [grok-fix-PROGRESS.md](../../prompts/finish/_context/grok-fix-PROGRESS.md). Until then, leave post 6 out; the thread reads fine without it.
+4. If a later proof lands (the xAI API or Grok Build shown working live), that surface gets its own post. Do not edit it into post 5 without adding its source below.
+
 ## The thread
 
-**1/ (media: [`public/x-media/grok-startups-announce/head.png`](../../public/x-media/grok-startups-announce/head.png))**
+**1/ (media: [`public/x-media/grok-startups-announce/head.png`](../../public/x-media/grok-startups-announce/head.png), or no image; see [The image](#the-image))**
 
-> three.ws is the first crypto-native company approved for xAI's Grok for Startups program.
+> xAI accepted three.ws into Grok for Startups, the program that gives startups credits to build on Grok.
 >
-> Grok builds in 3D with us. Now we're working directly with the xAI, @SpaceXSI and Cursor teams on co-marketing, and our plugin is headed to the Grok Bot, Grok Build and @cursor_ai marketplaces.
+> This thread is what we built on it: a connector that lets Grok make things in 3D.
 >
-> In plain terms: you ask Grok for something in 3D, and you get back a real model you can spin, download, animate or drop into a page. No 3D software, no modeling skills, no new app to learn. Just the Grok you already use.
+> In plain terms: you add three.ws to Grok, ask for something in 3D, and get back a real model you can spin, download, animate or drop into a page. No 3D software and no modeling skills.
 >
-> Every number in this thread comes from our own production logs.
+> Every number in this thread comes from our own production logs or our own test runs.
 
 **2/**
 
@@ -28,13 +69,11 @@ House voice: one link per post, no hashtags, no emoji, no dashes. The account ha
 
 **3/**
 
-> Grok checks its own work. Before it answers, it can render the model and look at it, so a broken mesh gets caught before you ever see it.
->
-> 426 checks so far.
+> Grok can check its own work. The connector gives it a tool that renders a model and hands back the pictures, so it can look at what it made before it answers.
 >
 > The check returns the model from several angles, plus its triangles, materials and textures. Grok can see whether the chair actually has four legs, whether the back is finished, whether anything melted together, and then regenerate, naming the fault it found.
 >
-> Most AI tools hand you whatever came out. This one looks first.
+> It runs when Grok chooses to call it, not on every model.
 
 **4/ (media: [`public/x-media/grok-startups-announce/ffsc-engine.mp4`](../../public/x-media/grok-startups-announce/ffsc-engine.mp4), still fallback [`public/anatomy/og/ffsc-engine.png`](../../public/anatomy/og/ffsc-engine.png))**
 
@@ -44,43 +83,41 @@ House voice: one link per post, no hashtags, no emoji, no dashes. The account ha
 >
 > The tour walks the whole loop: two cryogenic propellants, two turbopumps on two shafts, a fuel-rich and an oxygen-rich preburner, and every drop of propellant driven through a turbine before it burns. Methane cools the engine, gas meets gas in the main chamber, and it all leaves through the throat and the bell.
 >
-> Every number cites a public source, and our build fails if one doesn't. https://three.ws/anatomy/85160213-4c15-4b00-ba96-5990b9385249?utm_source=x&utm_campaign=grok-startups&utm_content=announce
+> Every number cites a public source, and our build fails if one doesn't. https://three.ws/anatomy/85160213-4c15-4b00-ba96-5990b9385249?utm_source=x&utm_campaign=grok-startups&utm_content=repost
 
 **5/**
 
-> It works everywhere you use Grok: a custom connector on grok.com, Grok Bot, Grok Build, Cursor and the xAI API. @ericzakariasson
+> It runs as a custom connector on grok.com and in Grok Bot.
 >
 > One URL, a free account, and no tool that can spend money.
 >
-> It's one remote MCP server behind all of them, so there's nothing to install twice and nothing to keep in sync. In Grok Bot, a plain request comes back with a viewer link, the GLB and an AR link. We timed the path from signing in to a finished model at 195.8 seconds on production.
+> It is one remote MCP server behind both, so there is nothing to install twice and nothing to keep in sync. A plain request comes back with a viewer link, the GLB, a poster image and embed code. Our own check script timed the path from signing in to a finished model at 195.8 seconds on production, and Grok Bot clients registered with the server 31 times between October 8 and November 20.
 >
-> Grok can even give itself a body: save a rigged character as a persona, and it lip-syncs, emotes and gestures as it replies, the same body every session. https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=announce
+> The connector can also keep a body for Grok: save a rigged character as a persona, and its view lip-syncs, emotes and gestures each reply, the same body every session. https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=repost
 
-**6/**
+**6/ (hold until step 3 of [Before posting](#before-posting) is met)**
 
-> Building on the Grok API? Grab six runnable examples: curl, Node on the Responses API, Python over MCP, a remote MCP tool call, an agent with a 3D avatar, and an X search turned into a 3D model. @XDevelopers
+> Building on the Grok API? We published six runnable examples, including plain curl, Node on the Responses API, Python over MCP, an agent with a 3D avatar, and an X search turned into a 3D model.
 >
-> The X search one has Grok sum up what people posted about a topic this week, then design a prop for it and draft a post. It never posts on its own. From a fresh copy of the folder to a finished GLB took 82 seconds, install and tests included.
+> The three.ws side of each one is tested against production. The Grok side runs on your own xAI key.
 >
-> One command runs all six against production, so you know they work before you copy them. https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=announce-examples#build-examples
+> The X search example asks Grok to sum up what people posted about a topic this week, then designs a prop for it and drafts a post. It never posts on its own. https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=repost-examples#build-examples
 
 **7/**
 
-> Grok was using us before we got in.
+> 5,547 tool calls on our Grok connector in 44 days, from October 8 to November 20.
 >
-> 5,547 tool calls in 44 days. Traffic every single day. 2 errors.
+> 1,243 of those calls asked for a model to be made or changed: 517 text to 3D requests, 283 avatar requests, 236 art-directed mesh requests, 118 rig requests and 89 refinements. Those are requests, not finished models, and the total includes our own testing.
 >
-> 1,243 of those calls made or changed a model: 517 free text to 3D runs, 283 avatars, 236 art-directed meshes, 118 rigs and 89 refinements.
->
-> The number we watch most: 718 distinct prompts written by people and agents we have never met, not by our own tests or demos. That is real demand, before a single announcement.
+> The number we watch most: 718 distinct prompts that don't match our own tests or demos.
 
 **8/**
 
-> No VC money built three.ws. When the application asked how we're funded, we told the truth: our @pumpdotfun creator rewards.
+> No VC money built three.ws. When we applied to Grok for Startups, we listed how we are actually funded: our @pumpdotfun creator rewards.
 >
-> xAI vets every applicant. A company funded by its own community got in. This one is for everyone who built it with us.
+> xAI accepted three.ws into the program. This one is for everyone who built it with us.
 >
-> Guides to the program say it looks for venture-backed startups. We had none. We had a product people were already using every day, and a community that paid for it to exist.
+> We had a product people were already using, and a community that paid for it to exist.
 
 **9/**
 
@@ -90,35 +127,38 @@ House voice: one link per post, no hashtags, no emoji, no dashes. The account ha
 >
 > @grok, what should we build next?
 
+**10/**
+
+> One more way in: models, avatars and cutaways on three.ws have an Ask @grok button beside Share on X.
+>
+> It writes a short description and one question about what you are looking at, opens it in the X composer, and posts nothing until you press post. https://three.ws/forge?utm_source=x&utm_campaign=grok-startups&utm_content=repost
+
 ## Why it is built this way
 
-- **Lead with the first.** "First crypto-native company approved" is the line nobody else in the program can post, and it is the hook for both audiences: crypto readers see one of their own clear a vetted AI program, AI readers see a category they did not expect. "Crypto-native company", not "crypto project": on X a crypto project reads as a coin with a website, which undersells a product whose Grok surface is 3D and makes a @SpaceXSI repost harder; "company" also matches post 8. Owner decision 2026-11-25: this thread says three.ws comes from crypto and names pump.fun, which overrides the plan's token-free rule for this thread only. It still never names $THREE, a contract address, a price or trading, so @SpaceXSI can repost it without endorsing a coin.
-- **"First" is the owner's claim, not a published fact.** xAI publishes no member list, and no public announcement of another crypto company's acceptance turned up in a search on 2026-11-25. If anyone replies with an earlier one, the fallback head line is "three.ws is a crypto-native company, and xAI just accepted us into Grok for Startups."
-- **Post 1 leads with the program and the teams behind it.** A thread that shows what membership means is marketing for xAI, which is the strongest reason for @SpaceXSI to repost it. The apply post was cut on 2026-11-25 to keep the thread about three.ws. Post 1 leads with access, not credits, because readers care who we can now reach, not how a credit balance is split. The access line says "working with", never "alongside" or "partnered with": the program gives us a working relationship with the startups team, and the Program Terms say it creates no partnership. The no-VC story is saved for post 8 so the head stays about the program. "A direct line to our startups team" is from the program page; the xAI, SpaceXSI and Cursor contact is the owner's firsthand account, and Cursor's maker Anysphere is a party to the Program Terms (its terms govern Grok Bot use under the program). No staff member is named, per the wording rules.
-- **Usage is the proof, after the demos.** Posts 2 to 6 show what Grok does with us; post 7 then shows it was already happening at scale before acceptance. Every startup posts "we got in"; almost none can say the program's own product was calling them every day.
-- **Post 8 is the founder story, and the second reply target.** Third-party guides to the program say it expects venture backing. We have none: the application listed our pump.fun creator rewards as funding, and it was accepted. The pump.fun core team already heard this directly and liked it, so tagging @pumpdotfun there gives them a reason to reply or quote. It says only what we put on our own application, nothing from the confidential approval email.
-- **Post 1 says what membership is for, without making promises for xAI.** The co-marketing and the three marketplace listings (both post 1) are real and tracked in the [plan](../partners/xai-grok-startups-plan.md) (rows A1 to A3 and D1): the submissions are prepared, and the startups-team email asks for reshares, a showcase slot and marketplace featuring. The post deliberately does not say "amplified posts" or name what xAI will do for us: their help is theirs to announce, and saying it in advance reads as a claim of endorsement the Program Terms rule out. Once a listing goes live or xAI reshares, that is its own post. The direct line to the Cursor team and the co-marketing with all three are the owner's firsthand account.
-- **Each tag sits where that account has a reason to engage** ([who reshares what](../partners/xai-comarketing-kit.md#who-reshares-what)). @SpaceXSI (the former @xai) quote-posts third-party builds on the Grok API, so it goes in the head. @cursor_ai is in the head too, on the marketplace it runs, so the tag points at something concrete (our plugin listing there) rather than sitting in a list of teams; post 5 then shows the connector working in Cursor. @ericzakariasson works on Grok Bot and posts calls for connectors, so post 5. @XDevelopers features apps built on the X API, and post 6 has the X search example. @pumpdotfun gets the funding story in post 8. @grok answers public tags in the thread, so post 9 gets a visible Grok reply under it. Add more if you like; this is a hand post, not the automated queue.
-- **Tags go in the post text, not on the media.** @SpaceXSI has photo tagging turned off, so it cannot be tagged on the head image; the text mention in post 1 is what notifies them. Leave media tags empty so no account is tagged twice.
+- **The head states membership and nothing more.** "xAI accepted three.ws into Grok for Startups" is the claim the Program Terms let a member make. The post says what the program is (credits to build on Grok) so no reader takes it for an investment, an endorsement or a joint effort.
+- **"Can", never "does".** Grok decides which tools to call. Posts 3 and 5 describe what the connector makes possible and say when a behavior is Grok's choice.
+- **Only surfaces with recorded use.** Post 5 names the grok.com custom connector and Grok Bot because both have OAuth registrations in production. A surface is added only with a dated live proof, as its own post.
+- **Numbers say what was counted.** Post 7 gives the window, calls its figures requests, and says the total includes our own testing. The prompt figure is described by its method (prompts that match nothing in our tests or demos), not by a guess about who wrote them.
+- **Post 8 says only what we put on our own application.** It makes no statement about how xAI chooses members and quotes nothing from the acceptance email.
+- **Tags.** No xAI, SpaceXSI or Cursor account or employee is tagged: a tag implies that account took part. @pumpdotfun is tagged in post 8 because the post names it as our funding source (owner decision 2026-11-25, reaffirmed for this repost). @grok appears in post 9 as a public question to the bot, which answers in thread, and in post 10 as the literal name of the button.
 - **Never tag @bot.** That is functional, not etiquette: tagging it starts a task for each reader's own Grok Bot.
-- **Post 9 asks, it does not promise.** Grok's public reply puts a second voice under the thread and invites replies, and the post commits us to nothing we would have to deliver later. Reply to any good suggestions by hand if there is time.
-- **Confident, not shilly.** Short declarative sentences, concrete numbers and verbs that show the product doing something. No hype words (huge, massive, game changer, LFG), no countdowns, no "this is just the start": the energy comes from the proof.
-- **Voice avatar and hero clips are held back.** Each gets its own post later from the kit's queue, so this thread only shows surfaces that run on production today.
+- **Post 9 asks, it does not promise.** It commits us to nothing we would have to deliver later.
+- **Token-free.** The thread says three.ws comes from crypto and names its funding source, and stops there: no $THREE, no contract address, no price, no trading.
+- **Confident, not shilly.** Short declarative sentences, concrete numbers and verbs that show the product doing something. No hype words, no countdowns.
 
 ## The image
 
-[`scripts/grok-startups-announce-card.mjs`](../../scripts/grok-startups-announce-card.mjs) renders every option into `public/x-media/grok-startups-announce/` at 2x:
+[`scripts/grok-startups-announce-card.mjs`](../../scripts/grok-startups-announce-card.mjs) renders the card into `public/x-media/grok-startups-announce/` at 2x:
 
 | File | Look | Use |
 |---|---|---|
-| `head.png` (1200x675), `head-square.png` (1080x1080) | Program card in the format SpaceXSI members post: our lockup, a wireframe torus, the badge "Super Intelligence \| Grok for Startups" | Post 1 (default) |
+| `head.png` (1200x675), `head-square.png` (1080x1080) | Program card: our lockup, a wireframe torus, the badge "Super Intelligence \| Grok for Startups" | Post 1, optional |
 | `head.mp4`, `head-square.mp4` | The same card with the torus drifting in a seamless loop (`--motion`) | Post 1, if you want motion in the timeline |
-| `pair.png`, `pair-dark.png` (1200x675) | Our lockup and the Grok logo split by a rule, in the format of Grok's integration announcements | Alternative head, or a reply |
 
-The Grok and SpaceXAI marks are the owner-approved files from the `SpaceXAI_Grok_Assets` kit linked at [x.ai/legal/brand-guidelines](https://x.ai/legal/brand-guidelines), drawn unaltered with nothing beside them that reads as a combined mark ([plan rule](../partners/xai-grok-startups-plan.md#rules-that-bind-every-route)). The Program Terms grant the right to "state publicly that you participate in the Program" and say the program creates no partnership, so the copy around the image still never says partner. If SpaceXSI sends an official program badge, it replaces the badge block in the script.
+The badge uses the SpaceXAI mark from the `SpaceXAI_Grok_Assets` kit linked at [x.ai/legal/brand-guidelines](https://x.ai/legal/brand-guidelines), drawn unaltered. The Program Terms grant the right to "state publicly that you participate in the Program", which is all the card says. Still, the mark is xAI's and they asked for the last thread to come down: if there is any doubt, post 1 goes out with no image. The script also renders `pair.png` and `pair-dark.png` (our lockup beside the Grok logo). They are not used here, because two logos side by side read as a joint announcement.
 
 ```bash
-node scripts/grok-startups-announce-card.mjs            # the four PNGs
+node scripts/grok-startups-announce-card.mjs            # the PNGs
 node scripts/grok-startups-announce-card.mjs --motion   # head.mp4 and head-square.mp4
 ```
 
@@ -132,24 +172,77 @@ node scripts/anatomy-cutaway-video.mjs --id 85160213-4c15-4b00-ba96-5990b9385249
 
 ## Wording rules
 
-- The approved membership line is "three.ws is a member of xAI's Grok for Startups program." This thread's head uses the owner's "the first crypto-native company approved for" variant (see above). "Approved" matches the Program Terms' own word (the Approval Communication); both state membership, neither claims partnership.
-- Never write "xAI partner", "partnered with xAI", "backed by xAI", "official Grok plugin" or "endorsed by SpaceX".
-- Never state the credit amount, the team ID or a staff contact. The terms make the Approval Communication's non-public details confidential; membership itself is public by right.
-- Full program terms and what they allow: [the plan](../partners/xai-grok-startups-plan.md#what-membership-actually-gives-us).
+- The approved membership line is "three.ws is a member of xAI's Grok for Startups program." Post 1 uses the equivalent "xAI accepted three.ws into Grok for Startups."
+- The program is a startup credit program. Nothing in the thread may say or imply more than that. The full list of banned phrasings is the "Saying it correctly" section of [grok-startups-00-CONTEXT.md](../../prompts/finish/_context/grok-startups-00-CONTEXT.md).
+- Never state the credit amount, the team ID or a staff contact, and never name or quote xAI staff.
 
-## Where the numbers come from
+## Sources
 
-All figures cover 2026-10-08 to 2026-11-20 and are traced in the [co-marketing kit appendix](../partners/xai-comarketing-kit.md#appendix-where-every-number-comes-from): 5,547 tool calls on `/api/mcp-grok`, 2 errors, traffic on 44 of 44 days, 426 `look_at_model` render checks, 1,243 generation calls (517 `forge_free`, 211 `forge_avatar` plus 72 `text_to_avatar` as 283 avatars, 236 `mesh_forge`, 118 `rig_mesh`, 89 `refine_model`) and 718 caller-written prompts. The 195.8 second sign-in-to-model path is the measured run in [grok-bot-listings.md](../partners/grok-bot-listings.md); the 82 second example run is in [examples/grok](../../examples/grok/README.md). The cutaway's 47 parts, 10 step tour and step titles come from its live design ([ffsc-engine.js](../../api/_lib/anatomy/featured/ffsc-engine.js)), and the persona tools are live on `/api/mcp-grok` (`create_agent_persona`, `persona_say`). To refresh the window up to posting day (needs `DATABASE_URL` from `.env.local`):
+Checked on 2026-11-27 unless a line gives another date. "Live tools/list" means `curl -s https://three.ws/api/mcp-grok -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`, which returned 21 tools.
 
-```bash
-node scripts/grok-comarketing-numbers.mjs --from 2026-10-08 --to 2026-11-24
-```
+**Post 1**
 
-If the refreshed totals are higher, update posts 3 and 7 before posting.
+- Accepted into the program; the program gives credits: the [program summary][plan] (acceptance dated 2026-11-20; the Program Terms allow a member to state that it participates).
+- Ask for 3D and get a model you can spin, download, animate or embed: live tools/list (`forge_free`, `rig_mesh`, `forge_avatar`) and the result fields in [docs/mcp-studio.md](../mcp-studio.md).
+- Numbers come from production logs or our own test runs: the entries below.
 
-Post 4 says "three.ws also explains", not "Grok can": the Grok connector has no cutaway tool (check `tools/list` on `/api/mcp-grok`), so the cutaway is shown as ours, not as something Grok makes.
+**Post 2** (kept as written)
+
+- Textured GLB from text, rigged characters, edit instead of restart, saved versions you can revert to or branch from, text or image input: live tools/list descriptions of `forge_free`, `forge_avatar`, `refine_model` and `mesh_forge`.
+- Signed-out catalog search of CC0 assets, and a free account whose results stay unlisted until published: live tools/list description of `search_catalog`, and the connector fields in the [listings doc][listings].
+
+**Post 3**
+
+- The render check, what it returns, and that it is a tool Grok calls: live tools/list description of `look_at_model` ("Renders the GLB from several angles and returns the frames as images", with triangles, materials and textures).
+
+**Post 4** (kept as written)
+
+- 47 parts and the 10 step tour: [api/_lib/anatomy/featured/ffsc-engine.js](../../api/_lib/anatomy/featured/ffsc-engine.js) (30 part entries, one of them repeated 18 times, so 47 rendered parts; 10 steps, whose titles the post paraphrases).
+- Every figure sourced, and a failing test otherwise: [tests/anatomy-featured.test.js](../../tests/anatomy-featured.test.js) against [docs/anatomy/rocket-engines-sources.md](../anatomy/rocket-engines-sources.md), commit `58bf8efe3`.
+
+**Post 5**
+
+- grok.com custom connector and Grok Bot: OAuth registrations in the [numbers appendix][kit] (Grok Bot 31, 2026-10-08 to 2026-11-20; Grok 2, 2026-08-28), run on 2026-11-20.
+- No tool that can spend money: live tools/list (21 tool names, none of them a wallet, payment, transfer or trade tool).
+- One remote MCP server: both surfaces add `https://three.ws/api/mcp-grok` ([listings doc][listings], "The text we submit").
+- Viewer link, GLB, poster image and embed code, and the 195.8 second path: the measured run of `node scripts/grok-connector-review-check.mjs` on 2026-11-20, recorded in the [listings doc][listings] and in [docs/grok-bot.md](../grok-bot.md). It is our script driving the connector, not a session inside Grok Bot, which is why the post says "our own check script".
+- Persona: live tools/list descriptions of `create_agent_persona` and `persona_say`.
+
+**Post 6**
+
+- Six runnable examples and what each does: [examples/grok/README.md](../../examples/grok/README.md), public at github.com/nirholas/three.ws/tree/main/examples/grok (HTTP 200).
+- The three.ws side tested against production: `npm run grok:examples-smoke`, 6 of 6 passing on 2026-11-20, entry "07 examples pack" in [grok-startups-PROGRESS.md](../../prompts/finish/_context/grok-startups-PROGRESS.md). That run had no xAI key, which is why the post claims nothing about the Grok side.
+- The X search example never posts: [examples/grok-x-search-to-3d](../../examples/grok-x-search-to-3d/) and its unit tests.
+
+**Post 7**
+
+- 5,547 tool calls, the 44 day window, 1,243 generation calls (517 `forge_free`; 211 `forge_avatar` plus 72 `text_to_avatar` as 283 avatar requests; 236 `mesh_forge`; 118 `rig_mesh`; 89 `refine_model`) and 718 prompts: the [numbers appendix][kit], from `node scripts/grok-comarketing-numbers.mjs --from 2026-10-08 --to 2026-11-20` run on 2026-11-20 against the production database.
+- "Requests, not finished models": the script's own note on its generation tool list.
+- "Don't match our own tests or demos": the 718 is 734 distinct prompts minus the 16 whose first 60 characters appear in a corpus built from our repository.
+- Not re-run on 2026-11-27: the build machine had no database access that day. Rerun the command before posting and update the figures if they moved. The five-minute uptime probe (`api/cron/mcp-probe.js`) was not yet deployed on 2026-11-21 ([grok-startups-PROGRESS.md](../../prompts/finish/_context/grok-startups-PROGRESS.md)), so it is not in this window; probe runs we made by hand are, as part of our own testing.
+
+**Post 8**
+
+- No venture funding, and creator rewards listed as funding on our application: the owner's own application, as recorded in this file's earlier revision (commit `f52be3c1d`).
+- Accepted into the program: as post 1.
+
+**Post 9** (kept as written)
+
+- A question, not a claim.
+
+**Post 10**
+
+- The button exists and is live: [src/shared/share.js](../../src/shared/share.js) and [src/shared/grok-ask.js](../../src/shared/grok-ask.js) (commit `c6cff9a25`); the text "Ask @grok about it" is in production's `share` bundle, which both the model page bundle (`/m/<id>`) and the cutaway page bundle import.
+- Drafts a description and one question, opens the X composer, posts nothing itself: `src/shared/grok-ask.js` builds an X intent link and nothing else.
+
+**Links** (each returned HTTP 200 on 2026-11-27)
+
+- `https://three.ws/anatomy/85160213-4c15-4b00-ba96-5990b9385249?utm_source=x&utm_campaign=grok-startups&utm_content=repost`
+- `https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=repost`
+- `https://three.ws/grok?utm_source=x&utm_campaign=grok-startups&utm_content=repost-examples#build-examples` (the page has an element with `id="build-examples"`)
+- `https://three.ws/forge?utm_source=x&utm_campaign=grok-startups&utm_content=repost`
 
 ## After posting
 
-- Read results at 48 hours and 7 days: `npm run x:outcomes -- --refresh`, then `node scripts/grok-comarketing-numbers.mjs --clicks` (filters on `utm_content=announce`).
-- Send email version 1 from the [co-marketing kit](../partners/xai-comarketing-kit.md#the-startups-team-email) to the startups team the same day, with the thread link.
+- Read results at 48 hours and 7 days: `npm run x:outcomes -- --refresh`, then `node scripts/grok-comarketing-numbers.mjs --clicks` (it groups landings by `utm_content`; this thread's links carry `repost` and `repost-examples`).
+- If @grok or anyone at xAI replies, the owner answers by hand or not at all.
