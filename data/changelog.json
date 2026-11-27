@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-27",
+			"title": "A takedown now removes every copy of a Forge model, and repeat offenders get a human check",
+			"summary": "Removing a Forge model used to leave copies behind: its display thumbnail, its game-ready exports, any avatar saved from it and its Sketchfab listing. The takedown now finds and removes all of them, clears every cached page and feed that showed it, and says plainly what it could not remove instead of reporting success. A model that is private, held or blocked is also no longer picked for the Sketchfab showcase or shown on its social preview card. An account that keeps having models blocked now alerts an operator, and its later models wait for a manual look before they can go public.",
+			"tags": ["fix", "security"],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-27",
 			"title": "A private Forge model now stays private on every page, and old job links stop working",
 			"summary": "A model you set to private could still be liked, commented on, counted and downloaded by anyone who had its link. Now every one of those answers exactly like a model that does not exist, and only you can open, keep, comment on or download it. A job link from a generation expires after seven days, so one left in a log or a shared message stops being useful. A Tripo completion notice can no longer finish a job that belongs to a different provider, and the file it points at must be a public https address, so it cannot be aimed at an internal one.",
 			"tags": ["fix", "security"],
