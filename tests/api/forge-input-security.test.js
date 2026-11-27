@@ -762,6 +762,16 @@ describe('uploaded reference photos are verified from their bytes at submit', ()
 		expect(verdict.url).toBe(urlFor('b.png'));
 	});
 
+	it('names which photo of a set is the problem, and stays plain for a single photo', async () => {
+		put('a.png', pngHeader(512, 512));
+		put('c.png', pngHeader(512, 512));
+		put('b.png', Buffer.from('%PDF-1.7 not an image'));
+		const among = await verifyUploadedReferences([urlFor('a.png'), urlFor('b.png'), urlFor('c.png')]);
+		expect(among.message).toMatch(/^Photo 2 of 3: /);
+		const alone = await verifyUploadedReferences([urlFor('b.png')]);
+		expect(alone.message).not.toMatch(/^Photo /);
+	});
+
 	it('does not block a job when storage itself is down or the object is not there yet', async () => {
 		put('ok.png', pngHeader(512, 512));
 		bucket.failWith = Object.assign(new Error('connect ETIMEDOUT r2'), { code: 'ETIMEDOUT' });

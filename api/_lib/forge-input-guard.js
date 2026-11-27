@@ -57,7 +57,11 @@ const UPLOAD_PREFIX = 'forge/uploads/';
 // Returns the first refusal as { url, status, code, message } or null.
 export async function verifyUploadedReferences(urls) {
 	const verdicts = await Promise.all(urls.map(verifyOne));
-	return verdicts.find(Boolean) || null;
+	const at = verdicts.findIndex(Boolean);
+	if (at < 0) return null;
+	// Of several photos, say which one the verdict is about.
+	if (urls.length === 1) return verdicts[at];
+	return { ...verdicts[at], message: `Photo ${at + 1} of ${urls.length}: ${verdicts[at].message}` };
 }
 
 async function verifyOne(url) {
