@@ -59,10 +59,14 @@ function isBlockedAddress(ip) {
 }
 
 export class SsrfBlockedError extends Error {
-	constructor(reason) {
+	// `dnsCode` is set only when the block is a failed name lookup (ENOTFOUND,
+	// ENODATA, EAI_AGAIN, ...), so a caller that must tell "this name points at a
+	// private address" from "this name points nowhere" does not parse the message.
+	constructor(reason, { dnsCode } = {}) {
 		super(reason);
 		this.code = 'ssrf_blocked';
 		this.status = 400;
+		if (dnsCode) this.dnsCode = dnsCode;
 	}
 }
 
@@ -83,7 +87,12 @@ export class MaxBytesExceededError extends Error {
 // Resolve a hostname, validate all returned addresses, and return the first
 // safe address (preferring IPv4 for socket compatibility). Throws SsrfBlockedError
 // when any address in the answer is blocked — the entire record set must be clean.
-async function resolveAndValidate(host) {
+async function resolveAndValidate(rawHost) {
+	// URL.hostname keeps the brackets of an IPv6 literal ("[::1]"). net.isIP
+	// rejects that spelling, and a resolver treats it as a name that does not
+	// exist, so the address would be judged by a failed lookup instead of by what
+	// it is. Strip them and classify the address itself.
+	const host = rawHost.startsWith('[') && rawHost.endsWith(']') ? rawHost.slice(1, -1) : rawHost;
 	const literal = net.isIP(host);
 	if (literal) {
 		if (isBlockedAddress(host)) throw new SsrfBlockedError(`host ${host} is a blocked address`);
@@ -93,7 +102,9 @@ async function resolveAndValidate(host) {
 	try {
 		records = await dns.lookup(host, { all: true, verbatim: true });
 	} catch (err) {
-		throw new SsrfBlockedError(`dns lookup failed for ${host}: ${err.code || err.message}`);
+		throw new SsrfBlockedError(`dns lookup failed for ${host}: ${err.code || err.message}`, {
+			dnsCode: err.code || 'UNKNOWN',
+		});
 	}
 	if (!records?.length) throw new SsrfBlockedError(`no addresses for ${host}`);
 	for (const r of records) {

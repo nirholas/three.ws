@@ -106,6 +106,7 @@ import {
 import { isInlineImageRef } from './_lib/image-persist.js';
 import { resolveProviderKey, resolveProviderKeyWithSource } from './_lib/forge-provider-key.js';
 import { validateForgeImage } from './_lib/forge-image-validate.js';
+import { findUnsafeUrl, verifyUploadedReferences } from './_lib/forge-input-guard.js';
 import {
 	SKETCH_FALLBACK_NOTE,
 	SKETCH_UNREADABLE_MESSAGE,
@@ -1609,6 +1610,16 @@ async function startJobWithBody(req, res, body) {
 				});
 			}
 		}
+		// The worker fetches each of these from inside our network, so a loopback,
+		// link-local (cloud metadata) or private-range target is refused here.
+		if (await findUnsafeUrl(imageUrls)) {
+			return json(res, 400, {
+				error: 'invalid_image_url',
+				message: 'Each reference image must point at a publicly reachable host.',
+			});
+		}
+		const badUpload = await verifyUploadedReferences(imageUrls);
+		if (badUpload) return json(res, badUpload.status, { error: badUpload.code, message: badUpload.message });
 		if (prompt.length > 1000) {
 			return json(res, 400, {
 				error: 'invalid_prompt',

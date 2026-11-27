@@ -1496,6 +1496,16 @@ async function startJob(req, res) {
 				});
 			}
 		}
+		// The worker fetches each of these from inside our network, so a loopback,
+		// link-local (cloud metadata) or private-range target is refused here.
+		if (await findUnsafeUrl(imageUrls)) {
+			return json(res, 400, {
+				error: 'invalid_image_url',
+				message: 'Each reference image must point at a publicly reachable host.',
+			});
+		}
+		const badUpload = await verifyUploadedReferences(imageUrls);
+		if (badUpload) return json(res, badUpload.status, { error: badUpload.code, message: badUpload.message });
 		if (prompt.length > 1000) {
 			return json(res, 400, {
 				error: 'invalid_prompt',
@@ -2844,6 +2854,14 @@ async function startRigJob(req, res) {
 		return json(res, 400, {
 			error: 'invalid_glb_url',
 			message: 'glb_url must be an http(s) URL to a GLB mesh, under 2048 characters.',
+		});
+	}
+	// The rig worker fetches this URL from inside our network, so a loopback,
+	// link-local (cloud metadata) or private-range target is refused here.
+	if (await findUnsafeUrl([glbUrl])) {
+		return json(res, 400, {
+			error: 'invalid_glb_url',
+			message: 'glb_url must point at a publicly reachable host.',
 		});
 	}
 

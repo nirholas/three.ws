@@ -540,6 +540,12 @@ async function inlineImageFromUrl(imageUrl, { timeoutMs = 8_000 } = {}) {
 				'user-agent': 'Mozilla/5.0 (compatible; three.ws-vision/1.0; +https://three.ws)',
 				accept: 'image/avif,image/webp,image/png,image/*;q=0.8,*/*;q=0.5',
 			},
+		}, {
+			// Enforced while the body streams, so a host that never stops sending
+			// (or lies about its length) cannot fill memory before the size check
+			// below runs.
+			maxBytes: MAX_INLINE_IMAGE_BYTES,
+			timeoutMs,
 		});
 	} catch (e) {
 		// ENOTFOUND is a name that does not exist; EAI_AGAIN and friends are a

@@ -84,6 +84,10 @@ export function inspectGlb(buf, { allowPartial = false } = {}) {
 		return null;
 	}
 
+	// A glTF document is a JSON object. A chunk that parses to null, a number, a
+	// string or an array is not a model, and reading `.skins` off it would throw.
+	if (!gltf || typeof gltf !== 'object' || Array.isArray(gltf)) return null;
+
 	// Optional BIN chunk follows the JSON chunk at byte (20 + jsonChunkLen).
 	// We don't read its body — just confirm the header validates so callers
 	// can distinguish embedded-bin GLBs (Hunyuan3D, TRELLIS, model-viewer
@@ -106,7 +110,7 @@ export function inspectGlb(buf, { allowPartial = false } = {}) {
 	const nodes = Array.isArray(gltf.nodes) ? gltf.nodes : [];
 	const meshes = Array.isArray(gltf.meshes) ? gltf.meshes : [];
 	const skeletonJointCount = skins.reduce(
-		(acc, s) => acc + (Array.isArray(s.joints) ? s.joints.length : 0),
+		(acc, s) => acc + (Array.isArray(s?.joints) ? s.joints.length : 0),
 		0,
 	);
 	const generator = typeof gltf.asset?.generator === 'string' ? gltf.asset.generator : null;
