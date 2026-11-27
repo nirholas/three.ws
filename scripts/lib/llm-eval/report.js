@@ -120,7 +120,7 @@ export function recommend({ task, current, candidates, routeEnv, latencyBudgetMs
 	const w = winners[0];
 	const value = w.lane.extraBody?.reasoning_effort ? `${w.lane.model}:${w.lane.extraBody.reasoning_effort}` : w.lane.model;
 	if (!routeEnv) return { route: null, text: `${w.label} wins on the ${w.by}, but this task has no route flag.` };
-	return { route: { env: routeEnv, value }, text: `Route to ${w.label}: set \`${routeEnv}=${value}\`. It wins on the ${w.by} with an interval that excludes a tie.${notes.length ? ` ${notes.join(' ')}` : ''}` };
+	return { route: { env: routeEnv, value }, text: `Route to ${w.label}: set \`${routeEnv}=${value}\`. It wins on the ${w.by} with an interval that excludes a tie.${w.judge ? '' : ' The pairwise judge has not scored it yet.'}${notes.length ? ` ${notes.join(' ')}` : ''}` };
 }
 
 /**
@@ -157,13 +157,14 @@ const NO_USAGE = Object.freeze({ inputTokens: 0, cachedTokens: 0, outputTokens: 
  * what that cost. Then one line on spend and one on coverage, so a reader can
  * tell a full set from a subset before reading a single score. PURE.
  */
-export function runFacts({ results, sets, taskInfo, lanes, ranLanes, usageOf }) {
+export function runFacts({ results, sets, taskInfo, lanes, ranLanes, usageOf, unanswered = {}, callLimitMs = 60_000 }) {
 	const read = usageOf || (() => NO_USAGE);
 	const out = [];
 	const tasks = Object.keys(sets);
 	out.push('| Lane | Model | Calls made | Inputs run per task | Prompt tokens (cached) | Output tokens (reasoning) | Spend |', '|---|---|---|---|---|---|---|');
 	const partial = [];
 	const grok = { spend: 0, list: 0, calls: 0, reported: 0, listKnown: true };
+	const retried = [];
 	for (const l of ranLanes) {
 		const isGrok = lanes[l].provider === 'grok';
 		const rows = results.filter((r) => r.lane === l);
@@ -192,6 +193,8 @@ export function runFacts({ results, sets, taskInfo, lanes, ranLanes, usageOf }) 
 		}
 		const spend = answered.reduce((s, r) => s + (r.costMicro || 0), 0);
 		if (isGrok) grok.spend += spend;
+		const kinds = Object.entries(unanswered[l] || {}).filter(([, n]) => n > 0);
+		if (kinds.length) retried.push({ lane: l, kinds, dearest: Math.max(0, ...answered.map((r) => r.costMicro || 0)), isGrok });
 		out.push(`| ${lanes[l].label} | \`${lanes[l].model}\` | ${when} | ${perTask} | ${tokens(sum.input)} (${tokens(sum.cached)}) | ${tokens(sum.output)} (${tokens(sum.reasoning)}) | ${isGrok ? money(spend) : '$0 (free tier)'} |`);
 	}
 	out.push('');
@@ -202,8 +205,9 @@ export function runFacts({ results, sets, taskInfo, lanes, ranLanes, usageOf }) 
 				? 'the token counts xAI returned, at list price'
 				: `the cost xAI reported on ${grok.reported} of ${grok.calls} responses and the token counts at list price for the rest`;
 		const check = grok.listKnown && grok.reported > 0 ? ` The same token counts at list price come to ${money(grok.list)}.` : '';
-		out.push(`Total xAI spend for the Grok columns: ${money(grok.spend)} over ${tokens(grok.calls)} answered calls, from ${source}.${check} Prompt tokens include the cached ones, which bill at the cached rate; reasoning tokens are counted beside the reply's output tokens and bill at the output rate. A call that failed and was retried is not counted.`, '');
+		out.push(`Total xAI spend for the Grok columns: ${money(grok.spend)} over ${tokens(grok.calls)} answered calls, from ${source}.${check} Prompt tokens include the cached ones, which bill at the cached rate; reasoning tokens are counted beside the reply's output tokens and bill at the output rate.`, '');
 	}
+	out.push(...retriedNotes(retried, lanes, callLimitMs), '');
 	out.push(
 		partial.length
 			? `Coverage: ${partial.join(' and ')} ran a subset of the inputs (counts above). Each pass rate is over the inputs that lane ran, and each paired difference covers only the inputs both lanes ran, so a subset lane is compared with the current lane on those inputs and not on the full baseline set.`
@@ -211,6 +215,28 @@ export function runFacts({ results, sets, taskInfo, lanes, ranLanes, usageOf }) 
 		'',
 	);
 	return out;
+}
+
+const UNANSWERED_KINDS = {
+	timeout: (n, limitMs) => `${tokens(n)} hit the harness's ${Math.round(limitMs / 1000)} s limit`,
+	rate_limit: (n) => `${tokens(n)} ${n === 1 ? 'was' : 'were'} rate limited`,
+	server: (n) => `${tokens(n)} got a server error`,
+	network: (n) => `${tokens(n)} lost the connection`,
+};
+
+// One paragraph per lane whose attempts were retried: the results file keeps
+// only the attempt that settled each row, so the page has to say what the
+// latency and spend figures leave out.
+function retriedNotes(retried, lanes, callLimitMs) {
+	if (!retried.length) return ['Every attempt got an answer, so no call was retried.'];
+	return retried.map(({ lane, kinds, dearest, isGrok }) => {
+		const total = kinds.reduce((s, [, n]) => s + n, 0);
+		const why = kinds.map(([k, n]) => (UNANSWERED_KINDS[k] ? UNANSWERED_KINDS[k](n, callLimitMs) : `${tokens(n)} ${k}`)).join(', ');
+		const billed = isGrok
+			? ` What xAI billed for those attempts is not in the spend above: at the price of that lane's most expensive answered call (${money(dearest)}) they would add ${money(dearest * total)}.`
+			: '';
+		return `${tokens(total)} ${total === 1 ? 'attempt' : 'attempts'} on ${lanes[lane].label} ended without an answer and ${total === 1 ? 'was' : 'were'} tried again (${why}). Latency on this page is the answering attempt alone, so it understates the wait on those inputs.${billed}`;
+	});
 }
 
 /**
@@ -221,7 +247,7 @@ export function runFacts({ results, sets, taskInfo, lanes, ranLanes, usageOf }) 
  * @param {Record<string, object[]>} o.sets      task -> rows of the input set
  * @param {Record<string, object>} o.taskInfo    TASK_INFO from tasks.js
  * @param {Record<string, object>} o.lanes       LANES from lanes.js
- * @param {object} o.meta                        { generatedOn, production, keyProbe, judgeNote, usageOf }
+ * @param {object} o.meta                        { generatedOn, production, keyProbe, judgeNote, usageOf, unanswered, callLimitMs }
  *   usageOf(row) reads a result's token counts and prices them:
  *   { inputTokens, cachedTokens, outputTokens, reasoningTokens, reportedMicro, listMicro }
  *   (reportedMicro: the cost the provider put on the response, or null;
@@ -241,7 +267,7 @@ export function buildReport({ results, judged, sets, taskInfo, lanes, meta }) {
 	out.push('## Status', '');
 	if (grokRan.length) {
 		out.push(`Lanes measured: ${ranLanes.map((l) => lanes[l].label).join(', ')}.`, '');
-		out.push(...runFacts({ results, sets, taskInfo, lanes, ranLanes, usageOf: meta.usageOf }));
+		out.push(...runFacts({ results, sets, taskInfo, lanes, ranLanes, usageOf: meta.usageOf, unanswered: meta.unanswered, callLimitMs: meta.callLimitMs }));
 	} else {
 		out.push(`Baseline only. ${meta.keyProbe}`, '');
 		out.push('Every task set, grader, judge and the routing flags are in place, so the Grok columns fill in with the Grok command under "Reproduce" when the process running it has GROK_API_KEY in its environment, and this page regenerates from the combined results.', '');
@@ -333,9 +359,9 @@ export function buildReport({ results, judged, sets, taskInfo, lanes, meta }) {
 	out.push('');
 	const { routes, held } = flagsToSet(recs);
 	out.push('## Routing', '');
-	out.push('Routing is per task and off by default. `LLM_ROUTE_<TASK>` names a chat Grok id from `GROK_MODELS`, optionally with a reasoning effort (`<id>:<effort>`); unset, `off`, `default` or an invalid value leave the task on its current chain ([api/_lib/llm.js](../../api/_lib/llm.js) `llmRouteOverride`). The routed Grok rung leads the chain and every existing rung stays behind it, so an xAI error falls through instead of failing the call. `LLM_ROUTE_AGENT_CHAT` does the same for signed-in agent chat in [api/chat.js](../../api/chat.js) when the caller picked no provider, model or agent brain; anonymous chat stays on the free lanes. The flags take effect only where the server has `GROK_API_KEY`.', '');
+	out.push('Routing is per task and off by default. `LLM_ROUTE_<TASK>` names a chat Grok id from `GROK_MODELS`, optionally with a reasoning effort (`<id>:<effort>`); unset, `off`, `default` or an invalid value leave the task on its current chain ([api/_lib/llm.js](../../api/_lib/llm.js) `llmRouteOverride`). The routed Grok rung leads the chain and every existing rung stays behind it, so an xAI error falls through instead of failing the call. `LLM_ROUTE_AGENT_CHAT` does the same for signed-in agent chat in [api/chat.js](../../api/chat.js) when the caller picked no provider, model or agent brain; anonymous chat stays on the free lanes. A flag does nothing on a server without `GROK_API_KEY`: the task stays on its current chain.', '');
 	if (routes.length) {
-		out.push('Set these on Cloud Run (owner step):', '', '```bash');
+		out.push('This page changes nothing in production and no flag is set today. If the owner decides to route on these results, this is the one command the data supports:', '', '```bash');
 		out.push(`gcloud run services update three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --update-env-vars ${routes.map((r) => `${r.env}=${r.value}`).join(',')}`);
 		out.push('```', '');
 	}

@@ -49,13 +49,16 @@
 //
 // Results (resumable, last line for a key wins):
 //   data/evals/llm-results/results.jsonl  one line per lane:task:id
-//     { task, id, lane, model, ok, status, error, latencyMs, costMicro, usage,
-//       text, toolCalls, pass, checks, reason, shipped, advisory, at }
+//     { task, id, lane, model, ok, status, error, latencyMs, attempts, costMicro,
+//       usage, text, toolCalls, pass, checks, reason, shipped, advisory, at }
+//     latencyMs, usage and costMicro belong to the attempt that settled the row.
 //     Grok rows also carry { responseId, ledgered }: xAI's response id and
 //     whether the call has reached the xAI credit ledger yet.
 //   data/evals/llm-results/judged.jsonl   one line per task:id:lane pair
 //     { task, id, a: 'current', b, judge, score (b vs a: 1 win, 0.5 tie, 0 loss), verdicts, consistent, at }
 //   data/evals/llm-results/runs.json      { runs: [...], keyProbe: { status, error, at } | null }
+//     A run that retried anything carries unanswered: { <lane>: { <kind>: n } },
+//     the attempts that timed out, were rate limited or hit a server error.
 // Report: docs/evals/grok-4-7-on-three-ws.md
 //
 // Exit codes: 0 ok; 1 every call in a lane that ran failed; 2 usage or setup error.
@@ -66,13 +69,14 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadCloudRunEnv } from './lib/cloud-run-env.mjs';
 import { TASKS, TASK_INFO, buildRequest, judgeInput } from './lib/llm-eval/tasks.js';
-import { LANES, laneKey, callLane } from './lib/llm-eval/lanes.js';
+import { LANES, laneKey, callLane, CALL_LIMIT_MS } from './lib/llm-eval/lanes.js';
 import { normalizeXaiUsage } from '../api/_lib/xai-usage.js';
 import { priceTableCostMicro } from '../api/_lib/xai-pricing.js';
 import { grade } from './lib/llm-eval/graders.js';
 import { JUDGES, pickJudge, judgePair } from './lib/llm-eval/judge.js';
 import { buildReport, laneSummary } from './lib/llm-eval/report.js';
 import { unledgered, ledgerInput } from './lib/llm-eval/ledger.js';
+import { attemptKind, tallyUnanswered } from './lib/llm-eval/attempts.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'data/evals/llm-results');
@@ -202,12 +206,16 @@ const wait = (s) => new Promise((r) => setTimeout(r, s * 1000));
 
 // One call with retries on rate limits, gateway errors and timeouts, honouring
 // Retry-After. A row that still fails is recorded as failed, never dropped.
-async function callWithRetry(lane, req) {
+// Every attempt that ended without an answer is handed to onUnanswered, because
+// the row keeps only the attempt that settled it.
+async function callWithRetry(lane, req, onUnanswered) {
 	let res;
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		res = await callLane(lane, req);
-		const retryable = !res.ok && (res.status === 429 || res.status === 0 || res.status >= 500);
-		if (!retryable || attempt === MAX_ATTEMPTS) return res;
+		res.attempts = attempt;
+		const kind = attemptKind(res);
+		if (kind) onUnanswered(kind);
+		if (!kind || attempt === MAX_ATTEMPTS) return res;
 		const after = Number(res.retryAfter);
 		const delay = Math.min(MAX_WAIT_S, Number.isFinite(after) && after > 0 ? after : 5 * 2 ** (attempt - 1));
 		console.warn(`  ${lane.name} ${res.status || res.error}: retry ${attempt}/${MAX_ATTEMPTS - 1} in ${delay}s`);
@@ -311,6 +319,8 @@ async function writeReport(sets, results, judged, runs) {
 			production: PRODUCTION_NOTE,
 			keyProbe: keyProbeNote(runs.keyProbe),
 			judgeNote: judgeNote([...judged.values()], pairsWaiting(results, judged)),
+			unanswered: tallyUnanswered(runs.runs),
+			callLimitMs: CALL_LIMIT_MS,
 			usageOf: (r) => {
 				const u = normalizeXaiUsage(r.usage);
 				return { ...u, reportedMicro: u.costMicro, listMicro: priceTableCostMicro(r.model, u) };
@@ -399,7 +409,11 @@ async function main() {
 		let okCount = 0;
 		await pool(todo, opts.concurrency, async ({ task, row }) => {
 			const req = buildRequest(task, row);
-			const res = await callWithRetry(lane, req);
+			const res = await callWithRetry(lane, req, (kind) => {
+				run.unanswered ??= {};
+				run.unanswered[laneName] ??= {};
+				run.unanswered[laneName][kind] = (run.unanswered[laneName][kind] || 0) + 1;
+			});
 			const graded = res.ok ? grade(task, row, { text: res.text, toolCalls: res.toolCalls }) : { pass: false, checks: null, reason: `error ${res.status}`, shipped: null };
 			const rec = {
 				task,
@@ -410,6 +424,7 @@ async function main() {
 				status: res.status,
 				error: res.ok ? null : res.error,
 				latencyMs: res.latencyMs,
+				attempts: res.attempts,
 				costMicro: res.ok ? res.costMicro : null,
 				usage: res.ok ? res.usage : null,
 				text: res.ok ? res.text : null,
@@ -436,6 +451,7 @@ async function main() {
 			console.log(`[${laneName} ${done}/${todo.length}] ${task} ${row.id} ${res.ok ? `${rec.pass ? 'pass' : `FAIL ${rec.reason}`} ${res.latencyMs} ms` : `ERROR ${res.status} ${res.error}`}`);
 		});
 		if (todo.length && okCount === 0) failedLanes.push(laneName);
+		if (okCount && lane.provider === 'grok') runs.keyProbe = null;
 	}
 	if (ledger) await ledger.flushXaiUsage();
 

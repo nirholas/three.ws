@@ -13,6 +13,7 @@ import { TASKS, TASK_INFO, buildRequest, judgeInput } from '../scripts/lib/llm-e
 import { LANES, laneBody, parseCompletion, laneCostMicro, laneKey, callLane } from '../scripts/lib/llm-eval/lanes.js';
 import { laneSummary, failureReasons, checkBreakdown, pairedComparison, recommend, flagsToSet, buildReport } from '../scripts/lib/llm-eval/report.js';
 import { unledgered, ledgerInput } from '../scripts/lib/llm-eval/ledger.js';
+import { attemptKind, tallyUnanswered } from '../scripts/lib/llm-eval/attempts.js';
 import { GROK_DEFAULT_MODEL, GROK_BUDGET_MODEL } from '../api/_lib/chat-models.js';
 import { LIMITS } from '../api/agents/suggest-spec.js';
 
@@ -263,6 +264,9 @@ describe('report and routing rule', () => {
 		};
 		const win = recommend({ task: 'x_reply', current, candidates: [mk('grok_budget', 45, 1200)], routeEnv: 'LLM_ROUTE_X_REPLY', latencyBudgetMs: 5000 });
 		expect(win.route).toEqual({ env: 'LLM_ROUTE_X_REPLY', value: `${GROK_BUDGET_MODEL}:none` });
+		expect(win.text).toMatch(/The pairwise judge has not scored it yet/);
+		const judgedWin = recommend({ task: 'x_reply', current, candidates: [{ ...mk('grok_budget', 45, 1200), judge: { mean: 0.7, lo: 0.6, hi: 0.8 } }], routeEnv: 'LLM_ROUTE_X_REPLY', latencyBudgetMs: 5000 });
+		expect(judgedWin.text).not.toMatch(/has not scored/);
 		const slow = recommend({ task: 'x_reply', current, candidates: [mk('grok', 45, 9000)], routeEnv: 'LLM_ROUTE_X_REPLY', latencyBudgetMs: 5000 });
 		expect(slow.route).toBeNull();
 		expect(slow.text).toMatch(/over the/);
@@ -335,6 +339,40 @@ describe('report and routing rule', () => {
 		expect(subset).toContain('Forge prompt director 10/50, Agent chat: tool selection 10/50');
 		expect(subset).toContain('Total xAI spend for the Grok columns: $0.07 over 50 answered calls, from the token counts xAI returned, at list price.');
 		expect(subset).toContain(`Coverage: ${LANES.grok.label} ran a subset of the inputs`);
+	});
+});
+
+describe('attempts that ended without an answer', () => {
+	it('names what was retried and nothing else', () => {
+		expect(attemptKind({ ok: true, status: 200 })).toBe(null);
+		expect(attemptKind({ ok: false, status: 0, error: 'timeout' })).toBe('timeout');
+		expect(attemptKind({ ok: false, status: 0, error: 'fetch failed' })).toBe('network');
+		expect(attemptKind({ ok: false, status: 429, error: 'slow down' })).toBe('rate_limit');
+		expect(attemptKind({ ok: false, status: 503, error: 'unavailable' })).toBe('server');
+		expect(attemptKind({ ok: false, status: 400, error: 'bad request' })).toBe(null);
+	});
+
+	it('sums the counts every run recorded, per lane and kind', () => {
+		const runs = [{ rows: 250 }, { unanswered: { grok: { timeout: 71 } } }, { unanswered: { grok: { timeout: 9, rate_limit: 2 }, grok_budget: { server: 1 } } }];
+		expect(tallyUnanswered(runs)).toEqual({ grok: { timeout: 80, rate_limit: 2 }, grok_budget: { server: 1 } });
+		expect(tallyUnanswered([])).toEqual({});
+	});
+
+	it('puts the retried attempts on the page beside the latency and spend they are missing from', () => {
+		const mk = (lane, costMicro) => TASKS.flatMap((task) => SETS[task].map((r, i) => ({ task, id: r.id, lane, model: LANES[lane].model, ok: true, pass: true, latencyMs: 1000, costMicro: i === 0 ? costMicro * 3 : costMicro, usage: null, at: '2026-11-27T20:00:00.000Z' })));
+		const results = [...mk('current', 0), ...mk('grok', 20_000)];
+		const base = { generatedOn: '2026-11-27', production: 'p', keyProbe: 'k', judgeNote: 'j' };
+		const build = (meta) => buildReport({ results, judged: [], sets: SETS, taskInfo: TASK_INFO, lanes: LANES, meta: { ...base, ...meta } }).markdown;
+
+		const clean = build({});
+		expect(clean).toContain('Every attempt got an answer, so no call was retried.');
+
+		const retried = build({ unanswered: { grok: { timeout: 80, rate_limit: 2 } }, callLimitMs: 60_000 });
+		expect(retried).toContain(`82 attempts on ${LANES.grok.label} ended without an answer and were tried again (80 hit the harness's 60 s limit, 2 were rate limited).`);
+		expect(retried).toContain('Latency on this page is the answering attempt alone, so it understates the wait on those inputs.');
+		expect(retried).toContain("at the price of that lane's most expensive answered call ($0.06) they would add $4.92.");
+		expect(retried).not.toContain('Every attempt got an answer');
+		expect(retried).not.toMatch(/[\u2013\u2014]/);
 	});
 });
 

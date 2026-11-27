@@ -18,6 +18,11 @@ import { priceTableCostMicro } from '../../../api/_lib/xai-pricing.js';
 
 const NVIDIA_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
+// The least time any call gets before the harness aborts it. Production gives
+// these tasks 20 to 30 s; the eval waits longer so a slow model is scored on
+// its answer and its latency is reported, instead of every row reading "timeout".
+export const CALL_LIMIT_MS = 60_000;
+
 export const LANES = Object.freeze({
 	current: Object.freeze({
 		name: 'current',
@@ -101,7 +106,7 @@ export async function callLane(lane, req, { env = process.env, fetchImpl = fetch
 	if (key) headers.authorization = `Bearer ${key}`;
 	const started = Date.now();
 	const ctrl = new AbortController();
-	const timer = setTimeout(() => ctrl.abort(), Math.max(req.timeoutMs || 30_000, 60_000));
+	const timer = setTimeout(() => ctrl.abort(), Math.max(req.timeoutMs || 30_000, CALL_LIMIT_MS));
 	try {
 		const res = await fetchImpl(lane.url, { method: 'POST', headers, body: JSON.stringify(laneBody(lane, req)), signal: ctrl.signal });
 		const latencyMs = Date.now() - started;
