@@ -1,5 +1,7 @@
 # Forge hardening 77: Verify every claim behind the NVIDIA catalog listing, and draft the reply for the owner to send
 
+**Status (2026-11-27):** done in the repo (claims verified, listing corrected, reply and pre-send checklist in `docs/nvidia-reply-2026-11-jiyeon.md`, commit 027627522). Remaining and owned by the owner: rename the Inception portal record and re-paste the corrected Technical Details, send the reply (nothing was sent), and optionally deploy so the reference-image fixes reach production. `tests/forge-product-name.test.js` has 5 locale failures (es, ar, bn, da, sk lack `forge.product_name` in HEAD) outside this order's scope.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository and send it. Nothing else is needed. This order depends on no other order: every fact, command and rule it needs is in this file. It is safe to run on its own, in any order, and at the same time as every other `forge-hardening` order. Its path in the repo is `prompts/finish/177-forge-hardening-77-nvidia-catalog-reply-readiness.md`.
 
 **Priority:** P0. **Area:** the reply to NVIDIA. **Dev port:** 4177. **Written:** 2026-11-26, from live production testing of Forge that day. Status claims rot, which is why Step 0 re-measures before you change anything.
