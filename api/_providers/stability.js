@@ -18,10 +18,13 @@ import { bodyRefusesContent, contentRefusedError } from '../_lib/forge-byok-guar
 const STABILITY_BASE = 'https://api.stability.ai/v2beta/3d';
 const ENDPOINT = 'stable-fast-3d';
 
-// Texture richness follows the tier; foreground_ratio/remesh use Stability's
-// sane defaults for a clean, centered reconstruction.
+// Texture richness follows the tier across the three sizes Stable Fast 3D
+// accepts (512, 1024, 2048), so Draft, Standard and High each send a different
+// request. foreground_ratio/remesh use Stability's sane defaults for a clean,
+// centered reconstruction.
 function textureResolutionFor(tier) {
-	return tier?.hd ? '2048' : '1024';
+	if (tier?.hd) return '2048';
+	return tier?.id === 'draft' ? '512' : '1024';
 }
 
 export function createStabilityProvider(apiKey) {
