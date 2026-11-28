@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { describe, it } from 'node:test';
-import { asAnon, asUser, createUser, supabaseDb } from './harness.mjs';
+import { after, describe, it } from 'node:test';
+import { asAnon, asUser, closeAll, createUser, supabaseDb } from './harness.mjs';
+
+after(closeAll);
 
 async function insertAs(db, userId, prompt, tier = 'standard') {
 	return asUser(db, userId, async (tx) => {

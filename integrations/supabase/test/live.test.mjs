@@ -11,9 +11,11 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { it } from 'node:test';
+import { after, it } from 'node:test';
 import { sweep } from '../supabase/functions/three-ws-forge/sweep.ts';
-import { asUser, createUser, pgliteStore, supabaseDb } from './harness.mjs';
+import { asUser, closeAll, createUser, pgliteStore, supabaseDb } from './harness.mjs';
+
+after(closeAll);
 
 const apiKey = process.env.THREE_WS_API_KEY?.trim();
 const baseUrl = process.env.THREE_WS_BASE_URL?.trim() || 'https://three.ws';

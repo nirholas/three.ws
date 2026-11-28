@@ -7,9 +7,11 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, it } from 'node:test';
+import { after, describe, it } from 'node:test';
 import { storagePathFor, sweep } from '../supabase/functions/three-ws-forge/sweep.ts';
-import { asUser, createUser, pgliteStore, supabaseDb } from './harness.mjs';
+import { asUser, closeAll, createUser, pgliteStore, supabaseDb } from './harness.mjs';
+
+after(closeAll);
 
 /** A minimal valid binary glTF: 12-byte header + an empty JSON chunk. */
 function glb() {

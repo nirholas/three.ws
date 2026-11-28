@@ -95,10 +95,21 @@ async function build(schedule) {
 // Booting PGlite and applying the migrations takes seconds, so each variant is
 // built once and every test gets its own clone of it.
 const templates = new Map();
+const open = new Set();
 
 export async function supabaseDb({ schedule = false } = {}) {
 	if (!templates.has(schedule)) templates.set(schedule, build(schedule));
-	return (await templates.get(schedule)).clone();
+	const db = await (await templates.get(schedule)).clone();
+	open.add(db);
+	return db;
+}
+
+/** Close every database this file opened; an open PGlite keeps the test process alive. */
+export async function closeAll() {
+	const all = [...open, ...(await Promise.all(templates.values()))];
+	open.clear();
+	templates.clear();
+	await Promise.all(all.map((db) => db.close()));
 }
 
 export async function createUser(db, id, email = `${id.slice(0, 8)}@example.test`) {
