@@ -1,4 +1,4 @@
-// The Cursor and Grok Build plugins promise reviewers and users that nothing
+// The Cursor and Grok Build plugins and the Gemini CLI extension promise reviewers and users that nothing
 // they connect to can move money. This opens a real MCP session to every server
 // their configs name, on production, and fails if any tool listed there reads as
 // a wallet, transfer, send, swap, trade, launch, payment, x402 or withdraw
@@ -17,9 +17,10 @@ import { describe, expect, it } from 'vitest';
 import { openSession, pluginMcpConfig, readMcpServers, spendSurfaceHits } from '../scripts/lib/plugin-mcp.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const PLUGINS = ['integrations/cursor/three-ws', 'integrations/grok/three-ws'];
+const PLUGINS = ['integrations/cursor/three-ws', 'integrations/grok/three-ws', 'integrations/gemini/three-ws'];
 const KEY = process.env.THREE_WS_API_KEY;
 const CURSOR = join(ROOT, 'integrations/cursor/three-ws');
+const GEMINI = join(ROOT, 'integrations/gemini/three-ws');
 
 /** Tool names in the first column of the README's "What the agent gets" table. */
 export function readmeToolTable(markdown) {
@@ -40,6 +41,18 @@ export function calledTools(markdown) {
 const cursorDocs = ['rules', 'commands'].flatMap((dir) =>
 	readdirSync(join(CURSOR, dir)).map((f) => ({ file: `${dir}/${f}`, text: readFileSync(join(CURSOR, dir, f), 'utf8') })),
 );
+
+const geminiDocs = [
+	{ file: 'GEMINI.md', text: readFileSync(join(GEMINI, 'GEMINI.md'), 'utf8') },
+	...readdirSync(join(GEMINI, 'commands')).map((f) => ({ file: `commands/${f}`, text: readFileSync(join(GEMINI, 'commands', f), 'utf8') })),
+];
+
+// Plugins whose README carries a "What the agent gets" table and whose rules or
+// commands name tools: both must match the live server.
+const DOCUMENTED = [
+	{ name: 'Cursor', dir: CURSOR, docs: cursorDocs },
+	{ name: 'Gemini CLI', dir: GEMINI, docs: geminiDocs },
+];
 
 const servers = [];
 for (const plugin of PLUGINS) {
@@ -77,10 +90,12 @@ describe('plugin text parsers', () => {
 		expect(calledTools('1. Call `search_catalog` first. Then call the three-ws `look_at_model` tool. Print `embed_html`.')).toEqual(['search_catalog', 'look_at_model']);
 	});
 
-	it('finds tool references in the shipped Cursor plugin', () => {
-		expect(readmeToolTable(readFileSync(join(CURSOR, 'README.md'), 'utf8')).length).toBeGreaterThan(10);
-		expect(cursorDocs.flatMap((d) => calledTools(d.text))).toContain('forge_free');
-	});
+	for (const p of DOCUMENTED) {
+		it(`finds tool references in the shipped ${p.name} plugin`, () => {
+			expect(readmeToolTable(readFileSync(join(p.dir, 'README.md'), 'utf8')).length).toBeGreaterThan(10);
+			expect(p.docs.flatMap((d) => calledTools(d.text))).toContain('forge_free');
+		});
+	}
 });
 
 describe.skipIf(!KEY)('live plugin tool surface (production)', () => {
@@ -102,15 +117,17 @@ describe.skipIf(!KEY)('live plugin tool surface (production)', () => {
 		}, 60_000);
 	}
 
-	it('the Cursor README lists exactly the live tools, and every tool a rule or command calls exists', async () => {
-		const [server] = readMcpServers(pluginMcpConfig(CURSOR));
-		const session = await openSession(server.url, KEY);
-		try {
-			const live = (await session.client.listTools()).tools.map((t) => t.name).sort();
-			expect(readmeToolTable(readFileSync(join(CURSOR, 'README.md'), 'utf8')).sort()).toEqual(live);
-			for (const d of cursorDocs) for (const tool of calledTools(d.text)) expect(live, `${d.file} calls ${tool}`).toContain(tool);
-		} finally {
-			await session.close();
-		}
-	}, 60_000);
+	for (const p of DOCUMENTED) {
+		it(`the ${p.name} README lists exactly the live tools, and every tool its docs call exists`, async () => {
+			const [server] = readMcpServers(pluginMcpConfig(p.dir));
+			const session = await openSession(server.url, KEY);
+			try {
+				const live = (await session.client.listTools()).tools.map((t) => t.name).sort();
+				expect(readmeToolTable(readFileSync(join(p.dir, 'README.md'), 'utf8')).sort()).toEqual(live);
+				for (const d of p.docs) for (const tool of calledTools(d.text)) expect(live, `${d.file} calls ${tool}`).toContain(tool);
+			} finally {
+				await session.close();
+			}
+		}, 60_000);
+	}
 });

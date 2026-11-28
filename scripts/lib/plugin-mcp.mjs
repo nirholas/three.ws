@@ -40,11 +40,13 @@ export function readMcpServers(configPath) {
 
 /** Locate the MCP config file inside a plugin directory. */
 export function pluginMcpConfig(dir) {
-	for (const f of ['mcp.json', '.mcp.json']) {
+	// Cursor and Grok Build read mcp.json / .mcp.json; a Gemini CLI extension
+	// declares its servers in gemini-extension.json under the same mcpServers key.
+	for (const f of ['mcp.json', '.mcp.json', 'gemini-extension.json']) {
 		const p = path.join(dir, f);
 		if (fs.existsSync(p)) return p;
 	}
-	throw new Error(`${dir}: no mcp.json or .mcp.json`);
+	throw new Error(`${dir}: no mcp.json, .mcp.json or gemini-extension.json`);
 }
 
 /**

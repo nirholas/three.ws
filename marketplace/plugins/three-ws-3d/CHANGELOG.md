@@ -4,7 +4,7 @@ All notable changes to this plugin are documented here. Versions follow [semver]
 
 ## Unreleased
 
-- Added Cursor manifests (`.cursor-plugin/plugin.json`, `mcp.json`) and applied to the Cursor Marketplace on 2026-11-21 (pending review). See `SUBMISSION.md`.
+- Removed the Cursor manifests (`.cursor-plugin/plugin.json`, `mcp.json`) added for the 2026-11-21 Cursor Marketplace application. This plugin starts local npx servers, one of them payment-capable, and its manifests failed Cursor's schema. The repository's `.cursor-plugin/marketplace.json` now lists `integrations/cursor/three-ws` (hosted studio server, OAuth sign-in) as the Cursor plugin. See `SUBMISSION.md`.
 
 ## 1.0.0 — 2026-07-01
 

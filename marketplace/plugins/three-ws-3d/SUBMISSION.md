@@ -86,7 +86,12 @@ marketplace-publishing@cursor.com once it has reviewed the plugin. Status: **pen
 | GitHub repository | `https://github.com/nirholas/three.ws` |
 | Website | `https://three.ws` |
 
-Cursor reads `.cursor-plugin/marketplace.json` at the repo root and
-`.cursor-plugin/plugin.json` plus `mcp.json` in this directory. Keep `mcp.json` in sync with
-the `mcpServers` block in `.claude-plugin/plugin.json` when servers change. Cursor reviews
-the public repo, so these files must be on `github.com/nirholas/three.ws` `main`.
+This directory is not the Cursor plugin. Cursor reads `.cursor-plugin/marketplace.json` at the
+repo root, which lists one plugin: `integrations/cursor/three-ws` (the hosted studio server at
+`https://three.ws/api/mcp-studio?auth=oauth`, OAuth sign-in, no spend tools). Its reviewer notes
+are in `integrations/cursor/three-ws/REVIEWING.md`. Check the listing against Cursor's published
+schema with `node scripts/validate-cursor-plugin.mjs`. Cursor reviews the public repo, so the
+change must be on `github.com/nirholas/three.ws` `main`.
+
+Answer for the form's test-account field: sign-up is free and self-serve (email code, Google or
+Microsoft) at the OAuth prompt, so reviewers need no shared credentials.
