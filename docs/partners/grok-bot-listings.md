@@ -143,7 +143,7 @@ already names. **That repository does not exist on GitHub yet** (404 on 2026-11-
 it is the first step and is itself a publish.
 
 The export was dry-run on 2026-11-14 from `threews/main`: the tree holds
-`.cursor-plugin/plugin.json`, `mcp.json`, `README.md`, `LICENSE`, `assets/logo.svg` and four
+`.cursor-plugin/plugin.json`, `mcp.json`, `README.md`, `LICENSE`, `assets/logo.png` and four
 skills; the logo path resolves; `mcp.json` declares no `${VAR}`; no file names another coin.
 
 Re-run on 2026-11-20 with `scripts/export-plugin-repo.mjs` (plugin 1.3.0): it validates the

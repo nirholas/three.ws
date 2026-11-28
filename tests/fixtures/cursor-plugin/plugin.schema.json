@@ -1,109 +1,229 @@
 {
-  "$comment": "Cursor Plugin manifest (.cursor-plugin/plugin.json). Cursor publishes no machine-readable schema, so this is a field-for-field transcription of the manifest tables at https://cursor.com/docs/reference/plugins (Required fields, Optional fields, Variables, Submission checklist; retrieved 2026-11-20) with the name pattern copied from scripts/validate-template.mjs in https://github.com/cursor/plugin-template at commit 46216072ac5750f782f95bb325b4d12b7c3ae9c9 (2026-04-24). additionalProperties is false because the reference defines the complete field set: a field it does not list is something a reviewer reads as noise or a mistake. Re-transcribe from the same two sources when Cursor changes the format.",
+  "$comment": "Vendored verbatim from https://github.com/cursor/plugins/blob/5229aad76c37451561c5b81a9b5072ae1c549a5b/schemas/plugin.schema.json (Cursor's published schema, the one its own marketplace listings validate against). Only this $comment is added. Re-vendor from cursor/plugins when Cursor changes the format; house rules stricter than this schema live in scripts/validate-cursor-plugin.mjs.",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://cursor.com/docs/reference/plugins#cursor-plugin-manifest",
-  "title": "Cursor Plugin manifest",
+  "$id": "https://cursor.com/schemas/cursor-plugin/plugin.json",
+  "title": "Cursor Plugin Manifest",
+  "description": "Schema for .cursor-plugin/plugin.json \u2014 defines a single Cursor plugin's metadata, components, and configuration.",
   "type": "object",
+  "required": [
+    "name"
+  ],
   "additionalProperties": false,
-  "required": ["name"],
-  "definitions": {
-    "relativePath": {
-      "type": "string",
-      "minLength": 1,
-      "not": { "anyOf": [{ "pattern": "^/" }, { "pattern": "^[A-Za-z]:[\\\\/]" }, { "pattern": "(^|[\\\\/])\\.\\.([\\\\/]|$)" }] }
-    },
-    "pathOrPaths": {
-      "oneOf": [
-        { "$ref": "#/definitions/relativePath" },
-        { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/relativePath" } }
-      ]
-    },
-    "url": { "type": "string", "pattern": "^https?://[^\\s]+$" },
-    "variableSchema": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "type": { "enum": ["string", "number", "integer", "boolean", "object", "array"] },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "default": {},
-        "enum": { "type": "array" },
-        "const": {},
-        "properties": { "type": "object", "additionalProperties": { "$ref": "#/definitions/variableSchema" } },
-        "required": { "type": "array", "items": { "type": "string" } },
-        "items": { "$ref": "#/definitions/variableSchema" },
-        "minLength": { "type": "integer", "minimum": 0 },
-        "maxLength": { "type": "integer", "minimum": 0 },
-        "pattern": { "type": "string" },
-        "format": { "type": "string" },
-        "minimum": { "type": "number" },
-        "maximum": { "type": "number" },
-        "exclusiveMinimum": { "type": "number" },
-        "exclusiveMaximum": { "type": "number" },
-        "multipleOf": { "type": "number" },
-        "minItems": { "type": "integer", "minimum": 0 },
-        "maxItems": { "type": "integer", "minimum": 0 }
-      }
-    }
-  },
   "properties": {
     "name": {
-      "description": "Plugin identifier. Lowercase, kebab-case (alphanumerics, hyphens, and periods). Must start and end with an alphanumeric character.",
       "type": "string",
-      "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
+      "minLength": 1,
+      "pattern": "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$",
+      "description": "Unique plugin identifier in kebab-case (lowercase alphanumeric with hyphens and periods)."
     },
-    "description": { "description": "Brief plugin description", "type": "string", "minLength": 1 },
-    "version": {
-      "description": "Semantic version (e.g., 1.0.0)",
+    "displayName": {
       "type": "string",
-      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$"
+      "description": "Human-readable display name for the plugin."
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description of what the plugin does."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the plugin (e.g. \"1.2.3\")."
+    },
+    "minClientVersions": {
+      "$ref": "#/$defs/minClientVersions",
+      "description": "Minimum client versions required to install the plugin, keyed by client identifier."
     },
     "author": {
-      "description": "Author info: name (required), email (optional)",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name"],
-      "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "email": { "type": "string", "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
-      }
+      "$ref": "#/$defs/author",
+      "description": "The plugin author."
     },
-    "homepage": { "description": "URL to plugin homepage", "$ref": "#/definitions/url" },
-    "repository": { "description": "URL to plugin repository", "$ref": "#/definitions/url" },
-    "license": { "description": "License identifier (e.g., MIT)", "type": "string", "minLength": 1 },
-    "keywords": { "description": "Tags for discovery and categorization", "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "publisher": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Publisher or organisation name."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the plugin's homepage."
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the plugin's source code repository."
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX license identifier (e.g. \"MIT\", \"Apache-2.0\")."
+    },
     "logo": {
-      "description": "Relative path to a logo file in the repo, or an absolute URL",
-      "oneOf": [{ "$ref": "#/definitions/url" }, { "allOf": [{ "$ref": "#/definitions/relativePath" }, { "not": { "pattern": "^https?://" } }] }]
+      "type": "string",
+      "description": "Path to a logo image (relative to the plugin root) or an absolute URL."
     },
-    "rules": { "description": "Path(s) to rule files or directories", "$ref": "#/definitions/pathOrPaths" },
-    "agents": { "description": "Path(s) to agent files or directories", "$ref": "#/definitions/pathOrPaths" },
-    "skills": { "description": "Path(s) to skill directories", "$ref": "#/definitions/pathOrPaths" },
-    "commands": { "description": "Path(s) to command files or directories", "$ref": "#/definitions/pathOrPaths" },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords for discovery and search."
+    },
+    "category": {
+      "type": "string",
+      "description": "Plugin category for marketplace classification."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for filtering and discovery."
+    },
+    "commands": {
+      "$ref": "#/$defs/stringOrStringArray",
+      "description": "Glob pattern(s) or path(s) to command files."
+    },
+    "agents": {
+      "$ref": "#/$defs/stringOrStringArray",
+      "description": "Glob pattern(s) or path(s) to agent definition files."
+    },
+    "skills": {
+      "$ref": "#/$defs/stringOrStringArray",
+      "description": "Glob pattern(s) or path(s) to skill files."
+    },
+    "rules": {
+      "$ref": "#/$defs/stringOrStringArray",
+      "description": "Glob pattern(s) or path(s) to rule files."
+    },
     "hooks": {
-      "description": "Path to hooks config file, or inline hook config",
-      "oneOf": [{ "$ref": "#/definitions/relativePath" }, { "type": "object" }]
-    },
-    "mcpServers": {
-      "description": "Path to MCP config file, inline MCP server config, or an array of either. Overrides default mcp.json discovery.",
       "oneOf": [
-        { "$ref": "#/definitions/relativePath" },
-        { "type": "object" },
-        { "type": "array", "minItems": 1, "items": { "oneOf": [{ "$ref": "#/definitions/relativePath" }, { "type": "object" }] } }
-      ]
+        {
+          "type": "string"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Path to a hooks configuration file, or an inline hooks object."
     },
     "variables": {
-      "description": "JSON Schema declaring variable names substituted into ${VAR} placeholders. The top level must be { type: object, properties: {...} }.",
       "type": "object",
-      "additionalProperties": false,
-      "required": ["type", "properties"],
+      "required": [
+        "type"
+      ],
       "properties": {
-        "type": { "const": "object" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "properties": { "type": "object", "additionalProperties": { "$ref": "#/definitions/variableSchema" } },
-        "required": { "type": "array", "items": { "type": "string" } }
+        "type": {
+          "const": "object"
+        },
+        "properties": {
+          "type": "object"
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "description": "JSON Schema for user-configured plugin variables."
+    },
+    "mcpServers": {
+      "$ref": "#/$defs/mcpServers",
+      "description": "MCP server configuration \u2014 a path, an inline config object, or an array of either."
+    }
+  },
+  "$defs": {
+    "author": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Author name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Author email address."
+        }
       }
+    },
+    "minClientVersions": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "cursor": {
+          "$ref": "#/$defs/clientVersionRequirement",
+          "description": "Minimum Cursor version required to install the plugin (e.g. \"3.13.0\"), or \"never\" to hide it from Cursor entirely."
+        },
+        "grokbot": {
+          "$ref": "#/$defs/clientVersionRequirement",
+          "description": "Minimum Grok Bot version required to install the plugin (e.g. \"0.49.0\"), or \"never\" to hide it from Grok Bot entirely."
+        },
+        "sand": {
+          "$ref": "#/$defs/clientVersionRequirement",
+          "description": "Deprecated client id for Grok Bot. Same meaning as grokbot."
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/clientVersionRequirement",
+        "description": "Minimum version required for another client identifier, or \"never\" to hide the plugin from that client."
+      }
+    },
+    "clientVersionRequirement": {
+      "description": "A minimum semantic version, or the literal \"never\" when that client must not list or install the plugin.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/semver"
+        },
+        {
+          "const": "never"
+        }
+      ]
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?$",
+      "description": "Strict semantic version \"X.Y.Z\" with an optional prerelease suffix."
+    },
+    "stringOrStringArray": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "mcpServers": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          }
+        }
+      ]
     }
   }
 }

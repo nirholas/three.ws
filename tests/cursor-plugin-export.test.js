@@ -62,9 +62,9 @@ describe('export-plugin-repo refuses a Cursor plugin the validator rejects', () 
 		mkdirSync(IN_REPO_TMP, { recursive: true });
 		const src = join(IN_REPO_TMP, 'broken');
 		cpSync(join(ROOT, SRC), src, { recursive: true });
-		unlinkSync(join(src, 'assets/logo.svg'));
+		unlinkSync(join(src, 'assets/logo.png'));
 		const out = join(TMP, 'broken-out');
-		expect(() => exportPluginRepo({ src, out, log: quiet })).toThrow(/validate-cursor-plugin[\s\S]*logo "assets\/logo\.svg" does not exist/);
+		expect(() => exportPluginRepo({ src, out, log: quiet })).toThrow(/validate-cursor-plugin[\s\S]*logo "assets\/logo\.png" does not exist/);
 		expect(existsSync(out)).toBe(false);
 	});
 });

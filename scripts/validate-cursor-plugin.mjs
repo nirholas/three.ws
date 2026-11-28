@@ -3,23 +3,34 @@
 // checks, so a submission is not bounced for something a script can catch.
 //
 // Sources (re-read them when Cursor changes the format):
-//   - Manifest and component reference: https://cursor.com/docs/reference/plugins
-//     (field tables, Variables, component discovery, Submission checklist)
-//   - The name pattern and frontmatter rules of scripts/validate-template.mjs in
+//   - Cursor's published schemas for .cursor-plugin/plugin.json and
+//     .cursor-plugin/marketplace.json, vendored verbatim from cursor/plugins at
+//     tests/fixtures/cursor-plugin/{plugin,marketplace}.schema.json.
+//   - Plugin docs: https://cursor.com/docs/plugins (component discovery,
+//     ${CURSOR_PLUGIN_ROOT}, manual review, open source only).
+//   - The frontmatter rules of scripts/validate-template.mjs in
 //     cursor/plugin-template, commit 46216072ac5750f782f95bb325b4d12b7c3ae9c9.
-//   - Marketplace publisher terms: open source, permissive license only
-// The manifest schema is vendored at tests/fixtures/cursor-plugin/plugin.schema.json.
+//   - Marketplace publisher terms: open source, permissive license only.
 //
-// Checks: manifest schema, kebab-case name, every referenced file exists,
-// component frontmatter, every ${VAR} in MCP and hooks config declared under
-// `variables`, every MCP server a remote https URL on the host allowlist,
-// manifest under 10 MB, no symlinks, README and permissive LICENSE present,
-// no committed secrets.
+// Plugin checks: Cursor's schema (the complete field set), plus house rules
+// stricter than it: kebab-case name, semantic version, every path field a
+// relative path inside the plugin, every referenced file exists, component
+// frontmatter, every ${VAR} in MCP and hooks config declared under `variables`,
+// every MCP server a remote https URL on the host allowlist, manifest under
+// 10 MB, no symlinks, README and permissive LICENSE present, no committed secrets.
+//
+// Marketplace checks (a repository holding .cursor-plugin/marketplace.json at its
+// root, which is how Cursor reads a multi-plugin repository): Cursor's schema,
+// every entry's source a directory inside the repository holding a plugin whose
+// manifest name matches the entry, and every listed plugin passing the plugin
+// checks above.
 //
 // Usage:
-//   node scripts/validate-cursor-plugin.mjs [plugin dir] [--allow-host <host>]... [--json]
-// Default dir: integrations/cursor/three-ws. Default allowlist: three.ws and its
-// subdomains. Exits 1 when any error is found.
+//   node scripts/validate-cursor-plugin.mjs [dir] [--allow-host <host>]... [--json]
+// With no dir, validates this repository's marketplace and every plugin it
+// lists. A dir holding .cursor-plugin/plugin.json is validated as one plugin; a
+// dir holding only .cursor-plugin/marketplace.json as a marketplace. Default
+// allowlist: three.ws and its subdomains. Exits 1 when any error is found.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -29,13 +40,17 @@ import Ajv from 'ajv';
 import { parse as parseYaml } from 'yaml';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SCHEMA_PATH = path.join(ROOT, 'tests/fixtures/cursor-plugin/plugin.schema.json');
+const SCHEMA_DIR = path.join(ROOT, 'tests/fixtures/cursor-plugin');
 
 export const DEFAULT_ALLOWED_HOSTS = Object.freeze(['three.ws']);
 export const MAX_MANIFEST_BYTES = 10 * 1024 * 1024;
 // Cursor expands these itself; they are not plugin variables.
 const BUILTIN_VARS = new Set(['CURSOR_PLUGIN_ROOT', 'CLAUDE_PLUGIN_ROOT']);
 const KEBAB = /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
+// Strict MAJOR.MINOR.PATCH with an optional prerelease and build suffix.
+const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/;
+// Manifest fields that name files inside the plugin.
+const PATH_FIELDS = ['rules', 'agents', 'skills', 'commands', 'hooks', 'mcpServers'];
 const COMPONENT_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 // Cursor's publisher terms accept permissive licenses only.
 const PERMISSIVE_LICENSES = new Set(['MIT', 'Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', '0BSD', 'Unlicense', 'CC0-1.0', 'MIT-0', 'Zlib']);
@@ -51,13 +66,14 @@ const SECRET_PATTERNS = [
 ];
 const TEXT_EXT = new Set(['.md', '.mdc', '.markdown', '.txt', '.json', '.js', '.mjs', '.cjs', '.ts', '.sh', '.yml', '.yaml', '.toml', '.svg', '.html', '']);
 
-let compiledSchema = null;
-function schemaValidator() {
-	if (!compiledSchema) {
-		const ajv = new Ajv({ allErrors: true, strict: false, verbose: true });
-		compiledSchema = ajv.compile(JSON.parse(fs.readFileSync(SCHEMA_PATH, 'utf8')));
+const compiledSchemas = new Map();
+/** @param {'plugin'|'marketplace'} kind */
+function schemaValidator(kind) {
+	if (!compiledSchemas.has(kind)) {
+		const ajv = new Ajv({ allErrors: true, strict: false, verbose: true, validateFormats: false });
+		compiledSchemas.set(kind, ajv.compile(JSON.parse(fs.readFileSync(path.join(SCHEMA_DIR, `${kind}.schema.json`), 'utf8'))));
 	}
-	return compiledSchema;
+	return compiledSchemas.get(kind);
 }
 
 /**
@@ -111,16 +127,25 @@ export function validateCursorPlugin(dir, opts = {}) {
 		return result();
 	}
 
-	const validate = schemaValidator();
+	const validate = schemaValidator('plugin');
 	if (!validate(manifest)) {
 		for (const e of validate.errors) {
 			// The name pattern gets its own message below, in the reviewer's words.
 			if (e.instancePath === '/name' && e.keyword === 'pattern') continue;
-			errors.push(formatSchemaError(manifestRel, e));
+			errors.push(formatSchemaError(manifestRel, e, 'plugin'));
 		}
 	}
 	if (typeof manifest.name === 'string' && !KEBAB.test(manifest.name)) {
 		errors.push(`${manifestRel}: name "${manifest.name}" is not lowercase kebab-case (letters, digits, hyphens, periods; starts and ends alphanumeric).`);
+	}
+	if (typeof manifest.version === 'string' && !SEMVER.test(manifest.version)) {
+		errors.push(`${manifestRel}: version "${manifest.version}" is not a semantic version (MAJOR.MINOR.PATCH).`);
+	}
+	const escapes = (v) => typeof v === 'string' && !/^https?:\/\//.test(v) && !safeJoin(root, v);
+	for (const field of PATH_FIELDS) {
+		if ([].concat(manifest[field] ?? []).some(escapes)) {
+			errors.push(`${manifestRel}: ${field} must be a relative path inside the plugin (no "..", no absolute path) or the documented object form.`);
+		}
 	}
 
 	// Logo.
@@ -129,6 +154,7 @@ export function validateCursorPlugin(dir, opts = {}) {
 		if (!logoAbs) errors.push(`${manifestRel}: logo "${manifest.logo}" leaves the plugin directory.`);
 		else if (!isFile(logoAbs)) errors.push(`${manifestRel}: logo "${manifest.logo}" does not exist. Commit the file and reference it by relative path.`);
 		else if (logoAbs.endsWith('.svg') && !fs.readFileSync(logoAbs, 'utf8').includes('<svg')) errors.push(`${manifest.logo}: not an SVG document.`);
+		else if (logoAbs.endsWith('.png') && fs.readFileSync(logoAbs).subarray(0, 8).toString('hex') !== '89504e470d0a1a0a') errors.push(`${manifest.logo}: not a PNG image.`);
 	}
 
 	// README and license (submission checklist; publisher terms).
@@ -346,18 +372,77 @@ function placeholders(value) {
 	return out;
 }
 
-function formatSchemaError(file, e) {
+function formatSchemaError(file, e, kind) {
 	const at = e.instancePath ? e.instancePath.slice(1).replace(/\//g, '.') : '(root)';
 	if (e.keyword === 'additionalProperties') {
 		const where = e.instancePath ? `${at}.` : '';
-		return `${file}: field "${where}${e.params.additionalProperty}" is not defined by the Cursor manifest reference. Remove it (https://cursor.com/docs/reference/plugins).`;
+		return `${file}: field "${where}${e.params.additionalProperty}" is not defined by Cursor's ${kind} schema. Remove it (https://github.com/cursor/plugins/tree/main/schemas).`;
 	}
 	if (e.keyword === 'required') return `${file}: ${at} is missing required field "${e.params.missingProperty}".`;
-	if (e.keyword === 'pattern' && at === 'version') return `${file}: version "${e.data}" is not a semantic version (MAJOR.MINOR.PATCH).`;
-	if (e.keyword === 'not' || (e.keyword === 'oneOf' && /^(rules|agents|skills|commands|hooks|mcpServers|logo)/.test(at))) {
-		return `${file}: ${at} must be a relative path inside the plugin (no "..", no absolute path) or the documented object form.`;
-	}
 	return `${file}: ${at} ${e.message}.`;
+}
+
+/**
+ * Validate a repository that lists its Cursor plugins in
+ * .cursor-plugin/marketplace.json, and every plugin it lists.
+ * @param {string} dir repository root
+ * @param {{ allowHosts?: readonly string[] }} [opts]
+ * @returns {{ ok: boolean, errors: string[], warnings: string[], marketplace: object|null, plugins: Array<{ name: string, source: string, ok: boolean, mcpServers: Array<{ name: string, url: string }> }> }}
+ */
+export function validateCursorMarketplace(dir, opts = {}) {
+	const root = path.resolve(dir);
+	const errors = [];
+	const warnings = [];
+	const plugins = [];
+	const rel = '.cursor-plugin/marketplace.json';
+	const abs = path.join(root, rel);
+	let marketplace = null;
+	const result = () => ({ ok: errors.length === 0, errors, warnings, marketplace, plugins });
+
+	if (!isFile(abs)) {
+		errors.push(`${rel}: missing. Cursor reads a multi-plugin repository through this file at the repository root.`);
+		return result();
+	}
+	if (fs.statSync(abs).size > MAX_MANIFEST_BYTES) errors.push(`${rel}: over the 10 MB manifest limit.`);
+	try {
+		marketplace = JSON.parse(fs.readFileSync(abs, 'utf8'));
+	} catch (err) {
+		errors.push(`${rel}: invalid JSON (${err.message}).`);
+		return result();
+	}
+	const validate = schemaValidator('marketplace');
+	if (!validate(marketplace)) for (const e of validate.errors) errors.push(formatSchemaError(rel, e, 'marketplace'));
+	if (!Array.isArray(marketplace.plugins) || !marketplace.plugins.length) {
+		errors.push(`${rel}: lists no plugins.`);
+		return result();
+	}
+
+	marketplace.plugins.forEach((entry, i) => {
+		const label = `${rel}: plugins[${i}]`;
+		if (!entry || typeof entry.source !== 'string') return;
+		if (/^https?:\/\//.test(entry.source)) {
+			warnings.push(`${label} (${entry.name}): source "${entry.source}" is a remote URL, so it is not validated here.`);
+			return;
+		}
+		const sourceAbs = safeJoin(root, entry.source);
+		if (!sourceAbs) {
+			errors.push(`${label} (${entry.name}): source "${entry.source}" leaves the repository.`);
+			return;
+		}
+		const sourceRel = relOf(root, sourceAbs);
+		if (!isFile(path.join(sourceAbs, '.cursor-plugin/plugin.json'))) {
+			errors.push(`${label} (${entry.name}): source "${entry.source}" has no .cursor-plugin/plugin.json.`);
+			return;
+		}
+		const res = validateCursorPlugin(sourceAbs, opts);
+		for (const e of res.errors) errors.push(`${sourceRel}/${e}`);
+		for (const w of res.warnings) warnings.push(`${sourceRel}/${w}`);
+		if (res.manifest && res.manifest.name !== entry.name) {
+			errors.push(`${label}: name "${entry.name}" does not match "${res.manifest.name}" in ${sourceRel}/.cursor-plugin/plugin.json.`);
+		}
+		plugins.push({ name: entry.name, source: sourceRel, ok: res.ok, mcpServers: res.mcpServers });
+	});
+	return result();
 }
 
 function walk(dir, visit) {
@@ -412,12 +497,29 @@ function main(argv) {
 		else if (argv[i] === '--json') json = true;
 		else if (!dir) dir = argv[i];
 	}
-	dir ||= path.join(ROOT, 'integrations/cursor/three-ws');
-	const res = validateCursorPlugin(dir, { allowHosts });
+	dir ||= ROOT;
+	const abs = path.resolve(dir);
+	const shown = path.relative(process.cwd(), abs) || '.';
+	if (!isFile(path.join(abs, '.cursor-plugin/plugin.json')) && isFile(path.join(abs, '.cursor-plugin/marketplace.json'))) {
+		const res = validateCursorMarketplace(abs, { allowHosts });
+		if (json) {
+			process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
+		} else {
+			console.log(`Cursor marketplace: ${shown}/.cursor-plugin/marketplace.json`);
+			for (const p of res.plugins) {
+				console.log(`  plugin    ${p.name} -> ${p.source} (${p.ok ? 'valid' : 'invalid'})`);
+				for (const s of p.mcpServers) console.log(`  server    ${s.name} -> ${s.url}`);
+			}
+			for (const w of res.warnings) console.log(`  WARN  ${w}`);
+			for (const e of res.errors) console.log(`  FAIL  ${e}`);
+			console.log(res.ok ? `PASS  0 errors, ${res.warnings.length} warning(s)` : `FAIL  ${res.errors.length} error(s), ${res.warnings.length} warning(s)`);
+		}
+		process.exit(res.ok ? 0 : 1);
+	}
+	const res = validateCursorPlugin(abs, { allowHosts });
 	if (json) {
 		process.stdout.write(`${JSON.stringify(res, null, 2)}\n`);
 	} else {
-		const shown = path.relative(process.cwd(), path.resolve(dir)) || '.';
 		console.log(`Cursor plugin: ${shown}`);
 		if (res.manifest) console.log(`  manifest  ${res.manifest.name}@${res.manifest.version ?? '(no version)'}`);
 		for (const [kind, list] of Object.entries(res.components)) {

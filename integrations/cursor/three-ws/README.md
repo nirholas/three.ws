@@ -9,7 +9,7 @@ unlisted until you publish them).
 
 ![The three.ws viewer showing a carved armchair the plugin generated from one sentence](assets/screenshot-viewer.png)
 
-This is a plugin in the [Cursor plugin format](https://cursor.com/docs/reference/plugins)
+This is a plugin in the [Cursor plugin format](https://cursor.com/docs/plugins)
 (`.cursor-plugin/plugin.json`, `mcp.json`, `rules/`, `skills/`, `commands/`). It
 has no local code. It points Cursor at the hosted three.ws studio MCP server and
 bundles rules, skills and commands that teach the agent when to use which tool.
@@ -50,7 +50,7 @@ use an API key instead (from <https://three.ws/dashboard/api>), drop
 ## What the agent gets
 
 The server's tool list comes from `https://three.ws/api/mcp-studio` at run time.
-These are the 16 tools it lists today:
+These are the 21 tools it lists today:
 
 | Tool | What it does |
 | --- | --- |
@@ -64,6 +64,8 @@ These are the 16 tools it lists today:
 | `look_at_model` | Renders a GLB from several angles and returns the frames as images, so the agent can see what it made |
 | `search_catalog`, `get_catalog_item`, `get_item_source` | Searches thousands of ready-made CC0 props, rigged characters and motion clips, and returns embed code |
 | `search_docs` | Searches the three.ws documentation |
+| `pano_capture_start`, `pano_capture_status`, `pano_capture_list` | Turns 360 video or photos (from a public https URL) into a Gaussian splat scene you can walk through, collects it, and lists your captures |
+| `pano_scene_create`, `pano_scene_status` | Turns one 360 photo into a depth-shell GLB you can stand inside, and collects it |
 | `create_agent_persona`, `get_agent_persona`, `persona_say` | Turns a generated GLB into a named, reusable talking 3D persona |
 
 Every generation links a run receipt: a signed, stage-by-stage record of what

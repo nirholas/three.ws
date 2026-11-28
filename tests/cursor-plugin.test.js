@@ -20,13 +20,16 @@ describe('Cursor plugin package', () => {
 		expect(m.version).toMatch(/^\d+\.\d+\.\d+$/);
 		expect(m.repository).toBe('https://github.com/nirholas/three.ws');
 		expect(m.license).toBe('Apache-2.0');
-		expect(read(join(PLUGIN, m.logo))).toContain('<svg');
+		expect(m.displayName).toBe('three.ws');
+		expect(m.logo).toBe('assets/logo.png');
+		// PNG signature: Cursor's own listings ship a committed PNG logo.
+		expect(readFileSync(join(PLUGIN, m.logo)).subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
 		expect(read(join(PLUGIN, 'LICENSE'))).toBe(read(join(ROOT, 'LICENSE')));
 	});
 
 	it('points only at the free studio server, asking the client to sign in', () => {
 		const m = JSON.parse(read(join(PLUGIN, 'mcp.json')));
-		expect(m.mcpServers).toEqual({ 'three-ws': { url: 'https://three.ws/api/mcp-studio?auth=oauth' } });
+		expect(m.mcpServers).toEqual({ 'three-ws': { type: 'http', url: 'https://three.ws/api/mcp-studio?auth=oauth' } });
 	});
 
 	it('bundles skills byte-identical to the .agents/skills sources', () => {

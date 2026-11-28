@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv from 'ajv';
 import { afterEach, describe, expect, it } from 'vitest';
-import { validateCursorPlugin } from '../scripts/validate-cursor-plugin.mjs';
+import { validateCursorMarketplace, validateCursorPlugin } from '../scripts/validate-cursor-plugin.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PLUGIN = join(ROOT, 'integrations/cursor/three-ws');
@@ -35,28 +35,46 @@ afterEach(() => {
 	while (temps.length) rmSync(temps.pop(), { recursive: true, force: true });
 });
 
-describe('vendored Cursor manifest schema', () => {
-	const schema = readJson(join(ROOT, 'tests/fixtures/cursor-plugin/plugin.schema.json'));
+// The manifest Cursor itself ships for its Gamma listing (cursor/plugins,
+// third_party/gamma/.cursor-plugin/plugin.json at the vendored commit), so the
+// schema is checked against a manifest Cursor's own review accepted.
+const CURSOR_LISTING_EXAMPLE = {
+	name: 'gamma',
+	displayName: 'Gamma',
+	version: '1.0.0',
+	minClientVersions: { cursor: '3.13.0' },
+	description: 'Generate presentations, documents, and webpages.',
+	author: { name: 'Cursor', email: 'plugins@cursor.com' },
+	homepage: 'https://developers.gamma.app/mcp/gamma-mcp-server.md',
+	repository: 'https://github.com/cursor/plugins',
+	license: 'MIT',
+	logo: 'assets/logo.png',
+	keywords: ['gamma', 'presentations', 'slides', 'documents', 'webpages', 'design', 'export', 'mcp'],
+	category: 'integrations',
+	tags: ['gamma', 'presentations', 'productivity', 'mcp'],
+	mcpServers: './mcp.json',
+};
+const UPSTREAM = 'https://github.com/cursor/plugins/blob/5229aad76c37451561c5b81a9b5072ae1c549a5b/schemas/';
 
-	it('cites its source page and template commit', () => {
-		expect(schema.$comment).toContain('https://cursor.com/docs/reference/plugins');
-		expect(schema.$comment).toContain('46216072ac5750f782f95bb325b4d12b7c3ae9c9');
+describe('vendored Cursor schemas', () => {
+	const plugin = readJson(join(ROOT, 'tests/fixtures/cursor-plugin/plugin.schema.json'));
+	const marketplace = readJson(join(ROOT, 'tests/fixtures/cursor-plugin/marketplace.schema.json'));
+
+	it('are the published cursor/plugins schemas, pinned to a commit', () => {
+		expect(plugin.$comment).toContain(`${UPSTREAM}plugin.schema.json`);
+		expect(marketplace.$comment).toContain(`${UPSTREAM}marketplace.schema.json`);
+		expect(plugin.$id).toBe('https://cursor.com/schemas/cursor-plugin/plugin.json');
+		expect(marketplace.$id).toBe('https://cursor.com/schemas/cursor-plugin/marketplace.json');
 	});
 
-	it('accepts the reference example manifest and rejects an undocumented field', () => {
-		const validate = new Ajv({ allErrors: true, strict: false }).compile(schema);
-		const example = {
-			name: 'enterprise-plugin',
-			version: '1.2.0',
-			description: 'Enterprise development tools with security scanning and compliance checks',
-			author: { name: 'ACME DevTools', email: 'devtools@acme.com' },
-			keywords: ['enterprise', 'security', 'compliance'],
-			logo: 'assets/logo.svg',
-		};
-		expect(validate(example)).toBe(true);
-		expect(validate({ ...example, displayName: 'Enterprise' })).toBe(false);
+	it('accept a manifest Cursor ships for its own listings and reject undefined fields', () => {
+		const validate = new Ajv({ allErrors: true, strict: false }).compile(plugin);
+		expect(validate(CURSOR_LISTING_EXAMPLE)).toBe(true);
 		expect(validate({ name: 'prompts.chat' })).toBe(true);
 		expect(validate({ name: 'My_Plugin' })).toBe(false);
+		expect(validate({ ...CURSOR_LISTING_EXAMPLE, iconUrl: 'x.png' })).toBe(false);
+		// author takes name and email only; marketplace/plugins/three-ws-3d once shipped author.url.
+		expect(validate({ ...CURSOR_LISTING_EXAMPLE, author: { name: 'three.ws', url: 'https://three.ws' } })).toBe(false);
 	});
 });
 
@@ -87,8 +105,8 @@ describe('validate-cursor-plugin on broken copies', () => {
 
 	it('fails a missing logo, naming the path', () => {
 		const dir = copyPlugin();
-		unlinkSync(join(dir, 'assets/logo.svg'));
-		fails(dir, /logo "assets\/logo\.svg" does not exist/);
+		unlinkSync(join(dir, 'assets/logo.png'));
+		fails(dir, /logo "assets\/logo\.png" does not exist/);
 	});
 
 	it('fails an undeclared ${VAR} in mcp.json, naming the variable', () => {
@@ -129,10 +147,16 @@ describe('validate-cursor-plugin on broken copies', () => {
 		fails(dir, /runs a local command \("npx"\)/);
 	});
 
-	it('fails a field the manifest reference does not define', () => {
+	it("fails a field Cursor's plugin schema does not define", () => {
 		const dir = copyPlugin();
-		editManifest(dir, (m) => ({ ...m, displayName: 'three.ws 3D Studio' }));
-		fails(dir, /field "displayName" is not defined by the Cursor manifest reference/);
+		editManifest(dir, (m) => ({ ...m, iconUrl: 'assets/logo.png' }));
+		fails(dir, /field "iconUrl" is not defined by Cursor's plugin schema/);
+	});
+
+	it('fails an author field Cursor does not accept', () => {
+		const dir = copyPlugin();
+		editManifest(dir, (m) => ({ ...m, author: { name: 'three.ws', url: 'https://three.ws' } }));
+		fails(dir, /field "author\.url" is not defined by Cursor's plugin schema/);
 	});
 
 	it('fails a name that is not kebab-case and a non-semver version', () => {
@@ -180,7 +204,7 @@ describe('validate-cursor-plugin on broken copies', () => {
 
 	it('exits 1 from the command line with a FAIL line per problem', () => {
 		const dir = copyPlugin();
-		unlinkSync(join(dir, 'assets/logo.svg'));
+		unlinkSync(join(dir, 'assets/logo.png'));
 		let out = '';
 		let code = 0;
 		try {
@@ -190,7 +214,68 @@ describe('validate-cursor-plugin on broken copies', () => {
 			out = err.stdout;
 		}
 		expect(code).toBe(1);
-		expect(out).toMatch(/FAIL {2}\.cursor-plugin\/plugin\.json: logo "assets\/logo\.svg" does not exist/);
+		expect(out).toMatch(/FAIL {2}\.cursor-plugin\/plugin\.json: logo "assets\/logo\.png" does not exist/);
 		expect(out).toMatch(/^FAIL {2}1 error\(s\)/m);
+	});
+});
+
+// Cursor reads a multi-plugin repository through .cursor-plugin/marketplace.json
+// at its root. The 2026-11-21 Marketplace application named this repository, so
+// that file decides which plugin Cursor's reviewers open: it must list the
+// maintained, free plugin and nothing that fails the plugin checks.
+describe('validateCursorMarketplace', () => {
+	function copyRepo() {
+		const dir = mkdtempSync(join(tmpdir(), 'cursor-marketplace-'));
+		temps.push(dir);
+		mkdirSync(join(dir, '.cursor-plugin'));
+		cpSync(join(ROOT, '.cursor-plugin/marketplace.json'), join(dir, '.cursor-plugin/marketplace.json'));
+		cpSync(PLUGIN, join(dir, 'integrations/cursor/three-ws'), { recursive: true });
+		return dir;
+	}
+	const editMarketplace = (dir, fn) => {
+		const p = join(dir, '.cursor-plugin/marketplace.json');
+		writeJson(p, fn(readJson(p)));
+	};
+
+	it('passes the repository and resolves to the maintained plugin only', () => {
+		const res = validateCursorMarketplace(ROOT);
+		expect(res.errors).toEqual([]);
+		expect(res.ok).toBe(true);
+		expect(res.plugins.map((p) => ({ name: p.name, source: p.source }))).toEqual([{ name: 'three-ws', source: 'integrations/cursor/three-ws' }]);
+		expect(res.plugins[0].mcpServers).toEqual([{ name: 'three-ws', url: 'https://three.ws/api/mcp-studio?auth=oauth' }]);
+	});
+
+	it('fails an entry whose source directory holds no plugin', () => {
+		const dir = copyRepo();
+		editMarketplace(dir, (m) => ({ ...m, plugins: [{ name: 'three-ws', source: 'marketplace/plugins/missing' }] }));
+		const res = validateCursorMarketplace(dir);
+		expect(res.ok).toBe(false);
+		expect(res.errors.join('\n')).toMatch(/plugins\[0\] \(three-ws\): source "marketplace\/plugins\/missing" has no \.cursor-plugin\/plugin\.json/);
+	});
+
+	it('fails an entry whose name differs from the plugin manifest', () => {
+		const dir = copyRepo();
+		editMarketplace(dir, (m) => ({ ...m, plugins: [{ name: 'three-ws-3d', source: 'integrations/cursor/three-ws' }] }));
+		const res = validateCursorMarketplace(dir);
+		expect(res.ok).toBe(false);
+		expect(res.errors.join('\n')).toMatch(/plugins\[0\]: name "three-ws-3d" does not match "three-ws" in integrations\/cursor\/three-ws\/\.cursor-plugin\/plugin\.json/);
+	});
+
+	it('reports the listed plugin\'s own failures, prefixed with its source', () => {
+		const dir = copyRepo();
+		writeJson(join(dir, 'integrations/cursor/three-ws/mcp.json'), { mcpServers: { local: { command: 'npx', args: ['-y', '@three-ws/mcp-server'] } } });
+		const res = validateCursorMarketplace(dir);
+		expect(res.ok).toBe(false);
+		expect(res.errors.join('\n')).toMatch(/integrations\/cursor\/three-ws\/mcp\.json: server "local" runs a local command/);
+	});
+
+	it('fails a source that leaves the repository and a field the marketplace schema does not define', () => {
+		const dir = copyRepo();
+		editMarketplace(dir, (m) => ({ ...m, metadata: { description: 'x' }, homepage: 'https://three.ws', plugins: [{ name: 'three-ws', source: '../elsewhere' }] }));
+		const res = validateCursorMarketplace(dir);
+		expect(res.ok).toBe(false);
+		const all = res.errors.join('\n');
+		expect(all).toMatch(/field "homepage" is not defined by Cursor's marketplace schema/);
+		expect(all).toMatch(/source "\.\.\/elsewhere" leaves the repository/);
 	});
 });

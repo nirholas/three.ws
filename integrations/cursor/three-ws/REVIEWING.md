@@ -30,7 +30,7 @@ Timings are from real runs of this plugin's server on 2026-11-20 (see
    `offline_access`): a **Read** group, always on, with "Read your avatars"
    and "See your name and email"; a **Manage** group with "Create and update
    avatars"; and the line "Stay connected without signing in again", followed
-   by a note that the app can never spend money on your behalf. Click **Authorize**. The server then shows 16 tools.
+   by a note that the app can never spend money on your behalf. Click **Authorize**. The server then shows 21 tools.
 3. **Find a ready-made asset (under 1 second).** In Agent chat:
    `Find me a free 3D chair model.` The agent calls `search_catalog` and returns
    CC0 results with viewer links (we measured 0.15 to 0.48 s).
@@ -59,8 +59,10 @@ an account.
 ## How we measured
 
 - `scripts/validate-cursor-plugin.mjs` in the source repository checks the
-  manifest against the Cursor plugin reference, every rule, skill and command's
-  frontmatter, the logo, and that the MCP server is remote and on three.ws.
+  manifest against Cursor's published schema (vendored from `cursor/plugins`),
+  the repository's root `.cursor-plugin/marketplace.json` and that it resolves
+  to this directory, every rule, skill and command's frontmatter, the logo, and
+  that the MCP server is remote and on three.ws.
 - `scripts/cursor-plugin-session-check.mjs` connects to the server exactly as
   `mcp.json` names it: the unauthenticated 401 and its `resource_metadata`, the
   RFC 9728 and RFC 8414 metadata, sign-in, `tools/list`, then `search_catalog`,

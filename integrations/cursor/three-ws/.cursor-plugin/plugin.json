@@ -1,13 +1,18 @@
 {
   "name": "three-ws",
-  "version": "1.3.0",
-  "description": "Free text-to-3D for Cursor: generate textured GLB models and rigged, animation-ready avatars, auto-rig a GLB, render a model so the agent can see it, and search thousands of CC0 props, characters and motion clips. Making a model needs a free three.ws account; Cursor signs you in on first connect.",
+  "displayName": "three.ws",
+  "version": "1.4.0",
+  "description": "Generate textured 3D models and rigged avatars, auto-rig a GLB, and search a free CC0 asset catalog.",
   "author": {
     "name": "three.ws"
   },
+  "publisher": "three.ws",
   "homepage": "https://three.ws/docs/mcp",
   "repository": "https://github.com/nirholas/three.ws",
   "license": "Apache-2.0",
-  "keywords": ["3d", "text-to-3d", "glb", "avatar", "rigging", "three.js", "mcp", "cc0"],
-  "logo": "assets/logo.svg"
+  "logo": "assets/logo.png",
+  "keywords": ["3d", "text-to-3d", "glb", "gltf", "avatar", "rigging", "three.js", "gaussian-splat", "cc0", "mcp"],
+  "category": "integrations",
+  "tags": ["3d", "design", "game-dev", "mcp"],
+  "mcpServers": "./mcp.json"
 }
