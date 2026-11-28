@@ -15,6 +15,8 @@
 //                             link. No sign-in is required: a signed state names
 //                             the account when there is one, and a nonce in that
 //                             state is also set as an HttpOnly cookie.
+//   GET ?leg=status           Public: whether Add to Slack works right now, so the
+//                             /slack page never offers a button that dead-ends.
 //   GET ?leg=oauth            Slack's OAuth redirect: verify the state and that
 //                             this browser holds its nonce, trade the code for the
 //                             workspace bot token, store it sealed
@@ -84,6 +86,10 @@ export default async function handler(req, res) {
 		const leg = q.get('leg');
 		if (leg === 'oauth') return oauthLeg(req, res, q);
 		if (leg === 'install') return installLeg(req, res);
+		if (leg === 'status') {
+			const available = slackOAuthConfigured();
+			return json(res, 200, { available, install_url: available ? '/api/gateway/slack?leg=install' : null }, { 'cache-control': 'public, max-age=60' });
+		}
 		return error(res, 400, 'bad_request', 'unknown leg');
 	}
 
