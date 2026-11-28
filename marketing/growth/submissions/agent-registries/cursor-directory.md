@@ -33,6 +33,6 @@ submit-button idea is superseded.
 ## Owner steps (not automatable here)
 
 1. In a real browser, open `https://cursor.directory/plugins/new` and sign in with GitHub or Google.
-2. Paste `https://github.com/nirholas/three.ws` (or the plugin subfolder repo URL if the form wants a plugin
-   root) and submit. Use the listing copy above for any name or description field it asks for.
+2. Paste `https://github.com/nirholas/three-ws-cursor-plugin` (the standalone plugin repo, created
+   2026-11-28, with `.cursor-plugin/plugin.json` at its root) and submit. Use the listing copy above for any name or description field it asks for.
 3. Wait for the automated scan verdict; fix anything it flags.

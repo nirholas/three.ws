@@ -14,7 +14,7 @@ The campaign map with the same steps in priority order is the "Owner actions" se
 
 | Order | Owner steps left |
 |---|---|
-| 871 Cursor plugin | Deploy (step 1). Create `nirholas/three-ws-cursor-plugin` from `npm run grok:cursor-plugin-export -- --out "$OUT"`. Submit rows 1 and 2 of `docs/partners/grok-bot-listings.md` (Cursor Marketplace, cursor.directory). |
+| 871 Cursor plugin | Deploy (step 1). ~~Create `nirholas/three-ws-cursor-plugin`~~ (done 2026-11-28, v1.4.0). Submit rows 1 and 2 of `docs/partners/grok-bot-listings.md` (Cursor Marketplace, cursor.directory). |
 | 872 Grok Build plugin | Create the GitHub org `three-ws` and public repo `three-ws/three-ws-grok`, push the export and confirm `git ls-remote` prints the pinned SHA (179da58e, or the new SHA if the folder changed). Open the row 3 marketplace PR from listings section 3. After step 2: `grok -p "/make-3d a brass desk lamp"`. |
 | 873 Grok Bot marketplace | Deploy, rerun `node scripts/grok-connector-review-check.mjs`, create the `three-ws` org handle, test the connector in Grok Bot, submit the form at x.ai/bot/marketplace/submit-a-plugin with the values in listings section 0, record it in the Submission log. |
 | 874 Imagine reference-image lane | After step 2: `npm run grok:eval-ref-image` adds the xAI column to `docs/evals/grok-imagine-ref-image.md`. Set `FORGE_REF_IMAGE_PROVIDER=xai` on Cloud Run with `--update-env-vars` only if the regenerated eval says Grok wins. |

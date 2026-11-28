@@ -139,8 +139,12 @@ submission log.
 
 Both read a whole repository from its root, so the plugin goes out as the standalone mirror
 `nirholas/three-ws-cursor-plugin` that [integrations/README.md](../../integrations/README.md)
-already names. **That repository does not exist on GitHub yet** (404 on 2026-11-14), so creating
-it is the first step and is itself a publish.
+already names. **Created 2026-11-28** at
+<https://github.com/nirholas/three-ws-cursor-plugin> from the export of plugin 1.4.0 (commit
+`da57cbb`, release `v1.4.0`), with a description, the `https://three.ws/docs/mcp` homepage and 20
+topics (cursor, cursor-plugin, mcp, mcp-server, text-to-3d, glb, avatar, rigging and the rest).
+To ship a later version, re-run the export below and push its commit to that repository's
+`main`, then tag a release.
 
 The export was dry-run on 2026-11-14 from `threews/main`: the tree holds
 `.cursor-plugin/plugin.json`, `mcp.json`, `README.md`, `LICENSE`, `assets/logo.png` and four
