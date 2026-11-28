@@ -7,9 +7,23 @@
 //   • Inject vendor/readability.js + content-narrator.js + content.js on demand
 //     and keep their iframes in sync as settings change.
 //   • Enforce the site allow/blocklist before an avatar is ever mounted.
+//   • On Firefox, keep narration and the session token off whenever the user
+//     has not granted (or has revoked) the data consent each one needs.
+
+import {
+	NARRATION_DATA,
+	SIGN_IN_DATA,
+	consentRequired,
+	dataCategories,
+	hasDataConsent,
+} from './data-consent.js';
 
 const THREEWS_ORIGIN = 'https://three.ws';
 const AUTH_STATE_KEY = 'auth_pending_state';
+// A sign-in waiting on Firefox's consent prompt. Kept in session storage, not
+// memory, because the prompt can outlive an idle background script.
+const PENDING_SIGNIN_KEY = 'signin_pending_consent';
+const PENDING_SIGNIN_TTL_MS = 5 * 60 * 1000;
 
 // Defaults are written on install and used as the merge base everywhere the UI
 // reads settings, so a missing key never produces `undefined` downstream.
@@ -94,15 +108,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 				}
 
 				case 'begin-signin': {
-					const bytes = crypto.getRandomValues(new Uint8Array(24));
-					const state = btoa(String.fromCharCode(...bytes))
-						.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-					await chrome.storage.session.set({ [AUTH_STATE_KEY]: state });
-					const next = `/extension/auth-callback?state=${state}`;
-					await chrome.tabs.create({
-						url: `${THREEWS_ORIGIN}/login?next=${encodeURIComponent(next)}`,
-					});
-					sendResponse({ ok: true });
+					// The UI has already asked for consent (see openLogin). If it is
+					// not granted yet, the prompt is still open: park the sign-in and
+					// let permissions.onAdded start it, because a Firefox popup can
+					// close while its prompt is showing and take its callbacks along.
+					if (await hasDataConsent(SIGN_IN_DATA)) {
+						await beginSignin();
+						sendResponse({ ok: true });
+					} else {
+						await chrome.storage.session.set({ [PENDING_SIGNIN_KEY]: Date.now() });
+						sendResponse({ ok: true, pending: 'consent' });
+					}
 					break;
 				}
 
@@ -184,6 +200,61 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	return true; // keep the channel open for the async response
 });
 
+// Open three.ws/login with a one-time state nonce the auth-callback capture
+// below checks before it accepts a token.
+async function beginSignin() {
+	const bytes = crypto.getRandomValues(new Uint8Array(24));
+	const state = btoa(String.fromCharCode(...bytes))
+		.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+	await chrome.storage.session.set({ [AUTH_STATE_KEY]: state });
+	const next = `/extension/auth-callback?state=${state}`;
+	await chrome.tabs.create({
+		url: `${THREEWS_ORIGIN}/login?next=${encodeURIComponent(next)}`,
+	});
+}
+
+// ── Firefox data consent ────────────────────────────────────────────────────
+// Invariant: narration is on only while websiteContent is granted, and a
+// session token exists only while authenticationInfo is granted. Enforced at
+// startup, when a grant is revoked from about:addons, and when synced settings
+// from another Firefox install switch narration on here. Every check resolves
+// true on Chromium, so none of this changes anything there.
+async function enforceDataConsent() {
+	if (consentRequired(NARRATION_DATA) && !(await hasDataConsent(NARRATION_DATA))) {
+		const { narrationEnabled } = await chrome.storage.sync.get('narrationEnabled');
+		if (narrationEnabled) {
+			await chrome.storage.sync.set({ narrationEnabled: false });
+			broadcast({ type: 'walk:applySettings', settings: await getSettings() });
+		}
+	}
+	if (consentRequired(SIGN_IN_DATA) && !(await hasDataConsent(SIGN_IN_DATA))) {
+		const { threews_session } = await chrome.storage.local.get('threews_session');
+		if (threews_session) await chrome.storage.local.remove('threews_session');
+	}
+}
+
+enforceDataConsent().catch(() => {});
+
+chrome.permissions.onAdded.addListener((granted) => {
+	if (!dataCategories(granted).includes(SIGN_IN_DATA)) return;
+	chrome.storage.session.get(PENDING_SIGNIN_KEY).then(async (stored) => {
+		const at = stored[PENDING_SIGNIN_KEY];
+		if (!at) return;
+		await chrome.storage.session.remove(PENDING_SIGNIN_KEY);
+		if (Date.now() - at <= PENDING_SIGNIN_TTL_MS) await beginSignin();
+	}).catch(() => {});
+});
+
+chrome.permissions.onRemoved.addListener((revoked) => {
+	if (dataCategories(revoked).length) enforceDataConsent().catch(() => {});
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+	if (area === 'sync' && changes.narrationEnabled?.newValue === true) {
+		enforceDataConsent().catch(() => {});
+	}
+});
+
 // Send a message to every tab that has a mounted avatar. Tabs without the
 // content script simply reject — swallowed here.
 function broadcast(message) {
@@ -258,6 +329,8 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 		const expected = stored[AUTH_STATE_KEY];
 		if (!expected || expected !== state) return;
 		await chrome.storage.session.remove(AUTH_STATE_KEY);
+		// Consent revoked mid sign-in: drop the token rather than store it.
+		if (!(await hasDataConsent(SIGN_IN_DATA))) return;
 		await chrome.storage.local.set({ threews_session: token });
 		chrome.runtime.sendMessage({ type: 'session-updated', token }).catch(() => {});
 		chrome.tabs.remove(tabId).catch(() => {});

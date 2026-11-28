@@ -3,7 +3,6 @@ import { build } from 'esbuild';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
@@ -15,23 +14,18 @@ const isProd = process.argv.includes('--prod');
 // removed entrypoint) never leak into the packaged zip.
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
-mkdirSync(join(out, 'icons'), { recursive: true });
 
-// Bundle JS files. background.js is an ESM service worker; everything else is a
-// self-contained IIFE. content-narrator.js is a classic content script injected
-// via chrome.scripting before content.js: it publishes a window global and is
-// NOT imported by content.js, so esbuild must emit the two separately or
-// chrome.scripting.executeScript fails on a missing file.
-const ENTRYPOINTS = [
-	{ file: 'background.js', format: 'esm', external: [] },
-	{ file: 'content.js', format: 'iife', external: ['chrome'] },
-	{ file: 'content-narrator.js', format: 'iife', external: ['chrome'] },
-	{ file: 'popup.js', format: 'iife', external: ['chrome'] },
-	{ file: 'options.js', format: 'iife', external: ['chrome'] },
-];
+// What ships lives in extensions/walk-avatar/build.config.json, shared with the
+// Firefox build (extensions/firefox/build.mjs) so the stores never diverge.
+// background.js is an ESM service worker; every other entrypoint is a classic
+// IIFE. content-narrator.js is injected via chrome.scripting before content.js:
+// it publishes a window global and is NOT imported by content.js, so esbuild
+// must emit the two separately or chrome.scripting.executeScript fails on a
+// missing file.
+const config = JSON.parse(readFileSync(join(src, 'build.config.json'), 'utf8'));
 
 await Promise.all(
-	ENTRYPOINTS.map((e) => {
+	config.entrypoints.map((e) => {
 		if (!existsSync(join(src, e.file))) {
 			throw new Error(`missing required extension entrypoint: ${e.file}`);
 		}
@@ -44,24 +38,20 @@ await Promise.all(
 			minify: isProd,
 			sourcemap: !isProd,
 			target: 'chrome109',
-			external: e.external,
 		});
 	}),
 );
 
-// Copy static files
-cpSync(join(src, 'manifest.json'), join(out, 'manifest.json'));
-cpSync(join(src, 'popup.html'), join(out, 'popup.html'));
-cpSync(join(src, 'options.html'), join(out, 'options.html'));
-cpSync(join(src, 'icons'), join(out, 'icons'), { recursive: true });
-// Vendored third-party readability lib is injected as-is (large, pre-minified);
-// copy it verbatim rather than re-bundling.
-cpSync(join(src, 'vendor'), join(out, 'vendor'), { recursive: true });
+// Static files: the manifest, the HTML pages, icons, and the vendored
+// readability lib (large, pre-minified, injected as-is rather than re-bundled).
+for (const name of config.copy) {
+	cpSync(join(src, name), join(out, name), { recursive: true });
+}
 
-// Copy stylesheets referenced by popup.html / options.html (e.g. popup.css).
-// HTML pages load these as-is; without them the popup ships unstyled.
+// Stylesheets referenced by popup.html / options.html (e.g. popup.css). HTML
+// pages load these as-is; without them the popup ships unstyled.
 for (const file of readdirSync(src)) {
-	if (file.endsWith('.css')) cpSync(join(src, file), join(out, file));
+	if (config.copyExtensions.some((ext) => file.endsWith(ext))) cpSync(join(src, file), join(out, file));
 }
 
 // Bump version in manifest for prod builds

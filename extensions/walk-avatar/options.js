@@ -10,6 +10,8 @@
 //   GET  /api/avatars      — the signed-in user's avatars (+ featured/public)
 //   GET  /api/threews/me   — session identity for the diagnostics panel
 
+import { NARRATION_DATA, SIGN_IN_DATA, requestDataConsent } from './data-consent.js';
+
 const THREEWS = 'https://three.ws';
 
 const state = {
@@ -43,19 +45,22 @@ async function apiFetch(path) {
 	return res.json();
 }
 
+// Firefox asks for consent first (the token rides along on avatar requests).
+// The background opens the sign-in tab once it is granted.
 function openLogin() {
+	requestDataConsent(SIGN_IN_DATA);
 	chrome.runtime.sendMessage({ type: 'begin-signin' }).catch(() => {});
 }
 
 // ── Toast ──────────────────────────────────────────────────────────────────────
 let toastTimer = null;
-function toast(text, isError = false) {
+function toast(text, isError = false, ms = 1600) {
 	const el = document.getElementById('toast');
 	document.getElementById('toast-text').textContent = text;
 	el.classList.toggle('error', isError);
 	el.classList.add('show');
 	clearTimeout(toastTimer);
-	toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
+	toastTimer = setTimeout(() => el.classList.remove('show'), ms);
 }
 
 // ── Segmented controls ──────────────────────────────────────────────────────────
@@ -352,8 +357,16 @@ function wireControls() {
 	wireSegment('opt-theme', 'theme', (theme) => persist({ theme }));
 
 	// Narration toggle
-	document.getElementById('opt-narration').addEventListener('change', (e) => {
-		persist({ narrationEnabled: e.target.checked });
+	// Narration sends the visible section's text to three.ws for speech, so on
+	// Firefox it needs the user's websiteContent consent before it can turn on.
+	document.getElementById('opt-narration').addEventListener('change', async (e) => {
+		const box = e.target;
+		if (box.checked && !(await requestDataConsent(NARRATION_DATA))) {
+			box.checked = false;
+			toast('Narration stays off until you allow sending page text to three.ws for speech.', true, 5000);
+			return;
+		}
+		persist({ narrationEnabled: box.checked });
 	});
 
 	// Voice

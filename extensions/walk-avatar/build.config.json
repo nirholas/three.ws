@@ -1,0 +1,12 @@
+{
+	"_about": "What a Walk Avatar package contains. Read by scripts/build-extension.mjs (Chromium: Chrome Web Store, Edge Add-ons) and extensions/firefox/build.mjs (Firefox Add-ons) so every store ships the same files. background.js is an ES module; every other entrypoint is a classic IIFE because chrome.scripting.executeScript and the popup/options pages load them as plain scripts. content-narrator.js is injected before content.js and publishes a window global, so it must stay a separate entrypoint.",
+	"entrypoints": [
+		{ "file": "background.js", "format": "esm" },
+		{ "file": "content.js", "format": "iife" },
+		{ "file": "content-narrator.js", "format": "iife" },
+		{ "file": "popup.js", "format": "iife" },
+		{ "file": "options.js", "format": "iife" }
+	],
+	"copy": ["manifest.json", "popup.html", "options.html", "icons", "vendor"],
+	"copyExtensions": [".css"]
+}

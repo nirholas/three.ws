@@ -11,6 +11,8 @@
 // callback URL into chrome.storage.local.threews_session. The "Recent" tab is
 // the avatars the user has picked here, kept in chrome.storage.local.
 
+import { SIGN_IN_DATA, requestDataConsent } from './data-consent.js';
+
 const THREEWS = 'https://three.ws';
 const RECENT_KEY = 'recentAvatars';
 const SELECTION_KEY = 'walk_selection';
@@ -46,7 +48,11 @@ function msg(type, data = {}) {
 	return chrome.runtime.sendMessage({ type, ...data });
 }
 
+// Firefox asks for consent first (the token rides along on avatar requests).
+// The background opens the sign-in tab once it is granted, so this still works
+// when the popup closes while the prompt is showing.
 function openLogin() {
+	requestDataConsent(SIGN_IN_DATA);
 	chrome.runtime.sendMessage({ type: 'begin-signin' }).catch(() => {});
 }
 
