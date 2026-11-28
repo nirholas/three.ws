@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>three.ws Forge for Supabase: example</title>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+<style>
+	:root {
+		color-scheme: light dark;
+		--bg: #0e1012; --panel: #16191c; --line: #2a2f35; --text: #e8eaed; --muted: #9aa3ad;
+		--accent: #3ecf8e; --accent-ink: #06261a; --danger: #ff6b6b; --warn: #f5b84b;
+		font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+	}
+	@media (prefers-color-scheme: light) {
+		:root { --bg: #f7f8f9; --panel: #fff; --line: #dde1e5; --text: #15181b; --muted: #5d6670; --accent-ink: #fff; --accent: #1f9d63; }
+	}
+	* { box-sizing: border-box; }
+	body { margin: 0; background: var(--bg); color: var(--text); }
+	main { max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; display: grid; gap: 20px; }
+	header h1 { margin: 0 0 4px; font-size: 22px; }
+	header p { margin: 0; color: var(--muted); }
+	.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+	.panel h2 { margin: 0 0 12px; font-size: 15px; }
+	.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+	label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); flex: 1 1 220px; }
+	input, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; }
+	input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+	button { font: inherit; font-weight: 600; border: 1px solid transparent; border-radius: 8px; padding: 9px 16px; cursor: pointer; background: var(--accent); color: var(--accent-ink); transition: filter .15s, transform .05s; }
+	button:hover { filter: brightness(1.08); }
+	button:active { transform: translateY(1px); }
+	button:disabled { opacity: .55; cursor: not-allowed; filter: none; }
+	button.ghost { background: transparent; color: var(--text); border-color: var(--line); }
+	button.ghost:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+	.note { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+	.banner { border-radius: 8px; padding: 10px 12px; font-size: 14px; margin-top: 10px; border: 1px solid; }
+	.banner.error { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); background: color-mix(in srgb, var(--danger) 8%, transparent); }
+	.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 20px; }
+	@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+	ul.models { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+	.model { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); text-align: left; color: var(--text); font-weight: 400; width: 100%; }
+	.model:hover { border-color: var(--accent); filter: none; }
+	.model[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+	.model .top { display: flex; justify-content: space-between; gap: 10px; }
+	.model .prompt { font-weight: 600; overflow-wrap: anywhere; }
+	.model .meta { font-size: 12px; color: var(--muted); }
+	.model .err { font-size: 13px; color: var(--danger); }
+	.pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line); color: var(--muted); }
+	.pill.done { color: var(--accent); border-color: currentColor; }
+	.pill.failed { color: var(--danger); border-color: currentColor; }
+	.pill.active { color: var(--warn); border-color: currentColor; }
+	.skeleton { height: 64px; border-radius: 10px; background: linear-gradient(90deg, var(--line) 0%, color-mix(in srgb, var(--line) 50%, transparent) 50%, var(--line) 100%); background-size: 200% 100%; animation: shimmer 1.2s infinite linear; }
+	@keyframes shimmer { to { background-position: -200% 0; } }
+	@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+	.empty { color: var(--muted); padding: 18px; border: 1px dashed var(--line); border-radius: 10px; text-align: center; }
+	.viewer { min-height: 460px; display: grid; }
+	agent-3d { width: 100%; height: 420px; border-radius: 10px; background: var(--bg); }
+	.viewer-empty { display: grid; place-items: center; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; padding: 24px; }
+	.viewer-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+	.viewer-actions a { color: var(--accent); font-weight: 600; }
+	[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+	<header>
+		<h1>three.ws Forge for Supabase</h1>
+		<p>Insert a prompt into <code>three_ws_models</code>, watch it over Realtime, view the GLB from Storage.</p>
+	</header>
+
+	<section class="panel" id="connect" aria-labelledby="connect-title">
+		<h2 id="connect-title">1. Connect your Supabase project</h2>
+		<form class="row" id="connect-form">
+			<label>Project URL <input name="url" type="url" required placeholder="https://abcd1234.supabase.co" autocomplete="off"></label>
+			<label>Publishable (anon) key <input name="key" required placeholder="sb_publishable_... or eyJ..." autocomplete="off"></label>
+			<button type="submit">Connect</button>
+		</form>
+		<p class="note">Saved in this browser only. The project needs the integration's migrations and the three-ws-forge function (see the setup guide at three.ws/docs/supabase).</p>
+		<div class="banner error" id="connect-error" role="alert" hidden></div>
+	</section>
+
+	<section class="panel" id="auth" aria-labelledby="auth-title" hidden>
+		<h2 id="auth-title">2. Sign in</h2>
+		<div class="row">
+			<button type="button" id="anon-signin">Continue as a guest</button>
+			<form class="row" id="email-form" style="flex:1">
+				<label>Or get a magic link <input name="email" type="email" required placeholder="you@example.com" autocomplete="email"></label>
+				<button type="submit" class="ghost">Send link</button>
+			</form>
+		</div>
+		<p class="note" id="auth-note">Guest sign-in needs Anonymous Sign-Ins turned on (Authentication, Sign In / Providers).</p>
+		<div class="banner error" id="auth-error" role="alert" hidden></div>
+	</section>
+
+	<section class="panel" id="create" aria-labelledby="create-title" hidden>
+		<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:12px">
+			<h2 id="create-title" style="margin:0">3. Describe a 3D model</h2>
+			<button type="button" class="ghost" id="signout">Sign out</button>
+		</div>
+		<form class="row" id="create-form">
+			<label style="flex:3 1 320px">Prompt <input name="prompt" required minlength="3" maxlength="600" placeholder="a brass telescope on a wooden tripod"></label>
+			<label style="flex:0 1 160px">Tier
+				<select name="tier"><option value="draft">Draft (fastest)</option><option value="standard" selected>Standard</option><option value="high">High</option></select>
+			</label>
+			<button type="submit" id="create-btn">Generate</button>
+		</form>
+		<div class="banner error" id="create-error" role="alert" hidden></div>
+	</section>
+
+	<div class="layout" id="workspace" hidden>
+		<section class="panel" aria-labelledby="list-title">
+			<h2 id="list-title">Your models</h2>
+			<div id="list-loading" aria-busy="true"><div class="skeleton"></div><div class="skeleton" style="margin-top:8px"></div></div>
+			<ul class="models" id="models" aria-live="polite"></ul>
+			<div class="empty" id="models-empty" hidden>No models yet. Describe an object above and press Generate; it appears here and updates live.</div>
+			<div class="banner error" id="list-error" role="alert" hidden></div>
+		</section>
+		<section class="panel viewer" aria-labelledby="viewer-title">
+			<h2 id="viewer-title">Viewer</h2>
+			<div class="viewer-empty" id="viewer-empty">Pick a finished model to view it here.</div>
+			<div id="viewer-box" hidden>
+				<agent-3d id="viewer"></agent-3d>
+				<div class="viewer-actions"><a id="download" download>Download GLB</a></div>
+			</div>
+			<div class="banner error" id="viewer-error" role="alert" hidden></div>
+		</section>
+	</div>
+</main>
+
+<script type="module">
+	import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+	const $ = (id) => document.getElementById(id);
+	const STORE = 'three-ws-supabase-example';
+	const ACTIVE = new Set(['queued', 'submitting', 'generating', 'storing']);
+	const LABEL = { queued: 'Queued', submitting: 'Submitting', generating: 'Generating', storing: 'Saving', done: 'Ready', failed: 'Failed' };
+	let supabase = null;
+	let channel = null;
+	let selected = null;
+	const models = new Map();
+
+	function show(el, message) {
+		el.textContent = message || '';
+		el.hidden = !message;
+	}
+
+	function render() {
+		const list = $('models');
+		list.replaceChildren();
+		const rows = [...models.values()].sort((a, b) => b.created_at.localeCompare(a.created_at));
+		$('models-empty').hidden = rows.length > 0;
+		for (const m of rows) {
+			const li = document.createElement('li');
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'model';
+			btn.setAttribute('aria-current', String(m.id === selected));
+			const pillClass = m.status === 'done' ? 'done' : m.status === 'failed' ? 'failed' : 'active';
+			btn.innerHTML = `<span class="top"><span class="prompt"></span><span class="pill ${pillClass}"></span></span><span class="meta"></span>`;
+			btn.querySelector('.prompt').textContent = m.prompt;
+			btn.querySelector('.pill').textContent = LABEL[m.status] ?? m.status;
+			const waiting = ACTIVE.has(m.status) && m.error ? ` · waiting: ${m.error}` : '';
+			btn.querySelector('.meta').textContent = `${m.tier} · ${new Date(m.created_at).toLocaleString()}${waiting}`;
+			if (m.status === 'failed') {
+				const err = document.createElement('span');
+				err.className = 'err';
+				err.textContent = m.error || 'Generation failed.';
+				btn.append(err);
+			}
+			btn.addEventListener('click', () => select(m.id));
+			li.append(btn);
+			list.append(li);
+		}
+	}
+
+	async function select(id) {
+		selected = id;
+		render();
+		const m = models.get(id);
+		show($('viewer-error'), '');
+		if (!m || m.status !== 'done') {
+			$('viewer-box').hidden = true;
+			$('viewer-empty').hidden = false;
+			$('viewer-empty').textContent = m?.status === 'failed' ? 'This model failed. Insert the prompt again, or rephrase it as one concrete object.' : 'This model is still being made. It opens here when it is ready.';
+			return;
+		}
+		const { data, error } = await supabase.storage.from('three-ws-models').createSignedUrl(m.storage_path, 3600);
+		if (error) return show($('viewer-error'), `Could not open the model from Storage: ${error.message}`);
+		$('viewer').setAttribute('body', data.signedUrl);
+		$('download').href = data.signedUrl;
+		$('viewer-empty').hidden = true;
+		$('viewer-box').hidden = false;
+	}
+
+	async function loadModels(userId) {
+		$('list-loading').hidden = false;
+		show($('list-error'), '');
+		const { data, error } = await supabase.from('three_ws_models').select('*').order('created_at', { ascending: false }).limit(50);
+		$('list-loading').hidden = true;
+		if (error) {
+			const hint = error.code === '42P01' || /does not exist/.test(error.message) ? ' Run the integration migrations with `supabase db push`.' : '';
+			return show($('list-error'), `Could not read your models: ${error.message}.${hint}`);
+		}
+		models.clear();
+		for (const m of data) models.set(m.id, m);
+		render();
+		channel?.unsubscribe();
+		channel = supabase
+			.channel(`three-ws-models-${userId}`)
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'three_ws_models', filter: `user_id=eq.${userId}` }, ({ eventType, new: row, old }) => {
+				if (eventType === 'DELETE') models.delete(old.id);
+				else models.set(row.id, row);
+				render();
+				if (row?.id === selected && row.status === 'done') select(row.id);
+			})
+			.subscribe();
+	}
+
+	async function onSession(session) {
+		const signedIn = Boolean(session?.user);
+		$('auth').hidden = signedIn;
+		$('create').hidden = !signedIn;
+		$('workspace').hidden = !signedIn;
+		if (signedIn) await loadModels(session.user.id);
+		else { channel?.unsubscribe(); models.clear(); }
+	}
+
+	async function connect(url, key) {
+		show($('connect-error'), '');
+		try {
+			supabase = createClient(url, key);
+			const { data, error } = await supabase.auth.getSession();
+			if (error) throw error;
+			localStorage.setItem(STORE, JSON.stringify({ url, key }));
+			$('auth').hidden = false;
+			supabase.auth.onAuthStateChange((_event, session) => onSession(session));
+			await onSession(data.session);
+		} catch (err) {
+			supabase = null;
+			show($('connect-error'), `Could not connect: ${err.message}. Check the project URL and key in Project Settings, API Keys.`);
+		}
+	}
+
+	$('connect-form').addEventListener('submit', (e) => {
+		e.preventDefault();
+		const f = new FormData(e.currentTarget);
+		connect(String(f.get('url')).trim().replace(/\/+$/, ''), String(f.get('key')).trim());
+	});
+
+	$('anon-signin').addEventListener('click', async () => {
+		show($('auth-error'), '');
+		const { error } = await supabase.auth.signInAnonymously();
+		if (error) show($('auth-error'), `${error.message}. Turn on Anonymous Sign-Ins, or use a magic link.`);
+	});
+
+	$('email-form').addEventListener('submit', async (e) => {
+		e.preventDefault();
+		show($('auth-error'), '');
+		const email = String(new FormData(e.currentTarget).get('email')).trim();
+		const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: location.href } });
+		if (error) show($('auth-error'), `Could not send the link: ${error.message}`);
+		else $('auth-note').textContent = `Check ${email} for a sign-in link. Open it in this browser.`;
+	});
+
+	$('signout').addEventListener('click', () => supabase.auth.signOut());
+
+	$('create-form').addEventListener('submit', async (e) => {
+		e.preventDefault();
+		show($('create-error'), '');
+		const form = e.currentTarget;
+		const f = new FormData(form);
+		$('create-btn').disabled = true;
+		const { data, error } = await supabase
+			.from('three_ws_models')
+			.insert({ prompt: String(f.get('prompt')).trim(), tier: String(f.get('tier')) })
+			.select()
+			.single();
+		$('create-btn').disabled = false;
+		if (error) return show($('create-error'), error.message);
+		models.set(data.id, data);
+		form.reset();
+		select(data.id);
+	});
+
+	const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
+	if (saved?.url && saved?.key) {
+		$('connect-form').url.value = saved.url;
+		$('connect-form').key.value = saved.key;
+		connect(saved.url, saved.key);
+	}
+</script>
+</body>
+</html>
