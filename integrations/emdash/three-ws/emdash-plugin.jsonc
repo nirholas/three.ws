@@ -1,0 +1,21 @@
+{
+	"$schema": "./node_modules/@emdash-cms/plugin-cli/schemas/emdash-plugin.schema.json",
+
+	"slug": "three-ws",
+	"publisher": "three.ws",
+
+	"license": "MIT",
+	"author": { "name": "three.ws", "url": "https://three.ws" },
+	"security": { "email": "security@three.ws" },
+	"description": "Generate textured 3D models from text inside EmDash with three.ws Forge.",
+	"repo": "https://github.com/nirholas/three.ws",
+
+	// Trust contract: what runtime APIs the plugin asks for.
+	// Empty arrays mean no extra privileges beyond logging,
+	// KV, and route/hook registration. Changing these between
+	// releases requires a version bump because installed
+	// users have consented to the old contract.
+	"capabilities": [],
+	"allowedHosts": [],
+	"storage": {}
+}

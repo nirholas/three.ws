@@ -1,0 +1,40 @@
+{
+	"name": "three-ws",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"packageManager": "npm@11.19.1",
+	"main": "dist/index.mjs",
+	"exports": {
+		".": {
+			"import": "./dist/index.mjs",
+			"types": "./dist/index.d.mts"
+		},
+		"./sandbox": "./dist/plugin.mjs"
+	},
+	"files": [
+		"dist",
+		"emdash-plugin.jsonc"
+	],
+	"scripts": {
+		"validate": "emdash-plugin validate",
+		"build": "emdash-plugin build",
+		"dev": "emdash-plugin dev",
+		"typecheck": "tsc --noEmit",
+		"test": "emdash-plugin validate && vitest run",
+		"bundle": "emdash-plugin bundle",
+		"login": "emdash-plugin login",
+		"publish": "emdash-plugin publish",
+		"release:setup": "emdash-plugin release setup"
+	},
+	"peerDependencies": {
+		"emdash": ">=0.12.0"
+	},
+	"devDependencies": {
+		"@emdash-cms/plugin-cli": "0.13.7",
+		"@emdash-cms/plugin-test": "^0.2.6",
+		"emdash": "^1.0.0",
+		"typescript": "^5.9.0",
+		"vitest": "^4.1.0"
+	}
+}
