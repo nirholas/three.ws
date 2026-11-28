@@ -13,7 +13,7 @@ servers/three-ws/
 
 1. MCP Toolkit, Catalog, search "three.ws", Add.
 2. Docker's gateway runs OAuth against three.ws: it reads the 401 challenge on `https://three.ws/mcp`, registers itself through `/api/oauth/register` (RFC 7591) with a loopback redirect, and opens the three.ws consent screen with PKCE.
-3. After consent, every client Docker connects (Claude Desktop, Cursor, VS Code and the rest) sees the unified server's tools: Forge 3D generation, avatar rigging, the CC0 asset catalog, glTF validation, agents, memory and wallets. Tools that move funds are opt-in on the consent screen and in [tool settings](https://three.ws/settings/mcp-tools).
+3. After consent, every client Docker connects (Claude Desktop, Cursor, VS Code and the rest) sees the unified server's tools: Forge 3D generation, avatar rigging, the CC0 asset catalog, glTF validation, agents, memory and wallets. Tools that move funds stay off until you turn them on in [tool settings](https://three.ws/settings/mcp-tools), and each spend asks for confirmation.
 
 The same flow by CLI:
 

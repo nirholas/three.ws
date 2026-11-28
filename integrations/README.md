@@ -32,6 +32,7 @@ Listing packages for developer-tool stores each carry a README and a `SUBMITTING
 | Gradio Space and MCP server | [`huggingface-space/`](huggingface-space/) | [Hugging Face Spaces](https://huggingface.co/spaces) |
 | Poe server bot | [`poe/`](poe/) | [Poe](https://poe.com) |
 | n8n community node | [`n8n/`](n8n/) | [n8n](https://n8n.io) |
+| Docker MCP Catalog entry (remote `https://three.ws/mcp` with OAuth, checked by Docker's own validator) | [`docker-mcp-catalog/`](docker-mcp-catalog/) | [Docker MCP Catalog](https://hub.docker.com/mcp) and the MCP Toolkit in Docker Desktop |
 
 Microsoft 365 and Power Platform get packages of their own, each built and validated by a script in `scripts/`:
 
