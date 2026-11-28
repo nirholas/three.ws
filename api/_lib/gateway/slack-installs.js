@@ -111,9 +111,13 @@ export async function saveSlackInstall({ teamId, teamName, botUserId, botToken, 
 	cache.delete(teamId);
 }
 
-/** Slack told us the app was uninstalled or its tokens revoked. */
+/**
+ * Slack told us the app was uninstalled or its tokens revoked. The token is
+ * dead at Slack either way, so the sealed copy is erased rather than kept; a
+ * reinstall stores a fresh one.
+ */
 export async function revokeSlackInstall(teamId) {
-	await sql`UPDATE gateway_slack_installs SET revoked_at = now() WHERE team_id = ${teamId} AND revoked_at IS NULL`;
+	await sql`UPDATE gateway_slack_installs SET revoked_at = COALESCE(revoked_at, now()), bot_token = '' WHERE team_id = ${teamId}`;
 	cache.delete(teamId);
 }
 

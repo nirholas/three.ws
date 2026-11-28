@@ -254,3 +254,30 @@ describe('slack App Home', () => {
 		expect(calls.map((c) => c.url)).toEqual(['https://slack.com/api/views.publish']);
 	});
 });
+
+describe('uninstall', () => {
+	async function postSigned(body) {
+		const { createHmac } = await import('node:crypto');
+		const raw = JSON.stringify(body);
+		const ts = String(Math.floor(Date.now() / 1000));
+		const sig = 'v0=' + createHmac('sha256', process.env.SLACK_SIGNING_SECRET).update(`v0:${ts}:${raw}`).digest('hex');
+		const { port } = server.address();
+		return realFetch(`http://127.0.0.1:${port}/api/gateway/slack`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'x-slack-request-timestamp': ts, 'x-slack-signature': sig },
+			body: raw,
+		});
+	}
+
+	it.each(['app_uninstalled', 'tokens_revoked'])('erases the stored bot token when Slack sends %s', async (type) => {
+		const { state, cookie } = await startInstall();
+		await get(`/api/gateway/slack?leg=oauth&code=fixture-code&state=${encodeURIComponent(state)}`, { cookie });
+		const res = await postSigned({ type: 'event_callback', team_id: 'T0MARKET01', event_id: `Ev0${type.length}UNINST`, event: { type, tokens: { bot: ['U0MARKBOT1'] } } });
+		expect(res.status).toBe(200);
+		const [row] = await installs();
+		expect(row.revoked_at).not.toBeNull();
+		expect(row.bot_token).toBe('');
+		const { slackTokenFor } = await import('../../../api/_lib/gateway/slack-installs.js');
+		expect(await slackTokenFor('T0MARKET01', {})).toBeNull();
+	});
+});
