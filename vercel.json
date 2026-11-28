@@ -756,6 +756,10 @@
 			"dest": "/api/x402/did"
 		},
 		{
+			"src": "/\\.well-known/muse-challenge(?:/([A-Za-z0-9._-]*))?/?",
+			"dest": "/api/wk?name=muse-challenge&file=$1"
+		},
+		{
 			"src": "/\\.well-known/oauth-authorization-server",
 			"dest": "/api/wk?name=oauth-authorization-server"
 		},
@@ -3523,6 +3527,10 @@
 		{
 			"src": "/integrations/",
 			"dest": "/integrations.html"
+		},
+		{
+			"src": "/integrations/basecamp/?",
+			"dest": "/integrations-basecamp.html"
 		},
 		{
 			"src": "/partners",
@@ -6314,6 +6322,10 @@
 		{
 			"src": "/api/microsoft-teams/messages/?",
 			"dest": "/api/microsoft-teams/messages.js"
+		},
+		{
+			"src": "/api/basecamp/command/(bc_[A-Za-z0-9_-]{43})/?",
+			"dest": "/api/basecamp/command?token=$1"
 		},
 		{
 			"src": "/api/microsoft-marketplace/leads/([A-Za-z0-9_-]{32,})/?",

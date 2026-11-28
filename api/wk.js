@@ -51,6 +51,7 @@ import { listActiveAgentServices, CALL_INPUT_EXAMPLE, CALL_INPUT_SCHEMA, CALL_OU
 import { buildRequirements } from './_lib/x402-paid-endpoint.js';
 import { toBazaarDiscovery } from './_lib/service-catalog/index.js';
 import { authMethodsFor } from './_lib/x402/route-auth-hints.js';
+import { museChallenge } from './_lib/muse-challenge.js';
 
 // ── agent-attestation-schemas ─────────────────────────────────────────────────
 
@@ -2143,6 +2144,22 @@ function handleAppleAppSiteAssociation(req, res) {
 	);
 }
 
+// ── muse-challenge ───────────────────────────────────────────────────────────
+// Meta Muse connector domain verification (./_lib/muse-challenge.js). Uncached:
+// the verifier must see a newly configured token on its first fetch.
+function handleMuseChallenge(req, res) {
+	const requested = req.query?.file ?? new URL(req.url, 'http://x').searchParams.get('file') ?? '';
+	const { status, body } = museChallenge({
+		token: process.env.MUSE_CHALLENGE_TOKEN,
+		file: process.env.MUSE_CHALLENGE_FILE,
+		requested,
+	});
+	res.statusCode = status;
+	res.setHeader('content-type', 'text/plain; charset=utf-8');
+	res.setHeader('cache-control', 'no-store');
+	res.end(body);
+}
+
 const DISPATCH = {
 	'agent-attestation-schemas': handleAttestationSchemas,
 	'three-vanity': handleThreeVanity,
@@ -2153,6 +2170,7 @@ const DISPATCH = {
 	x402: handleX402,
 	'x402-discovery': handleX402Discovery,
 	'apple-app-site-association': handleAppleAppSiteAssociation,
+	'muse-challenge': handleMuseChallenge,
 };
 
 // Public discovery docs (x402, x402-discovery, chat-plugin, agent-attestation-schemas)
@@ -2165,6 +2183,7 @@ const PUBLIC_DISCOVERY = new Set([
 	'sperax-plugin',
 	'agent-attestation-schemas',
 	'three-vanity',
+	'muse-challenge',
 ]);
 
 export default wrap(async (req, res) => {
