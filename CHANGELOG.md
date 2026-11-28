@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-28
+
+- **The Raycast extension searches 3D assets and your own models**: The three.ws extension for Raycast now has three commands. Search 3D Assets finds free CC0 props, rigged characters and motion clips and copies paste-ready embed code or downloads the file, with no account. Search My Models lists every model you forged with its preview and prompt, and forges a prompt again in one keystroke. Forge a 3D Model now starts at once when you type the prompt as its argument. The extension is ready for the Raycast Store pull request. (`/integrations`) `[feature]`
+
 ## 2026-11-27
 
 - **Docs · 3D tools for Grok fleet apps** (`/docs/grok-fleet-tools`): Connect the free three.ws 3D MCP server to five open-source apps that run fleets of coding agents: Orca, Happy, OpenMausBot, Suparagent and OpenHands. The file or setting each one reads, and how each was checked.

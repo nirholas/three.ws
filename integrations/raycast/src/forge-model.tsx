@@ -4,6 +4,7 @@ import {
 	Clipboard,
 	Detail,
 	Form,
+	Icon,
 	Keyboard,
 	LaunchProps,
 	Toast,
@@ -14,14 +15,8 @@ import {
 	useNavigation,
 } from '@raycast/api';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { randomUUID } from 'node:crypto';
-import { API_KEYS_URL, ForgeClient, ForgeError, ForgeResult, Tier } from './forge-api';
-
-interface Preferences {
-	apiKey?: string;
-	tier?: Tier;
-	baseUrl?: string;
-}
+import { API_KEYS_URL, ForgeError, ForgeResult, Tier } from './forge-api';
+import { Preferences, clientFromPreferences } from './client';
 
 function needsKey(error: Error): boolean {
 	return (
@@ -50,18 +45,21 @@ function recoveryFor(error: ForgeError | Error): string {
 	return 'Run the command again. If it keeps failing, try a simpler prompt.';
 }
 
-function Generating({ prompt, tier }: { prompt: string; tier: Tier }) {
-	const { pop } = useNavigation();
-	const preferences = getPreferenceValues<Preferences>();
-	const client = useMemo(
-		() =>
-			new ForgeClient({
-				baseUrl: preferences.baseUrl,
-				apiKey: preferences.apiKey,
-				clientHandle: `raycast-${randomUUID()}`,
-			}),
-		[preferences.baseUrl, preferences.apiKey],
-	);
+function Generating({
+	prompt,
+	tier,
+	standalone = false,
+}: {
+	prompt: string;
+	tier: Tier;
+	/** Launched straight from a command argument, so there is no form to pop back to. */
+	standalone?: boolean;
+}) {
+	const { pop, push } = useNavigation();
+	const editPrompt = standalone
+		? () => push(<PromptForm initialPrompt={prompt} tier={tier} />)
+		: pop;
+	const client = useMemo(clientFromPreferences, []);
 	const [status, setStatus] = useState('Submitting to Forge');
 	const [result, setResult] = useState<ForgeResult | null>(null);
 	const [error, setError] = useState<Error | null>(null);
@@ -70,20 +68,22 @@ function Generating({ prompt, tier }: { prompt: string; tier: Tier }) {
 	useEffect(() => {
 		if (started.current) return;
 		started.current = true;
-		client
-			.generate(prompt, tier, (s, elapsed) => setStatus(describeStatus(s, elapsed)))
-			.then((r) => {
-				setResult(r);
-				return showToast({ style: Toast.Style.Success, title: 'Model ready' });
-			})
-			.catch((e: Error) => {
-				setError(e);
-				return showToast({
-					style: Toast.Style.Failure,
-					title: 'Forge failed',
-					message: e.message,
-				});
+		const run = client.hasApiKey
+			? client.generate(prompt, tier, (s, elapsed) => setStatus(describeStatus(s, elapsed)))
+			: Promise.reject(
+					new ForgeError('No three.ws API key is set.', 'sign_in_required', 401),
+				);
+		run.then((r) => {
+			setResult(r);
+			return showToast({ style: Toast.Style.Success, title: 'Model ready' });
+		}).catch((e: Error) => {
+			setError(e);
+			return showToast({
+				style: Toast.Style.Failure,
+				title: 'Forge failed',
+				message: e.message,
 			});
+		});
 	}, [client, prompt, tier]);
 
 	if (error) {
@@ -105,7 +105,7 @@ function Generating({ prompt, tier }: { prompt: string; tier: Tier }) {
 								/>
 							</>
 						) : null}
-						<Action title="Back to Prompt" onAction={pop} />
+						<Action title="Edit Prompt" icon={Icon.Pencil} onAction={editPrompt} />
 					</ActionPanel>
 				}
 			/>
@@ -179,12 +179,10 @@ function Generating({ prompt, tier }: { prompt: string; tier: Tier }) {
 	);
 }
 
-export default function Command(props: LaunchProps<{ arguments: { prompt?: string } }>) {
-	const preferences = getPreferenceValues<Preferences>();
+function PromptForm({ initialPrompt, tier }: { initialPrompt: string; tier: Tier }) {
 	const { push } = useNavigation();
-	const [prompt, setPrompt] = useState(props.arguments.prompt ?? '');
+	const [prompt, setPrompt] = useState(initialPrompt);
 	const [promptError, setPromptError] = useState<string | undefined>();
-	const tier: Tier = preferences.tier ?? 'draft';
 
 	function submit() {
 		if (prompt.trim().length < 3) {
@@ -222,4 +220,16 @@ export default function Command(props: LaunchProps<{ arguments: { prompt?: strin
 			/>
 		</Form>
 	);
+}
+
+export default function Command(props: LaunchProps<{ arguments: { prompt?: string } }>) {
+	const tier: Tier = getPreferenceValues<Preferences>().tier ?? 'draft';
+	const launchedPrompt = props.arguments.prompt?.trim() ?? '';
+
+	// A prompt passed as the command argument (typed in root search, or sent by
+	// Search 3D Assets / My Models) starts forging straight away.
+	if (launchedPrompt.length >= 3) {
+		return <Generating prompt={launchedPrompt} tier={tier} standalone />;
+	}
+	return <PromptForm initialPrompt={launchedPrompt} tier={tier} />;
 }

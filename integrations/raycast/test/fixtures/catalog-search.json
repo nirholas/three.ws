@@ -1,0 +1,362 @@
+{
+ "recorded": "2026-11-28",
+ "exchanges": [
+  {
+   "path": "/api/catalog?limit=3&q=wooden+chair",
+   "status": 200,
+   "body": {
+    "ok": true,
+    "items": [
+     {
+      "id": "object:painted_wooden_chair_01",
+      "kind": "object",
+      "name": "painted_wooden_chair_01",
+      "title": "Painted Wooden Chair 01",
+      "categories": [
+       "furniture",
+       "seating"
+      ],
+      "tags": [
+       "chair",
+       "wood",
+       "painted",
+       "farmhouse",
+       "dining",
+       "diner",
+       "american",
+       "kitchen"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/painted_wooden_chair_01.png",
+      "bytes": 491572,
+      "format": "glb"
+     },
+     {
+      "id": "object:painted_wooden_chair_02",
+      "kind": "object",
+      "name": "painted_wooden_chair_02",
+      "title": "Painted Wooden Chair 02",
+      "categories": [
+       "furniture",
+       "seating"
+      ],
+      "tags": [
+       "old",
+       "wooden",
+       "vintage",
+       "antique",
+       "farmhouse",
+       "seat",
+       "dining",
+       "chair"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_02.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/painted_wooden_chair_02.png",
+      "bytes": 2395276,
+      "format": "glb"
+     },
+     {
+      "id": "object:WoodenChair_01",
+      "kind": "object",
+      "name": "WoodenChair_01",
+      "title": "Wooden Chair 01",
+      "categories": [
+       "furniture",
+       "seating"
+      ],
+      "tags": [
+       "wood",
+       "prop",
+       "vintage",
+       "furniture",
+       "chair",
+       "gothic",
+       "victorian",
+       "decorative"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/WoodenChair_01.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/WoodenChair_01.png",
+      "bytes": 1078588,
+      "format": "glb"
+     }
+    ],
+    "matched": 10,
+    "relaxed": false,
+    "total": 1306,
+    "offset": 0,
+    "next_offset": 3,
+    "facets": {
+     "kinds": {
+      "object": 10
+     },
+     "categories": [
+      {
+       "value": "furniture",
+       "count": 10
+      },
+      {
+       "value": "seating",
+       "count": 10
+      },
+      {
+       "value": "office",
+       "count": 1
+      }
+     ],
+     "tags": [
+      {
+       "value": "vintage",
+       "count": 7
+      },
+      {
+       "value": "wooden",
+       "count": 7
+      },
+      {
+       "value": "chair",
+       "count": 6
+      },
+      {
+       "value": "antique",
+       "count": 4
+      },
+      {
+       "value": "old",
+       "count": 4
+      },
+      {
+       "value": "farmhouse",
+       "count": 3
+      },
+      {
+       "value": "wood",
+       "count": 3
+      },
+      {
+       "value": "aged",
+       "count": 2
+      },
+      {
+       "value": "couch",
+       "count": 2
+      },
+      {
+       "value": "dining",
+       "count": 2
+      },
+      {
+       "value": "leather",
+       "count": 2
+      },
+      {
+       "value": "lounge",
+       "count": 2
+      }
+     ]
+    },
+    "generated_at": {
+     "object": "2026-07-21T13:16:14.305Z",
+     "character": "2026-07-21T13:39:15.447Z",
+     "animation": "2026-11-04T06:20:27.250Z"
+    },
+    "degraded": false
+   }
+  },
+  {
+   "path": "/api/catalog?limit=3&q=wooden+chair&offset=3",
+   "status": 200,
+   "body": {
+    "ok": true,
+    "items": [
+     {
+      "id": "object:bar_chair_round_01",
+      "kind": "object",
+      "name": "bar_chair_round_01",
+      "title": "Bar Chair Round 01",
+      "categories": [
+       "seating",
+       "furniture"
+      ],
+      "tags": [
+       "bar",
+       "pub",
+       "stool",
+       "tall",
+       "wooden",
+       "classical",
+       "old",
+       "vintage",
+       "cigar"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/bar_chair_round_01.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/bar_chair_round_01.png",
+      "bytes": 2811332,
+      "format": "glb"
+     },
+     {
+      "id": "object:gallinera_chair",
+      "kind": "object",
+      "name": "gallinera_chair",
+      "title": "Gallinera Chair",
+      "categories": [
+       "furniture",
+       "seating"
+      ],
+      "tags": [
+       "vintage",
+       "antique",
+       "philippines",
+       "traditional",
+       "old",
+       "wooden"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/gallinera_chair.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/gallinera_chair.png",
+      "bytes": 2357708,
+      "format": "glb"
+     },
+     {
+      "id": "object:mid_century_lounge_chair",
+      "kind": "object",
+      "name": "mid_century_lounge_chair",
+      "title": "Mid Century Lounge Chair",
+      "categories": [
+       "furniture",
+       "seating"
+      ],
+      "tags": [
+       "wooden",
+       "leather",
+       "couch",
+       "lounge",
+       "architecture",
+       "modern",
+       "interior design",
+       "home decor",
+       "living room",
+       "comfort",
+       "stylish",
+       "recliner",
+       "retro",
+       "classy"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/mid_century_lounge_chair.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/mid_century_lounge_chair.png",
+      "bytes": 2085952,
+      "format": "glb"
+     }
+    ],
+    "matched": 10,
+    "relaxed": false,
+    "total": 1306,
+    "offset": 3,
+    "next_offset": 6,
+    "facets": {
+     "kinds": {
+      "object": 10
+     },
+     "categories": [
+      {
+       "value": "furniture",
+       "count": 10
+      },
+      {
+       "value": "seating",
+       "count": 10
+      },
+      {
+       "value": "office",
+       "count": 1
+      }
+     ],
+     "tags": [
+      {
+       "value": "vintage",
+       "count": 7
+      },
+      {
+       "value": "wooden",
+       "count": 7
+      },
+      {
+       "value": "chair",
+       "count": 6
+      },
+      {
+       "value": "antique",
+       "count": 4
+      },
+      {
+       "value": "old",
+       "count": 4
+      },
+      {
+       "value": "farmhouse",
+       "count": 3
+      },
+      {
+       "value": "wood",
+       "count": 3
+      },
+      {
+       "value": "aged",
+       "count": 2
+      },
+      {
+       "value": "couch",
+       "count": 2
+      },
+      {
+       "value": "dining",
+       "count": 2
+      },
+      {
+       "value": "leather",
+       "count": 2
+      },
+      {
+       "value": "lounge",
+       "count": 2
+      }
+     ]
+    },
+    "generated_at": {
+     "object": "2026-07-21T13:16:14.305Z",
+     "character": "2026-07-21T13:39:15.447Z",
+     "animation": "2026-11-04T06:20:27.250Z"
+    },
+    "degraded": false
+   }
+  },
+  {
+   "path": "/api/catalog?limit=3&q=zzqxv+flurb",
+   "status": 200,
+   "body": {
+    "ok": true,
+    "items": [],
+    "matched": 0,
+    "relaxed": false,
+    "total": 1306,
+    "offset": 0,
+    "next_offset": null,
+    "facets": {
+     "kinds": {},
+     "categories": [],
+     "tags": []
+    },
+    "generated_at": {
+     "object": "2026-07-21T13:16:14.305Z",
+     "character": "2026-07-21T13:39:15.447Z",
+     "animation": "2026-11-04T06:20:27.250Z"
+    },
+    "degraded": false
+   }
+  }
+ ]
+}

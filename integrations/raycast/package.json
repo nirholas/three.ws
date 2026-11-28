@@ -1,8 +1,8 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "three-ws",
-  "title": "Three.ws Forge",
-  "description": "Generate a textured 3D model (GLB) from a text prompt through the free Forge lane on three.ws (needs a free three.ws API key).",
+  "title": "Three.ws",
+  "description": "Forge textured 3D models from a prompt, search a free library of CC0 props, rigged characters and motion clips, and browse the models you made on three.ws.",
   "icon": "extension-icon.png",
   "author": "three_ws",
   "categories": ["Design Tools", "Developer Tools"],
@@ -21,7 +21,24 @@
           "type": "text",
           "required": false
         }
-      ]
+      ],
+      "keywords": ["3d", "glb", "gltf", "generate", "text to 3d", "model"]
+    },
+    {
+      "name": "search-assets",
+      "title": "Search 3D Assets",
+      "subtitle": "three.ws",
+      "description": "Search free CC0 props, rigged characters and motion clips, then copy embed code or download the file. No account needed.",
+      "mode": "view",
+      "keywords": ["3d", "glb", "asset", "model", "animation", "character", "three.js", "cc0"]
+    },
+    {
+      "name": "my-models",
+      "title": "Search My Models",
+      "subtitle": "three.ws",
+      "description": "Browse and filter the 3D models you forged on three.ws, open them, copy links, or forge again.",
+      "mode": "view",
+      "keywords": ["3d", "glb", "forge", "library", "history"]
     }
   ],
   "preferences": [
@@ -29,8 +46,8 @@
       "name": "apiKey",
       "type": "password",
       "title": "API Key",
-      "description": "Making a model needs a free three.ws account. Create a key at https://three.ws/dashboard/api-keys.",
-      "required": true,
+      "description": "Needed for Forge a 3D Model and Search My Models (Search 3D Assets works without it). Create a free key at https://three.ws/dashboard/api-keys.",
+      "required": false,
       "placeholder": "sk_live_..."
     },
     {
@@ -62,7 +79,7 @@
   "devDependencies": {
     "@raycast/eslint-config": "^2.0.4",
     "@types/node": "22.13.10",
-    "@types/react": "19.0.10",
+    "@types/react": "19.3.0",
     "eslint": "^9.22.0",
     "prettier": "^3.5.3",
     "typescript": "^5.8.2",

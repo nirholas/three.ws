@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>The Raycast extension searches 3D assets and your own models</title>
+			<link>https://three.ws/integrations</link>
+			<guid isPermaLink="false">2026-11-28:The Raycast extension searches 3D assets and your own models</guid>
+			<pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws extension for Raycast now has three commands. Search 3D Assets finds free CC0 props, rigged characters and motion clips and copies paste-ready embed code or downloads the file, with no account. Search My Models lists every model you forged with its preview and prompt, and forges a prompt again in one keystroke. Forge a 3D Model now starts at once when you type the prompt as its argument. The extension is ready for the Raycast Store pull request.</description>
+		</item>
+		<item>
 			<title>Docs · 3D tools for Grok fleet apps</title>
 			<link>https://three.ws/docs/grok-fleet-tools</link>
 			<guid isPermaLink="false">2026-11-27:Docs · 3D tools for Grok fleet apps</guid>

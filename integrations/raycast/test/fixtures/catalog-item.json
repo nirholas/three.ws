@@ -1,0 +1,292 @@
+{
+ "recorded": "2026-11-28",
+ "exchanges": [
+  {
+   "path": "/api/catalog?id=object%3Apainted_wooden_chair_01",
+   "status": 200,
+   "body": {
+    "ok": true,
+    "item": {
+     "id": "object:painted_wooden_chair_01",
+     "kind": "object",
+     "name": "painted_wooden_chair_01",
+     "title": "Painted Wooden Chair 01",
+     "categories": [
+      "furniture",
+      "seating"
+     ],
+     "tags": [
+      "chair",
+      "wood",
+      "painted",
+      "farmhouse",
+      "dining",
+      "diner",
+      "american",
+      "kitchen"
+     ],
+     "license": "CC0",
+     "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb",
+     "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/painted_wooden_chair_01.png",
+     "bytes": 491572,
+     "format": "glb"
+    },
+    "links": {
+     "browse": "https://three.ws/objects",
+     "preview": "https://three.ws/app#model=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_01.glb&kind=object&title=Painted%20Wooden%20Chair%2001",
+     "ar": "https://three.ws/ar/studio?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fobjects%2Fpolyhaven%2Fglb%2Fpainted_wooden_chair_01.glb&title=Painted%20Wooden%20Chair%2001",
+     "download": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb"
+    },
+    "related": [
+     {
+      "id": "object:painted_wooden_chair_02",
+      "kind": "object",
+      "name": "painted_wooden_chair_02",
+      "title": "Painted Wooden Chair 02",
+      "categories": [
+       "furniture",
+       "seating"
+      ],
+      "tags": [
+       "old",
+       "wooden",
+       "vintage",
+       "antique",
+       "farmhouse",
+       "seat",
+       "dining",
+       "chair"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_02.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/painted_wooden_chair_02.png",
+      "bytes": 2395276,
+      "format": "glb"
+     },
+     {
+      "id": "object:painted_wooden_stool",
+      "kind": "object",
+      "name": "painted_wooden_stool",
+      "title": "Painted Wooden Stool",
+      "categories": [
+       "seating",
+       "furniture"
+      ],
+      "tags": [
+       "painted",
+       "worn",
+       "old",
+       "antique",
+       "vintage",
+       "farmhouse",
+       "rustic",
+       "carpentry",
+       "aged",
+       "chair"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_stool.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/painted_wooden_stool.png",
+      "bytes": 1873776,
+      "format": "glb"
+     },
+     {
+      "id": "object:ArmChair_01",
+      "kind": "object",
+      "name": "ArmChair_01",
+      "title": "Arm Chair 01",
+      "categories": [
+       "furniture",
+       "seating"
+      ],
+      "tags": [
+       "gothic",
+       "vintage",
+       "chair",
+       "furniture",
+       "victorian",
+       "couch",
+       "wood",
+       "varnished",
+       "classic"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/ArmChair_01.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/ArmChair_01.png",
+      "bytes": 768216,
+      "format": "glb"
+     },
+     {
+      "id": "object:BarberShopChair_01",
+      "kind": "object",
+      "name": "BarberShopChair_01",
+      "title": "Barber Shop Chair 01",
+      "categories": [
+       "furniture",
+       "seating"
+      ],
+      "tags": [
+       "chair",
+       "vintage",
+       "wood",
+       "leather",
+       "fancy",
+       "upholstery",
+       "barber",
+       "salon"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/BarberShopChair_01.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/BarberShopChair_01.png",
+      "bytes": 878232,
+      "format": "glb"
+     },
+     {
+      "id": "object:dining_chair_02",
+      "kind": "object",
+      "name": "dining_chair_02",
+      "title": "Dining Chair 02",
+      "categories": [
+       "furniture",
+       "seating"
+      ],
+      "tags": [
+       "modern",
+       "chair",
+       "seat",
+       "dining",
+       "fancy",
+       "leather"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/dining_chair_02.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/dining_chair_02.png",
+      "bytes": 920128,
+      "format": "glb"
+     },
+     {
+      "id": "object:GreenChair_01",
+      "kind": "object",
+      "name": "GreenChair_01",
+      "title": "Green Chair 01",
+      "categories": [
+       "furniture",
+       "seating"
+      ],
+      "tags": [
+       "vintage",
+       "wood",
+       "gothic",
+       "furniture",
+       "chair",
+       "fabric",
+       "decorative"
+      ],
+      "license": "CC0",
+      "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/GreenChair_01.glb",
+      "thumb": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/thumbs/GreenChair_01.png",
+      "bytes": 607116,
+      "format": "glb"
+     }
+    ],
+    "frameworks": [
+     "model-viewer",
+     "three",
+     "agent-3d",
+     "react"
+    ],
+    "snippets": {
+     "agent-3d": {
+      "language": "html",
+      "code": "<script\n  type=\"module\"\n  src=\"https://three.ws/agent-3d/1.5.2/agent-3d.js\"\n  integrity=\"sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q\"\n  crossorigin=\"anonymous\"\n></script>\n\n<agent-3d\n  body=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb\"\n  mode=\"section\"\n  style=\"width:100%;height:420px;display:block\"\n></agent-3d>",
+      "notes": [
+       "Pinned to agent-3d 1.5.2 with its published SRI hash. Release data: https://three.ws/agent-3d/versions.json",
+       "The bundle is served with access-control-allow-origin: *, so it loads from any domain."
+      ]
+     },
+     "model-viewer": {
+      "language": "html",
+      "code": "<script\n  type=\"module\"\n  src=\"https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js\"\n  integrity=\"sha384-wjsPzEO+lXOf7d9csIDfAQpPt2OKuUU3m0K9qsdKIuzX4N8czSF6hdh23eAbZa3p\"\n  crossorigin=\"anonymous\"\n></script>\n\n<model-viewer\n  src=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb\"\n  alt=\"Painted Wooden Chair 01\"\n  camera-controls\n  auto-rotate\n  ar\n  shadow-intensity=\"1\"\n  style=\"width:100%;height:420px\"\n></model-viewer>",
+      "notes": [
+       "This is the exact renderer and build the three.ws browse grids use.",
+       "Drop the `ar` attribute if you do not want the mobile AR button."
+      ]
+     },
+     "three": {
+      "language": "javascript",
+      "code": "import * as THREE from \"three\";\nimport { GLTFLoader } from \"three/examples/jsm/loaders/GLTFLoader.js\";\n\nconst loader = new GLTFLoader();\nconst gltf = await loader.loadAsync(\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb\");\nscene.add(gltf.scene);",
+      "notes": [
+       "The GLB is served cross-origin from the three.ws CDN; no proxy or re-hosting is needed. It is 480 KB."
+      ]
+     },
+     "react": {
+      "language": "jsx",
+      "code": "import { useEffect } from \"react\";\n\nconst AGENT_3D_SRC = \"https://three.ws/agent-3d/1.5.2/agent-3d.js\";\n\n/** Renders the three.ws Painted Wooden Chair 01 model. The custom element is defined once per page. */\nexport function PaintedWoodenChair01() {\n  useEffect(() => {\n    if (document.querySelector('script[data-agent-3d]')) return;\n    const s = document.createElement(\"script\");\n    s.type = \"module\";\n    s.src = AGENT_3D_SRC;\n    s.crossOrigin = \"anonymous\";\n    s.dataset.agent3d = \"1\";\n    document.head.appendChild(s);\n  }, []);\n\n  return (\n    <agent-3d\n      body=\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/objects/polyhaven/glb/painted_wooden_chair_01.glb\"\n      mode=\"section\"\n      style={{ width: \"100%\", height: 420, display: \"block\" }}\n    />\n  );\n}",
+      "notes": [
+       "Pinned to agent-3d 1.5.2 with its published SRI hash. Release data: https://three.ws/agent-3d/versions.json"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "path": "/api/catalog?id=animation%3Agen-wave-big-2b3a21372d56",
+   "status": 200,
+   "body": {
+    "ok": true,
+    "item": {
+     "id": "animation:gen-wave-big-2b3a21372d56",
+     "kind": "animation",
+     "name": "gen-wave-big-2b3a21372d56",
+     "title": "Big Wave",
+     "categories": [],
+     "tags": [],
+     "license": null,
+     "url": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/animations/library/generated/clips/gen-wave-big-2b3a21372d56.json",
+     "thumb": null,
+     "bytes": 262017,
+     "format": "three-animation-clip-json",
+     "duration_seconds": 3.966666666666667,
+     "loop": false,
+     "icon": "👋"
+    },
+    "links": {
+     "browse": "https://three.ws/animations",
+     "preview": "https://three.ws/animations?clip=gen-wave-big-2b3a21372d56",
+     "download": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/animations/library/generated/clips/gen-wave-big-2b3a21372d56.json"
+    },
+    "related": [],
+    "frameworks": [
+     "three",
+     "react",
+     "agent-3d"
+    ],
+    "snippets": {
+     "three": {
+      "language": "javascript",
+      "code": "import * as THREE from \"three\";\n\n// three.ws motion clips are plain THREE.AnimationClip JSON. The deadline\n// matters: without one a stalled connection hangs your loader forever\n// rather than failing, because fetch has no timeout of its own.\nconst json = await fetch(\"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/animations/library/generated/clips/gen-wave-big-2b3a21372d56.json\", { signal: AbortSignal.timeout(10000) }).then((r) => r.json());\nconst clip = THREE.AnimationClip.parse(json);\n\n// Track names use the canonical (Mixamo) bone names. Any avatar whose rig maps\n// to that skeleton plays it directly; retarget first if yours does not.\nconst mixer = new THREE.AnimationMixer(avatar);\nconst action = mixer.clipAction(clip);\naction.setLoop(THREE.LoopOnce, 1);\naction.play();\n// Call mixer.update(delta) from your render loop.",
+      "notes": [
+       "The clip runs 3.97s and plays once.",
+       "To bake this clip onto your own rig server-side instead, call the apply_animation MCP tool with your GLB url and this clip name."
+      ]
+     },
+     "react": {
+      "language": "jsx",
+      "code": "import { useEffect } from \"react\";\nimport * as THREE from \"three\";\n\nconst CLIP_URL = \"https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/animations/library/generated/clips/gen-wave-big-2b3a21372d56.json\";\n\n/** Plays the three.ws \"Big Wave\" clip on an existing avatar object. */\nexport function useBigWave(avatar) {\n  useEffect(() => {\n    if (!avatar) return;\n    let mixer;\n    let raf;\n    let cancelled = false;\n    const clock = new THREE.Clock();\n\n    // A deadline as well as the cancelled flag: the flag stops a late response\n    // touching an unmounted component, but only the signal ends a request that\n    // never answers at all.\n    fetch(CLIP_URL, { signal: AbortSignal.timeout(10000) })\n      .then((r) => r.json())\n      .then((json) => {\n        if (cancelled) return;\n        mixer = new THREE.AnimationMixer(avatar);\n        const action = mixer.clipAction(THREE.AnimationClip.parse(json));\n        action.setLoop(THREE.LoopOnce, 1);\n        action.play();\n        const tick = () => {\n          mixer.update(clock.getDelta());\n          raf = requestAnimationFrame(tick);\n        };\n        tick();\n      });\n\n    return () => {\n      cancelled = true;\n      if (raf) cancelAnimationFrame(raf);\n      mixer?.stopAllAction();\n    };\n  }, [avatar]);\n}",
+      "notes": [
+       "Pair this with the three snippet for the avatar itself."
+      ]
+     },
+     "agent-3d": {
+      "language": "html",
+      "code": "<script\n  type=\"module\"\n  src=\"https://three.ws/agent-3d/1.5.2/agent-3d.js\"\n  integrity=\"sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q\"\n  crossorigin=\"anonymous\"\n></script>\n\n<agent-3d\n  body=\"https://three.ws/avatars/default.glb\"\n  clip=\"idle\"\n  mode=\"section\"\n  style=\"width:100%;height:420px;display:block\"\n></agent-3d>",
+      "notes": [
+       "The `clip` attribute resolves names from the built-in gesture manifest (https://three.ws/animations/manifest.json), which is a curated subset and does not include this library clip.",
+       "To use \"Big Wave\" in an embed, bake it onto your avatar first with the apply_animation MCP tool, then point `body` at the returned GLB."
+      ]
+     }
+    }
+   }
+  }
+ ]
+}

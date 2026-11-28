@@ -37,6 +37,72 @@ export interface ForgeResult {
 	backend?: string;
 }
 
+export type CatalogKind = 'object' | 'character' | 'animation';
+
+/** One asset as GET /api/catalog lists it. */
+export interface CatalogItem {
+	id: string;
+	kind: CatalogKind;
+	title: string;
+	categories: string[];
+	tags: string[];
+	license: string | null;
+	/** The CDN GLB, or the clip JSON for an animation. */
+	url: string;
+	thumb: string | null;
+	bytes?: number;
+	format?: string;
+	duration_seconds?: number;
+	rigged?: boolean;
+	icon?: string;
+}
+
+export interface CatalogPage {
+	items: CatalogItem[];
+	/** How many assets matched the query in all. */
+	matched: number;
+	/** Size of the whole catalog. */
+	total: number;
+	/** True when no asset matched every word and these are the closest partial matches. */
+	relaxed: boolean;
+	nextOffset: number | null;
+}
+
+export interface CatalogSnippet {
+	language: string;
+	code: string;
+	notes?: string[];
+}
+
+/** GET /api/catalog?id=: one asset with its links and paste-ready code. */
+export interface CatalogDetail {
+	item: CatalogItem;
+	links: { preview?: string; download?: string; browse?: string; ar?: string };
+	/** Frameworks with a snippet, the default for this kind first. */
+	frameworks: string[];
+	snippets: Record<string, CatalogSnippet>;
+}
+
+/** One of the signed-in user's Forge models (GET /api/forge/mine). */
+export interface MyModel {
+	id: string;
+	title: string;
+	prompt: string;
+	previewImageUrl: string | null;
+	visibility: 'public' | 'unlisted' | 'private';
+	modelUrl: string;
+	createdAt: string;
+}
+
+export interface MyModelsPage {
+	models: MyModel[];
+	/** Pass back as `before` for the next page; null on the last page. */
+	nextBefore: string | null;
+}
+
+export const CATALOG_PAGE_SIZE = 30;
+export const MY_MODELS_PAGE_SIZE = 24;
+
 type Fetch = typeof fetch;
 
 export const API_KEYS_URL = 'https://three.ws/dashboard/api-keys';
@@ -74,7 +140,16 @@ export class ForgeClient {
 		this.now = options.now ?? Date.now;
 	}
 
-	private async request(path: string, init?: RequestInit): Promise<Record<string, unknown>> {
+	get hasApiKey(): boolean {
+		return this.apiKey.length > 0;
+	}
+
+	/** `auth: false` keeps the key off public, account-free routes such as the catalog. */
+	private async request(
+		path: string,
+		init?: RequestInit,
+		{ auth = true }: { auth?: boolean } = {},
+	): Promise<Record<string, unknown>> {
 		let response: Response;
 		try {
 			response = await this.fetchImpl(`${this.baseUrl}${path}`, {
@@ -82,7 +157,7 @@ export class ForgeClient {
 				headers: {
 					accept: 'application/json',
 					'x-forge-client': this.handle,
-					...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}),
+					...(auth && this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}),
 					...(init?.body ? { 'content-type': 'application/json' } : {}),
 				},
 			});
@@ -101,7 +176,10 @@ export class ForgeClient {
 		}
 		if (!response.ok) {
 			const message =
-				(parsed.message as string) || (parsed.error as string) || `HTTP ${response.status}`;
+				(parsed.message as string) ||
+				(parsed.error_description as string) ||
+				(parsed.error as string) ||
+				`HTTP ${response.status}`;
 			throw new ForgeError(message, (parsed.error as string) || '', response.status);
 		}
 		return parsed;
@@ -185,4 +263,90 @@ export class ForgeClient {
 		}
 		return this.poll(submission.job_id as string, onStatus);
 	}
+
+	/** Free and public: no account needed, so the key is never sent. */
+	async searchCatalog({
+		query = '',
+		kind,
+		offset = 0,
+		limit = CATALOG_PAGE_SIZE,
+	}: {
+		query?: string;
+		kind?: CatalogKind;
+		offset?: number;
+		limit?: number;
+	} = {}): Promise<CatalogPage> {
+		const params = new URLSearchParams({ limit: String(limit) });
+		const q = query.trim();
+		if (q) params.set('q', q);
+		if (kind) params.set('kind', kind);
+		if (offset > 0) params.set('offset', String(offset));
+		const result = await this.request(`/api/catalog?${params}`, undefined, { auth: false });
+		if (!Array.isArray(result.items)) {
+			throw new ForgeError('The catalog returned no item list.', 'bad_response');
+		}
+		const next = result.next_offset;
+		return {
+			items: result.items as CatalogItem[],
+			matched: Number(result.matched) || 0,
+			total: Number(result.total) || 0,
+			relaxed: result.relaxed === true,
+			nextOffset: typeof next === 'number' ? next : null,
+		};
+	}
+
+	async catalogItem(id: string): Promise<CatalogDetail> {
+		const result = await this.request(`/api/catalog?id=${encodeURIComponent(id)}`, undefined, {
+			auth: false,
+		});
+		if (!result.item || typeof result.item !== 'object') {
+			throw new ForgeError(`The catalog has no asset ${id}.`, 'not_found', 404);
+		}
+		const snippets = (result.snippets as Record<string, CatalogSnippet>) || {};
+		const frameworks = Array.isArray(result.frameworks)
+			? (result.frameworks as string[]).filter((f) => snippets[f])
+			: Object.keys(snippets);
+		return {
+			item: result.item as CatalogItem,
+			links: (result.links as CatalogDetail['links']) || {},
+			frameworks,
+			snippets,
+		};
+	}
+
+	/** The key owner's own finished models, newest first, every visibility. */
+	async listMyModels({
+		before,
+		limit = MY_MODELS_PAGE_SIZE,
+	}: { before?: string | null; limit?: number } = {}): Promise<MyModelsPage> {
+		if (!this.apiKey) {
+			throw new ForgeError(
+				'Add your three.ws API key to see your models.',
+				'sign_in_required',
+				401,
+			);
+		}
+		const params = new URLSearchParams({ limit: String(limit) });
+		if (before) params.set('before', before);
+		const result = await this.request(`/api/forge/mine?${params}`);
+		if (!Array.isArray(result.models)) {
+			throw new ForgeError('three.ws returned no model list.', 'bad_response');
+		}
+		return {
+			models: result.models as MyModel[],
+			nextBefore: typeof result.nextBefore === 'string' ? result.nextBefore : null,
+		};
+	}
+}
+
+/** The key is missing, revoked, or lacks the read scope: the fix is the same. */
+export function needsApiKey(error: Error): boolean {
+	return (
+		error instanceof ForgeError &&
+		(error.code === 'sign_in_required' ||
+			error.code === 'unauthorized' ||
+			error.code === 'insufficient_scope' ||
+			error.status === 401 ||
+			error.status === 403)
+	);
 }

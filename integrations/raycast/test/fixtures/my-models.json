@@ -1,0 +1,71 @@
+{
+ "recorded": "2026-11-28",
+ "exchanges": [
+  {
+   "path": "/api/forge/mine?limit=2",
+   "status": 200,
+   "body": {
+    "models": [
+     {
+      "id": "420980dd-1c07-4830-b0db-0eacd12cf6de",
+      "title": "A brass desk lamp with a green glass shade",
+      "prompt": "a brass desk lamp with a green glass shade",
+      "previewImageUrl": "https://three.ws/cdn/forge/7538fb22fd50/420980dd-1c07-4830-b0db-0eacd12cf6de.jpg",
+      "visibility": "unlisted",
+      "exportable": true,
+      "modelUrl": "https://three.ws/m/420980dd-1c07-4830-b0db-0eacd12cf6de",
+      "createdAt": "2026-11-28T07:22:35.757Z"
+     },
+     {
+      "id": "207989c2-ba74-41bf-bb29-a1ce8f27f458",
+      "title": "A futuristic wedge electric pickup truck, single sharp triangular roofline from...",
+      "prompt": "A futuristic wedge electric pickup truck, single sharp triangular roofline from hood to tailgate, flat unpainted stainless steel body panels with precise panel gaps and brushed-metal grain, no grille, thin full-width LED light bar front and rear, four symmetric rubber-tread wheels with alloy rims, flush glass windows and chrome trim accents, photoreal product shot, natural daylight studio lighting, soft key with gentle fill, shallow depth of field, true-to-life color, visible micro-detail: brushed steel texture, light dust and wear on panels, slight asymmetry in panel alignment, full subject centered isolated on plain neutral background, one camera angle, no motion blur, no text.",
+      "previewImageUrl": "https://three.ws/cdn/forge/anon/207989c2-ba74-41bf-bb29-a1ce8f27f458.jpg",
+      "visibility": "unlisted",
+      "exportable": true,
+      "modelUrl": "https://three.ws/m/207989c2-ba74-41bf-bb29-a1ce8f27f458",
+      "createdAt": "2026-11-27T22:25:15.966Z"
+     }
+    ],
+    "nextBefore": "2026-11-27T22:25:15.966Z"
+   }
+  },
+  {
+   "path": "/api/forge/mine?limit=2&before=2026-11-27T22%3A25%3A15.966Z",
+   "status": 200,
+   "body": {
+    "models": [
+     {
+      "id": "4549158e-6538-4f06-8af0-c1e9acee7735",
+      "title": "A sleek white electric sports car with a low glass roof, smooth curved body...",
+      "prompt": "a sleek white electric sports car with a low glass roof, smooth curved body panels and aero wheels, chrome",
+      "previewImageUrl": "https://three.ws/cdn/forge/anon/4549158e-6538-4f06-8af0-c1e9acee7735.jpg",
+      "visibility": "unlisted",
+      "exportable": true,
+      "modelUrl": "https://three.ws/m/4549158e-6538-4f06-8af0-c1e9acee7735",
+      "createdAt": "2026-11-27T22:21:50.269Z"
+     },
+     {
+      "id": "10e618b8-209e-40cc-95d8-53edf0a3a62f",
+      "title": "A single sleek white electric sports car, low wedge silhouette with fastback...",
+      "prompt": "A single sleek white electric sports car, low wedge silhouette with fastback roofline and panoramic glass roof flowing into rear decklid, smooth monocoque body with flush door handles, seamless front trunk, rear diffuser, and active aero spoiler lip; four identical five-spoke aero wheels with Michelin Pilot Sport EV tires, brake calipers visible through spokes; pearlescent white tri-coat paint on all body panels with precise panel gaps, brushed aluminum lower trim, glossy black glass roof and pillars, chrome window surround, smoked taillight lenses; photoreal product shot, natural daylight studio lighting from large soft key with gentle fill, shallow depth of field, true-to-life color, visible clear-coat orange peel, micro-scratches, dust on lower rockers, tire sidewall lettering; full car centered, isolated on neutral gray background, three-quarter front view, no motion, no text.",
+      "previewImageUrl": "https://three.ws/cdn/forge/anon/10e618b8-209e-40cc-95d8-53edf0a3a62f.jpg",
+      "visibility": "unlisted",
+      "exportable": true,
+      "modelUrl": "https://three.ws/m/10e618b8-209e-40cc-95d8-53edf0a3a62f",
+      "createdAt": "2026-11-27T22:14:38.816Z"
+     }
+    ],
+    "nextBefore": "2026-11-27T22:14:38.816Z"
+   }
+  },
+  {
+   "path": "/api/forge/mine?limit=2",
+   "status": 401,
+   "body": {
+    "error": "unauthorized",
+    "error_description": "Sign in to three.ws to see your models."
+   }
+  }
+ ]
+}

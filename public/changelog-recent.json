@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-27T21:54:50.458Z",
+	"generated_at": "2026-11-28T07:35:14.035Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4794,
+	"total": 4795,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "The Raycast extension searches 3D assets and your own models",
+			"summary": "The three.ws extension for Raycast now has three commands. Search 3D Assets finds free CC0 props, rigged characters and motion clips and copies paste-ready embed code or downloads the file, with no account. Search My Models lists every model you forged with its preview and prompt, and forges a prompt again in one keystroke. Forge a 3D Model now starts at once when you type the prompt as its argument. The extension is ready for the Raycast Store pull request.",
+			"link": "/integrations",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-11-27",
 			"type": "launch",
@@ -1562,16 +1572,6 @@
 			"link": null,
 			"tags": [
 				"infra"
-			]
-		},
-		{
-			"date": "2026-11-19",
-			"type": "update",
-			"title": "A busy multi-view lane asks you to retry instead of quietly downgrading your model",
-			"summary": "When the Pixal3D multi-view lane was at capacity, Forge silently handed the job to single-view TRELLIS, which ignored the extra angles you uploaded. Forge now tells you the lane is busy and to retry in about 30 seconds, instead of switching lanes behind your back.",
-			"link": null,
-			"tags": [
-				"improvement"
 			]
 		}
 	]

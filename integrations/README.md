@@ -28,7 +28,7 @@ Listing packages for developer-tool stores each carry a README and a `SUBMITTING
 | Package | Folder | Host |
 |---|---|---|
 | Zed extension (MCP context server running `@three-ws/mcp-server`) | [`zed/`](zed/) | [Zed](https://zed.dev) |
-| Raycast extension (Forge a 3D Model command) | [`raycast/`](raycast/) | [Raycast](https://raycast.com) |
+| Raycast extension (Forge a 3D Model, Search 3D Assets, Search My Models) | [`raycast/`](raycast/) | [Raycast](https://raycast.com) |
 | Gradio Space and MCP server | [`huggingface-space/`](huggingface-space/) | [Hugging Face Spaces](https://huggingface.co/spaces) |
 | Poe server bot | [`poe/`](poe/) | [Poe](https://poe.com) |
 | n8n community node | [`n8n/`](n8n/) | [n8n](https://n8n.io) |

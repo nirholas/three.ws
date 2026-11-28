@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-27T21:54:50.379Z",
+	"generated_at": "2026-11-28T07:35:13.785Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "The Raycast extension searches 3D assets and your own models",
+			"summary": "The three.ws extension for Raycast now has three commands. Search 3D Assets finds free CC0 props, rigged characters and motion clips and copies paste-ready embed code or downloads the file, with no account. Search My Models lists every model you forged with its preview and prompt, and forges a prompt again in one keystroke. Forge a 3D Model now starts at once when you type the prompt as its argument. The extension is ready for the Raycast Store pull request.",
+			"link": "/integrations",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-11-27",
 			"type": "launch",

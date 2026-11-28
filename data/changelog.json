@@ -2,6 +2,24 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-28",
+			"title": "Embed codes credit the creator and three.ws with a link",
+			"summary": "Every embed code three.ws hands out (Forge models, agents, avatars, widgets, dioramas, the editor and the get_embed_code MCP tool) now ends with one short credit line under the embed: the model or agent's name linked to its page, and a link to three.ws. Readers of the site you embed on can find the original, and the link tells search engines where the work came from. It is plain HTML in the snippet, so you can restyle or remove it.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-28",
+			"title": "The Raycast extension searches 3D assets and your own models",
+			"summary": "The three.ws extension for Raycast now has three commands. Search 3D Assets finds free CC0 props, rigged characters and motion clips and copies paste-ready embed code or downloads the file, with no account. Search My Models lists every model you forged with its preview and prompt, and forges a prompt again in one keystroke. Forge a 3D Model now starts at once when you type the prompt as its argument. The extension is ready for the Raycast Store pull request.",
+			"tags": [
+				"feature"
+			],
+			"link": "/integrations"
+		},
+		{
 			"date": "2026-11-27",
 			"title": "Grok measured against today's model on five three.ws tasks",
 			"summary": "We ran Grok 4.7 and Grok 4.3 on the same 250 inputs as the model three.ws uses today, across the five AI tasks people see most. Grok 4.3 passed more often on Forge prompt rewrites (100% against 48%), public X replies (96% against 80%) and agent specs (100% against 76%), and answered faster. Grok 4.7 scored as well but took about 40 seconds on the two longest tasks. Agent chat was a tie. Nothing in production changed: the page has the method, every number and the $3.48 the run cost.",
