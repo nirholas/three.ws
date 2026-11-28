@@ -60,7 +60,7 @@
 
 import { recordConversion } from './_lib/campaign-ledger.js';
 import { randomUUID } from 'node:crypto';
-import { cors, json as sendJson, method, readJson, wrap, rateLimited, setRateLimitHeaders } from './_lib/http.js';
+import { cors, json as sendJson, method, readJson, wrap, rateLimited, setRateLimitHeaders, AIRTABLE_BLOCKS_ORIGIN } from './_lib/http.js';
 import { withManageToken } from './_lib/forge-manage-token.js';
 import { limits, clientIp, refundOnServerFailure } from './_lib/rate-limit.js';
 import { preflightRig, refundRigAllowance, refundFailedRigJob } from './_lib/rig-preflight.js';
@@ -3836,7 +3836,9 @@ async function pollJob(req, res, jobId) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS' })) return;
+	// The Airtable extension (integrations/airtable) submits and polls from its block
+	// iframe with the user's own API key as a bearer, never a cookie.
+	if (cors(req, res, { methods: 'GET,POST,DELETE,OPTIONS', extraOrigins: [AIRTABLE_BLOCKS_ORIGIN] })) return;
 	if (!method(req, res, ['GET', 'POST', 'DELETE'])) return;
 
 	const url = new URL(req.url, 'http://localhost');

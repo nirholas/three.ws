@@ -487,6 +487,12 @@ const IBM_ORIGIN = /^https:\/\/([a-z0-9-]+\.)*ibm\.com$/i;
 // seismic.com.evil.example can't match.
 const SEISMIC_ORIGIN = /^https:\/\/([a-z0-9-]+\.)*seismic\.com$/i;
 
+// Airtable extension iframes run on Airtable-generated *.airtableblocks.com hosts
+// (devblock--… under `block run`, blk… once released), https only. Not part of the
+// default allowlist: only the endpoints the three.ws Airtable extension calls pass
+// it to cors() as `extraOrigins`, so the rest of the API stays closed to them.
+export const AIRTABLE_BLOCKS_ORIGIN = /^https:\/\/([a-z0-9-]+\.)+airtableblocks\.com$/i;
+
 // Add fields to the response's `Vary` header without dropping what is already
 // there. `res.setHeader('vary', …)` REPLACES, so a handler that varies on Cookie
 // would otherwise erase the `vary: origin` cors() just set (and vice versa), and
@@ -510,12 +516,15 @@ export function varyOn(res, ...fields) {
 export function cors(
 	req,
 	res,
-	{ origins = null, methods = 'GET,POST,OPTIONS', credentials = false, payments = true } = {},
+	{ origins = null, extraOrigins = null, methods = 'GET,POST,OPTIONS', credentials = false, payments = true } = {},
 ) {
 	const origin = req.headers.origin;
 	if (origins === '*') {
 		res.setHeader('access-control-allow-origin', '*');
-	} else if (origin && isAllowedOrigin(origin, origins)) {
+	} else if (
+		origin &&
+		(isAllowedOrigin(origin, origins) || (extraOrigins && isAllowedOrigin(origin, extraOrigins)))
+	) {
 		res.setHeader('access-control-allow-origin', origin);
 		res.setHeader('vary', 'origin');
 		if (credentials) res.setHeader('access-control-allow-credentials', 'true');

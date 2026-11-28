@@ -1,0 +1,171 @@
+{
+	"recorded": "2026-11-28",
+	"prompt": "a ceramic teapot with a bamboo handle",
+	"submit": {
+		"status": 200,
+		"body": {
+			"job_id": "f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqa3pNV1JtWm1VeExUVTRNV010TkdWak5DMWhaamxpTFdZNE5UZzBZVFkzWkRsaVlpSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSIsIngiOjE3OTY0NTU3Njl9.UVjUNWyjxlFpZNIjVw1IiiFUXcttOJdQwHF3CIUlfwc",
+			"creation_id": "b7f213c5-a15f-458d-824d-90c99601740a",
+			"status": "queued",
+			"mode": "text_to_3d",
+			"path": "image",
+			"tier": "draft",
+			"backend": "trellis_selfhost",
+			"prompt": "a ceramic teapot with a bamboo handle",
+			"directed_prompt": "White glazed ceramic teapot with bulbous body, short curved spout, flush lid with small knob, and dark bamboo C-handle attached at two points by thin metal bands; vertically symmetrical body; matte white ceramic with visible glaze texture, brushed bamboo grain, small chip on spout edge and lid seam line; photoreal ceramic and wood studio product shot, shallow depth of field, neutral background, centered full subject, even studio lighting, no text.",
+			"direction": {
+				"status": "directed",
+				"ms": 1200
+			},
+			"preview_image_url": "https://three.ws/cdn/forge/refs/c87ca612-50f2-4d5d-8498-25df7c5f19ab.jpg",
+			"reference_image_urls": [
+				"https://three.ws/cdn/forge/refs/c87ca612-50f2-4d5d-8498-25df7c5f19ab.jpg"
+			],
+			"views_requested": 1,
+			"views_used": 1,
+			"multiview": false,
+			"text_to_image_model": "black-forest-labs/flux.2-klein-4b",
+			"cold_start": false,
+			"eta_seconds": 36,
+			"estimated_credits": null
+		}
+	},
+	"polls": [
+		{
+			"status": 200,
+			"body": {
+				"job_id": "f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqa3pNV1JtWm1VeExUVTRNV010TkdWak5DMWhaamxpTFdZNE5UZzBZVFkzWkRsaVlpSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSIsIngiOjE3OTY0NTU3Njl9.UVjUNWyjxlFpZNIjVw1IiiFUXcttOJdQwHF3CIUlfwc",
+				"status": "running",
+				"views_requested": 1,
+				"views_used": 1,
+				"multiview": false,
+				"backend": "trellis_selfhost",
+				"tier": "draft",
+				"path": "image",
+				"engine_version": null,
+				"preview_image_url": "https://three.ws/cdn/forge/refs/c87ca612-50f2-4d5d-8498-25df7c5f19ab.jpg",
+				"elapsed_seconds": 3,
+				"eta_seconds": 36,
+				"eta_remaining_seconds": 33
+			}
+		},
+		{
+			"status": 200,
+			"body": {
+				"job_id": "f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqa3pNV1JtWm1VeExUVTRNV010TkdWak5DMWhaamxpTFdZNE5UZzBZVFkzWkRsaVlpSXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSIsIngiOjE3OTY0NTU3Njl9.UVjUNWyjxlFpZNIjVw1IiiFUXcttOJdQwHF3CIUlfwc",
+				"creation_id": "b7f213c5-a15f-458d-824d-90c99601740a",
+				"status": "done",
+				"glb_url": "https://three.ws/cdn/forge/4a67eb323665/b7f213c5-a15f-458d-824d-90c99601740a.glb",
+				"durable": true,
+				"quality": {
+					"valid": true,
+					"flag": "ok",
+					"score": 0.952,
+					"reasons": [],
+					"metrics": {
+						"sizeBytes": 1690468,
+						"vertexCount": 10627,
+						"triangleCount": 17604,
+						"meshCount": 1,
+						"primitiveCount": 1,
+						"bboxDiagonal": 1.606468,
+						"flatness": 0.801513,
+						"thinAxis": "z",
+						"planar": false,
+						"veryHeavy": false,
+						"hasMaterials": true,
+						"hasTextures": true,
+						"materialCount": 1,
+						"textureCount": 3,
+						"imageCount": 3,
+						"isIndexed": true,
+						"watertightish": true,
+						"generator": "glTF-Transform v4.5.1"
+					}
+				},
+				"quality_gate": {
+					"pass": true,
+					"score": 70,
+					"realism": 60,
+					"completeness": 95,
+					"subject": "object",
+					"subject_detected": "ceramic teapot with bamboo handle",
+					"is_photoreal": false,
+					"defects": [
+						"plastic"
+					],
+					"reason": "The teapot looks like a simple, game-ready model with plastic-like material.",
+					"suggested_retry_hint": "Add more realistic PBR materials",
+					"provider": "cloudflare",
+					"model": "@cf/meta/llama-4-scout-17b-16e-instruct",
+					"qa_available": true,
+					"render_source": "rendered_glb"
+				},
+				"compression": null,
+				"worker_stats": {
+					"elapsed_ms": 33944
+				},
+				"views_requested": 1,
+				"views_used": 1,
+				"multiview": false,
+				"backend": "trellis_selfhost",
+				"tier": "draft",
+				"path": "image",
+				"engine_version": null,
+				"preview_image_url": "https://three.ws/cdn/forge/refs/c87ca612-50f2-4d5d-8498-25df7c5f19ab.jpg"
+			}
+		}
+	],
+	"cached": {
+		"status": 200,
+		"body": {
+			"job_id": null,
+			"creation_id": null,
+			"status": "done",
+			"glb_url": "https://three.ws/cdn/forge/4a67eb323665/b7f213c5-a15f-458d-824d-90c99601740a.glb",
+			"durable": true,
+			"cached": true,
+			"cached_at": "2026-11-28",
+			"mode": "text_to_3d",
+			"path": "image",
+			"tier": "draft",
+			"backend": "trellis_selfhost",
+			"prompt": "a ceramic teapot with a bamboo handle",
+			"quality": {
+				"valid": true,
+				"flag": "ok",
+				"score": 0.952,
+				"reasons": [],
+				"metrics": {
+					"sizeBytes": 1690468,
+					"vertexCount": 10627,
+					"triangleCount": 17604,
+					"meshCount": 1,
+					"primitiveCount": 1,
+					"bboxDiagonal": 1.606468,
+					"flatness": 0.801513,
+					"thinAxis": "z",
+					"planar": false,
+					"veryHeavy": false,
+					"hasMaterials": true,
+					"hasTextures": true,
+					"materialCount": 1,
+					"textureCount": 3,
+					"imageCount": 3,
+					"isIndexed": true,
+					"watertightish": true,
+					"generator": "glTF-Transform v4.5.1"
+				}
+			}
+		}
+	},
+	"unauthorized": {
+		"status": 401,
+		"body": {
+			"error": "sign_in_required",
+			"message": "Sign in to make a 3D model. A three.ws account is free.",
+			"sign_in_url": "/login",
+			"api_keys_url": "/dashboard/api-keys"
+		}
+	}
+}
