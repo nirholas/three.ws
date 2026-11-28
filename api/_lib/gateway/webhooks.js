@@ -127,6 +127,12 @@ export function classifySlackDelivery({ contentType, rawBody }) {
 		if (body?.type !== 'event_callback' || !body.event) return { type: 'ignore' };
 		if (body.event.type === 'app_uninstalled' || body.event.type === 'tokens_revoked') return { type: 'uninstall', teamId: body.team_id };
 		const ev = body.event;
+		// Opening the app's Home tab: the worker publishes the onboarding and
+		// pairing-status view for that person. The Messages tab needs nothing.
+		if (ev.type === 'app_home_opened') {
+			if (ev.tab !== 'home' || !ev.user || !ev.channel) return { type: 'ignore' };
+			return { type: 'enqueue', dedupeKey: `home:${body.event_id || `${ev.user}:${ev.event_ts}`}`, chatKey: `slack:${ev.channel}`, payload: { kind: 'slack_home', team_id: body.team_id, event: ev } };
+		}
 		// The bot's own posts, edits and joins come back as events too. A
 		// file_share is a person sending a voice clip or image, so it stays.
 		if (ev.bot_id || (ev.subtype && ev.subtype !== 'file_share')) return { type: 'ignore' };

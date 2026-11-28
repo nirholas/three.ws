@@ -6,7 +6,7 @@
 // deployment that serves one workspace can skip OAuth and set SLACK_BOT_TOKEN,
 // which answers for any workspace without an install row.
 
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { sql } from '../db.js';
 import { encryptSecret, decryptSecret } from '../secret-box.js';
 import { appOrigin } from './format.js';
@@ -28,31 +28,62 @@ function stateKey(env) {
 	return `three-ws-slack-install:${env.SLACK_CLIENT_SECRET}`;
 }
 
-/** A signed, expiring OAuth state naming the three.ws account that started the install. */
-export function signInstallState(userId, { env = process.env, now = Date.now() } = {}) {
-	const body = `${userId}.${Math.floor(now / 1000)}`;
-	const mac = createHmac('sha256', stateKey(env)).update(body).digest('base64url');
-	return `${body}.${mac}`;
+// An install can start from Connections (signed in), from the public /slack page
+// or from the Slack Marketplace's direct install link (often signed out). Either
+// way the state carries a random nonce that is also set in a short-lived
+// HttpOnly cookie, and the OAuth callback is only honoured in the browser that
+// holds it, so nobody can finish an install they did not start.
+export const INSTALL_COOKIE = 'tws_slack_install';
+const ANON = '-';
+
+export function newInstallNonce() {
+	return randomBytes(18).toString('base64url');
 }
 
-/** @returns {string|null} the user id the state was signed for, or null when forged or expired. */
+function mac(env, body) {
+	return createHmac('sha256', stateKey(env)).update(body).digest('base64url');
+}
+
+/** A signed, expiring OAuth state: the installing account (or none) and the browser nonce. */
+export function signInstallState({ userId = null, nonce }, { env = process.env, now = Date.now() } = {}) {
+	const body = `${userId || ANON}.${nonce}.${Math.floor(now / 1000)}`;
+	return `${body}.${mac(env, body)}`;
+}
+
+/**
+ * @returns {{ userId: string|null, nonce: string }|null} what the state was signed
+ *   for, or null when forged, malformed or expired. The caller still has to match
+ *   the nonce against the install cookie.
+ */
 export function verifyInstallState(state, { env = process.env, now = Date.now() } = {}) {
-	const m = /^([0-9a-f-]{36})\.(\d{1,12})\.([\w-]{43})$/i.exec(String(state || ''));
+	const m = /^([0-9a-f-]{36}|-)\.([\w-]{16,64})\.(\d{1,12})\.([\w-]{43})$/i.exec(String(state || ''));
 	if (!m) return null;
-	const expected = createHmac('sha256', stateKey(env)).update(`${m[1]}.${m[2]}`).digest('base64url');
-	const a = Buffer.from(m[3]);
-	const b = Buffer.from(expected);
+	const a = Buffer.from(m[4]);
+	const b = Buffer.from(mac(env, `${m[1]}.${m[2]}.${m[3]}`));
 	if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-	if (now / 1000 - Number(m[2]) > STATE_TTL_S) return null;
-	return m[1];
+	if (now / 1000 - Number(m[3]) > STATE_TTL_S) return null;
+	return { userId: m[1] === ANON ? null : m[1], nonce: m[2] };
 }
 
-export function slackInstallUrl(userId, env = process.env) {
+/** True when the state is genuine and the cookie the browser sent holds its nonce. */
+export function installNonceMatches(verified, cookieNonce) {
+	if (!verified || !cookieNonce) return false;
+	const a = Buffer.from(String(cookieNonce));
+	const b = Buffer.from(verified.nonce);
+	return a.length === b.length && timingSafeEqual(a, b);
+}
+
+export function installCookie(nonce, { clear = false } = {}) {
+	const value = clear ? '' : nonce;
+	return `${INSTALL_COOKIE}=${value}; Path=/api/gateway/slack; HttpOnly; Secure; SameSite=Lax; Max-Age=${clear ? 0 : STATE_TTL_S}`;
+}
+
+export function slackInstallUrl({ userId = null, nonce }, env = process.env) {
 	const q = new URLSearchParams({
 		client_id: env.SLACK_CLIENT_ID,
 		scope: SLACK_BOT_SCOPES.join(','),
 		redirect_uri: slackRedirectUri(),
-		state: signInstallState(userId, { env }),
+		state: signInstallState({ userId, nonce }, { env }),
 	});
 	return `https://slack.com/oauth/v2/authorize?${q.toString()}`;
 }
@@ -67,7 +98,7 @@ export async function exchangeSlackCode(code, { env = process.env, fetchImpl = f
 	});
 	const j = await r.json().catch(() => ({}));
 	if (!j.ok || !j.access_token || !j.team?.id) throw Object.assign(new Error(`slack oauth: ${j.error || r.status}`), { code: j.error || 'oauth_failed' });
-	return { teamId: j.team.id, teamName: j.team.name || null, botUserId: j.bot_user_id || null, botToken: j.access_token };
+	return { teamId: j.team.id, teamName: j.team.name || null, botUserId: j.bot_user_id || null, botToken: j.access_token, appId: j.app_id || null };
 }
 
 export async function saveSlackInstall({ teamId, teamName, botUserId, botToken, userId }) {

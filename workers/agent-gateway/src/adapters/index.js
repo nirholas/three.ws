@@ -10,7 +10,8 @@
 //                      sendChoice, editMessage, sendMedia, typing, ackAction,
 //                      and sendVoice where the platform plays audio; plus the
 //                      capability flags `buttons` and `canEdit`
-//   handle(event, gw)  optional: its own turn instead of the shared core, for a
+//   handle(event, gw, core)  optional: its own turn instead of the shared core (passed
+//                      as `core` so it can hand on events that are not its own), for a
 //                      platform whose conversations are not paired chats
 //   finish(event, gw)  optional: tidy up after the handler (Discord resolves an
 //                      unanswered "thinking...")

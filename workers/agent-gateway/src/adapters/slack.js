@@ -11,6 +11,10 @@
 //                  ephemerally through the command's response_url, so it works
 //                  in channels the bot was never invited to.
 //   slack_action   an Approve / Cancel press on a Block Kit preview.
+//   slack_home     someone opened the app's Home tab. The adapter's own handle()
+//                  publishes the onboarding and pairing-status view
+//                  (slack-home.js) instead of running a chat turn; the event is
+//                  quiet, so the drain never posts into the DM on its behalf.
 //
 // A chat is `<team id>:<channel id>`, so one worker serves every workspace that
 // installed the app: the team half picks the bot token (an OAuth install row in
@@ -22,6 +26,7 @@ import { parseActionId } from '../../../../api/_lib/gateway/approvals.js';
 import { parseApprovalCallback } from '../../../../api/_lib/gateway/approval-buttons.js';
 import { slackTokenFor } from '../../../../api/_lib/gateway/slack-installs.js';
 import { PlatformError, isPermanentStatus } from '../errors.js';
+import { homeViewFor } from './slack-home.js';
 
 const PLATFORM = 'slack';
 const API = 'https://slack.com/api';
@@ -225,9 +230,17 @@ export function createSlackAdapter({ env = process.env, fetch: fetchImpl = globa
 		};
 	}
 
+	function normalizeHome(p) {
+		const ev = p.event;
+		if (ev?.type !== 'app_home_opened' || ev.tab !== 'home' || !ev.user || !ev.channel) return null;
+		const teamId = p.team_id || ev.team || null;
+		return { platform: PLATFORM, homeOpened: true, quiet: true, chatType: 'home', chatId: slackChatId(teamId, ev.channel), userId: ev.user, teamId };
+	}
+
 	/** @returns {object|null} a GatewayEvent, or null for deliveries nobody answers */
 	function normalize(payload) {
 		if (!payload || typeof payload !== 'object') return null;
+		if (payload.kind === 'slack_home') return normalizeHome(payload);
 		if (payload.kind === 'slack_event') return normalizeEvent(payload);
 		if (payload.kind === 'slack_command') return normalizeCommand(payload);
 		if (payload.kind === 'slack_action') return normalizeAction(payload);
@@ -319,10 +332,19 @@ export function createSlackAdapter({ env = process.env, fetch: fetchImpl = globa
 		};
 	}
 
+	/** A Home tab open publishes the view; every other event is a chat turn for the core. */
+	async function handle(event, gw, coreHandler) {
+		if (!event?.homeOpened) return coreHandler(event, gw);
+		const view = await homeViewFor(event.chatId);
+		await call(event.teamId, 'views.publish', { user_id: event.userId, view });
+		return null;
+	}
+
 	return {
 		platform: PLATFORM,
 		normalize,
 		gateway,
+		handle,
 		describe() {
 			return { mode: 'events_api', oauth: Boolean(env.SLACK_CLIENT_ID && env.SLACK_CLIENT_SECRET), single_workspace_token: Boolean(env.SLACK_BOT_TOKEN) };
 		},

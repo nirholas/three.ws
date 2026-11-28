@@ -23,7 +23,9 @@ const PREREQUISITES = `
 		id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 		user_id uuid REFERENCES users(id),
 		name text,
+		persona_prompt text,
 		meta jsonb NOT NULL DEFAULT '{}'::jsonb,
+		created_at timestamptz NOT NULL DEFAULT now(),
 		deleted_at timestamptz
 	);
 	CREATE TABLE notification_events (id bigserial PRIMARY KEY, channel text NOT NULL);

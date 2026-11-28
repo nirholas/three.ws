@@ -182,7 +182,7 @@ export function createDrainer({ adapters, config, store = inboxStore, defaultHan
 		const closed = await store.ageOutChatInbox({ chatKey: row.chat_key, olderThanSeconds: config.backlogTtlSeconds, exceptId: row.id, note });
 		row.note = note;
 		stats.agedOut += 1 + closed;
-		const addressed = !event.forwarded
+		const addressed = !event.forwarded && !event.quiet
 			&& (event.chatType === 'private' || event.chatType === 'dm' || Boolean(event.command || event.action || event.approvalAction));
 		log.info('stale backlog aged out', { id: row.id, platform: row.platform, ageSeconds, alsoClosed: closed, replied: addressed });
 		if (!addressed) return;
@@ -204,18 +204,22 @@ export function createDrainer({ adapters, config, store = inboxStore, defaultHan
 		row.counter = counter;
 		row.event = event;
 		row.gw = gw;
-		const handler = typeof adapter.handle === 'function' ? adapter.handle.bind(adapter) : defaultHandler;
+		// An adapter's own handle() gets the default handler too, so it can take
+		// the events that are its own (a Slack Home tab open) and pass the rest on.
+		const handler = typeof adapter.handle === 'function' ? (e, g) => adapter.handle(e, g, defaultHandler) : defaultHandler;
 		log.info('handling event', {
 			id: row.id, platform: row.platform, attempt: row.attempts,
-			kind: event.action ? 'action' : event.command ? 'command' : event.voice ? 'voice' : event.photo ? 'photo' : 'text',
+			kind: event.homeOpened ? 'home' : event.action ? 'action' : event.command ? 'command' : event.voice ? 'voice' : event.photo ? 'photo' : 'text',
 			command: event.command || null,
 		});
 		await handler(event, gw);
 		if (typeof adapter.finish === 'function') await adapter.finish(event, gw, counter);
 	}
 
+	// A quiet event (a Slack Home tab open) never asked anything in the chat, so
+	// a failure to serve it is not apologised for there.
 	async function apologize(row) {
-		if (!row.event || !row.gw) return;
+		if (!row.event || !row.gw || row.event.quiet) return;
 		try {
 			await row.gw.sendText(String(row.event.chatId), APOLOGY);
 		} catch (e) {

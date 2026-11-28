@@ -10,40 +10,69 @@
 //                             three-second window; the gateway worker
 //                             (workers/agent-gateway src/adapters/slack.js) runs
 //                             the turn and replies.
-//   GET ?leg=install          signed-in owner: redirect to Slack's Add to Slack
-//                             consent screen with a signed state.
-//   GET ?leg=oauth            Slack's OAuth redirect: verify the state, trade the
-//                             code for the workspace bot token, store it sealed
+//   GET ?leg=install          Add to Slack, from Connections, the public /slack
+//                             page, or the Slack Marketplace's direct install
+//                             link. No sign-in is required: a signed state names
+//                             the account when there is one, and a nonce in that
+//                             state is also set as an HttpOnly cookie.
+//   GET ?leg=oauth            Slack's OAuth redirect: verify the state and that
+//                             this browser holds its nonce, trade the code for the
+//                             workspace bot token, store it sealed
 //                             (api/_lib/gateway/slack-installs.js), and return to
-//                             /settings/connections.
+//                             /settings/connections (signed in) or /slack.
 //
-// docs/gateways.md has the app manifest and env vars.
+// docs/gateways.md has the env vars; integrations/slack/manifest.json is the app.
 
 import { cors, json, method, error, readBody, redirect, text } from '../_lib/http.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { verifySlackSignature, classifySlackDelivery } from '../_lib/gateway/webhooks.js';
 import { enqueueInbox } from '../_lib/gateway/store.js';
 import {
-	slackOAuthConfigured, slackInstallUrl, verifyInstallState, exchangeSlackCode, saveSlackInstall, revokeSlackInstall,
+	slackOAuthConfigured, slackInstallUrl, verifyInstallState, installNonceMatches, installCookie, newInstallNonce,
+	exchangeSlackCode, saveSlackInstall, revokeSlackInstall, INSTALL_COOKIE,
 } from '../_lib/gateway/slack-installs.js';
+import { readCookie } from '../_lib/acquisition.js';
 
 const BACK = '/settings/connections';
+const SLACK_ID = /^[A-Z0-9]{2,32}$/;
+
+// A signed-in owner started from Connections and goes back there; anyone else
+// (the Marketplace, the /slack page) lands on /slack, which explains the outcome.
+function outcome(res, signedIn, status, { team = null, app = null } = {}) {
+	if (signedIn) return redirect(res, `${BACK}?slack=${status}#tab-connections`);
+	if (status !== 'installed') return redirect(res, `/slack?install=${status}`);
+	const q = new URLSearchParams({ installed: '1' });
+	if (team && SLACK_ID.test(team)) q.set('team', team);
+	if (app && SLACK_ID.test(app)) q.set('app', app);
+	return redirect(res, `/slack?${q.toString()}`);
+}
 
 async function oauthLeg(req, res, q) {
-	if (!slackOAuthConfigured()) return redirect(res, `${BACK}?slack=not_configured#tab-connections`);
-	if (q.get('error')) return redirect(res, `${BACK}?slack=cancelled#tab-connections`);
-	const userId = verifyInstallState(q.get('state'));
-	if (!userId) return redirect(res, `${BACK}?slack=expired#tab-connections`);
+	const verified = verifyInstallState(q.get('state'));
+	const signedIn = Boolean(verified?.userId);
+	if (!slackOAuthConfigured()) return outcome(res, signedIn, 'not_configured');
+	if (!installNonceMatches(verified, readCookie(req.headers.cookie, INSTALL_COOKIE))) return outcome(res, signedIn, 'expired');
+	res.setHeader('set-cookie', installCookie('', { clear: true }));
+	if (q.get('error')) return outcome(res, signedIn, 'cancelled');
 	const code = q.get('code');
-	if (!code || code.length > 256) return redirect(res, `${BACK}?slack=failed#tab-connections`);
+	if (!code || code.length > 256) return outcome(res, signedIn, 'failed');
+	let install;
 	try {
-		const install = await exchangeSlackCode(code);
-		await saveSlackInstall({ ...install, userId });
+		install = await exchangeSlackCode(code);
+		await saveSlackInstall({ ...install, userId: verified.userId });
 	} catch (e) {
 		console.warn('[slack] oauth exchange failed', e?.code || e?.message);
-		return redirect(res, `${BACK}?slack=failed#tab-connections`);
+		return outcome(res, signedIn, 'failed');
 	}
-	return redirect(res, `${BACK}?slack=installed#tab-connections`);
+	return outcome(res, signedIn, 'installed', { team: install.teamId, app: install.appId });
+}
+
+async function installLeg(req, res) {
+	if (!slackOAuthConfigured()) return redirect(res, '/slack?install=not_configured');
+	const user = await getSessionUser(req, res).catch(() => null);
+	const nonce = newInstallNonce();
+	res.setHeader('set-cookie', installCookie(nonce));
+	return redirect(res, slackInstallUrl({ userId: user?.id || null, nonce }));
 }
 
 export default async function handler(req, res) {
@@ -54,12 +83,7 @@ export default async function handler(req, res) {
 	if (req.method === 'GET') {
 		const leg = q.get('leg');
 		if (leg === 'oauth') return oauthLeg(req, res, q);
-		if (leg === 'install') {
-			if (!slackOAuthConfigured()) return error(res, 503, 'not_configured', 'Slack installs are not configured on this deployment');
-			const user = await getSessionUser(req, res);
-			if (!user) return redirect(res, `/login?next=${encodeURIComponent(`${BACK}#tab-connections`)}`);
-			return redirect(res, slackInstallUrl(user.id));
-		}
+		if (leg === 'install') return installLeg(req, res);
 		return error(res, 400, 'bad_request', 'unknown leg');
 	}
 
