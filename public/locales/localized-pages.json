@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 439,
+	"count": 440,
 	"paths": [
 		"/",
 		"/3d",
@@ -379,6 +379,7 @@
 		"/signals",
 		"/sitemap",
 		"/skills",
+		"/slack",
 		"/smart-home",
 		"/smart-money",
 		"/sonar",

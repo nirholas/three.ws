@@ -5683,6 +5683,14 @@
 					"added": "2026-11-11"
 				},
 				{
+					"path": "/docs/basecamp",
+					"title": "Docs · Make a 3D model from a Basecamp Campfire or Ping",
+					"description": "How the three.ws Basecamp chatbot works: command URLs and revoking them, the !threews commands, one generation per request, delivery back to the room, the callback guard, the settings API and the tests.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-28"
+				},
+				{
 					"path": "/docs/microsoft-sharepoint",
 					"title": "Docs · three.ws 3D for SharePoint and Viva Connections",
 					"description": "Admin and site-owner guide for the SharePoint Framework solution: upload the package, allow one script source, then add the Agent web part, the 3D Model web part or the Viva Connections Agent card.",
@@ -8662,6 +8670,14 @@
 					"priority": 0.4,
 					"changefreq": "monthly",
 					"added": "2026-11-11"
+				},
+				{
+					"path": "/integrations/basecamp",
+					"title": "three.ws for Basecamp",
+					"description": "Add the three.ws chatbot to Basecamp: type !threews and a description in a Campfire or Ping and a textured 3D model comes back in the room with a viewer, AR and a GLB download.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-28"
 				},
 				{
 					"path": "/slack",

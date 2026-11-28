@@ -1,14 +1,54 @@
 {
-	"generated_at": "2026-11-28T07:42:04.832Z",
+	"generated_at": "2026-11-28T07:56:20.639Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4799,
+	"total": 4804,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-28",
+			"type": "launch",
+			"title": "Docs · Make a 3D model from a Basecamp Campfire or Ping",
+			"summary": "How the three.ws Basecamp chatbot works: command URLs and revoking them, the !threews commands, one generation per request, delivery back to the room, the callback guard, the settings API and the tests.",
+			"link": "/docs/basecamp",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "launch",
+			"title": "three.ws for Basecamp",
+			"summary": "Add the three.ws chatbot to Basecamp: type !threews and a description in a Campfire or Ping and a textured 3D model comes back in the room with a viewer, AR and a GLB download.",
+			"link": "/integrations/basecamp",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "launch",
+			"title": "three.ws for Slack",
+			"summary": "Add the three.ws app to Slack: talk to your AI agent in DMs and threads, run private /three commands, approve trades with buttons, and see exactly which scopes it asks for and why.",
+			"link": "/slack",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "A busy 3D generator now says nothing started and when to try again",
+			"summary": "When an assistant asked the three.ws 3D studio for a model while the generator was too busy to take it, the next status check said the generation had failed and, in the same sentence, that it was queued and would be picked up. Neither was true: nothing was running and nothing was held in line. The status check now says the generator was too busy to start it, gives the wait the generator stated, and frees the request's idempotency key so the same call can simply be sent again.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-28",
 			"type": "update",
@@ -37,6 +77,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "Make 3D models from Basecamp with !threews",
+			"summary": "three.ws now has a Basecamp chatbot. Create a command URL in Settings, Basecamp chatbot, add it to any Campfire as a chatbot named threews, and anyone in that Basecamp account can type !threews and a description in a Campfire or Ping. The chatbot answers at once, then posts the finished model in the same room, mentioning whoever asked, with a preview, a 3D viewer link, an AR link for phones and a GLB download. Models are saved to the account that made the URL, replies only ever go to Basecamp, and a URL can be revoked at any time.",
+			"link": "/integrations/basecamp",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1517,60 +1567,6 @@
 				"feature",
 				"fix",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-20",
-			"type": "update",
-			"title": "The /glass lens gets past \"Location needed\"",
-			"summary": "The site-wide permissions policy blocked location, compass sensors and the microphone on every page, so the smart-glasses lens at /glass stopped on its first screen for every visitor. /glass now grants exactly those three to itself (the camera stays off, and no other page changes), so the lens can find where you are, which way you face, and hear your reply.",
-			"link": "/glass",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-20",
-			"type": "update",
-			"title": "The free NVIDIA image step accepts requests again",
-			"summary": "When you make a 3D model from text, the first step draws a reference picture, and the free NVIDIA FLUX service is the first place it asks. That service changed its rules and began refusing any request that carried a random seed, so every attempt was turned away in under a second and the job had to wait for a backup service instead. Requests no longer carry the seed, so the free step can answer again whenever NVIDIA has capacity.",
-			"link": "/forge",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-20",
-			"type": "update",
-			"title": "The Hunyuan3D-2 image-to-3D lane loads again, and fails fast when it cannot",
-			"summary": "The Hunyuan3D-2 worker, a backup lane for photo-to-3D, had stopped loading its texture model after a dependency upgrade: newer diffusers refused its bundled paint pipeline, and newer transformers refused its weights on the older torch it ran. It now trusts its own pinned pipeline and runs torch 2.6 on CUDA 12.4, so the lane generates textured models again. Separately, a job that arrived while either Hunyuan worker was still loading used to wait 15 minutes and report a timeout when the load failed; it now fails at once with the real reason, so the forge moves to the next lane straight away.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-20",
-			"type": "update",
-			"title": "The three.ws plugin for Cursor gets /make-3d, /rig and /embed",
-			"summary": "The Cursor plugin now has three commands. /make-3d checks the free catalog, generates a textured model, renders it so the agent can see whether it matches, and prints the GLB, a viewer link, the run receipt and paste-ready embed code. /rig turns a humanoid GLB into an animation-ready one, and /embed writes HTML for any website. Signing in from Cursor now always asks for the same four permissions (read and update your 3D models, see your name and email, stay connected) and nothing else, even when Cursor registers without naming them. The plugin ships a five-minute test plan with measured timings, and the privacy policy now spells out what the plugin's server can reach, how long models are kept, and that prompts and models are never used for training or sold.",
-			"link": "/docs/mcp",
-			"tags": [
-				"feature",
-				"fix",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-11-20",
-			"type": "update",
-			"title": "The three.ws plugin for Grok Build gets /make-3d, /rig, /embed and an art director agent",
-			"summary": "The three.ws plugin for Grok Build, xAI's coding agent, now does the whole 3D job from the terminal. /make-3d checks the free catalog first and otherwise generates a textured model, /rig turns a humanoid GLB into an animation-ready avatar, /embed writes paste-ready HTML for any model, and /three-ws-init teaches a project's AGENTS.md how to load and embed GLBs safely. A 3d-art-director agent makes a model to a brief, renders it from four sides, fixes the one thing that is wrong and stops after two rounds. Catalog search, render checks and embed code are free with no account; making or rigging a model needs a free three.ws account, signed in once from Grok Build with OAuth or with an API key. The plugin installs in under a second and is ready for xAI's plugin marketplace.",
-			"link": "/grok",
-			"tags": [
-				"feature",
-				"docs"
 			]
 		}
 	]

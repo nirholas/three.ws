@@ -4316,6 +4316,12 @@ URL: https://three.ws/docs/microsoft-teams-forge
 
 The Teams app's Create a 3D model action and forge bot command: a real free-lane generation on an Adaptive Card that refreshes for the requester and updates for the whole chat when the model is ready, with Open in 3D, Download GLB and Make a variation.
 
+### Docs · Make a 3D model from a Basecamp Campfire or Ping
+
+URL: https://three.ws/docs/basecamp
+
+How the three.ws Basecamp chatbot works: command URLs and revoking them, the !threews commands, one generation per request, delivery back to the room, the callback guard, the settings API and the tests.
+
 ### Docs · three.ws 3D for SharePoint and Viva Connections
 
 URL: https://three.ws/docs/microsoft-sharepoint
@@ -6636,6 +6642,18 @@ How three.ws hosts, encrypts, retains and deletes data, which AI providers see p
 URL: https://three.ws/trust/subprocessors
 
 Every third party that processes data for three.ws: purpose, data categories, region and the file that calls it.
+
+### three.ws for Basecamp
+
+URL: https://three.ws/integrations/basecamp
+
+Add the three.ws chatbot to Basecamp: type !threews and a description in a Campfire or Ping and a textured 3D model comes back in the room with a viewer, AR and a GLB download.
+
+### three.ws for Slack
+
+URL: https://three.ws/slack
+
+Add the three.ws app to Slack: talk to your AI agent in DMs and threads, run private /three commands, approve trades with buttons, and see exactly which scopes it asks for and why.
 
 ### Accessibility statement
 

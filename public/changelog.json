@@ -1,11 +1,51 @@
 {
-	"generated_at": "2026-11-28T07:42:04.697Z",
+	"generated_at": "2026-11-28T07:56:20.524Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-28",
+			"type": "launch",
+			"title": "Docs · Make a 3D model from a Basecamp Campfire or Ping",
+			"summary": "How the three.ws Basecamp chatbot works: command URLs and revoking them, the !threews commands, one generation per request, delivery back to the room, the callback guard, the settings API and the tests.",
+			"link": "/docs/basecamp",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "launch",
+			"title": "three.ws for Basecamp",
+			"summary": "Add the three.ws chatbot to Basecamp: type !threews and a description in a Campfire or Ping and a textured 3D model comes back in the room with a viewer, AR and a GLB download.",
+			"link": "/integrations/basecamp",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "launch",
+			"title": "three.ws for Slack",
+			"summary": "Add the three.ws app to Slack: talk to your AI agent in DMs and threads, run private /three commands, approve trades with buttons, and see exactly which scopes it asks for and why.",
+			"link": "/slack",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "A busy 3D generator now says nothing started and when to try again",
+			"summary": "When an assistant asked the three.ws 3D studio for a model while the generator was too busy to take it, the next status check said the generation had failed and, in the same sentence, that it was queued and would be picked up. Neither was true: nothing was running and nothing was held in line. The status check now says the generator was too busy to start it, gives the wait the generator stated, and frees the request's idempotency key so the same call can simply be sent again.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-28",
 			"type": "update",
@@ -34,6 +74,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "Make 3D models from Basecamp with !threews",
+			"summary": "three.ws now has a Basecamp chatbot. Create a command URL in Settings, Basecamp chatbot, add it to any Campfire as a chatbot named threews, and anyone in that Basecamp account can type !threews and a description in a Campfire or Ping. The chatbot answers at once, then posts the finished model in the same room, mentioning whoever asked, with a preview, a 3D viewer link, an AR link for phones and a GLB download. Models are saved to the account that made the URL, replies only ever go to Basecamp, and a URL can be revoked at any time.",
+			"link": "/integrations/basecamp",
+			"tags": [
+				"feature"
 			]
 		},
 		{
