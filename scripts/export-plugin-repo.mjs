@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Exports a coding-agent plugin from this monorepo as a standalone git
 // repository with the plugin at the tree root, the shape plugin marketplaces
-// (xAI's xai-org/plugin-marketplace, Claude Code's, Cursor's) clone and pin.
+// (xAI's xai-org/plugin-marketplace, Claude Code's, Cursor's) clone and pin, or
+// the one-repo-per-extension shape the Gemini CLI extension gallery crawls.
 //
 //   node scripts/export-plugin-repo.mjs --src integrations/grok/three-ws --out dist/three-ws-grok
 //   node scripts/export-plugin-repo.mjs --src <plugin dir> --out <dir> [--grok-bin <path to grok>]
@@ -18,7 +19,9 @@
 //     directory and grouped by the manifest version each commit shipped.
 // Then it validates the tree (the manifest rules Grok Build enforces, plus the
 // component layout; a tree with .cursor-plugin/plugin.json must also pass
-// scripts/validate-cursor-plugin.mjs, the Cursor Marketplace gate), runs `grok plugin validate` too when --grok-bin is given,
+// scripts/validate-cursor-plugin.mjs, the Cursor Marketplace gate, and a tree
+// with gemini-extension.json is checked by scripts/validate-gemini-extension.mjs
+// instead, since Gemini CLI commands are TOML), runs `grok plugin validate` too when --grok-bin is given,
 // and makes one git commit.
 //
 // Deterministic: the same plugin files and history give the same tree and the
@@ -34,10 +37,11 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statS
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateCursorPlugin } from './validate-cursor-plugin.mjs';
+import { MANIFEST as GEMINI_MANIFEST, validateGeminiExtension } from './validate-gemini-extension.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const AUTHOR = Object.freeze({ name: 'three.ws', email: 'support@three.ws' });
-const MANIFEST_PATHS = ['plugin.json', '.grok-plugin/plugin.json', '.claude-plugin/plugin.json', '.cursor-plugin/plugin.json'];
+const MANIFEST_PATHS = ['plugin.json', '.grok-plugin/plugin.json', '.claude-plugin/plugin.json', '.cursor-plugin/plugin.json', GEMINI_MANIFEST];
 const PLUGIN_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MAX_NAME = 64;
 const SEMVER = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/;
@@ -91,6 +95,9 @@ export function validatePluginTree(dir) {
 	const found = findManifest(dir);
 	if (!found) return [`no manifest (looked for ${MANIFEST_PATHS.join(', ')})`];
 	const { manifest, path: manifestPath } = found;
+	// A Gemini CLI extension has its own layout (TOML commands, a context file,
+	// servers inside the manifest), so it gets its own rule set.
+	if (manifestPath === GEMINI_MANIFEST) return validateGeminiExtension(dir).errors;
 	if (typeof manifest.name !== 'string' || manifest.name.length < 1 || manifest.name.length > MAX_NAME || !PLUGIN_NAME.test(manifest.name)) {
 		problems.push(`${manifestPath}: name "${manifest.name}" must be 1-${MAX_NAME} chars, lowercase alphanumeric + hyphens, no leading/trailing hyphens`);
 	}
@@ -255,6 +262,7 @@ export function exportPluginRepo({ src, out, grokBin = null, log = console.log }
 		if (!cursor.ok) throw new Error(`exported tree fails validate-cursor-plugin:\n  ${cursor.errors.join('\n  ')}`);
 		log(`validate-cursor-plugin: PASS (${cursor.warnings.length} warning(s))`);
 	}
+	if (manifestPath === GEMINI_MANIFEST) log(`validate-gemini-extension: PASS (${validateGeminiExtension(OUT).warnings.length} warning(s))`);
 	log(`validate: ${manifest.name} ${manifest.version || ''} OK (${walk(OUT).length} files, manifest ${manifestPath})`);
 	if (grokBin) {
 		const res = execFileSync(grokBin, ['plugin', 'validate', OUT], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
