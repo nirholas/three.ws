@@ -224,11 +224,14 @@ async function storeJob(record) {
 	return record;
 }
 
-/** Merge a change into the stored record. A settled record never goes back to running. */
+/**
+ * Merge a change into the stored record. A settled record never goes back to
+ * running; changes that carry no state (the delivery outcome) still land.
+ */
 export async function patchJob(key, patch) {
 	const current = await loadJob(key);
 	if (!current) return null;
-	if (settled(current) && !settled(patch)) return current;
+	if (settled(current) && patch?.state && !settled(patch)) return current;
 	return storeJob({ ...current, ...patch });
 }
 
