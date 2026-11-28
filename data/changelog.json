@@ -3,6 +3,20 @@
 	"entries": [
 		{
 			"date": "2026-11-28",
+			"title": "Connect the 3D studio read-only, and the choice is enforced",
+			"summary": "When you connect the three.ws 3D studio to an assistant, the consent screen lets you untick \"Create and update avatars\". That choice now holds on the server: a read-only connection can still search the catalog, read docs, check jobs and look at models, but any tool that would create or save something answers that it needs the wider permission, without generating or charging anything. Reconnect with the box ticked to make models.",
+			"tags": ["security"],
+			"link": "/docs/mcp-studio"
+		},
+		{
+			"date": "2026-11-28",
+			"title": "MCP servers answer a malformed request in a format MCP clients can read",
+			"summary": "A request with broken JSON sent to any three.ws MCP server used to get a generic web error that MCP clients could not parse. It now gets the standard JSON-RPC parse error (-32700), and an oversized request gets a JSON-RPC invalid-request error, so the client shows a real message instead of failing silently.",
+			"tags": ["fix"],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-11-28",
 			"title": "Docker Desktop's MCP Toolkit gets full access when you sign in to three.ws",
 			"summary": "Clients that read the OAuth scope list only from a server's sign-in challenge, like Docker's MCP gateway, used to register with no scope, so three.ws handed them a read-only token for avatars. Every hosted three.ws MCP server now names its full scope list in that challenge, as the MCP authorization spec recommends, so signing in from Docker Desktop shows the same consent screen as Claude or Cursor. The entry that lists three.ws in Docker's MCP Catalog is ready and passes Docker's own validator.",
 			"tags": ["fix"],

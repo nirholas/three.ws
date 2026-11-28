@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-28T07:40:32.350Z",
+	"generated_at": "2026-11-28T07:42:04.832Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4797,
+	"total": 4799,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "Connect the 3D studio read-only, and the choice is enforced",
+			"summary": "When you connect the three.ws 3D studio to an assistant, the consent screen lets you untick \"Create and update avatars\". That choice now holds on the server: a read-only connection can still search the catalog, read docs, check jobs and look at models, but any tool that would create or save something answers that it needs the wider permission, without generating or charging anything. Reconnect with the box ticked to make models.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"security"
+			]
+		},
 		{
 			"date": "2026-11-28",
 			"type": "update",
@@ -27,6 +37,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "MCP servers answer a malformed request in a format MCP clients can read",
+			"summary": "A request with broken JSON sent to any three.ws MCP server used to get a generic web error that MCP clients could not parse. It now gets the standard JSON-RPC parse error (-32700), and an oversized request gets a JSON-RPC invalid-request error, so the client shows a real message instead of failing silently.",
+			"link": "/docs/mcp",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1551,27 +1571,6 @@
 			"tags": [
 				"feature",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-11-20",
-			"type": "update",
-			"title": "three-ws setup offers sign-in for the Grok and free studio connectors again",
-			"summary": "The directory now describes the Grok and free 3D Studio servers as \"none to connect, a free account to make a model\", and the CLI read that as no-sign-in-possible, so npx three-ws setup --client grok-bot only offered anonymous and install-token connections and refused --auth key or oauth. It now offers all four ways to connect on both servers, and its server lists stop calling the studio \"no account needed\".",
-			"link": null,
-			"tags": [
-				"fix",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-20",
-			"type": "update",
-			"title": "three.ws joins xAI's Grok for Startups program",
-			"summary": "three.ws has been admitted to Grok for Startups, xAI's program for startups building on Grok, with credits across the Grok API, Grok and Grok Build. xAI now has a card on /partners and /partners/benefits and a place in the site footer's partner row. The credits fund the Grok brain lane agents can think on and sit behind the three.ws Grok connector, which gives Grok Bot, Grok connectors and the xAI API a free 3D studio.",
-			"link": "/partners/benefits#xai",
-			"tags": [
-				"feature"
 			]
 		}
 	]

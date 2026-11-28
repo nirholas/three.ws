@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-28T07:40:32.188Z",
+	"generated_at": "2026-11-28T07:42:04.697Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "Connect the 3D studio read-only, and the choice is enforced",
+			"summary": "When you connect the three.ws 3D studio to an assistant, the consent screen lets you untick \"Create and update avatars\". That choice now holds on the server: a read-only connection can still search the catalog, read docs, check jobs and look at models, but any tool that would create or save something answers that it needs the wider permission, without generating or charging anything. Reconnect with the box ticked to make models.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"security"
+			]
+		},
 		{
 			"date": "2026-11-28",
 			"type": "update",
@@ -24,6 +34,16 @@
 			"link": "/forge",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "MCP servers answer a malformed request in a format MCP clients can read",
+			"summary": "A request with broken JSON sent to any three.ws MCP server used to get a generic web error that MCP clients could not parse. It now gets the standard JSON-RPC parse error (-32700), and an oversized request gets a JSON-RPC invalid-request error, so the client shows a real message instead of failing silently.",
+			"link": "/docs/mcp",
+			"tags": [
+				"fix"
 			]
 		},
 		{

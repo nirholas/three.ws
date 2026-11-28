@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Connect the 3D studio read-only, and the choice is enforced</title>
+			<link>https://three.ws/docs/mcp-studio</link>
+			<guid isPermaLink="false">2026-11-28:Connect the 3D studio read-only, and the choice is enforced</guid>
+			<pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>When you connect the three.ws 3D studio to an assistant, the consent screen lets you untick &quot;Create and update avatars&quot;. That choice now holds on the server: a read-only connection can still search the catalog, read docs, check jobs and look at models, but any tool that would create or save something answers that it needs the wider permission, without generating or charging anything. Reconnect with the box ticked to make models.</description>
+		</item>
+		<item>
 			<title>Docker Desktop's MCP Toolkit gets full access when you sign in to three.ws</title>
 			<link>https://three.ws/docs/mcp</link>
 			<guid isPermaLink="false">2026-11-28:Docker Desktop's MCP Toolkit gets full access when you sign in to three.ws</guid>
@@ -21,6 +29,14 @@
 			<pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Every embed code three.ws hands out (Forge models, agents, avatars, widgets, dioramas, the editor and the get_embed_code MCP tool) now ends with one short credit line under the embed: the model or agent's name linked to its page, and a link to three.ws. Readers of the site you embed on can find the original, and the link tells search engines where the work came from. It is plain HTML in the snippet, so you can restyle or remove it.</description>
+		</item>
+		<item>
+			<title>MCP servers answer a malformed request in a format MCP clients can read</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-11-28:MCP servers answer a malformed request in a format MCP clients can read</guid>
+			<pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A request with broken JSON sent to any three.ws MCP server used to get a generic web error that MCP clients could not parse. It now gets the standard JSON-RPC parse error (-32700), and an oversized request gets a JSON-RPC invalid-request error, so the client shows a real message instead of failing silently.</description>
 		</item>
 		<item>
 			<title>The Raycast extension searches 3D assets and your own models</title>
