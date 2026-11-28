@@ -141,6 +141,8 @@ create table agent_transfers (
 	payout_signature text
 );
 create table home_invites (id bigserial primary key, email text not null);
+create table user_identities (id bigserial primary key, user_id uuid not null references users(id) on delete cascade, provider text not null, email text);
+create table newsletter_subscribers (id uuid primary key default gen_random_uuid(), email text not null unique, status text not null default 'confirmed', confirm_token text not null default 'tok');
 create table avatar_regen_jobs (id bigserial primary key, user_id uuid);
 create table orders (id bigserial primary key, user_id uuid not null, total numeric);
 create table x402_receipts (id bigserial primary key, payer text not null, amount numeric);
@@ -319,6 +321,19 @@ describe('purgeDeletedAccounts', () => {
 		expect((await findValueAnywhere('paiduser')).filter((h) => !isRetained(h))).toEqual([]);
 		// The other person is unaffected.
 		expect(await countRows('users', 'id = $1', [other])).toBe(1);
+	});
+
+	it('erases newsletter subscriptions held under the account email or a linked sign-in email', async () => {
+		const id = await makeUser({ email: 'reader@example.test', wallet: null, deletedDaysAgo: 31 });
+		await q(`insert into user_identities (user_id, provider, email) values ($1, 'google', 'Reader.Alt@example.test')`, [id]);
+		await q(`insert into newsletter_subscribers (email) values ('READER@example.test'), ('reader.alt@example.test'), ('stranger@example.test')`);
+
+		const result = await purgeDeletedAccounts({ olderThanDays: 30, limit: 25 });
+
+		expect(result.failed).toEqual([]);
+		expect(result.purged).toBe(1);
+		const left = await q(`select email from newsletter_subscribers order by email`);
+		expect(left.map((r) => r.email)).toEqual(['stranger@example.test']);
 	});
 
 	it('keeps a completed sale of the purged account\'s agent, unlinked from the deleted listing, bid and seller', async () => {

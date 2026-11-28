@@ -2668,6 +2668,12 @@ export const limits = {
 	// rights will ever need. NOT local: this must hold across instances.
 	homePrivacy: (userId) =>
 		getLimiter('home:privacy', { limit: 20, window: '1 h' }).limit(userId),
+	// The full account data export (GET /api/auth/export, api/_lib/account-export.js):
+	// every table the account owns, read page by page, plus a signed link per file.
+	// The most expensive read an account can trigger, so a tight bucket that still
+	// lets anyone exercising their access right retry a failed download. NOT local.
+	accountExport: (userId) =>
+		getLimiter('account:export', { limit: 6, window: '1 h' }).limit(userId),
 	// The per-plan API envelope (data/plans.json `rate_limit`), applied to every
 	// /api request by server/index.mjs through api/_lib/plan-rate-limit.js and
 	// advertised as RateLimit-* headers. Keyed per account (or per IP when

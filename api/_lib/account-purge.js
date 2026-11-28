@@ -21,6 +21,9 @@
 //      delete the account's records that carry no foreign key at all, then delete
 //      the users row, which cascades through everything declared ON DELETE
 //      CASCADE and nulls everything declared ON DELETE SET NULL.
+//      The same transaction queues the erasure owed by each third-party
+//      processor (processor_erasure_requests; api/_lib/processor-erasure.js
+//      sends it and deletes the row once the processor accepts).
 //   4. Receipt. One account_purge_log row: SHA-256 of the user id, the
 //      soft-delete time and per-table counts. No email, wallet or username.
 //
@@ -46,7 +49,8 @@
 //   columns that had it; every foreign key is kept.
 // no foreign key: OWNED_WITHOUT_FK lists the user-id columns the platform writes
 //   without a constraint, each with the same delete or nullify decision.
-//   EMAIL_KEYED lists records keyed by the account's email address.
+//   EMAIL_KEYED lists records keyed by one of the account's email addresses
+//   (the newsletter list, household invites).
 // retain (left exactly as written): RETAINED_TABLES. legal_signatures (the
 //   policy keeps legal acceptance records after deletion), the purge receipts,
 //   the security decision log within its own retention window, and the x402 and
@@ -63,6 +67,7 @@
 import { createHash } from 'node:crypto';
 import { sql } from './db.js';
 import { deleteObject, keyFromPublicUrl, objectStorageConfigured } from './r2.js';
+import { POSTHOG } from './processor-erasure.js';
 
 export const PURGE_AFTER_DAYS = 30;
 
@@ -222,8 +227,15 @@ export const IN_FLIGHT = [
 	{ table: 'agent_transfers', columns: ['status'], when: `"status" <> 'completed'` },
 ];
 
-/** Records keyed by the account's email address rather than its id. */
-export const EMAIL_KEYED = [{ table: 'home_invites', column: 'email' }];
+/**
+ * Records keyed by an email address rather than the account id. Matched against
+ * every email the account holds: its primary email and the email of each linked
+ * sign-in identity (a Google or Microsoft address can differ from the primary).
+ */
+export const EMAIL_KEYED = [
+	{ table: 'home_invites', column: 'email' },
+	{ table: 'newsletter_subscribers', column: 'email' },
+];
 
 /** Tables the purge deliberately leaves exactly as written. */
 export const RETAINED_TABLES = [
@@ -258,6 +270,7 @@ export const RETAINED_TABLES = [
 	'solana_agents_index',
 	'three_holder_snapshot',
 	'custody_attestation_leaves',
+	'processor_erasure_requests',
 ];
 
 // R2 objects an account owns. KEY sources store bucket keys; URL sources store
@@ -298,7 +311,7 @@ class PurgeError extends Error {
 
 // ── Catalog ──────────────────────────────────────────────────────────────────
 
-async function loadCatalog() {
+export async function loadCatalog() {
 	const [fks, cols] = await Promise.all([
 		sql(
 			`select
@@ -352,6 +365,10 @@ function buildPlan({ fks, columns }) {
 	const guardEdges = [];
 	const nullifyEdges = [];
 	const nullifies = [];
+	// ON DELETE SET NULL edges: the database unlinks these rows by itself, so the
+	// purge needs no statement for them, but they are still records about the
+	// account until it does, and the data export lists them.
+	const setNullEdges = [];
 
 	const node = (table) => {
 		if (!nodes.has(table)) {
@@ -377,7 +394,10 @@ function buildPlan({ fks, columns }) {
 	while (queue.length) {
 		const parent = queue.shift();
 		for (const fk of byParent.get(parent) || []) {
-			if (fk.rule === 'n' || fk.rule === 'd') continue;
+			if (fk.rule === 'n' || fk.rule === 'd') {
+				setNullEdges.push(fk);
+				continue;
+			}
 			const key = `${fk.child}.${fk.cols.join(',')}`;
 			if (fk.rule === 'c') {
 				node(fk.child).edges.push(fk);
@@ -516,12 +536,60 @@ function buildPlan({ fks, columns }) {
 				.join(', ')}], null) as codes`
 		: null;
 
-	return { statements, guardSql, guardCodes: guards.map((g) => g.code) };
+	return { statements, guardSql, guardCodes: guards.map((g) => g.code), exportSources: exportSourcesOf() };
+
+	// What the data export reads (api/_lib/account-export.js). The same walk the
+	// purge deletes by, so the export can never miss a table the purge would
+	// remove: every table in the ownership tree, every retained record the purge
+	// would unlink, every record the database itself unlinks, the email-keyed
+	// records, and the retained tables that carry the account id.
+	//
+	// `direct` marks a row that points at the account itself (a sale where it was
+	// the buyer). An indirect row points at something the account owned (another
+	// person's fork of its avatar), so the export takes it only when one of its
+	// own account columns is this account; another person's record that merely
+	// references this account's content is theirs, not this account's.
+	function exportSourcesOf() {
+		const out = [];
+		for (const table of nodes.keys()) out.push({ table, pred: whereOf(table), owned: true, direct: true });
+		const linked = (table, pred, direct) => {
+			// Another account's users row (someone this account referred) is never
+			// this account's data.
+			if (table !== 'users') out.push({ table, pred, owned: false, direct });
+		};
+		for (const n of nullifies) {
+			const fk = nullifyEdges.find((e) => e.child === n.table && e.cols.join(',') === n.columns.join(','));
+			linked(n.table, n.pred, !fk || fk.parent === 'users');
+		}
+		for (const fk of setNullEdges) linked(fk.child, edgePred(fk), fk.parent === 'users');
+		for (const e of EMAIL_KEYED) {
+			if (col(e.table, e.column)) out.push({ table: e.table, pred: `lower(${qi(e.column)}) = any($2::text[])`, owned: true, direct: true, identifiers: true });
+		}
+		for (const table of RETAINED_TABLES) {
+			const info = col(table, 'user_id');
+			if (info) linked(table, `"user_id" = ${info.type === 'uuid' ? '$1::uuid' : '$1::uuid::text'}`, true);
+		}
+		return out;
+	}
+}
+
+/**
+ * The ownership plan for one run, read from the live catalog: the purge's
+ * statements and guards plus the export sources. Read-only.
+ */
+export async function loadOwnershipPlan() {
+	const catalog = await loadCatalog();
+	return { ...buildPlan(catalog), catalog };
 }
 
 // ── Object storage ───────────────────────────────────────────────────────────
 
-async function collectStorageKeys(userId, columns) {
+/**
+ * Object-storage keys the account owns. The purge passes `includeShared: false`
+ * (the default) so it never deletes bytes another account still points at; the
+ * data export passes `true`, because a shared key is still the account's file.
+ */
+export async function collectStorageKeys(userId, columns, { includeShared = false } = {}) {
 	const has = (t, c) => columns.get(t)?.has(c);
 	const parts = [];
 	for (const s of KEY_SOURCES) {
@@ -548,7 +616,7 @@ async function collectStorageKeys(userId, columns) {
 			if (key) keys.add(key);
 		}
 	}
-	if (!keys.size) return [];
+	if (!keys.size || includeShared) return [...keys];
 
 	// Never delete bytes another account still points at.
 	const shared = [];
@@ -582,15 +650,23 @@ async function deleteStorageObjects(keys) {
 
 // ── Purge ────────────────────────────────────────────────────────────────────
 
-async function identifiersFor(user, columns) {
+/** Lowercased emails and wallet addresses the account holds, for email- and address-keyed matches. */
+export async function identifiersFor(user, columns) {
 	const ids = new Set([user.email, user.wallet_address].filter(Boolean).map((v) => String(v).toLowerCase()));
 	if (columns.get('user_wallets')?.has('address')) {
 		for (const r of await sql`select lower(address) as a from user_wallets where user_id = ${user.id}`) ids.add(r.a);
+	}
+	if (columns.get('user_identities')?.has('email')) {
+		for (const r of await sql`select lower(email) as e from user_identities where user_id = ${user.id} and email is not null`) ids.add(r.e);
 	}
 	return [...ids];
 }
 
 async function purgeOne(user, plan, columns, olderThanDays) {
+	// The processor erasure is queued in the same transaction as the purge, so an
+	// account is never erased here while its analytics live on at the processor.
+	// Without the queue table the purge refuses rather than skip that half.
+	if (!columns.has('processor_erasure_requests')) throw new PurgeError('processor_queue_missing');
 	if (plan.guardSql) {
 		const [row] = await sql(plan.guardSql, [user.id]);
 		if (row?.codes?.length) throw new PurgeError(row.codes[0]);
@@ -614,6 +690,10 @@ async function purgeOne(user, plan, columns, olderThanDays) {
 			[user.id, olderThanDays],
 		),
 		...plan.statements.map((s) => sql(s.text, s.identifiers ? [user.id, identifiers] : [user.id])),
+		sql(
+			`insert into processor_erasure_requests (processor, subject) values ($1, $2::uuid::text) on conflict (processor, subject) do nothing`,
+			[POSTHOG, user.id],
+		),
 		sql(`with x as (delete from users where id = $1::uuid returning 1) select count(*)::int as n from x`, [user.id]),
 	];
 	const results = await sql.transaction(queries);

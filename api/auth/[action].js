@@ -1,6 +1,6 @@
 // Consolidated auth endpoint. Dispatches on URL action segment.
 // Routes: /api/auth/login, /api/auth/logout, /api/auth/register,
-//         /api/auth/me, /api/auth/profile, /api/auth/forgot-password,
+//         /api/auth/me, /api/auth/export, /api/auth/profile, /api/auth/forgot-password,
 //         /api/auth/reset-password, /api/auth/verify-email,
 //         /api/auth/resend-verification, /api/auth/logout-everywhere
 
@@ -24,8 +24,10 @@ import { logAudit } from '../_lib/audit.js';
 import { tosAcceptanceFromBody, recordTosAcceptance } from '../_lib/legal.js';
 import { revokeAllMemberships } from '../_lib/home/members.js';
 import { z } from 'zod';
+import { once } from 'node:events';
 import { recordConversion } from '../_lib/campaign-ledger.js';
 import { announceIndexNow } from '../_lib/indexnow-queue.js';
+import { prepareAccountExport, streamAccountExport } from '../_lib/account-export.js';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
 
@@ -376,6 +378,42 @@ async function handleDeleteAccount(req, res) {
 	return json(res, 200, { ok: true, deleted });
 }
 
+// ── data export (GET /api/auth/export) ────────────────────────────────────────
+
+// GDPR Articles 15 and 20: a complete, machine-readable copy of everything the
+// account holds, built from the same ownership walk the 30-day purge deletes by
+// (api/_lib/account-export.js, docs/account-deletion.md). Streamed as a JSON
+// download. Session only: an API key is a bearer credential an integration
+// holds, and it should not be able to pull the whole account out.
+async function handleExport(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthenticated', 'sign in to download your data');
+	const rl = await limits.accountExport(user.id);
+	if (!rl.success) return rateLimited(res, rl, 'you have requested several exports in the last hour; try again later');
+
+	const prepared = await prepareAccountExport(user.id);
+	if (!prepared) return error(res, 401, 'unauthenticated', 'not signed in');
+
+	const day = new Date().toISOString().slice(0, 10);
+	res.statusCode = 200;
+	res.setHeader('content-type', 'application/json; charset=utf-8');
+	res.setHeader('content-disposition', `attachment; filename="three-ws-account-${day}.json"`);
+	res.setHeader('cache-control', 'no-store, private');
+	res.setHeader('x-content-type-options', 'nosniff');
+
+	let complete = false;
+	for await (const chunk of streamAccountExport(prepared)) {
+		if (chunk.endsWith('"complete":true}')) complete = true;
+		if (!res.write(chunk)) await Promise.race([once(res, 'drain'), once(res, 'close')]);
+		// The owner closed the tab or lost the connection: stop reading tables.
+		if (res.destroyed) break;
+	}
+	if (!res.destroyed) res.end();
+	logAudit({ userId: user.id, action: 'export_account', meta: { complete, tables: prepared.sources.length, files: prepared.files.length }, req });
+}
+
 // ── profile ───────────────────────────────────────────────────────────────────
 
 const profileSchema = z.object({
@@ -575,6 +613,7 @@ const DISPATCH = {
 	'logout-everywhere':   handleLogoutEverywhere,
 	register:              handleRegister,
 	me:                    handleMe,
+	export:                handleExport,
 	profile:               handleProfile,
 	'forgot-password':     handleForgotPassword,
 	'reset-password':      handleResetPassword,
