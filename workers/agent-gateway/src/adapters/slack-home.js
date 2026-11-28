@@ -22,7 +22,8 @@ function esc(text) {
 function commandLines() {
 	return COMMANDS
 		.filter((c) => c.name !== 'link')
-		.map((c) => `\`/three ${c.name}${c.arg ? ` <${c.arg}>` : ''}\`  ${esc(c.description)}`)
+		// Descriptions spell usage the Telegram way (/buy ...); in Slack it is /three buy ...
+		.map((c) => `\`/three ${c.name}${c.arg ? ` <${c.arg}>` : ''}\`  ${esc(c.description.replace(/(^|\s)\/(\w+)/g, '$1/three $2'))}`)
 		.join('\n');
 }
 
