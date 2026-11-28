@@ -26,6 +26,7 @@
 //   node scripts/grok-connector-review-check.mjs
 //   node scripts/grok-connector-review-check.mjs --base http://localhost:3000 --no-generate
 //   node scripts/grok-connector-review-check.mjs --json out.json --record tests/fixtures/grok-review
+//   node scripts/grok-connector-review-check.mjs --server /api/mcp-studio   (same path, another listing)
 //
 // Exit 0 when nothing failed, 1 otherwise.
 
@@ -117,9 +118,10 @@ export async function runReviewCheck({
 	sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
 	generationTimeoutMs = 15 * 60_000,
 	onRow = () => {},
+	serverPath = SERVER_PATH,
 } = {}) {
 	const origin = base.replace(/\/+$/, '');
-	const serverUrl = `${origin}${SERVER_PATH}`;
+	const serverUrl = `${origin}${serverPath}`;
 	const rows = [];
 	const ctx = { glbUrl: null };
 
@@ -527,8 +529,10 @@ async function main() {
 			'no-generate': { type: 'boolean', default: false },
 			json: { type: 'string' },
 			record: { type: 'string' },
+			server: { type: 'string', default: SERVER_PATH },
 		},
 	});
+	const serverPath = `/${opts.server.replace(/^\/+/, '')}`;
 	const origin = opts.base.replace(/\/+$/, '');
 	let apiKey = process.env.THREE_WS_API_KEY || null;
 	let minted = null;
@@ -539,7 +543,7 @@ async function main() {
 	}
 	const log = [];
 	const fetchImpl = opts.record ? recordingFetch(fetch, log) : fetch;
-	console.log(`Grok Bot marketplace reviewer path: ${origin}${SERVER_PATH}?auth=oauth\n`);
+	console.log(`Marketplace reviewer path: ${origin}${serverPath}?auth=oauth\n`);
 	let report;
 	try {
 		report = await runReviewCheck({
@@ -548,6 +552,7 @@ async function main() {
 			generate: !opts['no-generate'],
 			prompt: opts.prompt,
 			fetchImpl,
+			serverPath,
 		});
 	} finally {
 		if (minted) await revokeQaKey(minted);
