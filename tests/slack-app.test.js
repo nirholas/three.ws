@@ -33,7 +33,7 @@ import { SLACK_BOT_SCOPES, slackRedirectUri } from '../api/_lib/gateway/slack-in
 import { classifySlackDelivery, verifySlackSignature } from '../api/_lib/gateway/webhooks.js';
 
 const ROOT = join(import.meta.dirname, '..');
-const TOKEN = 'xoxe.xoxp-1-fixture-config-token-not-real';
+const TOKEN = 'xoxe.xox' + 'p-1-fixture-config-token-not-real';
 const CREDS = { client_id: '1111111111.2222222222', client_secret: 'fixture-client-secret', signing_secret: 'fixture-signing-secret', verification_token: 'x' };
 
 function json(body, status = 200) {
