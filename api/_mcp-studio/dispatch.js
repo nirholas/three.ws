@@ -4,12 +4,14 @@
 // shared api/_lib/mcp-dispatch.js core (method routing, Ajv arg validation,
 // usage accounting, error sanitizing) but ALSO serves the Apps SDK UI resource
 // (resources/list + resources/read for the ui:// widget), which the shared core
-// stubs out. There is no scope check and no payment path here: no tool costs
-// anything. Making or rigging a model needs a three.ws account (the forge
-// refuses anonymous creation, api/_lib/creator-account.js), so the tools in
-// CREATOR_TOOL_NAMES answer an anonymous call with a sign-in result
-// (../_mcp/creator-gate.js) and forward a signed-in caller's account to the
-// forge. Job status, the catalog, docs and persona playback stay open.
+// stubs out. There is no payment path here: no tool costs anything. Making or
+// rigging a model needs a three.ws account (the forge refuses anonymous
+// creation, api/_lib/creator-account.js), so the tools in CREATOR_TOOL_NAMES
+// answer an anonymous call with a sign-in result (../_mcp/creator-gate.js) and
+// forward a signed-in caller's account to the forge. An OAuth grant the person
+// made read-only (avatars:write unticked) still reaches the account reads in
+// CREATOR_READS, and every other creator tool answers it with a step-up result.
+// Job status, the catalog, docs and persona playback stay open.
 
 import { recordEvent, logger } from '../_lib/usage.js';
 import { madeModelUrl, usageClientLabel } from './usage-tags.js';
@@ -28,6 +30,8 @@ import {
 	OPEN_SECURITY_SCHEMES,
 	creatorForgeAuth,
 	signInToolResult,
+	writeScopeMissing,
+	writeScopeToolResult,
 } from '../_mcp/creator-gate.js';
 
 // The @three-ws/mcp-policy server id for the free studio.
@@ -233,6 +237,11 @@ const CREATOR_ACTIONS = Object.freeze({
 
 export const CREATOR_TOOL_NAMES = new Set(Object.keys(CREATOR_ACTIONS));
 
+// Creator tools that only read the account (render views of a model, the
+// caller's own 360 jobs): they need a signed-in account but not avatars:write,
+// so a read-only grant keeps them.
+export const CREATOR_READS = new Set(['look_at_model', 'pano_capture_status', 'pano_capture_list', 'pano_scene_status']);
+
 // Declare up front (the Apps SDK `securitySchemes` field) which tools need an
 // account, so a host can offer sign-in before the first call instead of after
 // a refusal.
@@ -400,6 +409,10 @@ async function onToolCall(params, auth, started, req, surface, opts = {}) {
 	if (creates && !opts.account?.userId) {
 		recordEvent({ ...who, kind: 'tool_call', tool: name, status: 'sign_in_required', latencyMs: Date.now() - started, meta: { server: surface.server } });
 		return signInToolResult(req, { action: CREATOR_ACTIONS[name] });
+	}
+	if (creates && !CREATOR_READS.has(name) && writeScopeMissing(opts.account)) {
+		recordEvent({ ...who, kind: 'tool_call', tool: name, status: 'insufficient_scope', latencyMs: Date.now() - started, meta: { server: surface.server } });
+		return writeScopeToolResult(req, { action: CREATOR_ACTIONS[name] });
 	}
 	const sentArgs = { ...args };
 	const gate = await gateCall(POLICY_SERVER, name, sentArgs, auth, req);

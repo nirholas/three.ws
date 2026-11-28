@@ -18,10 +18,23 @@ import { env } from '../_lib/env.js';
 import { API_KEYS_URL, SIGN_IN_REQUIRED, forwardCreatorAuth, platformAuthHeaders } from '../_lib/creator-account.js';
 import { mcpResourceFor, protectedResourceMetadataUrl } from '../_lib/mcp-resources.js';
 
-// The scope a connector asks for to make models. No studio tool checks it (the
-// account itself is the requirement); it names what the grant is for on the
-// consent screen.
+// The scope a connector asks for to make models. The consent screen lets a
+// person untick it ("Create and update avatars") and connect read-only, so an
+// OAuth token without it is refused by the studio tools that create something
+// (writeScopeMissing below). API keys carry their own scope presets
+// (../_lib/key-scopes.js) and are not checked here.
 export const CREATOR_SCOPES = Object.freeze(['avatars:write']);
+const WRITE_SCOPE = CREATOR_SCOPES[0];
+
+/**
+ * True when a signed-in OAuth principal was granted read-only access, so a tool
+ * that creates or changes something must not run for it.
+ * @param {{ source?: string, scope?: string } | null} account
+ */
+export function writeScopeMissing(account) {
+	if (!account?.userId || account.source !== 'oauth') return false;
+	return !String(account.scope || '').split(/\s+/).includes(WRITE_SCOPE);
+}
 
 export const CREATOR_SECURITY_SCHEMES = Object.freeze([Object.freeze({ type: 'oauth2', scopes: CREATOR_SCOPES })]);
 export const OPEN_SECURITY_SCHEMES = Object.freeze([Object.freeze({ type: 'noauth' })]);
@@ -85,6 +98,48 @@ export function signInToolResult(req, { action = 'make a 3D model', resourcePath
 		},
 		isError: true,
 		_meta: { 'mcp/www_authenticate': [creatorChallenge(req, { resourcePath: path, action })] },
+	};
+}
+
+/**
+ * The tool result for a signed-in caller whose OAuth grant is read-only. The
+ * challenge names the missing scope (RFC 6750 §3.1), so a host that supports
+ * step-up re-runs consent for it; the text tells everyone else how.
+ * @param {object} req the MCP HTTP request (its path picks the resource)
+ * @param {{ action?: string, resourcePath?: string }} [opts]
+ */
+export function writeScopeToolResult(req, { action = 'make a 3D model', resourcePath } = {}) {
+	const origin = env.APP_ORIGIN;
+	const path = pathOf(req, resourcePath);
+	const resource = mcpResourceFor(path);
+	const reconnectUrl = SIGN_IN_PARAM_PATHS.has(path) ? `${origin}${path}?auth=oauth` : null;
+	const message =
+		`This connector has read-only access to your three.ws account, so it cannot ${action}. ` +
+		`To allow it, reconnect and keep "Create and update avatars" ticked on the three.ws consent screen` +
+		(reconnectUrl ? ` (${reconnectUrl}).` : '.') +
+		` You can review or revoke connected apps at ${origin}/dashboard/settings#connected-apps.`;
+	return {
+		content: [{ type: 'text', text: message }],
+		structuredContent: {
+			error: true,
+			status: 'insufficient_scope',
+			reason: 'insufficient_scope',
+			required_scope: WRITE_SCOPE,
+			message,
+			...(reconnectUrl ? { sign_in_url: reconnectUrl } : {}),
+		},
+		isError: true,
+		_meta: {
+			'mcp/www_authenticate': [
+				[
+					`Bearer resource_metadata=${quote(protectedResourceMetadataUrl(resource))}`,
+					`resource=${quote(resource)}`,
+					'error="insufficient_scope"',
+					`scope=${quote(WRITE_SCOPE)}`,
+					`error_description=${quote(`Grant "Create and update avatars" to ${action}`)}`,
+				].join(', '),
+			],
+		},
 	};
 }
 
