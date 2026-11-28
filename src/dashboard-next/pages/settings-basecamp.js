@@ -62,7 +62,7 @@ function shell() {
 	panel.innerHTML = `
 		<div style="margin-bottom:14px">
 			<div class="dn-panel-title">Basecamp chatbot</div>
-			<div class="dn-panel-sub" style="margin:2px 0 0">Type <code>!threews</code> and a description in a Basecamp Campfire or Ping and get a textured 3D model back in the room, with a 3D viewer, AR and a GLB download. Models are made on this account and appear in your library. <a class="bc-link" href="${GUIDE}">Setup guide</a></div>
+			<div class="dn-panel-sub" style="margin:2px 0 0">Type <code>!threews</code> and a description in a Basecamp Campfire or Ping and get a textured 3D model back in the room, with a 3D viewer, AR and a GLB download. Models are made free on this account and saved to it, unlisted. <a class="bc-link" href="${GUIDE}">Setup guide</a></div>
 		</div>
 		<div data-slot="body"></div>`;
 	return panel;

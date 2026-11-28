@@ -1,0 +1,464 @@
+/* /integrations/basecamp: setup guide for the three.ws Basecamp chatbot.
+   Tokens come from public/tokens.css (loaded through /style.css). */
+
+.bcx-body {
+	background: var(--bg-0);
+	color: var(--ink);
+	--bcx-accent: #7c9cff;
+	--bcx-accent-soft: color-mix(in srgb, var(--bcx-accent) 16%, transparent);
+	--bcx-camp: #1d9e5f;
+}
+
+html[data-theme='light'] .bcx-body {
+	--bcx-accent: #3a5bd9;
+	--bcx-camp: #12804a;
+}
+
+.bcx {
+	width: 100%;
+	box-sizing: border-box;
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: var(--space-xl, 40px) var(--space-md, 16px) var(--space-2xl, 64px);
+}
+
+.bcx code {
+	font-family: var(--font-mono);
+	font-size: 0.9em;
+	padding: 0.08em 0.38em;
+	border-radius: 5px;
+	background: var(--surface-2);
+	color: var(--ink-bright, var(--ink));
+	overflow-wrap: anywhere;
+}
+
+.bcx a:not(.bcx-btn) {
+	color: var(--bcx-accent);
+	text-underline-offset: 2px;
+	border-radius: 3px;
+}
+
+.bcx a:not(.bcx-btn):hover {
+	text-decoration-thickness: 2px;
+}
+
+.bcx a:focus-visible,
+.bcx summary:focus-visible,
+.bcx-btn:focus-visible {
+	outline: 2px solid var(--bcx-accent);
+	outline-offset: 2px;
+}
+
+/* Hero */
+
+.bcx-hero {
+	display: grid;
+	grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+	gap: clamp(28px, 4vw, 56px);
+	align-items: center;
+	padding-bottom: var(--space-xl, 40px);
+}
+
+.bcx-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 14px;
+	font-size: var(--text-xs, 12px);
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ink-dim);
+}
+
+.bcx-eyebrow__mark {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--bcx-camp);
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--bcx-camp) 22%, transparent);
+}
+
+.bcx h1 {
+	margin: 0 0 16px;
+	font-family: var(--font-display, inherit);
+	font-size: clamp(32px, 4.4vw, 50px);
+	line-height: 1.08;
+	letter-spacing: -0.02em;
+	color: var(--ink-bright, var(--ink));
+}
+
+.bcx-lede {
+	margin: 0 0 22px;
+	font-size: clamp(16px, 1.4vw, 18px);
+	line-height: 1.6;
+	color: var(--ink-dim);
+	max-width: 60ch;
+}
+
+.bcx-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-bottom: 14px;
+}
+
+.bcx-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 42px;
+	padding: 0 18px;
+	border-radius: var(--radius-control, 10px);
+	border: 1px solid var(--stroke-strong);
+	background: var(--surface-1);
+	color: var(--ink);
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	transition: background var(--dur-fast, 0.15s) ease, border-color var(--dur-fast, 0.15s) ease, transform var(--dur-fast, 0.15s) ease;
+}
+
+.bcx-btn:hover {
+	border-color: var(--bcx-accent);
+	background: var(--surface-2);
+}
+
+.bcx-btn:active {
+	transform: translateY(1px);
+}
+
+.bcx-btn--primary {
+	background: var(--bcx-accent);
+	border-color: var(--bcx-accent);
+	color: #fff;
+}
+
+.bcx-btn--primary:hover {
+	background: color-mix(in srgb, var(--bcx-accent) 86%, #fff);
+	border-color: color-mix(in srgb, var(--bcx-accent) 86%, #fff);
+}
+
+.bcx-btn--primary:active {
+	background: color-mix(in srgb, var(--bcx-accent) 86%, #000);
+}
+
+.bcx-note {
+	margin: 0;
+	font-size: var(--text-xs, 12px);
+	line-height: 1.55;
+	color: var(--ink-faint, var(--ink-dim));
+	max-width: 56ch;
+}
+
+/* The example exchange */
+
+.bcx-chat {
+	margin: 0;
+	border: 1px solid var(--stroke);
+	border-radius: 16px;
+	background: var(--surface-1);
+	box-shadow: var(--shadow-2);
+	overflow: hidden;
+}
+
+.bcx-chat__bar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--stroke);
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ink-dim);
+}
+
+.bcx-chat__bar::before {
+	content: '';
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--bcx-camp);
+}
+
+.bcx-chat__lines {
+	list-style: none;
+	margin: 0;
+	padding: 14px 16px 6px;
+	display: grid;
+	gap: 14px;
+}
+
+.bcx-line {
+	display: grid;
+	grid-template-columns: 32px minmax(0, 1fr);
+	gap: 10px;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.bcx-line p {
+	margin: 0;
+}
+
+.bcx-line__avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	font-size: 13px;
+	font-weight: 700;
+	color: #fff;
+	background: #c2617c;
+}
+
+.bcx-line__avatar--bot {
+	background: var(--surface-3, var(--surface-2));
+	border: 1px solid var(--stroke);
+}
+
+.bcx-line__who {
+	font-size: 12.5px;
+	font-weight: 700;
+	color: var(--ink-bright, var(--ink));
+	margin-bottom: 2px !important;
+}
+
+.bcx-mention {
+	display: inline-block;
+	padding: 0 6px;
+	border-radius: 6px;
+	background: var(--bcx-accent-soft);
+	color: var(--bcx-accent);
+	font-weight: 600;
+}
+
+.bcx-model {
+	margin: 10px 0 8px;
+	border-radius: 12px;
+	overflow: hidden;
+	background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--bcx-accent) 14%, var(--surface-2)), var(--surface-2) 70%);
+	aspect-ratio: 4 / 3;
+	max-width: 420px;
+}
+
+.bcx-model model-viewer {
+	width: 100%;
+	height: 100%;
+	--poster-color: transparent;
+	background: transparent;
+}
+
+.bcx-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 8px;
+	font-size: 13.5px;
+	color: var(--ink-faint, var(--ink-dim));
+}
+
+.bcx-chat__caption {
+	padding: 10px 16px 14px;
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--ink-faint, var(--ink-dim));
+}
+
+/* Sections */
+
+.bcx-section {
+	padding: var(--space-xl, 40px) 0 0;
+	border-top: 1px solid var(--stroke);
+	margin-top: var(--space-xl, 40px);
+}
+
+.bcx-h2 {
+	margin: 0 0 8px;
+	font-size: clamp(22px, 2.4vw, 28px);
+	letter-spacing: -0.01em;
+	color: var(--ink-bright, var(--ink));
+}
+
+.bcx-h3 {
+	margin: 0 0 8px;
+	font-size: 17px;
+	color: var(--ink-bright, var(--ink));
+}
+
+.bcx-sub {
+	margin: 0 0 22px;
+	color: var(--ink-dim);
+	line-height: 1.6;
+	max-width: 70ch;
+}
+
+.bcx-steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.bcx-step {
+	position: relative;
+	padding: 22px 20px 20px;
+	border: 1px solid var(--stroke);
+	border-radius: 14px;
+	background: var(--surface-1);
+	transition: border-color var(--dur-fast, 0.15s) ease;
+}
+
+.bcx-step:hover {
+	border-color: var(--stroke-strong);
+}
+
+.bcx-step p {
+	margin: 0 0 10px;
+	font-size: 14.5px;
+	line-height: 1.6;
+	color: var(--ink-dim);
+}
+
+.bcx-step p:last-child {
+	margin-bottom: 0;
+}
+
+.bcx-step__n {
+	display: grid;
+	place-items: center;
+	width: 30px;
+	height: 30px;
+	margin-bottom: 12px;
+	border-radius: 50%;
+	background: var(--bcx-accent-soft);
+	color: var(--bcx-accent);
+	font-weight: 700;
+	font-size: 14px;
+}
+
+.bcx-commands {
+	margin: 14px 0 0;
+	display: grid;
+	gap: 10px;
+}
+
+.bcx-cmd {
+	display: grid;
+	grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+	gap: 16px;
+	padding: 14px 16px;
+	border: 1px solid var(--stroke);
+	border-radius: 12px;
+	background: var(--surface-1);
+}
+
+.bcx-cmd dt {
+	margin: 0;
+}
+
+.bcx-cmd dd {
+	margin: 0;
+	color: var(--ink-dim);
+	line-height: 1.6;
+	font-size: 14.5px;
+}
+
+.bcx-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 32px;
+}
+
+.bcx-list {
+	margin: 14px 0 0;
+	padding-left: 18px;
+	display: grid;
+	gap: 12px;
+	color: var(--ink-dim);
+	line-height: 1.6;
+	font-size: 14.5px;
+}
+
+.bcx-list strong {
+	color: var(--ink-bright, var(--ink));
+}
+
+.bcx-faq {
+	margin-top: 14px;
+	display: grid;
+	gap: 8px;
+}
+
+.bcx-faq details {
+	border: 1px solid var(--stroke);
+	border-radius: 12px;
+	padding: 0 16px;
+	background: var(--surface-1);
+	transition: border-color var(--dur-fast, 0.15s) ease;
+}
+
+.bcx-faq details:hover,
+.bcx-faq details[open] {
+	border-color: var(--stroke-strong);
+}
+
+.bcx-faq summary {
+	cursor: pointer;
+	padding: 14px 0;
+	font-weight: 600;
+	font-size: 15px;
+	border-radius: 6px;
+}
+
+.bcx-faq details p {
+	margin: 0 0 14px;
+	color: var(--ink-dim);
+	line-height: 1.6;
+	font-size: 14.5px;
+}
+
+.bcx-foot {
+	margin-top: var(--space-2xl, 56px);
+	padding-top: var(--space-lg, 24px);
+	border-top: 1px solid var(--stroke);
+	font-size: 14px;
+	color: var(--ink-dim);
+	line-height: 1.6;
+}
+
+.bcx-foot p {
+	margin: 0 0 8px;
+}
+
+.bcx-legal {
+	font-size: 12px;
+	color: var(--ink-faint, var(--ink-dim));
+}
+
+@media (max-width: 960px) {
+	.bcx-hero,
+	.bcx-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.bcx-steps {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media (max-width: 640px) {
+	.bcx-cmd {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 6px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.bcx-btn,
+	.bcx-step,
+	.bcx-faq details {
+		transition: none;
+	}
+}

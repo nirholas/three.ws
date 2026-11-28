@@ -248,6 +248,17 @@
 			box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 		}
 		.card[hidden] { display: none !important; }
+		.apps-band { max-width: 1200px; margin: 48px auto 0; padding: 0 24px; }
+		.apps-band-title { font-size: 18px; font-weight: 600; margin: 0 0 12px; }
+		.apps-band-item { display: grid; grid-template-columns: 140px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px 18px; border: 1px solid var(--stroke, rgba(255,255,255,0.1)); border-radius: 14px; color: inherit; text-decoration: none; transition: border-color .15s ease, background .15s ease; }
+		.apps-band-item:hover { border-color: var(--accent, #7c9cff); background: rgba(255,255,255,0.03); }
+		.apps-band-item:active { transform: translateY(1px); }
+		.apps-band-item:focus-visible { outline: 2px solid var(--accent, #7c9cff); outline-offset: 2px; }
+		.apps-band-name { font-weight: 700; }
+		.apps-band-desc { color: var(--ink-dim, rgba(255,255,255,0.7)); font-size: 14px; line-height: 1.5; }
+		.apps-band-desc code { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.92em; }
+		.apps-band-go { color: var(--accent, #7c9cff); font-weight: 600; font-size: 14px; white-space: nowrap; }
+		@media (max-width: 640px) { .apps-band-item { grid-template-columns: minmax(0, 1fr); gap: 6px; } }
 
 		/* Preview area */
 		.card-preview {
@@ -1153,6 +1164,16 @@
 		</article>
 
 	</div><!-- /grid -->
+
+	<!-- Work apps: chat integrations that make 3D where a team already talks -->
+	<section class="apps-band" aria-labelledby="appsBandTitle">
+		<h2 id="appsBandTitle" class="apps-band-title">In the apps your team already uses</h2>
+		<a class="apps-band-item" href="/integrations/basecamp">
+			<span class="apps-band-name">Basecamp</span>
+			<span class="apps-band-desc">Type <code>!threews</code> and a description in a Campfire or Ping and get a textured 3D model back in the room.</span>
+			<span class="apps-band-go" aria-hidden="true">Set it up</span>
+		</a>
+	</section>
 
 	<!-- ── Showcase CTA ───────────────────────────────────────── -->
 	<section class="showcase">
