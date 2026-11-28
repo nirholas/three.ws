@@ -111,13 +111,42 @@ describe('OAuth discovery scope parity', () => {
 		expect(filterRegisterableScope(doc.scopes_supported.join(' ')).split(' ')).toEqual(doc.scopes_supported);
 	});
 
-	it('names the narrow studio scope in the studio 401 challenge only', async () => {
+	it('names the narrow studio scope in the studio 401 challenge', async () => {
 		const { bearerChallenge } = await import('../../api/_mcp/auth.js');
 		expect(bearerChallenge('https://three.ws/api/mcp-studio')).toContain(
 			'scope="avatars:read avatars:write profile offline_access"',
 		);
-		expect(bearerChallenge('https://three.ws/api/mcp-agent')).not.toContain('scope=');
-		expect(bearerChallenge('https://three.ws/api/mcp')).not.toContain('scope=');
+	});
+
+	// Docker's MCP gateway (the MCP Toolkit in Docker Desktop) never reads
+	// scopes_supported: it takes the scope list from a non-standard `scopes`
+	// field in the protected-resource document, else from the `scope` parameter
+	// of the 401 challenge (mcp-gateway-oauth-helpers, discovery.go and
+	// FindRequiredScopes). With neither present it registers with no scope, the
+	// registration endpoint stores the avatars:read default, and the user gets a
+	// one-permission consent screen and a read-only token. The MCP authorization
+	// spec (2025-11-25) says a server SHOULD name the scope in the challenge, so
+	// every hosted server names exactly the set its own document advertises.
+	function challengeScopes(header) {
+		const match = /(?:^|[\s,])scope="([^"]*)"/.exec(header);
+		return match ? match[1].split(/\s+/).filter(Boolean) : [];
+	}
+
+	it('names the advertised scope set in every hosted server 401 challenge', async () => {
+		const { bearerChallenge } = await import('../../api/_mcp/auth.js');
+		for (const path of ['/mcp', '/api/mcp', '/api/mcp-agent', '/api/mcp-3d', '/api/mcp-studio']) {
+			const resource = `https://three.ws${path}`;
+			const res = makeRes();
+			const req = {
+				method: 'GET',
+				url: `/api/wk?name=oauth-protected-resource&path=${path}`,
+				headers: {},
+				query: { name: 'oauth-protected-resource', path },
+			};
+			await wkHandler(req, res);
+			const advertised = JSON.parse(res.body).scopes_supported;
+			expect(challengeScopes(bearerChallenge(resource)), path).toEqual(advertised);
+		}
 	});
 
 	it('keeps the full registerable set on every other hosted server', async () => {

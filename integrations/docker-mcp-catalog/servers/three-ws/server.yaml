@@ -1,0 +1,24 @@
+name: three-ws
+type: remote
+dynamic:
+  tools: true
+meta:
+  category: ai
+  tags:
+    - ai
+    - 3d
+    - gltf
+    - avatars
+    - agents
+    - remote
+about:
+  title: Three.ws
+  description: Generate textured 3D models and rigged, animation-ready avatars from text, search a free catalog of CC0 assets, validate and optimize glTF/GLB files, and run AI agents with memory, a 3D body and their own wallet. Signs in with OAuth; tools that move funds stay off until you enable them.
+  icon: https://three.ws/three-ws-mcp-icon.svg
+remote:
+  transport_type: streamable-http
+  url: https://three.ws/mcp
+oauth:
+  - provider: three-ws
+    secret: three-ws.personal_access_token
+    env: THREE_WS_PERSONAL_ACCESS_TOKEN

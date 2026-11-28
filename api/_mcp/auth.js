@@ -38,12 +38,15 @@ function requestResource(req, resourcePath) {
 
 // RFC 9728 §5.1: the challenge names the metadata document for THIS resource,
 // whose `resource` an MCP client checks against the URL it connected to.
-// A server with its own narrow scope set also names it here (MCP authorization
-// spec: a client prefers the challenge's scope over scopes_supported).
+// It also names the scope set that document advertises (MCP authorization spec
+// 2025-11-25: a server SHOULD send `scope`, and a client prefers it over
+// scopes_supported). Some clients read only the challenge: Docker's MCP gateway
+// registers with no scope when it is absent, which left a Docker Desktop user
+// with an avatars:read-only token.
 export function bearerChallenge(resource) {
 	const base = `Bearer resource_metadata=${quoteString(protectedResourceMetadataUrl(resource))}, resource=${quoteString(resource)}`;
-	const { scopes, narrowed } = scopesForResource(hostedMcpPath(resource));
-	return narrowed ? `${base}, scope=${quoteString(scopes.join(' '))}` : base;
+	const { scopes } = scopesForResource(hostedMcpPath(resource));
+	return `${base}, scope=${quoteString(scopes.join(' '))}`;
 }
 
 export function send401(res, msg, { req, resourcePath } = {}) {
