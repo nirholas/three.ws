@@ -1110,6 +1110,10 @@
 			"title": "Integrations",
 			"links": [
 				{
+					"label": "Supabase",
+					"path": "supabase"
+				},
+				{
 					"label": "NVIDIA free models",
 					"path": "nvidia-models"
 				},

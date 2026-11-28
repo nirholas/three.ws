@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Verifies the listing packages under integrations/ (Zed, Raycast, Airtable extension, n8n,
-// Gradio Space, Poe bot, Docker MCP Catalog entry, Gemini CLI extension).
+// Gradio Space, Poe bot, Docker MCP Catalog entry, Gemini CLI extension, Supabase integration).
 // Each package is tested and built with its own toolchain. A package whose toolchain is not
 // installed is reported as skipped and makes the run exit 2, so a green exit means everything ran.
 //
@@ -136,6 +136,22 @@ const packages = {
 		} finally {
 			rmSync(work, { recursive: true, force: true });
 		}
+	},
+	// The Supabase Edge Function runs on Deno, so its types are checked with the real Deno
+	// (from its own deno.json); the unit suite runs the migrations on PGlite under Node.
+	supabase: () => {
+		const cwd = dir('supabase');
+		// PGlite is a root devDependency too, so a repo checkout needs no install of its own.
+		const pglite = ['node_modules', join('..', '..', 'node_modules')].some((m) => existsSync(join(cwd, m, '@electric-sql', 'pglite')));
+		if (!pglite) return { skip: 'run npm install in integrations/supabase' };
+		const test = run(cwd, 'npm', ['test']);
+		if (!test.ok) return { fail: `npm test\n${test.out.slice(-1500)}` };
+		const fn = join(cwd, 'supabase', 'functions', 'three-ws-forge');
+		const deno = run(fn, 'deno', ['--version']);
+		if (deno.missing || !deno.ok) return { skip: 'tests pass; install Deno 2 (deno.com) to type-check the Edge Function' };
+		const check = run(fn, 'deno', ['check', '--no-lock', 'index.ts']);
+		if (!check.ok) return { fail: `deno check index.ts\n${check.out.slice(-1500)}` };
+		return { ok: 'migration, client and sweep suites pass on PGlite; deno check passes on the Edge Function' };
 	},
 	zed: () => {
 		const cargo = run(dir('zed'), 'cargo', ['--version'], { PATH: cargoPath });

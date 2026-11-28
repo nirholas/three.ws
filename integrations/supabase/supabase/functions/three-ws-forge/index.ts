@@ -9,7 +9,7 @@
 // THREE_WS_FORGE_SECRET (any long random string, also stored in Vault).
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by the platform.
 
-import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { normalizeBaseUrl } from './forge.ts';
 import { type ModelPatch, type ModelRow, type Store, sweep } from './sweep.ts';
 

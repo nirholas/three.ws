@@ -16,13 +16,14 @@ const { data: model } = await supabase
 
 The integration's source lives in
 [`integrations/supabase/`](https://github.com/nirholas/three.ws/tree/main/integrations/supabase).
-It is three files you add to your Supabase project: two SQL migrations and one Edge Function.
+You add two SQL migrations and one Edge Function folder to your Supabase project.
 
 ## What you get
 
 - **A `three_ws_models` table.** A signed-in user inserts `prompt` (3 to 600 characters) and
   optionally `tier` (`draft`, `standard` or `high`). Everything else is written by the Edge
-  Function: `status`, `forge_job_id`, `storage_path`, `preview_image_url`, `error_code`, `error`.
+  Function: `status`, `forge_job_id`, `storage_path`, `preview_image_url`, `error_code`, `error`,
+  `submitted_at` (when three.ws accepted the job) and `completed_at`.
 - **Row level security.** Users see and delete only their own rows and may write only `prompt`
   and `tier`. Status and URLs cannot be forged from the client.
 - **A private `three-ws-models` bucket.** Finished models are stored at
@@ -181,10 +182,12 @@ are stored under `service/`.
 
 - `draft` is the fastest, `standard` (the default) balances speed and detail, and `high` takes
   longest. All three run on the free image-to-3D pipeline.
-- A model usually takes one to three minutes. A row still unfinished after 45 minutes is failed
-  with `error_code = 'timeout'`.
+- A model usually takes one to three minutes. A job three.ws has not finished 45 minutes after
+  it started is failed with `error_code = 'timeout'`. Time spent waiting for a limit to reset
+  does not count.
 - Generations count against the three.ws account that owns `THREE_WS_API_KEY`. When its daily
-  limit is reached, rows wait (`error_code = 'rate_limited'`) and resume when the limit resets.
+  limit is reached, rows wait (`error_code = 'daily_limit_reached'`) and resume when it resets
+  at midnight UTC. Shorter rate limits wait the `retry_after` three.ws sends.
 - The bucket accepts GLB files up to 50 MB, the Supabase free plan's upload limit.
 
 ## Errors
@@ -196,7 +199,8 @@ are stored under `service/`.
 - `generation_failed`: three.ws could not make a model from this prompt, even after retries.
   Rephrase it as one concrete object.
 - `invalid_glb`: the downloaded file was not a GLB. Insert the prompt again.
-- `timeout`: the model was not ready within 45 minutes.
+- `timeout`: three.ws had not finished the model 45 minutes after it started. Insert the prompt
+  again.
 - `sweep_error` on an unfinished row: a database or Storage write failed; the next sweep resumes
   the row from the step it reached. The `error` column has the Storage or database message.
 
@@ -216,6 +220,6 @@ Then empty and delete the `three-ws-models` bucket in the dashboard and run
 ## Support
 
 Open an issue at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws/issues). The
-integration is tested on every change: its migrations run on Postgres 18 with Supabase's roles,
+integration has its own test suite: its migrations run on Postgres 18 with Supabase's roles,
 `auth.uid()` and Storage policies, and a live test generates a real model through production
 three.ws (`integrations/supabase/README.md`).

@@ -7157,6 +7157,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/supabase",
+					"title": "Docs · three.ws Forge for Supabase",
+					"description": "Insert a prompt into a Postgres table and get a textured 3D model back in Supabase Storage: two migrations and an Edge Function, with row level security, a private bucket and Realtime progress.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-11-28"
+				},
+				{
 					"path": "/docs/ibm",
 					"title": "Docs · IBM watsonx and Granite",
 					"description": "three.ws agents can think on IBM Granite foundation models served through IBM watsonx.ai. The whole integration for developers and operators: model selection, credentials, request shapes, and the fallback behind it.",

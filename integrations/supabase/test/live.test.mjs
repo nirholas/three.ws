@@ -53,6 +53,7 @@ it('turns an inserted prompt into a stored GLB through production three.ws', { t
 	assert.equal(final.status, 'done', `row ended ${final.status}: ${final.error_code} ${final.error}`);
 	assert.equal(final.storage_path, `${user}/${row.id}.glb`);
 	assert.match(final.source_glb_url, /\.glb/);
+	assert.ok(final.submitted_at, 'records when three.ws accepted the job');
 	const bytes = readFileSync(join(dir, final.storage_path));
 	assert.equal(bytes.subarray(0, 4).toString('ascii'), 'glTF');
 	assert.ok(bytes.byteLength > 10_000, `a real model, got ${bytes.byteLength} bytes`);

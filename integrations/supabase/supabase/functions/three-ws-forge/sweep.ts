@@ -28,6 +28,7 @@ export interface ModelRow {
 	source_glb_url: string | null;
 	attempts: number;
 	created_at: string;
+	submitted_at: string | null;
 }
 
 export interface ModelPatch {
@@ -42,6 +43,7 @@ export interface ModelPatch {
 	attempts?: number;
 	next_attempt_at?: string;
 	lease_until?: string | null;
+	submitted_at?: string | null;
 	completed_at?: string | null;
 }
 
@@ -60,9 +62,9 @@ export interface SweepOptions {
 	batch?: number;
 	leaseSeconds?: number;
 	pollIntervalS?: number;
-	/** Transient failures a row may take before it is failed. */
+	/** Transient failures a row may take before it is failed. Quota waits do not count. */
 	maxAttempts?: number;
-	/** A row unfinished this long after insert is failed as timed out. */
+	/** A job three.ws accepted but has not finished this long after is failed as timed out. */
 	maxAgeMs?: number;
 	now?: () => number;
 	sleep?: (ms: number) => Promise<void>;
@@ -113,9 +115,11 @@ export async function sweep(options: SweepOptions): Promise<SweepSummary> {
 		});
 	}
 
-	async function retry(row: ModelRow, status: ModelStatus, code: string, message: string, afterS: number) {
-		const attempts = row.attempts + 1;
-		if (attempts >= maxAttempts) {
+	// A quota wait (the account's daily limit) is the expected answer until the
+	// limit resets, not a failure, so it does not spend one of the row's attempts.
+	async function retry(row: ModelRow, status: ModelStatus, code: string, message: string, afterS: number, quota = false) {
+		const attempts = quota ? row.attempts : row.attempts + 1;
+		if (!quota && attempts >= maxAttempts) {
 			await fail(row, code, `${message} Gave up after ${attempts} attempts.`);
 			return;
 		}
@@ -163,6 +167,7 @@ export async function sweep(options: SweepOptions): Promise<SweepSummary> {
 					forge_job_id: outcome.jobId ?? row.forge_job_id,
 					backend: outcome.backend ?? null,
 					preview_image_url: outcome.previewImageUrl ?? null,
+					submitted_at: row.submitted_at ?? new Date(now()).toISOString(),
 				});
 				return storeGlb(ready, outcome.glbUrl);
 			}
@@ -171,13 +176,14 @@ export async function sweep(options: SweepOptions): Promise<SweepSummary> {
 					status: 'generating',
 					forge_job_id: outcome.jobId,
 					backend: outcome.backend ?? null,
+					submitted_at: row.submitted_at ?? new Date(now()).toISOString(),
 					error_code: null,
 					error: null,
 					next_attempt_at: at(pollIntervalS),
 					lease_until: null,
 				});
 			case 'retry':
-				return retry(row, row.forge_job_id ? 'generating' : 'queued', outcome.code, outcome.message, outcome.retryAfterS);
+				return retry(row, row.forge_job_id ? 'generating' : 'queued', outcome.code, outcome.message, outcome.retryAfterS, outcome.quota);
 			case 'fatal':
 				return fail(row, outcome.code, outcome.message);
 		}
@@ -185,8 +191,8 @@ export async function sweep(options: SweepOptions): Promise<SweepSummary> {
 
 	async function step(row: ModelRow) {
 		try {
-			if (now() - Date.parse(row.created_at) > maxAgeMs) {
-				return await fail(row, 'timeout', `The model was not ready ${Math.round(maxAgeMs / 60_000)} minutes after it was requested.`);
+			if (row.submitted_at && now() - Date.parse(row.submitted_at) > maxAgeMs) {
+				return await fail(row, 'timeout', `three.ws had not finished the model ${Math.round(maxAgeMs / 60_000)} minutes after it started.`);
 			}
 			if (row.status === 'storing' && row.source_glb_url) return await storeGlb(row, row.source_glb_url);
 			if (row.forge_job_id) {

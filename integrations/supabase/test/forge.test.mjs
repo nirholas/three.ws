@@ -45,12 +45,14 @@ describe('classify', () => {
 
 	it('retries a rate limit after retry_after, and the daily limit at its reset time', () => {
 		const burst = classify(429, { error: 'rate_limited', message: 'Slow down.', retry_after: 42 });
-		assert.deepEqual(burst, { kind: 'retry', code: 'rate_limited', message: 'Slow down.', retryAfterS: 42, until: undefined });
+		assert.deepEqual(burst, { kind: 'retry', code: 'rate_limited', message: 'Slow down.', retryAfterS: 42, until: undefined, quota: false });
 
 		const reset = new Date(Date.now() + 3 * 3600_000).toISOString();
-		const daily = classify(429, { error: 'rate_limited', limit: 'generation_daily', message: 'Daily limit.', retry_after: 10, reset_at: reset });
+		const daily = classify(429, { error: 'daily_limit_reached', limit: 'generation_daily', message: 'Daily limit.', retry_after: 10, reset_at: reset });
 		assert.equal(daily.kind, 'retry');
 		assert.equal(daily.until, reset);
+		assert.equal(daily.code, 'daily_limit_reached');
+		assert.equal(daily.quota, true, 'a daily limit is a quota wait, not a failed attempt');
 		assert.ok(daily.retryAfterS > 3 * 3600 - 5 && daily.retryAfterS <= 3 * 3600, `waits until reset, got ${daily.retryAfterS}s`);
 	});
 

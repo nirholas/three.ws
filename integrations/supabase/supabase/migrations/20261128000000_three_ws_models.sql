@@ -31,6 +31,9 @@ create table if not exists public.three_ws_models (
 	next_attempt_at timestamptz not null default now(),
 	lease_until timestamptz,
 	created_at timestamptz not null default now(),
+	-- When three.ws accepted the job; the age limit counts from here, so time
+	-- spent waiting for a quota reset never times a row out.
+	submitted_at timestamptz,
 	updated_at timestamptz not null default now(),
 	completed_at timestamptz
 );

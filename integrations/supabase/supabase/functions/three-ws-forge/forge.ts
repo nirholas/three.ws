@@ -17,7 +17,7 @@ export type Tier = 'draft' | 'standard' | 'high';
 export type ForgeOutcome =
 	| { kind: 'done'; glbUrl: string; jobId?: string; backend?: string; previewImageUrl?: string }
 	| { kind: 'pending'; jobId: string; status: string; backend?: string }
-	| { kind: 'retry'; code: string; message: string; retryAfterS: number; until?: string }
+	| { kind: 'retry'; code: string; message: string; retryAfterS: number; until?: string; quota?: boolean }
 	| { kind: 'fatal'; code: string; message: string };
 
 export interface ForgeConfig {
@@ -60,7 +60,9 @@ export function classify(httpStatus: number, body: Json, headers?: Headers): For
 	const glb = str(body.glb_url);
 	const jobId = str(body.job_id) ?? str(body.id);
 
-	if (httpStatus >= 200 && httpStatus < 300 && !error) {
+	// On a 2xx the status field decides: a failed poll is a 200 whose `error`
+	// holds the reason as prose, not a code.
+	if (httpStatus >= 200 && httpStatus < 300 && (!error || body.status === 'failed')) {
 		const status = str(body.status) ?? (glb ? 'done' : 'pending');
 		if (status === 'done' && glb) {
 			return {
@@ -83,10 +85,11 @@ export function classify(httpStatus: number, body: Json, headers?: Headers): For
 	}
 	if (httpStatus === 429) {
 		const until = str(body.reset_at);
-		const wait = until && body.limit === 'generation_daily'
-			? Math.max(60, Math.ceil((Date.parse(until) - Date.now()) / 1000))
+		const quota = Boolean(until) && body.limit === 'generation_daily';
+		const wait = quota
+			? Math.max(60, Math.ceil((Date.parse(until as string) - Date.now()) / 1000))
 			: retryAfterSeconds(body, headers, 60);
-		return { kind: 'retry', code: error ?? 'rate_limited', message, retryAfterS: wait, until };
+		return { kind: 'retry', code: error ?? 'rate_limited', message, retryAfterS: wait, until, quota };
 	}
 	if (httpStatus === 409 && error === 'idempotency_in_progress') {
 		return { kind: 'retry', code: error, message, retryAfterS: retryAfterSeconds(body, headers, 5) };

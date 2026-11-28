@@ -204,15 +204,47 @@ describe('sweep', () => {
 		assert.ok(after.next_attempt_at > new Date());
 	});
 
-	it('fails a row that has been unfinished longer than the age limit', async () => {
+	it('fails a job three.ws started but has not finished within the age limit', async () => {
 		const { db, insert, read, store } = await setup();
 		const row = await insert('a bronze statue');
-		await db.query(`update public.three_ws_models set created_at = now() - interval '2 hours' where id = $1`, [row.id]);
-		const { fetchImpl } = forgeFetch({});
+		await db.query(
+			`update public.three_ws_models set status = 'generating', forge_job_id = 'f1.slow', submitted_at = now() - interval '2 hours' where id = $1`,
+			[row.id],
+		);
+		const { fetchImpl, calls } = forgeFetch({});
 		await run(store, fetchImpl);
 		const after = await read(row.id);
 		assert.equal(after.status, 'failed');
 		assert.equal(after.error_code, 'timeout');
+		assert.equal(calls.length, 0);
+	});
+
+	it('submits a row that waited hours for the daily limit instead of timing it out', async () => {
+		const { db, insert, read, store } = await setup();
+		const row = await insert('a marble bust');
+		await db.query(`update public.three_ws_models set created_at = now() - interval '8 hours', error_code = 'daily_limit_reached' where id = $1`, [row.id]);
+		const { fetchImpl } = forgeFetch({ 'POST /api/forge': [{ status: 202, body: { job_id: 'f1.late', status: 'queued' } }], 'GET /api/forge?job=f1.late': [{ body: { job_id: 'f1.late', status: 'running' } }] });
+		await run(store, fetchImpl, { budgetMs: 300 });
+		const after = await read(row.id);
+		assert.equal(after.status, 'generating', JSON.stringify(after));
+		assert.equal(after.forge_job_id, 'f1.late');
+		assert.ok(after.submitted_at, 'records when three.ws started the job');
+	});
+
+	it('waits for the daily limit to reset without spending an attempt', async () => {
+		const { db, insert, read, store } = await setup();
+		const row = await insert('a jade dragon');
+		await db.query('update public.three_ws_models set attempts = 11 where id = $1', [row.id]);
+		const reset = new Date(Date.now() + 5 * 3600_000).toISOString();
+		const { fetchImpl } = forgeFetch({
+			'POST /api/forge': [{ status: 429, body: { error: 'daily_limit_reached', limit: 'generation_daily', message: 'Daily limit reached.', retry_after: 18000, reset_at: reset } }],
+		});
+		await run(store, fetchImpl, { budgetMs: 1000 });
+		const after = await read(row.id);
+		assert.equal(after.status, 'queued');
+		assert.equal(after.attempts, 11);
+		assert.equal(after.error_code, 'daily_limit_reached');
+		assert.ok(Math.abs(after.next_attempt_at.getTime() - Date.parse(reset)) < 5000, `resumes at the reset, got ${after.next_attempt_at.toISOString()}`);
 	});
 
 	it('returns at once when nothing is waiting', async () => {

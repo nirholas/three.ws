@@ -1,0 +1,9 @@
+# Supabase CLI config for running this integration in a local stack
+# (`supabase start` from integrations/supabase). Every setting not named here
+# keeps the CLI's default.
+project_id = "three-ws-supabase"
+
+[functions.three-ws-forge]
+# The caller is the project's own database (pg_net), not a signed-in user. The
+# function authenticates it with the THREE_WS_FORGE_SECRET header instead.
+verify_jwt = false

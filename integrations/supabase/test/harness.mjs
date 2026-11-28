@@ -136,11 +136,14 @@ export function asAnon(db, fn) {
 
 const PATCH_COLUMNS = new Set([
 	'status', 'forge_job_id', 'backend', 'source_glb_url', 'storage_path', 'preview_image_url',
-	'error_code', 'error', 'attempts', 'next_attempt_at', 'lease_until', 'completed_at',
+	'error_code', 'error', 'attempts', 'next_attempt_at', 'lease_until', 'submitted_at', 'completed_at',
 ]);
 
+const iso = (value) => (value instanceof Date ? value.toISOString() : value);
+
+/** Timestamps as ISO strings, the way PostgREST hands rows to the Edge Function. */
 function toRow(row) {
-	return { ...row, created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at };
+	return { ...row, created_at: iso(row.created_at), submitted_at: iso(row.submitted_at) };
 }
 
 /**
