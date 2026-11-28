@@ -89,6 +89,22 @@ afterEach(() => {
 });
 
 describe('slack install without a three.ws account (Marketplace and /slack)', () => {
+	it('tells the public /slack page whether Add to Slack works, without a sign-in', async () => {
+		const { port } = server.address();
+		const live = await realFetch(`http://127.0.0.1:${port}/api/gateway/slack?leg=status`);
+		expect(live.status).toBe(200);
+		expect(await live.json()).toEqual({ available: true, install_url: '/api/gateway/slack?leg=install' });
+
+		const saved = process.env.SLACK_CLIENT_SECRET;
+		delete process.env.SLACK_CLIENT_SECRET;
+		try {
+			const off = await realFetch(`http://127.0.0.1:${port}/api/gateway/slack?leg=status`);
+			expect(await off.json()).toEqual({ available: false, install_url: null });
+		} finally {
+			process.env.SLACK_CLIENT_SECRET = saved;
+		}
+	});
+
 	it('sends a signed-out visitor straight to Slack consent with a state bound to a cookie', async () => {
 		const { res, url, state, cookie } = await startInstall();
 		expect(res.status).toBe(302);
