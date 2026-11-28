@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Verifies the listing packages under integrations/ (Zed, Raycast, n8n, Gradio Space, Poe bot).
+// Verifies the listing packages under integrations/ (Zed, Raycast, n8n, Gradio Space, Poe bot,
+// Docker MCP Catalog entry).
 // Each package is tested and built with its own toolchain. A package whose toolchain is not
 // installed is reported as skipped and makes the run exit 2, so a green exit means everything ran.
 //
@@ -64,6 +65,37 @@ const packages = {
 		const r = run(dir('poe'), 'python3', ['-m', 'pytest', '-q', 'test_forge_bot.py']);
 		if (r.missing) return { skip: 'python3 not installed' };
 		return r.ok ? { ok: r.out.trim().split('\n').pop() } : { fail: r.out.slice(-1500) };
+	},
+	// Runs Docker's own validator (docker/mcp-registry `cmd/validate`) on the entry in
+	// integrations/docker-mcp-catalog/servers/three-ws, then confirms the live 401 names
+	// the scopes Docker's gateway registers for (it never reads scopes_supported).
+	'docker-mcp-catalog': () => {
+		const go = run(root, 'go', ['version']);
+		if (go.missing || !go.ok) return { skip: 'install Go 1.24+ (Docker\'s validator is a Go program)' };
+		const npx = run(root, 'npx', ['--version']);
+		if (npx.missing || !npx.ok) return { skip: 'npx not on PATH (the validator runs prettier through it)' };
+		// Outside the repo on purpose: prettier would otherwise apply this repo's config to the entry.
+		const registry = join(homedir(), '.cache', 'three-ws', 'docker-mcp-registry');
+		const sync = existsSync(join(registry, '.git'))
+			? run(registry, 'git', ['pull', '--ff-only', '--depth', '1', '-q'])
+			: run(root, 'git', ['clone', '--depth', '1', '-q', 'https://github.com/docker/mcp-registry.git', registry]);
+		if (!sync.ok) return { fail: `could not fetch docker/mcp-registry\n${sync.out.slice(-800)}` };
+		const entry = join(registry, 'servers', 'three-ws');
+		const copy = run(root, 'cp', ['-R', join(dir('docker-mcp-catalog'), 'servers', 'three-ws'), join(registry, 'servers')]);
+		if (!copy.ok || !existsSync(join(entry, 'server.yaml'))) return { fail: `could not stage the entry\n${copy.out}` };
+		const validate = run(registry, 'go', ['run', './cmd/validate', '--name', 'three-ws']);
+		if (!validate.ok) return { fail: `docker/mcp-registry validate\n${validate.out.slice(-1500)}` };
+		const probe = run(root, 'curl', [
+			'-s', '-o', '/dev/null', '-D', '-', '-X', 'POST', 'https://three.ws/mcp',
+			'-H', 'content-type: application/json', '-H', 'accept: application/json, text/event-stream',
+			'-d', '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"check-integrations","version":"1"}}}',
+		]);
+		if (probe.missing) return { ok: 'docker validator passes; curl missing, live challenge not probed' };
+		const challenge = probe.out.split('\n').find((l) => /^www-authenticate:/i.test(l)) || '';
+		if (!/scope="[^"]*agents:read[^"]*"/.test(challenge)) {
+			return { fail: `docker validator passes, but https://three.ws/mcp 401 names no scope, so Docker Desktop would mint an avatars:read token (deploy api/_mcp/auth.js)\n${challenge}` };
+		}
+		return { ok: 'docker validator passes; live /mcp challenge names the scope set' };
 	},
 	zed: () => {
 		const cargo = run(dir('zed'), 'cargo', ['--version'], { PATH: cargoPath });
