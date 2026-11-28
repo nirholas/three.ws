@@ -4,7 +4,7 @@
 
 Every place three.ws is listed, submitted to, or known to be absent from. This is the master index; the prose record with announcements and context is [listings.md](./listings.md), and the action list for stuck items is [partners/opportunities.md](./partners/opportunities.md).
 
-**123 tracked surfaces.** 49 live, 17 pr open, 2 submitted, pending, 4 ready to submit, 13 not listed, 22 declined or closed, 16 unverified.
+**126 tracked surfaces.** 50 live, 17 pr open, 2 submitted, pending, 6 ready to submit, 13 not listed, 22 declined or closed, 16 unverified.
 
 Maintain it:
 
@@ -22,8 +22,11 @@ A `live` entry is only ever set after the page was fetched and rendered three.ws
 | [Claude Marketplaces (crossaitools)](https://claudemarketplaces.com/mcp/io.github.nirholas/three.ws) | Live | Page describes three.ws avatar platform and GLB MCP server |  | 2026-10-11 |
 | [Glama](https://glama.ai/mcp/connectors/io.github.nirholas/three.ws) | Live | Connectors ingested; main connector unclaimed and showing a failing health check (no OAuth test credentials) | Claim the connector and supply test credentials via /.well-known/glama.json | 2026-10-11 |
 | [LobeHub MCP marketplace](https://lobehub.com/mcp/nirholas-three-ws-portal) | Live | Indexed from GitHub (@three-ws/portal, @three-ws/avatar-mcp) |  | 2026-10-11 |
+| [MCP Market](https://mcpmarket.com/server/three-ws) | Live | Indexed from the public GitHub repo: three-ws server page plus separate Avatar, Vision, Activity and Copy Trading server pages; unclaimed | Claim the listing (sign in with GitHub as the nirholas/three.ws owner) to edit copy and categories | 2026-11-28 |
 | [Official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=three.ws) | Live | 72 servers published under io.github.nirholas/*, including io.github.nirholas/three.ws |  | 2026-10-11 |
 | [PulseMCP](https://www.pulsemcp.com/servers/nirholas-three-ws) | Live | Ingested from the official registry |  | 2026-09-16 |
+| [AIBase MCP](https://mcp.aibase.com/submit) | Ready to submit | Free remote-only submit form (Google sign-in). /api/mcp-studio answers initialize and tools/list anonymously (21 tools), so it passes a crawler check; listing kit in docs/aibase-mcp-listing.md | Owner signs in with Google and submits the form values in docs/aibase-mcp-listing.md | 2026-11-28 |
+| Docker MCP Catalog (Docker Hub and Docker Desktop MCP Toolkit) | Ready to submit | Remote entry for https://three.ws/mcp passes Docker's own validator (docker/mcp-registry cmd/validate); PR not yet opened | Deploy the api/_mcp/auth.js scope challenge, then run integrations/docker-mcp-catalog/submit.sh (SUBMITTING.md) | 2026-11-28 |
 | LobeHub chat plugin index | Not listed | /.well-known/lobehub-plugin.json exists but the plugin is not in the index |  | 2026-09-16 |
 | mcp.so | Not listed | Search returns no results for three.ws on 2026-09-16 | Submit at mcp.so | 2026-09-16 |
 | [mcp.so](https://mcp.so/search?q=three.ws) | Not listed | Search returned 0 results |  | 2026-10-11 |

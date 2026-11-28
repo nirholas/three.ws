@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docker Desktop's MCP Toolkit gets full access when you sign in to three.ws</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-11-28:Docker Desktop's MCP Toolkit gets full access when you sign in to three.ws</guid>
+			<pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Clients that read the OAuth scope list only from a server's sign-in challenge, like Docker's MCP gateway, used to register with no scope, so three.ws handed them a read-only token for avatars. Every hosted three.ws MCP server now names its full scope list in that challenge, as the MCP authorization spec recommends, so signing in from Docker Desktop shows the same consent screen as Claude or Cursor. The entry that lists three.ws in Docker's MCP Catalog is ready and passes Docker's own validator.</description>
+		</item>
+		<item>
+			<title>Embed codes credit the creator and three.ws with a link</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-28:Embed codes credit the creator and three.ws with a link</guid>
+			<pubDate>Sat, 28 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every embed code three.ws hands out (Forge models, agents, avatars, widgets, dioramas, the editor and the get_embed_code MCP tool) now ends with one short credit line under the embed: the model or agent's name linked to its page, and a link to three.ws. Readers of the site you embed on can find the original, and the link tells search engines where the work came from. It is plain HTML in the snippet, so you can restyle or remove it.</description>
+		</item>
+		<item>
 			<title>The Raycast extension searches 3D assets and your own models</title>
 			<link>https://three.ws/integrations</link>
 			<guid isPermaLink="false">2026-11-28:The Raycast extension searches 3D assets and your own models</guid>

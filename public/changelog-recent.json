@@ -1,14 +1,34 @@
 {
-	"generated_at": "2026-11-28T07:35:14.035Z",
+	"generated_at": "2026-11-28T07:40:32.350Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4795,
+	"total": 4797,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "Docker Desktop's MCP Toolkit gets full access when you sign in to three.ws",
+			"summary": "Clients that read the OAuth scope list only from a server's sign-in challenge, like Docker's MCP gateway, used to register with no scope, so three.ws handed them a read-only token for avatars. Every hosted three.ws MCP server now names its full scope list in that challenge, as the MCP authorization spec recommends, so signing in from Docker Desktop shows the same consent screen as Claude or Cursor. The entry that lists three.ws in Docker's MCP Catalog is ready and passes Docker's own validator.",
+			"link": "/docs/mcp",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "Embed codes credit the creator and three.ws with a link",
+			"summary": "Every embed code three.ws hands out (Forge models, agents, avatars, widgets, dioramas, the editor and the get_embed_code MCP tool) now ends with one short credit line under the embed: the model or agent's name linked to its page, and a link to three.ws. Readers of the site you embed on can find the original, and the link tells search engines where the work came from. It is plain HTML in the snippet, so you can restyle or remove it.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-28",
 			"type": "update",
@@ -1552,26 +1572,6 @@
 			"link": "/partners/benefits#xai",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-20",
-			"type": "update",
-			"title": "TripoSG photo-to-3D stops failing at the background cutout",
-			"summary": "TripoSG cuts the subject out of your photo with our background-removal service before building the mesh. That service finished the cutout after answering the request, and Cloud Run gave it almost no CPU between requests, so a 20-second cutout dragged past the two minutes TripoSG waits. Its model was also downloaded on first use, and two cutouts at once could run it out of memory. The service now keeps its CPU, ships the model in its image, and has twice the memory, so photo-to-3D on TripoSG completes again. The segmentation service had the same CPU gap and is fixed too.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-20",
-			"type": "update",
-			"title": "xAI credit ledger with burn-rate and expiry alerts",
-			"summary": "Every platform-key call to xAI now records tokens and cost, so a new report and an advisory health check show where the Grok credits go and warn before they run out or expire unused.",
-			"link": null,
-			"tags": [
-				"infra"
 			]
 		}
 	]

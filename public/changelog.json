@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-11-28T07:35:13.785Z",
+	"generated_at": "2026-11-28T07:40:32.188Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "Docker Desktop's MCP Toolkit gets full access when you sign in to three.ws",
+			"summary": "Clients that read the OAuth scope list only from a server's sign-in challenge, like Docker's MCP gateway, used to register with no scope, so three.ws handed them a read-only token for avatars. Every hosted three.ws MCP server now names its full scope list in that challenge, as the MCP authorization spec recommends, so signing in from Docker Desktop shows the same consent screen as Claude or Cursor. The entry that lists three.ws in Docker's MCP Catalog is ready and passes Docker's own validator.",
+			"link": "/docs/mcp",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-28",
+			"type": "update",
+			"title": "Embed codes credit the creator and three.ws with a link",
+			"summary": "Every embed code three.ws hands out (Forge models, agents, avatars, widgets, dioramas, the editor and the get_embed_code MCP tool) now ends with one short credit line under the embed: the model or agent's name linked to its page, and a link to three.ws. Readers of the site you embed on can find the original, and the link tells search engines where the work came from. It is plain HTML in the snippet, so you can restyle or remove it.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-28",
 			"type": "update",

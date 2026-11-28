@@ -314,6 +314,36 @@
 			"checked": "2026-10-11"
 		},
 		{
+			"id": "docker-mcp-catalog",
+			"name": "Docker MCP Catalog (Docker Hub and Docker Desktop MCP Toolkit)",
+			"category": "mcp",
+			"status": "prerequisites",
+			"url": null,
+			"evidence": "Remote entry for https://three.ws/mcp passes Docker's own validator (docker/mcp-registry cmd/validate); PR not yet opened",
+			"next": "Deploy the api/_mcp/auth.js scope challenge, then run integrations/docker-mcp-catalog/submit.sh (SUBMITTING.md)",
+			"checked": "2026-11-28"
+		},
+		{
+			"id": "mcp-market",
+			"name": "MCP Market",
+			"category": "mcp",
+			"status": "live",
+			"url": "https://mcpmarket.com/server/three-ws",
+			"evidence": "Indexed from the public GitHub repo: three-ws server page plus separate Avatar, Vision, Activity and Copy Trading server pages; unclaimed",
+			"next": "Claim the listing (sign in with GitHub as the nirholas/three.ws owner) to edit copy and categories",
+			"checked": "2026-11-28"
+		},
+		{
+			"id": "aibase-mcp",
+			"name": "AIBase MCP",
+			"category": "mcp",
+			"status": "prerequisites",
+			"url": "https://mcp.aibase.com/submit",
+			"evidence": "Free remote-only submit form (Google sign-in). /api/mcp-studio answers initialize and tools/list anonymously (21 tools), so it passes a crawler check; listing kit in docs/aibase-mcp-listing.md",
+			"next": "Owner signs in with Google and submits the form values in docs/aibase-mcp-listing.md",
+			"checked": "2026-11-28"
+		},
+		{
 			"id": "x402-list-com-three-ws-3d-studio",
 			"name": "x402-list.com three.ws 3D Studio",
 			"category": "x402",

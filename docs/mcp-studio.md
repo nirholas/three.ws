@@ -65,6 +65,19 @@ because the widget re-serves every off-origin GLB through `/api/glb` and every
 poster through `/api/img`. ChatGPT enforces that CSP, and its review flags
 wildcard or unused domains.
 
+**Read-only grants.** The three.ws consent screen lets a user untick "Create
+and update avatars", which grants the connector `avatars:read` and `profile`
+without `avatars:write`. That choice is enforced: an OAuth token without
+`avatars:write` can still call every read tool (catalog search, docs, job and
+persona lookups, `look_at_model`, the pano status and list tools), but a tool
+that creates or saves anything answers with `structuredContent.reason:
+"insufficient_scope"`, `required_scope: "avatars:write"`, and a
+`_meta["mcp/www_authenticate"]` challenge carrying `error="insufficient_scope"`
+so the host can ask for the wider grant. Nothing is generated or billed on that
+path. API keys keep their own key scopes and are not affected. Muse's guideline
+3.1 asks for exactly this read-only option; see
+[muse-connector.md](muse-connector.md).
+
 ### Any MCP client
 
 ```bash
