@@ -48,6 +48,7 @@ import {
 } from './marketplace-bundles.js';
 import { wireModelViewerFallback } from './shared/model-viewer-fallback.js';
 import { DEFAULT_STAGE_RIG_URL } from './default-stage-avatar.js';
+import { buildAgentCredit } from './share-panel-builders.js';
 
 ensureStateKitStyles();
 
@@ -5554,11 +5555,14 @@ function renderEmbedTab(a) {
 	const embedPageUrl = `${location.origin}/marketplace/agents/${agentId}`;
 	const iframeSrc = `/agents/${agentId}/embed`;
 
+	// Copied snippets end with a visible credit link to the agent's public page.
+	const credit = buildAgentCredit({ origin: location.origin, agentId });
+
 	const wcSnippet = glbUrl
-		? `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>\n<agent-3d\n  src="${glbUrl}"\n  agent-id="${agentId}"\n  style="width:480px;height:480px"\n></agent-3d>`
+		? `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>\n<agent-3d\n  src="${glbUrl}"\n  agent-id="${agentId}"\n  style="width:480px;height:480px"\n></agent-3d>\n${credit}`
 		: `<!-- No 3D avatar attached yet -->`;
 
-	const iframeSnippet = `<iframe\n  src="${iframeSrc}"\n  width="480"\n  height="640"\n  style="border:0;border-radius:14px"\n  allow="autoplay; xr-spatial-tracking"\n></iframe>`;
+	const iframeSnippet = `<iframe\n  src="${iframeSrc}"\n  width="480"\n  height="640"\n  style="border:0;border-radius:14px"\n  allow="autoplay; xr-spatial-tracking"\n></iframe>\n${credit}`;
 
 	const wc = $('d-embed-wc');
 	const iframe = $('d-embed-iframe');

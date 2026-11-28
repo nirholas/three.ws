@@ -1,6 +1,8 @@
 // Pure helpers for the model detail page (/m/:id). No DOM, no fetch: everything
 // here is unit-tested in tests/model-lib.test.js and imported by src/model-page.js.
 
+import { buildEmbedCredit } from '../api/_lib/embed.js';
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // /m/<uuid> (optional trailing slash) → the uuid, else null.
@@ -197,9 +199,15 @@ export function timeAgo(iso, now = Date.now()) {
 
 // The copy-paste embed for any site: the same /viewer iframe public/viewer.html
 // generates for itself, sized like a card.
-export function embedSnippet(glbUrl, title) {
+export function embedSnippet(glbUrl, title, modelId) {
 	const src = `https://three.ws/viewer?src=${encodeURIComponent(glbUrl || '')}${title ? `&title=${encodeURIComponent(title)}` : ''}`;
-	return `<iframe src="${src}" width="640" height="480" frameborder="0" allow="xr-spatial-tracking; fullscreen" title="${escapeAttr(title || '3D model')}"></iframe>`;
+	const credit = buildEmbedCredit({
+		href: 'https://three.ws/forge',
+		text: title ? 'forged on' : '3D model forged on',
+		subject: title || '',
+		subjectHref: modelId ? `https://three.ws/m/${modelId}` : src,
+	});
+	return `<iframe src="${src}" width="640" height="480" frameborder="0" allow="xr-spatial-tracking; fullscreen" title="${escapeAttr(title || '3D model')}"></iframe>\n${credit}`;
 }
 
 function escapeAttr(s) {

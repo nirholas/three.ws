@@ -13,6 +13,7 @@ import { resolveURI } from '../ipfs.js';
 import { withPayoutStepUp, cooldownNotice } from '../payout-step-up.js';
 import { shortAddress } from '../shared/address.js';
 import { mountSuggestedSkills } from './suggested-skills.js';
+import { buildAgentCredit } from '../share-panel-builders.js';
 
 function escapeHtml(s) {
 	return String(s == null ? '' : s)
@@ -2327,7 +2328,9 @@ async function renderEmbed(root) {
 	const origin = location.origin;
 	const embedUrl = `${origin}/agents/${encodeURIComponent(agent.id)}/embed`;
 	const homeUrl = `${origin}/agents/${encodeURIComponent(agent.id)}`;
-	const iframeSnippet = `<iframe src="${embedUrl}" allow="camera; microphone" style="width:320px;height:420px;border:0;border-radius:16px;overflow:hidden" title="${esc(agent.name || 'Agent')}"></iframe>`;
+	// Copied HTML snippets end with a visible credit link to the agent's public page.
+	const credit = buildAgentCredit({ origin, agentId: agent.id });
+	const iframeSnippet = `<iframe src="${embedUrl}" allow="camera; microphone" style="width:320px;height:420px;border:0;border-radius:16px;overflow:hidden" title="${esc(agent.name || 'Agent')}"></iframe>\n${credit}`;
 	const sidecarSnippet = [
 		'// Drop into a chat host — renders the agent alongside the chat panel',
 		'// and forwards assistant messages to it so the avatar speaks/emotes.',
@@ -2356,6 +2359,7 @@ async function renderEmbed(root) {
 		`<iframe src="${embedUrl}"`,
 		'        style="width:100%;height:480px;border:0;border-radius:16px"',
 		'        allow="camera; microphone"></iframe>',
+		credit,
 	].join('\n');
 	const postMessageSnippet = [
 		'// From any host page, make the avatar speak + emote:',
@@ -2378,6 +2382,7 @@ async function renderEmbed(root) {
 		'<!-- See /agents/' + agent.id + '/embed for the wire contract. -->',
 		`<iframe id="agent" src="${embedUrl}" allow="camera; microphone"`,
 		'        style="width:320px;height:420px;border:0;border-radius:16px"></iframe>',
+		credit,
 		`<script src="${origin}/embed-sdk.js"></script>`,
 		'<script>',
 		"  const bridge = Agent3D.connect(document.getElementById('agent'), {",
@@ -2393,9 +2398,10 @@ async function renderEmbed(root) {
 	const webComponentSnippet = [
 		'<!-- Zero-install web component. Works in plain HTML, React, Vue, Svelte. -->',
 		`<script type="module" src="${origin}/lib.js"></script>`,
-		`<agent-three.ws-id="${esc(agent.id)}"`,
+		`<agent-3d agent-id="${esc(agent.id)}"`,
 		'          style="width:320px;height:420px;display:block;border-radius:16px;overflow:hidden">',
 		'</agent-3d>',
+		credit,
 	].join('\n');
 	const onchainSnippet = agent.erc8004_agent_id
 		? [

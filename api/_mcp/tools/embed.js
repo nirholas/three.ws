@@ -14,6 +14,7 @@ import { resolveOnChainAgent, SERVER_CHAIN_META } from '../../_lib/onchain.js';
 import { readEmbedPolicy } from '../../_lib/embed-policy.js';
 import {
 	buildEmbedIframe,
+	buildEmbedCredit,
 	clampEmbedDim,
 	agentEmbedTarget,
 	onchainEmbedTarget,
@@ -183,14 +184,20 @@ export const toolDefs = [
 			if (resolved.error) return resolved.error;
 			const { target, title, oembed } = resolved;
 
-			const embedHtml = buildEmbedIframe({
+			const credit = buildEmbedCredit({
+				href: kind === 'forge' ? `${origin}/forge` : `${origin}/`,
+				text: kind === 'forge' ? 'forged on' : '3D AI agent on',
+				subject: title,
+				subjectHref: target.shareUrl,
+			});
+			const embedHtml = `${buildEmbedIframe({
 				src: target.embedUrl,
 				width,
 				height,
 				title,
 				autorotate,
 				ar,
-			});
+			})}\n${credit}`;
 
 			const structuredContent = {
 				ok: true,

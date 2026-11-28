@@ -11,6 +11,8 @@
 //   • web component — a <model-viewer> snippet for builders who want the model
 //                     inline in their own DOM with their own controls.
 
+import { buildEmbedCredit } from '../../api/_lib/embed.js';
+
 const ORIGIN = 'https://three.ws';
 const MODEL_VIEWER_CDN =
 	'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js';
@@ -63,6 +65,18 @@ export function embedPreviewUrl(glbUrl, title, origin) {
 	return `${o}/forge-embed.html?${embedQuery(glbUrl, title)}`;
 }
 
+// The visible credit line under every model snippet: the model's name links to
+// its standalone viewer, "three.ws" links to the Forge. See buildEmbedCredit.
+export function buildModelCredit(glbUrl, title) {
+	const name = String(title || '').trim();
+	return buildEmbedCredit({
+		href: `${ORIGIN}/forge`,
+		text: name ? 'forged on' : '3D model forged on',
+		subject: name,
+		subjectHref: embedPageUrl(glbUrl, name),
+	});
+}
+
 export function buildIframeSnippet(glbUrl, title, sizeId) {
 	const s = embedSize(sizeId);
 	const src = embedPageUrl(glbUrl, title);
@@ -72,7 +86,8 @@ export function buildIframeSnippet(glbUrl, title, sizeId) {
 		`        style="border:0;border-radius:14px;max-width:100%"\n` +
 		`        allow="xr-spatial-tracking; fullscreen"\n` +
 		`        loading="lazy" title="${escEmbed(title || '3D model forged on three.ws')}">` +
-		`</iframe>`
+		`</iframe>\n` +
+		buildModelCredit(glbUrl, title)
 	);
 }
 
@@ -93,6 +108,7 @@ export function buildWebComponentSnippet(glbUrl, title, sizeId) {
 		`  exposure="1.5"\n` +
 		`  shadow-intensity="1" shadow-softness="0.9"\n` +
 		`  style="width:${s.w}px;height:${s.h}px;max-width:100%;background:#0b0b0b;border-radius:14px">` +
-		`\n</model-viewer>`
+		`\n</model-viewer>\n` +
+		buildModelCredit(glbUrl, title)
 	);
 }

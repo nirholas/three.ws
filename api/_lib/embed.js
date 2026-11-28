@@ -46,6 +46,26 @@ export function buildEmbedIframe({ src, width, height, title, autorotate = true,
 	);
 }
 
+// The visible credit line that follows every copy-paste snippet three.ws hands
+// out, the way CodePen, Sketchfab and Spotify embed codes carry a text link.
+// An iframe or a custom element gives the host page no link of its own, so
+// without this line an embed on a site with real traffic tells search engines
+// nothing about where the content came from. The anchor text is the brand and
+// the subject's own name (never keywords), the line sits in the host page's
+// normal flow, and the person pasting it can edit or drop it.
+//
+// Without a subject the line reads "<text> three.ws". With one, the subject name
+// comes first as its own link (to subjectHref, falling back to href), followed
+// by a comma, the text and the brand link.
+export function buildEmbedCredit({ href, text, subject = '', subjectHref = '' }) {
+	const brand = `<a href="${escapeAttr(href)}">three.ws</a>`;
+	const name = String(subject || '').trim();
+	const lead = name
+		? `<a href="${escapeAttr(subjectHref || href)}">${escapeAttr(name)}</a>, ${escapeAttr(text)}`
+		: escapeAttr(text);
+	return `<p style="margin:8px 0 0;font-size:13px;line-height:1.4">${lead} ${brand}</p>`;
+}
+
 // ── Canonical URL shapes per target ──────────────────────────────────────────
 // embedUrl    → the iframe src (renders the 3D viewer standalone)
 // shareUrl    → the human-facing page to link/share

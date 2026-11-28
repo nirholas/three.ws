@@ -9,6 +9,7 @@
 import { beaconShareEvent } from '../shared/share-beacon.js';
 import { objectiveText } from './game-rules.js';
 import { xIntentUrl } from '../shared/share-targets.js';
+import { buildEmbedCredit } from '../../api/_lib/embed.js';
 
 /** Resolve a possibly-relative permalink to an absolute URL for sharing/embedding. */
 function absolute(url) {
@@ -62,11 +63,17 @@ function flash(btn, ok) {
 	);
 }
 
-function embedSnippet(url) {
+function embedSnippet(url, title) {
 	return (
 		`<iframe src="${url}" width="480" height="360" frameborder="0" ` +
 		`allow="fullscreen; xr-spatial-tracking" loading="lazy" ` +
-		`title="A 3D diorama on three.ws" style="border-radius:12px;border:0"></iframe>`
+		`title="A 3D diorama on three.ws" style="border-radius:12px;border:0"></iframe>\n` +
+		buildEmbedCredit({
+			href: `${window.location.origin}/diorama`,
+			text: 'made on',
+			subject: title,
+			subjectHref: url,
+		})
 	);
 }
 
@@ -107,7 +114,7 @@ export function openShare({ diorama = {}, url, playable = false } = {}) {
 	if (embedBtn) {
 		embedBtn.onclick = async () => {
 			beaconShareEvent('diorama_share', 'action');
-			flash(embedBtn, await copyText(embedSnippet(href)));
+			flash(embedBtn, await copyText(embedSnippet(href, diorama.title || diorama.prompt || '')));
 		};
 	}
 

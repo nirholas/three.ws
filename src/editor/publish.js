@@ -13,6 +13,7 @@
  */
 
 import { exportEditedGLB } from './glb-export.js';
+import { buildEmbedCredit } from '../../api/_lib/embed.js';
 
 export const MAX_BYTES = 25 * 1024 * 1024;
 
@@ -140,10 +141,16 @@ export async function publishEditedGLB(
 	onStep({ step: 'widget', pct: 1 });
 
 	const page = `${origin}/w/${widget.id}`;
-	const iframe = `<iframe src="${page}" width="600" height="600" style="border:0"></iframe>`;
+	const credit = buildEmbedCredit({
+		href: origin,
+		text: 'widget made with',
+		subject: displayName,
+		subjectHref: page,
+	});
+	const iframe = `<iframe src="${page}" width="600" height="600" style="border:0"></iframe>\n${credit}`;
 	const element =
 		`<script type="module" src="${origin}/dist-lib/agent-3d.js"></script>\n` +
-		`<agent-3d src="${origin}/api/avatars/${avatar.id}" style="width:600px;height:600px"></agent-3d>`;
+		`<agent-3d src="${origin}/api/avatars/${avatar.id}" style="width:600px;height:600px"></agent-3d>\n${credit}`;
 
 	return { widget, avatar, urls: { page, iframe, element }, warnings };
 }

@@ -1068,7 +1068,7 @@ function wireActions() {
 	});
 
 	$('mp-embed')?.addEventListener('click', async () => {
-		const snippet = embedSnippet(c.glb_url, creationName(c));
+		const snippet = embedSnippet(c.glb_url, creationName(c), c.id);
 		try {
 			await navigator.clipboard.writeText(snippet);
 			toast('Embed code copied to clipboard');

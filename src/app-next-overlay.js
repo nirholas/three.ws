@@ -3,6 +3,7 @@
 import { getMe, readAuthHint, saveRemoteGlbToAccount } from './account.js';
 import { log } from './shared/log.js';
 import { xIntentUrl } from './shared/share-targets.js';
+import { buildEmbedCredit } from '../api/_lib/embed.js';
 
 const STORAGE_HINT_KEY = 'nxt:first-hint-dismissed';
 const CHIP_ROTATE_MS = 9000;
@@ -815,7 +816,8 @@ function wireShare() {
 		embedEl.value =
 			`<iframe src="${kiosk}" width="540" height="720" ` +
 			`style="border:0;border-radius:18px;overflow:hidden" ` +
-			`allow="autoplay;microphone;camera"></iframe>`;
+			`allow="autoplay;microphone;camera"></iframe>\n` +
+			buildEmbedCredit({ href: `${location.origin}/app`, text: 'made with' });
 	};
 
 	const open = () => {

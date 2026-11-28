@@ -1,4 +1,5 @@
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
+import { buildAgentCredit } from './share-panel-builders.js';
 
 /**
  * Embed modal for the agent hub page.
@@ -232,6 +233,7 @@ export class AgentEmbedModal {
 	}
 
 	_snippets(origin, id, w, h) {
+		const credit = buildAgentCredit({ origin, agentId: id });
 		return {
 			iframe:
 				`<iframe\n` +
@@ -242,7 +244,8 @@ export class AgentEmbedModal {
 				`  allow="autoplay; xr-spatial-tracking"\n` +
 				`  sandbox="allow-scripts allow-same-origin allow-popups"\n` +
 				`  loading="lazy"\n` +
-				`></iframe>`,
+				`></iframe>\n` +
+				credit,
 			webcomponent:
 				`<script type="module"\n` +
 				`  src="${origin}/dist-lib/agent-3d.js"\n` +
@@ -250,7 +253,8 @@ export class AgentEmbedModal {
 				`<agent-3d\n` +
 				`  agent-id="${id}"\n` +
 				`  style="width:${w}px;height:${h}px"\n` +
-				`></agent-3d>`,
+				`></agent-3d>\n` +
+				credit,
 			sdk:
 				`<script src="${origin}/embed-sdk.js"><\/script>\n` +
 				`<iframe\n` +
@@ -263,6 +267,7 @@ export class AgentEmbedModal {
 				`  sandbox="allow-scripts allow-same-origin allow-popups"\n` +
 				`  loading="lazy"\n` +
 				`></iframe>\n` +
+				`${credit}\n` +
 				`<script>\n` +
 				`const bridge = Agent3D.connect(\n` +
 				`  document.getElementById('agent-frame'),\n` +
@@ -286,7 +291,8 @@ export class AgentEmbedModal {
 				`  allow="autoplay; xr-spatial-tracking"\n` +
 				`  sandbox="allow-scripts allow-same-origin allow-popups"\n` +
 				`  loading="lazy"\n` +
-				`></iframe>`,
+				`></iframe>\n` +
+				credit,
 		};
 	}
 

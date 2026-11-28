@@ -13,6 +13,7 @@ import {
 	weightedAvgSessionSeconds,
 } from './widgets-helpers.js';
 import { emptyStateHTML, errorStateHTML, attachRetry } from '../../shared/state-kit.js';
+import { buildEmbedCredit } from '../../../api/_lib/embed.js';
 
 const STATS_DAYS = 7;
 const SKELETON_COUNT = 6;
@@ -383,17 +384,23 @@ function openEmbedPopover(anchor, widget) {
 			: 'https://three.ws';
 	const avatarId = widget.avatar?.id || widget.avatar_id || '';
 
+	const credit = '\n' + buildEmbedCredit({
+		href: `${origin}/widgets`,
+		text: 'widget made with',
+		subject: widget.name || '',
+		subjectHref: `${origin}/w/${widget.id}`,
+	});
 	const snippets = {
 		script:
 			`<script async src="${origin}/embed.js"\n` +
 			`        data-widget="${widget.id}"\n` +
 			`        data-reveal="interaction"\n` +
-			`        data-poster="auto"><\/script>`,
+			`        data-poster="auto"><\/script>` + credit,
 		iframe:
 			`<iframe src="${origin}/widget#widget=${widget.id}&kiosk=true"\n` +
-			`        width="600" height="600" frameborder="0"><\/iframe>`,
+			`        width="600" height="600" frameborder="0"><\/iframe>` + credit,
 		webc: avatarId
-			? `<threews-avatar avatar-id="${avatarId}" hide-chrome></threews-avatar>`
+			? `<threews-avatar avatar-id="${avatarId}" hide-chrome></threews-avatar>` + credit
 			: '<!-- This widget has no avatar attached. Pick one in the Studio first. -->',
 	};
 

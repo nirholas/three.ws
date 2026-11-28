@@ -41,6 +41,7 @@ import { originFromReq, generate, rig, viewerUrl } from '../_mcp-studio/forge-cl
 import { createPersona } from '../_lib/persona-store.js';
 import { buildEmbedUrl } from '../_lib/embodiment-artifact.js';
 import { TTS_VOICE_IDS, DEFAULT_VOICE } from '../_lib/tts-voices.js';
+import { buildEmbedCredit } from '../_lib/embed.js';
 
 const ROUTE = '/api/x402/embody';
 
@@ -93,7 +94,7 @@ const OUTPUT_EXAMPLE = {
 	glb_url: 'https://pub-xxxx.r2.dev/personas/persona_8f2a1c9d4be6f70a1b2c.glb',
 	viewer_url: 'https://three.ws/viewer?src=https%3A%2F%2Fpub-xxxx.r2.dev%2Fpersonas%2Fpersona_8f2a1c9d4be6f70a1b2c.glb',
 	profile_url: 'https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c',
-	embed_html: '<iframe src="https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c" width="480" height="640" loading="lazy" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>',
+	embed_html: '<iframe src="https://three.ws/embodiment/embed?persona=persona_8f2a1c9d4be6f70a1b2c" width="480" height="640" loading="lazy" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>\n<p style="margin:8px 0 0;font-size:13px;line-height:1.4"><a href="https://three.ws/viewer?src=https%3A%2F%2Fpub-xxxx.r2.dev%2Fpersonas%2Fpersona_8f2a1c9d4be6f70a1b2c.glb">Nova Scout</a>, 3D agent made on <a href="https://three.ws/forge">three.ws</a></p>',
 	reload_url: 'https://three.ws/api/mcp3d/persona?id=persona_8f2a1c9d4be6f70a1b2c',
 	voice: 'nova',
 	rigged: true,
@@ -223,7 +224,13 @@ function buildBundle(base, { persona, glbUrl, rigged, voice, name }) {
 		`<iframe src="${profileUrl}" width="${EMBED_W}" height="${EMBED_H}" ` +
 		`loading="lazy" style="border:0;border-radius:12px;max-width:100%" ` +
 		`allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen ` +
-		`sandbox="allow-scripts allow-same-origin allow-popups"></iframe>`;
+		`sandbox="allow-scripts allow-same-origin allow-popups"></iframe>\n` +
+		buildEmbedCredit({
+			href: `${base}/forge`,
+			text: '3D agent made on',
+			subject: name,
+			subjectHref: viewerUrl(base, personaView.glb_url),
+		});
 	return {
 		agent_id: persona.id,
 		glb_url: personaView.glb_url,

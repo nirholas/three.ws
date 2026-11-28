@@ -14,6 +14,7 @@ import { onchainBadgeHTML, ensureOnchainBadgeStyles } from '../../shared/onchain
 import { walletChipHTML, wireWalletChips } from '../../shared/agent-wallet-chip.js';
 import { rigBadgeHTML, matchesRigFilter, RIG_FILTERS } from '../../shared/rig-status.js';
 import { emptyStateEl, ensureStateKitStyles } from '../../shared/state-kit.js';
+import { buildEmbedCredit } from '../../../api/_lib/embed.js';
 ensureStateKitStyles();
 
 const PAGE_SIZE = 24;
@@ -767,7 +768,11 @@ async function copyCommunityEmbed(root, a) {
 	const safeName = (a.name || 'avatar').replace(/"/g, '&quot;');
 	const u = new URL('/a-embed.html', location.origin);
 	u.searchParams.set('avatar', a.id);
-	const snippet = `<iframe src="${u.toString()}" width="360" height="540" style="border:0;border-radius:12px;max-width:100%" allow="xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${safeName}" loading="lazy"></iframe>`;
+	const snippet = `<iframe src="${u.toString()}" width="360" height="540" style="border:0;border-radius:12px;max-width:100%" allow="xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${safeName}" loading="lazy"></iframe>\n${buildEmbedCredit({
+		href: new URL(`/avatars/${encodeURIComponent(a.id)}`, location.origin).toString(),
+		text: '3D avatar on',
+		subject: a.name || '',
+	})}`;
 	await copyText(root, snippet, 'Embed snippet copied');
 }
 
@@ -1173,7 +1178,11 @@ async function copyEmbedSnippet(root, a) {
 	}
 	const u = new URL('/a-embed.html', location.origin);
 	u.searchParams.set('avatar', a.id);
-	const snippet = `<iframe src="${u.toString()}" width="360" height="540" style="border:0;border-radius:12px;max-width:100%" allow="xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${safeName}" loading="lazy"></iframe>`;
+	const snippet = `<iframe src="${u.toString()}" width="360" height="540" style="border:0;border-radius:12px;max-width:100%" allow="xr-spatial-tracking" sandbox="allow-scripts allow-same-origin allow-popups" title="${safeName}" loading="lazy"></iframe>\n${buildEmbedCredit({
+		href: new URL(`/avatars/${encodeURIComponent(a.id)}`, location.origin).toString(),
+		text: '3D avatar on',
+		subject: a.name || '',
+	})}`;
 	try {
 		await navigator.clipboard.writeText(snippet);
 		toast(root, 'Embed snippet copied');

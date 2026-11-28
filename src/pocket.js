@@ -25,6 +25,7 @@
 
 import { xIntentUrl } from './shared/share-targets.js';
 import { pocketFrameSrc, pocketSwapAvatarId } from './pocket-screen.js';
+import { buildEmbedCredit } from '../api/_lib/embed.js';
 
 const WALK_CHANNEL = 'three-walk';
 const ROSTER_URL = '/api/agents/public?limit=24';
@@ -903,7 +904,13 @@ function embedCode() {
 	url.searchParams.set('chrome', 'off');
 	const agent = currentAgent();
 	const title = agent ? `${agent.name} on three.ws` : 'three.ws Pocket Console';
-	return `<iframe src="${url.toString()}" width="440" height="640" title="${title}" style="border:0;background:transparent" allow="xr-spatial-tracking" loading="lazy"></iframe>`;
+	const credit = buildEmbedCredit({
+		href: `${location.origin}/pocket`,
+		text: agent ? 'pocket console on' : 'Pocket Console on',
+		subject: agent ? agent.name : '',
+		subjectHref: agent ? `${location.origin}/agents/${encodeURIComponent(agent.id)}` : '',
+	});
+	return `<iframe src="${url.toString()}" width="440" height="640" title="${title}" style="border:0;background:transparent" allow="xr-spatial-tracking" loading="lazy"></iframe>\n${credit}`;
 }
 
 function renderEmbed() {

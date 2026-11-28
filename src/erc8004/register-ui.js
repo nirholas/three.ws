@@ -66,6 +66,7 @@ import { apiFetch } from '../api.js';
 import { log } from '../shared/log.js';
 import { resolveURI } from '../ipfs.js';
 import { shortAddress } from '../shared/address.js';
+import { buildEmbedCredit } from '../../api/_lib/embed.js';
 
 ensureOnchainBadgeStyles();
 
@@ -3239,14 +3240,24 @@ export class RegisterUI {
 			? `<script type="module"\n  src="${cdnBase}"\n  integrity="${integrity}"\n  crossorigin="anonymous"></script>`
 			: `<script type="module" src="${cdnBase}"></script>`;
 
+		// Both copied snippets end with a visible credit link to the agent's public page.
+		const credit = buildEmbedCredit({
+			href: pageUrl,
+			text: 'on-chain 3D agent on',
+			subject: name || '',
+			subjectHref: pageUrl,
+		});
+
 		const snippetWC =
 			`${scriptTag}\n` +
-			`<agent-3d chain-id="${chainId}" agent-id="${agentId}" style="width:420px;height:520px"></agent-3d>`;
+			`<agent-3d chain-id="${chainId}" agent-id="${agentId}" style="width:420px;height:520px"></agent-3d>\n` +
+			credit;
 		const snippetIframe =
 			`<iframe src="${embedUrl}" width="420" height="520" ` +
 			`style="border:0;border-radius:12px" ` +
 			`allow="autoplay; xr-spatial-tracking" ` +
-			`sandbox="allow-scripts allow-same-origin allow-popups"></iframe>`;
+			`sandbox="allow-scripts allow-same-origin allow-popups"></iframe>\n` +
+			credit;
 
 		const modal = document.createElement('div');
 		modal.className = 'erc8004-modal';
@@ -3269,12 +3280,12 @@ export class RegisterUI {
 				<div class="erc8004-embed-panels">
 					<div data-panel="wc" class="is-active">
 						<p class="erc8004-muted erc8004-small">Drop into any HTML page. Self-contained, no build step.</p>
-						<textarea class="erc8004-code" data-role="code-wc" readonly rows="4">${esc(snippetWC)}</textarea>
+						<textarea class="erc8004-code" data-role="code-wc" readonly rows="6">${esc(snippetWC)}</textarea>
 						<button class="erc8004-btn erc8004-btn--primary btn btn--primary" data-copy="wc">Copy</button>
 					</div>
 					<div data-panel="if" hidden>
 						<p class="erc8004-muted erc8004-small">Works everywhere iframes do — Notion, Ghost, WordPress, Substack.</p>
-						<textarea class="erc8004-code" data-role="code-if" readonly rows="4">${esc(snippetIframe)}</textarea>
+						<textarea class="erc8004-code" data-role="code-if" readonly rows="6">${esc(snippetIframe)}</textarea>
 						<button class="erc8004-btn erc8004-btn--primary btn btn--primary" data-copy="if">Copy</button>
 					</div>
 					<div data-panel="sh" hidden>

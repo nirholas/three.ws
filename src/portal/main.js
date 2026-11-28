@@ -11,6 +11,7 @@
 // you copy reopens exactly the world you were standing in.
 
 import { createPortalWorld } from './render.js';
+import { buildEmbedCredit } from '../../api/_lib/embed.js';
 
 const $ = (id) => document.getElementById(id);
 const els = {
@@ -323,7 +324,24 @@ async function copyText(text, message) {
 }
 
 function embedSnippet(url) {
-	return `<iframe src="https://three.ws/portal?url=${encodeURIComponent(url)}&embed=1" width="100%" height="520" style="border:0;border-radius:14px" loading="lazy" title="Walk ${url} in 3D"></iframe>`;
+	return `<iframe src="https://three.ws/portal?url=${encodeURIComponent(url)}&embed=1" width="100%" height="520" style="border:0;border-radius:14px" loading="lazy" title="Walk ${url} in 3D"></iframe>\n${portalCredit(url)}`;
+}
+
+// The followed link under the pasted embed. The subject is the site the portal
+// was built from (its hostname), linked to this exact portal.
+function portalCredit(url) {
+	let host = '';
+	try {
+		host = new URL(url).hostname;
+	} catch {
+		host = '';
+	}
+	return buildEmbedCredit({
+		href: 'https://three.ws/portal',
+		text: 'walked in 3D on',
+		subject: host,
+		subjectHref: `https://three.ws/portal?url=${encodeURIComponent(url)}`,
+	});
 }
 
 async function downloadGlb() {

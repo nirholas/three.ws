@@ -43,6 +43,8 @@ import { agentBodyReadable } from './shared/agent-body-access.js';
 import { renderHomeConfirmation } from './home-confirm-card.js';
 import { GROK_MENU_MODELS, grokMenuModelId } from '../api/_lib/chat-models.js';
 import { wireModelViewerFallback } from './shared/model-viewer-fallback.js';
+import { buildEmbedCredit } from '../api/_lib/embed.js';
+import { buildAgentCredit } from './share-panel-builders.js';
 
 // Talk, Pose and the client-side GLB/OBJ/USDZ export each build their own
 // three.js scene. The profile itself renders in <model-viewer>, so those three
@@ -1357,20 +1359,32 @@ function renderEmbedPanel(glbUrl) {
 	// The studio page itself is iframe-friendly; embedders can drop the page URL
 	// with `?embed=1` and we hide the chrome (handled below).
 	const iframeSrc = `${fullUrl}?embed=1`;
+	// Every copied snippet ends with a visible credit link back to this page, so
+	// an embed on someone else's site is also a plain backlink to three.ws.
+	const embedCredit =
+		mode === 'agent'
+			? buildAgentCredit({ origin: location.origin, agentId: entityId })
+			: buildEmbedCredit({
+					href: `${location.origin}/avatars/${encodeURIComponent(avatarId)}`,
+					text: '3D avatar on',
+					subject: avatar?.name || '',
+				});
 	// In agent mode the component gets `agent-id` too, so the embed talks to the
 	// agent's brain rather than just rendering its body.
 	const webComponentSnippet = `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>
 <agent-3d
   src="${glbUrl}"${mode === 'agent' ? `\n  agent-id="${entityId}"` : ''}
   style="width:480px;height:480px"
-></agent-3d>`;
+></agent-3d>
+${embedCredit}`;
 	const iframeSnippet = `<iframe
   src="${iframeSrc}"
   width="480"
   height="480"
   style="border:0;border-radius:14px"
   allow="autoplay; xr-spatial-tracking"
-></iframe>`;
+></iframe>
+${embedCredit}`;
 	const linkSnippet = fullUrl;
 	// The terminal viewer resolves an agent to its bound body through
 	// /api/agents/:id, so the agent id is the right handle in agent mode.

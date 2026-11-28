@@ -6,6 +6,8 @@
  * @module share-panel-builders
  */
 
+import { buildEmbedCredit } from '../api/_lib/embed.js';
+
 /** @type {{ readonly bg: 'transparent' | 'dark' | 'light', readonly name: boolean, readonly size: 'small' | 'medium' | 'large' }} */
 export const DEFAULT_OPTIONS = Object.freeze({
 	bg: 'transparent',
@@ -36,6 +38,20 @@ export function buildEmbedUrl({ origin, agentId, opts = {} }) {
 }
 
 /**
+ * The visible credit line under every agent snippet, linking the agent's public
+ * page. See buildEmbedCredit in api/_lib/embed.js for why every snippet has one.
+ *
+ * @param {{ origin: string, agentId: string }} args
+ * @returns {string}
+ */
+export function buildAgentCredit({ origin, agentId }) {
+	return buildEmbedCredit({
+		href: new URL(`/agents/${encodeURIComponent(agentId)}`, origin).toString(),
+		text: '3D AI agent on',
+	});
+}
+
+/**
  * Build the iframe embed snippet. Uses the canonical /agents/{id}/embed URL,
  * declares a transparent CSS background so external sites composite cleanly,
  * and lazy-loads to avoid a network hit on hosts that paginate embeds.
@@ -56,7 +72,8 @@ export function buildIframeSnippet({ origin, agentId, opts = {} }) {
 		`    allow="${allow}"\n` +
 		`    loading="lazy"\n` +
 		`    referrerpolicy="strict-origin-when-cross-origin"\n` +
-		`></iframe>`
+		`></iframe>\n` +
+		buildAgentCredit({ origin, agentId })
 	);
 }
 
@@ -78,6 +95,7 @@ export function buildWebComponentSnippet({ origin, agentId, opts = {} }) {
 		`<script type="module" src="${origin}/dist-lib/agent-3d.js"><\/script>\n` +
 		`<agent-3d ${attrs.join(' ')}\n` +
 		`    style="display:block;width:${width}px;height:${height}px"\n` +
-		`></agent-3d>`
+		`></agent-3d>\n` +
+		buildAgentCredit({ origin, agentId })
 	);
 }

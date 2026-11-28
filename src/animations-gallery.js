@@ -40,6 +40,7 @@
 
 import { GALLERY_CATEGORIES, galleryCategoryOf } from './animation-categories.js';
 import { getLivePreview } from './animations-live-preview.js';
+import { buildEmbedCredit } from '../api/_lib/embed.js';
 
 const API_BASE = '/api/animations/clips';
 const MANIFEST_URL = '/animations/manifest.json';
@@ -998,7 +999,12 @@ els.modalCopyEmbed?.addEventListener('click', async () => {
 	const clip = state.filtered[state.modalIndex];
 	if (!clip) return;
 	const src = `${location.origin}/embed/avatar?anim=${encodeURIComponent(clip.id)}`;
-	const snippet = `<iframe src="${src}" width="360" height="480" style="border:0;border-radius:12px" allow="autoplay" title="${escHtml(clip.name)} on three.ws"></iframe>`;
+	const snippet = `<iframe src="${src}" width="360" height="480" style="border:0;border-radius:12px" allow="autoplay" title="${escHtml(clip.name)} on three.ws"></iframe>\n${buildEmbedCredit({
+		href: `${location.origin}/animations`,
+		text: 'animated on',
+		subject: clip.name,
+		subjectHref: `${location.origin}/animations?clip=${encodeURIComponent(clip.id)}`,
+	})}`;
 	await navigator.clipboard.writeText(snippet).catch(() => {});
 	flashButton(els.modalCopyEmbed, 'Copied!');
 });

@@ -23,6 +23,7 @@ import { watchEmbed, embedFallbackNode } from '../shared/embed-guard.js';
 import { dextoolsTokenUrl } from '../shared/trading-terminals.js';
 import { parseTarget, SOL_RE } from './target.js';
 import { shortAddress as short } from '../shared/address.js';
+import { buildEmbedCredit } from '../../api/_lib/embed.js';
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const POLL_MS = 5000;
@@ -409,7 +410,7 @@ function wireControls(market, voice, performer) {
 	$('#cc-copy-link')?.addEventListener('click', (e) => copy(companionUrl(market), e.currentTarget));
 	$('#cc-copy-overlay')?.addEventListener('click', (e) => copy(companionUrl(market, { overlay: '1' }), e.currentTarget));
 	$('#cc-copy-embed')?.addEventListener('click', (e) => copy(
-		`<iframe src="${companionUrl(market, { embed: '1' })}" width="960" height="540" style="border:0;border-radius:12px" loading="lazy" allow="clipboard-write; fullscreen" title="Live chart companion by three.ws"></iframe>`,
+		`<iframe src="${companionUrl(market, { embed: '1' })}" width="960" height="540" style="border:0;border-radius:12px" loading="lazy" allow="clipboard-write; fullscreen" title="Live chart companion by three.ws"></iframe>\n${buildEmbedCredit({ href: `${location.origin}/chart-companion`, text: 'live chart companion on' })}`,
 		e.currentTarget,
 	));
 }

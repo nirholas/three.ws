@@ -31,6 +31,7 @@ import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { publicUrl, thumbnailUrl } from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
+import { buildEmbedCredit } from '../../_lib/embed.js';
 
 const VALID_LOD = new Set(['0', '1', '2']);
 const VALID_TEX = new Set(['128', '256', '512', '1024', '2048']);
@@ -144,6 +145,14 @@ export default wrap(async (req, res) => {
 		embedUrl = u.toString();
 	}
 
+	const credit = origin
+		? buildEmbedCredit({
+				href: origin,
+				text: '3D avatar on',
+				subject: user.display_name || user.username,
+				subjectHref: `${origin}/@${user.username}`,
+			})
+		: '';
 	res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
 	return json(res, 200, {
 		user: {
@@ -169,10 +178,10 @@ export default wrap(async (req, res) => {
 		embed_url: embedUrl,
 		embed: {
 			script: origin
-				? `<script async src="${origin}/embed.js" data-avatar="@${user.username}"></script>`
+				? `<script async src="${origin}/embed.js" data-avatar="@${user.username}"></script>\n${credit}`
 				: '',
 			iframe: embedUrl
-				? `<iframe src="${embedUrl}" width="420" height="600" frameborder="0" allow="autoplay; camera; clipboard-write; xr-spatial-tracking" style="border-radius:12px;"></iframe>`
+				? `<iframe src="${embedUrl}" width="420" height="600" frameborder="0" allow="autoplay; camera; clipboard-write; xr-spatial-tracking" style="border-radius:12px;"></iframe>\n${credit}`
 				: '',
 		},
 	});

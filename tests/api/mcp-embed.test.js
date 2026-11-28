@@ -151,6 +151,10 @@ describe('agent embed', () => {
 		expect(sc.share_url).toBe(`https://three.ws/agents/${AGENT_ID}`);
 		expect(sc.oembed_url).toContain('/api/oembed?url=');
 		expect(sc.thumbnail_url).toBe(`https://three.ws/api/agent/${AGENT_ID}/og`);
+		// A followed credit line names the agent and links its public page.
+		expect(sc.embed_html).toMatch(
+			new RegExp(`</iframe>\\n<p [^>]*><a href="https://three\\.ws/agents/${AGENT_ID}">Nova</a>, 3D AI agent on <a href="https://three\\.ws/">three\\.ws</a></p>$`),
+		);
 		// Live-preview artifact for HTML-rendering clients.
 		const resource = body.result.content.find((c) => c.type === 'resource');
 		expect(resource.resource.mimeType).toBe('text/html');
@@ -209,6 +213,9 @@ describe('forge creation embed', () => {
 		expect(sc.embed_html).toContain('https://three.ws/forge/embed?src=');
 		expect(sc.embed_html).toContain(encodeURIComponent('https://cdn.test/m.glb'));
 		expect(sc.embed_html).toContain('height="540"');
+		expect(sc.embed_html).toContain(
+			`<a href="https://three.ws/forge/share/${CREATION_ID}">a robot</a>, forged on <a href="https://three.ws/forge">three.ws</a></p>`,
+		);
 		expect(sc.share_url).toBe(`https://three.ws/forge/share/${CREATION_ID}`);
 		// /api/oembed now resolves /forge/share/:id (extractForgeId), so Forge
 		// creations get a real oEmbed URL like every other embeddable target.

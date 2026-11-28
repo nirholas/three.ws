@@ -15,6 +15,7 @@ import { openTalkMode } from './voice/talk-mode.js';
 import { downloadAvatar } from './avatar-export.js';
 import { fbxFromBlob, downloadUrl } from './remesh-convert.js';
 import { log } from './shared/log.js';
+import { buildEmbedCredit } from '../api/_lib/embed.js';
 
 // ── Live platform stats ──────────────────────────────────────────────────────
 
@@ -583,12 +584,16 @@ print(reply.json())  # {"reply": ..., "tx": "<sig>"}`,
 
 export function openEmbedModal(ctx = {}) {
 	const handle = slugify(ctx.name) || 'your-agent';
+	// Each pasted HTML snippet ends with a visible credit link back to three.ws.
+	const credit = buildEmbedCredit({ href: 'https://three.ws/', text: '3D AI agent on' });
 	const snippets = {
 		script: `<script src="https://three.ws/embed.js"
         data-widget="${handle}"
         data-type="talking-agent"
-        async></script>`,
+        async></script>
+${credit}`,
 		webcomponent: `<agent-3d agent="${handle}" mode="full"></agent-3d>
+${credit}
 <script type="module"
   src="https://three.ws/embed/agent-3d.js"></script>`,
 		react: `import { Agent3D } from '@three-ws/react';
@@ -601,7 +606,8 @@ export default function Page() {
   width="420" height="600"
   style="border:0;border-radius:14px"
   allow="microphone; autoplay"
-  loading="lazy"></iframe>`,
+  loading="lazy"></iframe>
+${credit}`,
 	};
 
 	const body = document.createElement('div');

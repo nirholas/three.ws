@@ -15,6 +15,7 @@
 //     configured embed can be shared and re-opened (e.g. /embed?avatar=x).
 
 import { openAvatarPicker } from '../avatar-gallery-picker.js';
+import { buildEmbedCredit } from '../../api/_lib/embed.js';
 
 const ORIGIN = 'https://three.ws';
 
@@ -394,7 +395,7 @@ function mountEmbedEditor(root, opts = {}) {
 		el('span', { className: 'ee-bar-title', textContent: 'Snippet' }),
 		variantRow,
 	]);
-	const snippetBox = el('textarea', { className: 'ee-snippet', readOnly: true, rows: 5, spellcheck: false });
+	const snippetBox = el('textarea', { className: 'ee-snippet', readOnly: true, rows: 8, spellcheck: false });
 
 	const copyBtn = el('button', { type: 'button', className: 'ee-copy', textContent: 'Copy snippet' });
 	copyBtn.addEventListener('click', async () => {
@@ -621,8 +622,13 @@ function buildSnippet(cfg) {
 		return '<!-- Chat embeds need an agent id — pick an agent from the gallery above -->';
 	}
 	if (cfg.mode === 'chat') {
-		return iframeSnippet(cfg, chatSrc(cfg), 'microphone; autoplay; clipboard-write');
+		return (
+			iframeSnippet(cfg, chatSrc(cfg), 'microphone; autoplay; clipboard-write') +
+			'\n' +
+			buildEmbedCredit({ href: ORIGIN, text: 'AI agent chat on' })
+		);
 	}
+	const walkCredit = buildEmbedCredit({ href: `${ORIGIN}/walk`, text: '3D avatar made with' });
 	if (cfg.snippetVariant === 'script') {
 		const attrs = [
 			`src="${ORIGIN}/walk-embed-sdk.js"`,
@@ -638,10 +644,10 @@ function buildSnippet(cfg) {
 			`data-width="${cfg.width}"`,
 			`data-height="${cfg.height}"`,
 		].filter(Boolean);
-		return `<script\n  ${attrs.join('\n  ')}><\/script>`;
+		return `<script\n  ${attrs.join('\n  ')}><\/script>\n${walkCredit}`;
 	}
 	// iframe variant
-	return iframeSnippet(cfg, walkSrc(cfg), 'accelerometer; gyroscope; autoplay');
+	return `${iframeSnippet(cfg, walkSrc(cfg), 'accelerometer; gyroscope; autoplay')}\n${walkCredit}`;
 }
 
 // Build an <iframe> snippet. Fixed-pixel by default; when cfg.responsive is set,

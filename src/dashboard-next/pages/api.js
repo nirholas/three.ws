@@ -23,6 +23,7 @@ import { requireUser, get, post, del, put, esc, relTime, ApiError } from '../api
 import { apiFetch } from '../../api.js';
 import { errorStateHTML, emptyStateHTML, skeletonHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
 import { keyToolButtons, keyLifecycleTag, wireKeyTools } from './api-key-tools.js';
+import { buildEmbedCredit } from '../../../api/_lib/embed.js';
 
 // Scopes accepted by /api/keys: match API_KEY_SCOPES in api/_lib/api-keys.js exactly.
 const SCOPES = [
@@ -1165,6 +1166,7 @@ function buildSnippet(state) {
 	const sel = state.embed.selection;
 	const { width, height, background, reveal, hideChrome, tab } = state.embed;
 	const o = origin();
+	const credit = embedSelectionCredit(sel, o);
 
 	if (tab === 'iframe') {
 		const src = embedIframeSrc(sel, { background, reveal, hideChrome });
@@ -1176,7 +1178,7 @@ function buildSnippet(state) {
 			'overflow:hidden',
 		];
 		if (background === 'transparent') styleParts.push('background:transparent');
-		return `<iframe src="${src}" allow="camera; microphone; autoplay" style="${styleParts.join(';')}" title="${esc(sel.label)}"></iframe>`;
+		return `<iframe src="${src}" allow="camera; microphone; autoplay" style="${styleParts.join(';')}" title="${esc(sel.label)}"></iframe>\n${credit}`;
 	}
 
 	if (tab === 'component') {
@@ -1190,6 +1192,7 @@ function buildSnippet(state) {
 		return [
 			`<script src="${o}/embed.js"></script>`,
 			`<threews-avatar ${attrs.join(' ')} style="${style}"></threews-avatar>`,
+			credit,
 		].join('\n');
 	}
 
@@ -1202,7 +1205,25 @@ function buildSnippet(state) {
 	if (hideChrome) dataAttrs.push('data-hide-chrome');
 	dataAttrs.push(`data-width="${width}"`);
 	dataAttrs.push(`data-height="${height}"`);
-	return `<script async src="${o}/embed.js" ${dataAttrs.join(' ')}></script>`;
+	return `<script async src="${o}/embed.js" ${dataAttrs.join(' ')}></script>\n${credit}`;
+}
+
+// Visible credit link under every copied embed snippet. Links the most specific
+// public page for the selected target: its agent, else the widget, else the avatar.
+function embedSelectionCredit(sel, o) {
+	let path;
+	let text;
+	if (sel.agentId) {
+		path = `/agents/${encodeURIComponent(sel.agentId)}`;
+		text = '3D AI agent on';
+	} else if (sel.kind === 'widget') {
+		path = `/widget/${encodeURIComponent(sel.id)}`;
+		text = '3D widget on';
+	} else {
+		path = `/avatars/${encodeURIComponent(sel.id)}`;
+		text = '3D avatar on';
+	}
+	return buildEmbedCredit({ href: `${o}${path}`, text, subject: sel.label || '' });
 }
 
 function embedIframeSrc(sel, opts) {

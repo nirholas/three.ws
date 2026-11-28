@@ -16,7 +16,9 @@
 // `kind: 'unknown'` is resolved by the caller against /api/coin/pair, which is
 // the only honest way to tell a pool account from a mint on Solana.
 //
-// Dependency-free and DOM-free so it is unit-tested directly.
+// DOM-free (its only import is the shared credit-line builder) so it is
+// unit-tested directly.
+import { buildEmbedCredit } from '../api/_lib/embed.js';
 
 const SOL_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
@@ -97,7 +99,7 @@ export function embedSnippets({ mint, pair = null, theme = 'dark', origin = 'htt
 	return {
 		scene,
 		boost,
-		sceneHtml: `<iframe src="${amp(scene)}"\n        width="420" height="560" style="border:0" loading="lazy"\n        title="Token in 3D by three.ws"></iframe>`,
+		sceneHtml: `<iframe src="${amp(scene)}"\n        width="420" height="560" style="border:0" loading="lazy"\n        title="Token in 3D by three.ws"></iframe>\n${buildEmbedCredit({ href: `${origin}/coin3d`, text: '3D token view on' })}`,
 		boostHtml: `<iframe src="${amp(boost)}"\n        width="380" height="460" style="border:0" loading="lazy"\n        title="Boost on DEXTools"></iframe>`,
 	};
 }

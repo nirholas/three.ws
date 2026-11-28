@@ -7,6 +7,7 @@
 // it shows up.
 
 import { log } from './shared/log.js';
+import { buildEmbedCredit } from '../api/_lib/embed.js';
 const main = document.getElementById('main');
 
 const handle = (() => {
@@ -65,12 +66,20 @@ async function render(name) {
 	];
 
 	const embedUrl = data.embed_url || `${location.origin}/embed/avatar/${user.username}`;
-	const scriptSnippet =
+	// Both copied snippets end with a visible credit link to this public profile.
+	const credit = buildEmbedCredit({
+		href: `${location.origin}/@${encodeURIComponent(user.username)}`,
+		text: '3D avatar on',
+		subject: `@${user.username}`,
+	});
+	const scriptSnippet = `${
 		data.embed?.script ||
-		`<script async src="${location.origin}/embed.js" data-avatar="@${user.username}"></script>`;
-	const iframeSnippet =
+		`<script async src="${location.origin}/embed.js" data-avatar="@${user.username}"></script>`
+	}\n${credit}`;
+	const iframeSnippet = `${
 		data.embed?.iframe ||
-		`<iframe src="${embedUrl}" width="420" height="600" frameborder="0" allow="autoplay; camera; clipboard-write; xr-spatial-tracking" style="border-radius:12px;"></iframe>`;
+		`<iframe src="${embedUrl}" width="420" height="600" frameborder="0" allow="autoplay; camera; clipboard-write; xr-spatial-tracking" style="border-radius:12px;"></iframe>`
+	}\n${credit}`;
 
 	main.innerHTML = `
 		<section class="stage">

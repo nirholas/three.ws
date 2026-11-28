@@ -11,6 +11,7 @@ import { mountMoodInspector } from './agents/mood-inspector.js';
 import { SLOTS, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
 // Boot the mood engine + embodiment so the edit-page avatar reflects mood live.
 import './agents/mood-embodiment.js';
+import { buildAgentCredit } from './share-panel-builders.js';
 
 const API_BASE = '/api';
 const params = new URLSearchParams(location.search);
@@ -2889,7 +2890,8 @@ function updateEmbedPreview() {
   const oembedUrl = `${origin}/api/oembed?url=${encodeURIComponent(pageUrl)}`;
 
   const iframeAttrs = `src="${embedUrl}" width="${w}" height="${h}" frameborder="0" allow="microphone; autoplay; clipboard-write" style="border:0;border-radius:12px;background:#000"`;
-  $('embed-iframe-code').value = `<iframe ${iframeAttrs}></iframe>`;
+  // The copied snippet carries a visible credit link; the live preview below does not.
+  $('embed-iframe-code').value = `<iframe ${iframeAttrs}></iframe>\n${buildAgentCredit({ origin, agentId })}`;
   $('embed-link').value = pageUrl;
   $('embed-oembed').value = oembedUrl;
   $('embed-open').href = pageUrl;
