@@ -14,6 +14,7 @@ import { withPayoutStepUp, cooldownNotice } from '../payout-step-up.js';
 import { shortAddress } from '../shared/address.js';
 import { mountSuggestedSkills } from './suggested-skills.js';
 import { buildAgentCredit } from '../share-panel-builders.js';
+import { buildEmbedCredit } from '../../api/_lib/embed.js';
 
 function escapeHtml(s) {
 	return String(s == null ? '' : s)
@@ -4342,7 +4343,7 @@ async function openWidgetDrawer(w, ctx) {
 	const previewSrc = `/widget#widget=${encodeURIComponent(w.id)}&kiosk=true&preview=1&poster=${encodeURIComponent(drawerPoster)}`;
 	const pageUrl = `${origin}/w/${encodeURIComponent(w.id)}`;
 	const iframeSnippet = makeIframeSnippet(w, pageUrl, 600, 600);
-	const scriptSnippet = `<script async src="${origin}/embed.js" data-widget="${esc(w.id)}"></script>`;
+	const scriptSnippet = `<script async src="${origin}/embed.js" data-widget="${esc(w.id)}"></script>\n${widgetCredit(w, pageUrl)}`;
 	const reactSnippet = [
 		`import { useRef } from 'react';`,
 		``,
@@ -4920,9 +4921,23 @@ function clampInt(v, lo, hi, fallback) {
 	return Math.max(lo, Math.min(hi, n));
 }
 
+// Credit line under a copied widget snippet: the widget's name links its public
+// /w/<id> page, "three.ws" links the widget gallery. See buildEmbedCredit.
+function widgetCredit(w, pageUrl) {
+	return buildEmbedCredit({
+		href: `${new URL(pageUrl).origin}/widgets`,
+		text: 'widget made with',
+		subject: w.name || '',
+		subjectHref: pageUrl,
+	});
+}
+
 function makeIframeSnippet(w, pageUrl, width, height) {
 	const title = (w.name || 'Widget').replace(/"/g, '&quot;');
-	return `<iframe src="${pageUrl}" width="${width}" height="${height}" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; xr-spatial-tracking; clipboard-write" title="${title}" loading="lazy"></iframe>`;
+	return (
+		`<iframe src="${pageUrl}" width="${width}" height="${height}" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; xr-spatial-tracking; clipboard-write" title="${title}" loading="lazy"></iframe>\n` +
+		widgetCredit(w, pageUrl)
+	);
 }
 
 // ── Avatar embed modal ──────────────────────────────────────────────────────
@@ -5004,7 +5019,13 @@ function openAvatarEmbedModal(avatar) {
 	const safeName = (avatar.name || 'avatar').replace(/"/g, '&quot;');
 	const refresh = () => {
 		const url = buildEmbedUrl();
-		snipEl.textContent = `<iframe src="${url}" width="${dim.width}" height="${dim.height}" style="border:0;border-radius:12px;max-width:100%" allow="xr-spatial-tracking" title="${safeName}" loading="lazy"></iframe>`;
+		const credit = buildEmbedCredit({
+			href: `${location.origin}/`,
+			text: '3D avatar on',
+			subject: avatar.name || '',
+			subjectHref: `${location.origin}/avatars/${encodeURIComponent(avatar.id)}`,
+		});
+		snipEl.textContent = `<iframe src="${url}" width="${dim.width}" height="${dim.height}" style="border:0;border-radius:12px;max-width:100%" allow="xr-spatial-tracking" title="${safeName}" loading="lazy"></iframe>\n${credit}`;
 		const maxW = 480;
 		const maxH = 300;
 		const scale = Math.min(maxW / dim.width, maxH / dim.height, 1);

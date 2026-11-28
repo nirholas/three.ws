@@ -906,7 +906,7 @@ function embedCode() {
 	const title = agent ? `${agent.name} on three.ws` : 'three.ws Pocket Console';
 	const credit = buildEmbedCredit({
 		href: `${location.origin}/pocket`,
-		text: agent ? 'pocket console on' : 'Pocket Console on',
+		text: agent ? '3D AI agent on' : 'Pocket Console on',
 		subject: agent ? agent.name : '',
 		subjectHref: agent ? `${location.origin}/agents/${encodeURIComponent(agent.id)}` : '',
 	});

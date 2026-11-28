@@ -34,7 +34,7 @@ const surfaces = [
 	['src/agent-edit.js', ['buildAgentCredit({ origin, agentId })', "$('embed-iframe-code').value"]],
 	['src/agent-detail-market.js', ['buildAgentCredit({ origin: location.origin, agentId })', '></agent-3d>\\n${credit}', '></iframe>\\n${credit}']],
 	['src/handle.js', ['buildEmbedCredit({', '/@${encodeURIComponent(user.username)}', '}\\n${credit}`']],
-	['src/dashboard/dashboard.js', ['buildAgentCredit({ origin, agentId: agent.id })', '</iframe>\\n${credit}', 'credit,\n\t\t`<script src="${origin}/embed-sdk.js">']],
+	['src/dashboard/dashboard.js', ['buildAgentCredit({ origin, agentId: agent.id })', '</iframe>\\n${credit}', 'credit,\n\t\t`<script src="${origin}/embed-sdk.js">', '</iframe>\\n` +\n\t\twidgetCredit(w, pageUrl)', 'data-widget="${esc(w.id)}"></script>\\n${widgetCredit(w, pageUrl)}', "text: '3D avatar on'", 'title="${safeName}" loading="lazy"></iframe>\\n${credit}`']],
 	['src/erc8004/register-ui.js', ['buildEmbedCredit({', 'href: pageUrl', '</agent-3d>\\n` +\n\t\t\tcredit', '</iframe>\\n` +\n\t\t\tcredit']],
 	['src/dashboard-next/pages/avatars.js', ['/avatars/${encodeURIComponent(a.id)}', '</iframe>\\n${buildEmbedCredit(']],
 	['src/dashboard-next/pages/community-avatars.js', ['/avatars/${encodeURIComponent(a.id)}', '</iframe>\\n${buildEmbedCredit(']],
