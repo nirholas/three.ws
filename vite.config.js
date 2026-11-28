@@ -994,6 +994,7 @@ const appConfig = {
 				// chunks instead of shipping unresolved bare imports.
 				'embodiment-embed': resolve(__dirname, 'pages/embodiment/embed.html'),
 				integrations: resolve(__dirname, 'pages/integrations.html'),
+				'integrations-basecamp': resolve(__dirname, 'pages/integrations-basecamp.html'),
 				partners: resolve(__dirname, 'pages/partners.html'),
 				'partner-benefits': resolve(__dirname, 'pages/partner-benefits.html'),
 				sperax: resolve(__dirname, 'pages/sperax.html'),
@@ -2866,6 +2867,9 @@ const appConfig = {
 						filePath = resolve(root, 'pages/office-powerpoint-auth.html');
 					else if (!filePath && /^\/office\/powerpoint\/?$/.test(path))
 						filePath = resolve(root, 'pages/office-powerpoint.html');
+					// /integrations/basecamp → the Basecamp chatbot setup page. Mirrors vercel.json.
+					else if (!filePath && /^\/integrations\/basecamp\/?$/.test(path))
+						filePath = resolve(root, 'pages/integrations-basecamp.html');
 					// /microsoft/teams-tab → the Agents tab of the three.ws Teams app.
 					else if (!filePath && /^\/microsoft\/teams-tab\/?$/.test(path))
 						filePath = resolve(root, 'pages/microsoft-teams-tab.html');

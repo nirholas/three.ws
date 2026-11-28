@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>three.ws for Basecamp · 3D models from a Campfire chat · three.ws</title>
+	<meta name="description" content="Add the three.ws chatbot to Basecamp. Type !threews and a description in any Campfire or Ping and get a textured 3D model back in the room, with a 3D viewer, AR on your phone and a GLB download." />
+	<link rel="canonical" href="https://three.ws/integrations/basecamp" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="three.ws for Basecamp" />
+	<meta property="og:description" content="Type !threews and a description in a Basecamp Campfire or Ping and get a textured 3D model back in the room." />
+	<meta property="og:url" content="https://three.ws/integrations/basecamp" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=three.ws+for+Basecamp&amp;d=Type+!threews+and+a+description+in+a+Campfire+or+Ping+and+get+a+textured+3D+model+back+in+the+room.&amp;p=%2Fintegrations%2Fbasecamp" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content="three.ws for Basecamp" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="three.ws for Basecamp" />
+	<meta name="twitter:description" content="Type !threews and a description in a Basecamp Campfire or Ping and get a textured 3D model back in the room." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=three.ws+for+Basecamp&amp;d=Type+!threews+and+a+description+in+a+Campfire+or+Ping+and+get+a+textured+3D+model+back+in+the+room.&amp;p=%2Fintegrations%2Fbasecamp" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<link rel="stylesheet" href="/src/integrations-basecamp.css" />
+	<script src="/model-viewer-meshopt.js" defer></script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"three.ws for Basecamp","applicationCategory":"DesignApplication","operatingSystem":"Web","description":"A Basecamp chatbot that turns a text description typed in a Campfire or Ping into a textured 3D model, posted back in the room with a 3D viewer, AR and a GLB download.","url":"https://three.ws/integrations/basecamp","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"HowTo","name":"Add the three.ws chatbot to Basecamp","step":[{"@type":"HowToStep","name":"Create a command URL","text":"Sign in to three.ws, open Settings, find Basecamp chatbot and create a command URL. Copy it: it is shown once."},{"@type":"HowToStep","name":"Add the chatbot in Basecamp","text":"A Basecamp admin opens any Campfire, chooses Configure chatbots from the ••• menu, adds a chatbot named threews and pastes the command URL."},{"@type":"HowToStep","name":"Ask for a model","text":"Type !threews followed by a description in any Campfire or Ping. The finished model is posted in the same room."}]}]}</script>
+</head>
+<body class="bcx-body">
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="bcx">
+		<section class="bcx-hero" aria-labelledby="bcxTitle">
+			<div class="bcx-hero__copy">
+				<p class="bcx-eyebrow"><span class="bcx-eyebrow__mark" aria-hidden="true"></span>Integration · Basecamp</p>
+				<h1 id="bcxTitle">Make 3D models without leaving the Basecamp chat.</h1>
+				<p class="bcx-lede">Add the three.ws chatbot to your Basecamp account, then type <code>!threews</code> and a description in any Campfire or Ping. A textured 3D model comes back in the same room in a minute or two, with a picture of it, a 3D viewer, a link to place it in your space with AR, and a GLB file ready for Blender, Unity, Unreal or a website.</p>
+				<div class="bcx-actions">
+					<a class="bcx-btn bcx-btn--primary" href="/dashboard/settings#basecamp-chatbot">Create your command URL</a>
+					<a class="bcx-btn" href="#setup">Setup takes two minutes</a>
+				</div>
+				<p class="bcx-note">Free with a three.ws account. Models are made on the free Forge lane and saved, unlisted, to the account that created the command URL.</p>
+			</div>
+
+			<figure class="bcx-chat" aria-label="An example exchange in a Basecamp Campfire">
+				<div class="bcx-chat__bar"><span class="bcx-chat__room">Campfire · Product launch</span></div>
+				<ol class="bcx-chat__lines">
+					<li class="bcx-line">
+						<span class="bcx-line__avatar" aria-hidden="true">M</span>
+						<div class="bcx-line__body">
+							<p class="bcx-line__who">Maya</p>
+							<p><code>!threews a low-poly lighthouse on a rocky island</code></p>
+						</div>
+					</li>
+					<li class="bcx-line bcx-line--bot">
+						<span class="bcx-line__avatar bcx-line__avatar--bot" aria-hidden="true"><img src="/favicon.svg" alt="" width="18" height="18" /></span>
+						<div class="bcx-line__body">
+							<p class="bcx-line__who">threews</p>
+							<p><strong>Making a 3D model:</strong> a low-poly lighthouse on a rocky island<br />It will be posted here when it is ready, usually within two minutes.</p>
+						</div>
+					</li>
+					<li class="bcx-line bcx-line--bot">
+						<span class="bcx-line__avatar bcx-line__avatar--bot" aria-hidden="true"><img src="/favicon.svg" alt="" width="18" height="18" /></span>
+						<div class="bcx-line__body">
+							<p class="bcx-line__who">threews</p>
+							<p><span class="bcx-mention">@Maya</span> <strong>Your 3D model is ready:</strong> a low-poly lighthouse on a rocky island</p>
+							<div class="bcx-model">
+								<model-viewer
+									src="https://three.ws/cdn/forge/anon/fb4e585f-e77a-461f-a9f0-522fe4e0289e.glb"
+									poster="https://three.ws/api/render/glb?glbUrl=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Ffb4e585f-e77a-461f-a9f0-522fe4e0289e.glb&amp;width=640&amp;height=640"
+									alt="A low-poly lighthouse on a rocky island, generated by the three.ws chatbot from the Campfire line above"
+									camera-controls
+									auto-rotate
+									auto-rotate-delay="0"
+									interaction-prompt="none"
+									shadow-intensity="0.8"
+									exposure="1.05"
+									loading="lazy"
+								></model-viewer>
+							</div>
+							<p class="bcx-links">
+								<a href="https://three.ws/viewer?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Ffb4e585f-e77a-461f-a9f0-522fe4e0289e.glb">Open in 3D</a>
+								<span aria-hidden="true">|</span>
+								<a href="https://three.ws/api/ar?src=https%3A%2F%2Fthree.ws%2Fcdn%2Fforge%2Fanon%2Ffb4e585f-e77a-461f-a9f0-522fe4e0289e.glb&amp;title=a%20low-poly%20lighthouse%20on%20a%20rocky%20island">View in AR on your phone</a>
+								<span aria-hidden="true">|</span>
+								<a href="https://three.ws/cdn/forge/anon/fb4e585f-e77a-461f-a9f0-522fe4e0289e.glb" download>Download GLB</a>
+							</p>
+						</div>
+					</li>
+				</ol>
+				<figcaption class="bcx-chat__caption">A real reply: this lighthouse and these links came from the chatbot on 28 November 2026. Drag the model to turn it.</figcaption>
+			</figure>
+		</section>
+
+		<section id="setup" class="bcx-section" aria-labelledby="bcxSetup">
+			<h2 id="bcxSetup" class="bcx-h2">Set it up</h2>
+			<p class="bcx-sub">You need a free three.ws account and someone who is an admin of your Basecamp account. One chatbot works in every Campfire and Ping in that account.</p>
+			<ol class="bcx-steps">
+				<li class="bcx-step">
+					<span class="bcx-step__n" aria-hidden="true">1</span>
+					<h3 class="bcx-h3">Create a command URL on three.ws</h3>
+					<p><a href="/login?next=%2Fdashboard%2Fsettings%23basecamp-chatbot">Sign in</a> (or <a href="/register?next=%2Fdashboard%2Fsettings%23basecamp-chatbot">create an account</a>), open <a href="/dashboard/settings#basecamp-chatbot">Settings, Basecamp chatbot</a>, give it a name such as the Basecamp account it is for, and choose <strong>Create command URL</strong>.</p>
+					<p>Copy the URL straight away. It is shown once, because it works like a password: anyone who has it can make models on your account.</p>
+				</li>
+				<li class="bcx-step">
+					<span class="bcx-step__n" aria-hidden="true">2</span>
+					<h3 class="bcx-h3">Add the chatbot in Basecamp</h3>
+					<p>In Basecamp, open any project's Campfire. Open the <strong>•••</strong> menu at the top of the Campfire and choose <strong>Configure chatbots</strong>, then <strong>Add a new chatbot</strong>.</p>
+					<p>Name it <code>threews</code> (that is the word people type after the <code>!</code>), paste the command URL into <strong>Command URL</strong>, and save. Only Basecamp admins and owners see Configure chatbots.</p>
+				</li>
+				<li class="bcx-step">
+					<span class="bcx-step__n" aria-hidden="true">3</span>
+					<h3 class="bcx-h3">Ask for a model</h3>
+					<p>In any Campfire or Ping, type <code>!threews</code> and describe what you want, for example <code>!threews a brass desk lamp with a green glass shade</code>.</p>
+					<p>The chatbot answers at once, then posts the finished model in the same room and mentions you. Everyone in the room can open it in 3D, view it in AR or download the GLB.</p>
+				</li>
+			</ol>
+		</section>
+
+		<section class="bcx-section" aria-labelledby="bcxCommands">
+			<h2 id="bcxCommands" class="bcx-h2">Commands</h2>
+			<dl class="bcx-commands">
+				<div class="bcx-cmd">
+					<dt><code>!threews &lt;description&gt;</code></dt>
+					<dd>Makes a textured 3D model of the description on the standard quality setting. Descriptions can be 3 to 1,000 characters. A short, concrete object works best: what it is, what it is made of, its colours and style.</dd>
+				</div>
+				<div class="bcx-cmd">
+					<dt><code>!threews &lt;description&gt; --draft</code></dt>
+					<dd>A quicker, lighter model for trying ideas.</dd>
+				</div>
+				<div class="bcx-cmd">
+					<dt><code>!threews &lt;description&gt; --high</code></dt>
+					<dd>More detail and better textures. It takes longer.</dd>
+				</div>
+				<div class="bcx-cmd">
+					<dt><code>!threews help</code></dt>
+					<dd>Shows these commands in the room.</dd>
+				</div>
+			</dl>
+		</section>
+
+		<section class="bcx-section bcx-grid" aria-labelledby="bcxPrivacy">
+			<div>
+				<h2 id="bcxPrivacy" class="bcx-h2">What it can see and do</h2>
+				<ul class="bcx-list">
+					<li><strong>Only the command line.</strong> Basecamp sends three.ws the text after <code>!threews</code>, the name of the person who typed it, and a reply address for that one room. The chatbot never reads other messages, files, to-dos or people in your Basecamp account, and it has no Basecamp login.</li>
+					<li><strong>It only posts back to Basecamp.</strong> Replies go to the room the command came from, through the reply address Basecamp provided, and only to Basecamp's own servers.</li>
+					<li><strong>Models belong to you.</strong> Each model is saved, unlisted, to the three.ws account that created the command URL: it is owned by that account and not listed publicly. Anyone with the links in the room can open it.</li>
+					<li><strong>The command URL is stored as a hash.</strong> three.ws keeps only a fingerprint of it, never the URL itself, and records how many commands it has served, when it was last used and which Basecamp account used it.</li>
+				</ul>
+			</div>
+			<div>
+				<h2 class="bcx-h2">Revoke, limits and cost</h2>
+				<ul class="bcx-list">
+					<li><strong>Revoke any time.</strong> In <a href="/dashboard/settings#basecamp-chatbot">Settings, Basecamp chatbot</a>, choose <strong>Revoke</strong>. The chatbot stops making models at once and tells anyone who tries that its URL was revoked. Remove it from Configure chatbots in Basecamp too.</li>
+					<li><strong>Limits.</strong> Each command URL accepts 20 models every 10 minutes, and an account can have 10 active command URLs. The same request repeated within a minute is recognised and made once.</li>
+					<li><strong>Cost.</strong> Free. Models use the free Forge lane on three.ws servers; you do not need a paid plan or an API key.</li>
+				</ul>
+			</div>
+		</section>
+
+		<section class="bcx-section" aria-labelledby="bcxTrouble">
+			<h2 id="bcxTrouble" class="bcx-h2">Troubleshooting</h2>
+			<div class="bcx-faq">
+				<details>
+					<summary>Nothing happens when I type <code>!threews</code></summary>
+					<p>Check that the chatbot is named exactly <code>threews</code> in Configure chatbots, and that the command starts with <code>!threews</code> followed by a space. Basecamp only sends the command if the name matches.</p>
+				</details>
+				<details>
+					<summary>The reply says "This three.ws chatbot URL is not recognized"</summary>
+					<p>The URL was mistyped or cut off when it was pasted. Create a new one in <a href="/dashboard/settings#basecamp-chatbot">Settings</a> and paste it into the chatbot's Command URL in Basecamp.</p>
+				</details>
+				<details>
+					<summary>The reply says the chatbot URL was revoked</summary>
+					<p>Its command URL was revoked on three.ws. The account owner can create a new URL and update the chatbot in Basecamp.</p>
+				</details>
+				<details>
+					<summary>It said it was making a model, but nothing came back</summary>
+					<p>Most models arrive within two minutes; high quality models and busy periods can take longer. If generation fails, the chatbot posts that it failed and why. If neither arrives within 15 minutes, try again with <code>--draft</code>. If it keeps happening, email <a href="mailto:support@three.ws">support@three.ws</a> with the time and the description you typed.</p>
+				</details>
+				<details>
+					<summary>It says Basecamp is sending more models than it can make</summary>
+					<p>A command URL accepts 20 models every 10 minutes, shared by everyone in the Basecamp account. Wait a few minutes and ask again.</p>
+				</details>
+				<details>
+					<summary>Can I use it in a Ping?</summary>
+					<p>Yes. The chatbot works in Campfires and in Pings (one-to-one and group). Basecamp keeps a Ping's reply address for 24 hours, which is far longer than a model takes.</p>
+				</details>
+			</div>
+		</section>
+
+		<aside class="bcx-foot" aria-label="About this integration">
+			<p>Prefer the full studio? <a href="/forge">Forge</a> makes models in the browser with more controls, and <a href="/integrations">other integrations</a> bring three.ws into the tools you already use.</p>
+			<p class="bcx-legal">Basecamp is a trademark of 37signals LLC. three.ws is an independent service and is not affiliated with or endorsed by 37signals. Questions or problems: <a href="mailto:support@three.ws">support@three.ws</a>.</p>
+		</aside>
+	</main>
+
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+</body>
+</html>
