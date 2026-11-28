@@ -40,7 +40,7 @@ const { createDrainer } = await import('../src/drain.js');
 const store = await import('../../../api/_lib/gateway/store.js');
 
 const quietLog = { debug() {}, info() {}, warn() {}, error() {} };
-const OAUTH_ANSWER = { ok: true, access_token: 'xoxb-fixture-market-token', team: { id: 'T0MARKET01', name: 'Fixture Co' }, bot_user_id: 'U0MARKBOT1', app_id: 'A0FIXAPP01' };
+const OAUTH_ANSWER = { ok: true, access_token: 'fixture-bot-token-market', team: { id: 'T0MARKET01', name: 'Fixture Co' }, bot_user_id: 'U0MARKBOT1', app_id: 'A0FIXAPP01' };
 
 let server;
 const realFetch = globalThis.fetch;
@@ -114,7 +114,7 @@ describe('slack install without a three.ws account (Marketplace and /slack)', ()
 		expect(slackCalls[0].body).toMatchObject({ code: 'fixture-code', client_id: '1111111111.2222222222' });
 		const [row] = await installs();
 		expect(row).toMatchObject({ team_id: 'T0MARKET01', team_name: 'Fixture Co', bot_user_id: 'U0MARKBOT1', installed_by: null, revoked_at: null });
-		expect(row.bot_token).not.toContain('xoxb-fixture-market-token');
+		expect(row.bot_token).not.toContain('fixture-bot-token-market');
 		expect(res.setCookie).toMatch(/Max-Age=0/);
 	});
 
