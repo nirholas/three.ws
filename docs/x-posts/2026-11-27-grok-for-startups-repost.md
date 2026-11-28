@@ -12,7 +12,7 @@ The `[NEW]` markers are notes for us, not post text. Strip them when pasting.
 
 ## What changed from the 2026-11-25 thread
 
-- **Post 1:** "Now we're working directly with the xAI, @SpaceXSI and Cursor teams on co-marketing" is gone. The opening line now says the approval comes with credits across Grok, Grok Build, Grok Bot and the Grok API: the program terms list those as the Eligible Services and let a participant say publicly that it is in the program, while the credit amount, tranche structure and expiry in the approval email stay confidential. @SpaceXSI stays as a plain company mention at the end of the opening line, with no relationship claim.
+- **Post 1:** "Now we're working directly with the xAI, @SpaceXSI and Cursor teams on co-marketing" is gone. Post 1 is rewritten around the 3D layer on top of superintelligence (owner, 2026-11-27); it keeps "first crypto-native company", the marketplace line and the production-logs line, and says the program comes with credits across Grok, Grok Build, Grok Bot and the Grok API: the program terms list those as the Eligible Services and let a participant say publicly that it is in the program, while the credit amount, tranche structure and expiry in the approval email stay confidential. @SpaceXSI stays as a plain company mention at the end of the opening paragraph, with no relationship claim.
 - **Post 6:** the personal tag @ericzakariasson is gone. Tags are company accounts only, never individual staff (owner, 2026-11-27).
 - **Post 10 (was 7):** "2 errors" is gone from the text, and the usage card shows the 718 distinct prompts in that slot instead (owner, 2026-11-27).
 - Nothing else in the original nine (now posts 1 to 4, 6, 8, 10, 11 and 13) changed.
@@ -26,11 +26,11 @@ The `[NEW]` markers are notes for us, not post text. Strip them when pasting.
 
 **1/ (media: [`public/x-media/grok-startups-announce/head.mp4`](../../public/x-media/grok-startups-announce/head.mp4), still [`public/x-media/grok-startups-announce/head.png`](../../public/x-media/grok-startups-announce/head.png))**
 
-> three.ws is the first crypto-native company approved for xAI's Grok for Startups program, with credits across Grok, Grok Build, Grok Bot and the Grok API. @SpaceXSI
+> Superintelligence is here, and three.ws is building the 3D layer on top of it. xAI approved us for Grok for Startups, the first crypto-native company in the program. @SpaceXSI
 >
-> Grok builds in 3D with us, and our plugin is headed to the Grok Bot, Grok Build and @cursor_ai marketplaces.
+> Ask Grok for anything in 3D and get back a real model you can spin, download, animate or drop into a page. No 3D software. No modeling skills. No new app. Just the Grok you already use.
 >
-> In plain terms: you ask Grok for something in 3D, and you get back a real model you can spin, download, animate or drop into a page. No 3D software, no modeling skills, no new app to learn. Just the Grok you already use.
+> Our plugins are headed to the Grok Bot, Grok Build and @cursor_ai marketplaces. The program comes with credits across Grok, Grok Build, Grok Bot and the Grok API. More compute, faster shipping, bigger swings at what 3D can be.
 >
 > Every number in this thread comes from our own production logs.
 
