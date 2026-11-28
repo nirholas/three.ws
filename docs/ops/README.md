@@ -38,6 +38,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [runtime-flags.md](runtime-flags.md) | DB-backed feature flags that flip platform behavior without a redeploy. |
 | [x402-discovery-listings.md](x402-discovery-listings.md) | Getting paid endpoints listed and ranked on x402scan, the Bazaar, and other directories. |
 | [seo-keyword-plan.md](seo-keyword-plan.md) | Verified keyword landscape and content calendar (snapshot dated 2026-07-17). |
+| [backlinks.md](backlinks.md) | Why Ahrefs DR fell from 35 (DR3) to 7 (DR4), the embed credit link, `npm run seo:backlinks`, and the ranked link work that needs a person. |
 | [search-indexing.md](search-indexing.md) | How pages reach a search index: the three serving paths, the crawler-page duplicate cluster and its fix, robots.txt vs noindex, SPA soft 404s, and how to check a URL as a crawler. |
 | [nvidia-inception-response-2026-09-14.md](nvidia-inception-response-2026-09-14.md) | Private correspondence record and owner-action runbook for NVIDIA's catalog, co-marketing, technical-resource, and invite-only GTC Pavilion reply. |
 | [wallet-key-migration.md](wallet-key-migration.md) | Incident record: stranded pool-agent wallets after the WALLET_ENCRYPTION_KEY migration. Also the standing runbook for where production's credentials live in Secret Manager, how to publish a new version, and the owner-gated master-wallet rotation. |

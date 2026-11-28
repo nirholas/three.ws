@@ -90,6 +90,7 @@ Conversion: the `/m/:id` call to action links to `/forge?from=share`. The Forge 
 
 ## Related
 
+- [docs/ops/backlinks.md](./ops/backlinks.md): off-page authority, the embed credit link and the backlink readout
 - [docs/guards.md](./guards.md): the full guard registry, including `audit:seo` and `audit:pages`
 - [api/_lib/safe-text.js](../api/_lib/safe-text.js): why every string that reaches JSON-LD is truncated on grapheme boundaries
 - [STRUCTURE.md](../STRUCTURE.md): where each product surface lives
