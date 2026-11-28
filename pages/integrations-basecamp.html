@@ -32,7 +32,8 @@
 	<link rel="stylesheet" href="/mobile.css" />
 	<link rel="stylesheet" href="/footer.css" />
 	<link rel="stylesheet" href="/src/integrations-basecamp.css" />
-	<script src="/model-viewer-meshopt.js" defer></script>
+	<script src="/model-viewer-meshopt.js"></script>
+	<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.4.0/dist/model-viewer.min.js"></script>
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"three.ws for Basecamp","applicationCategory":"DesignApplication","operatingSystem":"Web","description":"A Basecamp chatbot that turns a text description typed in a Campfire or Ping into a textured 3D model, posted back in the room with a 3D viewer, AR and a GLB download.","url":"https://three.ws/integrations/basecamp","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"HowTo","name":"Add the three.ws chatbot to Basecamp","step":[{"@type":"HowToStep","name":"Create a command URL","text":"Sign in to three.ws, open Settings, find Basecamp chatbot and create a command URL. Copy it: it is shown once."},{"@type":"HowToStep","name":"Add the chatbot in Basecamp","text":"A Basecamp admin opens any Campfire, chooses Configure chatbots from the ••• menu, adds a chatbot named threews and pastes the command URL."},{"@type":"HowToStep","name":"Ask for a model","text":"Type !threews followed by a description in any Campfire or Ping. The finished model is posted in the same room."}]}]}</script>
 </head>
 <body class="bcx-body">
