@@ -519,6 +519,7 @@
 		"test:core": "vitest run",
 		"test:serial": "vitest run --maxWorkers=1",
 		"gateway:ship-check": "node workers/agent-gateway/scripts/ship-check.mjs",
+		"slack:app": "node scripts/slack-app.mjs",
 		"approvals:telegram-live-check": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/approvals-telegram-live-check.mjs",
 		"approvals:teams-live-check": "node scripts/approvals-teams-live-check.mjs",
 		"test:gate": "node scripts/test-gate.mjs",
