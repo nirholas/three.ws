@@ -1,0 +1,17 @@
+{
+	"about": "Third-party pages known to mention three.ws. `npm run seo:backlinks` fetches each one and reports whether it links to three.ws with a link search engines follow. Add a page here the day it goes live. Rationale and the latest readout: docs/ops/backlinks.md.",
+	"placements": [
+		{ "url": "https://marketplace.microsoft.com/en-us/product/three-ws.three-ws", "owner": "Microsoft Marketplace listing (ours)" },
+		{ "url": "https://community.ibm.com/community/user/blogs/jessica-swanson/2026/06/11/threews-the-open-on-chain-platform-for-3d-agents", "owner": "IBM Community blog" },
+		{ "url": "https://community.ibm.com/community/user/blogs/jessica-swanson/2026/06/24/spotlight-three-ws-ibm-strategic-partner", "owner": "IBM Community blog" },
+		{ "url": "https://community.ibm.com/community/user/discussion/the-internets-second-species-has-arrived-how-threews-built-it", "owner": "IBM Build Partners discussion" },
+		{ "url": "https://runtimewire.com/article/three-ws-open-source-3d-ai-agent-stack", "owner": "runtimewire.com editorial" },
+		{ "url": "https://hackernoon.com/threews-earns-a-781-proof-of-usefulness-score-by-building-embeddable-3d-ai-agents", "owner": "HackerNoon" },
+		{ "url": "https://devpost.com/software/three-ws", "owner": "Devpost project (ours)" },
+		{ "url": "https://vibehackers.io/mcp/three-ws", "owner": "vibehackers MCP directory" },
+		{ "url": "https://claudemarketplaces.com/mcp/io.github.nirholas/three.ws", "owner": "claudemarketplaces MCP directory" },
+		{ "url": "https://github.com/nirholas/three.ws", "owner": "GitHub repo (ours)" },
+		{ "url": "https://www.producthunt.com/p/three-ws-2", "owner": "Product Hunt (ours)" },
+		{ "url": "https://www.npmjs.com/package/@three-ws/avatar", "owner": "npm package (ours)" }
+	]
+}
