@@ -194,6 +194,6 @@ describe('empty state', () => {
 		window.localStorage.setItem('three-ws:forge:api-key', KEY);
 		mount();
 		await screen.findByText(/None of the 4 records has a prompt in "Status" yet/);
-		expect(screen.getByRole('button', { name: 'Generate 0 models' }).disabled).toBe(true);
+		expect(screen.getByRole('button', { name: 'No prompts yet' }).disabled).toBe(true);
 	});
 });

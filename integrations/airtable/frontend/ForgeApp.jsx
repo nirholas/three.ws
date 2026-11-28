@@ -122,6 +122,7 @@ function Generator({ settings, apiKey, clientOptions, onOpenSettings, onKeyRejec
 	const selectedTodo = withPrompt.filter((r) => selectedIds.has(r.id) && !queue.isActive(r.id));
 	const active = queue.activeCount;
 
+	const primary = primaryAction(withPrompt.length, todo.length, active);
 	const start = (list) => queue.enqueue(list.map((r) => ({ id: r.id, prompt: promptOf(r, promptField) })));
 
 	return (
@@ -145,17 +146,13 @@ function Generator({ settings, apiKey, clientOptions, onOpenSettings, onKeyRejec
 				<Box display="flex" flexWrap="wrap" alignItems="center" marginTop={3}>
 					<Button
 						variant="primary"
-						icon={todo.length === 0 ? 'check' : 'play'}
+						icon={primary.icon}
 						marginRight={2}
 						marginBottom={1}
 						disabled={!permission.hasPermission || todo.length === 0}
 						onClick={() => start(todo)}
 					>
-						{todo.length === 0
-							? 'All models generated'
-							: todo.length === 1
-								? 'Generate 1 model'
-								: `Generate ${todo.length} models`}
+						{primary.label}
 					</Button>
 					{selectedTodo.length > 0 && (
 						<Button
@@ -199,4 +196,11 @@ function Generator({ settings, apiKey, clientOptions, onOpenSettings, onKeyRejec
 			</Box>
 		</Box>
 	);
+}
+
+/** What the main button offers, so it never reads "Generate 0 models". */
+function primaryAction(withPrompt, todo, active) {
+	if (withPrompt === 0) return { label: 'No prompts yet', icon: 'play' };
+	if (todo === 0) return active > 0 ? { label: 'Generating…', icon: 'play' } : { label: 'All models generated', icon: 'check' };
+	return { label: todo === 1 ? 'Generate 1 model' : `Generate ${todo} models`, icon: 'play' };
 }
