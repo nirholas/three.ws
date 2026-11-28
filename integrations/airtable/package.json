@@ -24,6 +24,6 @@
     "core-js": "^3.51.0",
     "jsdom": "^25.0.1",
     "regenerator-runtime": "^0.14.1",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.11"
   }
 }
