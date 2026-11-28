@@ -17,32 +17,45 @@ The one exception is the browser voice panel, which runs the turn inside the req
 
 ## Slack
 
-**For users.** Press **Add to Slack** on the Slack card, approve the app for your workspace, then message the app directly or mention it in a channel. It answers with a pairing code; paste it on Connections, or run `/three link CODE` with a code issued there. After that:
+**For users.** Press **Add to Slack** on [three.ws/slack](https://three.ws/slack), in the Slack Marketplace, or on the Slack card in Connections, and approve the app for your workspace. Installing needs no three.ws account; pairing does. The app's **Home** tab explains what it does and whether your DM is paired. Message the app directly or mention it in a channel: it answers with a pairing code to confirm on Connections, or run `/three link CODE` with a code issued there. After that:
 
 - Replies land in the thread of the message that asked, so a channel stays readable.
 - `/three <command>` runs any gateway command (`/three balance`, `/three positions`). The answer is ephemeral: only you see it.
 - Trade previews arrive with Approve and Cancel buttons. Pressing one updates the card in place.
 - Voice clips and images you upload are transcribed or read like any other chat.
-- Removing the app from the workspace revokes its stored token at once.
+- Removing the app from the workspace (or revoking its tokens) erases its stored bot token at once.
+- The Home tab updates when you pair: it names the agent your DM talks to and lists the commands.
 
-**For operators.** Create a Slack app at api.slack.com/apps and set:
+**For operators.** The app is defined in [integrations/slack/manifest.json](../integrations/slack/manifest.json). One command creates it and wires production:
+
+```bash
+npm run slack:app            # paste a Slack app configuration token when asked (never on argv)
+npm run slack:app -- --dry-run
+npm run slack:app -- --app-id A0123ABCD   # re-apply the manifest to an existing app
+```
+
+It creates the app without events, stores the client id, client secret and signing secret in Secret Manager, attaches them to `three-ws-api` with `--update-secrets`, proves the live receiver holds the signing secret with a signed `url_verification`, then applies the full manifest (which turns events on) and probes the install link. The agent-gateway worker mirrors the API's env on its next deploy. Marketplace listing copy, scope answers and the submission checklist live in [integrations/slack/SUBMITTING.md](../integrations/slack/SUBMITTING.md).
+
+The manifest sets:
 
 | Setting | Value |
 |---|---|
 | Bot token scopes | `app_mentions:read`, `chat:write`, `commands`, `files:read`, `files:write`, `im:history`, `im:read`, `im:write` |
 | Event Subscriptions request URL | `https://three.ws/api/gateway/slack` (Slack's `url_verification` challenge is answered automatically) |
-| Bot events | `app_mention`, `message.im`, `app_uninstalled`, `tokens_revoked` |
+| Bot events | `app_home_opened`, `app_mention`, `message.im`, `app_uninstalled`, `tokens_revoked` |
 | Interactivity request URL | `https://three.ws/api/gateway/slack` |
 | Slash command | `/three`, request URL `https://three.ws/api/gateway/slack` |
 | OAuth redirect URL | `https://three.ws/api/gateway/slack?leg=oauth` |
-| App Home | Messages tab on, so users can DM the app |
+| App Home | Home tab on (the worker publishes it with `views.publish`), Messages tab on so users can DM the app |
 
 There are two ways to run it:
 
-- **Any workspace (OAuth).** Set `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` and `SLACK_SIGNING_SECRET`. The **Add to Slack** button appears and each install's bot token is stored encrypted (the same secret box as agent wallets) in `gateway_slack_installs`.
+- **Any workspace (OAuth).** Set `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` and `SLACK_SIGNING_SECRET`. The **Add to Slack** button appears and each install's bot token is stored encrypted (the same secret box as agent wallets) in `gateway_slack_installs`. The direct install URL for the Marketplace is `https://three.ws/api/gateway/slack?leg=install`; set it under Manage Distribution.
 - **One workspace.** Set `SLACK_BOT_TOKEN` and `SLACK_SIGNING_SECRET`. There is no install button; users find the app in that workspace.
 
 `SLACK_BOT_USER_ID` is optional and strips the bot's own mention from a message before it reaches the agent.
+
+**Install flow.** `GET ?leg=install` needs no sign-in. It signs an OAuth state that carries a fresh nonce (and the account id when someone is signed in) and sets the same nonce in an HttpOnly `tws_slack_install` cookie. The `?leg=oauth` callback only completes when the state verifies and this browser holds its nonce, so a forwarded link cannot bind an install to someone else's session. A signed-in owner returns to Connections; anyone else lands on `/slack`, which explains the outcome (`installed`, `cancelled`, `expired`, `failed`, `not_configured`) and the next step. `GET ?leg=status` is public and returns `{ available, install_url }` so the page never shows a button that dead-ends.
 
 **Signatures.** Every Slack request carries `X-Slack-Signature`, an HMAC-SHA256 over `v0:<timestamp>:<raw body>` with the signing secret. A request older than five minutes is refused as a replay even when its signature is valid.
 
@@ -107,7 +120,8 @@ The browser voice leg uses the speech setup that already exists: NVIDIA Riva (`N
 - Receivers: [api/gateway/slack.js](../api/gateway/slack.js), [api/gateway/whatsapp.js](../api/gateway/whatsapp.js), [api/gateway/voice.js](../api/gateway/voice.js)
 - Signatures and inbox mapping: [api/_lib/gateway/webhooks.js](../api/_lib/gateway/webhooks.js); Slack installs: [api/_lib/gateway/slack-installs.js](../api/_lib/gateway/slack-installs.js); call turns and TwiML: [api/_lib/gateway/voice-calls.js](../api/_lib/gateway/voice-calls.js)
 - Worker adapters: [workers/agent-gateway/src/adapters/](../workers/agent-gateway/src/adapters)
-- Tests: [slack-adapter.test.js](../workers/agent-gateway/tests/slack-adapter.test.js), [whatsapp-adapter.test.js](../workers/agent-gateway/tests/whatsapp-adapter.test.js), [voice-adapter.test.js](../workers/agent-gateway/tests/voice-adapter.test.js), each against a real Postgres and a real receiver socket with fixture deliveries.
+- Slack app: [integrations/slack/manifest.json](../integrations/slack/manifest.json), [scripts/slack-app.mjs](../scripts/slack-app.mjs), Home tab [slack-home.js](../workers/agent-gateway/src/adapters/slack-home.js), public page [pages/slack.html](../pages/slack.html)
+- Tests: [slack-marketplace.test.js](../workers/agent-gateway/tests/slack-marketplace.test.js) (install binding, status leg, App Home, uninstall), [tests/slack-app.test.js](../tests/slack-app.test.js) (setup script and manifest consistency), [tests/slack-page.test.js](../tests/slack-page.test.js) (page commands, scopes, routes), [slack-adapter.test.js](../workers/agent-gateway/tests/slack-adapter.test.js), [whatsapp-adapter.test.js](../workers/agent-gateway/tests/whatsapp-adapter.test.js), [voice-adapter.test.js](../workers/agent-gateway/tests/voice-adapter.test.js), each against a real Postgres and a real receiver socket with fixture deliveries.
 
 ## Related
 

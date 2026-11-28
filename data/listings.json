@@ -1178,6 +1178,16 @@
 			"url": "https://github.com/vibewatch/vibewatch.github.io/blob/c31bbf7c1e59ff2297b3f5c38b3200d1d4176c4a/docs/twitter/ai-agent/2026-06-06.zh.md",
 			"evidence": "docs/twitter/ai-agent/2026-06-06.zh.md: [@trythreews](https://x.com/trythreews) [已发布](https://x.com/trythreews/status/2063223928483697090)（373 个赞、61 条回复、20,856 次浏览、18 次收藏）展示了一个 3D AI 智能体",
 			"checked": "2026-10-11"
+		},
+		{
+			"id": "slack-marketplace",
+			"name": "Slack Marketplace",
+			"category": "ecosystem",
+			"status": "prerequisites",
+			"url": null,
+			"evidence": "App manifest, login-free OAuth install, App Home, /slack landing page, privacy section 10c and the submission kit are built and tested",
+			"next": "Owner runs npm run slack:app, approves the API and agent-gateway deploys, reaches 10 active workspaces, then submits using integrations/slack/SUBMITTING.md",
+			"checked": "2026-11-28"
 		}
 	]
 }

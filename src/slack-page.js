@@ -17,7 +17,7 @@ const OUTCOMES = {
 	expired: {
 		tone: 'warn',
 		title: 'That install link expired',
-		text: 'The link is good for 10 minutes and has to finish in the browser that started it. Start again from this page.',
+		text: 'An install has 15 minutes to finish, in the same browser that started it. Start again from this page.',
 		retry: true,
 	},
 	failed: {
