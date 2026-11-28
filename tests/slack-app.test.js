@@ -234,6 +234,6 @@ describe('integrations/slack/manifest.json', () => {
 		expect(moved).not.toContain('https://three.ws');
 		expect(withoutEvents(manifest).settings.event_subscriptions).toBeUndefined();
 		expect(manifest.settings.event_subscriptions).toBeDefined();
-		expect(readFileSync(MANIFEST_PATH, 'utf8')).not.toMatch(/[–—]/);
+		expect(readFileSync(MANIFEST_PATH, 'utf8')).not.toMatch(/[\u2013\u2014]/);
 	});
 });
