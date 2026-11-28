@@ -1906,6 +1906,11 @@ export const limits = {
 	usageFeedKeyWrite: (userId) => getLimiter('usage-feed:key-write', { limit: 20, window: '1 h' }).limit(userId),
 	// Team enterprise settings and tenant join (claim, token rotation, join).
 	teamEnterprise: (userId) => getLimiter('team:enterprise', { limit: 60, window: '10 m' }).limit(userId),
+	// Basecamp chatbot: model commands per command URL (a whole Basecamp shares
+	// one URL; the owner's own forge limits still apply behind this), and the
+	// owner creating or revoking command URLs in settings.
+	basecampCommand: (chatbotId) => getLimiter('basecamp:command', { limit: 20, window: '10 m' }).limit(chatbotId),
+	basecampChatbotWrite: (userId) => getLimiter('basecamp:chatbot-write', { limit: 20, window: '1 h' }).limit(userId),
 	// local: embedded-widget read fetch — flood protection only, no side effects.
 	// Widgets on third-party pages poll continuously, so a Redis command per read
 	// at 600/min is pure burn; a per-instance cap bounds throughput just as well.

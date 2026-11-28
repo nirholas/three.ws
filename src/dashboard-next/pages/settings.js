@@ -28,6 +28,7 @@
 //   GET  /api/billing/summary               { usage: { total_bytes, avatar_count, ... } }
 //   GET  /api/usage/summary                 { llm: { calls_month, tokens_month, by_model } }
 //   GET  /api/usage/feed-keys               { keys, teams, feed_url } OData feed keys (settings-usage-feed.js)
+//   GET  /api/basecamp/chatbots             { chatbots } Basecamp chatbot command URLs (settings-basecamp.js)
 //   GET  /api/dashboard/prefs               { prefs }
 //   PATCH /api/dashboard/prefs              body prefs patch
 //   GET  /api/avatars/mine                  { avatars: [{ storage, ... }] }
@@ -42,6 +43,7 @@ import { toast } from '../../shared/toast.js';
 import { renderAccountStatus, renderXPosting } from './settings-account-status.js';
 import { renderTeamsNotifications } from './settings-teams.js';
 import { renderUsageFeed } from './settings-usage-feed.js';
+import { renderBasecampChatbots } from './settings-basecamp.js';
 import { IPFS_GATEWAYS } from '../../ipfs.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
@@ -126,7 +128,7 @@ async function loadContent(host) {
 
 	const retry = () => loadContent(host);
 
-	const [sessionsResp, grantsResp, googleResp, telegramResp, microsoftResp, notifResp, notifPrefsResp, teamsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp, statusResp, xResp, feedResp] =
+	const [sessionsResp, grantsResp, googleResp, telegramResp, microsoftResp, notifResp, notifPrefsResp, teamsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp, statusResp, xResp, feedResp, basecampResp] =
 		await Promise.all([
 			safeGet('/api/auth/sessions'),
 			safeGet('/api/oauth/grants'),
@@ -144,6 +146,7 @@ async function loadContent(host) {
 			safeGet('/api/v1/me/status'),
 			safeGet('/api/x/agents'),
 			safeGet('/api/usage/feed-keys'),
+			safeGet('/api/basecamp/chatbots'),
 		]);
 
 	const prefs = prefsResp.data?.prefs || prefsResp.data || {};
@@ -171,6 +174,7 @@ async function loadContent(host) {
 	host.appendChild(renderNotifications(notifResp, retry));
 	host.appendChild(renderNotificationPrefs(notifPrefsResp, retry));
 	host.appendChild(renderTeamsNotifications(teamsResp, retry));
+	host.appendChild(renderBasecampChatbots(basecampResp, retry));
 	host.appendChild(renderDefaultNetwork(prefs));
 	host.appendChild(renderAvatarStorage(avatarsResp, retry));
 	host.appendChild(renderStorage(summaryResp, retry));
@@ -182,7 +186,7 @@ async function loadContent(host) {
 	host.appendChild(renderAbout(versionResp));
 	// The OAuth consent screen and three.ws Desktop link here to revoke an app,
 	// and the /notifications empty states link to the notification matrix.
-	if (location.hash === '#connected-apps' || location.hash === '#x-posting' || location.hash === '#account-status' || location.hash === '#notification-preferences' || location.hash === '#usage-feed') {
+	if (location.hash === '#connected-apps' || location.hash === '#x-posting' || location.hash === '#account-status' || location.hash === '#notification-preferences' || location.hash === '#usage-feed' || location.hash === '#basecamp-chatbot') {
 		document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
 	}
 }
