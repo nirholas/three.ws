@@ -23,12 +23,24 @@ describe('Hermes plugin package', () => {
 		expect(read(join(PLUGIN, 'LICENSE'))).toBe(read(join(ROOT, 'LICENSE')));
 	});
 
-	it('points only at the free studio server, asking the client to sign in', () => {
+	// Hermes translates a portable streamable-http server to {url, headers} only: the Agent
+	// Plugins v1 remote entry has no auth field, so Hermes never runs OAuth for it, and the studio's
+	// ?auth=oauth URL answers 401 with zero tools. Verified against Hermes v0.23.5
+	// (hermes_cli/agent_plugins.py _REMOTE_FIELDS = {type, url, headers}). The package therefore
+	// runs the OAuth sign-in itself through a pinned mcp-remote, the same shape the catalog already
+	// admits, and keeps the tokens inside the plugin's own Hermes data folder.
+	it('points only at the free studio server through a pinned OAuth proxy Hermes can sign in with', () => {
 		const m = JSON.parse(read(join(PLUGIN, 'mcp.json')));
 		expect(m.$schema).toBe('https://agent-plugins.org/schemas/1.0.0/mcp.schema.json');
-		expect(m.mcpServers).toEqual({
-			'three-ws': { type: 'streamable-http', url: 'https://three.ws/api/mcp-studio?auth=oauth' },
-		});
+		expect(Object.keys(m.mcpServers)).toEqual(['three-ws']);
+		const s = m.mcpServers['three-ws'];
+		expect(s.type).toBe('stdio');
+		expect(s.command).toBe('npx');
+		expect(s.args.slice(0, 3)).toEqual(['-y', 'mcp-remote@0.1.49', 'https://three.ws/api/mcp-studio?auth=oauth']);
+		expect(s.args).toContain('http-only');
+		const meta = JSON.parse(s.args[s.args.indexOf('--static-oauth-client-metadata') + 1]);
+		expect(meta.client_name).toBe('Hermes Agent (three.ws)');
+		expect(s.env).toEqual({ MCP_REMOTE_CONFIG_DIR: '${PLUGIN_DATA}/mcp-auth' });
 	});
 
 	it('bundles skills byte-identical to the .agents/skills sources', () => {

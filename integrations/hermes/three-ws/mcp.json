@@ -2,8 +2,20 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
     "three-ws": {
-      "type": "streamable-http",
-      "url": "https://three.ws/api/mcp-studio?auth=oauth"
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@0.1.49",
+        "https://three.ws/api/mcp-studio?auth=oauth",
+        "--transport",
+        "http-only",
+        "--static-oauth-client-metadata",
+        "{\"client_name\":\"Hermes Agent (three.ws)\",\"token_endpoint_auth_method\":\"none\",\"grant_types\":[\"authorization_code\",\"refresh_token\"],\"response_types\":[\"code\"]}"
+      ],
+      "env": {
+        "MCP_REMOTE_CONFIG_DIR": "${PLUGIN_DATA}/mcp-auth"
+      }
     }
   }
 }
