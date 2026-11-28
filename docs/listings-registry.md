@@ -4,7 +4,7 @@
 
 Every place three.ws is listed, submitted to, or known to be absent from. This is the master index; the prose record with announcements and context is [listings.md](./listings.md), and the action list for stuck items is [partners/opportunities.md](./partners/opportunities.md).
 
-**126 tracked surfaces.** 50 live, 17 pr open, 2 submitted, pending, 6 ready to submit, 13 not listed, 22 declined or closed, 16 unverified.
+**127 tracked surfaces.** 50 live, 17 pr open, 2 submitted, pending, 7 ready to submit, 13 not listed, 22 declined or closed, 16 unverified.
 
 Maintain it:
 
@@ -128,6 +128,7 @@ A `live` entry is only ever set after the page was fetched and rendered three.ws
 | [Trendshift](https://trendshift.io/repositories/38279) | Live | Profile for nirholas/three.ws |  | 2026-10-11 |
 | [OpenAI Cookbook](https://github.com/openai/openai-cookbook/pull/2874) | PR open | PR #2874 open since 2026-07-21, unmerged, review required | Revival steps in docs/openai-listing-channels.md | 2026-09-16 |
 | [NVIDIA Accelerated Apps Catalog](https://marketplace.nvidia.com/en-us/enterprise/applications/) | Submitted, pending | Requested 2026-09-04; NVIDIA replied 2026-09-14; portal record saved 2026-10-25; NVIDIA App Publishing reviewing it and asked for the exact product name on 2026-11-25; not yet in the public catalog | Deploy, rename the portal record to Forge: AI 3D Model Generator, then send the reply in docs/nvidia-apps-catalog-request.md | 2026-11-25 |
+| Meta Muse Connector Platform | Ready to submit | Studio MCP server meets the gates: OAuth 2.1 with PKCE, 3600s access tokens, enforced read-only grant, no money-movement tools, /.well-known/muse-challenge/ served from env | Owner submits as Existing MCP at platform.muse.ai using docs/muse-connector.md, then sets MUSE_CHALLENGE_TOKEN on three-ws-api | 2026-11-28 |
 | [NVIDIA NGC Catalog](https://catalog.ngc.nvidia.com/) | Ready to submit | EULA prerequisite closed; one build and the partner legal agreement remain | See docs/nvidia-ngc-listing.md | 2026-09-16 |
 | OpenAI Plugin Directory (ChatGPT + Codex) | Ready to submit | Public OAuth 2.1 MCP server meets the gate; submission not yet made | Submit via the kit in docs/openai-listing-channels.md | 2026-09-16 |
 | OpenAI Showcase Gallery | Ready to submit | Open web form, no repo gate; not yet submitted | Submit the form (docs/openai-listing-channels.md) | 2026-09-16 |

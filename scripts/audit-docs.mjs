@@ -314,6 +314,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['grok-roadmap', 'internal: ranked plan for unused xAI capabilities and the key blocker, written for planning rather than for a reader arriving from search'],
 	['github-trending-patterns', 'internal: growth research comparing three.ws with the GitHub trending repos, written for planning rather than for a reader arriving from search'],
 	['aws-marketplace-listing-kit', 'internal: paste-ready listing copy and portal steps'],
+	['muse-connector', 'internal: paste-ready Meta Muse connector form answers and owner submission steps'],
 	['microsoft-marketplace-offer-plan', 'internal: owner-gated Partner Center offer plan and priority map, written for planning rather than for a reader arriving from search'],
 	['huggingface-audio2face-any-rig', 'internal: Hugging Face community article draft, owner approval required before posting'],
 	['aws-builder-center-before-the-signature', 'internal: draft prepared for the AWS Builder Center'],

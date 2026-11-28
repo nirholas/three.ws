@@ -117,6 +117,16 @@
 			"checked": "2026-09-16"
 		},
 		{
+			"id": "meta-muse-connectors",
+			"name": "Meta Muse Connector Platform",
+			"category": "ai-directory",
+			"status": "prerequisites",
+			"url": null,
+			"evidence": "Studio MCP server meets the gates: OAuth 2.1 with PKCE, 3600s access tokens, enforced read-only grant, no money-movement tools, /.well-known/muse-challenge/ served from env",
+			"next": "Owner submits as Existing MCP at platform.muse.ai using docs/muse-connector.md, then sets MUSE_CHALLENGE_TOKEN on three-ws-api",
+			"checked": "2026-11-28"
+		},
+		{
 			"id": "openai-showcase",
 			"name": "OpenAI Showcase Gallery",
 			"category": "ai-directory",
