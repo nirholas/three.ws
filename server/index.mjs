@@ -47,6 +47,7 @@ import { renderCrawlerBody } from './crawler-body.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag, hardenOnEnd } from './csp-hashes.mjs';
 import { cronEdgeAuth } from './cron-edge-auth.mjs';
+import { bodyParseErrorHandler } from './body-parse-errors.mjs';
 import { frameOptionsMiddleware } from './security-headers.mjs';
 import { mfaGateMiddleware } from './mfa-gate.mjs';
 import { setBounded, touchBounded } from './bounded-cache.mjs';
@@ -782,38 +783,7 @@ app.use(async (req, res) => {
 });
 
 // Body-parser failures (malformed JSON, over-limit payloads) → clean 4xx.
-app.use((err, req, res, next) => {
-	if (res.headersSent) return next(err);
-	const status = err?.status || err?.statusCode;
-	if (status && status >= 400 && status < 500) {
-		// body-parser tags over-limit payloads with type 'entity.too.large'.
-		// Surface a specific code + human message so client error paths (which
-		// read error/error_description) say something actionable.
-		if (err?.type === 'entity.too.large' || status === 413) {
-			// Quote BODY_LIMIT rather than a literal: this said "under 4 MB" long
-			// after the cap moved to 8 MB, so a caller inside the real limit was
-			// told to shrink a payload that was already small enough.
-			res.status(413).json({
-				error: 'payload_too_large',
-				error_description: `Request body is too large. Keep it under ${BODY_LIMIT.toUpperCase().replace('MB', ' MB')}.`,
-				message: err.message,
-			});
-			return;
-		}
-		// Same reason as the 413 branch above: client error paths read
-		// error/error_description, so a body-parser rejection that carried only
-		// `message` rendered as an empty reason next to every handler-emitted
-		// 4xx on the same endpoint.
-		res.status(status).json({
-			error: 'bad_request',
-			error_description: err.message,
-			message: err.message,
-		});
-		return;
-	}
-	console.error('[server] unexpected middleware error:', err);
-	res.status(500).json({ error: 'internal_error', message: 'The request failed unexpectedly.' });
-});
+app.use(bodyParseErrorHandler({ bodyLimit: BODY_LIMIT }));
 
 process.on('unhandledRejection', (reason) => {
 	console.error('[server] unhandled rejection:', reason);
