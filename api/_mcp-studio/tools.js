@@ -1022,6 +1022,20 @@ export async function collectJob(base, jobId, shape = {}, { jobTool = 'check_job
 		// produced and link it, now that a collection resolved it.
 		return doneJob(await completeRun(envelope, { base, jobId, data }), jobId, data);
 	}
+	if (data.status === 'failed' && data.reason === 'busy') {
+		// The generator refused the submit as busy: no job ran, so this is not a
+		// failed generation, and the remedy carries the generator's stated wait.
+		const wait = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : null;
+		const message = 'The 3D generator was too busy to start this generation, so nothing is waiting in line for it.';
+		const result = jobFailure({
+			jobId,
+			message,
+			remedy: `Start a new generation ${wait ? `in about ${wait}s` : 'in a moment'} (with a new idempotency_key if you used one).`,
+			reason: 'busy',
+			retryAfter: wait,
+		});
+		return completeRun(result, { base, jobId, data, failure: message });
+	}
 	if (data.status === 'failed') {
 		// data.error is already sanitized server-side (sanitizeJobError): safe copy.
 		const message = data.error ? `Generation failed: ${data.error}` : 'Generation failed for this prompt.';
@@ -1072,8 +1086,9 @@ async function replayJob(record, { save, release, req, ctx = {} }) {
 		if (sc.status === 'done') await save({ state: 'done', result: out });
 		else if (sc.reason === 'generation_failed') await save({ state: 'failed', message: sc.message });
 	}
-	// A job too old to look up frees its key, so calling again starts fresh.
-	if (sc.reason === 'unknown_job') await release();
+	// A job too old to look up, or a submit the generator refused as busy, frees
+	// its key, so calling again starts fresh.
+	if (sc.reason === 'unknown_job' || sc.reason === 'busy') await release();
 	return out;
 }
 

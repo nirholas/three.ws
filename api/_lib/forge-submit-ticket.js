@@ -133,6 +133,7 @@ const START_AGAIN = 'Start a new generation.';
  *   job         the submit was accepted; poll `jobId` for the model.
  *   done        the submit finished the model outright; `body` is its frame.
  *   failed      the submit was refused, errored, or died; `message` says why.
+ *               A busy refusal (429) also sets `busy` and `retryAfter`.
  */
 export function resolveTicket(record, now = Date.now(), ticket = null) {
 	if (!record || typeof record !== 'object') {
@@ -154,6 +155,19 @@ export function resolveTicket(record, now = Date.now(), ticket = null) {
 	if (status >= 200 && status < 300) {
 		if (body.status === 'done' && body.glb_url) return { kind: 'done', body };
 		if (typeof body.job_id === 'string' && body.job_id) return { kind: 'job', jobId: body.job_id };
+	}
+	// A busy refusal (429) started nothing and holds no place, whatever its own
+	// copy said to a caller who was still waiting on the socket. Keep its stated
+	// wait so the poller can say when to start again.
+	if (status === 429) {
+		const retryAfter = Number(body.retry_after) > 0 ? Math.ceil(Number(body.retry_after)) : null;
+		const when = retryAfter ? `in about ${retryAfter}s` : 'in a moment';
+		return {
+			kind: 'failed',
+			busy: true,
+			retryAfter,
+			message: `The 3D generator was too busy to start this generation, so nothing is waiting in line for it. ${START_AGAIN.replace(/\.$/, '')} ${when}.`,
+		};
 	}
 	const reason = typeof body.message === 'string' && body.message.trim() ? body.message.trim() : 'The generation could not start.';
 	return { kind: 'failed', message: /start a new generation/i.test(reason) ? reason : `${reason.replace(/[.\s]*$/, '.')} ${START_AGAIN}` };

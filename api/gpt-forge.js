@@ -3037,7 +3037,10 @@ async function pollTicket(req, res, ticket) {
 			message: 'The generation request is still being accepted.',
 		});
 	}
-	if (out.kind === 'failed') return json(res, 200, { job_id: handle, status: 'failed', error: out.message });
+	if (out.kind === 'failed') {
+		const busy = out.busy ? { reason: 'busy', ...(out.retryAfter ? { retry_after: out.retryAfter } : {}) } : {};
+		return json(res, 200, { job_id: handle, status: 'failed', error: out.message, ...busy });
+	}
 	return json(res, 404, { error: 'unknown_job', message: 'That job id is not recognized (it may be mistyped or expired).' });
 }
 

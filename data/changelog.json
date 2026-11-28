@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-28",
+			"title": "A busy 3D generator now says nothing started and when to try again",
+			"summary": "When an assistant asked the three.ws 3D studio for a model while the generator was too busy to take it, the next status check said the generation had failed and, in the same sentence, that it was queued and would be picked up. Neither was true: nothing was running and nothing was held in line. The status check now says the generator was too busy to start it, gives the wait the generator stated, and frees the request's idempotency key so the same call can simply be sent again.",
+			"tags": ["fix"],
+			"link": "/docs/mcp-studio"
+		},
+		{
+			"date": "2026-11-28",
 			"title": "Connect the 3D studio read-only, and the choice is enforced",
 			"summary": "When you connect the three.ws 3D studio to an assistant, the consent screen lets you untick \"Create and update avatars\". That choice now holds on the server: a read-only connection can still search the catalog, read docs, check jobs and look at models, but any tool that would create or save something answers that it needs the wider permission, without generating or charging anything. Reconnect with the box ticked to make models.",
 			"tags": ["security"],
