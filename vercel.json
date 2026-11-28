@@ -6145,13 +6145,6 @@
 			"dest": "/settings/index.html"
 		},
 		{
-			"src": "/settings/connections/?",
-			"headers": {
-				"Location": "/dashboard/settings#x-posting"
-			},
-			"status": 302
-		},
-		{
 			"src": "/api/memory/settings",
 			"dest": "/api/memory/[action]?action=settings"
 		},

@@ -23,6 +23,24 @@ describe('/settings SPA catch-all', () => {
 		expect(existsSync(path.join(ROOT, 'public/settings/index.html'))).toBe(true);
 	});
 
+	// Every chat bot's pairing prompt links /settings/connections?code=..., the
+	// Slack install returns to /settings/connections?slack=..., and X review
+	// links carry ?agent=. The shell's Connections tab reads all three. A 302 to
+	// /dashboard/settings#x-posting (added 2026-11-04) dropped the query, so no
+	// pairing code from Telegram, Discord, Slack or WhatsApp could be confirmed.
+	it.each([
+		'/settings/connections?code=ABCD2345',
+		'/settings/connections?slack=installed',
+		'/settings/connections/?agent=a',
+	])('serves the settings shell with the query intact for %s', async (href) => {
+		const { loadRouteTable, resolvePhase1 } = await import('../server/route-resolve.mjs');
+		const { phase1Routes } = loadRouteTable(path.join(ROOT, 'vercel.json'));
+		const url = new URL(href, 'https://three.ws');
+		const out = resolvePhase1(phase1Routes, { headers: {} }, url);
+		expect(out.terminal, `routed to ${out.headers.Location || out.headers.location || out.path}`).toBeNull();
+		expect(out.path).toBe('/settings/index.html');
+	});
+
 	it('keeps the api-keys redirect ahead of the catch-all', () => {
 		const idx = (src) => vercelConfig.routes.findIndex((r) => r.src === src);
 		expect(idx('/settings/api-keys/?')).toBeGreaterThan(-1);
