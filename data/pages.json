@@ -8664,6 +8664,14 @@
 					"added": "2026-11-11"
 				},
 				{
+					"path": "/slack",
+					"title": "three.ws for Slack",
+					"description": "Add the three.ws app to Slack: talk to your AI agent in DMs and threads, run private /three commands, approve trades with buttons, and see exactly which scopes it asks for and why.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-28"
+				},
+				{
 					"path": "/accessibility",
 					"title": "Accessibility statement",
 					"description": "How accessible three.ws is: WCAG 2.2 AA conformance, how it is tested with axe, keyboard, the Orca screen reader, zoom and forced colours, the known limitations with workarounds, and how to report a barrier.",

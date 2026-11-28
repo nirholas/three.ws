@@ -3533,6 +3533,14 @@
 			"dest": "/integrations-basecamp.html"
 		},
 		{
+			"src": "/integrations/slack/?",
+			"dest": "/slack.html"
+		},
+		{
+			"src": "/slack/?",
+			"dest": "/slack.html"
+		},
+		{
 			"src": "/partners",
 			"dest": "/partners.html"
 		},

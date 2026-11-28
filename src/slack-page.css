@@ -1,0 +1,280 @@
+/* /slack: the three.ws Slack app page. Tokens come from public/tokens.css via
+   style.css, so the page follows the light and dark themes. */
+
+.sk {
+	width: 100%;
+	max-width: 1120px;
+	margin: 0 auto;
+	padding: var(--space-xl) var(--space-md) calc(var(--space-xl) * 2);
+	box-sizing: border-box;
+	color: var(--ink);
+}
+.sk code {
+	font-family: var(--font-mono);
+	font-size: 0.92em;
+	padding: 1px 6px;
+	border-radius: var(--radius-sm);
+	background: var(--surface-2);
+	border: 1px solid var(--stroke);
+	color: var(--ink-bright);
+	white-space: nowrap;
+}
+
+/* Install result banner */
+.sk-result {
+	display: flex;
+	gap: var(--space-sm);
+	align-items: flex-start;
+	padding: var(--space-md);
+	margin: 0 0 var(--space-lg);
+	border: 1px solid var(--stroke-strong);
+	border-radius: var(--radius-card);
+	background: var(--surface-1);
+	outline: none;
+	animation: sk-rise var(--duration-base) var(--ease-out) both;
+}
+.sk-result__icon {
+	flex: none;
+	width: 28px;
+	height: 28px;
+	border-radius: var(--radius-full);
+	display: grid;
+	place-items: center;
+	font-weight: var(--weight-bold);
+	font-size: var(--text-sm);
+}
+.sk-result[data-tone='ok'] { border-color: color-mix(in srgb, var(--success) 45%, var(--stroke)); }
+.sk-result[data-tone='ok'] .sk-result__icon { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+.sk-result[data-tone='ok'] .sk-result__icon::before { content: '\2713'; }
+.sk-result[data-tone='warn'] { border-color: color-mix(in srgb, var(--warn) 45%, var(--stroke)); }
+.sk-result[data-tone='warn'] .sk-result__icon { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.sk-result[data-tone='warn'] .sk-result__icon::before { content: '!'; }
+.sk-result[data-tone='error'] { border-color: color-mix(in srgb, var(--danger) 45%, var(--stroke)); }
+.sk-result[data-tone='error'] .sk-result__icon { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
+.sk-result[data-tone='error'] .sk-result__icon::before { content: '!'; }
+.sk-result__title { margin: 0; font-weight: var(--weight-semibold); color: var(--ink-bright); font-size: var(--text-md); }
+.sk-result__text { margin: 4px 0 0; color: var(--ink-dim); font-size: var(--text-sm); line-height: var(--leading-normal); }
+.sk-result__actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-sm); }
+.sk-result__actions:empty { display: none; }
+
+/* Hero */
+.sk-hero {
+	display: grid;
+	grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+	gap: var(--space-xl);
+	align-items: center;
+}
+.sk-eyebrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 var(--space-sm);
+	font-size: var(--text-xs);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--ink-dim);
+}
+.sk-eyebrow__mark {
+	width: 8px;
+	height: 8px;
+	border-radius: var(--radius-full);
+	background: var(--accent);
+	box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.sk-h1 {
+	font-family: var(--font-display);
+	font-size: clamp(2rem, 5.2vw, 3.5rem);
+	line-height: 1.06;
+	letter-spacing: -0.025em;
+	text-wrap: balance;
+	color: var(--ink-bright);
+	margin: 0;
+}
+.sk-lede {
+	margin: var(--space-sm) 0 0;
+	font-size: var(--text-md);
+	line-height: 1.6;
+	color: var(--ink-dim);
+	max-width: 58ch;
+}
+.sk-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); margin-top: var(--space-lg); }
+.sk-note { margin: var(--space-sm) 0 0; font-size: var(--text-sm); color: var(--ink-faint); max-width: 58ch; line-height: var(--leading-normal); }
+
+/* Add to Slack follows Slack's button guidance: white field, the mark, "Add to Slack". */
+.sk-slack-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	height: 48px;
+	padding: 0 20px 0 16px;
+	border-radius: var(--radius-control);
+	background: #fff;
+	color: #1d1c1d;
+	border: 1px solid #ddd;
+	font-family: var(--font-body);
+	font-size: 16px;
+	font-weight: var(--weight-medium);
+	text-decoration: none;
+	box-shadow: var(--shadow-1);
+	transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out), opacity var(--duration-fast);
+}
+.sk-slack-btn b { font-weight: var(--weight-bold); }
+.sk-slack-btn:hover { box-shadow: var(--shadow-2); transform: translateY(-1px); }
+.sk-slack-btn:active { transform: translateY(0); box-shadow: var(--shadow-1); }
+.sk-slack-btn:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+.sk-slack-btn[data-state='checking'] { opacity: 0.75; }
+.sk-slack-btn[aria-disabled='true'] { opacity: 0.5; cursor: not-allowed; box-shadow: none; transform: none; }
+.sk-slack-btn__mark { flex: none; }
+
+.sk-btn {
+	display: inline-flex;
+	align-items: center;
+	height: 44px;
+	padding: 0 18px;
+	border-radius: var(--radius-control);
+	border: 1px solid var(--stroke-strong);
+	background: transparent;
+	color: var(--ink-bright);
+	font-size: var(--text-sm);
+	font-weight: var(--weight-medium);
+	text-decoration: none;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
+}
+.sk-btn:hover { background: var(--surface-2); border-color: var(--ink-dim); }
+.sk-btn:active { transform: translateY(1px); }
+.sk-btn:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+.sk-btn--primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.sk-btn--primary:hover { background: var(--accent); border-color: var(--accent); filter: brightness(1.08); }
+
+/* Home tab figure: the view the worker publishes, rendered in Slack's own idiom. */
+.sk-home {
+	margin: 0;
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg);
+	background: var(--surface-1);
+	box-shadow: var(--shadow-2);
+	overflow: hidden;
+}
+.sk-home__bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--stroke);
+}
+.sk-home__bar img { border-radius: 6px; }
+.sk-home__app { font-weight: var(--weight-bold); color: var(--ink-bright); }
+.sk-home__tabs { display: flex; gap: 14px; margin-left: auto; font-size: var(--text-xs); color: var(--ink-dim); }
+.sk-home__tabs .is-on { color: var(--ink-bright); box-shadow: inset 0 -2px 0 var(--accent); padding-bottom: 4px; }
+.sk-home__view { padding: 16px 18px 18px; font-size: var(--text-sm); line-height: 1.55; color: var(--ink); }
+.sk-home__view p { margin: 0 0 10px; }
+.sk-home__view ol { margin: 0 0 12px; padding-left: 20px; }
+.sk-home__view li { margin-bottom: 6px; }
+.sk-home__view hr { border: 0; border-top: 1px solid var(--stroke); margin: 12px 0; }
+.sk-home__h { font-size: var(--text-lg); font-weight: var(--weight-bold); color: var(--ink-bright); }
+.sk-home__btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.sk-home__btns span {
+	padding: 6px 12px;
+	border: 1px solid var(--stroke-strong);
+	border-radius: var(--radius-sm);
+	font-weight: var(--weight-semibold);
+	font-size: var(--text-xs);
+}
+.sk-home__btns .is-primary { background: #007a5a; border-color: #007a5a; color: #fff; }
+.sk-home__caption { padding: 10px 16px 12px; font-size: var(--text-xs); color: var(--ink-faint); border-top: 1px solid var(--stroke); }
+
+/* Sections */
+.sk-section { margin-top: calc(var(--space-xl) * 1.5); }
+.sk-h2 { font-family: var(--font-display); font-size: var(--text-xl); color: var(--ink-bright); margin: 0 0 var(--space-sm); letter-spacing: -0.01em; }
+.sk-h3 { font-size: var(--text-md); color: var(--ink-bright); margin: 0 0 6px; font-weight: var(--weight-semibold); }
+.sk-sub { margin: 0 0 var(--space-md); color: var(--ink-dim); max-width: 70ch; line-height: 1.6; }
+
+.sk-features {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+	gap: var(--space-sm);
+}
+.sk-feature, .sk-step {
+	padding: var(--space-md);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-card);
+	background: var(--surface-1);
+	transition: border-color var(--duration-fast), transform var(--duration-fast) var(--ease-out);
+}
+.sk-feature:hover, .sk-step:hover { border-color: var(--stroke-strong); }
+.sk-feature p, .sk-step p { margin: 0 0 8px; color: var(--ink-dim); line-height: 1.6; font-size: var(--text-sm); }
+.sk-feature p:last-child, .sk-step p:last-child { margin-bottom: 0; }
+
+.sk-steps {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--space-sm);
+}
+.sk-step { position: relative; }
+.sk-step__n {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	margin-bottom: var(--space-sm);
+	border-radius: var(--radius-full);
+	background: var(--accent-soft);
+	color: var(--ink-bright);
+	font-weight: var(--weight-bold);
+	font-size: var(--text-sm);
+}
+.sk a:not(.sk-btn):not(.sk-slack-btn) { color: var(--ink-bright); text-underline-offset: 3px; }
+.sk a:not(.sk-btn):not(.sk-slack-btn):hover { color: var(--accent); }
+.sk a:not(.sk-btn):not(.sk-slack-btn):focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 2px; border-radius: 2px; }
+
+.sk-commands { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0 var(--space-lg); }
+.sk-cmd { display: grid; grid-template-columns: 11.5rem minmax(0, 1fr); gap: var(--space-sm); padding: 12px 0; border-bottom: 1px solid var(--stroke); align-items: baseline; }
+.sk-cmd dt { margin: 0; }
+.sk-cmd dd { margin: 0; color: var(--ink-dim); font-size: var(--text-sm); line-height: 1.55; }
+
+.sk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl); }
+.sk-list { margin: 0; padding-left: 18px; }
+.sk-list li { margin-bottom: 10px; color: var(--ink-dim); line-height: 1.6; font-size: var(--text-sm); }
+.sk-list strong { color: var(--ink-bright); }
+.sk-scopes { list-style: none; margin: 0; padding: 0; }
+.sk-scopes li { display: grid; grid-template-columns: 10.5rem minmax(0, 1fr); gap: var(--space-sm); padding: 9px 0; border-bottom: 1px solid var(--stroke); align-items: baseline; }
+.sk-scopes span { color: var(--ink-dim); font-size: var(--text-sm); line-height: 1.5; }
+
+.sk-faq { display: grid; gap: var(--space-xs); max-width: 820px; }
+.sk-faq details { border: 1px solid var(--stroke); border-radius: var(--radius-md); background: var(--surface-1); transition: border-color var(--duration-fast); }
+.sk-faq details:hover, .sk-faq details[open] { border-color: var(--stroke-strong); }
+.sk-faq summary { cursor: pointer; padding: 14px 16px; font-weight: var(--weight-medium); color: var(--ink-bright); list-style: none; display: flex; justify-content: space-between; gap: var(--space-sm); border-radius: var(--radius-md); }
+.sk-faq summary::-webkit-details-marker { display: none; }
+.sk-faq summary::after { content: '+'; color: var(--ink-dim); transition: transform var(--duration-fast) var(--ease-out); }
+.sk-faq details[open] summary::after { transform: rotate(45deg); }
+.sk-faq summary:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 2px; }
+.sk-faq summary:active { background: var(--surface-2); }
+.sk-faq details p { margin: 0; padding: 0 16px 14px; color: var(--ink-dim); line-height: 1.6; font-size: var(--text-sm); }
+
+.sk-foot { margin-top: calc(var(--space-xl) * 1.5); padding-top: var(--space-md); border-top: 1px solid var(--stroke); color: var(--ink-dim); font-size: var(--text-sm); line-height: 1.6; }
+.sk-foot p { margin: 0 0 8px; }
+.sk-legal { color: var(--ink-faint); font-size: var(--text-xs); }
+
+@keyframes sk-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 900px) {
+	.sk-hero { grid-template-columns: 1fr; }
+	.sk-steps { grid-template-columns: 1fr; }
+	.sk-grid { grid-template-columns: 1fr; gap: var(--space-lg); }
+}
+@media (max-width: 480px) {
+	.sk { padding-top: var(--space-lg); }
+	.sk-cmd, .sk-scopes li { grid-template-columns: 1fr; gap: 4px; }
+	.sk-home__tabs { display: none; }
+	.sk code { white-space: normal; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.sk-result { animation: none; }
+	.sk-slack-btn, .sk-btn, .sk-faq summary::after { transition: none; }
+}

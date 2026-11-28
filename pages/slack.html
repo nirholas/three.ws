@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+	<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title data-i18n="slack_app.meta_title">three.ws for Slack · Your AI agent in Slack · three.ws</title>
+	<meta name="description" content="Add the three.ws app to Slack. Talk to your AI agent in a direct message or a mention, run private /three commands for balances and positions, and approve or cancel the trades your agent prepares with a button." data-i18n-attr="content:slack_app.meta_description" />
+	<link rel="canonical" href="https://three.ws/slack" />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:url" content="https://three.ws/slack" />
+	<meta property="og:title" content="three.ws for Slack" />
+	<meta property="og:description" content="Talk to your three.ws AI agent in Slack: private /three commands, trade approvals with buttons, and account alerts." />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=three.ws+for+Slack&amp;d=Talk+to+your+AI+agent+in+Slack%3A+private+%2Fthree+commands%2C+trade+approvals+with+buttons+and+account+alerts.&amp;p=%2Fslack" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:alt" content="three.ws for Slack" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="three.ws for Slack" />
+	<meta name="twitter:description" content="Talk to your three.ws AI agent in Slack: private /three commands, trade approvals with buttons, and account alerts." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=three.ws+for+Slack&amp;d=Talk+to+your+AI+agent+in+Slack%3A+private+%2Fthree+commands%2C+trade+approvals+with+buttons+and+account+alerts.&amp;p=%2Fslack" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<link rel="stylesheet" href="/src/slack-page.css" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"three.ws for Slack","applicationCategory":"BusinessApplication","operatingSystem":"Slack","description":"A Slack app that connects a workspace member to their three.ws AI agent: direct messages and mentions, private /three slash commands, trade previews with Approve and Cancel buttons, and account alerts.","url":"https://three.ws/slack","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"HowTo","name":"Add three.ws to Slack","step":[{"@type":"HowToStep","name":"Add to Slack","text":"Choose Add to Slack on three.ws/slack and approve the app for your workspace."},{"@type":"HowToStep","name":"Open the Home tab","text":"Open the three.ws app in Slack. Its Home tab shows whether your Slack account is connected and what to do next."},{"@type":"HowToStep","name":"Pair your account","text":"Send the app any message to get a pairing code and confirm it on three.ws, or generate a code in Settings, Connections and run /three link with it."}]}]}</script>
+</head>
+<body class="sk-body">
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="sk" id="main-content">
+		<div class="sk-result" id="skResult" role="status" tabindex="-1" hidden>
+			<div class="sk-result__icon" aria-hidden="true"></div>
+			<div class="sk-result__body">
+				<p class="sk-result__title" id="skResultTitle"></p>
+				<p class="sk-result__text" id="skResultText"></p>
+				<div class="sk-result__actions" id="skResultActions"></div>
+			</div>
+		</div>
+
+		<section class="sk-hero" aria-labelledby="skTitle">
+			<div class="sk-hero__copy">
+				<p class="sk-eyebrow"><span class="sk-eyebrow__mark" aria-hidden="true"></span>Integration · Slack</p>
+				<h1 id="skTitle" class="sk-h1">Your three.ws agent, inside Slack.</h1>
+				<p class="sk-lede">Ask your agent anything in a direct message or a mention, check balances and positions with private <code>/three</code> commands, and approve or cancel the trades it prepares with a button. Nothing moves until you say yes.</p>
+				<div class="sk-actions">
+					<a class="sk-slack-btn" id="skInstall" href="/api/gateway/slack?leg=install" aria-describedby="skInstallNote" data-state="checking">
+						<svg class="sk-slack-btn__mark" viewBox="0 0 122.8 122.8" width="20" height="20" aria-hidden="true" focusable="false"><path d="M25.8 77.6c0 7.1-5.8 12.9-12.9 12.9S0 84.7 0 77.6s5.8-12.9 12.9-12.9h12.9v12.9zm6.5 0c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9v32.3c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V77.6z" fill="#e01e5a"/><path d="M45.2 25.8c-7.1 0-12.9-5.8-12.9-12.9S38.1 0 45.2 0s12.9 5.8 12.9 12.9v12.9H45.2zm0 6.5c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H12.9C5.8 58.1 0 52.3 0 45.2s5.8-12.9 12.9-12.9h32.3z" fill="#36c5f0"/><path d="M97 45.2c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9-5.8 12.9-12.9 12.9H97V45.2zm-6.5 0c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V12.9C64.7 5.8 70.5 0 77.6 0s12.9 5.8 12.9 12.9v32.3z" fill="#2eb67d"/><path d="M77.6 97c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9-12.9-5.8-12.9-12.9V97h12.9zm0-6.5c-7.1 0-12.9-5.8-12.9-12.9s5.8-12.9 12.9-12.9h32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H77.6z" fill="#ecb22e"/></svg>
+						<span>Add to <b>Slack</b></span>
+					</a>
+					<a class="sk-btn" href="#setup">How pairing works</a>
+				</div>
+				<p class="sk-note" id="skInstallNote">Free. You need permission to add apps to your Slack workspace, and a free three.ws account to pair with.</p>
+			</div>
+
+			<figure class="sk-home" aria-label="The three.ws app's Home tab in Slack, as it looks before you pair">
+				<div class="sk-home__bar">
+					<img src="/favicon.svg" alt="" width="22" height="22" />
+					<span class="sk-home__app">three.ws</span>
+					<span class="sk-home__tabs" aria-hidden="true"><span class="is-on">Home</span><span>Messages</span><span>About</span></span>
+				</div>
+				<div class="sk-home__view">
+					<p class="sk-home__h">three.ws agent</p>
+					<p>Talk to your three.ws AI agent without leaving Slack.</p>
+					<hr />
+					<p><b>Not connected yet.</b> Link this app to your three.ws account in either of two ways:</p>
+					<ol>
+						<li>Open the <b>Messages</b> tab and send me anything. I reply with a pairing code; confirm it on three.ws.</li>
+						<li>Or generate a code on three.ws (Settings, Connections) and run <code>/three link &lt;code&gt;</code> here.</li>
+					</ol>
+					<p class="sk-home__btns" aria-hidden="true"><span class="is-primary">Connect on three.ws</span><span>How it works</span></p>
+				</div>
+				<figcaption class="sk-home__caption">The Home tab the app publishes for you, word for word. Once you pair, it names the agent your messages go to.</figcaption>
+			</figure>
+		</section>
+
+		<section class="sk-section" aria-labelledby="skWhat">
+			<h2 id="skWhat" class="sk-h2">What it does</h2>
+			<ul class="sk-features">
+				<li class="sk-feature">
+					<h3 class="sk-h3">Talk to your agent</h3>
+					<p>Send the app a direct message, or mention <code>@three.ws</code> in a channel it was invited to. Replies to a mention land in a thread, so channels stay readable. Voice clips and images work too.</p>
+				</li>
+				<li class="sk-feature">
+					<h3 class="sk-h3">Private commands</h3>
+					<p><code>/three balance</code>, <code>/three portfolio</code>, <code>/three positions</code> and the rest work in any channel. Only you see the answer.</p>
+				</li>
+				<li class="sk-feature">
+					<h3 class="sk-h3">Trades wait for your yes</h3>
+					<p>When your agent prepares a trade, you get a preview with <b>Approve</b> and <b>Cancel</b> buttons. Nothing runs from text alone, and a preview expires after ten minutes.</p>
+				</li>
+				<li class="sk-feature">
+					<h3 class="sk-h3">Alerts and a stop button</h3>
+					<p>Account alerts arrive in your DM. Approve or deny what your spend policy holds with <code>/three approvals</code>, and stop agents at once with <code>/three pause</code> or <code>/three kill</code>.</p>
+				</li>
+			</ul>
+		</section>
+
+		<section id="setup" class="sk-section" aria-labelledby="skSetup">
+			<h2 id="skSetup" class="sk-h2">Set it up</h2>
+			<p class="sk-sub">Installing adds the app to your workspace. Pairing connects your own Slack account to your own three.ws account, so each person in a workspace talks to their own agent and nobody else's.</p>
+			<ol class="sk-steps">
+				<li class="sk-step">
+					<span class="sk-step__n" aria-hidden="true">1</span>
+					<h3 class="sk-h3">Add to Slack</h3>
+					<p>Choose <b>Add to Slack</b> above and approve the app for your workspace. Already installed by a teammate? Skip this: find <b>three.ws</b> under Apps in Slack's sidebar.</p>
+				</li>
+				<li class="sk-step">
+					<span class="sk-step__n" aria-hidden="true">2</span>
+					<h3 class="sk-h3">Open the Home tab</h3>
+					<p>Open the three.ws app in Slack. Its <b>Home</b> tab tells you whether your Slack account is connected and, once it is, which agent answers.</p>
+				</li>
+				<li class="sk-step">
+					<span class="sk-step__n" aria-hidden="true">3</span>
+					<h3 class="sk-h3">Pair your account</h3>
+					<p>Send the app any message. It replies with a pairing code; confirm it on three.ws in <a href="/settings/connections">Settings, Connections</a>. Or generate a code there first and run <code>/three link &lt;code&gt;</code> in Slack.</p>
+					<p>No account yet? <a href="/register?next=%2Fsettings%2Fconnections">Create one free</a>.</p>
+				</li>
+			</ol>
+		</section>
+
+		<section class="sk-section" aria-labelledby="skCommands">
+			<h2 id="skCommands" class="sk-h2">Commands</h2>
+			<p class="sk-sub">Type them anywhere in Slack. Run <code>/three help</code> for the full list.</p>
+			<dl class="sk-commands">
+				<div class="sk-cmd"><dt><code>/three balance</code></dt><dd>Your agent wallet's SOL balance.</dd></div>
+				<div class="sk-cmd"><dt><code>/three portfolio</code></dt><dd>Net worth and top holdings.</dd></div>
+				<div class="sk-cmd"><dt><code>/three positions</code></dt><dd>Open positions and their live value.</dd></div>
+				<div class="sk-cmd"><dt><code>/three runs</code></dt><dd>Recent agent runs and trades.</dd></div>
+				<div class="sk-cmd"><dt><code>/three approvals</code></dt><dd>Requests waiting for your yes, with Approve and Deny buttons.</dd></div>
+				<div class="sk-cmd"><dt><code>/three agents</code></dt><dd>List your agents; <code>/three use &lt;agent&gt;</code> picks which one answers.</dd></div>
+				<div class="sk-cmd"><dt><code>/three pause</code></dt><dd>Stop one agent from trading or spending. <code>/three kill</code> stops every agent.</dd></div>
+				<div class="sk-cmd"><dt><code>/three link</code></dt><dd>Pair this Slack account with a code from three.ws. <code>/three unlink</code> disconnects it.</dd></div>
+			</dl>
+		</section>
+
+		<section class="sk-section sk-grid" aria-labelledby="skPrivacy">
+			<div>
+				<h2 id="skPrivacy" class="sk-h2">What it can see</h2>
+				<ul class="sk-list">
+					<li><strong>Only what is sent to it.</strong> The app reads direct messages to the app and messages that mention it. It never reads other channels, other people's DMs or your files.</li>
+					<li><strong>Tokens are sealed.</strong> Each workspace's bot token is stored encrypted, with the same secret box that protects agent wallets.</li>
+					<li><strong>Uninstall ends it.</strong> Removing the app from Slack revokes its token on our side at once, and unpairing with <code>/three unlink</code> disconnects your account.</li>
+					<li><strong>Not sold or shared.</strong> Messages are used only to answer you. Full details are in the <a href="/legal/privacy#slack">privacy policy</a>.</li>
+				</ul>
+			</div>
+			<div>
+				<h2 class="sk-h2">Permissions it asks for</h2>
+				<ul class="sk-scopes" aria-label="Slack permissions and why the app needs each">
+					<li><code>app_mentions:read</code><span>See messages that mention the app, so a mention gets an answer.</span></li>
+					<li><code>chat:write</code><span>Post replies, trade previews and alerts.</span></li>
+					<li><code>commands</code><span>Add the <code>/three</code> command.</span></li>
+					<li><code>im:history</code><span>Read the messages you send the app in its DM.</span></li>
+					<li><code>im:read</code><span>Know which DM belongs to which person, for pairing.</span></li>
+					<li><code>im:write</code><span>Open a DM to send your alerts and approvals.</span></li>
+					<li><code>files:read</code><span>Hear a voice clip or read an image you send the app.</span></li>
+					<li><code>files:write</code><span>Reply with a spoken answer when you turn voice replies on.</span></li>
+				</ul>
+			</div>
+		</section>
+
+		<section class="sk-section" aria-labelledby="skTrouble">
+			<h2 id="skTrouble" class="sk-h2">Questions</h2>
+			<div class="sk-faq">
+				<details>
+					<summary>Slack says I can't install apps</summary>
+					<p>Your workspace limits who can add apps. Choose <b>Add to Slack</b> anyway and Slack offers to send an install request to your workspace admins; once they approve it, everyone can pair.</p>
+				</details>
+				<details>
+					<summary>The app answers with a pairing code instead of my agent</summary>
+					<p>Your Slack account is not paired yet. Confirm the code in <a href="/settings/connections">Settings, Connections</a> while signed in to three.ws. Codes expire after a few minutes; send another message for a fresh one.</p>
+				</details>
+				<details>
+					<summary>Can teammates see my balances or trades?</summary>
+					<p>No. Slash command answers are only visible to you, and trade previews and alerts go to your DM with the app. In a channel, the app only answers mentions, in a thread.</p>
+				</details>
+				<details>
+					<summary>Which agent answers me?</summary>
+					<p>Your default agent. Run <code>/three agents</code> to list yours and <code>/three use &lt;agent&gt;</code> to switch. The Home tab always shows the current one.</p>
+				</details>
+				<details>
+					<summary>How do I remove it?</summary>
+					<p>Run <code>/three unlink</code> to disconnect your account, or remove the app in Slack (Settings, Manage apps) to uninstall it for the workspace. Uninstalling revokes its token immediately.</p>
+				</details>
+			</div>
+		</section>
+
+		<aside class="sk-foot" aria-label="About this integration">
+			<p>three.ws also works in <a href="/settings/connections">Telegram, Discord and WhatsApp</a>, and <a href="/integrations">other integrations</a> bring it into the tools you already use.</p>
+			<p class="sk-legal">Slack is a trademark of Slack Technologies, LLC, a Salesforce company. three.ws is an independent service and is not affiliated with or endorsed by Slack. Questions or problems: <a href="/support">Support</a> or <a href="mailto:support@three.ws">support@three.ws</a>.</p>
+		</aside>
+	</main>
+
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+	<script type="module" src="/src/slack-page.js"></script>
+</body>
+</html>
