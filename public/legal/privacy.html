@@ -64,7 +64,7 @@
 	<script src="/nav.js"></script>
 <main id="main-content" class="wrap" tabindex="-1">
 	<h1 data-i18n="legal_privacy.privacy_policy">Privacy Policy</h1>
-	<p class="meta">Effective: November 26, 2026 &nbsp;·&nbsp; Version 4 &nbsp;·&nbsp; <a href="/legal/tos">Terms of Service</a></p>
+	<p class="meta">Effective: November 28, 2026 &nbsp;·&nbsp; Version 5 &nbsp;·&nbsp; <a href="/legal/tos">Terms of Service</a></p>
 
 	<p data-i18n="legal_privacy.this_privacy_policy_explains_how_three_ws">This Privacy Policy explains how three.ws ("we", "us", "our") collects, uses, and shares information about you when you use three.ws (the "Service"). We take your privacy seriously and collect only what we need to operate.</p>
 
@@ -195,6 +195,19 @@
 	<p data-i18n="legal_privacy.if_you_connect_a_home_assistant_instance">If you connect a Home Assistant instance, the access token you provide is a credential to a physical building. We encrypt it at rest with the same primitive we use for custodial wallet keys, never display it again, and erase it the moment you disconnect the home. Actions that open a building (unlocking, opening, disarming) always require an explicit human confirmation, which cannot be produced by an AI model, until you grant a standing allowance for one specific entity.</p>
 	<p data-i18n="legal_privacy.we_do_not_store_the_names_of">We do not store the names of your rooms, devices or scenes, and we do not store their states. There is no record of which lights were on, or when. The room graph is read live from your own instance and held in memory only while the connection is open. Voice audio is never stored.</p>
 	<p data-i18n-html="legal_privacy.you_can_see_export_and_delete_everything">You can see, export and delete everything this feature holds at any time, and set your own retention window for the action log. See <a href="/docs/home-privacy">Home privacy and retention</a> for the complete inventory and the API.</p>
+
+	<h2 id="slack">10c. Chat Apps (Slack, Telegram, Discord, WhatsApp and others)</h2>
+	<p>You can talk to your agents from chat apps, including the three.ws app for Slack. This section covers what those apps let us see and keep.</p>
+	<ul>
+		<li><strong>What the Slack app can read:</strong> only direct messages you send the app, messages that mention it in a channel it was invited to, files you attach to those messages (voice clips and images), and the <code>/three</code> commands you run. It cannot read other channels, other people's DMs, or your workspace's message history. The full scope list, with the reason for each, is on <a href="/slack">three.ws/slack</a>.</li>
+		<li><strong>Workspace install:</strong> when a workspace adds the Slack app we store the workspace ID and name, the app's bot user ID, and the bot token Slack issues. The token is encrypted at rest with the same primitive we use for custodial wallet keys. When the workspace uninstalls the app or revokes its tokens, Slack tells us and we erase the token at once.</li>
+		<li><strong>Pairing:</strong> pairing a chat with your account stores the chat app's user ID and username for you, the chat or channel ID, and which of your agents answers there. Unlinking (<code>/three unlink</code>) or deleting your account ends the link.</li>
+		<li><strong>Messages:</strong> a message from a paired chat is queued briefly for delivery, then answered by your agent. Queued copies are deleted 7 days after they are handled. The conversation itself is saved to your agent's thread, the same one you see on the web, so the agent remembers it across apps; it is deleted when you delete the agent or your account, or on request. Messages from chats that are not paired are only answered with pairing instructions and are not saved to any thread.</li>
+		<li><strong>AI processing:</strong> to answer, your message, voice clip or image is sent to the AI model providers listed in Section 10. Each processes it under its own privacy policy.</li>
+		<li><strong>Not sold or shared:</strong> we do not sell chat messages or share them with anyone beyond the providers needed to answer you.</li>
+		<li><strong>Trades and payments:</strong> nothing in a chat message can move funds by itself. A trade your agent prepares is shown as a preview that only you can approve, and an unanswered preview expires after ten minutes.</li>
+	</ul>
+	<p>Questions or deletion requests: <a href="mailto:privacy@three.ws">privacy@three.ws</a>.</p>
 
 	<h2 data-i18n="legal_privacy.11_changes_to_this_policy">11. Changes to This Policy</h2>
 	<p data-i18n="legal_privacy.we_may_update_this_privacy_policy_we">We may update this Privacy Policy. We will notify you of material changes by email or a prominent notice on the Service. The "Effective" date and version at the top reflect the most recent revision.</p>
