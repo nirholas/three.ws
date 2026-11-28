@@ -14,6 +14,7 @@ import { parse as parseToml } from 'smol-toml';
 import { afterAll, describe, expect, it } from 'vitest';
 import { exportPluginRepo } from '../scripts/export-plugin-repo.mjs';
 import { validateGeminiExtension } from '../scripts/validate-gemini-extension.mjs';
+import { planPush } from '../scripts/publish-gemini-extension.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SRC = 'integrations/gemini/three-ws';
@@ -162,5 +163,60 @@ describe('export-plugin-repo on the Gemini extension', () => {
 		} finally {
 			rmSync(inRepo, { recursive: true, force: true });
 		}
+	});
+});
+
+describe('publish-gemini-extension only ever fast-forwards the published repository', () => {
+	const exp = exportPluginRepo({ src: SRC, out: join(TMP, 'publish'), log: quiet });
+	const tag = `v${manifest.version}`;
+	const label = `three-ws ${manifest.version}`;
+	const bare = (name) => {
+		const dir = join(TMP, `${name}.git`);
+		git(TMP, ['init', '--quiet', '--bare', '--initial-branch=main', dir]);
+		return `file://${dir}`;
+	};
+	const push = (url, refspecs) => git(exp.out, ['push', '--quiet', url, ...refspecs]);
+
+	it('pushes the export commit and tag to an empty repository', () => {
+		const url = bare('empty');
+		const plan = planPush({ dir: exp.out, exportSha: exp.sha, url, tag, label });
+		expect(plan).toMatchObject({ commit: exp.sha, pushMain: true, remoteMain: null, remoteTag: null });
+		expect(plan.refspecs).toEqual([`${exp.sha}:refs/heads/main`, `${exp.sha}:refs/tags/${tag}`]);
+		push(url, plan.refspecs);
+		expect(planPush({ dir: exp.out, exportSha: exp.sha, url, tag, label }).refspecs).toEqual([]);
+	});
+
+	it('pushes nothing to main when it already holds the exported tree', () => {
+		const url = bare('same-tree');
+		push(url, [`${exp.sha}:refs/heads/main`]);
+		const plan = planPush({ dir: exp.out, exportSha: exp.sha, url, tag, label });
+		expect(plan).toMatchObject({ commit: exp.sha, pushMain: false });
+		expect(plan.refspecs).toEqual([`${exp.sha}:refs/tags/${tag}`]);
+	});
+
+	it('commits a changed tree on top of the existing main so the push is a fast-forward', () => {
+		const url = bare('older');
+		const older = join(TMP, 'older-src');
+		git(TMP, ['init', '--quiet', '--initial-branch=main', older]);
+		writeFileSync(join(older, 'README.md'), 'an older release\n');
+		git(older, ['add', 'README.md']);
+		git(older, ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '--quiet', '-m', 'old']);
+		git(older, ['push', '--quiet', url, 'main']);
+		const remoteMain = git(older, ['rev-parse', 'HEAD']);
+
+		const plan = planPush({ dir: exp.out, exportSha: exp.sha, url, tag, label, date: '2026-11-28T00:00:00Z' });
+		expect(plan.pushMain).toBe(true);
+		expect(plan.remoteMain).toBe(remoteMain);
+		expect(git(exp.out, ['rev-parse', `${plan.commit}^`])).toBe(remoteMain);
+		expect(git(exp.out, ['rev-parse', `${plan.commit}^{tree}`])).toBe(git(exp.out, ['rev-parse', `${exp.sha}^{tree}`]));
+		push(url, plan.refspecs);
+		expect(git(older, ['ls-remote', url, 'refs/heads/main']).split('\t')[0]).toBe(plan.commit);
+	});
+
+	it('refuses to move a published tag to a different commit', () => {
+		const url = bare('moved-tag');
+		const other = git(exp.out, ['-c', 'user.name=t', '-c', 'user.email=t@example.invalid', 'commit-tree', `${exp.sha}^{tree}`, '-p', exp.sha, '-m', 'unrelated']);
+		push(url, [`${exp.sha}:refs/heads/main`, `${other}:refs/tags/${tag}`]);
+		expect(() => planPush({ dir: exp.out, exportSha: exp.sha, url, tag, label })).toThrow(/already points at .* Bump "version"/);
 	});
 });

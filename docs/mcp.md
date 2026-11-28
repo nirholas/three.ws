@@ -423,6 +423,18 @@ Send Grok Bot: `Add a custom MCP server called three-ws at https://three.ws/api/
 
 `tests/mcp-directory.test.js` pins the `clients` block's shape, checks that every Grok Bot field matches what the [/connect](/connect?client=grok) card renders, and resolves every three.ws URL in the file against the production route table, so a recommended server or setup link that stops being served fails the test suite.
 
+### Gemini CLI
+
+Add the free studio server once for every project, then sign in from inside Gemini CLI:
+
+```bash
+gemini mcp add --scope user --transport http three-ws 'https://three.ws/api/mcp-studio?auth=oauth'
+```
+
+In Gemini CLI, run `/mcp auth three-ws`. It opens the three.ws sign-in, registers itself with dynamic client registration and keeps the token refreshed. Catalog search works before you sign in; making or rigging a model needs the free account. A headless machine can send an API key instead: `gemini mcp add --scope user --transport http -H 'Authorization: Bearer <key>' three-ws https://three.ws/api/mcp-studio`. Gemini CLI only connects MCP servers in folders you have trusted, so `gemini mcp list` shows the server as disabled until you trust the folder you run it from.
+
+The Gemini CLI extension in [integrations/gemini/three-ws](https://github.com/nirholas/three.ws/tree/main/integrations/gemini/three-ws) wraps the same server with `/make-3d`, `/rig` and `/embed` commands, the four 3D skills and a short context file.
+
 ### Any MCP-compatible client
 
 Send `POST /api/mcp` with valid JSON-RPC 2.0 messages and a bearer token. The server is stateless, so no session setup is needed beyond the `initialize` handshake. `initialize` returns an `Mcp-Session-Id` header; echo it on later requests, as the MCP SDKs do, so your calls are attributed to your client in the platform's [client analytics](./ops/mcp-clients.md). It holds no state, and a request without it is served the same way.

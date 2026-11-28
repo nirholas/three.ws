@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Verifies the listing packages under integrations/ (Zed, Raycast, n8n, Gradio Space, Poe bot,
-// Docker MCP Catalog entry).
+// Docker MCP Catalog entry, Gemini CLI extension).
 // Each package is tested and built with its own toolchain. A package whose toolchain is not
 // installed is reported as skipped and makes the run exit 2, so a green exit means everything ran.
 //
@@ -10,8 +10,8 @@
 // The Raycast lint step fails on exactly one known error until the owner creates the Raycast
 // account (integrations/raycast/SUBMITTING.md). That single error is tolerated; any other fails.
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import { delimiter, join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
@@ -96,6 +96,36 @@ const packages = {
 			return { fail: `docker validator passes, but https://three.ws/mcp 401 names no scope, so Docker Desktop would mint an avatars:read token (deploy api/_mcp/auth.js)\n${challenge}` };
 		}
 		return { ok: 'docker validator passes; live /mcp challenge names the scope set' };
+	},
+	// Exports the Gemini CLI extension as its gallery repository will hold it, then has the real
+	// Gemini CLI validate, install and list it in a throwaway HOME. 0.71.1 is the version the
+	// extension and scripts/validate-gemini-extension.mjs were checked against.
+	gemini: () => {
+		const npx = run(root, 'npx', ['--version']);
+		if (npx.missing || !npx.ok) return { skip: 'npx not on PATH (Gemini CLI runs through it)' };
+		const work = mkdtempSync(join(tmpdir(), 'check-gemini-'));
+		try {
+			const out = join(work, 'export');
+			const exp = run(root, 'node', ['scripts/export-plugin-repo.mjs', '--src', 'integrations/gemini/three-ws', '--out', out]);
+			if (!exp.ok) return { fail: `export-plugin-repo\n${exp.out.slice(-1500)}` };
+			const home = join(work, 'home');
+			mkdirSync(join(home, '.gemini'), { recursive: true });
+			// An install from a folder Gemini CLI has not been told to trust stops at a prompt.
+			writeFileSync(join(home, '.gemini', 'trustedFolders.json'), JSON.stringify({ [out]: 'TRUST_FOLDER', [work]: 'TRUST_FOLDER' }));
+			const env = { HOME: home, npm_config_cache: join(homedir(), '.npm') };
+			const gemini = (args) => run(work, 'npx', ['-y', '@google/gemini-cli@0.71.1', ...args], env);
+			for (const args of [['extensions', 'validate', out], ['extensions', 'install', out, '--consent']]) {
+				const r = gemini(args);
+				if (!r.ok) return { fail: `gemini ${args.slice(0, 2).join(' ')}\n${r.out.slice(-1500)}` };
+			}
+			const list = gemini(['extensions', 'list']);
+			if (!list.ok || !/three-ws \(\d+\.\d+\.\d+\)/.test(list.out) || !/MCP servers:\s*\n\s*three-ws/.test(list.out)) {
+				return { fail: `gemini extensions list does not show three-ws with its MCP server\n${list.out.slice(-1500)}` };
+			}
+			return { ok: 'export passes; Gemini CLI 0.71.1 validates, installs and loads it with its MCP server' };
+		} finally {
+			rmSync(work, { recursive: true, force: true });
+		}
 	},
 	zed: () => {
 		const cargo = run(dir('zed'), 'cargo', ['--version'], { PATH: cargoPath });
