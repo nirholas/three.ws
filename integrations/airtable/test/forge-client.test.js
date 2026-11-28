@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { AbortedError, ForgeClient, ForgeError, modelPageUrl } from '../frontend/forge-client.js';
+const LAMP = 'https://three.ws/cdn/forge/7538fb22fd50/420980dd-1c07-4830-b0db-0eacd12cf6de.glb';
+import { AbortedError, ForgeClient, ForgeError, modelPageUrl, posterUrl } from '../frontend/forge-client.js';
 import { exchange, instantSleep, replayFetch } from './replay.js';
 
 const KEY = 'sk_live_fixture-key-not-real-000000';
@@ -110,5 +111,15 @@ describe('modelPageUrl', () => {
 		expect(modelPageUrl('https://three.ws', 'https://cdn.example/x.glb', null)).toBe(
 			'https://three.ws/viewer?src=https%3A%2F%2Fcdn.example%2Fx.glb',
 		);
+	});
+});
+
+describe('posterUrl', () => {
+	it('points at the creation poster when the GLB is stored under a creation id', () => {
+		expect(posterUrl('https://three.ws', LAMP)).toBe('https://three.ws/api/forge/420980dd-1c07-4830-b0db-0eacd12cf6de/og');
+	});
+
+	it('has no poster for a GLB that did not come from Forge', () => {
+		expect(posterUrl('https://three.ws', 'https://cdn.example/x.glb')).toBeNull();
 	});
 });

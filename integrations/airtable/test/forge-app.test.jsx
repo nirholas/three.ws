@@ -1,7 +1,7 @@
 import TestDriver from '@airtable/blocks-testing';
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ForgeApp from '../frontend/ForgeApp.jsx';
 import baseFixture, { LAMP_GLB } from './fixtures/base.js';
@@ -92,6 +92,25 @@ describe('generator', () => {
 		expect(screen.queryByText('ab')).toBeNull();
 		expect(screen.getByText('1 of 2 records with a prompt have a model.')).toBeTruthy();
 		expect(screen.getByRole('button', { name: 'Generate 1 model' }).disabled).toBe(false);
+	});
+
+	it('shows the stored model poster as its thumbnail, falling back to a cube when there is none', async () => {
+		mount();
+		await screen.findByText('Forge 3D models');
+		const poster = document.querySelector('img');
+		expect(poster.getAttribute('src')).toBe('https://three.ws/api/forge/420980dd-1c07-4830-b0db-0eacd12cf6de/og');
+		fireEvent.error(poster);
+		expect(document.querySelector('img')).toBeNull();
+	});
+
+	it('says every model is generated instead of offering to generate zero', async () => {
+		mount(replayFetch({ cached: true }));
+		await screen.findByText('Forge 3D models');
+		userEvent.click(screen.getByRole('button', { name: 'Generate 1 model' }));
+		await screen.findByText('2 of 2 records with a prompt have a model.');
+		const all = screen.getByRole('button', { name: 'All models generated' });
+		expect(all.disabled).toBe(true);
+		expect(screen.queryByText(/Generate 0 models/)).toBeNull();
 	});
 
 	it('generates a model and writes the GLB, its 3D page and the status into the record', async () => {

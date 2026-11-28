@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button, Icon, Link, Loader, Text, expandRecord } from '@airtable/blocks/ui';
 import { hasModel, promptOf, storedModelUrl, storedThumbnailUrl } from './fields.js';
 import { ACTIVE_PHASES, PHASES } from './queue.js';
-import { DEFAULT_BASE_URL, modelPageUrl } from './forge-client.js';
+import { DEFAULT_BASE_URL, modelPageUrl, posterUrl } from './forge-client.js';
 
 const PAGE = 100;
 
@@ -74,6 +74,9 @@ export default function RecordList({ loading, records, totalRecords, jobs, setti
 }
 
 function Thumbnail({ src, busy }) {
+	// A poster that fails to load (no poster stored, offline) falls back to the cube.
+	const [failedSrc, setFailedSrc] = useState(null);
+	const shown = src && src !== failedSrc ? src : null;
 	return (
 		<Box
 			width="56px"
@@ -87,8 +90,15 @@ function Thumbnail({ src, busy }) {
 			justifyContent="center"
 			overflow="hidden"
 		>
-			{src ? (
-				<img src={src} alt="" width="56" height="56" style={{ objectFit: 'cover', display: 'block' }} />
+			{shown ? (
+				<img
+					src={shown}
+					alt=""
+					width="56"
+					height="56"
+					style={{ objectFit: 'cover', display: 'block' }}
+					onError={() => setFailedSrc(shown)}
+				/>
 			) : busy ? (
 				<Loader scale={0.3} />
 			) : (
@@ -107,7 +117,10 @@ function Row({ record, job, settings, canWrite, onGenerate }) {
 	const result = phase === 'done' ? job.result : null;
 	const storedUrl = storedModelUrl(record, modelField);
 	const pageUrl = result?.pageUrl || (storedUrl ? modelPageUrl(DEFAULT_BASE_URL, storedUrl, null) : null);
-	const thumb = result?.previewImageUrl || storedThumbnailUrl(record, modelField);
+	const thumb =
+		result?.previewImageUrl ||
+		storedThumbnailUrl(record, modelField) ||
+		posterUrl(DEFAULT_BASE_URL, result?.glbUrl || storedUrl);
 	const title = record.name && record.name !== prompt ? record.name : null;
 
 	let status;

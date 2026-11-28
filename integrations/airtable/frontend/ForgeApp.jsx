@@ -145,13 +145,17 @@ function Generator({ settings, apiKey, clientOptions, onOpenSettings, onKeyRejec
 				<Box display="flex" flexWrap="wrap" alignItems="center" marginTop={3}>
 					<Button
 						variant="primary"
-						icon="play"
+						icon={todo.length === 0 ? 'check' : 'play'}
 						marginRight={2}
 						marginBottom={1}
 						disabled={!permission.hasPermission || todo.length === 0}
 						onClick={() => start(todo)}
 					>
-						{todo.length === 1 ? 'Generate 1 model' : `Generate ${todo.length} models`}
+						{todo.length === 0
+							? 'All models generated'
+							: todo.length === 1
+								? 'Generate 1 model'
+								: `Generate ${todo.length} models`}
 					</Button>
 					{selectedTodo.length > 0 && (
 						<Button

@@ -51,6 +51,16 @@ export function modelPageUrl(baseUrl, glbUrl, creationId) {
 	return `${baseUrl}/viewer?src=${encodeURIComponent(glbUrl)}`;
 }
 
+/**
+ * A thumbnail for a stored model. Forge keeps a poster image for each creation and
+ * /api/forge/<id>/og redirects to it (404 when there is none), so a GLB stored by an
+ * earlier session still gets a picture even though Airtable cannot thumbnail a GLB.
+ */
+export function posterUrl(baseUrl, glbUrl) {
+	const id = (UUID.exec(glbUrl || '') || [])[1];
+	return id ? `${baseUrl}/api/forge/${id}/og` : null;
+}
+
 function defaultSleep(ms, signal) {
 	return new Promise((resolve, reject) => {
 		if (signal?.aborted) return reject(new AbortedError());
