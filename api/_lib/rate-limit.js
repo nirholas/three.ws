@@ -1911,6 +1911,12 @@ export const limits = {
 	// owner creating or revoking command URLs in settings.
 	basecampCommand: (chatbotId) => getLimiter('basecamp:command', { limit: 20, window: '10 m' }).limit(chatbotId),
 	basecampChatbotWrite: (userId) => getLimiter('basecamp:chatbot-write', { limit: 20, window: '1 h' }).limit(userId),
+	// Linear agent: models per Linear workspace (everyone who mentions or
+	// delegates to the app shares one bucket; the installing account's own forge
+	// limits still apply behind this), and the owner starting or removing an
+	// install from /integrations/linear.
+	linearSession: (organizationId) => getLimiter('linear:session', { limit: 30, window: '10 m' }).limit(organizationId),
+	linearInstallWrite: (userId) => getLimiter('linear:install-write', { limit: 20, window: '1 h' }).limit(userId),
 	// local: embedded-widget read fetch — flood protection only, no side effects.
 	// Widgets on third-party pages poll continuously, so a Redis command per read
 	// at 600/min is pure burn; a per-instance cap bounds throughput just as well.
