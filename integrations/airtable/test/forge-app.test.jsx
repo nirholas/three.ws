@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import ForgeApp from '../frontend/ForgeApp.jsx';
 import baseFixture, { LAMP_GLB } from './fixtures/base.js';
 import { exchange, instantSleep, replayFetch } from './replay.js';
+import { lineAnswer } from '../../../api/_lib/forge-line.js';
 
 const KEY = 'sk_live_fixture-key-not-real-000000';
 const done = exchange.polls.at(-1).body;
@@ -144,6 +145,25 @@ describe('generator', () => {
 			{ id: 'attLamp', url: LAMP_GLB, filename: 'lamp.glb' },
 			{ url: done.glb_url, filename: 'a-brass-desk-lamp-with-a-green-glass-shade.glb' },
 		]);
+	});
+
+	it('shows the place in the Forge waiting line while a generation waits its turn', async () => {
+		const queued = lineAnswer({ action: 'queued', position: 3, ahead: 2, depth: 3, etaSeconds: 90, intervalSeconds: 30, checkAgainSeconds: 10 });
+		let release;
+		const gate = new Promise((resolve) => (release = resolve));
+		const sleep = (ms, signal) => gate.then(() => instantSleep(ms, signal));
+		const fetchSetup = replayFetch({ script: [{ status: queued.status, body: queued.body, headers: queued.headers }] });
+		render(
+			<driver.Container>
+				<ForgeApp clientOptions={{ fetchImpl: fetchSetup.fetchImpl, sleep }} />
+			</driver.Container>,
+		);
+		await screen.findByText('Forge 3D models');
+		userEvent.click(screen.getByRole('button', { name: 'Generate 1 model' }));
+		expect(await screen.findByText(/^In line · number 3/)).toBeTruthy();
+		release();
+		await waitFor(() => expect(recordUpdates()).toHaveLength(1));
+		expect(recordUpdates()[0].cellValuesByFieldId.fldStatus).toBe('Done');
 	});
 
 	it('writes the failure reason to the status field and offers a retry', async () => {

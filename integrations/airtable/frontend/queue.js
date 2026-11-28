@@ -9,6 +9,7 @@ export const PHASES = {
 	queued: 'Queued',
 	submitting: 'Sending',
 	waiting: 'In line',
+	throttled: 'three.ws is busy, retrying',
 	running: 'Generating',
 	saving: 'Saving to record',
 	done: 'Done',
@@ -18,11 +19,12 @@ export const PHASES = {
 
 /** Forge job statuses mapped onto the phases shown in the list. */
 export function phaseForForgeStatus(status) {
-	if (status === 'queued' || status === 'pending' || status === 'waiting') return 'waiting';
+	if (status === 'rate_limited') return 'throttled';
+	if (status === 'queued' || status === 'pending' || status === 'waiting' || status === 'in_line') return 'waiting';
 	return 'running';
 }
 
-export const ACTIVE_PHASES = new Set(['queued', 'submitting', 'waiting', 'running', 'saving']);
+export const ACTIVE_PHASES = new Set(['queued', 'submitting', 'waiting', 'throttled', 'running', 'saving']);
 
 export class ForgeQueue {
 	constructor({ runJob, concurrency = 2 }) {
@@ -92,7 +94,8 @@ export class ForgeQueue {
 		try {
 			const result = await this.runJob(entry, {
 				signal,
-				onStatus: (status, elapsedMs) => this.set(entry.id, { phase: phaseForForgeStatus(status), elapsedMs }),
+				onStatus: (status, elapsedMs, retryInMs, line = null) =>
+					this.set(entry.id, { phase: phaseForForgeStatus(status), elapsedMs, position: line?.position ?? null }),
 				onSaving: () => this.set(entry.id, { phase: 'saving' }),
 			});
 			this.set(entry.id, { phase: 'done', result });

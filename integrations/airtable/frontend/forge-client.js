@@ -125,13 +125,14 @@ export class ForgeClient {
 				response.status,
 			);
 			error.retryAfterMs = retryAfterMs(response.headers?.get?.('retry-after'));
+			error.details = parsed;
 			throw error;
 		}
 		return parsed;
 	}
 
 	/** Start a generation. Resolves to the submission, which is already done when Forge had it cached. */
-	async submit(prompt, tier = 'draft', { signal } = {}) {
+	async submit(prompt, tier = 'draft', { signal, onStatus } = {}) {
 		const trimmed = String(prompt || '').trim();
 		if (trimmed.length < 3) {
 			throw new ForgeError('The prompt needs at least 3 characters describing one object.', 'invalid_prompt');
@@ -140,7 +141,9 @@ export class ForgeClient {
 			throw new ForgeError('Add your three.ws API key to generate models.', 'sign_in_required', 401);
 		}
 		const body = { prompt: trimmed.slice(0, 1000), tier: TIERS.includes(tier) ? tier : 'draft', path: 'image', aspect_ratio: '1:1' };
-		for (let attempt = 0; ; attempt++) {
+		const start = this.now();
+		let throttled = 0;
+		for (;;) {
 			try {
 				const result = await this.request('/api/forge', { method: 'POST', body, signal });
 				const cached = result.status === 'done' && typeof result.glb_url === 'string';
@@ -149,7 +152,21 @@ export class ForgeClient {
 				}
 				return result;
 			} catch (error) {
-				if (error instanceof ForgeError && error.status === 429 && attempt < MAX_RATE_LIMIT_RETRIES) {
+				if (!(error instanceof ForgeError)) throw error;
+				const elapsed = this.now() - start;
+				// A place in Forge's waiting line (429 forge_queued) is held by submitting again
+				// when told to; it is a normal wait, bounded only by the overall time limit.
+				if (error.status === 429 && error.code === 'forge_queued' && elapsed < POLL_TIMEOUT_MS) {
+					const { position = null, eta_seconds: etaSeconds = null } = error.details || {};
+					onStatus?.('in_line', elapsed, error.retryAfterMs, { position, etaSeconds });
+					await this.sleep(error.retryAfterMs, signal);
+					continue;
+				}
+				// A rate limit or a full line (503 forge_full) gets a few patient retries.
+				const busy = error.status === 429 || (error.status === 503 && error.code === 'forge_full');
+				if (busy && throttled < MAX_RATE_LIMIT_RETRIES) {
+					throttled++;
+					onStatus?.('rate_limited', elapsed, error.retryAfterMs);
 					await this.sleep(error.retryAfterMs, signal);
 					continue;
 				}
@@ -158,7 +175,10 @@ export class ForgeClient {
 		}
 	}
 
-	/** Poll a job until it is done. `onStatus(status, elapsedMs)` reports each answer. */
+	/**
+	 * Poll a job until it is done. `onStatus(status, elapsedMs, retryInMs)` reports each answer,
+	 * and "rate_limited" with the wait whenever three.ws asks the client to slow down.
+	 */
 	async poll(jobId, { onStatus, signal, creationId } = {}) {
 		const start = this.now();
 		for (;;) {
@@ -171,6 +191,7 @@ export class ForgeClient {
 				job = await this.request(`/api/forge?job=${encodeURIComponent(jobId)}`, { signal });
 			} catch (error) {
 				if (error instanceof ForgeError && [429, 502, 503, 504].includes(error.status)) {
+					if (error.status === 429) onStatus?.('rate_limited', elapsed, error.retryAfterMs);
 					await this.sleep(error.status === 429 ? error.retryAfterMs : POLL_INTERVAL_MS, signal);
 					continue;
 				}
@@ -199,7 +220,7 @@ export class ForgeClient {
 	}
 
 	async generate(prompt, tier, { onStatus, signal } = {}) {
-		const submission = await this.submit(prompt, tier, { signal });
+		const submission = await this.submit(prompt, tier, { signal, onStatus });
 		if (submission.status === 'done' && submission.glb_url) return this.result(submission);
 		onStatus?.(submission.status || 'queued', 0);
 		return this.poll(submission.job_id, { onStatus, signal, creationId: submission.creation_id });

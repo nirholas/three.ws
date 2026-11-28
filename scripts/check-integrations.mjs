@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Verifies the listing packages under integrations/ (Zed, Raycast, n8n, Gradio Space, Poe bot,
-// Docker MCP Catalog entry, Gemini CLI extension).
+// Verifies the listing packages under integrations/ (Zed, Raycast, Airtable extension, n8n,
+// Gradio Space, Poe bot, Docker MCP Catalog entry, Gemini CLI extension).
 // Each package is tested and built with its own toolchain. A package whose toolchain is not
 // installed is reported as skipped and makes the run exit 2, so a green exit means everything ran.
 //
@@ -46,6 +46,16 @@ const packages = {
 			return { ok: 'tests, types, build pass; lint reports only the owner-owned author error' };
 		}
 		return { ok: 'tests, types, build and lint pass' };
+	},
+	airtable: () => {
+		const cwd = dir('airtable');
+		if (!existsSync(join(cwd, 'node_modules'))) return { skip: 'run npm install in integrations/airtable' };
+		const test = run(cwd, 'npm', ['test']);
+		if (!test.ok) return { fail: `npm test\n${test.out.slice(-1500)}` };
+		// Airtable's Marketplace review rejects any npm audit finding, dev tooling included.
+		const audit = run(cwd, 'npm', ['audit']);
+		if (!audit.ok) return { fail: `npm audit\n${audit.out.slice(-1500)}` };
+		return { ok: 'TestDriver suite passes; npm audit is clean' };
 	},
 	n8n: () => {
 		const cwd = dir('n8n');

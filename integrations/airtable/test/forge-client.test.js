@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 const LAMP = 'https://three.ws/cdn/forge/7538fb22fd50/420980dd-1c07-4830-b0db-0eacd12cf6de.glb';
+import { PHASES, phaseForForgeStatus } from '../frontend/queue.js';
+import { lineAnswer } from '../../../api/_lib/forge-line.js';
 import { AbortedError, ForgeClient, ForgeError, modelPageUrl, posterUrl } from '../frontend/forge-client.js';
 import { exchange, instantSleep, replayFetch } from './replay.js';
 
@@ -65,6 +67,45 @@ describe('ForgeClient against recorded production answers', () => {
 		expect(result.glbUrl).toBe(done.glb_url);
 		expect(sleep.mock.calls[0][0]).toBe(7000);
 		expect(calls[1].method).toBe('POST');
+	});
+
+	it('reports a rate-limit wait so the list can say three.ws is busy', async () => {
+		const { fetchImpl } = replayFetch({
+			script: [{ status: 429, body: { error: 'rate_limited', message: 'Slow down.' }, headers: { 'retry-after': '7' } }],
+		});
+		const onStatus = vi.fn();
+		const client = new ForgeClient({ apiKey: KEY, fetchImpl, sleep: instantSleep, now: () => 0 });
+		await client.generate(exchange.prompt, 'draft', { onStatus });
+		expect(onStatus.mock.calls[0]).toEqual(['rate_limited', 0, 7000]);
+		expect(phaseForForgeStatus('rate_limited')).toBe('throttled');
+		expect(PHASES.throttled).toBe('three.ws is busy, retrying');
+	});
+
+	it('keeps its place in the Forge waiting line until its turn, however many check-ins that takes', async () => {
+		// Built by Forge's own answer builder, so a change to the line contract fails here.
+		const queued = (position, etaSeconds) => {
+			const answer = lineAnswer({ action: 'queued', position, ahead: position - 1, depth: position, etaSeconds, intervalSeconds: 20, checkAgainSeconds: 10 });
+			return { status: answer.status, body: answer.body, headers: answer.headers };
+		};
+		const script = [queued(5, 180), queued(4, 140), queued(3, 100), queued(2, 60), queued(1, 45)];
+		const { fetchImpl, calls } = replayFetch({ script });
+		const onStatus = vi.fn();
+		const client = new ForgeClient({ apiKey: KEY, fetchImpl, sleep: instantSleep, now: () => 0 });
+		const result = await client.generate(exchange.prompt, 'draft', { onStatus });
+		expect(result.glbUrl).toBe(done.glb_url);
+		expect(calls.filter((c) => c.method === 'POST')).toHaveLength(6);
+		expect(onStatus.mock.calls[0]).toEqual(['in_line', 0, 10000, { position: 5, etaSeconds: 180 }]);
+		expect(onStatus.mock.calls[4]).toEqual(['in_line', 0, 10000, { position: 1, etaSeconds: 45 }]);
+		expect(phaseForForgeStatus('in_line')).toBe('waiting');
+	});
+
+	it('waits out a full Forge (503 forge_full) like a rate limit', async () => {
+		const full = lineAnswer({ action: 'full', depth: 40, maxDepth: 40, retryAfterSeconds: 30 });
+		const { fetchImpl } = replayFetch({ script: [{ status: full.status, body: full.body, headers: full.headers }] });
+		const onStatus = vi.fn();
+		const client = new ForgeClient({ apiKey: KEY, fetchImpl, sleep: instantSleep, now: () => 0 });
+		expect((await client.generate(exchange.prompt, 'draft', { onStatus })).glbUrl).toBe(done.glb_url);
+		expect(onStatus.mock.calls[0]).toEqual(['rate_limited', 0, 30000]);
 	});
 
 	it('keeps polling through a 503 from the job endpoint', async () => {

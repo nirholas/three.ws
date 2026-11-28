@@ -74,11 +74,13 @@ export default function RecordList({ loading, records, totalRecords, jobs, setti
 }
 
 function Thumbnail({ src, busy }) {
-	// A poster that fails to load (no poster stored, offline) falls back to the cube.
+	// The cube sits under the poster, so a poster that is still loading never shows an empty
+	// tile; one that fails to load (no poster stored, offline) is dropped and the cube stays.
 	const [failedSrc, setFailedSrc] = useState(null);
 	const shown = src && src !== failedSrc ? src : null;
 	return (
 		<Box
+			position="relative"
 			width="56px"
 			height="56px"
 			flex="none"
@@ -90,19 +92,16 @@ function Thumbnail({ src, busy }) {
 			justifyContent="center"
 			overflow="hidden"
 		>
-			{shown ? (
+			{busy && !shown ? <Loader scale={0.3} /> : <Icon name="cube" size={20} fillColor="gray" />}
+			{shown && (
 				<img
 					src={shown}
 					alt=""
 					width="56"
 					height="56"
-					style={{ objectFit: 'cover', display: 'block' }}
+					style={{ position: 'absolute', inset: 0, objectFit: 'cover', display: 'block' }}
 					onError={() => setFailedSrc(shown)}
 				/>
-			) : busy ? (
-				<Loader scale={0.3} />
-			) : (
-				<Icon name="cube" size={20} fillColor="gray" />
 			)}
 		</Box>
 	);

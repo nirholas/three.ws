@@ -8,7 +8,9 @@
 // the extension still makes every real request, only the hop is same-origin.
 //
 // Usage:
-//   THREE_WS_API_KEY=sk_live_... node scripts/airtable-extension-browser-check.mjs [--shots <dir>]
+//   THREE_WS_API_KEY=sk_live_... node scripts/airtable-extension-browser-check.mjs \
+//     [--shots <dir>] [--prompt "a carved wooden owl bookend"]
+//   --prompt replaces the fixture teapot prompt so Forge runs a fresh (uncached) generation.
 //   FORGE_BASE_URL overrides https://three.ws. Exits non-zero on any console error, page
 //   error, or a generation that does not land in the record.
 import http from 'node:http';
@@ -25,6 +27,8 @@ const FORGE = (process.env.FORGE_BASE_URL || 'https://three.ws').replace(/\/$/, 
 const API_KEY = process.env.THREE_WS_API_KEY || '';
 const shotsArg = process.argv.indexOf('--shots');
 const SHOTS = shotsArg > -1 ? path.resolve(process.argv[shotsArg + 1]) : null;
+const promptArg = process.argv.indexOf('--prompt');
+const PROMPT = promptArg > -1 ? process.argv[promptArg + 1] : 'a ceramic teapot with a bamboo handle';
 const TIMEOUT_MS = 7 * 60 * 1000;
 
 if (!/^sk_(live|test)_/.test(API_KEY)) {
@@ -52,6 +56,7 @@ const page = `<!doctype html><html><head><meta charset="utf-8"><title>Forge for 
 <style>html,body{margin:0;height:100%;font-family:-apple-system,system-ui,sans-serif}</style></head>
 <body><script src="/harness.js"></script></body></html>`;
 
+const exchanges = [];
 const server = http.createServer(async (req, res) => {
 	try {
 		if (req.url.startsWith('/api/forge')) {
@@ -71,6 +76,7 @@ const server = http.createServer(async (req, res) => {
 				const value = upstream.headers.get(name);
 				if (value) passHeaders[name] = value;
 			}
+			exchanges.push(`${req.method} ${upstream.status}`);
 			res.writeHead(upstream.status, passHeaders);
 			res.end(Buffer.from(await upstream.arrayBuffer()));
 			return;
@@ -94,15 +100,27 @@ const problems = [];
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 560, height: 760 }, deviceScaleFactor: 2 });
 const tab = await context.newPage();
+// Chromium logs every non-2xx fetch as a console error. A 429 the extension waited out and
+// retried is handled behavior, counted separately; any other console error or warning fails.
+let handled429 = 0;
 tab.on('console', (msg) => {
-	if (['error', 'warning'].includes(msg.type())) problems.push(`console.${msg.type()}: ${msg.text()}`);
+	if (!['error', 'warning'].includes(msg.type())) return;
+	if (/^Failed to load resource: .*status of 429/.test(msg.text())) handled429 += 1;
+	else problems.push(`console.${msg.type()}: ${msg.text()}`);
 });
 tab.on('pageerror', (error) => problems.push(`pageerror: ${error.message}`));
-const shot = async (name) => SHOTS && tab.screenshot({ path: path.join(SHOTS, name) });
+const imagesLoaded = () =>
+	tab.waitForFunction(() => [...document.images].every((image) => image.complete), null, { timeout: 30_000 });
+const shot = async (name) => {
+	if (!SHOTS) return;
+	await imagesLoaded();
+	await tab.screenshot({ path: path.join(SHOTS, name) });
+};
 
 let exitCode = 0;
 try {
-	await tab.goto(`${origin}/?configured=1&base=${encodeURIComponent(origin)}`);
+	const query = new URLSearchParams({ configured: '1', base: origin, prompt: PROMPT });
+	await tab.goto(`${origin}/?${query}`);
 	await tab.getByRole('heading', { name: 'Set up Forge' }).waitFor();
 	await shot('01-setup.png');
 
@@ -115,12 +133,16 @@ try {
 	await shot('02-records.png');
 
 	const started = Date.now();
-	await tab.getByRole('button', { name: 'Generate: a ceramic teapot with a bamboo handle' }).click();
-	await tab.getByText(/^(Submitting|In line|Generating)/).first().waitFor();
-	await tab.getByText(/^Generating · \d+s$/).first().waitFor({ timeout: TIMEOUT_MS }).catch(() => {});
-	await shot('03-generating.png');
+	await tab.getByRole('button', { name: `Generate: ${PROMPT}` }).click();
+	// A cached prompt finishes before any progress paints, so progress is only captured when seen.
+	const progress = await tab
+		.getByText(/^(In line|Generating|three\.ws is busy, retrying) · ([3-9]|\d{2,})s$/)
+		.first()
+		.waitFor({ timeout: 60_000 })
+		.then(() => true, () => false);
+	if (progress) await shot('03-generating.png');
 	await tab.getByText('2 of 2 records with a prompt have a model.').waitFor({ timeout: TIMEOUT_MS });
-	await tab.locator('img[src^="http"]').first().waitFor({ timeout: 30_000 }).catch(() => {});
+	await tab.locator('img[src^="http"]').first().waitFor({ timeout: 30_000 });
 	await shot('04-saved.png');
 
 	const mutations = await tab.evaluate(() => window.forgeMutations || []);
@@ -135,6 +157,9 @@ try {
 		console.log(`GLB ${glbUrl} -> ${head.status} ${head.headers.get('content-type')}`);
 	}
 	console.log(`3D page: ${cells.fldPage}`);
+	console.log(`Progress captured: ${progress ? 'yes' : 'no (finished before a 3s progress frame painted)'}`);
+	console.log(`Forge exchanges: ${exchanges.join(', ')}`);
+	if (handled429) console.log(`Rate-limit answers waited out and retried: ${handled429}`);
 	console.log(`Generated and saved in ${Math.round((Date.now() - started) / 1000)}s`);
 } catch (error) {
 	problems.push(`flow failed: ${error.message.split('\n')[0]}`);

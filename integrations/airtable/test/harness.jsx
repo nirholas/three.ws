@@ -1,8 +1,11 @@
 // Testing entry for `block run --testing` (block.json "frontendTestingEntry"). It renders
 // the real extension inside Airtable's TestDriver with the fixture catalog base, so the
 // bundle the Blocks CLI builds can be driven in an ordinary browser without an Airtable
-// account. Forge calls go to the real API (window.FORGE_BASE_URL, default three.ws) with
-// the key typed into the extension; nothing here is shipped in the released extension.
+// account (see scripts/airtable-extension-browser-check.mjs). Query parameters:
+//   configured=1  start with the catalog mapping already saved
+//   base=<url>    Forge origin for API calls (the check script's same-origin pass-through)
+//   prompt=<text> replace the teapot record's prompt, to force an uncached generation
+// Nothing here ships in the released extension (block.json points only at frontend/).
 import TestDriver from '@airtable/blocks-testing';
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -14,12 +17,18 @@ const style = document.createElement('style');
 style.textContent = STYLES;
 document.head.appendChild(style);
 
-window.testDriver = new TestDriver(baseFixture);
+const params = new URLSearchParams(window.location.search);
+const fixture = structuredClone(baseFixture);
+if (params.get('prompt')) {
+	const teapot = fixture.base.tables[0].records.find((record) => record.id === 'recTeapot');
+	teapot.cellValuesByFieldId.fldPrompt = params.get('prompt');
+}
+
+window.testDriver = new TestDriver(fixture);
 window.testDriver.watch('mutation', (mutation) => {
 	window.forgeMutations = [...(window.forgeMutations || []), mutation];
 });
 
-const params = new URLSearchParams(window.location.search);
 if (params.get('configured') === '1') {
 	window.testDriver.globalConfig.setPathsAsync(
 		Object.entries({
