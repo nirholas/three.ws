@@ -101,11 +101,14 @@ drops below the 7-day figure (95.5%), set the URL back.
 
 | Piece | Where it is now | Status |
 | --- | --- | --- |
-| `three-ws-api` | `three-ws`, us-central1 | Built and verified; serves the public once DNS moves |
-| Secrets (87) | Secret Manager in `three-ws` | Copied, every value hash-checked |
+| `three-ws-api` | `three-ws`, us-central1 | Built and verified; serves the public once DNS moves. Runs older code than the live service (revision `00004` of 2026-11-27 13:41 vs the old project's `00561` of 23:33), so cutover step 6 (deploy current `main`) is required |
+| Secrets (87 the API reads) | Secret Manager in `three-ws` | Copied, every value hash-checked; re-checked 2026-11-28, no drift |
+| Secrets (39 more, 2026-11-28) | Secret Manager in `three-ws`, label `migrated-from=aerial-vehicle-466722-p5` | Copied, every value hash-checked. See "2026-11-28 sweep" below |
 | Redis for the API | VM `three-ws-redis` (e2-small), Direct VPC egress | Live on the new API since revision `three-ws-api-00003-tjr` |
-| Load balancer and certificate | `three-ws-ip` 136.82.11.20 | Built; waits on the DNS records |
+| Load balancer and certificate | `three-ws-ip` 136.82.11.20 | Built; certificate `ACTIVE`; waits on the DNS A records |
 | Crons | One `three-ws-scheduler-tick` job | Created at cutover, never in both projects |
+| Vertex AI access | `vercel-inference@aerial-vehicle-466722-p5` holds `aiplatform.user` on `three-ws` | Granted 2026-11-28, verified with real calls. See "2026-11-28 sweep" below |
+| Monitoring | Uptime check `three.ws API healthz`, policies `Event: three.ws is DOWN` and `Event: three-ws-api 5xx rate elevated`, email channel | Created 2026-11-28 (mirrors the old project's) |
 
 ### Required (the site breaks or data is lost without these)
 
@@ -143,7 +146,12 @@ in `three-ws-model-weights`.
 succeeds (17 done, 26 failed in 7 days). It moves as it is; fixing it is
 separate work.
 
-Cloud Run jobs that move: `vanity-grinder` and `three-ws-x-partners`.
+Cloud Run jobs that move: `vanity-grinder` and `three-ws-x-partners`. Their live
+images are copied by digest to `us-central1-docker.pkg.dev/three-ws/workers/<job>:migrated`
+and their secrets are in `three-ws` (2026-11-28). `three-ws-x-partners` runs
+daily from the old Scheduler job `three-ws-x-partners-daily`, which is not a
+`vercel.json` cron, so the tick never replaces it: recreate it in `three-ws`
+when the job moves, and pause the old one in the same session.
 
 ### Efficiency changes made during the move
 
@@ -192,6 +200,63 @@ under the old billing account. If the old project is ever closed, each bucket
 moves with a same-name swap: copy to a temporary bucket, delete the original,
 create the name in `three-ws`, copy back. That deletes the original, so it
 needs the owner's yes and a short write freeze per bucket.
+
+## 2026-11-28 sweep: gaps the first manifest missed
+
+A full diff of both projects (services, jobs, Scheduler, secrets, enabled APIs,
+buckets, monitoring, IAM) on 2026-11-28 found these. Reproduce the secret diff
+with `comm -23` over `gcloud secrets list --format='value(name)'` of each
+project.
+
+- **Vertex AI was broken in the new project (fixed).** The API signs Vertex
+  calls with the key in `GCP_SERVICE_ACCOUNT_JSON`
+  (`api/_lib/gcp-auth.js` prefers it over the metadata server), and that key
+  belongs to `vercel-inference@aerial-vehicle-466722-p5`, which held no role in
+  `three-ws`. Every Vertex call from the new API (Gemini, Imagen, embeddings,
+  Gemini TTS, the Forge reference image and quality gate) answered
+  `PERMISSION_DENIED`. That account now holds `roles/aiplatform.user` on
+  `three-ws`; a real Gemini and embedding call as that identity returns 200.
+  The identity still lives in the old project. Replacing it with a key for an
+  account in `three-ws` needs the org policy
+  `iam.managed.disableServiceAccountKeyCreation` lifted for the project, since
+  `ai-image-lanes.js` and the signed URLs in `storage-fallback.js` require a key.
+- **Model access on the trial billing account.** Tested 2026-11-28 in
+  `three-ws`: `gemini-3-flash-preview` (global), `gemini-2.5-flash-image`
+  (global), `gemini-2.5-flash-preview-tts`, `gemini-2.5-flash-tts` and
+  `text-embedding-005` answer. `gemini-2.5-flash`, `gemini-2.5-flash-lite` and
+  every Imagen model (`imagen-4.0-generate-001`, `-fast`, `-ultra`,
+  `imagen-3.0-generate-002`) return 404 "publisher model not found". The code
+  pins `gemini-2.5-flash` and `imagen-4.0-generate-001`. Re-test these right
+  after the billing change; if they still 404 on a paid account, the pins move
+  to the models that answer, as a code change with its own tests.
+- **Secrets the first copy skipped.** The first copy took only what
+  `three-ws-api` reads. These 39 were copied on 2026-11-28: the two
+  `vanity-grinder` needs (`JWT_SECRET`, `WALLET_ENCRYPTION_KEY`); keys that
+  cannot be regenerated (the Seeker Android release keystore and its password,
+  the four `SOLANA_PROGRAM_KEYPAIR_*` program keys,
+  `SOLANA_DEVNET_DEPLOY_AUTHORITY`, the x402 buyer and receiver keys, the two EVM
+  relay and pay-to keys, the retired sniper's master and funder wallets, two test
+  wallets); and the secrets of three.ws workers and services that are not
+  deployed today (`agora-citizens`, `autopilot`, `agent-orders`, `deploy/world`,
+  `cad-forge`, `longcat`, the second Hugging Face and NVIDIA keys, the R2 keys
+  for the pano capture scripts, the claims bot env, a QuickNode RPC URL, and the
+  three retired claim bots' tokens). Left behind on purpose: the old Redis URIs
+  (replaced by the VM) and every secret of the owner's other projects.
+- **Scheduler jobs outside the tick.** Besides `three-ws-x-partners-daily`
+  (above), `db-backup-daily` runs a Cloud Build in the old project every day at
+  06:30 UTC (`deploy/db-backup/`, `scripts/schedule-db-backup.mjs`). Neither
+  `--tick` nor `--pause` touches it, so backups keep running from the old
+  project. Move it with the backup buckets.
+- **Monitoring.** The old project's uptime checks and alert policies covered
+  three.ws, and the 5xx policy watches the old `three-ws-api`, so it goes blind
+  at cutover. The new project now has the healthz uptime check, the DOWN policy
+  and the 5xx policy, emailing the same address. The `three.ws world server`
+  check targets the old `three-ws-multiplayer` URL; add it in `three-ws` when
+  multiplayer moves.
+- **Buckets checked and not needed:** `three-ws-sandbox` is empty and no sandbox
+  runner is configured. `three-ws-veo` is used only by local scripts.
+  `three-ws-autopilot`, `three-ws-human-tasks`, `three-ws-lib-releases` and
+  `world-three-ws-data` have no reader in the API.
 
 ## Staying in the old project
 
